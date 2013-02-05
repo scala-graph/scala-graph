@@ -3,16 +3,20 @@ package scalax.collection
 import annotation.tailrec
 import collection.mutable.{ArrayBuffer, ListBuffer, Queue, PriorityQueue, Stack,
                            Set => MutableSet, Map => MutableMap}
-
 import GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn, GraphParamOut,
                     NodeIn, NodeOut, EdgeIn, EdgeOut}
 import GraphEdge.{EdgeLike}
-import mutable.ArraySet
+import mutable.{ArraySet, ExtBitSet}
+import scalax.collection.mutable.ExtBitSet
+import scalax.collection.mutable.ExtBitSet
 
-trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]] extends GraphTraversal[N,E]
+trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
+  extends GraphTraversal[N,E]
+  with State[N,E]
 {
   import GraphTraversal.VisitorReturn._
   import GraphTraversal._
+  import State._
   /*
   override def components(nodeFilter : (NodeT) => Boolean       = anyNode,
                           edgeFilter : (EdgeT) => Boolean       = anyEdge,
@@ -41,7 +45,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]] extends GraphTraversal[N,E]
       val path = CycleBuffer(nodeFilter, edgeFilter)
       val traversal = new Traversal(Successors, nodeFilter, edgeFilter,
                                                 nodeVisitor, edgeVisitor, ordering)
-      State.withHandles(2) { handles => 
+      withHandles(2) { handles => 
         implicit val visitedHandle = handles(0) 
         for (node <- nodes if ! node.visited) {
           val res = traversal.depthFirstSearchWGB(
@@ -57,7 +61,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]] extends GraphTraversal[N,E]
       None
     }
   type NodeT <: InnerNodeTraversalImpl
-  trait InnerNodeTraversalImpl extends super.InnerNodeLike
+  trait InnerNodeTraversalImpl extends super.InnerNodeLike with InnerNodeState
   { this: NodeT =>
     override def findSuccessor(pred: (NodeT) => Boolean,
                                nodeFilter : (NodeT) => Boolean       = anyNode,
@@ -114,7 +118,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]] extends GraphTraversal[N,E]
                                 edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
                                 ordering   : ElemOrdering             = noOrdering): Option[Path] =
     {
-      State.withHandle() { implicit visitedHandle => 
+      withHandle() { implicit visitedHandle => 
         @inline def visited(n: NodeT) = n visited
   
         type NodeWeight    = Tuple2[NodeT,Long]
@@ -224,36 +228,8 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]] extends GraphTraversal[N,E]
       new Traversal(direction, nodeFilter,  edgeFilter, nodeVisitor, edgeVisitor, ordering).
         apply(this, noNode, breadthFirst, maxDepth)
     }
-                                
-    @transient private var flags = State.emptyFlags
-    @inline final protected[collection]
-    def bit[T](implicit handle: State.Handle): Boolean =
-      State.bit(flags, handle) 
-    /** Whether this node is marked as visited with respect to `handle`. */
-    @inline final protected[collection]
-    def visited(implicit handle: State.Handle): Boolean =
-      bit(handle) 
-    @inline final protected[collection]
-    def bit_=[T](visited: Boolean)(implicit handle : State.Handle) {
-      synchronized {
-        flags = State.bit_=(flags, visited, handle)
-      }
-    }
-    /** Sets this node to `visited` with respect to to `handle`. */
-    @inline final protected[collection]
-    def visited_= (visited: Boolean)(implicit handle: State.Handle) {
-      bit_= (visited)(handle)
-    }
-
-    /** Resets stateful data with respect to dirty bits.
-     *  @param dirtyFlags bits to be set to 0
-     */
-    @inline final protected[collection] def clear(dirtyFlags: StateFlags) {
-      synchronized {
-        flags &= ~dirtyFlags
-      }
-    }
   }
+
   class Traversal(direction  : Direction,
                   nodeFilter : (NodeT) => Boolean,
                   edgeFilter : (EdgeT) => Boolean,
@@ -363,7 +339,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]] extends GraphTraversal[N,E]
                                   maxDepth     : Int                = 0,
                                   nodeUpVisitor: (NodeT) => Unit    = noNodeUpAction, 
                                   onPopFound   : (NodeT) => Unit    = noAction): Option[NodeT] =
-    State.withHandle() { implicit visitedHandle => 
+    withHandle() { implicit visitedHandle => 
       val stack: Stack[(NodeT, Int)] = Stack((root, 0))
       val path:  Stack[(NodeT, Int)] = Stack()
       val untilDepth: Int = if (maxDepth > 0) maxDepth else java.lang.Integer.MAX_VALUE
@@ -425,10 +401,10 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]] extends GraphTraversal[N,E]
     def depthFirstSearchWGB(root      :  NodeT,
                             predicate : (NodeT) => Boolean  = noNode,
                             onPopFound: (NodeT) => Unit     = noAction,
-                            globalState: Array[State.Handle]= Array.empty[State.Handle])
+                            globalState: Array[Handle]= Array.empty[Handle])
         : Option[NodeT] =
     {
-      State.withHandles(2, globalState) { handles =>
+      withHandles(2, globalState) { handles =>
         implicit val visitedHandle = handles(0)
         val blackHandle = handles(1)
         val stack = Stack((root, root)) // (node, predecessor)
@@ -509,7 +485,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]] extends GraphTraversal[N,E]
                                     pred    : (NodeT) => Boolean = noNode,
                                     maxDepth: Int                = 0): Option[NodeT] =
     {
-      State.withHandle() { implicit visitedHandle => 
+      withHandle() { implicit visitedHandle => 
         val untilDepth = if (maxDepth > 0) maxDepth else java.lang.Integer.MAX_VALUE
         var depth = 0
         val doNodeVisitor = isCustomNodeVisitor(nodeVisitor)
@@ -689,92 +665,5 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]] extends GraphTraversal[N,E]
      */
     @inline final
     implicit def toBuffer(cycleBuf: CycleBuffer): ListBuffer[GraphParamOut[N,E]] = cycleBuf.buf 
-  }
-
-  /** Boolean state information stored by `Graph` elements (nodes). State flags are 
-   *  represented by the bits of an `Int`. These flags are mainly used to store
-   *  whether an element counts as visited with respect to a given traversal. */
-  type StateFlags = Int
-  /**
-   * Decoupled implementation of state for `Graph` elements.
-   * State instances may carry data bound to multiple processes such as traversals.
-   * To distinguish between processes they communicate with state instances by `Handle`s.
-   * Parallel processes are not yet supported.
-   * Currently state is just used to store whether an element counts as visited.
-   * For this purpose the bits of an Int are used as flags.
-   */
-  protected object State extends Serializable {
-    /** Initializes unset flags. */
-    @transient val emptyFlags: StateFlags = 0
-    /** Whether `state` is visited with respect to `handle`. */
-    @inline def bit  [T](flags:  StateFlags,
-                         handle: Handle): Boolean =
-      (flags & handle) != 0 
-    /** Sets `state` to `visited` with respect to `handle`. */
-    @inline def bit_=[T](flags:   StateFlags,
-                         visited: Boolean,
-                         handle:  Handle): StateFlags =
-      if (visited) flags |  handle
-      else         flags & ~handle
-
-    /** state accessor with respect to a given process. */
-    type Handle = Int
-    @transient private var lastHandle: Handle = 0
-    @transient private var flagsInUse: Handle = 0
-    @transient private var dirtyFlags: Handle = 0
-    @inline private def    existsFreeFlag: Boolean = ! notExistsFreeFlag      
-    @inline private def notExistsFreeFlag: Boolean = ~flagsInUse == 0
-
-    /** Avoid calling this directly, prefer `withHandle` instead. */
-    protected[collection] def nextHandle = synchronized {
-      while (notExistsFreeFlag) wait
-
-      if ((flagsInUse | dirtyFlags) == ~0) {
-        nodes foreach (_.clear(dirtyFlags))
-        dirtyFlags = 0
-      }
-      val freeFlags = ~(flagsInUse | dirtyFlags)
-      var next = lastHandle
-      do {
-        next = next << 1
-        if (next == 0) next = 1
-      } while ((next & freeFlags) == 0)
-      lastHandle = next
-      flagsInUse = flagsInUse | next 
-      next
-    }
-    /** Avoid calling this directly, prefer `withHandle` instead. */
-    protected[collection] def releaseHandle(handle: Handle) = synchronized {
-      flagsInUse = flagsInUse & ~handle
-      dirtyFlags = dirtyFlags | handle
-      notify
-    }
-    /** Executes a code block in the context of a new or reused state handler.
-     *  @return The result of the code block executed.
-     */
-    protected[collection]
-    def withHandle[T](reuse: Option[Handle] = None)(
-                      block: Handle => T          ): T = {
-      val thisHandler = reuse getOrElse nextHandle
-      val res = block(thisHandler)
-      if (reuse isEmpty) releaseHandle(thisHandler)
-      res
-    }
-    /** Executes a code block in the context `nr` new state handlers
-     *  or alternatively in the context of the state handlers `reuse`.
-     *  @return The result of the code block executed.
-     */
-    protected[collection]
-    def withHandles[T](nr:    Int,
-                       reuse: Array[Handle] = Array.empty[Handle])(
-                       block: Array[Handle] => T): T = {
-      val newHandlers = reuse isEmpty
-      val theseHandles =
-        if (newHandlers) Array.fill(nr)(nextHandle)
-        else reuse
-      val res = block(theseHandles)
-      if (newHandlers) theseHandles foreach releaseHandle
-      res
-    }
   }
 }
