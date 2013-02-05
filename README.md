@@ -29,6 +29,15 @@ version           1.6.0
 For a direct download you may select the required artifacts including the executable JARs,
 Scaladoc and sources [here](https://oss.sonatype.org/content/repositories/releases/com/assembla/scala-incubator/).
 
+You may also view Scaladoc online at
+
+```
+[core]       (http://www.scala-graph.org/core/api/)
+[constrained](http://www.scala-graph.org/constrained/api/)
+[dot]        (http://www.scala-graph.org/dot/api/)
+(json to follow)
+```
+
 Any feedback is appreciated. You are also welcome as a co-contributor.
 
 Have fun with Graph for Scala.
