@@ -7,9 +7,11 @@ Besides ready-to-go implementations of JSON-Import/-Export and Dot-Export,
 more popular graph formats, mirroring of graph databases as well as distributed 
 processing are due to be supported.
 
-Graph for Scala was originally planned to move from here to the Scala Extended 
+Graph for Scala was originally planned to be moved from Assembla to the Scala Extended 
 Core Library, a new facility to be launched sometime later by the Scala Core Team. 
-Until then, use this Scala Incubator site to read up on Graph for Scala.
+Until then, use this site along with [Graph for Scala on Assembla](
+https://www.assembla.com/spaces/scala-graph/documents) to read up.
+
 To download the latest release `1.6.0` of the core module, SBT users will have to add
 
 ```
