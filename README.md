@@ -31,12 +31,10 @@ Scaladoc and sources [here](https://oss.sonatype.org/content/repositories/releas
 
 You may also view Scaladoc online at
 
-```
-[core]       (http://www.scala-graph.org/core/api/)
+[core](http://www.scala-graph.org/core/api/)
 [constrained](http://www.scala-graph.org/constrained/api/)
-[dot]        (http://www.scala-graph.org/dot/api/)
+[dot](http://www.scala-graph.org/dot/api/)
 (json to follow)
-```
 
 Any feedback is appreciated. You are also welcome as a co-contributor.
 
