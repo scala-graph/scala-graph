@@ -21,9 +21,9 @@ libraryDependencies += "com.assembla.scala-incubator" % "graph-core_2.10" % "1.6
 
 As a Maven user, please set  
 ```
-group id com.assembla.scala-incubator  
-artifact id       graph-core_2.10  
-version           1.6.1  
+group id: com.assembla.scala-incubator  
+artifact id: graph-core_2.10  
+version: 1.6.1  
 ```
 
 For a direct download you may select the required artifacts including the executable JARs,
