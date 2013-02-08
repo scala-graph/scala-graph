@@ -15,18 +15,13 @@ object GraphBuild extends Build {
   lazy val core = Project(
     id = "Graph-core",
     base = file("core"),
-    settings = defaultSettings ++ (
-	  Seq(
+    settings = defaultSettings ++ Seq(
       name      := "Graph Core",
       version   := Version.core
-      ) ++
-      ( if (Version.scala_2_9) Seq()
-        else 
-          Seq(
-            libraryDependencies ++= Seq(
-              "org.scala-lang" % "scala-actors"  % Version.compiler)
-          )
-      )
+    ) ++
+    ( if (Version.scala_2_9) Seq()
+      else Seq(
+        libraryDependencies ++= Seq("org.scala-lang" % "scala-actors"  % Version.compiler))
     )
   )
   lazy val constrained = Project(
@@ -50,11 +45,13 @@ object GraphBuild extends Build {
     base = file("json"),
     settings = defaultSettings ++ Seq(
       name      := "Graph JSON",
-      version   := Version.json,
-	  libraryDependencies ++= Seq(
-	    "net.liftweb" % "lift-json_2.9.1" % "2.4"
-      )
-	)
+      version   := Version.json
+    ) ++
+    ( if (Version.scala_2_9) Seq(
+        libraryDependencies ++= Seq("net.liftweb" % "lift-json_2.9.1" % "2.4"))
+      else Seq(
+        libraryDependencies ++= Seq("net.liftweb" % "lift-json_2.10" % "2.5-M4"))
+    )
   ) dependsOn (core)
   lazy val misc = Project(
     id = "Graph-misc",
@@ -80,6 +77,7 @@ object GraphBuild extends Build {
     // prevents sbteclipse from including java source directories
     unmanagedSourceDirectories in Compile <<= (scalaSource in Compile)(Seq(_)),
     unmanagedSourceDirectories in Test    <<= (scalaSource in Test)   (Seq(_)),
+    scalacOptions in (Compile, doc) += "-diagrams",
 //    scalacOptions in doc ++= Seq(
 //      "-doc-root-content", "src/main/scala/rootdoc.txt"
 //    ),
