@@ -1,0 +1,31 @@
+*.class
+*.log
+
+# SBT
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Eclipse, Scala IDE
+.project
+.classpath
+.settings/
+.scala_dependencies
+
+# Mac OS specific
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+Icon
+Icon?
+
+# Thumbnails
+._*
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
