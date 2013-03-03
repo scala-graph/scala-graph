@@ -31,7 +31,10 @@ trait AdjacencyListGraph[N,
   class NodeSet extends super.NodeSet
   {
     @inline final override protected def minus(node: NodeT) { coll -= node }
-    def +(node: NodeT) = { coll + node; this }
+    def +(node: NodeT) =
+      if (coll contains node) this
+      else {val c = copy; c.coll += node; c }
+    
     protected[collection] def +=(edge: EdgeT): this.type = {
       edge foreach { n =>
         val inColl = coll findEntry n getOrElse {coll += n; n}

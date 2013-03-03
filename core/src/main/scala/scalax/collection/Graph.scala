@@ -139,13 +139,15 @@ trait GraphLike[N,
 
   type NodeSetT <: NodeSet
   trait NodeSet extends super.NodeSet {
-    def copy: NodeSetT
-    override final def -(node: NodeT) = { val c = copy; c minus node; c }
+    protected def copy: NodeSetT
+    override final def -(node: NodeT): NodeSetT =
+      if (this contains node) { val c = copy; c minus node; c }
+      else this.asInstanceOf[NodeSetT]
     /**
      * removes `node` from this node set leaving the edge set unchanged.
      * @param node the node to be removed from the node set.
      */
-    protected def minus (node: NodeT): Unit
+    protected def minus(node: NodeT): Unit
     /**
      * removes `node` either rippling or gently. 
      * 

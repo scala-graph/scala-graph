@@ -313,6 +313,23 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 		m.contains("1.") should be (true) //m should contain ("1.")
 		m.contains("3.") should be (true) //m should contain ("3.")
 	}
+	def test_NodeSet {
+	  val o = Array.range(0, 4)
+    val g = factory(o(1) ~ o(2), o(2) ~ o(3))
+    val n = o map (g.nodes find _ getOrElse g.nodes.head)
+	  
+    val less = g.nodes - n(3)
+    less should have size (2)
+    less should contain (n(1))
+	  less.find(_ == n(1)).get.edges should have size (1)
+    less should contain (n(2))
+    less.find(_ == n(2)).get.edges should have size (2)
+
+	  val restored = less + n(3)
+	  restored should have size (3)
+    restored should contain (n(3))
+    restored.find(_ == n(1)).get.edges should have size (1)
+}
 	def test_Eq {
 		factory() should be === factory()
 		gInt_1_3	should be === factory(seq_1_3: _*)

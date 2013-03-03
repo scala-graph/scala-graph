@@ -63,9 +63,9 @@ trait AdjacencyListBase[N,
       for (n <- new NodeAux.NodeContStream(nodeStreams, nodes))
         coll += Node(n)
     }
-    override def copy = {
+    override protected def copy = {
       val nodeSet = newNodeSet 
-      nodeSet initialize (this.toNodeInSet, null)
+      nodeSet.coll ++= this.coll
       nodeSet
     }
     protected[AdjacencyListBase]
