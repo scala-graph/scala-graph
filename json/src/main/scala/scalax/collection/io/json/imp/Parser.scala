@@ -40,9 +40,12 @@ object Parser {
   // ----------------------------------- parsing JSON text to NodeList/EdgeList 
   def parse[N,C <: EdgeCompanionBase[EdgeLike]]
     (json:       String,
+     descriptor: Descriptor[N]): List[ElemList] = parse(JsonParser.parse(json), descriptor)
+
+  def parse[N,C <: EdgeCompanionBase[EdgeLike]]
+    (jsonAST:    JValue,
      descriptor: Descriptor[N]): List[ElemList] =
   {
-    val jsonAST = JsonParser.parse(json)
     for (JField(name, values) <- jsonAST
          if descriptor.sectionIds contains name) yield
     {

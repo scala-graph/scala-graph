@@ -16,9 +16,8 @@ final class GraphSerializer[N, E[X] <: EdgeLikeIn[X]]
 
   override def deserialize(implicit format: Formats) = {
     case (TypeInfo(clazz, _), json) if clazz == classOf[Graph[N,E]] => json match {
-      case JObject(text) =>
-        import scalax.collection.io.json.imp.Parser
-        Graph.fromJson[N,E](compact(render(json)), descriptor)
+      case JObject(_) =>
+        Graph.fromJson[N,E](json, descriptor)
       case x => throw new MappingException(
         "Can't convert " + x + " to " + clazz.getSimpleName)
     }

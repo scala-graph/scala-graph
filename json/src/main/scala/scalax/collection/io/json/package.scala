@@ -35,11 +35,27 @@ package object json {
   type WLHyperEdgeDescriptor[N,E[X]<:WLHyperEdge[X] with WLEdge[X],+C<:WLHyperEdgeCompanion[E],L<:AnyRef] = descriptor.WLHyperEdgeDescriptor[N,E,C,L] 
 
   import imp._, imp.Parser.parse, imp.Stream.createStreams
+  import net.liftweb.json.JValue
   
   final class JsonGraphCoreCompanion[+G[N, E[X] <: EdgeLikeIn[X]]
                                         <: Graph[N,E] with GraphLike[N,E,G]]
              (val companion: GraphCoreCompanion[G])
   {
+    /**
+     * Creates a new Graph instance and populates it with all nodes/edges found in
+     * the node/edge sections of a JSON text.
+     * 
+     * @param jsonAST the JSON tree to be parsed for node/edge sections
+     * @param descriptor $DESCR 
+     * @return new `Graph` instance populated from `jsonAST`
+     */
+    def fromJson[N, E[X]<:EdgeLikeIn[X]]
+        (jsonAST:    JValue,
+         descriptor: Descriptor[N])
+        (implicit edgeManifest: Manifest[E[N]],
+         config: companion.Config = companion.defaultConfig): G[N,E] =
+      fromJson[N,E](parse(jsonAST, descriptor), descriptor)
+
     /**
      * Creates a new Graph instance and populates it with all nodes/edges found in
      * the node/edge sections of a JSON text.
@@ -54,6 +70,7 @@ package object json {
         (implicit edgeManifest: Manifest[E[N]],
          config: companion.Config = companion.defaultConfig): G[N,E] =
       fromJson[N,E](parse(jsonText, descriptor), descriptor)
+
     /**
      * Creates a new Graph instance and populates it with all nodes/edges found in
      * `jsonLists`.
