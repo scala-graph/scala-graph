@@ -29,10 +29,26 @@ class TExtByImplicitTest
       new ExtGraph[N,E](g)
 
     // test enrichment --------------
-//    Graph.empty.diEdges should be ('isEmpty)
     Graph(1~2,  2~3).diEdges should be ('isEmpty)
     Graph(1~2, 2~>3).diEdges should have size (1)
   }
+  
+  def test_enrichedUnDiGraph {
+    /*
+     * Restrict enrichment to undirected graphs only.
+     */
+    final class UnDiGraph[N, E[X] >: UnDiEdge[X] <: UnDiEdge[X]](val g: Graph[N,E]) {
+      def alwaysTrue = true
+    }
+    implicit def gToUnDiG[N, E[X] >: UnDiEdge[X] <: UnDiEdge[X]](g: Graph[N,E]) =
+      new UnDiGraph[N,E](g)
+    
+    Graph(1~2).alwaysTrue should be (true)
+    // must not compile:
+    // Graph(1~2~3).alwaysTrue 
+    // Graph(1~>2).alwaysTrue
+  }
+  
   def test_newNodeMethod {
     /*
      * Enriches Graph nodes with custom methods.
