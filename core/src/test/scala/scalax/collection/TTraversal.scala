@@ -5,10 +5,12 @@ import org.scalatest.Suites
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
 
-import GraphPredef._, GraphEdge._, GraphTraversal.VisitorReturn._
+import scala.collection.mutable.{ListBuffer, Set, Stack}
+
+import GraphPredef._, GraphEdge._
+import GraphTraversal.VisitorReturn._
 import generic.GraphCoreCompanion
 import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
-import collection.mutable.{ListBuffer, Set, Stack}
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -205,11 +207,6 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     def n(value: Int) = gUnDi_2 get value
 
     val p1_3 = n(1).shortestPathTo(n(3)).get
-//    p1_3 should have (
-//      'nodes  (List(1,2,3)),
-//      'edges  (List(edgesIn(4), edgesIn(1))),
-//      'weight (3)
-//    )
     p1_3.nodes should be (List(1,2,3))
     p1_3.edges should be (List(eUnDi_2(4), eUnDi_2(1)))
 
@@ -254,6 +251,21 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
                                   edgeVisitor = (e: gUnDi_2.EdgeT) => {edges += e} )).get
     nodes should be (List(n(2), n(1)))
     edges.toList.sorted(gUnDi_2.Edge.WeightOrdering) should be (List(eUnDi_2(1), eUnDi_2(5), eUnDi_2(0)))
+  }
+  def test_ExtendedVisitor {
+    def n(outer: Int) = Di_1.node(outer)
+    
+    import Di_1.g.ExtendedNodeVisitor
+    import GraphTraversalImpl._
+
+    n(1) pathTo (n(3),
+                 nodeVisitor = ExtendedNodeVisitor((node, informer) => {
+      informer match {
+        case DfsInformer(depth) => depth should be >= (0)
+        case _ => fail
+      }
+      Continue
+    }))
   }
   def test_shortestPathFunctional {
     import custom.flight._, custom.flight.Helper._, custom.flight.FlightImplicits._

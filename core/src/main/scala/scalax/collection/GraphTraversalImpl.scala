@@ -14,6 +14,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   extends GraphTraversal[N,E]
   with State[N,E]
 {
+  import GraphTraversalImpl._
   import GraphTraversal.VisitorReturn._
   import GraphTraversal._
   import State._
@@ -33,6 +34,11 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         traversal.depthFirstSearch(next).found.isDefined)
       ...
     }
+ *         [[scala.collection.GraphTraversalImpl#]].   
+ * @define BFSINFORMER Concerning this method please match against   
+ *         [[scala.collection.GraphTraversalImpl#BfsInformer]].
+ * @define WGBINFORMER Concerning this method please match against   
+ *         [[scala.collection.GraphTraversalImpl#WgbInformer]].
   */
   override def findCycle(nodeFilter : (NodeT) => Boolean       = anyNode,
                          edgeFilter : (EdgeT) => Boolean       = anyEdge,
@@ -343,7 +349,11 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       val stack: Stack[(NodeT, Int)] = Stack((root, 0))
       val path:  Stack[(NodeT, Int)] = Stack()
       val untilDepth: Int = if (maxDepth > 0) maxDepth else java.lang.Integer.MAX_VALUE
-      @inline def isVisited(n: NodeT): Boolean = n visited  
+      @inline def isVisited(n: NodeT): Boolean = n visited
+      val extendedVisitor = nodeVisitor match {
+        case e: ExtendedNodeVisitor => Some(e)
+        case _ => None
+      }
       val doNodeUpVisitor = isCustomNodeUpVisitor(nodeUpVisitor)
       var res: Option[NodeT] = None
       root.visited = true
@@ -360,8 +370,12 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
             path.push(popped)
             popped
           }
-          if (doNodeVisitor && nodeVisitor(current) == Cancel)
-              return
+          if (doNodeVisitor && extendedVisitor.map(v =>
+                v(current, new DfsInformer {
+                             def currentDepth = depth
+                           })
+              ).getOrElse(nodeVisitor(current)) == Cancel)
+            return
           if (pred(current) && (current ne root)) {
             res = Some(current)
           } else {
@@ -642,13 +656,13 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       def isDependent(a: Cycle, b: Cycle) =
         (a.nodes.toSet & b.nodes.toSet) nonEmpty
       val excluded = List.empty[EdgeT]
-      for(e <- edges; val exclude = excluded :+ e;
+      for(e <- edges; exclude = excluded :+ e;
           n <- (e.edge filter (_ ne e.edge._1));
-          val opt = n findCycle(nodeFilter,
-                                edgeFilter(_) && ! excluded.exists(_ eq e),
-                                maxDepth,
-                                nodeVisitor,
-                                edgeVisitor) filter (c => isDependent(c, this)) 
+          opt = n findCycle(nodeFilter,
+                            edgeFilter(_) && ! excluded.exists(_ eq e),
+                            maxDepth,
+                            nodeVisitor,
+                            edgeVisitor) filter (c => isDependent(c, this)) 
             if opt.isDefined)
         yield opt.get  
     }
@@ -667,3 +681,16 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     implicit def toBuffer(cycleBuf: CycleBuffer): ListBuffer[GraphParamOut[N,E]] = cycleBuf.buf 
   }
 }
+object GraphTraversalImpl {
+  import GraphTraversal._
+  trait DfsInformer extends NodeInformer {
+    def currentDepth: Int
+  }
+  object DfsInformer {
+    def unapply(i: DfsInformer): Option[Int] = Some(i.currentDepth)
+  }
+  trait BfsInformer extends NodeInformer
+  trait WgbInformer extends NodeInformer
+  trait DijkstraInformer extends NodeInformer
+
+} 

@@ -26,7 +26,24 @@ import GraphPredef.{EdgeLikeIn, GraphParamOut, NodeOut, EdgeOut}
  *         when moving up in the imaginary tree of a depth first search. Paired with
  *         `nodeVisitor` (the 'down-visitor'), this 'up-visitor' enables a stack-wise view of
  *         the traversed nodes. 
- *         The default value is the empty function `noNodeUpAction`. 
+ *         The default value is the empty function `noNodeUpAction`.
+ * @define EXTNODEVISITOR Alternatively, an instance of `ExtendedNodeVisitor`
+ *         may be passed by means of which additional state information
+ *         such as the actual depth may be required. In your extended node visitor
+ *         you need to pattern match against the informer argument.
+ *         The concrete type of the informer depends on the underlying implementation.
+ * @define DFSINFORMER Concerning this method please match against
+ *         [[scalax.collection.GraphTraversalImpl#Traversal#DfsInformer]].   
+ * @define BFSINFORMER Concerning this method please match against   
+ *         [[scalax.collection.GraphTraversalImpl#Traversal#BfsInformer]].
+ * @define WGBINFORMER Concerning this method please match against   
+ *         [[scalax.collection.GraphTraversalImpl#Traversal#WgbInformer]].
+ * @define DIJKSTRAINFORMER Concerning this method please match against   
+ *         [[scalax.collection.GraphTraversalImpl#Traversal#DijkstraInformer]].
+ * @define ONEOFINFORMER Concerning this method please match against
+ *         [[scalax.collection.GraphTraversalImpl#Traversal#DfsInformer]] or
+ *         [[scalax.collection.GraphTraversalImpl#Traversal#BfsInformer]] depending on the
+ *         `breadthFirst` argument.   
  * @define EDGEVISITOR Function to be called on visiting an edge.
  *         It can mutate the node or carry out any other side effect.
  *         The default value is the empty function `noEdgeAction`.
@@ -98,6 +115,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
    * @param edgeFilter $EDGEFILTER
    * @param maxDepth   $MAXDEPTH
    * @param nodeVisitor $NODEVISITOR
+   *                    $EXTNODEVISITOR $WGBINFORMER
    * @param edgeVisitor $EDGEVISITOR
    * @param ordering   $ORD
    * @return A cycle or None if either
@@ -204,6 +222,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * @param edgeFilter $EDGEFILTER
      * @param maxDepth   $MAXDEPTH
      * @param nodeVisitor $NODEVISITOR
+     *                    $EXTNODEVISITOR $WGBINFORMER
      * @param edgeVisitor $EDGEVISITOR
      * @return List of dependent cycles. 
      */
@@ -226,26 +245,37 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
   @transient final val noNode = (n: NodeT) => false
   /** Default edge filter letting path all edges (non-filter). */
   @transient final val anyEdge = (e: EdgeT) => true
-  //@inline final def  noNodeSort   = (n1: NodeT, n2: NodeT) => true
-  //@inline final def  noEdgeSort   = (e1: EdgeT, e2: EdgeT) => true
+
   /** Default node visitor doing nothing (non-visitor). */
   @transient final val noNodeAction = (n: NodeT) => Continue
   /** Default node-up visitor doing nothing (non-visitor). */
   @transient final val noNodeUpAction = (n: NodeT) => {}
   /** Default edge visitor doing nothing (non-visitor). */
   @transient final val noEdgeAction = (e: EdgeT) => {}
+
   /** `true` if `filter` is not equivalent to `anyNode`. */ 
   @inline final def isCustomNodeFilter(filter: (NodeT) => Boolean)  = filter ne anyNode   
   /** `true` if `filter` is not equivalent to `anyEdge`. */ 
   @inline final def isCustomEdgeFilter(filter: (EdgeT) => Boolean)  = filter ne anyEdge   
-//  @inline final def isCustomNodeSort    = nodeSort ne NoNodeSort   
-//  @inline final def isCustomEdgeSort    = nodeSort ne NoEdgeSort   
+
   /** `true` if `visitor` is not equivalent to `noNodeAction`. */ 
   @inline final def isCustomNodeVisitor  (visitor: (NodeT) => VisitorReturn) = visitor ne noNodeAction   
   /** `true` if `visitor` is not equivalent to `noNodeUpAction`. */ 
   @inline final def isCustomNodeUpVisitor(visitor: (NodeT) => Unit         ) = visitor ne noNodeUpAction   
   /** `true` if `visitor` is not equivalent to `noEdgeAction`. */ 
   @inline final def isCustomEdgeVisitor  (visitor: (EdgeT) => Unit         ) = visitor ne noEdgeAction
+
+  trait ExtendedNodeVisitor
+      extends (NodeT => VisitorReturn)
+      with ((NodeT, NodeInformer) => VisitorReturn) {
+    def apply(node: NodeT) = apply(node, NodeInformer.empty)
+  }
+  object ExtendedNodeVisitor {
+    def apply[N, E[X] <: EdgeLikeIn[X]](v: (NodeT, NodeInformer) => VisitorReturn) =
+      new ExtendedNodeVisitor {
+        def apply(n: NodeT, i: NodeInformer) = v(n, i)
+      } 
+  }  
 
   type NodeT <: InnerNodeLike
   trait InnerNodeLike extends super.InnerNodeLike
@@ -261,6 +291,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * @param nodeFilter $NODEFILTER
      * @param edgeFilter $EDGEFILTER
      * @param nodeVisitor $NODEVISITOR
+     *                    $EXTNODEVISITOR $DFSINFORMER
      * @param edgeVisitor $EDGEVISITOR
      * @param ordering   $ORD
      * @return A node with the predicate `pred` or None if either
@@ -319,6 +350,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * @param nodeFilter $NODEFILTER
      * @param edgeFilter $EDGEFILTER
      * @param nodeVisitor $NODEVISITOR
+     *                    $EXTNODEVISITOR $DFSINFORMER
      * @param edgeVisitor $EDGEVISITOR
      * @param ordering   $ORD
      * @return A node with the predicate `pred` or None if either
@@ -342,6 +374,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * @param nodeFilter $NODEFILTER
      * @param edgeFilter $EDGEFILTER
      * @param nodeVisitor $NODEVISITOR
+     *                    $EXTNODEVISITOR $DFSINFORMER
      * @param edgeVisitor $EDGEVISITOR
      * @param ordering   $ORD
      * @return `true` if a path exists from `potentialPredecessor` to this node and
@@ -380,6 +413,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * @param nodeFilter $NODEFILTER
      * @param edgeFilter $EDGEFILTER
      * @param nodeVisitor $NODEVISITOR
+     *                    $EXTNODEVISITOR $DFSINFORMER
      * @param edgeVisitor $EDGEVISITOR
      * @param ordering   $ORD
      * @return A node with the predicate `pred` or None if either
@@ -430,6 +464,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * @param nodeFilter $NODEFILTER
      * @param edgeFilter $EDGEFILTER
      * @param nodeVisitor $NODEVISITOR
+     *                    $EXTNODEVISITOR $DFSINFORMER
      * @param edgeVisitor $EDGEVISITOR
      * @param ordering   $ORD
      * @return A path to a node with the predicate `pred` or None if either
@@ -463,6 +498,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * @param nodeFilter $NODEFILTER
      * @param edgeFilter $EDGEFILTER
      * @param nodeVisitor $NODEVISITOR
+     *                    $EXTNODEVISITOR $DFSINFORMER
      * @param edgeVisitor $EDGEVISITOR
      * @param ordering   $ORD
      * @return A path to `potentialSuccessor` or None if either
@@ -490,6 +526,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * @param nodeFilter $NODEFILTER
      * @param edgeFilter $EDGEFILTER
      * @param nodeVisitor $NODEVISITOR
+     *                    $EXTNODEVISITOR $DIJKSTRAINFORMER
      * @param edgeVisitor $EDGEVISITOR
      * @param ordering   $ORD
      * @return The shortest path to `potentialSuccessor` or None if either
@@ -511,6 +548,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * @param edgeFilter $EDGEFILTER
      * @param maxDepth   $MAXDEPTH
      * @param nodeVisitor $NODEVISITOR
+     *                    $EXTNODEVISITOR $WGBINFORMER
      * @param edgeVisitor $EDGEVISITOR
      * @param ordering   $ORD
      * @return A cycle or None if either
@@ -536,6 +574,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * 
      * @param direction $DIRECTION
      * @param nodeFilter $NODEFILTER
+     *                   $EXTNODEVISITOR $ONEOFINFORMER
      * @param edgeFilter $EDGEFILTER
      * @param breadthFirst $BREADTHFIRST
      * @param maxDepth     $MAXDEPTH
@@ -596,7 +635,9 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * @param maxDepth   $MAXDEPTH
      * @param ordering   $ORD
      * @param nodeDown $NODEVISITOR
+     *                 $EXTNODEVISITOR $DFSINFORMER
      * @param nodeUp   $NODEUPVISITOR
+     *                 $EXTNODEVISITOR $DFSINFORMER
      */
     @inline final
     def traverseDownUp(direction  : Direction          = Successors,
@@ -641,6 +682,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
    * @param nodeFilter $NODEFILTER
    * @param edgeFilter $EDGEFILTER
    * @param nodeVisitor $NODEVISITOR
+   *                    $EXTNODEVISITOR $ONEOFINFORMER
    * @param edgeVisitor $EDGEVISITOR
    * @param ordering   $ORD
    * 
@@ -719,6 +761,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * @param pred $PRED
      * @param maxDepth $MAXDEPTH
      * @param nodeUpVisitor $NODEUPVISITOR
+     *                      $EXTNODEVISITOR $DFSINFORMER
      * @param onPopFound This function is called for all nodes from the node found
      *        by `pred` back to `root` skipping backward along the path from `root`
      *        to the node found. 
@@ -763,6 +806,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
    * @param nodeFilter $NODEFILTER
    * @param edgeFilter $EDGEFILTER
    * @param nodeVisitor $NODEVISITOR
+   *                    $EXTNODEVISITOR $ONEOFINFORMER
    * @param edgeVisitor $EDGEVISITOR
    * @param ordering   $ORD
    */
@@ -782,4 +826,9 @@ object GraphTraversal {
   object Successors   extends Direction 
   object Predecessors extends Direction
   object AnyConnected extends Direction
+  
+  trait NodeInformer
+  @transient object NodeInformer {
+    def empty = new NodeInformer {}
+  }
 }
