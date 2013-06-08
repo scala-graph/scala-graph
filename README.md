@@ -26,6 +26,16 @@ artifact id: graph-core_2.10
 version: 1.6.1  
 ```
 
+If you are using Eclipse/ScalaIDE you can generate Eclipse project files by:
+```
+$ sbt eclipse
+```
+
+If you are using Intellij IDEA you can generate idea project files by:
+```
+$ sbt gen-idea
+```
+
 For a direct download you may select the required artifacts including the executable JARs,
 Scaladoc and sources [here](https://oss.sonatype.org/content/repositories/releases/com/assembla/scala-incubator/).
 

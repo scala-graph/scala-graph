@@ -29,3 +29,11 @@ Icon?
 # Files that might appear on external disk
 .Spotlight-V100
 .Trashes
+
+# Intellij IDEA files
+dist
+/.idea
+/*.iml
+/out
+/.idea_modules
+/.classpath
