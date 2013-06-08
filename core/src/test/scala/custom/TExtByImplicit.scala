@@ -2,20 +2,19 @@ package custom
 
 import org.scalatest.Suite
 import org.scalatest.matchers.ShouldMatchers
-
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._,
-       scalax.collection.GraphEdge._
-
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+
+import scalax.collection.Graph
+import scalax.collection.GraphPredef._
+import scalax.collection.GraphEdge._
 
 @RunWith(classOf[JUnitRunner])
 class TExtByImplicitTest
 	extends	Suite
 	with	  ShouldMatchers
 {
-  def test_newGraphMethod {
+  def test_graphEnrichment {
     /*
      * Enriches Graph with custom methods.
      */
@@ -49,10 +48,8 @@ class TExtByImplicitTest
     // Graph(1~>2).alwaysTrue
   }
   
-  def test_newNodeMethod {
-    /*
-     * Enriches Graph nodes with custom methods.
-     */
+  def test_nodeEnrichment_1 {
+    // provide enrichment --------------
     final class ExtGraphNode[N, E[X] <: EdgeLikeIn[X]](node_ : Graph[N,E]#NodeT)
     {
       type NodeT = graph.NodeT
@@ -66,12 +63,42 @@ class TExtByImplicitTest
     implicit def nodeToExtN[N, E[X] <: EdgeLikeIn[X]] (node: Graph[N,E]#NodeT) =
       new ExtGraphNode[N,E](node)
 
-    // test enrichment --------------
+    // consume enrichment --------------
     import scalax.collection.edge.Implicits._
 
-    val g = Graph((1~%2)(1),  (1~%3)(2), (2~%3)(3))
+    implicit val g = Graph((1~%2)(1),  (1~%3)(2), (2~%3)(3))
     (g get 1).outgoingWeights should be (3)
     (g get 2).outgoingWeights should be (4)
     (g get 3).outgoingWeights should be (5)
+    
+  }
+  
+  def test_nodeEnrichment_2 {
+    // provide enrichment --------------
+    implicit def toExtNode[N, E[X] <: EdgeLikeIn[X]]
+        (node: Graph[N,E]#NodeT)(implicit graph: Graph[N,E]) = {
+      require(node.containingGraph eq graph,
+          "'node' must be an inner node of the implicit 'graph' instance.")
+      new Object {
+        def inHead = node.inNeighbors.head.asInstanceOf[graph.NodeT]
+      }
+    }
+    // consume enrichment --------------
+    implicit val g = Graph(1 ~> 2, 2 ~> 3)
+    (g get 1).inHead.shortestPathTo(g get 3) should be ('isDefined)
+  }
+
+  def test_nodeEnrichment_3 {
+    // provide enrichment --------------
+    class ExtGraph[N, E[X] <: EdgeLikeIn[X], G <: Graph[N,E]](val graph: G) {
+      implicit final class ExtNode(node: graph.type#NodeT) {
+        def inHead = node.inNeighbors.head
+      }
+    }
+    // consume enrichment --------------
+    val g = Graph(1 ~> 2, 2 ~> 3)
+    val e = new ExtGraph[Int,DiEdge,g.type](g)
+    import e.ExtNode
+    (g get 1).inHead.shortestPathTo(g get 3) should be ('isDefined)
   }
 }
