@@ -86,7 +86,9 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     predecessor.get should be (n1)
   }
   import Data._
-  object Di_1 extends TGraph[Int, DiEdge](factory(elementsOfDi_1: _*))
+  object Di_1   extends TGraph[Int, DiEdge  ](factory(elementsOfDi_1: _*))
+  object UnDi_1 extends TGraph[Int, UnDiEdge](factory(elementsOfUnDi_1: _*))
+  
   def test_findSuccessor_mid {
     val g = Di_1
     def n(outer: Int) = g.node(outer)
@@ -253,19 +255,31 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     edges.toList.sorted(gUnDi_2.Edge.WeightOrdering) should be (List(eUnDi_2(1), eUnDi_2(5), eUnDi_2(0)))
   }
   def test_ExtendedVisitor {
-    def n(outer: Int) = Di_1.node(outer)
-    
-    import Di_1.g.ExtendedNodeVisitor
+    import UnDi_1.g.ExtendedNodeVisitor
     import GraphTraversalImpl._
+    def n(outer: Int) = UnDi_1.node(outer)
 
-    n(1) pathTo (n(3),
-                 nodeVisitor = ExtendedNodeVisitor((node, informer) => {
-      informer match {
-        case DfsInformer(depth) => depth should be >= (0)
-        case _ => fail
-      }
-      Continue
-    }))
+    var lastCount = 0
+    n(1) pathTo (
+        n(4),
+        nodeVisitor = ExtendedNodeVisitor((node, count, depth, informer) => {
+          count should be (lastCount + 1)
+          lastCount += 1
+
+          node.value match {
+            case 1 => depth should be (0)
+            case 2 => depth should (be (1) or be (3))
+            case 3 => depth should (be (1) or be (2))
+            case 4 => depth should (be (2) or be (3))
+            case 5 => depth should (be > (0) and be < (5))
+          }
+          informer match {
+            case DfsInformer(stack, path) => ;
+            case _ => fail
+          }
+          Continue
+        })
+    )
   }
   def test_shortestPathFunctional {
     import custom.flight._, custom.flight.Helper._, custom.flight.FlightImplicits._
@@ -278,10 +292,10 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
            jfc ~> lhr ## ("BA 174" , 19 o 10, 6 h 50),
            jfc ~> fra ## ("LH 400" , 10 o 25, 8 h 20),
            jfc ~> fra ## ("UA 8840", 15 o 40, 7 h 35),
-           lhr ~> dme ## ("BA 872" ,  8 o 55, 4 h 00),
+           lhr ~> dme ## ("BA 872" ,  8 o 55, 4 h  0),
            lhr ~> dme ## ("SU 242" , 20 o 15, 3 h 50),
            lhr ~> fra ## ("LH 903" ,  9 o 50, 1 h 35),
-           lhr ~> prg ## ("BA 860" , 11 o 15, 2 h 00),
+           lhr ~> prg ## ("BA 860" , 11 o 15, 2 h  0),
            fra ~> lhr ## ("LH 920" , 19 o 50, 1 h 35),
            fra ~> dme ## ("LH 1444",  7 o 50, 3 h 10),
            fra ~> svx ## ("LH 1480", 19 o 20, 4 h 35),

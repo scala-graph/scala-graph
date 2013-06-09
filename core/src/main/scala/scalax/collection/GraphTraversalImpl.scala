@@ -18,28 +18,6 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   import GraphTraversal.VisitorReturn._
   import GraphTraversal._
   import State._
-  /*
-  override def components(nodeFilter : (NodeT) => Boolean       = anyNode,
-                          edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                          nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                          edgeVisitor: (EdgeT) => Unit          = noEdgeAction) =
-    if (order == 0) List.empty[Set[NodeT]]
-    else {
-      val all = nodes filter (nodeFilter(_))
-      val collected = MutableSet.empty[NodeT]
-      val traversal = new Traversal(
-          AnyConnected, nodeFilter, edgeFilter, nodeVisitor, edgeVisitor)
-      var next = nodes.head 
-      while (! (collected contains next))
-        traversal.depthFirstSearch(next).found.isDefined)
-      ...
-    }
- *         [[scala.collection.GraphTraversalImpl#]].   
- * @define BFSINFORMER Concerning this method please match against   
- *         [[scala.collection.GraphTraversalImpl#BfsInformer]].
- * @define WGBINFORMER Concerning this method please match against   
- *         [[scala.collection.GraphTraversalImpl#WgbInformer]].
-  */
   override def findCycle(nodeFilter : (NodeT) => Boolean       = anyNode,
                          edgeFilter : (EdgeT) => Boolean       = anyEdge,
                          maxDepth   :  Int                     = 0,
@@ -127,13 +105,20 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       withHandle() { implicit visitedHandle => 
         @inline def visited(n: NodeT) = n visited
   
-        type NodeWeight    = Tuple2[NodeT,Long]
-        lazy val dest      = MutableMap[NodeT,Long](this->0L)
-        lazy val mapToPred = MutableMap[NodeT,NodeT]()
-        lazy val traversal = new Traversal(Successors, nodeFilter, edgeFilter,
+        type NodeWeight    = (NodeT,Long)
+        val dest      = MutableMap[NodeT,Long](this -> 0L)
+        val mapToPred = MutableMap[NodeT,NodeT]()
+        val traversal = new Traversal(Successors, nodeFilter, edgeFilter,
                                            nodeVisitor, edgeVisitor, ordering) 
-        lazy val doNodeVisitor = isCustomNodeVisitor(nodeVisitor)
-        // not implicit - see ticket #4405 and #4407
+        val doNodeVisitor = isCustomNodeVisitor(nodeVisitor)
+        val extendedVisitor =
+          if (doNodeVisitor)
+            nodeVisitor match {
+              case e: ExtendedNodeVisitor => Some(e)
+              case _ => None
+            }
+          else None
+        // not implicit due to issues #4405 and #4407
         object ordNodeWeight extends Ordering[NodeWeight] {
           def compare(x: NodeWeight,
                       y: NodeWeight) = y._2.compare(x._2)
@@ -152,11 +137,12 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         def relax(pred: NodeT, succ: NodeT) {
           val cost = dest(pred) + pred.outgoingTo(succ).filter(edgeFilter(_)).
                                   min(Edge.WeightOrdering).weight
-          if(!dest.isDefinedAt(succ) || cost < dest(succ)) {
-            dest      += (succ->cost)
-            mapToPred += (succ->pred)
+          if(! dest.isDefinedAt(succ) || cost < dest(succ)) {
+            dest      += (succ -> cost)
+            mapToPred += (succ -> pred)
           }
         }
+        var nodeCnt = 0
         var canceled = false
         @tailrec
         def rec(pq: PriorityQueue[NodeWeight]) {
@@ -177,11 +163,17 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
               case None =>
             }
             node.visited = true
-            if (doNodeVisitor) 
-              if (nodeVisitor(node) == Cancel) {
-                canceled = true
-                return
-              }
+            if (doNodeVisitor && extendedVisitor.map{ v =>
+                  nodeCnt += 1
+                  v(node, nodeCnt, 0,
+                    new DijkstraInformer[NodeT] {
+                      def queueIterator = qNodes.toIterator
+                      def costsIterator = dest.toIterator
+                    })
+                }.getOrElse(nodeVisitor(node)) == Cancel) {
+              canceled = true
+              return
+            }
             rec(pq) 
           }
         }
@@ -356,6 +348,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       }
       val doNodeUpVisitor = isCustomNodeUpVisitor(nodeUpVisitor)
       var res: Option[NodeT] = None
+      var nodeCnt = 0
       root.visited = true
       @tailrec def loop {
         if(stack.nonEmpty) {
@@ -370,11 +363,14 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
             path.push(popped)
             popped
           }
-          if (doNodeVisitor && extendedVisitor.map(v =>
-                v(current, new DfsInformer {
-                             def currentDepth = depth
-                           })
-              ).getOrElse(nodeVisitor(current)) == Cancel)
+          if (doNodeVisitor && extendedVisitor.map{ v =>
+                nodeCnt += 1
+                v(current, nodeCnt, depth,
+                  new DfsInformer[NodeT] {
+                    def stackIterator = stack.toIterator 
+                    def pathIterator  = path .toIterator 
+                  })
+              }.getOrElse(nodeVisitor(current)) == Cancel)
             return
           if (pred(current) && (current ne root)) {
             res = Some(current)
@@ -434,7 +430,12 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   
         def isVisited (node: NodeT) = node visited
         def nonVisited(node: NodeT) = ! isVisited(node)
+        val extendedVisitor = nodeVisitor match {
+          case e: ExtendedNodeVisitor => Some(e)
+          case _ => None
+        }
         var res: Option[NodeT] = None
+        var nodeCnt = 0
         /* pushed allows to track the path.
          * prev   serves the special handling of undirected edges. */
         @tailrec
@@ -457,7 +458,15 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
               val current = stack.pop._1
               path.push(current)
               if (nonVisited(current)) onNodeDown(current)
-              if (doNodeVisitor && nodeVisitor(current) == Cancel) return
+              if (doNodeVisitor && extendedVisitor.map{ v =>
+                    nodeCnt += 1
+                    v(current, nodeCnt, 0,
+                      new WgbInformer[NodeT] {
+                        def stackIterator = stack.toIterator 
+                        def pathIterator  = path .toIterator 
+                      })
+                  }.getOrElse(nodeVisitor(current)) == Cancel)
+                return
               if (predicate(current) && (current ne root))
                 res = Some(current)
               else {
@@ -502,14 +511,28 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       withHandle() { implicit visitedHandle => 
         val untilDepth = if (maxDepth > 0) maxDepth else java.lang.Integer.MAX_VALUE
         var depth = 0
+        var nodeCnt = 0
+        val q = Queue[(NodeT, Int)](root -> depth)
         val doNodeVisitor = isCustomNodeVisitor(nodeVisitor)
+        val extendedVisitor =
+          if (doNodeVisitor)
+            nodeVisitor match {
+              case e: ExtendedNodeVisitor => Some(e)
+              case _ => None
+            }
+          else None
         @inline def visited(n: NodeT) = n visited  
         @inline def visitAndCanceled(n: NodeT) = {
           n.visited = true
-          doNodeVisitor && nodeVisitor(n) == Cancel
+          doNodeVisitor && extendedVisitor.map{ v =>
+            nodeCnt += 1
+            v(n, nodeCnt, depth,
+              new BfsInformer[NodeT] {
+                def queueIterator = q.toIterator 
+              })
+          }.getOrElse(nodeVisitor(n)) == Cancel
         }
         if (visitAndCanceled(root)) return None
-        val q = Queue[(NodeT, Int)](root -> depth)
         while (q.nonEmpty) { 
           val (prevNode, prevDepth) = q.dequeue
           if (prevDepth < untilDepth) {
@@ -683,14 +706,58 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
 }
 object GraphTraversalImpl {
   import GraphTraversal._
-  trait DfsInformer extends NodeInformer {
-    def currentDepth: Int
+
+  /** Extended node visitor informer for depth first searches. 
+   */
+  trait DfsInformer[N] extends NodeInformer {
+    import DfsInformer._
+    def stackIterator: DfsStack[N]
+    def pathIterator:  DfsPath [N]
   }
   object DfsInformer {
-    def unapply(i: DfsInformer): Option[Int] = Some(i.currentDepth)
+    type DfsStack[N] = Iterator[(N, Int)]
+    type DfsPath [N] = Iterator[(N, Int)]
+    def unapply[N](inf: DfsInformer[N]): Option[(DfsStack[N], DfsPath[N])] =
+      Some(inf.stackIterator, inf.pathIterator)
   }
-  trait BfsInformer extends NodeInformer
-  trait WgbInformer extends NodeInformer
-  trait DijkstraInformer extends NodeInformer
-
+  /** Extended node visitor informer for cycle detecting. 
+   *  This informer always returns `0` for `depth`.
+   */
+  trait WgbInformer[N] extends NodeInformer {
+    import WgbInformer._
+    def stackIterator: WgbStack[N]
+    def pathIterator:  WgbPath [N]
+  }
+  object WgbInformer {
+    type WgbStack[N] = Iterator[(N, N)]
+    type WgbPath [N] = Iterator[N]
+    def unapply[N](inf: WgbInformer[N]): Option[(WgbStack[N], WgbPath[N])] =
+      Some(inf.stackIterator, inf.pathIterator)
+  }
+  /** Extended node visitor informer for best first searches. 
+   */
+  trait BfsInformer[N] extends NodeInformer {
+    import BfsInformer._
+    def queueIterator: BfsQueue[N]
+  }
+  object BfsInformer {
+    type BfsQueue[N] = Iterator[(N, Int)]
+    def unapply[N](inf: BfsInformer[N]): Option[BfsQueue[N]] =
+      Some(inf.queueIterator)
+  }
+  /** Extended node visitor informer for calculating shortest paths. 
+   *  This informer always returns `0` for `depth`.
+   */
+  trait DijkstraInformer[N] extends NodeInformer {
+    import DijkstraInformer._
+    def queueIterator: DijkstraQueue[N]
+    def costsIterator: DijkstraCosts[N]
+  }
+  object DijkstraInformer {
+    type DijkstraQueue[N] = Iterator[(N, Long)]
+    type DijkstraCosts[N] = Iterator[(N, Long)]
+    def unapply[N](inf: DijkstraInformer[N])
+        : Option[(DijkstraQueue[N], DijkstraCosts[N])] =
+      Some(inf.queueIterator, inf.costsIterator)
+  }
 } 
