@@ -178,6 +178,11 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     (n(0) shortestPathTo n(3)).get.nodes should be (List(0,1,2,3))
     (n(1) shortestPathTo n(3)).get.nodes should be (List(  1,2,3))
   }
+  def test_shortestPathTo_fix_github9 {
+    val g = factory(0~>1 % 3, 0~>2 % 4, 1~>3 % 3, 2~>3 % 1)
+    def n(outer: Int) = g get outer
+    (n(0) shortestPathTo n(3)).get.nodes should be (List(0,2,3)) 
+  }
   def test_shortestPathTo_Di_1 {
     val g = factory(elementsOfWDi_1: _*)
     def n(outer: Int) = g get outer

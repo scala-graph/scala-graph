@@ -130,7 +130,8 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
             case adj if adj.nonEmpty =>
               Some(adj.
                    foldLeft(new PriorityQueue[NodeWeight]()(ordNodeWeight))(
-                     (q,n) => q += ((n, node.outgoingTo(n).filter(edgeFilter(_)).
+                     (q,n) => q += ((n, dest(node) +
+                                        node.outgoingTo(n).filter(edgeFilter(_)).
                                         min(Edge.WeightOrdering).weight))))
             case _ => None
           }
@@ -149,32 +150,34 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
           if(pq.nonEmpty && (pq.head._1 ne to)) { 
             val nodeWeight = pq.dequeue
             val node = nodeWeight._1 
-            sortedAdjacentsNodes(node) match {
-              case Some(ordNodes) =>
-                if (ordNodes.nonEmpty) pq ++=(ordNodes)
-                @tailrec
-                def loop(pq2: PriorityQueue[NodeWeight]) {
-                  if(pq2.nonEmpty) {
-                    relax(node, pq2.dequeue._1)
-                    loop(pq2)
+            if (! node.visited) {
+              sortedAdjacentsNodes(node) match {
+                case Some(ordNodes) =>
+                  if (ordNodes.nonEmpty) pq ++=(ordNodes)
+                  @tailrec
+                  def loop(pq2: PriorityQueue[NodeWeight]) {
+                    if(pq2.nonEmpty) {
+                      relax(node, pq2.dequeue._1)
+                      loop(pq2)
+                    }
                   }
-                }
-                loop(ordNodes)
-              case None =>
+                  loop(ordNodes)
+                case None =>
+              }
+              node.visited = true
+              if (doNodeVisitor && extendedVisitor.map{ v =>
+                    nodeCnt += 1
+                    v(node, nodeCnt, 0,
+                      new DijkstraInformer[NodeT] {
+                        def queueIterator = qNodes.toIterator
+                        def costsIterator = dest.toIterator
+                      })
+                  }.getOrElse(nodeVisitor(node)) == Cancel) {
+                canceled = true
+                return
+              }
+              rec(pq) 
             }
-            node.visited = true
-            if (doNodeVisitor && extendedVisitor.map{ v =>
-                  nodeCnt += 1
-                  v(node, nodeCnt, 0,
-                    new DijkstraInformer[NodeT] {
-                      def queueIterator = qNodes.toIterator
-                      def costsIterator = dest.toIterator
-                    })
-                }.getOrElse(nodeVisitor(node)) == Cancel) {
-              canceled = true
-              return
-            }
-            rec(pq) 
           }
         }
         rec(qNodes) 
