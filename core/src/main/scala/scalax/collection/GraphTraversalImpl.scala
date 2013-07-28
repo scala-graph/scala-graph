@@ -130,7 +130,8 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
             case adj if adj.nonEmpty =>
               Some(adj.
                    foldLeft(new PriorityQueue[NodeWeight]()(ordNodeWeight))(
-                     (q,n) => q += ((n, node.outgoingTo(n).filter(edgeFilter(_)).
+                     (q,n) => q += ((n, dest(node) +
+                                        node.outgoingTo(n).filter(edgeFilter(_)).
                                         min(Edge.WeightOrdering).weight))))
             case _ => None
           }
