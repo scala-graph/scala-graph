@@ -138,9 +138,9 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         def relax(pred: NodeT, succ: NodeT) {
           val cost = dest(pred) + pred.outgoingTo(succ).filter(edgeFilter(_)).
                                   min(Edge.WeightOrdering).weight
-          if(! dest.isDefinedAt(succ) || cost < dest(succ)) {
-            dest      += (succ -> cost)
-            mapToPred += (succ -> pred)
+          if(!dest.isDefinedAt(succ) || cost < dest(succ)) {
+            dest      += (succ->cost)
+            mapToPred += (succ->pred)
           }
         }
         var nodeCnt = 0
@@ -149,14 +149,14 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         def rec(pq: PriorityQueue[NodeWeight]) {
           if(pq.nonEmpty && (pq.head._1 ne to)) { 
             val nodeWeight = pq.dequeue
-            val node = nodeWeight._1 
-            if (! node.visited) {
+            val node = nodeWeight._1
+            if (!node.visited) {
               sortedAdjacentsNodes(node) match {
                 case Some(ordNodes) =>
-                  if (ordNodes.nonEmpty) pq ++=(ordNodes)
+                  if (ordNodes.nonEmpty) pq ++= (ordNodes)
                   @tailrec
                   def loop(pq2: PriorityQueue[NodeWeight]) {
-                    if(pq2.nonEmpty) {
+                    if (pq2.nonEmpty) {
                       relax(node, pq2.dequeue._1)
                       loop(pq2)
                     }
@@ -165,18 +165,18 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
                 case None =>
               }
               node.visited = true
-              if (doNodeVisitor && extendedVisitor.map{ v =>
-                    nodeCnt += 1
-                    v(node, nodeCnt, 0,
-                      new DijkstraInformer[NodeT] {
-                        def queueIterator = qNodes.toIterator
-                        def costsIterator = dest.toIterator
-                      })
-                  }.getOrElse(nodeVisitor(node)) == Cancel) {
+              if (doNodeVisitor && extendedVisitor.map { v =>
+                nodeCnt += 1
+                v(node, nodeCnt, 0,
+                  new DijkstraInformer[NodeT] {
+                    def queueIterator = qNodes.toIterator
+                    def costsIterator = dest.toIterator
+                  })
+              }.getOrElse(nodeVisitor(node)) == Cancel) {
                 canceled = true
                 return
               }
-              rec(pq) 
+              rec(pq)
             }
           }
         }
@@ -344,7 +344,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       val stack: Stack[(NodeT, Int)] = Stack((root, 0))
       val path:  Stack[(NodeT, Int)] = Stack()
       val untilDepth: Int = if (maxDepth > 0) maxDepth else java.lang.Integer.MAX_VALUE
-      @inline def isVisited(n: NodeT): Boolean = n visited
+      @inline def isVisited(n: NodeT): Boolean = n visited  
       val extendedVisitor = nodeVisitor match {
         case e: ExtendedNodeVisitor => Some(e)
         case _ => None
@@ -374,7 +374,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
                     def pathIterator  = path .toIterator 
                   })
               }.getOrElse(nodeVisitor(current)) == Cancel)
-            return
+              return
           if (pred(current) && (current ne root)) {
             res = Some(current)
           } else {
@@ -685,10 +685,10 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       for(e <- edges; exclude = excluded :+ e;
           n <- (e.edge filter (_ ne e.edge._1));
           opt = n findCycle(nodeFilter,
-                            edgeFilter(_) && ! excluded.exists(_ eq e),
-                            maxDepth,
-                            nodeVisitor,
-                            edgeVisitor) filter (c => isDependent(c, this)) 
+                                edgeFilter(_) && ! excluded.exists(_ eq e),
+                                maxDepth,
+                                nodeVisitor,
+                                edgeVisitor) filter (c => isDependent(c, this)) 
             if opt.isDefined)
         yield opt.get  
     }
