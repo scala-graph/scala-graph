@@ -455,7 +455,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      * The inner nodes incident with this inner edge.
      * This is just a synonym to `this` that extends `Iterable[NodeT]`.
      */
-    @inline final def nodes = this 
+    @inline final def nodes: Iterable[NodeT] = this 
     /**
      * Finds nodes of this edge which only participate in this edge.
      * 
