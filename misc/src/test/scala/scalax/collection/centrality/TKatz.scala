@@ -11,26 +11,29 @@ import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
-class TKatz extends Suite with ShouldMatchers {
+class TKatzTest extends Suite with ShouldMatchers {
 
   def test_Wikipedia {
     val ( kim,  pria,  sri,  jose,  diego,  agneta,  aziz,  bob,  john,  jane,  samantha) =
         ("Kim","Pria","Sri","Jose","Diego","Agneta","Aziz","Bob","John","Jane","Samantha")
-    val connections = Set(
+
+    val network = Graph.from(edges = List(
         kim ~ pria, kim ~ sri, pria ~ sri, pria ~ jose, sri ~ jose,
         jose ~ diego, diego ~ agneta, agneta ~ aziz, aziz ~ jose,
         jose ~ bob, bob ~ john, john ~ jane, jane ~ aziz, jane ~ samantha
-    )
-    val network = Graph.from(edges = connections)
+    ))
     
     import Katz._
-    val centralities = network.centralities()
- 
-    implicit def ordering = centralities.ordering
-    // we need a projection for the provided ordering
-    val pCentralities = centralities: Map[_ <: Graph[String,UnDiEdge]#NodeT, Float]
+    val centralities = network.centralities[network.type]()
+    centralities should be ('nonEmpty)
+
+    // ordering for centrality maps with path dependent node types
+    implicit def ord = centralityMapOrdering[String,UnDiEdge,network.type](centralities)
+    centralities.max._1 should be (network get jose)
     
-    pCentralities.max._1 should be (network get jose)
+    // ordering for centrality maps with type projection node types
+    val pCentralities = centralities: Map[_ <: Graph[String,UnDiEdge]#NodeT, Float]
+    implicit def projectionOrd = centralityProjectionMapOrdering(pCentralities)
     pCentralities.min._1 should be (network get samantha)
   }
 }
