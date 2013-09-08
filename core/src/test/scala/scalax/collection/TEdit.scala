@@ -448,4 +448,21 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     g  filter g.having(edge = _._1 == 2)    should be (factory(2~>3))
     g  filter g.having(edge = _ contains 2) should be (factory(2~>3))
   }
+  def test_match {
+    val di = 1 ~> 2
+    (di match { case DiEdge(src, _) => src }) should be (1)
+    (di match { case src ~> trg => src + trg }) should be (3)
+    
+    val unDi = 1 ~ 2
+    (unDi match { case UnDiEdge(n1, _) => n1 }) should be (1)
+    (unDi match { case n1 ~ n2 => n1 + n2 }) should be (3)
+    
+    val hyper = 1 ~ 2 ~ 3
+    (hyper match { case HyperEdge(n1, n2, n3, _*) => n1 + n2 + n3 }) should be (6)
+    (hyper match { case n1 ~~ (n2, n3) => n1 + n2 + n3 }) should be (6)
+    
+    val diHyper = 1 ~> 2 ~> 3
+    (diHyper match { case DiHyperEdge(_, t1, _*) => t1 }) should be (2)
+    (diHyper match { case _ ~~> (t1, t2) => t1 + t2 }) should be (5)
+  }
 }

@@ -22,6 +22,7 @@ object GraphEdge {
    * @author Peter Empen
    * @define CalledByValidate This function is called on every edge-instantiation
    *         by `validate` that throws EdgeException if this method returns `false`.
+   * @define SHORTCUT Allows to replace the edge object with it's shortcut like 
    */
   trait EdgeLike[+N] extends Iterable[N] with Serializable
   {  
@@ -450,8 +451,12 @@ object GraphEdge {
     def apply[N](nodes: Iterable[N]) = new HyperEdge[N](nodes.toList)
     protected[collection]
     def from [N](nodes: Product)     = new HyperEdge[N](nodes)
-    def unapply[N](e: HyperEdge[N]) = Some(e)
+    def unapplySeq[N](e: HyperEdge[N]) =
+      if (e eq null) None else Some(e._1, e.nodeSeq drop 1)
   }
+  /** $SHORTCUT `hyperedge match {case n1 ~~ (n2, n3) => f(n1, n2, n3)}`.
+   */
+  val ~~ = HyperEdge
   
   /**
    * Represents a directed edge (link) in a hypergraph with unlimited number of nodes.
@@ -481,8 +486,12 @@ object GraphEdge {
     def apply[N]  (nodes: Iterable[N]) = new DiHyperEdge[N](nodes.toList)
     protected[collection]
     def from [N](nodes: Product)       = new DiHyperEdge[N](nodes)
-    def unapply[N](e: DiHyperEdge[N]) = Some(e)
+    def unapplySeq[N](e: DiHyperEdge[N]) =
+      if (e eq null) None else Some(e.from, e.nodeSeq drop 1)
   }
+  /** $SHORTCUT `diHyperedge match {case source ~~ (t1, t2) => f(source, t1, t2)}`.
+   */
+  val ~~> = DiHyperEdge
   
   /**
    * Represents an undirected edge.
@@ -511,8 +520,11 @@ object GraphEdge {
     def apply[N]  (nodes: Tuple2[N,N])   = new UnDiEdge[N](nodes)
     protected[collection]
     def from [N](nodes: Product)         = new UnDiEdge[N](nodes)
-    def unapply[N](e: UnDiEdge[N]) = Some(e)
+    def unapply[N](e: UnDiEdge[N]) = if (e eq null) None else Some(e._1, e._2)
   }
+  /** $SHORTCUT `edge match {case n1 ~ n2 => f(n1, n2)}`.
+   */
+  val ~ = UnDiEdge
   
   /**
    * Represents a directed edge (arc / arrow) connecting two nodes.
@@ -540,6 +552,9 @@ object GraphEdge {
     def apply[N](nodes: Tuple2[N,N]) = new DiEdge[N](nodes)
     protected[collection]
     def from [N](nodes: Product)     = new DiEdge[N](nodes)
-    def unapply[N](e: DiEdge[N]) = Some(e)
+    def unapply[N](e: DiEdge[N]) = if (e eq null) None else Some(e.source, e.target)
   }
+  /** $SHORTCUT `edge match {case source ~> target => f(source, target)}`.
+   */
+  val ~> = DiEdge
 }
