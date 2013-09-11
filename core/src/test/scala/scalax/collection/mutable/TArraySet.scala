@@ -109,4 +109,13 @@ class TArraySetTest extends Suite with ShouldMatchers {
     sas.range(-10, -3) should be (SortedArraySet.empty[Int])
     sas.range(-10, -4) should be (SortedArraySet.empty[Int])
   }
+  def test_plusPlus {
+    val a = ArraySet.empty[Int]
+    val b = ArraySet(1)
+    val c = ArraySet(2)
+
+    a.clone should be ('isEmpty)
+    a ++ b  should be (b)
+    b ++ c  should be (b.toSet ++ c.toSet)
+  }
 }

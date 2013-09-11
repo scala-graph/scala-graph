@@ -30,7 +30,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   override def newBuilder   = new SimpleArraySet.CheckingBuilder   [A] (this)
   protected[collection]
   def newNonCheckingBuilder[B] = new SimpleArraySet.NonCheckingBuilder[A,B] (this)
-  override def clone = (newNonCheckingBuilder ++= (if (isHash) hashSet else arr)) result
+  override def clone = (newNonCheckingBuilder ++= this) result
   private var nextFree: Int = 0
   private var arr: Array[A] = _
   private var hashSet: ExtHashSet[A] = _
