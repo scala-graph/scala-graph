@@ -44,6 +44,64 @@ class TEdgeTest extends Suite with ShouldMatchers
     (ham ~+#> gig)(Flight(flightNo))          should be (outer)
     (ham ~+#> gig)(Flight(flightNo, 11 o 20)) should be (outer)
   }
+  def test_match_W {
+    val (n1, n2, w) = (1, 2, 5)
+    def check(_n1: Int, _n2: Int, _w: Long) {
+      _n1 should be (n1)
+      _n2 should be (n2)
+      _w  should be (w)
+    }
+    val wDi = (n1 ~%> n2)(w)
+    wDi match { case WDiEdge(s, t, w) => check(s, t, w) }
+    wDi match { case s :~> %(t, w)    => check(s, t, w) }
+    wDi match { case s :~> t % w      => check(s, t, w) }
+    Graph(wDi).get(wDi).edge match {
+      case s :~> t % w => check(s.value, t.value, w) }
+    
+    val wkDi = (n1 ~%#> n2)(w)
+    wkDi match { case s :~> t % w     => check(s, t, w) }
+  }
+  def test_match_L {
+   object StringLabel extends LEdgeImplicits[String]
+   import StringLabel._
+
+   val (n1, n2, label) = (1, 2, "A")
+    def check(_n1: Int, _n2: Int, _label: String) {
+      _n1 should be (n1)
+      _n2 should be (n2)
+      _label should be (label)
+    }
+    val lDi = (n1 ~+> n2)(label)
+    lDi match { case LDiEdge(s, t, l) => check(s, t, l) }
+    lDi match { case s :~> +(t, l)    => check(s, t, l) }
+    lDi match { case s :~> t + l      => check(s, t, l) }
+    Graph(lDi).get(lDi).edge match {
+      case s :~> t + l => check(s.value, t.value, l) }
+
+    val lkDi = (n1 ~+#> n2)(label)
+    lkDi match { case s :~> t + l     => check(s, t, l) }
+  }
+  def test_match_WL {
+   object StringLabel extends LEdgeImplicits[String]
+   import StringLabel._
+
+   val (n1, n2, label, weight) = (1, 2, "A", 4L)
+    def check(_n1: Int, _n2: Int, _weight: Long, _label: String) {
+      _n1 should be (n1)
+      _n2 should be (n2)
+      _weight should be (weight)
+      _label should be (label)
+    }
+    val wlDi = (n1 ~%+> n2)(weight, label)
+    wlDi match { case WLDiEdge(s, t, w, l) => check(s, t, w, l) }
+    wlDi match { case s :~> %+(t, w, l)    => check(s, t, w, l) }
+    wlDi match { case s :~> t %+ (w, l)    => check(s, t, w, l) }
+    Graph(wlDi).get(wlDi).edge match {
+      case s :~> t %+ (w, l) => check(s.value, t.value, w, l) }
+
+    val wlkDi = (n1 ~%+#> n2)(weight, label)
+    wlkDi match { case s :~> t %+ (w, l)   => check(s, t, w, l) }
+  }
 }
 /* Label type for use in key-labeled edges.
  * Note that using path-dependent label types with Scala 2.9.1-final I had a runtime issue

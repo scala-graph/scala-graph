@@ -93,8 +93,8 @@ object LBase {
     /** @param nodes must be of `arity >= 2` for hyperedges and of `arity == 2` for edges. */
     @inline final protected[collection]
     def from [N,L]  (nodes: Product)(label: L) = newEdge[N,L](nodes, label)
-    @inline final
-    def unapply[N]  (e: E[N]): Option[E[N]] = Some(e)
+    @inline final def unapply[N]  (e: E[N]): Option[(N,N,E[N]#L1)] =
+      if (e eq null) None else Some((e._1, e._2, e.label))
 
     def newEdge[N,L](nodes: Product, label_1: L): E[N] with EdgeCopy[E]{type L1 = L}
   }
@@ -117,27 +117,73 @@ object LBase {
     final def apply[N,L](nodes: Product)
                         (label: L) = newEdge[N,L](nodes, label)
   }
-  /** Convenience trait to quickly achieve implicit conversion from a
-   * labeled edge to its label for any graph type.
-   * This trait is the typed variant of [[scalax.collection.edge.LBase.LEdgeImplicits]] which works for immutable `Graph`s only.
-   *
-   * @tparam G kind of type of graph.
+  /** Implicit conversions from an outer labeled edge to its label.
+   * 
    * @tparam UL type of the user label.
    */
-  trait TypedLEdgeImplicits[G[N, E[X] <: EdgeLikeIn[X]] <: GraphBase[N,E], UL] {
+  trait OuterLEdgeImplicits[UL] {
     /** Lets implicitly convert a labeled outer edge to its label:
       {{{ 
-      import scalax.collection.mutable.{Graph => MGraph}
-
       case class MyLabel(val i: Int)
       val eOuter = LUnDiEdge(1,3)(MyLabel(4))
 
-      object MyLabelConversion extends TypedLEdgeImplicits[MGraph, MyLabel]
+      object MyLabelConversion extends OuterLEdgeImplicits[MyLabel]
       import MyLabelConversion._
       val four = eOuter.i
       }}}  
      */
     implicit def outerLEdge2UserLabel[N](edge: LEdge[N]{type L1 = UL}): UL = edge.label
+
+    /** Lets implicitly convert a label to its user type:
+      {{{
+      case class MyLabel(val i: Int)
+      val eOuter = LUnDiEdge(1,3)(MyLabel(4))
+
+      object MyLabelConversion extends OuterLEdgeImplicits[MyLabel]
+      import MyLabelConversion._
+      val label: MyLabel = eOuter.label
+      }}}
+      As this conversion is not type safe, the user has to ensure that `label`
+      is of the type `UL`.  
+     */
+    implicit def toUserLabel[N, E[X] <: LEdge[X]](label: E[N]#L1): UL =
+      label match { case ul: UL => ul }
+  }
+  /** Implicit conversions from an inner or outer labeled edge to its label.
+   *  In case of inner edges, this trait works for [[scalax.collection.Graph]] only.
+   *  For other graph types see [[scalax.collection.edge.LBase.TypedLEdgeImplicits]].
+   * 
+   * @tparam UL type of the user label.
+   */
+  trait LEdgeImplicits[UL]
+      extends OuterLEdgeImplicits[UL] {
+    /** Lets implicitly convert a labeled inner edge to its label:
+      {{{ 
+      case class MyLabel(val i: Int)
+      val g = Graph(LUnDiEdge(1,3)(MyLabel(4)))
+      val eInner = g.edges.head
+
+      object MyLabelConversion extends LEdgeImplicits[MyLabel]
+      import MyLabelConversion._
+      val four_2 = eInner.i 
+      }}}
+      As this conversion is not type safe, the user has to ensure that `innerEdge`
+      is of appropriate type.  
+     */
+    implicit def innerEdge2UserLabel[N, E[X] <: EdgeLikeIn[X]]
+                                    (innerEdge: Graph[N,E]#EdgeT): UL =
+      innerEdge.edge match {
+        case contEdge: LEdge[N]{ type L1 = UL } => contEdge.label
+      }
+  }
+  /** Implicit conversions from an inner or outer labeled edge to its label
+   *  for any graph type.
+   *
+   * @tparam G kind of type of graph.
+   * @tparam UL type of the user label.
+   */
+  trait TypedLEdgeImplicits[G[N, E[X] <: EdgeLikeIn[X]] <: GraphBase[N,E], UL]
+      extends OuterLEdgeImplicits[UL] {
     /** Lets implicitly convert a labeled inner edge to its label:
       {{{
       import scalax.collection.mutable.{Graph => MGraph}
@@ -159,43 +205,6 @@ object LBase {
         case contEdge: LEdge[N]{ type L1 = UL } => contEdge.label
       }
     }
-  }
-  /** Convenience trait to quickly achieve implicit conversion from a
-   * labeled edge to its label. This trait works for immutable `Graph`s only.
-   * For other graph types see [[scalax.collection.edge.LBase.TypedLEdgeImplicits]].
-   * 
-   * @tparam UL type of the user label.
-   */
-  trait LEdgeImplicits[UL] {
-    /** Lets implicitly convert a labeled outer edge to its label:
-      {{{ 
-      case class MyLabel(val i: Int)
-      val eOuter = LUnDiEdge(1,3)(MyLabel(4))
-
-      object MyLabelConversion extends LEdgeImplicits[MyLabel]
-      import MyLabelConversion._
-      val four = eOuter.i
-      }}}  
-     */
-    implicit def outerLEdge2UserLabel[N](edge: LEdge[N]{type L1 = UL}): UL = edge.label
-    /** Lets implicitly convert a labeled inner edge to its label:
-      {{{ 
-      case class MyLabel(val i: Int)
-      val g = Graph(LUnDiEdge(1,3)(MyLabel(4)))
-      val eInner = g.edges.head
-
-      object MyLabelConversion extends LEdgeImplicits[MyLabel]
-      import MyLabelConversion._
-      val four_2 = eInner.i 
-      }}}
-      As this conversion is not type safe, the user has to ensure that `innerEdge`
-      is of appropriate type.  
-     */
-    implicit def innerEdge2UserLabel[N, E[X] <: EdgeLikeIn[X]]
-                                    (innerEdge: Graph[N,E]#EdgeT): UL =
-      innerEdge.edge match {
-        case contEdge: LEdge[N]{ type L1 = UL } => contEdge.label
-      }
   }
 }
 /** Base traits for key-labeled edges. */
@@ -242,7 +251,8 @@ object WLBase {
     @inline final protected[collection]
     def from [N,L](nodes: Product)(weight: Long, label: L): E[N] =
       newEdge[N,L](nodes, weight, label)
-    @inline final def unapply[N](e: E[N]): Option[E[N]] = Some(e)
+    @inline final def unapply[N]  (e: E[N]): Option[(N,N,Long,E[N]#L1)] =
+      if (e eq null) None else Some((e._1, e._2, e.weight, e.label))
     protected
     def newEdge[N,L](nodes: Product, weight: Long, label_1: L): E[N] with EdgeCopy[E]
   }

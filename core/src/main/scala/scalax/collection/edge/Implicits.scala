@@ -88,4 +88,80 @@ object Implicits {
     def ~%#+#> [N >: NOld, NX <: N, L](n: NX)(w: Long, l: L) = WkLkDiHyperEdge[N,L](e.iterator.toBuffer[N] += n)(w, l)
   }
   implicit def edge2XHyperEdgeAssoc[NOld](e: EdgeLike[NOld]) = new XHyperEdgeAssoc(e)
+  
+  // ------------------------------------------------------------------ extractors
+  /** Extractors for weighted and/or labeled undirected edges.
+      {{{
+      object StringLabel extends LEdgeImplicits[String]
+      import StringLabel._
+
+      val lE = (n1 ~+ n2)(label)
+      lE match { case LUnDiEdge(s, t, l) => f(s, t, l) } // constructor pattern
+      lE match { case s :~ t + l         => f(s, t, l) } // infix op pattern
+
+      val lkE = (n1 ~+# n2)(label)
+      lkE match { case s :~ t + l => f(s, t, l) }
+      }}}
+   */
+  object :~ {
+    def unapply[N](e: WUnDiEdge[N]): Option[(N, (N, Long))] =
+      if (e eq null) None else Some(e._1, (e._2, e.weight))
+
+    def unapply[N](e: WkUnDiEdge[N]): Option[(N, (N, Long))] = unapply(e: WUnDiEdge[N])
+
+    def unapply[N](e: LUnDiEdge[N]): Option[(N, (N, LUnDiEdge[N]#L1))] =
+      if (e eq null) None else Some(e._1, (e._2, e.label))
+
+    def unapply[N](e: LkUnDiEdge[N]): Option[(N, (N, LUnDiEdge[N]#L1))] = unapply(e: LUnDiEdge[N])
+
+    def unapply[N](e: WLUnDiEdge[N]): Option[(N, (N, Long, WLUnDiEdge[N]#L1))] =
+      if (e eq null) None else Some(e._1, (e._2, e.weight, e.label))
+
+    def unapply[N](e:  WLkUnDiEdge[N]): Option[(N, (N,Long,WLUnDiEdge[N]#L1))] = unapply(e: WLUnDiEdge[N])
+    def unapply[N](e:  WkLUnDiEdge[N]): Option[(N, (N,Long,WLUnDiEdge[N]#L1))] = unapply(e: WLUnDiEdge[N])
+    def unapply[N](e: WkLkUnDiEdge[N]): Option[(N, (N,Long,WLUnDiEdge[N]#L1))] = unapply(e: WLUnDiEdge[N])
+  }
+
+  /** Extractors for weighted and/or labeled directed edges.
+      {{{
+      object StringLabel extends LEdgeImplicits[String]
+      import StringLabel._
+
+      val lDi = (n1 ~+> n2)(label)
+      lDi match { case LDiEdge(s, t, l) => f(s, t, l) } // constructor pattern
+      lDi match { case s :~> t + l      => f(s, t, l) } // infix op pattern
+
+      val lkDi = (n1 ~+#> n2)(label)
+      lkDi match { case s :~> t + l     => f(s, t, l) }
+      }}}
+   */
+  object :~> {
+    def unapply[N](e:  WDiEdge[N]): Option[(N, (N, Long))] = :~ unapply e
+    def unapply[N](e: WkDiEdge[N]): Option[(N, (N, Long))] = :~ unapply (e: WkUnDiEdge[N])
+
+    def unapply[N](e:  LDiEdge[N]): Option[(N, (N,LUnDiEdge[N]#L1))] = :~ unapply e
+    def unapply[N](e: LkDiEdge[N]): Option[(N, (N,LUnDiEdge[N]#L1))] = :~ unapply (e: LUnDiEdge[N])
+
+    def unapply[N](e: WLDiEdge[N]): Option[(N, (N, Long, WLUnDiEdge[N]#L1))] = :~ unapply e
+
+    def unapply[N](e:  WLkDiEdge[N]): Option[(N, (N,Long,WLUnDiEdge[N]#L1))] = :~ unapply (e: WLUnDiEdge[N])
+    def unapply[N](e:  WkLDiEdge[N]): Option[(N, (N,Long,WLUnDiEdge[N]#L1))] = :~ unapply (e: WLUnDiEdge[N])
+    def unapply[N](e: WkLkDiEdge[N]): Option[(N, (N,Long,WLUnDiEdge[N]#L1))] = :~ unapply (e: WLUnDiEdge[N])
+  }
+
+  /** Weight extractor to be combined with `:~` or `:~>`. */
+  object % {
+    def unapply[N](nw: (N, Long)): Option[(N, Long)] =
+      if (nw eq null) None else Some(nw._1, nw._2)
+  }
+  /** Label extractor to be combined with `:~` or `:~>`. */
+  object + {
+    def unapply[N,L](nl: (N, L)): Option[(N, L)] =
+      if (nl eq null) None else Some(nl._1, nl._2)
+  }
+  /** Weight and label extractor to be combined with `:~` or `:~>`. */
+  object %+ {
+    def unapply[N,L](nwl: (N, Long, L)): Option[(N, Long, L)] =
+      if (nwl eq null) None else Some(nwl._1, nwl._2, nwl._3)
+  }
 }
