@@ -1,16 +1,17 @@
 package scalax.collection
 
-import org.scalatest.Suite
-import org.scalatest.Suites
-import org.scalatest.Informer
-import org.scalatest.matchers.ShouldMatchers
-
-import scala.collection.mutable.{ListBuffer, Set, Stack}
+import language.{higherKinds, postfixOps}
+import collection.mutable.{ListBuffer, Set, Stack}
 
 import GraphPredef._, GraphEdge._
 import GraphTraversal.VisitorReturn._
 import generic.GraphCoreCompanion
 import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
+
+import org.scalatest.Suite
+import org.scalatest.Suites
+import org.scalatest.Informer
+import org.scalatest.matchers.ShouldMatchers
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith

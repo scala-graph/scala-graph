@@ -1,13 +1,15 @@
 package custom
 
-import org.scalatest.Suite
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
+import language.{higherKinds, implicitConversions, postfixOps, reflectiveCalls}
 
 import scalax.collection.Graph
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
+
+import org.scalatest.Suite
+import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
 class TExtByImplicitTest

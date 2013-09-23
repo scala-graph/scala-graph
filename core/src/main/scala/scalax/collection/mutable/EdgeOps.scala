@@ -1,6 +1,8 @@
 package scalax.collection
 package mutable
 
+import language.{higherKinds, postfixOps}
+
 import GraphPredef.EdgeLikeIn
 import GraphEdge.  {  HyperEdgeCompanion,                     EdgeCompanion}
 import edge. WBase.{ WHyperEdgeCompanion,  WHyperEdgeBound,  WEdgeCompanion,  WEdgeBound}

@@ -1,10 +1,11 @@
 package scalax.collection.constrained
 package generic
 
-import annotation.unchecked.uncheckedVariance
-import collection.Iterable
-import collection.mutable.{Builder, ListBuffer}
-import collection.generic.CanBuildFrom
+import scala.language.{higherKinds, postfixOps}
+import scala.annotation.unchecked.uncheckedVariance
+import scala.collection.Iterable
+import scala.collection.mutable.{Builder, ListBuffer}
+import scala.collection.generic.CanBuildFrom
 
 import scalax.collection.GraphPredef.{EdgeLikeIn, GraphParamIn}
 import scalax.collection.generic.GraphCompanion

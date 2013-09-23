@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import scalax.collection.GraphEdge.DiEdge
-import scalax.collection.GraphPredef.{ anyToNode, any2EdgeAssoc }
+import scalax.collection.GraphPredef._
 import scalax.collection.connectivity.GraphComponents.graphToComponents
 import scalax.collection.Graph
 import org.scalatest.matchers.ShouldMatchers

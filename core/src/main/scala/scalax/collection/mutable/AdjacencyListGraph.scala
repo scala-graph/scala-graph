@@ -1,6 +1,7 @@
 package scalax.collection
 package mutable
 
+import language.higherKinds
 import collection.Set
 
 import GraphPredef.EdgeLikeIn
@@ -16,7 +17,7 @@ trait AdjacencyListGraph[N,
                               <: AdjacencyListGraph[X,Y,This] with Graph[X,Y]]
   extends GraphLike[N,E,This]
   with    AdjacencyListBase[N,E,This]
-{ selfGraph =>
+{ selfGraph: This[N,E] =>
   type NodeT <: InnerNodeImpl 
   abstract class InnerNodeImpl(value: N, hints: ArraySet.Hints)
     extends NodeBase(value)

@@ -1,6 +1,7 @@
 package scalax.collection.constrained
 
-import collection.Set
+import scala.language.{higherKinds, postfixOps}
+import scala.collection.Set
   
 import org.scalatest.{Suite, Suites}
 import org.scalatest.Informer

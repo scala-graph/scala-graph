@@ -1,5 +1,7 @@
 package scalax.collection
 
+import language.{higherKinds, postfixOps}
+
 import GraphPredef.{NodeOut, EdgeIn}
 import edge.LBase.LEdge
 
@@ -89,12 +91,12 @@ object GraphEdge {
     protected def isValidCustom = true
     protected def isValidCustomExceptionMessage = "Custom validation failed: " + toString
     /**
-     * Performs basic, inevitable edge validation. Amon others, ensures
+     * Performs basic, inevitable edge validation. Among others, ensures
      * that `nodes ne null` and no edge end `eq null`.
      * 
      * This validation method must be called in the constructor of any edge class
-     * that directly extends or mixes in `EdgeLike`. To perform additional custom validation
-     * `isValidCustom` is to be overridden.
+     * that directly extends or mixes in `EdgeLike`. To perform additional custom
+     * validation `isValidCustom` is to be overridden.
      *  
      *  @throws EdgeException if any of the basic validations or of eventually
      *  supplied additional validations fails.
@@ -102,22 +104,12 @@ object GraphEdge {
     protected final def validate {
       nodes match {
         case r: AnyRef if r eq null =>
-          throw new EdgeException("nodes mustn't be null: " + toString)
+          throw new EdgeException(s"null node in: $toString")
         case _ =>
       }
       val ar = arity
       if (! (ar >= 2 && isValidArity(ar)))
         throw new EdgeException("Invalid arity: " + ar + ": " + toString)
-      nodes match {
-        case i: Iterable[N] => ;
-        case p: Product     => p.productIterator foreach (e =>
-                                 if (! e.isInstanceOf[N])
-                                   throw new EdgeException(
-                                     "Product-element doesn't conform to edge type parameter: "
-                                     + e.toString)) }
-      iterator foreach (n =>
-        if(n.asInstanceOf[AnyRef] eq null)
-          throw new EdgeException("Edge ends mustn't be null: " + toString))
       if (! isValidCustom)
           throw new EdgeException(isValidCustomExceptionMessage)
     }
@@ -191,7 +183,6 @@ object GraphEdge {
         (that canEqual this) &&
         (that.undirected == this.undirected) &&
         (this.nodes == that.nodes ||
-         that.nodes == this.nodes || // TODO for Scala 2.9.x only
          undirected && nodesEqual(that))
       case _ => false
     }

@@ -1,12 +1,14 @@
 package scalax.collection
 
+import language.{higherKinds, postfixOps}
+
+import GraphPredef._, GraphEdge._
+import generic.GraphCoreCompanion
+
 import org.scalatest.Suite
 import org.scalatest.Suites
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
-
-import GraphPredef._, GraphEdge._
-import generic.GraphCoreCompanion
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith

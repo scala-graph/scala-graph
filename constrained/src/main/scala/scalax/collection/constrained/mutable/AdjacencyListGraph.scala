@@ -1,8 +1,9 @@
 package scalax.collection.constrained
 package mutable
 
-import collection.Set
-import collection.mutable.{HashSet, HashMap, Set => MutableSet}
+import scala.language.{higherKinds, postfixOps}
+import scala.collection.Set
+import scala.collection.mutable.{HashSet, HashMap, Set => MutableSet}
 
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.GraphPredef.EdgeLikeIn

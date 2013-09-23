@@ -1,10 +1,12 @@
 package scalax.collection
 
+import language.higherKinds
 import collection.{SetLike, GenTraversableOnce}
 import collection.mutable.{Set => MSet}
 import collection.generic.GenericCompanion
 
-import GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn, NodeIn, NodeOut, EdgeIn, EdgeOut}
+import GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn, GraphParamOut,
+                    NodeIn, NodeOut, EdgeIn, EdgeOut}
 import GraphEdge.{EdgeLike, EdgeCompanionBase}
 import generic.{GraphCompanion, GraphCoreCompanion}
 import config.GraphConfig
@@ -13,7 +15,8 @@ import io._
 /**
  * A template trait for graphs.
  * 
- * This trait provides the common structure and operations of immutable graphs independently of its representation.
+ * This trait provides the common structure and operations of immutable graphs independently
+ * of their representation.
  * 
  * If `E` inherits `DirectedEdgeLike` the graph is directed, otherwise it is undirected or mixed.
  * 
@@ -33,7 +36,7 @@ trait GraphLike[N,
   with    GraphTraversal[N,E]
   with    GraphBase     [N,E]
   with    GraphDegree   [N,E]
-{ selfGraph =>
+{ selfGraph: This[N,E] =>
   protected type ThisGraph = this.type
   implicit val edgeManifest: Manifest[E[N]]
 
@@ -130,12 +133,16 @@ trait GraphLike[N,
   trait InnerNodeLike extends super.InnerNodeLike {
     this: NodeT =>
     /** The `Graph` instance `this` node is contained in. */
-    def containingGraph: ThisGraph = selfGraph.asInstanceOf[ThisGraph]
+    final def containingGraph: ThisGraph = selfGraph.asInstanceOf[ThisGraph]
   }
   protected abstract class NodeBase(override val value: N)
-    extends super.NodeBase
-    with    NodeOut[N]
-    with    InnerNodeLike { this: NodeT => }
+      extends super.NodeBase
+         with NodeOut[N]
+         with InnerNodeLike {
+    this: NodeT =>
+    final def isContaining[N, E[X]<:EdgeLikeIn[X]](g: GraphBase[N,E]) =
+      g eq containingGraph
+  }
 
   type NodeSetT <: NodeSet
   trait NodeSet extends super.NodeSet {
@@ -181,20 +188,20 @@ trait GraphLike[N,
    *  @param elem the node or edge the existence of which is to be checked
    *  @return true if `elem` is contained in this graph
    */
-  def contains(elem: GraphParam[N,E]) =
-    if (elem.isNode)
-      nodes contains (elem match {
-        case n: NodeIn[N] => newNode(n.value)
-        case n: NodeT     => n
-        case n: NodeOut[N]=> newNode(n.value)
-      })
-    else
-      edges contains (elem match {
-        case e: E[N]                 => newEdge(e)
-        case e: EdgeT                => e
-        case e: GraphBase[N,E]#EdgeT => newEdge(e.toEdgeIn)
-        case _ => throw new IllegalArgumentException
-      }) 
+  def contains(elem: GraphParam[N,E]) = elem match {
+    case in: GraphParamIn[N,E] => in match {
+      case n: NodeIn[N]   => nodes contains newNode(n.value)
+      case e: EdgeIn[N,E] => edges contains newEdge(e.edge)
+    } 
+    case out: GraphParamOut[_,_] => out match {
+      case n: NodeOut[N] => nodes contains (
+          n.toNodeT[N,E,ThisGraph](selfGraph)(anyNode => newNode(anyNode.value))
+        )
+      case e: EdgeOut[N,E,_,E]  => edges contains (
+          e.toEdgeT[N,E,ThisGraph](selfGraph)(anyEdge => newEdge(anyEdge.toEdgeIn))
+        ) 
+    } 
+  }
   /** Iterates over all nodes and all edges.
    *
    *  @return iterator containing all nodes and all edges
@@ -247,35 +254,46 @@ trait GraphLike[N,
    * @return the inner edge looked up or `default` if no inner edge
    *         equaling to `edge` could be found. 
    */
-  @inline final def getOrElse(outerEdge: E[N],default: EdgeT) = find(outerEdge).getOrElse(default)
+  @inline final def getOrElse(outerEdge: E[N],default: EdgeT) =
+    find(outerEdge).getOrElse(default)
 
-  /** Creates a new supergraph with an additional node, unless the node passed is already present.
+  /** Creates a new supergraph with an additional node, unless the node passed is
+   *  already present.
    *
    *  @param node the node to be added
    *  @return the new supergraph containing all nodes and edges of this graph and `node`
    *  additionally.
    */
   def +(node: N): This[N,E]
-  /** Creates a new supergraph with an additional edge, unless the edge passed is already present.
-   *
-   *  @param edge the edge to be added
-   *  @return the new supergraph containing all nodes and edges of this graph plus `edge`.
-   */
-  protected def +#(edge: E[N]): This[N,E]
-  /** Creates a new supergraph with an additional node or edge, unless the node or edge passed is
+  /** Creates a new supergraph with an additional edge, unless the edge passed is
    *  already present.
    *
-   *  This method purely wraps `+(node: N)` respectively `+(edge: E[N])` granting the same behavior.
+   *  @param edge the edge to be added
+   *  @return the new supergraph containing all nodes and edges of this
+   *          graph plus `edge`.
+   */
+  protected def +#(edge: E[N]): This[N,E]
+  /** Creates a new supergraph with an additional node or edge, unless the
+   *  node or edge passed is already present.
+   *
+   *  This method purely wraps `+(node: N)` respectively `+(edge: E[N])`
+   *  granting the same behavior.
    *    
-   *  @param elem the wrapped node or edge to be added; ; if `elem` is of type N, the wrapped object
-   *         is added to the node set otherwise to the edge set.
-   *  @return a new supergraph containing all nodes and edges of this graph plus `elem`.
+   *  @param elem the wrapped node or edge to be added; ; if `elem` is of type N,
+   *         the wrapped object is added to the node set otherwise to the edge set.
+   *  @return a new supergraph containing all nodes and edges of this graph
+   *          plus `elem`.
    */
   def +(elem: GraphParam[N,E]): This[N,E] = elem match {
-    case n: NodeIn [N] => this + n.value
-    case n: NodeOut[N] => this + n.value
-    case e: E[N]                 => this +# e
-    case e: GraphBase[N,E]#EdgeT => this +# e.toEdgeIn 
+    case in: GraphParamIn[N,E] => in match {
+      case n: NodeIn[N]   => this + n.value
+      case e: EdgeIn[N,E] => this +# e.edge
+    } 
+    case out: GraphParamOut[_,_] => out match {
+      case n: NodeOut[N] => this + n.value
+      case e: EdgeOut[N,E,_,E]  => this +#
+                                   e.asEdgeT[N,E,ThisGraph](selfGraph).toEdgeIn
+    } 
   }
   override def ++ (elems: GenTraversableOnce[GraphParam[N,E]]) = bulkOp(elems, true)
   override def -- (elems: GenTraversableOnce[GraphParam[N,E]]) = bulkOp(elems, false)
@@ -343,7 +361,8 @@ trait GraphLike[N,
    *  and those nodes which are incident with `edge` and would become edge-less after deletion. 
    *
    *  @param edge the edge to be removed.
-   *  @return a new subgraph of this graph after the "ripple" deletion of `edge` from this graph.
+   *  @return a new subgraph of this graph after the "ripple" deletion of `edge` from
+   *          this graph.
    */
   protected def -!#(edge: E[N]): This[N,E]
   /** Creates a new subgraph consisting of all nodes and edges of this graph except `elem`.
@@ -351,27 +370,36 @@ trait GraphLike[N,
    *  leaving the node set unchanged.
    *
    *  @param elem node or edge to be removed.
-   *  @return the new subgraph of this graph after the "ripple" deletion of the passed node or the
-   *          simple deletion of the passed edge.
+   *  @return the new subgraph of this graph after the "ripple" deletion of the passed node
+   *          or the simple deletion of the passed edge.
    */
   def - (elem: GraphParam[N,E]): This[N,E] = elem match {
-    case n: NodeIn [N] => this - n.value
-    case n: NodeOut[N] => this - n.value
-    case e: E[N]                 => this -# e
-    case e: GraphBase[N,E]#EdgeT => this -# e.toEdgeIn 
+    case in: GraphParamIn[N,E] => in match {
+      case n: NodeIn[N]   => this - n.value
+      case e: EdgeIn[N,E] => this -# e.edge
+    } 
+    case out: GraphParamOut[_,_] => out match {
+      case n: NodeOut[N] => this - n.value
+      case e: EdgeOut[N,E,_,E]  => this -# e.asEdgeT[N,E,ThisGraph](selfGraph).toEdgeIn
+    } 
   }
   /** Creates a new subgraph consisting of all nodes and edges of this graph except `elem`.
    *  If `elem` is of type N, this method maps to `-(node: N)`. Otherwise the edge is deleted
    *  along with those incident nodes which would become edge-less after deletion.
    *
    *  @param elem node or edge to be removed.
-   *  @return a new subgraph of this graph after the "ripple" deletion of the passed node or edge.
+   *  @return a new subgraph of this graph after the "ripple" deletion of the passed
+   *          node or edge.
    */
   def -!(elem: GraphParam[N,E]): This[N,E] = elem match {
-    case n: NodeIn [N] => this - n.value 
-    case n: NodeOut[N] => this - n.value
-    case e: E[N]                 => this -!# e
-    case e: GraphBase[N,E]#EdgeT => this -!# e.toEdgeIn 
+    case in: GraphParamIn[N,E] => in match {
+      case n: NodeIn[N]   => this - n.value
+      case e: EdgeIn[N,E] => this -!# e.edge
+    } 
+    case out: GraphParamOut[_,_] => out match {
+      case n: NodeOut[N] => this - n.value
+      case e: EdgeOut[N,E,_,E]  => this -!# e.asEdgeT[N,E,ThisGraph](selfGraph).toEdgeIn
+    } 
   }
   /** Creates a new subgraph consisting of all nodes and edges of this graph but the elements
    * of `coll` which will be unconditionally removed. This operation differs from `--`
@@ -421,10 +449,15 @@ trait GraphLike[N,
    */
   def having(node: (NodeT) => Boolean = _ => false,
              edge: (EdgeT) => Boolean = null): PartialFunction[GraphParam[N,E], Boolean] = {
-    val nodePred: PartialFunction[GraphParam[N,E], Boolean] = { case n: NodeT => node(n) }
+    val nodePred: PartialFunction[GraphParam[N,E], Boolean] = {
+      case n: NodeOut[N] => node(n.asNodeT[N,E,ThisGraph](selfGraph))
+    }
     val edgePred: PartialFunction[GraphParam[N,E], Boolean] =
-      if (edge eq null) { case e: EdgeT => e forall (node(_)) }
-      else              { case e: EdgeT => edge(e) }
+      if (edge eq null) {
+        case e: EdgeOut[N,E,_,E] => e.asEdgeT[N,E,ThisGraph](selfGraph) forall (node(_))
+      } else {
+        case e: EdgeOut[N,E,_,E] => edge(e.asEdgeT[N,E,ThisGraph](selfGraph))
+      }
     nodePred orElse edgePred
   }
 }

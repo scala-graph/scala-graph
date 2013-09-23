@@ -1,7 +1,9 @@
 package scalax.collection
 
+import language.higherKinds
 import collection.{Set, SortedSet, SortedMap}
 import collection.mutable.{Set => MutableSet, Map => MutableMap, ListBuffer}
+import reflect.{classTag, ClassTag}
 
 import GraphPredef.{EdgeLikeIn, GraphParamNode, NodeIn, NodeOut, EdgeOut}
 import GraphEdge.{EdgeLike, EdgeCompanionBase}
@@ -241,53 +243,75 @@ trait GraphAux[N, E[X] <: EdgeLikeIn[X]]
         type  CHEdgeT[X] = HyperEdge[X] with E[X] with  CHyperEdgeBound[_,E]
 
         val edgeStream = genEedgeStream.
-                         asInstanceOf[EdgeInputStream[N,E,_,EdgeCompanionBase,EdgeAdapterBase]] 
-        val eF  = edgeStream.factory match {
-                    case f:   EdgeCompanion[  EdgeT] => f; case _=> null}
-        val wF  = edgeStream.factory match {
-                    case f:  WEdgeCompanion[ WEdgeT] => f; case _=> null}
-        val lF  = edgeStream.factory match {
-                    case f:  LEdgeCompanion[ LEdgeT] => f; case _=> null}
-        val wlF = edgeStream.factory match {
-                    case f: WLEdgeCompanion[WLEdgeT] => f; case _=> null}
-        val cF  = edgeStream.factory match {
-                    case f:  CEdgeCompanion[ CEdgeT] => f; case _=> null}
-        val hF  = edgeStream.factory match {
-                    case f:   HyperEdgeCompanion[  HEdgeT] => f; case _=> null}
-        val whF = edgeStream.factory match {
-                    case f:  WHyperEdgeCompanion[ WHEdgeT] => f; case _=> null}
-        val lhF = edgeStream.factory match {
-                    case f:  LHyperEdgeCompanion[ LHEdgeT] => f; case _=> null}
-        val wlhF= edgeStream.factory match {
-                    case f: WLHyperEdgeCompanion[WLHEdgeT] => f; case _=> null}
-        val chF = edgeStream.factory match {
-                    case f:  CHyperEdgeCompanion[ CHEdgeT] => f; case _=> null}
+                         asInstanceOf[EdgeInputStream[N,E,_,EdgeCompanionBase,EdgeAdapterBase]]
+        val fClass = edgeStream.factory.getClass
+        def typedFactory[C](tag: ClassTag[C]): C =
+          (if (tag.runtimeClass.isAssignableFrom(fClass)) edgeStream.factory
+           else null).asInstanceOf[C]
 
-        def   e(a: EdgeAdapterBase[N,E,_]) = a match { case a:   EdgeAdapter[N,E,_]
-            => nodesToEdgeCont  ( eF, a.nodes._1, a.nodes._2) }
-        def   w(a: EdgeAdapterBase[N,E,_]) = a match { case a:  WEdgeAdapter[N,E,_]
-            => nodesToWEdgeCont ( wF, a.weight, a.nodes._1, a.nodes._2) }
-        def   l(a: EdgeAdapterBase[N,E,_]) = a match { case a:  LEdgeAdapter[N,E,_]
-            => nodesToLEdgeCont ( lF, a.label, a.nodes._1, a.nodes._2) }
-        def  wl(a: EdgeAdapterBase[N,E,_]) = a match { case a: WLEdgeAdapter[N,E,_]
-            => nodesToWLEdgeCont(wlF, a.weight, a.label, a.nodes._1, a.nodes._2) }
-        def   c(a: EdgeAdapterBase[N,E,_]) = a match { case a:  CEdgeAdapter[N,E,_]
-            => nodesToCEdgeCont ( cF, a.attributes, a.nodes._1, a.nodes._2) }
-        def   h(a: EdgeAdapterBase[N,E,_]) = a match { case a:   HyperEdgeAdapter[N,E,_]
-            => { val nodes = a.nodes; assert(nodes.size >= 2)
-                 nodesToEdgeCont  (  hF, nodes(0), nodes(1), nodes.tail.tail: _*) }}
-        def  wh(a: EdgeAdapterBase[N,E,_]) = a match { case a:  WHyperEdgeAdapter[N,E,_]
-            => { val nodes = a.nodes; assert(nodes.size >= 2)
-                 nodesToWEdgeCont ( whF, a.weight, nodes(0), nodes(1), nodes.tail.tail: _*) }}
-        def  lh(a: EdgeAdapterBase[N,E,_]) = a match { case a:  LHyperEdgeAdapter[N,E,_]
-            => { val nodes = a.nodes; assert(nodes.size >= 2)
-                 nodesToLEdgeCont ( lhF, a.label, nodes(0), nodes(1), nodes.tail.tail: _*) }}
-        def wlh(a: EdgeAdapterBase[N,E,_]) = a match { case a: WLHyperEdgeAdapter[N,E,_]
-            => { val nodes = a.nodes; assert(nodes.size >= 2)
-                 nodesToWLEdgeCont(wlhF, a.weight, a.label, nodes(0), nodes(1), nodes.tail.tail: _*) }}
-        def  ch(a: EdgeAdapterBase[N,E,_]) = a match { case a:  CHyperEdgeAdapter[N,E,_]
-            => { val nodes = a.nodes; assert(nodes.size >= 2)
-                 nodesToCEdgeCont ( chF, a.attributes, nodes(0), nodes(1), nodes.tail.tail: _*) }}
+        val eF  = typedFactory(classTag[  EdgeCompanion[  EdgeT]])
+        val wF  = typedFactory(classTag[ WEdgeCompanion[ WEdgeT]])
+        val lF  = typedFactory(classTag[ LEdgeCompanion[ LEdgeT]])
+        val wlF = typedFactory(classTag[WLEdgeCompanion[WLEdgeT]])
+        val cF  = typedFactory(classTag[ CEdgeCompanion[ CEdgeT]])
+
+        val hF  = typedFactory(classTag[  HyperEdgeCompanion[  HEdgeT]])
+        val whF = typedFactory(classTag[ WHyperEdgeCompanion[ WHEdgeT]])
+        val lhF = typedFactory(classTag[ LHyperEdgeCompanion[ LHEdgeT]])
+        val wlhF= typedFactory(classTag[WLHyperEdgeCompanion[WLHEdgeT]])
+        val chF = typedFactory(classTag[ CHyperEdgeCompanion[ CHEdgeT]])
+
+        private def illegal = throw new IllegalAccessException   
+        def   e(a: EdgeAdapterBase[N,E,_]) = a match {
+          case a:   EdgeAdapter[N,E,_] => nodesToEdgeCont  ( eF, a.nodes._1, a.nodes._2)
+          case _ => illegal
+        }
+        def   w(a: EdgeAdapterBase[N,E,_]) = a match {
+          case a:  WEdgeAdapter[N,E,_] => nodesToWEdgeCont ( wF, a.weight, a.nodes._1, a.nodes._2)
+          case _ => illegal
+        }
+        def   l(a: EdgeAdapterBase[N,E,_]) = a match {
+          case a:  LEdgeAdapter[N,E,_] => nodesToLEdgeCont ( lF, a.label, a.nodes._1, a.nodes._2)
+          case _ => illegal
+        }
+        def  wl(a: EdgeAdapterBase[N,E,_]) = a match {
+          case a: WLEdgeAdapter[N,E,_] => nodesToWLEdgeCont(wlF, a.weight, a.label, a.nodes._1, a.nodes._2)
+          case _ => illegal
+        }
+        def   c(a: EdgeAdapterBase[N,E,_]) = a match {
+          case a:  CEdgeAdapter[N,E,_] => nodesToCEdgeCont ( cF, a.attributes, a.nodes._1, a.nodes._2)
+          case _ => illegal
+        }
+        def   h(a: EdgeAdapterBase[N,E,_]) = a match {
+          case a:   HyperEdgeAdapter[N,E,_] => {
+            val nodes = a.nodes; assert(nodes.size >= 2)
+            nodesToEdgeCont  (  hF, nodes(0), nodes(1), nodes.tail.tail: _*) }
+          case _ => illegal
+        }
+        def  wh(a: EdgeAdapterBase[N,E,_]) = a match {
+          case a:  WHyperEdgeAdapter[N,E,_] => {
+            val nodes = a.nodes; assert(nodes.size >= 2)
+            nodesToWEdgeCont ( whF, a.weight, nodes(0), nodes(1), nodes.tail.tail: _*) }
+          case _ => illegal
+        }
+        def  lh(a: EdgeAdapterBase[N,E,_]) = a match {
+          case a:  LHyperEdgeAdapter[N,E,_] => {
+            val nodes = a.nodes; assert(nodes.size >= 2)
+            nodesToLEdgeCont ( lhF, a.label, nodes(0), nodes(1), nodes.tail.tail: _*) }
+          case _ => illegal
+        }
+        def wlh(a: EdgeAdapterBase[N,E,_]) = a match {
+          case a: WLHyperEdgeAdapter[N,E,_] => {
+            val nodes = a.nodes; assert(nodes.size >= 2)
+            nodesToWLEdgeCont(wlhF, a.weight, a.label, nodes(0), nodes(1), nodes.tail.tail: _*) }
+          case _ => illegal
+        }
+        def  ch(a: EdgeAdapterBase[N,E,_]) = a match {
+          case a:  CHyperEdgeAdapter[N,E,_] => {
+            val nodes = a.nodes; assert(nodes.size >= 2)
+            nodesToCEdgeCont ( chF, a.attributes, nodes(0), nodes(1), nodes.tail.tail: _*) }
+          case _ => illegal
+        }
 
         val make = edgeStream.factory match {
           case _:  CEdgeCompanion[E] =>  c _

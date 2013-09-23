@@ -12,11 +12,11 @@ import collection.immutable.WrappedString
  * @author Peter Empen
  */
 class AnyOrdering[N] extends Ordering[N]{
-  protected trait Type
-  protected case class IntegerType(value: RichLong)      extends Type
-  protected case class FloatType  (value: RichDouble)    extends Type
-  protected case class StringType (value: WrappedString) extends Type
-  protected case class RefType    (value: AnyRef)        extends Type
+  sealed protected trait Type
+  sealed protected case class IntegerType(value: RichLong)      extends Type
+  sealed protected case class FloatType  (value: RichDouble)    extends Type
+  sealed protected case class StringType (value: WrappedString) extends Type
+  sealed protected case class RefType    (value: AnyRef)        extends Type
   protected def typeOf(x: Any) = x match {
     case b: Byte => IntegerType(b)
     case s: Short=> IntegerType(s)

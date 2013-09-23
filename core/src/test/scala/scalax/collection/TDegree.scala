@@ -1,5 +1,6 @@
 package scalax.collection
 
+import language.{higherKinds, postfixOps}
 import collection.{SortedSet, SortedMap}
 
 import org.scalatest.Suite

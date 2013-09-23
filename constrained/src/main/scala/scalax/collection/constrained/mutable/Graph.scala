@@ -1,9 +1,10 @@
 package scalax.collection.constrained
 package mutable
 
-import collection.{Set, Iterable}
-import collection.generic.{CanBuildFrom, Growable, Shrinkable}
-import collection.mutable.{Builder, Cloneable, ListBuffer, Set => MutableSet}
+import scala.language.{higherKinds, postfixOps}
+import scala.collection.{Set, Iterable}
+import scala.collection.generic.{CanBuildFrom, Growable, Shrinkable}
+import scala.collection.mutable.{Builder, Cloneable, ListBuffer, Set => MutableSet}
 
 import scalax.collection.{Graph => CommonGraph, GraphTraversalImpl}
 import scalax.collection.GraphEdge.{EdgeLike, EdgeCompanionBase}

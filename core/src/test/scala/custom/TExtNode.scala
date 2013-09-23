@@ -1,12 +1,14 @@
 package custom
 
-import org.scalatest.Suite
-import org.scalatest.matchers.ShouldMatchers
+import language.postfixOps
 
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge._
 import immutable.{MyExtGraph => Graph}
 import mutable.{MyExtGraph => MutableGraph}
+
+import org.scalatest.Suite
+import org.scalatest.matchers.ShouldMatchers
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith

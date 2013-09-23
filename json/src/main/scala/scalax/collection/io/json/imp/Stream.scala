@@ -1,9 +1,10 @@
 package scalax.collection.io.json
 package imp
 
+import language.higherKinds
+
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge._
-
 import scalax.collection.edge._,
        scalax.collection.edge.WBase._,
        scalax.collection.edge.LBase._,
@@ -11,7 +12,6 @@ import scalax.collection.edge._,
        scalax.collection.edge.CBase._
 import scalax.collection.io._,
        scalax.collection.io.edge._
-
 
 import descriptor._
 import error.JsonGraphError._, error.JsonGraphWarning._
@@ -29,8 +29,8 @@ object Stream {
     val idMap = collection.mutable.Map.empty[String,N]
     val nodes: List[NodeInputStream[N]] =
       for (nodeList <- jsonLists collect { case n: NodeList => n };
-           val NodeList(typeId, jsonNodes) = nodeList; 
-           val nodeDescriptor = descriptor.nodeDescriptor(typeId).get) yield
+           NodeList(typeId, jsonNodes) = nodeList; 
+           nodeDescriptor = descriptor.nodeDescriptor(typeId).get) yield
       {
         new NodeInputStream[N] {
           val it =
@@ -38,14 +38,14 @@ object Stream {
               val node = nodeDescriptor.extract(jsonNode)
               val nodeId = nodeDescriptor.id(node)
               val nodeInMap = idMap get nodeId
-              if (nodeInMap isDefined) {
+              if (nodeInMap.isDefined) {
                 warn(DuplicateNodeId)
-                nodeInMap get
+                nodeInMap.get
               } else {
                 idMap += nodeId -> node
                 node
               }
-            }) iterator
+            }).iterator
           def hasNext = it.hasNext
           def next = it.next
         }
@@ -53,12 +53,12 @@ object Stream {
             type AEdge[X] = UnDiEdge[N] with Attributes[N] 
     val edges: List[GenEdgeInputStream[N,E]] =
       for (edgeList <- jsonLists collect { case e: EdgeList => e };
-           val EdgeList(typeId, edges) = edgeList; 
-           val edgeDescriptor = descriptor.edgeDescriptor(typeId).get) yield 
+           EdgeList(typeId, edges) = edgeList; 
+           edgeDescriptor = descriptor.edgeDescriptor(typeId).get) yield 
       {
         def lookupNode(nodeId: String): N = {
           val nodeInMap = idMap get nodeId
-          if (nodeInMap isDefined) nodeInMap.get
+          if (nodeInMap.isDefined) nodeInMap.get
           else                     throw err(UnknownNode, nodeId)
         }
         edgeDescriptor match {
@@ -72,7 +72,7 @@ object Stream {
               val it = 
                 (for (jsonEdge <- edgeList.view) yield {
                   params = d.extract(jsonEdge).asInstanceOf[WLEdgeParameters[L]]
-                }) iterator
+                }).iterator
               def nodes = (lookupNode(params.n1),
                            lookupNode(params.n2))
               def weight = params.weight
@@ -91,7 +91,7 @@ object Stream {
               val it = 
                 (for (jsonEdge <- edgeList.view) yield {
                   params = d.extract(jsonEdge).asInstanceOf[LEdgeParameters[L]]
-                }) iterator
+                }).iterator
               def nodes = (lookupNode(params.n1),
                            lookupNode(params.n2))
               def label = params.label
@@ -108,7 +108,7 @@ object Stream {
               val it = 
                 (for (jsonEdge <- edgeList.view) yield {
                   params = d.extract(jsonEdge)
-                }) iterator
+                }).iterator
               def nodes = (lookupNode(params.n1),
                            lookupNode(params.n2))
               def weight = params.weight
@@ -126,7 +126,7 @@ object Stream {
               val it = 
                 (for (jsonEdge <- edgeList.view) yield {
                   params = d.extract(jsonEdge).asInstanceOf[CEdgeParameters[P]]
-                }) iterator
+                }).iterator
               def nodes = (lookupNode(params.n1),
                            lookupNode(params.n2))
               def attributes = params.attributes
@@ -143,7 +143,7 @@ object Stream {
               val it = 
                 (for (jsonEdge <- edgeList.view) yield {
                   params = d.extract(jsonEdge)
-                }) iterator
+                }).iterator
               def nodes = (lookupNode(params.n1),
                            lookupNode(params.n2))
               def hasNext = it.hasNext
@@ -161,7 +161,7 @@ object Stream {
               val it = 
                 (for (jsonEdge <- edgeList.view) yield {
                   params = d.extract(jsonEdge).asInstanceOf[WLHyperEdgeParameters[L]]
-                }) iterator
+                }).iterator
               def nodes = params.nodeIds map lookupNode
               def weight = params.weight
               def label  = params.label
@@ -180,7 +180,7 @@ object Stream {
               val it = 
                 (for (jsonEdge <- edgeList.view) yield {
                   params = d.extract(jsonEdge).asInstanceOf[LHyperEdgeParameters[L]]
-                }) iterator
+                }).iterator
               def nodes = params.nodeIds map lookupNode
               def label  = params.label
               def hasNext = it.hasNext
@@ -197,7 +197,7 @@ object Stream {
               val it = 
                 (for (jsonEdge <- edgeList.view) yield {
                   params = d.extract(jsonEdge)
-                }) iterator
+                }).iterator
               def nodes = params.nodeIds map lookupNode
               def weight = params.weight
               def hasNext = it.hasNext
@@ -214,7 +214,7 @@ object Stream {
               val it = 
                 (for (jsonEdge <- edgeList.view) yield {
                   params = d.extract(jsonEdge).asInstanceOf[CHyperEdgeParameters[P]]
-                }) iterator
+                }).iterator
               def nodes = params.nodeIds map lookupNode
               def attributes = params.attributes
               def hasNext = it.hasNext
@@ -231,7 +231,7 @@ object Stream {
               val it = 
                 (for (jsonEdge <- edgeList.view) yield {
                   params = d.extract(jsonEdge)
-                }) iterator
+                }).iterator
               def nodes = params.nodeIds map lookupNode
               def hasNext = it.hasNext
               def next = { it.next; this }

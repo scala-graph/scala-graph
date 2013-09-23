@@ -1,5 +1,7 @@
 package scalax.collection.io
 
+import language.higherKinds
+
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge._,
        scalax.collection.{Graph, GraphLike}
@@ -37,9 +39,9 @@ package object json {
   import imp._, imp.Parser.parse, imp.Stream.createStreams
   import net.liftweb.json.JValue
   
-  final class JsonGraphCoreCompanion[+G[N, E[X] <: EdgeLikeIn[X]]
-                                        <: Graph[N,E] with GraphLike[N,E,G]]
-             (val companion: GraphCoreCompanion[G])
+  implicit final class JsonGraphCoreCompanion[+G[N, E[X] <: EdgeLikeIn[X]]
+                                              <: Graph[N,E] with GraphLike[N,E,G]]
+      (val companion: GraphCoreCompanion[G]) extends AnyVal
   {
     /**
      * Creates a new Graph instance and populates it with all nodes/edges found in
@@ -91,13 +93,9 @@ package object json {
                                  edges       = Seq.empty[E[N]])(edgeManifest, config)
     }
   }
-  /** Enables calling `Graph.fromJson` with `Graph` being any Graph companion object.*/
-  implicit def graphC2JsonGraphC[G[N, E[X] <: EdgeLikeIn[X]]
-                                   <: Graph[N,E] with GraphLike[N,E,G]]
-              (companion: GraphCoreCompanion[G]): JsonGraphCoreCompanion[G] =
-    new JsonGraphCoreCompanion[G](companion)
 
-  final class JsonGraph[N, E[X] <: EdgeLikeIn[X]] (graph: Graph[N,E]) {
+  implicit final class JsonGraph[N, E[X] <: EdgeLikeIn[X]]
+      (val graph: Graph[N,E]) extends AnyVal {
     /**
      * Creates a JSON text including all nodes/edges in this graph.
      * 
@@ -110,9 +108,6 @@ package object json {
       jsonText(jsonAST(jsonASTNodes ++ jsonASTEdges))
     }
   }
-  /** Enables calling `graph.toJson` with `graph` being a Graph instance.*/
-  implicit def graph2JsonGraph[N, E[X] <: EdgeLikeIn[X]] (graph: Graph[N,E]): JsonGraph[N,E] =
-    new JsonGraph[N,E](graph)
     
   /**
    * Replaces all occurrences of `paramPlaceholder` in source with the elements

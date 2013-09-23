@@ -1,9 +1,10 @@
 package scalax.collection.io.json
 package exp
 
-import net.liftweb.json._
-
+import language.higherKinds
 import collection.immutable.Iterable
+
+import net.liftweb.json._
 
 import error.JsonGraphError._, error.JsonGraphWarning._
 
@@ -24,9 +25,9 @@ class Export[N, E[X] <: EdgeLikeIn[X]] (graph:      Graph[N,E],
     }
     val classNodesMap = (for (n <- graph.nodes) yield n.value) groupBy (className(_))
     for (classNodes <- classNodesMap;
-         val descr = descriptor.nodeDescriptor(classNodes._2.head)) yield {
+         descr = descriptor.nodeDescriptor(classNodes._2.head)) yield {
       val jNodes = JArray(
-          (for (node <- classNodes._2) yield descr.decompose(node)) toList)
+          (for (node <- classNodes._2) yield descr.decompose(node)).toList)
       JField(
         descriptor.sectionIds.nodesId,
         if (descr eq descriptor.defaultNodeDescriptor) jNodes
@@ -41,7 +42,7 @@ class Export[N, E[X] <: EdgeLikeIn[X]] (graph:      Graph[N,E],
       descriptor.edgeDescriptor(classEdges._1) match {
         case d: EdgeDescriptorBase[N,E,_] =>
           val jEdges = JArray(
-              (for (edge <- classEdges._2) yield d.decompose(edge)) toList)
+              (for (edge <- classEdges._2) yield d.decompose(edge)).toList)
         JField(
           descriptor.sectionIds.edgesId,
           if (d eq descriptor.defaultEdgeDescriptor)
@@ -51,6 +52,6 @@ class Export[N, E[X] <: EdgeLikeIn[X]] (graph:      Graph[N,E],
         )
       }
   }
-  def jsonAST(parts: Iterable[JField]) = JObject(parts toList)
+  def jsonAST(parts: Iterable[JField]) = JObject(parts.toList)
   def jsonText(obj: JObject) = compact(render(obj))
 }

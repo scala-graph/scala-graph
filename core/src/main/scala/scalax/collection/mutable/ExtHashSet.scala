@@ -30,7 +30,7 @@ class ExtHashSet[A]
     }
     // must always find an element either upwards or downwards
     search(drawn, 1, (i: Int) => i < len)    getOrElse(
-    search(drawn - 1, -1, (i: Int) => i > 0) get)
+    search(drawn - 1, -1, (i: Int) => i > 0).get)
   }
   override def findEntry(elem: A): Option[A] = super.findEntry(elem)
   def findEntry[B](other: B, correspond: (A, B) => Boolean): A = {

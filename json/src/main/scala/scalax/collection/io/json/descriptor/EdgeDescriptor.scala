@@ -1,6 +1,9 @@
 package scalax.collection.io.json
 package descriptor
 
+import language.{existentials, higherKinds}
+import reflect.ClassTag
+
 import net.liftweb.json._
 
 import scalax.collection.GraphPredef._,
@@ -19,7 +22,7 @@ import serializer._
  * to be used as type argument to collections containing edge descriptors
  * of different types. */
 sealed abstract class GenEdgeDescriptor[N]
-                     (val edgeManifest:    ClassManifest[_],
+                     (val edgeManifest:    ClassTag[_],
                       override val typeId: String)
   extends TypeId(typeId)
 /** Base trait for any `class *EdgeDescriptor`.
@@ -49,7 +52,7 @@ sealed abstract class EdgeDescriptorBase[N,
     val customSerializer: Option[Serializer[_ <: Parameters]] = None,
     val extraClasses:     List[Class[_]] = Nil,
     typeId:               String)
-   (implicit edgeManifest: ClassManifest[E[N]])
+   (implicit edgeManifest: ClassTag[E[N]])
   extends GenEdgeDescriptor[N](edgeManifest, typeId)
 {
   implicit val formats = Serialization.formats(
@@ -80,7 +83,7 @@ class EdgeDescriptor[N,
       customSerializer: Option[Serializer[_ <: EdgeParameters]] = None,
       extraClasses:     List[Class[_]] = Nil,
       typeId:           String = Defaults.defaultId)
-     (implicit          edgeManifest:  ClassManifest[E[N]])
+     (implicit          edgeManifest:  ClassTag[E[N]])
   extends EdgeDescriptorBase[N,E,C](edgeCompanion, customSerializer, extraClasses, typeId)(
                                     edgeManifest)
 {
@@ -109,7 +112,7 @@ class WEdgeDescriptor[N,
       customSerializer: Option[Serializer[_ <: WEdgeParameters]] = None,
       extraClasses:     List[Class[_]] = Nil,
       typeId:           String = Defaults.defaultId)
-     (implicit          edgeManifest:  ClassManifest[E[N]])
+     (implicit          edgeManifest:  ClassTag[E[N]])
   extends EdgeDescriptorBase[N,E,C](edgeCompanion, customSerializer, extraClasses, typeId)(
                                     edgeManifest)
 {
@@ -142,7 +145,7 @@ class LEdgeDescriptor[N,
       customSerializer: Option[Serializer[_ <: LEdgeParameters[L]]] = None,
       extraClasses:     List[Class[_]] = Nil,
       typeId:           String = Defaults.defaultId)
-     (implicit edgeManifest:      ClassManifest[E[N]],
+     (implicit edgeManifest:      ClassTag[E[N]],
       implicit val labelManifest: Manifest[L])
   extends EdgeDescriptorBase[N,E,C](edgeCompanion, customSerializer, extraClasses, typeId)(
                                     edgeManifest)
@@ -176,7 +179,7 @@ class WLEdgeDescriptor[N,
       customSerializer: Option[Serializer[_ <: WLEdgeParameters[L]]] = None,
       extraClasses:     List[Class[_]] = Nil,
       typeId:           String = Defaults.defaultId)
-     (implicit edgeManifest:      ClassManifest[E[N]],
+     (implicit edgeManifest:      ClassTag[E[N]],
       implicit val labelManifest: Manifest[L])
   extends EdgeDescriptorBase[N,E,C](edgeCompanion, customSerializer, extraClasses, typeId)(
                                     edgeManifest)
@@ -211,7 +214,7 @@ class CEdgeDescriptor[N,
       customSerializer:     Option[Serializer[_ <: CEdgeParameters[P]]] = None,
       extraClasses:         List[Class[_]] = Nil,
       typeId:               String = Defaults.defaultId)
-     (implicit     edgeManifest:      ClassManifest[E[N]],
+     (implicit     edgeManifest:      ClassTag[E[N]],
       implicit val attributeManifest: Manifest[P])
   extends EdgeDescriptorBase[N,E,C](edgeCompanion, customSerializer, extraClasses, typeId)(
                                     edgeManifest)
@@ -242,7 +245,7 @@ class CEdgeDescriptor[N,
       customSerializer: Option[Serializer[_ <: HyperEdgeParameters]] = None,
       extraClasses:     List[Class[_]] = Nil,
       typeId:           String = Defaults.defaultId)
-     (implicit edgeManifest: ClassManifest[E[N]])
+     (implicit edgeManifest: ClassTag[E[N]])
   extends EdgeDescriptorBase[N,E,C](edgeCompanion, customSerializer, extraClasses, typeId)(
                                     edgeManifest)
 {
@@ -267,7 +270,7 @@ class CEdgeDescriptor[N,
       customSerializer: Option[Serializer[_ <: WHyperEdgeParameters]] = None,
       extraClasses:     List[Class[_]] = Nil,
       typeId:           String = Defaults.defaultId)
-     (implicit edgeManifest: ClassManifest[E[N]])
+     (implicit edgeManifest: ClassTag[E[N]])
   extends EdgeDescriptorBase[N,E,C](edgeCompanion, customSerializer, extraClasses, typeId)(
                                     edgeManifest)
 {
@@ -296,7 +299,7 @@ class CEdgeDescriptor[N,
       customSerializer: Option[Serializer[_ <: LHyperEdgeParameters[L]]] = None,
       extraClasses:     List[Class[_]] = Nil,
       typeId:           String = Defaults.defaultId)
-     (implicit edgeManifest:      ClassManifest[E[N]],
+     (implicit edgeManifest:      ClassTag[E[N]],
       implicit val labelManifest: Manifest[L])
   extends EdgeDescriptorBase[N,E,C](edgeCompanion, customSerializer, extraClasses, typeId)(
                                     edgeManifest)
@@ -326,7 +329,7 @@ class CEdgeDescriptor[N,
       customSerializer: Option[Serializer[_ <: WLHyperEdgeParameters[L]]] = None,
       extraClasses:     List[Class[_]] = Nil,
       typeId:           String = Defaults.defaultId)
-     (implicit edgeManifest:      ClassManifest[E[N]],
+     (implicit edgeManifest:      ClassTag[E[N]],
       implicit val labelManifest: Manifest[L])
   extends EdgeDescriptorBase[N,E,C](edgeCompanion, customSerializer, extraClasses, typeId)(
                                     edgeManifest)
@@ -357,7 +360,7 @@ class CHyperEdgeDescriptor[N,
       customSerializer:     Option[Serializer[_ <: CEdgeParameters[P]]] = None,
       extraClasses:         List[Class[_]] = Nil,
       typeId:               String = Defaults.defaultId)
-     (implicit     edgeManifest:      ClassManifest[E[N]],
+     (implicit     edgeManifest:      ClassTag[E[N]],
       implicit val attributeManifest: Manifest[P])
   extends EdgeDescriptorBase[N,E,C](edgeCompanion, customSerializer, extraClasses, typeId)(
                                     edgeManifest)

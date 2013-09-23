@@ -1,5 +1,6 @@
 package scalax.collection.constrained
 
+import scala.language.{higherKinds, postfixOps}
 import scala.collection.{Set, SetLike, GenTraversableOnce}
 import scala.collection.generic.CanBuildFrom
 

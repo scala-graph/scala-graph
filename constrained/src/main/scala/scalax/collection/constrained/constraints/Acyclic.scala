@@ -1,8 +1,9 @@
 package scalax.collection.constrained
 package constraints
 
-import scala.collection.Set
-import scala.collection.mutable.{Set => MutableSet}
+import language.{higherKinds, postfixOps}
+import collection.Set
+import collection.mutable.{Set => MutableSet}
 
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge._

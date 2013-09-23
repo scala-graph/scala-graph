@@ -1,6 +1,7 @@
 package custom
 
-import scala.collection.generic.CanBuildFrom
+import language.higherKinds
+import collection.generic.CanBuildFrom
 
 import scalax.collection._
 import scalax.collection.GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn} 
@@ -21,7 +22,7 @@ trait MyExtGraphLike[N,
                      +This[X, Y[X]<:EdgeLikeIn[X]]
                            <: MyExtGraphLike[X,Y,This] with Set[GraphParam[X,Y]] with Graph[X,Y]]
   extends GraphLike[N,E,This]
-{
+{ this: This[N,E] =>
   trait InnerNodeLike extends super.InnerNodeLike {
     this: NodeT =>
     def helloSuccessors = "Hello " + (sorted(diSuccessors) mkString ",") + "!"
@@ -31,7 +32,7 @@ trait MyExtGraphLike[N,
      * are in the same order as any expected test result.
      */
     protected def sorted(nodes: collection.Set[NodeT]) =
-      (nodes map (_.toString) toList).sorted
+      (nodes.map(_.toString).toList).sorted
   }
 }
 

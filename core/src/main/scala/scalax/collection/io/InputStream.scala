@@ -1,6 +1,8 @@
 package scalax.collection
 package io
 
+import language.higherKinds
+
 import GraphEdge._
 import edge.{CEdge, CHyperEdge}
 import edge. WBase.{    WEdge,  WHyperEdgeCompanion,  WHyperEdgeBound,  WEdgeCompanion,  WEdgeBound}

@@ -18,10 +18,6 @@ object GraphBuild extends Build {
     settings = defaultSettings ++ Seq(
       name      := "Graph Core",
       version   := Version.core
-    ) ++
-    ( if (Version.scala_2_9) Seq()
-      else Seq(
-        libraryDependencies ++= Seq("org.scala-lang" % "scala-actors"  % Version.compiler))
     )
   )
   lazy val constrained = Project(
@@ -45,12 +41,8 @@ object GraphBuild extends Build {
     base = file("json"),
     settings = defaultSettings ++ Seq(
       name      := "Graph JSON",
-      version   := Version.json
-    ) ++
-    ( if (Version.scala_2_9) Seq(
-        libraryDependencies ++= Seq("net.liftweb" % "lift-json_2.9.1" % "2.4"))
-      else Seq(
-        libraryDependencies ++= Seq("net.liftweb" % "lift-json_2.10" % "2.5-M4"))
+      version   := Version.json,
+      libraryDependencies ++= Seq("net.liftweb" % "lift-json_2.10" % "2.5.1")
     )
   ) dependsOn (core)
   lazy val misc = Project(
@@ -59,8 +51,7 @@ object GraphBuild extends Build {
     settings = defaultSettings ++ Seq(
       name      := "Graph Miscellaneous",
       version   := Version.misc,
-	  libraryDependencies ++= Seq(
-	    "ch.qos.logback" % "logback-classic" % "1.0.7"
+	  libraryDependencies ++= Seq("ch.qos.logback" % "logback-classic" % "1.0.7"
       )
     )
   ) dependsOn (core)
@@ -69,8 +60,6 @@ object GraphBuild extends Build {
     scalaVersion := Version.compiler,
     organization := "com.assembla.scala-incubator",
     parallelExecution in Test := false,
-    scalacOptions ++= Seq(Opts.compile.deprecation,
-                          Opts.compile.unchecked),
     scalacOptions in (Compile, doc) <++= (name, version) map {
       Opts.doc.title(_) ++ Opts.doc.version(_)
     },
@@ -84,9 +73,7 @@ object GraphBuild extends Build {
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     libraryDependencies ++= Seq(
       "junit" % "junit" % "4.8.2" % "test",
-      if (Version.scala_2_9)
-           "org.scalatest" %% "scalatest" % "1.8" % "test"
-      else "org.scalatest" %% "scalatest" % "1.9.1" % "test"
+      "org.scalatest" %% "scalatest" % "1.9.2" % "test"
     )
   ) ++ GraphSonatype.settings ++ (
     if (Version.compilerIsRC) Seq(

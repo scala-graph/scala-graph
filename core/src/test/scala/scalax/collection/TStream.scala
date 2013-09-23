@@ -1,10 +1,6 @@
 package scalax.collection
 
-import org.scalatest.Suite
-import org.scalatest.Suites
-import org.scalatest.Informer
-import org.scalatest.matchers.ShouldMatchers
-
+import language.{higherKinds, postfixOps}
 import collection.Set
 import collection.immutable.{Range, SortedSet}
 import collection.mutable.{Set => MutableSet}
@@ -14,6 +10,11 @@ import generic.GraphCoreCompanion
 
 import edge._, edge.WBase._, edge.LBase._, edge.WLBase._
 import io._
+
+import org.scalatest.Suite
+import org.scalatest.Suites
+import org.scalatest.Informer
+import org.scalatest.matchers.ShouldMatchers
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith

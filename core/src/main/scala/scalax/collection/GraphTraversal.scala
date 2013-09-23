@@ -1,6 +1,8 @@
 package scalax.collection
 
+import language.{higherKinds, postfixOps}
 import collection.mutable.ListBuffer
+
 import GraphPredef.{EdgeLikeIn, GraphParamOut, NodeOut, EdgeOut}
 
 /**

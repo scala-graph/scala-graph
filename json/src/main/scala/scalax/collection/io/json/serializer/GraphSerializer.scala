@@ -1,7 +1,10 @@
 package scalax.collection.io.json
 package serializer
 
+import language.higherKinds
+
 import net.liftweb.json._
+
 import scalax.collection.GraphPredef._
 import scalax.collection.Graph
 

@@ -1,5 +1,6 @@
 package scalax.collection
 
+import language.higherKinds
 import GraphPredef._, GraphEdge._, edge._, edge.Implicits._
 
 abstract class TGraph[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N,E]) {

@@ -1,14 +1,16 @@
 package custom.flight
 
-import org.scalatest.Suite
-import org.scalatest.Suites
-import org.scalatest.Informer
-import org.scalatest.matchers.ShouldMatchers
+import language.{higherKinds, postfixOps}
 
 import scalax.collection.{Graph, GraphLike}
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge._
 import scalax.collection.generic.GraphCompanion
+
+import org.scalatest.Suite
+import org.scalatest.Suites
+import org.scalatest.Informer
+import org.scalatest.matchers.ShouldMatchers
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -41,7 +43,8 @@ class TFlight[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     val outer = Flight(ham, gig, flightNo)
     val g = Graph(outer)
     val e  = g.edges.head
-    e.edge.nodes.productElement(0).asInstanceOf[AnyRef].isInstanceOf[g.NodeT] should be (true)
+    e.edge.nodes.productElement(0).asInstanceOf[AnyRef].getClass should be (
+        g.nodes.head.getClass)
     e.from     should be (ham)
     e.to       should be (gig)
     e.flightNo should be (flightNo)

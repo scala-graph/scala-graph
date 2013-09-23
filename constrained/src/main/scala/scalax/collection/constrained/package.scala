@@ -1,5 +1,7 @@
 package scalax.collection
 
+import language.{higherKinds, implicitConversions}
+
 import GraphPredef._, GraphEdge._
 
 /**
@@ -48,7 +50,7 @@ package object constrained {
   implicit def constraintToConfig
       (constraint: ConstraintCompanion[Constraint])
       (implicit adjacencyListHints: ArraySet.Hints = ArraySet.Hints()) =
-    ConstrainedConfig(adjacencyListHints, constraint)
+    Config(adjacencyListHints, constraint)
 
   /** Enables to quickly assemble immutable constrained graph companion modules. Example:
    *  {{{

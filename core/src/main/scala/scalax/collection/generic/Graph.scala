@@ -1,6 +1,7 @@
 package scalax.collection
 package generic
 
+import language.higherKinds
 import annotation.unchecked.uncheckedVariance
 import collection.mutable.{Builder, ListBuffer}
 import collection.generic.CanBuildFrom

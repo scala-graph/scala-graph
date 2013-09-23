@@ -1,6 +1,7 @@
 package scalax.collection.constrained
 package constraints
 
+import scala.language.{higherKinds, postfixOps}
 import scala.collection.Set
 
 import scalax.collection.GraphPredef._

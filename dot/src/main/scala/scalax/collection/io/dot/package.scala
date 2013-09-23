@@ -1,7 +1,9 @@
 package scalax.collection
 package io
 
+import language.higherKinds
 import mutable.{Graph => MGraph}
+
 import GraphPredef.EdgeLikeIn
 import GraphEdge.DiEdge
 

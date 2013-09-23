@@ -2,6 +2,8 @@ package scalax.collection
 
 import java.io._
 
+import language.higherKinds
+
 import org.scalatest.Suite
 import org.scalatest.Suites
 import org.scalatest.Informer
@@ -54,7 +56,7 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
     def test   [N, E[X] <: EdgeLikeIn[X]](g: CC[N,E]): CC[N,E] = {
       save[N,E](g)
       val r = restore[N,E]
-      r should be === (g)
+      r should be (g)
       r
     }
   }
@@ -83,7 +85,7 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
       } catch {
         case e: Exception => fail("Couldn't write: " + g, e)
       } finally
-        fos close
+        fos.close
     }
     def restore[N, E[X] <: EdgeLikeIn[X]] = {
       var fis: FileInputStream = null
@@ -93,7 +95,7 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
         val read = in.readObject
         read.asInstanceOf[CC[N,E]]
       } finally {
-        fis close
+        fis.close
       }
     }
   }
@@ -114,7 +116,7 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
       } catch {
         case e: Exception => println(e); fail("Couldn't write: " + g, e)
       } finally {
-        bos close
+        bos.close
       }
     }
     def restore[N, E[X] <: EdgeLikeIn[X]] = {
@@ -169,7 +171,7 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
       val out = new ObjectOutputStream(bos)
       out writeObject n1
       out writeObject label
-      bos close
+      bos.close
     }
 
     val g = factory(e)
@@ -188,7 +190,7 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
         : Iterable[GraphParamIn[N,E]] = {
       save[N,E](e)
       val r = restore[N,E]
-      r should be === (e)
+      r should be (e)
       r
     }
   }
@@ -200,7 +202,7 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
       val out = new ObjectOutputStream(bos)
       out writeObject e
       _saved = bos.toByteArray 
-      bos close
+      bos.close
     }
     def restore[N, E[X] <: EdgeLikeIn[X]] = {
       val bis = new ByteArrayInputStream(_saved) 

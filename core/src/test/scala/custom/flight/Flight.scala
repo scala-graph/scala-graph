@@ -1,5 +1,6 @@
 package custom.flight
 
+import language.implicitConversions
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge._
 

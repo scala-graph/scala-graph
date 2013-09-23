@@ -1,6 +1,8 @@
 package scalax.collection.constrained
 package constraints
 
+import scala.language.{higherKinds, postfixOps}
+
 import org.scalatest.{Suite, Suites}
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers

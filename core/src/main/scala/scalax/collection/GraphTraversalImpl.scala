@@ -1,5 +1,6 @@
 package scalax.collection
 
+import language.{higherKinds, implicitConversions}
 import annotation.tailrec
 import collection.mutable.{ArrayBuffer, ListBuffer, Queue, PriorityQueue, Stack,
                            Set => MutableSet, Map => MutableMap}
@@ -103,7 +104,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
                                 ordering   : ElemOrdering             = noOrdering): Option[Path] =
     {
       withHandle() { implicit visitedHandle => 
-        @inline def visited(n: NodeT) = n visited
+        @inline def visited(n: NodeT) = n.visited
   
         type NodeWeight    = (NodeT,Long)
         val dest      = MutableMap[NodeT,Long](this -> 0L)
@@ -344,7 +345,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       val stack: Stack[(NodeT, Int)] = Stack((root, 0))
       val path:  Stack[(NodeT, Int)] = Stack()
       val untilDepth: Int = if (maxDepth > 0) maxDepth else java.lang.Integer.MAX_VALUE
-      @inline def isVisited(n: NodeT): Boolean = n visited  
+      @inline def isVisited(n: NodeT): Boolean = n.visited  
       val extendedVisitor = nodeVisitor match {
         case e: ExtendedNodeVisitor => Some(e)
         case _ => None
@@ -431,7 +432,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         def onNodeDown(node: NodeT) { setGray (node) } 
         def onNodeUp  (node: NodeT) { setBlack(node) }
   
-        def isVisited (node: NodeT) = node visited
+        def isVisited (node: NodeT) = node.visited
         def nonVisited(node: NodeT) = ! isVisited(node)
         val extendedVisitor = nodeVisitor match {
           case e: ExtendedNodeVisitor => Some(e)
@@ -524,7 +525,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
               case _ => None
             }
           else None
-        @inline def visited(n: NodeT) = n visited  
+        @inline def visited(n: NodeT) = n.visited  
         @inline def visitAndCanceled(n: NodeT) = {
           n.visited = true
           doNodeVisitor && extendedVisitor.map{ v =>
@@ -592,9 +593,9 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
      */
     def firstEdge (from: NodeT, to: NodeT): EdgeT =
       if (isCustomEdgeFilter(edgeFilter))
-        from outgoingTo to filter edgeFilter head
+        from.outgoingTo(to).filter(edgeFilter).head
       else
-        from findOutgoingTo to get
+        from.findOutgoingTo(to).get
     /**
      * The edge with minimal weight having its tail at `from` and its head at `to`
      * and satisfying `navigation.edgeFilter`.
@@ -640,7 +641,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         (that.buf sameElements this.buf)
       case _ => false
     }
-    override def hashCode = buf ##  
+    override def hashCode = buf.##  
   }
   object PathBuffer
   {
@@ -680,7 +681,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
                         nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
                         edgeVisitor: (EdgeT) => Unit          = noEdgeAction) = {
       def isDependent(a: Cycle, b: Cycle) =
-        (a.nodes.toSet & b.nodes.toSet) nonEmpty
+        (a.nodes.toSet & b.nodes.toSet).nonEmpty
       val excluded = List.empty[EdgeT]
       for(e <- edges; exclude = excluded :+ e;
           n <- (e.edge filter (_ ne e.edge._1));

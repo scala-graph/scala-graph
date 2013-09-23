@@ -1,14 +1,17 @@
 package scalax.collection
 
-import org.scalatest.Suite
-import org.scalatest.Informer
-import org.scalatest.matchers.ShouldMatchers
-
+import language.postfixOps
 import collection.mutable.{ListBuffer, Map => MutableMap}
-import actors.{Future, Futures}, Futures._
+import concurrent.{future, Future, Await}
+import concurrent.ExecutionContext.Implicits._
+import concurrent.duration._
 
 import GraphPredef._, GraphEdge._
 import GraphTraversal.VisitorReturn._
+
+import org.scalatest.Suite
+import org.scalatest.Informer
+import org.scalatest.matchers.ShouldMatchers
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -71,14 +74,14 @@ class TStateTest extends Suite with ShouldMatchers {
     for(i <- 1 to 2) countNodesDeep(aLotOfTimes)
   }
   def test_Futures {
-    val traversals = for (i <- 1 to aLotOfTimes)
-                       yield future { countNodes() }
+    val traversals = Future.sequence(
+        for (i <- 1 to aLotOfTimes)
+        yield future { countNodes() }
+    )
     // statistics map with key = nrOfNodesCounted, value = frequency
-    val stat = MutableMap.empty[Int,Int] 
-    awaitAll(1000, traversals: _*) foreach { opt =>
-      opt.getOrElse(-1) match {
-        case cnt: Int => stat += cnt -> (stat.getOrElse(cnt, 0) + 1)
-      }
+    val stat = MutableMap.empty[Int,Int]
+    val a = Await.result(traversals, 1 seconds) foreach { cnt =>
+      stat += cnt -> (stat.getOrElse(cnt, 0) + 1)
     }
     // each traversal must yield the same result
     stat should be (Map(nrNodesExpected -> aLotOfTimes))

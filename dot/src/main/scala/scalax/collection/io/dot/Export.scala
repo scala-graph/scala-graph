@@ -1,8 +1,9 @@
 package scalax.collection
 package io.dot
 
-import scala.collection.mutable.{Map => MMap, Set => MSet, StringBuilder}
-import scala.util.matching.Regex
+import language.higherKinds
+import collection.mutable.{Map => MMap, Set => MSet, StringBuilder}
+import util.matching.Regex
 
 import mutable.{Graph => MGraph}
 import GraphPredef.EdgeLikeIn

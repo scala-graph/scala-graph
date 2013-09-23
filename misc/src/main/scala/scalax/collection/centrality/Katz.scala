@@ -1,9 +1,9 @@
 package scalax.collection.centrality
 
-//import scala.collection.mutable.
-import scala.math.{ceil, min}
+import language.higherKinds
+import math.{ceil, min}
 
-import scalax.collection.GraphPredef.{any2EdgeAssoc, EdgeLikeIn}
+import scalax.collection.GraphPredef._
 import scalax.collection.Graph
 
 /** Calculation of node centrality based on Katz centrality.

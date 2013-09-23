@@ -1,5 +1,7 @@
 package scalax.collection.edge
 
+import language.implicitConversions
+
 import scalax.collection.GraphEdge._
 
 object Implicits {

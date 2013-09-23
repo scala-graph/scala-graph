@@ -26,7 +26,8 @@ class TEdgeTest extends Suite with ShouldMatchers
     val outer = LkDiEdge(ham, gig)(Flight(flightNo))
     val g = Graph(outer)
     val e  = g.edges.head
-    e.edge.nodes.productElement(0).asInstanceOf[AnyRef].isInstanceOf[g.NodeT] should be (true)
+    e.edge.nodes.productElement(0).asInstanceOf[AnyRef].getClass should be (
+        g.nodes.head.getClass)
     e.from     should be (ham)
     e.to       should be (gig)
     e.flightNo should be (flightNo)

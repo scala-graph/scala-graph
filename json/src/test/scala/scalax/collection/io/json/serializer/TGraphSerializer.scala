@@ -1,18 +1,21 @@
 package scalax.collection.io.json
 package serializer
 
+import language.higherKinds
+
 import net.liftweb.json._
+
 import org.scalatest.{Suite, Suites}
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+
 import scalax.collection.GraphPredef._
 import scalax.collection._
 import scalax.collection.generic.GraphCoreCompanion
 import scalax.collection.edge._
 import scalax.collection.edge.Implicits._
 import scalax.collection.io.json.descriptor.StringNodeDescriptor
-import com.sun.org.apache.xerces.internal.impl.xs.traversers.Container
 
 @RunWith(classOf[JUnitRunner])
 class TGraphSerializerRootTest

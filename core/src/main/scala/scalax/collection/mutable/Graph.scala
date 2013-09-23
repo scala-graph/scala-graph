@@ -1,6 +1,7 @@
 package scalax.collection
 package mutable
 
+import language.{higherKinds, postfixOps}
 import collection.generic.{CanBuildFrom, Growable, Shrinkable}
 import collection.mutable.{Builder, Cloneable, ListBuffer, Set => MutableSet}
 
@@ -27,8 +28,8 @@ trait BuilderImpl [N,
     elem match {
       case n: NodeIn [N] => nodes.+=:(n.value)
       case n: NodeOut[N] => nodes.+=:(n.value)
-      case e: E[N]                 => edges.+=:(e)
-      case e: GraphBase[N,E]#EdgeT => edges.+=:(e.toEdgeIn)
+      case e: EdgeIn[N,E]      => edges.+=:(e.edge)
+      case e: EdgeOut[N,E,_,E] => edges.+=:(e.asEdgeTProjection[N,E].toEdgeIn)
     }
   }
   override def +=(elem: GraphParam[N,E]): this.type = {
@@ -69,7 +70,7 @@ trait GraphLike[N,
 	with	  Cloneable [Graph[N,E]]
   with    EdgeOps   [N,E,This]
   with    Mutable
-{
+{ this: This[N,E] =>
 	override def clone: This[N,E] =
     graphCompanion.from[N,E](nodes.toNodeInSet, edges.toEdgeInSet)
   /**
@@ -145,8 +146,8 @@ trait GraphLike[N,
     elem match {
       case n: NodeIn [N] => this += n.value	
       case n: NodeOut[N] => this += n.value
-      case e: E[N]                 => this +=# e
-      case e: GraphBase[N,E]#EdgeT => this +=# e.toEdgeIn
+      case e: EdgeIn[N,E]      => this +=# e.edge
+      case e: EdgeOut[N,E,_,E] => this +=# e.asEdgeTProjection[N,E].toEdgeIn
     }
 	@inline final def     - (node: N) = clone -= node
   @inline final def remove(node: N) = nodes find node exists (nodes remove _)
@@ -168,16 +169,15 @@ trait GraphLike[N,
     elem match {
       case n: NodeIn [N] => this -= n.value 
       case n: NodeOut[N] => this -= n.value
-      case e: E[N]                 => this -=# e
-      case e: GraphBase[N,E]#EdgeT => this -=# e.toEdgeIn
+      case e: EdgeIn[N,E]      => this -=# e.edge
+      case e: EdgeOut[N,E,_,E] => this -=# e.asEdgeTProjection[N,E].toEdgeIn
   	}
   def -!=(elem: GraphParam[N,E]): this.type =
     elem match {
       case n: NodeIn [N] => this  -= n.value 
-      case n: NodeT      => nodes -= n; this
       case n: NodeOut[N] => this  -= n.value
-      case e: E[N]                 => this -!=# e
-      case e: GraphBase[N,E]#EdgeT => this -!=# e.toEdgeIn
+      case e: EdgeIn[N,E]      => this -!=# e.edge
+      case e: EdgeOut[N,E,_,E] => this -!=# e.asEdgeTProjection[N,E].toEdgeIn
     }
   /**
    * Shrinks this graph to its intersection with `coll`.
@@ -189,11 +189,12 @@ trait GraphLike[N,
     val collSet = coll.toSet
     foreach { _ match {
       case n: NodeIn [N] => if(! collSet.contains(n)) this -= n 
-      case n: NodeT      => if(! collSet.contains(n.value)) this -= n.value
       case n: NodeOut[N] => if(! collSet.contains(n.value)) this -= n.value
-      case e: E[N]                 => if(! collSet.contains(e)) this -= e
-      case e: GraphBase[N,E]#EdgeT => val outer = e.toEdgeIn.asInstanceOf[GraphParamIn[N,E]]
-                                      if(! collSet.contains(outer)) this -= outer 
+      case e: EdgeIn[N,E]      => if(! collSet.contains(e)) this -= e
+      case e: EdgeOut[N,E,_,E] =>
+        val outer: GraphParamIn[N,E] = e.asEdgeTProjection[N,E].toEdgeIn.
+                                       asInstanceOf[EdgeIn[N,E]] // TODO
+        if(! collSet.contains(outer)) this -= outer 
     }}
     this.asInstanceOf[This[N,E]]
   }

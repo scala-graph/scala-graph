@@ -1,5 +1,7 @@
 package scalax.collection
 
+import language.{higherKinds, postfixOps}
+
 import GraphPredef.EdgeLikeIn
 import mutable.ExtBitSet
 
@@ -193,7 +195,7 @@ object State {
   /** Dumps the state flags of a `node`. */
   def dump[N, E[X] <: EdgeLikeIn[X]](node: Graph[N,E]#NodeT): ExtBitSet =
     node.containingGraph match {
-      case g: State[N,E] => node match {
+      case g: State[_,_] => node match {
         case n: g.InnerNodeLike with g.InnerNodeState => new ExtBitSet(n.dumpState)
       }
     }
@@ -204,6 +206,6 @@ object State {
   }
   /** Dumps the state flags of a `graph`. */
   def dump[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]): GraphDump = graph match {
-    case g: State[N,E] => new GraphDump(g.dumpInUse, g.dumpDirty)
+    case g: State[_,_] => new GraphDump(g.dumpInUse, g.dumpDirty)
   }
 }

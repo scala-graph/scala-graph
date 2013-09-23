@@ -1,10 +1,11 @@
 package scalax.collection
 
+import language.{higherKinds, implicitConversions}
 import collection.{Set, SortedSet, SortedMap}
 import collection.mutable.{Map => MutableMap}
 import util.Random
 
-import GraphPredef.{EdgeLikeIn, GraphParamNode, NodeIn, NodeOut, EdgeOut}
+import GraphPredef.{EdgeLikeIn, GraphParamNode, NodeIn, NodeOut, EdgeIn, EdgeOut}
 import GraphEdge.{EdgeLike, EdgeCompanionBase, DiHyperEdgeLike}
 import generic.AnyOrdering
 import mutable.ArraySet
@@ -306,7 +307,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     }
     def canEqual(that: Any) = true
     override def equals(other: Any) = other match {
-      case that: NodeT => 
+      case that: GraphBase[N,E]#InnerNodeLike => 
         (this eq that) || (that canEqual this) && (this.value == that.value)
       case thatN: N => 
         thatN match { case thatR: AnyRef => val thisN = this.value.asInstanceOf[AnyRef]  
@@ -461,7 +462,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      * 
      * @return those nodes of this edge which do not participate in any other edge 
      */
-    def privateNodes: Set[NodeT] = filter (_.edges.size == 1) toSet 
+    def privateNodes: Set[NodeT] = filter(_.edges.size == 1).toSet 
     /**
      * All connecting edges, that is all edges at any of the nodes incident with this edge.
      *
@@ -484,12 +485,12 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
       case unDi @ _                   => unDi.edge._2
     }
 
-    override def canEqual(that: Any) = that.isInstanceOf[GraphBase[N,E]#EdgeT] ||
+    override def canEqual(that: Any) = that.isInstanceOf[GraphBase[N,E]#InnerEdgeLike] ||
                                        that.isInstanceOf[EdgeLike[_]]
     override def equals(other: Any) = other match {
-      case that: GraphBase[N,E]#EdgeT => (this eq that) ||
-                         (this.edge eq that.edge) ||
-                         (this.edge == that.edge)
+      case that: GraphBase[N,E]#InnerEdgeLike => (this eq that) ||
+                                                 (this.edge eq that.edge) ||
+                                                 (this.edge == that.edge)
       case that: EdgeLike[_] => (this.edge eq that) ||
                                 (this.edge == that)
       case _ => false
@@ -503,7 +504,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
         case 3 => Tuple3(edge._1.value, edge._2.value, edge._n(2).value)
         case 4 => Tuple4(edge._1.value, edge._2.value, edge._n(2).value, edge._n(3).value)
         case 5 => Tuple5(edge._1.value, edge._2.value, edge._n(2).value, edge._n(3).value, edge._n(4).value)
-        case _ => edge map (n => n.value) toList 
+        case _ => edge.map(n => n.value).toList 
       } 
       edge.copy[N](newNs).asInstanceOf[E[N]]
     }
@@ -523,8 +524,8 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
       else existing
     }
     def mkNode(n: GraphParamNode[N]): NodeT = n match {
-      case ni: NodeIn[N] => mkNode(ni.value)
-      case no: NodeT     => no
+      case n: NodeIn[N]  => mkNode(n.value)
+      case n: NodeOut[N] => n.toNodeT[N,E,selfGraph.type](selfGraph)(n => mkNode(n.value))
     } 
     /**
      * Creates a new inner edge from the outer `edge` using its
@@ -535,7 +536,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
         case 3 => Tuple3(mkNode(edge._1), mkNode(edge._2), mkNode(edge._n(2)))
         case 4 => Tuple4(mkNode(edge._1), mkNode(edge._2), mkNode(edge._n(2)), mkNode(edge._n(3)))
         case 5 => Tuple5(mkNode(edge._1), mkNode(edge._2), mkNode(edge._n(2)), mkNode(edge._n(3)), mkNode(edge._n(4)))
-        case _ => edge map (n => mkNode(n)) toList 
+        case _ => edge.map(n => mkNode(n)).toList 
       }
       freshNodes.clear
       edge.copy[NodeT](newNodes).asInstanceOf[E[NodeT]]
@@ -549,7 +550,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
           case 1 => Tuple3(n_1, n_2, mkNode(nodes(0)))
           case 2 => Tuple4(n_1, n_2, mkNode(nodes(0)), mkNode(nodes(1)))
           case 3 => Tuple5(n_1, n_2, mkNode(nodes(0)), mkNode(nodes(1)), mkNode(nodes(2)))
-          case _ => (nodes map (n => mkNode(n)) toList).:::(List(n_1, n_2)) 
+          case _ => (nodes.map(n => mkNode(n)).toList).:::(List(n_1, n_2)) 
         }
       freshNodes.clear
       newNodes
@@ -628,9 +629,9 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
         case _ => throw new IllegalArgumentException
       } 
       other match {
-        case e: E[N]                 => find(e)
-        case e: GraphBase[N,E]#EdgeT => find(e.toEdgeIn)
-        case _                       => null.asInstanceOf[EdgeT]
+        case e: EdgeIn[N,E]      => find(e.edge)
+        case e: EdgeOut[N,E,_,E] => find(e.asEdgeT[N,E,selfGraph.type](selfGraph).toEdgeIn)
+        case _                   => null.asInstanceOf[EdgeT]
       }
     }
   }

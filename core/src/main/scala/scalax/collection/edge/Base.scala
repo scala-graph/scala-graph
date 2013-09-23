@@ -1,5 +1,8 @@
 package scalax.collection.edge
 
+import language.{higherKinds, implicitConversions}
+import reflect.ClassTag
+
 import scalax.collection.GraphEdge._,
        scalax.collection.GraphPredef._
 import scalax.collection.{GraphBase, Graph}
@@ -121,7 +124,7 @@ object LBase {
    * 
    * @tparam UL type of the user label.
    */
-  trait OuterLEdgeImplicits[UL] {
+  abstract class OuterLEdgeImplicits[UL: ClassTag] {
     /** Lets implicitly convert a labeled outer edge to its label:
       {{{ 
       case class MyLabel(val i: Int)
@@ -147,7 +150,20 @@ object LBase {
       is of the type `UL`.  
      */
     implicit def toUserLabel[N, E[X] <: LEdge[X]](label: E[N]#L1): UL =
-      label match { case ul: UL => ul }
+      try label.asInstanceOf[UL]
+      catch {
+        case e: ClassCastException => handle(label)
+      }
+
+    protected def handle(label: Any) = throw new IllegalArgumentException(
+      s"Expected label type: ${
+        implicitly[ClassTag[UL]].runtimeClass.getName
+      }, found: ${
+        label match {
+          case r: AnyRef => r.getClass.getName
+          case a         => a.toString
+        }
+      }.")
   }
   /** Implicit conversions from an inner or outer labeled edge to its label.
    *  In case of inner edges, this trait works for [[scalax.collection.Graph]] only.
@@ -155,7 +171,7 @@ object LBase {
    * 
    * @tparam UL type of the user label.
    */
-  trait LEdgeImplicits[UL]
+  abstract class LEdgeImplicits[UL: ClassTag]
       extends OuterLEdgeImplicits[UL] {
     /** Lets implicitly convert a labeled inner edge to its label:
       {{{ 
@@ -172,8 +188,9 @@ object LBase {
      */
     implicit def innerEdge2UserLabel[N, E[X] <: EdgeLikeIn[X]]
                                     (innerEdge: Graph[N,E]#EdgeT): UL =
-      innerEdge.edge match {
-        case contEdge: LEdge[N]{ type L1 = UL } => contEdge.label
+      try innerEdge.edge.label.asInstanceOf[UL]
+      catch {
+        case e: ClassCastException => handle(innerEdge)
       }
   }
   /** Implicit conversions from an inner or outer labeled edge to its label
@@ -182,7 +199,7 @@ object LBase {
    * @tparam G kind of type of graph.
    * @tparam UL type of the user label.
    */
-  trait TypedLEdgeImplicits[G[N, E[X] <: EdgeLikeIn[X]] <: GraphBase[N,E], UL]
+  abstract class TypedLEdgeImplicits[G[N, E[X] <: EdgeLikeIn[X]] <: GraphBase[N,E], UL: ClassTag]
       extends OuterLEdgeImplicits[UL] {
     /** Lets implicitly convert a labeled inner edge to its label:
       {{{
@@ -201,8 +218,9 @@ object LBase {
      */
     implicit def innerEdge2UserLabel[N, E[X] <: EdgeLikeIn[X]]
                                     (innerEdge: G[N,E]#EdgeT): UL = {
-      innerEdge.edge match {
-        case contEdge: LEdge[N]{ type L1 = UL } => contEdge.label
+      try innerEdge.edge.label.asInstanceOf[UL]
+      catch {
+        case e: ClassCastException => handle(innerEdge)
       }
     }
   }

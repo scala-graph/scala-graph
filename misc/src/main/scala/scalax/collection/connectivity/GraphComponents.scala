@@ -5,7 +5,7 @@ import scala.collection.{mutable, Set}
 import scala.math.min
 
 import scalax.collection.GraphEdge.DiEdge
-import scalax.collection.GraphPredef.{any2EdgeAssoc, EdgeLikeIn}
+import scalax.collection.GraphPredef._
 import scalax.collection.Graph
 
 import logging.Logging

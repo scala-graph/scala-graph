@@ -1,6 +1,7 @@
 package scalax.collection
 package immutable
 
+import language.higherKinds
 import collection.Set
 
 import GraphPredef.EdgeLikeIn

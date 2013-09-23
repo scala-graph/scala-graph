@@ -1,5 +1,7 @@
 package scalax.collection
 
+import language.{higherKinds, postfixOps}
+
 import org.scalatest.Suite
 import org.scalatest.Suites
 import org.scalatest.Informer
@@ -331,15 +333,15 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     restored.find(_ == n(1)).get.edges should have size (1)
 }
 	def test_Eq {
-		factory() should be === factory()
-		gInt_1_3	should be === factory(seq_1_3: _*)
-		gString_A	should be === factory("A")
+		factory() shouldEqual factory()
+		gInt_1_3	shouldEqual factory(seq_1_3: _*)
+		gString_A	shouldEqual factory("A")
 
-		factory()	should not be === (factory(1))
-		gInt_1_3	should not be === (factory(2, 3))
-		gString_A	should not be === (factory("B"))
+		factory()	should not be (factory(1))
+		gInt_1_3	should not be (factory(2, 3))
+		gString_A	should not be (factory("B"))
 
-		gInt_1_3	should be === (factory(1) + 3) 
+		gInt_1_3	should be (factory(1) + 3) 
 	}
 	def test_EdgeAssoc {
     val e = 1 ~ 2 

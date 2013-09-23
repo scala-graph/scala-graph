@@ -1,6 +1,9 @@
 package scalax.collection.io.json
 package descriptor
 
+import language.existentials
+import reflect.ClassTag
+
 import net.liftweb.json._
 
 import error.JsonGraphError._, error.JsonGraphWarning._
@@ -22,7 +25,7 @@ abstract class NodeDescriptor[+N]
               (override val typeId: String                     = Defaults.defaultId,
                customSerializers:   Traversable[Serializer[_]] = Nil,
                extraClasses:        List[Class[_]]             = Nil,
-               furtherManifests:    List[ClassManifest[_]]     = Nil)
+               furtherManifests:    List[ClassTag[_]]     = Nil)
               (implicit nodeManifest: Manifest[N])
   extends TypeId(typeId)
 {

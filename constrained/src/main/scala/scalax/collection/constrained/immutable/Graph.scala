@@ -1,8 +1,10 @@
 package scalax.collection.constrained
 package immutable
 
-import collection.{Set, Iterable}
-import collection.generic.CanBuildFrom
+import scala.language.{higherKinds, postfixOps}
+import scala.collection.{Set, Iterable}
+import scala.collection.generic.CanBuildFrom
+
 import scalax.collection.{Graph => CommonGraph}
 import scalax.collection.GraphEdge.{EdgeLike, EdgeCompanionBase}
 import scalax.collection.GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn}

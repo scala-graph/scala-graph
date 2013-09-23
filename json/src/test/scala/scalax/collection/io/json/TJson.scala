@@ -1,5 +1,7 @@
 package scalax.collection.io.json
 
+import language.higherKinds
+
 import org.scalatest.Suite
 import org.scalatest.Suites
 import org.scalatest.Informer
@@ -139,9 +141,9 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
                                  ("List(JField(v1,JString(Y)), JField(v2,JString(A)))")
           case _ => fail
         }
+        Unit
       case _ => fail
     }
-    lists
   }
   def test_importMixed {
     import FixtureMixed._

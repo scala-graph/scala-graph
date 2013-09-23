@@ -1,5 +1,7 @@
 package scalax.collection.io.json
 
+import language.higherKinds
+
 import org.scalatest.Suite
 import org.scalatest.Suites
 import org.scalatest.Informer

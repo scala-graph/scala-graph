@@ -1,5 +1,6 @@
 package scalax.collection
 
+import language.{higherKinds, postfixOps}
 import collection.{Set, SortedSet, SortedMap}
 import collection.mutable.{Set => MutableSet, Map => MutableMap}
 

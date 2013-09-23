@@ -1,6 +1,7 @@
 package scalax.collection
 package immutable
 
+import language.higherKinds
 import annotation.unchecked.uncheckedVariance
 
 import GraphPredef._
@@ -23,7 +24,7 @@ trait AdjacencyListBase[N,
                         <: GraphLike[X,Y,This] with Set[GraphParam[X,Y]] with SimpleGraph[X,Y]]
   extends GraphLike[N,E,This]
   with    GraphAux [N,E]
-{
+{ this: This[N,E] =>
   protected type Config <: GraphConfig with AdjacencyListArrayConfig
   
   @inline final protected
@@ -108,7 +109,7 @@ trait AdjacencyListBase[N,
             case 3 => Tuple3(thisNode, get(e._2), get(e._n(2)))
             case 4 => Tuple4(thisNode, get(e._2), get(e._n(2)), get(e._n(3)))
             case 5 => Tuple5(thisNode, get(e._2), get(e._n(2)), get(e._n(3)), get(e._n(4)))
-            case _ => e map (n => get(n)) toList 
+            case _ => e.map(n => get(n)).toList 
           }).asInstanceOf[E[NodeT]])
 
           thisNode.edges +=! thisEdge
@@ -138,7 +139,7 @@ trait AdjacencyListBase[N,
       coll.findEntry[N](elem, eq)
     }
     @inline final def contains(node: NodeT) = coll contains node
-    @inline final def iterator: Iterator[NodeT] = coll iterator
+    @inline final def iterator: Iterator[NodeT] = coll.iterator
     protected[collection] def +=(edge: EdgeT): this.type
   }
   def newNodeSet: NodeSetT

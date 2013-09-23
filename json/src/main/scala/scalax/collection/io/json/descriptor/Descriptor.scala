@@ -1,6 +1,9 @@
 package scalax.collection.io.json
 package descriptor
 
+import language.existentials
+import reflect.ClassTag
+
 import scalax.collection.GraphEdge._
 import scalax.collection.edge._,
        scalax.collection.edge.WBase._,
@@ -59,7 +62,7 @@ class Descriptor[N]
 {
   def requireUniqueTypeIds(descriptors: Iterable[TypeId]) {
     def duplicateTypeId =
-      (namedNodeDescriptors map (_.typeId) toList).sorted sliding 2 find
+      (namedNodeDescriptors.map(_.typeId).toList).sorted sliding 2 find
       (strings => if(strings.size == 2) strings.head == strings.tail else false)
     val duplNodeTypeId = duplicateTypeId
     require(duplNodeTypeId.isEmpty, "Duplicate typeId found: " + duplNodeTypeId.get.head)
@@ -77,16 +80,16 @@ class Descriptor[N]
     if (typeId == defaultId) Some(defaultEdgeDescriptor)
     else                     namedEdgeDescriptors find (_.typeId == typeId)
   
-  protected lazy val nodeDescriptorsByManifest: Map[ClassManifest[_],NodeDescriptor[N]] = {
-    val ret = collection.mutable.Map.empty[ClassManifest[_], NodeDescriptor[N]] 
+  protected lazy val nodeDescriptorsByManifest: Map[ClassTag[_],NodeDescriptor[N]] = {
+    val ret = collection.mutable.Map.empty[ClassTag[_], NodeDescriptor[N]] 
     for (descr <- nodeDescriptors;
-         val manifests = descr.manifests;
+         manifests = descr.manifests;
          m <- manifests)
       ret += (m -> descr) 
     ret.toMap
   }
-  protected final def classManifest(any: Any): ClassManifest[_] =
-    reflect.ClassManifest.fromClass( any match {
+  protected final def classManifest(any: Any): ClassTag[_] =
+    ClassTag( any match {
       case r: AnyRef => r.getClass
       case v         => v.asInstanceOf[AnyRef].getClass  
     })
@@ -96,18 +99,18 @@ class Descriptor[N]
       case r: AnyRef => Some(r.getClass)
       case _         => None
     }
-    if (clazz filter (_ == lastNodeDescriptor._1 ) isDefined)
+    if (clazz.filter(_ == lastNodeDescriptor._1 ).isDefined)
       lastNodeDescriptor._2
     else {
       val descr =
-        nodeDescriptorsByManifest.find(_._1.erasure == classManifest(node).erasure).
+        nodeDescriptorsByManifest.find(_._1.runtimeClass == classManifest(node).runtimeClass).
           flatMap(kv => Some(kv._2)) getOrElse (
-       (nodeDescriptorsByManifest find (_._1 <:< manifest)).
+       (nodeDescriptorsByManifest find (classTag => manifest.runtimeClass.isAssignableFrom(classTag._1.runtimeClass))).
           flatMap(kv => Some(kv._2)) getOrElse (
         throw err(NoNodeDescr,
                   clazz flatMap (c => Some(c.getName)) getOrElse ("AnyVal"))))
-      if (clazz isDefined)
-        lastNodeDescriptor = (clazz get, descr)
+      if (clazz.isDefined)
+        lastNodeDescriptor = (clazz.get, descr)
       descr
     }
   }
@@ -115,7 +118,7 @@ class Descriptor[N]
     val className = clazz.getName
     val classNameLength = className.length
     edgeDescriptors find { d =>
-      val dClassName = d.edgeManifest.erasure.getName
+      val dClassName = d.edgeManifest.runtimeClass.getName
       val dClassNameLength = dClassName.length
       dClassName == (if (dClassNameLength < classNameLength)
         className substring (0, dClassNameLength)
