@@ -161,6 +161,17 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      */
     def isValid: Boolean
   }
+  object Path {
+    /** A path of zero length that is a single node. */
+    def zero(node: NodeT) = new Path {
+      private[this] val _node = node
+      def iterator: Iterator[GraphParamOut[N,E]] = List(_node).iterator
+      override def length = 0
+      def startNode = _node
+      def endNode = _node
+      def isValid = true
+    }
+  }
   /**
    * Whether all nodes are pairwise adjacent.
    * 
@@ -483,8 +494,10 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      */
     @inline final
     def pathTo(potentialSuccessor: NodeT): Option[Path] =
-      pathUntil(_ eq potentialSuccessor,
-                anyNode, anyEdge, noNodeAction, noEdgeAction)
+      if (potentialSuccessor eq this) Some(Path.zero(this))
+      else
+        pathUntil(_ eq potentialSuccessor,
+                  anyNode, anyEdge, noNodeAction, noEdgeAction)
     /**
      * Finds a path from this node to `potentialSuccessor` $INTOACC.
      *
