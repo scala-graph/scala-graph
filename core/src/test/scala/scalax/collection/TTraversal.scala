@@ -12,6 +12,7 @@ import org.scalatest.Suite
 import org.scalatest.Suites
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.prop.PropertyChecks
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -23,6 +24,7 @@ class TTraversalRootTest
 			new TTraversal[  mutable.Graph](  mutable.Graph)
 		)
 	with ShouldMatchers
+	with PropertyChecks
 {
 }
 /**	This class contains tests for graph traversals to be run for Graph instances created
@@ -33,6 +35,7 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
 			(val factory: GraphCoreCompanion[CC])
 	extends	Suite
 	with	ShouldMatchers
+	with	PropertyChecks
 {
   def test_findSuccessor_tiny {
     val g = factory(1~>2)
@@ -555,5 +558,52 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     (g get root).traverseNodes(breadthFirst = false,
                                ordering     = edgeOrdering)(add)
     resultOrder should be (List(1,2,3,5,6,7,4) toArray)
+  }
+
+  def test_ShortestPathExistsIfPathExists {
+    import org.scalacheck._
+    import Arbitrary.arbitrary
+    import Gen._
+
+    val numEdges = 100
+    val nodeIdGen = Gen.choose(1, 20)
+
+    implicit val arbGraph: Arbitrary[Graph[Int, WDiEdge]] =
+      Arbitrary {
+        val nodeGen = for {
+          n1 <- nodeIdGen
+          n2 <- nodeIdGen
+          weight <- Gen.choose(1, 100)
+        } yield (n1 min n2) ~> (n1 max n2) % weight
+
+        val graphGen = for {
+          edges <- Gen.listOfN(numEdges, nodeGen)
+        } yield factory(edges: _*)
+
+        graphGen
+      }
+
+    def pathBetween(g: Graph[Int, WDiEdge], n1: Int, n2: Int) = for {
+      nodeT1 <- g.find(n1)
+      nodeT2 <- g.find(n2)
+      path <- nodeT1.pathTo(nodeT2)
+    } yield path
+
+    def shortestPathBetween(g: Graph[Int, WDiEdge], n1: Int, n2: Int) = for {
+      nodeT1 <- g.find(n1)
+      nodeT2 <- g.find(n2)
+      path <- nodeT1.shortestPathTo(nodeT2)
+    } yield path
+
+    forAll(arbitrary[Graph[Int, WDiEdge]], nodeIdGen, nodeIdGen) {
+      (g: Graph[Int, WDiEdge], n1: Int, n2: Int) =>
+        val lower = n1 min n2
+        val higher = n1 max n2
+
+        val path = pathBetween(g, lower, higher)
+        val shortestPath = shortestPathBetween(g, lower, higher)
+
+        path.isDefined should equal (shortestPath.isDefined)
+    }
   }
 }

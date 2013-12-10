@@ -177,8 +177,8 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
                 canceled = true
                 return
               }
-              rec(pq)
             }
+            rec(pq)
           }
         }
         rec(qNodes) 
