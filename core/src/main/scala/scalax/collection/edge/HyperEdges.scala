@@ -54,9 +54,9 @@ object WkHyperEdge extends WkHyperEdgeCompanion[WkHyperEdge] {
 }
 /** key-weighted directed hyperedge. */
 abstract class WkDiHyperEdge[N](nodes: Product, weight: Long)
-  extends WkHyperEdge [N](nodes, weight)
-  with    DiEdgeLike[N]
-  with    EdgeIn    [N,WkDiHyperEdge]
+  extends WkHyperEdge    [N](nodes, weight)
+  with    DiHyperEdgeLike[N]
+  with    EdgeIn         [N,WkDiHyperEdge]
 object WkDiHyperEdge extends WkHyperEdgeCompanion[WkDiHyperEdge] {
   @SerialVersionUID(876L) override
   def newEdge[N](nodes: Product, weight: Long) =
@@ -85,9 +85,9 @@ object LHyperEdge extends LHyperEdgeCompanion[LHyperEdge] {
 }
 /** Labeled directed hyperedge. */
 abstract class LDiHyperEdge[N](nodes: Product)
-  extends LHyperEdge[N](nodes) 
-  with    DiEdgeLike[N]
-  with    EdgeIn    [N,LDiHyperEdge]
+  extends LHyperEdge     [N](nodes) 
+  with    DiHyperEdgeLike[N]
+  with    EdgeIn         [N,LDiHyperEdge]
 object LDiHyperEdge extends LHyperEdgeCompanion[LDiHyperEdge] {
   @SerialVersionUID(873L) override
   def newEdge[N,L](nodes: Product, pLabel: L) =
@@ -154,9 +154,9 @@ object WLHyperEdge extends WLHyperEdgeCompanion[WLHyperEdge] {
 }
 /** weighted, labeled directed hyperedge. */
 abstract class WLDiHyperEdge[N](nodes: Product, weight: Long)
-  extends WLHyperEdge[N](nodes, weight) 
-  with    DiEdgeLike[N]
-  with    EdgeIn    [N,WLDiHyperEdge]
+  extends WLHyperEdge    [N](nodes, weight) 
+  with    DiHyperEdgeLike[N]
+  with    EdgeIn         [N,WLDiHyperEdge]
 object WLDiHyperEdge extends WLHyperEdgeCompanion[WLDiHyperEdge] {
   @SerialVersionUID(882L) override
   def newEdge[N,L](nodes: Product, weight: Long, pLabel: L) =
@@ -188,9 +188,9 @@ object WkLHyperEdge extends WkLHyperEdgeCompanion[WkLHyperEdge] {
 }
 /** key-weighted, labeled directed hyperedge. */
 abstract class WkLDiHyperEdge[N](nodes: Product, weight: Long)
-  extends WkLHyperEdge[N](nodes, weight) 
-  with    DiEdgeLike [N]
-  with    EdgeIn     [N,WkLDiHyperEdge]
+  extends WkLHyperEdge   [N](nodes, weight) 
+  with    DiHyperEdgeLike[N]
+  with    EdgeIn         [N,WkLDiHyperEdge]
 object WkLDiHyperEdge extends WkLHyperEdgeCompanion[WkLDiHyperEdge] {
   @SerialVersionUID(884L) override
   def newEdge[N,L](nodes: Product, weight: Long, pLabel: L) =
@@ -223,9 +223,9 @@ object WLkHyperEdge extends WLkHyperEdgeCompanion[WLkHyperEdge] {
 }
 /** weighted, key-labeled directed hyperedge. */
 abstract class WLkDiHyperEdge[N](nodes: Product, weight: Long)
-  extends WLkHyperEdge[N](nodes, weight) 
-  with    DiEdgeLike [N]
-  with    EdgeIn     [N,WLkDiHyperEdge]
+  extends WLkHyperEdge   [N](nodes, weight) 
+  with    DiHyperEdgeLike[N]
+  with    EdgeIn         [N,WLkDiHyperEdge]
 object WLkDiHyperEdge extends WLkHyperEdgeCompanion[WLkDiHyperEdge] {
   @SerialVersionUID(886L) override
   def newEdge[N,L](nodes: Product, weight: Long, pLabel: L) =
@@ -257,9 +257,9 @@ object WkLkHyperEdge extends WkLkHyperEdgeCompanion[WkLkHyperEdge] {
 }
 /** key-weighted, key-labeled directed hyperedge. */
 abstract class WkLkDiHyperEdge[N](nodes: Product, weight: Long)
-  extends WkLkHyperEdge[N](nodes, weight) 
-  with    DiEdgeLike  [N]
-  with    EdgeIn      [N,WkLkDiHyperEdge]
+  extends WkLkHyperEdge  [N](nodes, weight) 
+  with    DiHyperEdgeLike[N]
+  with    EdgeIn         [N,WkLkDiHyperEdge]
 object WkLkDiHyperEdge extends WkLkHyperEdgeCompanion[WkLkDiHyperEdge] {
   @SerialVersionUID(888L) override
   def newEdge[N,L](nodes: Product, weight: Long, pLabel: L) =

@@ -2,7 +2,6 @@ package scalax.collection
 
 import language.{higherKinds, implicitConversions}
 import collection.{Set, SortedSet, SortedMap}
-import collection.mutable.{Map => MutableMap}
 import util.Random
 
 import GraphPredef.{EdgeLikeIn, GraphParamNode, NodeIn, NodeOut, EdgeIn, EdgeOut}
@@ -108,8 +107,8 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      * @return `true` if `that` node is independent of this node.
      */
     def isIndependentOf(that: NodeT): Boolean =
-      if (this eq that) edges forall (e => (e count (_ eq that)) <= 1)
-      else              edges forall (_ forall (_ ne that))
+      if (this eq that) edges forall (_.nonLooping)
+      else              edges forall (! _.isAt((_: NodeT) ne that))
     /**
      * All direct successors of this node, also called ''successor set'' or
      * ''open out-neighborhood'': target nodes of directed incident edges and / or
@@ -127,12 +126,11 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     /** Synonym for `diSuccessors`. */
     @inline final def ~>| = diSuccessors 
     protected[collection] def addDiSuccessors(edge: EdgeT,
-                                              add: (NodeT) => Unit) {
-      (if (edge.directed)
-         if (edge.arity == 2) List(edge._2)
-         else                 edge dropWhile (_ ne this) dropWhile (_ eq this)
-       else edge
-      ) foreach (n => if (n ne this) add(n))
+                                              add: (NodeT) => Unit): Unit = {
+      val filter =
+        if (edge.isHyperEdge && edge.directed) edge.hasSource((_: NodeT) eq this)
+        else true
+      edge withTargets (n => if ((n ne this) && filter) add(n))
     }
     /**
      * All direct predecessors of this node, also called ''predecessor set'' or
@@ -152,11 +150,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     @inline final def <~| = diPredecessors 
     protected[collection] def addDiPredecessors(edge: EdgeT,
                                                 add: (NodeT) => Unit) {
-      (if (edge.directed)
-         if (edge.arity == 2) List(edge._1)
-         else                 edge.toList.reverse dropWhile (_ ne this) dropWhile (_ eq this)
-       else edge
-      ) foreach (n => if (n ne this) add(n))
+      edge withSources (n => if (n ne this) add(n))
     }
     /**
      * All adjacent nodes (direct successors and predecessors) of this node,
@@ -182,11 +176,16 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         including undirected edges and hooks.  
      */
     def outgoing: Set[EdgeT] = edges filter (e =>
-      if (e.directed) e.dropRight(1) exists (_ eq this)
+      if (e.directed) e.hasSource((_: NodeT) eq this)
       else true
     )
     /** Synonym for `outgoing`. */
-    @inline final def ~> = outgoing 
+    @inline final def ~> = outgoing
+
+    @inline private[this] def isOutgoingTo(e: EdgeT, to: NodeT): Boolean =
+      (e.hasTarget((_: NodeT) eq to)) &&
+      (if (e.isHyperEdge) e.hasSource((_: NodeT) eq this)
+       else true)
     /**
      * All outgoing edges connecting this node with `to`.
      *
@@ -195,13 +194,11 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         If `to` equals this node all hooks are returned.
      *         If `to` is not an adjacent an empty set is returned.   
      */
-    def outgoingTo(to: NodeT): Set[EdgeT] =
-      if (to eq this)
-        outgoing filter (e => (e count (n => n eq this)) >= 2) // hooks
-      else
-        outgoing filter (e => e contains to) 
+    def outgoingTo(to: NodeT): Set[EdgeT] = edges filter (isOutgoingTo(_, to))
+
     /** Synonym for `outgoingTo`. */
-    @inline final def ~>(to: NodeT) = outgoingTo(to) 
+    @inline final def ~>(to: NodeT) = outgoingTo(to)
+    
     /**
      * An outgoing edge connecting this node with `to`.
      *
@@ -210,12 +207,9 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         If `to` equals this node a hook may be returned.
      *         If `to` is not an adjacent node `None` is returned.   
      */
-    def findOutgoingTo(to: NodeT): Option[EdgeT] =
-      if (to eq this)
-        outgoing find (e => (e count (n => n eq this)) >= 2) // a hook
-      else
-        outgoing find (e => e contains to) 
-    /** Synonym for `outgoingTo`. */
+    def findOutgoingTo(to: NodeT): Option[EdgeT] = edges find (isOutgoingTo(_, to))
+
+    /** Synonym for `findOutgoingTo`. */
     @inline final def ~>?(to: NodeT) = findOutgoingTo(to) 
     /**
      * Incoming edges of this node.
@@ -223,11 +217,16 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      * @return set of all edges incoming to of this including undirected edges.  
      */
     def incoming: Set[EdgeT] = edges filter (e =>
-      if (e.directed) e.drop(1) exists (_ eq this)
+      if (e.directed) e.hasTarget((_: NodeT) eq this)
       else true
     )
     /** Synonym for `incoming`. */
-    @inline final def <~ = incoming 
+    @inline final def <~ = incoming
+
+    @inline private[this] def isIncomingFrom(e: EdgeT, from: NodeT): Boolean =
+      (e.hasSource((_: NodeT) eq from)) &&
+      (if (e.isHyperEdge) e.hasTarget((_: NodeT) eq this)
+       else true)
     /**
      * All incoming edges connecting `from` with this node.
      *
@@ -237,11 +236,8 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         If `from` equals this node all hooks are returned.
      *         If `from` is not an adjacent node an empty set is returned.   
      */
-    def incomingFrom(from: NodeT): Set[EdgeT] =
-      if (from eq this)
-        incoming filter (e => (e count (n => n eq this)) >= 2) // hooks
-      else
-        incoming filter (e => e contains from) 
+    def incomingFrom(from: NodeT): Set[EdgeT] = edges filter (isIncomingFrom(_, from))
+
     /** Synonym for `incomingFrom`. */
     @inline final def <~(from: NodeT) = incomingFrom(from) 
     /**
@@ -253,18 +249,17 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         If `from` equals this node a hook may be returned.
      *         If `from` is not an adjacent node `None` is returned.   
      */
-    def findIncomingFrom(from: NodeT): Option[EdgeT] =
-      if (from eq this)
-        incoming find (e => (e count (n => n eq this)) >= 2) // a hook
-      else
-        incoming find (e => e contains from) 
+    def findIncomingFrom(from: NodeT): Option[EdgeT] = edges find (isIncomingFrom(_, from))
+
     /** Synonym for `findIncomingFrom`. */
-    @inline final def <~?(from: NodeT) = findIncomingFrom(from) 
+    @inline final def <~?(from: NodeT) = findIncomingFrom(from)
+
     /**
      * The degree of this node.
      *
-     * @return the number of edges that connect to this node. An edge that connects to this node
-     *         at more than one ends (loop) is counted as much times as it is connected to this node.
+     * @return the number of edges that connect to this node. An edge that connects
+     *         to this node at more than one ends (loop) is counted as much times as
+     *         it is connected to this node.
      */
     def degree: Int = {
       var cnt: Int = 0
@@ -284,12 +279,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         Every loop on this node is counted twice. 
      */
     def outDegree: Int = {
-      var cnt: Int = 0
-      outgoing foreach {
-        e => if (e.directed) cnt += (e.dropRight(1) count (_ eq this))
-             else            cnt += (e              count (_ eq this))
-      }
-      cnt
+      edges count (_.hasSource((n: NodeT) => n eq this))
     }
     /**
      * The incoming degree of this node.
@@ -298,12 +288,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         Every loop on this node is counted twice. 
      */
     def inDegree: Int = {
-      var cnt: Int = 0
-      incoming foreach { e =>
-        if (e.directed) cnt += (e.drop(1) count (_ eq this))
-        else            cnt += (e         count (_ eq this))
-      }
-      cnt
+      edges count (_.hasTarget((n: NodeT) => n eq this))
     }
     def canEqual(that: Any) = true
     override def equals(other: Any) = other match {
@@ -430,9 +415,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
         (n.value.toString + ": " + 
         ((for (a <- n.diSuccessors) yield a.value) mkString ","))) mkString "\n"
     }
-    @inline final def draw(random: Random) = nodes draw random
-    @inline final def findEntry[B](other: B, correspond: (NodeT, B) => Boolean) =
-      nodes findEntry (other, correspond)
+    def draw(random: Random): NodeT
   }
   /**
    * The node (vertex) set of this `Graph` commonly referred to as V(G).
@@ -513,7 +496,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     def apply(innerEdge: E[NodeT]) = newEdge(innerEdge)
     def unapply(e: EdgeT) = Some(e)
 
-    protected var freshNodes = MutableMap[N,NodeT]()
+    protected var freshNodes = Map[N,NodeT]()
     protected def mkNode(n: N): NodeT = {
       val existing = nodes lookup n
       if (null == existing)
@@ -538,7 +521,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
         case 5 => Tuple5(mkNode(edge._1), mkNode(edge._2), mkNode(edge._n(2)), mkNode(edge._n(3)), mkNode(edge._n(4)))
         case _ => edge.map(n => mkNode(n)).toList 
       }
-      freshNodes.clear
+      freshNodes = Map.empty[N,NodeT]
       edge.copy[NodeT](newNodes).asInstanceOf[E[NodeT]]
     }
     def mkNodes(node_1: N, node_2: N, nodes:  N *): Product =
@@ -552,7 +535,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
           case 3 => Tuple5(n_1, n_2, mkNode(nodes(0)), mkNode(nodes(1)), mkNode(nodes(2)))
           case _ => (nodes.map(n => mkNode(n)).toList).:::(List(n_1, n_2)) 
         }
-      freshNodes.clear
+      freshNodes = Map.empty[N,NodeT]
       newNodes
     }
     @inline final implicit def innerEdgeToEdgeCont(edge: EdgeT): E[NodeT] = edge.edge

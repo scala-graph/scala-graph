@@ -1,6 +1,8 @@
 package scalax.collection
 
 import language.{higherKinds, postfixOps}
+import scala.annotation.switch
+import scala.collection.mutable.Set
 
 import GraphPredef.{NodeOut, EdgeIn}
 import edge.LBase.LEdge
@@ -24,10 +26,12 @@ object GraphEdge {
    * @author Peter Empen
    * @define CalledByValidate This function is called on every edge-instantiation
    *         by `validate` that throws EdgeException if this method returns `false`.
-   * @define SHORTCUT Allows to replace the edge object with it's shortcut like 
+   * @define SHORTCUT Allows to replace the edge object with it's shortcut like
+   * @define ISAT In case this edge is undirected this method maps to `isAt`
+   * @defBYEQ the check is made by means of `eq` 
    */
-  trait EdgeLike[+N] extends Iterable[N] with Serializable
-  {  
+  sealed trait EdgeLike[+N] extends Iterable[N] with Eq with Serializable
+  {
     /** The end nodes joined by this edge.
      * 
      * Nodes will typically be represented by Tuples. Alternatively subclasses of `Iterable`
@@ -37,10 +41,7 @@ object GraphEdge {
     def nodes: Product
     /** Iterator for the nodes (end-points) of this edge.
      */
-    def iterator: Iterator[N] = nodes match {
-      case i: Iterable[N] => i.iterator
-      case p: Product   => p.productIterator.asInstanceOf[Iterator[N]] 
-    }
+    def iterator: Iterator[N]
     /** Sequence of the end points of this edge.
      */
     def nodeSeq: Seq[N] = iterator.toSeq
@@ -113,9 +114,6 @@ object GraphEdge {
       if (! isValidCustom)
           throw new EdgeException(isValidCustomExceptionMessage)
     }
-    def contains[X >: Nothing](node: X) = iterator contains node
-    /** Same as `contains`. */
-    @inline final def isAt[X >: Nothing](node: X) = this contains node
     /** `true` it this edge is directed. */
     def directed = false
     /** Same as `directed`. */
@@ -137,7 +135,7 @@ object GraphEdge {
      */
     def isLooping = if (arity == 2) _1 == _2
                     else if (directed) iterator.drop(1) exists (_ == _1)
-                    else EdgeLike.nrEqualingNodes(this, this) > 0
+                    else (Set() ++= iterator).size < arity
     /** Same as `! looping`. */                
     final def nonLooping = ! isLooping 
     /**
@@ -176,38 +174,44 @@ object GraphEdge {
     /** `true` if this edge is labeled. See also `label`. */
     def isLabeled = this.isInstanceOf[LEdge[N]]
 
+    /** Same as `isAt`. */
+    @inline final def contains[M>:N](node: M): Boolean = isAt(node)
+
+    /** `true` if `node` is incident with this edge. */
+    def isAt[M>:N](node: M): Boolean
+    /** `true` if any end of this edge fulfills `pred`. */
+    def isAt[M>:N](pred: N => Boolean): Boolean
+    
+    /** `true` if `node` is a source of this edge. $ISAT. */
+    def hasSource[M>:N](node: M): Boolean
+    /** `true` if any source end of this edge fulfills `pred`. */
+    def hasSource[M>:N](pred: N => Boolean): Boolean
+
+    /** `true` if `node` is a target of this edge. $ISAT. */
+    def hasTarget[M>:N](node: M): Boolean
+    /** `true` if any target end of this edge fulfills `pred`. */
+    def hasTarget[M>:N](pred: N => Boolean): Boolean
+    
+    /** Applies `f` to the source end resp. to all source ends of this edge. */
+    def withSources(f: N => Unit): Unit
+    /** Applies `f` to the target end resp. to all target ends of this edge. */
+    def withTargets(f: N => Unit): Unit
+
     override def canEqual(that: Any) = that.isInstanceOf[EdgeLike[_]]
     override def equals(other: Any) = other match {
       case that: EdgeLike[_] => 
         (this eq that) ||
         (that canEqual this) &&
-        (that.undirected == this.undirected) &&
-        (this.nodes == that.nodes ||
-         undirected && nodesEqual(that))
+        (this.directed == that.directed) &&
+        equals(that) 
       case _ => false
     }
     /**
-     * called by equals if nodes are formally not equal but may still
-     * functionally be equal due to being undirected, e. g. (1, 2) and (2, 1)
-     * will be equal
+     * Precondition: this.directed == that.directed.
      */
-    protected def nodesEqual[E <: EdgeLike[_]](that: E) = {
-      var isEq = false
-      var done = false
-      this.nodes match { case Tuple2(aa, ab) =>
-      that.nodes match { case Tuple2(ba, bb) => isEq = aa == bb && ab == ba
-                              done = true
-                         case _ => } 
-                         case _ => } 
-      if (! done)  
-        if (this.arity == that.arity) {
-        isEq = EdgeLike.nrEqualingNodes(this, this) ==
-               EdgeLike.nrEqualingNodes(this, that)
-      }
-      isEq
-    }
-  
-    override def hashCode = iterator map (_.##) sum  
+    protected def equals(other: EdgeLike[_]): Boolean = baseEquals(other)
+    
+    override def hashCode: Int = baseHashCode
   
     final protected def thisSimpleClassName = try {
       this.getClass.getSimpleName
@@ -250,7 +254,6 @@ object GraphEdge {
      * which itself contains the outer node. 
      */
     protected[collection] def copy[NN](newNodes: Product): CC[NN]
-    // TODO pick-up instanceOf assertions of the elements of newNode 
   }
   object EdgeLike {
     /**
@@ -262,9 +265,8 @@ object GraphEdge {
     final def nrEqualingNodes(edgeA: EdgeLike[_], edgeB: EdgeLike[_]): Int = {
       var nr = 0
       for (a <- edgeA.iterator; b <- edgeB.iterator)
-        if (a == b)
-          nr += 1
-          nr
+        if (a == b) nr += 1
+      nr
     }
     val nodeSeparator = "~" 
     protected case class Brackets(val left: Char, val right: Char)
@@ -294,6 +296,61 @@ object GraphEdge {
         apply(nodes.head, nodesTail.head, nodesTail.tail.toSeq: _*)
       }
   }
+  protected[collection] sealed trait Eq {
+    protected def baseEquals(other: EdgeLike[_]): Boolean
+    protected def baseHashCode: Int
+  }
+  protected[collection] trait EqHyper extends Eq {
+    this: EdgeLike[_] =>
+
+    override protected def baseEquals(other: EdgeLike[_]) =
+      this.arity == other.arity &&
+      this.arity == EdgeLike.nrEqualingNodes(this, other)
+
+    override protected def baseHashCode: Int = (0 /: iterator)(_ ^ _.hashCode)
+  }
+  protected[collection] trait EqDiHyper extends Eq {
+    this: DiHyperEdgeLike[_] =>
+
+    override protected def baseEquals(other: EdgeLike[_]) = (arity: @switch) match {
+      case 2 => other.arity == 2 &&
+                this._1 == other._1 &&
+                this._2 == other._2
+      case a => other.arity == a && 
+               (other match {
+                  case diHyper: DiHyperEdge[_] =>
+                    this.source == diHyper.source &&
+                    EdgeLike.nrEqualingNodes(this, other) == a
+                  case _ => throw new IllegalArgumentException("Unexpected edge type.")
+                })
+    }
+    
+    override protected def baseHashCode = {
+      var m = 4
+      def mul(i: Int): Int = { m += 3; m * i }
+      (0 /: iterator)((s: Int, n: Any) => s ^ mul(n.hashCode))
+    }
+  }
+  protected[collection] trait EqUnDi extends Eq {
+    this: EdgeLike[_] =>
+
+    override protected def baseEquals(other: EdgeLike[_]) =
+      other.arity == 2 &&
+      (this._1 == other._1 && this._2 == other._2 ||
+       this._1 == other._2 && this._2 == other._1)
+
+    override protected def baseHashCode = (_1 ##) ^ (_2 ##)
+  }
+  protected[collection] trait EqDi extends Eq {
+    this: DiEdgeLike[_] =>
+
+    final protected override def baseEquals(other: EdgeLike[_]) =
+      other.arity == 2 &&
+      this._1 == other._1 &&
+      this._2 == other._2
+
+    override protected def baseHashCode = (23 * (_1 ##)) ^ (_2 ##)
+  }
   /**
    * Template trait for directed edges.
    * 
@@ -301,7 +358,9 @@ object GraphEdge {
    * 
    * @author Peter Empen
    */
-  trait DiHyperEdgeLike[+N] extends EdgeLike[N]
+  trait DiHyperEdgeLike[+N]
+      extends EdgeLike[N]
+      with    EqDiHyper
   {
     @inline final override def directed = true
     /**
@@ -329,14 +388,35 @@ object GraphEdge {
      * @return the target (end) node.
      */
     @inline final def target = to
+
+    override def hasSource[M>:N](node: M) = this._1 == node
+    override def hasSource[M>:N](pred: N => Boolean) = pred(this._1)
+
+    override def hasTarget[M>:N](node: M) = (iterator drop 1) contains node
+    override def hasTarget[M>:N](pred: N => Boolean) = (iterator drop 1) exists pred
+
+    override def withSources(f: N => Unit) = f(this._1)
+    override def withTargets(f: N => Unit) = (iterator drop 1) foreach f
+
     override protected def nodesToStringSeparator = DiEdgeLike.nodeSeparator
   }
   object DiEdgeLike {
     val nodeSeparator = "~>" 
     def unapply[N](e: DiEdgeLike[N]) = Some(e)
   }
-  trait DiEdgeLike[+N] extends DiHyperEdgeLike[N] {
+  trait DiEdgeLike[+N]
+      extends DiHyperEdgeLike[N]
+      with    EqDi {
     @inline final override def to = _2
+
+    final override def hasSource[M>:N](node: M) = this._1 == node
+    final override def hasSource[M>:N](pred: N => Boolean) = pred(this._1)
+
+    final override def hasTarget[M>:N](node: M) = this._2 == node
+    final override def hasTarget[M>:N](pred: N => Boolean) = pred(this._2)
+
+    final override def withSources(f: N => Unit) = f(this._1)
+    final override def withTargets(f: N => Unit) = f(this._2)
   }
   case class EdgeException(val msg: String) extends Exception
   
@@ -381,7 +461,7 @@ object GraphEdge {
     override protected def isValidCustom = {
       super.isValidCustom
       if (arity == 2) _1 != _2
-      else EdgeLike.nrEqualingNodes(this, this) == 0
+      else nonLooping
     }
     override protected def isValidCustomExceptionMessage = "No loop is allowed: " + toString
   }
@@ -423,11 +503,32 @@ object GraphEdge {
     extends EdgeLike[N]
     with    EdgeCopy[HyperEdge]
     with    EdgeIn[N,HyperEdge]
+    with    EqHyper
   {
     validate
-    protected def isValidArity(size: Int) = size >= 2 
+    protected def isValidArity(size: Int) = size >= 2
+
     override protected[collection]
     def copy[NN](newNodes: Product) = new HyperEdge[NN](newNodes)
+
+    /** Iterator for the nodes (end-points) of this edge.
+     */
+    def iterator: Iterator[N] = nodes match {
+      case i: Iterable[N] => i.iterator
+      case p: Product   => p.productIterator.asInstanceOf[Iterator[N]] 
+    }
+
+    override def isAt[M>:N](node: M) = iterator contains node
+    override def isAt[M>:N](pred: N => Boolean) = iterator exists pred
+    
+    override def hasSource[M>:N](node: M) = isAt(node)
+    override def hasSource[M>:N](pred: N => Boolean) = isAt(pred)
+
+    override def hasTarget[M>:N](node: M) = isAt(node)
+    override def hasTarget[M>:N](pred: N => Boolean) = isAt(pred)
+
+    override def withSources(f: N => Unit) = iterator foreach f
+    override def withTargets(f: N => Unit) = withSources(f)
   }
   /**
    * Factory for undirected hyper-edges.
@@ -494,11 +595,33 @@ object GraphEdge {
     extends HyperEdge[N](nodes)
     with    EdgeCopy[UnDiEdge]
     with    EdgeIn[N,UnDiEdge]
+    with    EqUnDi
   {
     @inline final override protected def isValidArity(size: Int) = size == 2 
     @inline final override def isHyperEdge = false
+
     override protected[collection] def copy[NN](newNodes: Product) =
       new UnDiEdge[NN](newNodes)
+
+    @inline final override def size = 2
+    override def iterator: Iterator[N] = new AbstractIterator[N] {
+      private var count = 0
+      def hasNext = count < 2
+      def next: N = {
+        count += 1
+        (count: @switch) match {
+          case 1 => _1
+          case 2 => _2
+          case _ => Iterator.empty.next
+        } 
+      }
+    }
+    
+    override def isAt[M>:N](node: M) = this._1 == node || this._2 == node
+    override def isAt[M>:N](pred: N => Boolean) = pred(this._1) || pred(this._2)    
+
+    override def withSources(f: N => Unit) = { f(this._1); f(this._2) }
+    override def withTargets(f: N => Unit) = withSources(f)
   }
   /**
    * Factory for undirected edges.

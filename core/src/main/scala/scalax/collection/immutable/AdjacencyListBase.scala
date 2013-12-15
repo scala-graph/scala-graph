@@ -2,7 +2,8 @@ package scalax.collection
 package immutable
 
 import language.higherKinds
-import annotation.unchecked.uncheckedVariance
+import scala.util.Random
+import scala.annotation.unchecked.uncheckedVariance
 
 import GraphPredef._
 import scalax.collection.{Graph => SimpleGraph}
@@ -140,6 +141,9 @@ trait AdjacencyListBase[N,
     }
     @inline final def contains(node: NodeT) = coll contains node
     @inline final def iterator: Iterator[NodeT] = coll.iterator
+    @inline final def draw(random: Random) = coll draw random
+    @inline final def findEntry[B](toMatch: B, correspond: (NodeT, B) => Boolean): NodeT =
+      coll findEntry (toMatch, correspond)
     protected[collection] def +=(edge: EdgeT): this.type
   }
   def newNodeSet: NodeSetT
