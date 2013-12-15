@@ -511,6 +511,6 @@ object Graph
                                     edgeManifest, config)
   implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](
       implicit edgeManifest: Manifest[E[N]],
-      config: Config = defaultConfig): CanBuildFrom[Coll, GraphParamIn[N,E], Graph[N,E]] =
+      config: Config = defaultConfig): GraphCompanion[Graph]#GraphCanBuildFrom[N,E] =
     new GraphCanBuildFrom[N,E]()(edgeManifest, config)
 }

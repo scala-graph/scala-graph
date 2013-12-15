@@ -124,6 +124,7 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (unDiAcyclic_2 get 1 findCycle) should be (None)
     uc_21(1).findCycle.get.nodes    should (be (List(1, 3, 5, 2, 1) map uc_21) or
                                             be (List(1, 2, 5, 3, 1) map uc_21))
-    uc_22(3).findCycle.get.nodes    should be (List(3, 1, 2, 4, 7, 6, 3) map (uc_22(_)))
+    uc_22(3).findCycle.get.nodes    should (be (List(3, 1, 2, 4, 7, 6, 3) map uc_22) or
+                                            be (List(3, 6, 7, 4, 2, 1, 3) map uc_22))
   }
 }

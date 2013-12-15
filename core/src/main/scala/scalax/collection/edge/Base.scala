@@ -1,7 +1,7 @@
 package scalax.collection.edge
 
 import language.{higherKinds, implicitConversions}
-import reflect.ClassTag
+import scala.reflect.ClassTag
 
 import scalax.collection.GraphEdge._,
        scalax.collection.GraphPredef._
@@ -59,13 +59,13 @@ object WBase {
 object WkBase {
   import WBase._
   trait WkEdge[N] extends WEdge[N]
-  { this: EdgeLike[N] =>
-    override def equals(other: Any) =
-      super.equals(other) && (other match {
-        case that: EdgeLike[N] with WkEdge[_] => this.weight == that.weight  
+  { this: EdgeLike[N] with Eq =>
+    override protected def equals(other: EdgeLike[_]) =
+      this.weight == other.weight && (other match {
+        case wkEdge: WkEdge[_] => baseEquals(wkEdge)   
         case _ => false
-        })
-    override def hashCode = super.hashCode + (weight.## * 41)  
+      })
+    override def hashCode = baseHashCode ^ weight.##  
   }
   type  WkHyperEdgeBound[N, +E[X<:N] <: EdgeLikeIn[X]] = WHyperEdgeBound[N,E] with WkEdge[N] 
   /** Everything common to key-weighted hyperedge companion objects. */
@@ -232,13 +232,13 @@ object LkBase {
    *  Such labeled and keyed edge classes are named `Lk<EdgeType>Edge` by convention.
    */
   trait LkEdge[N] extends LEdge[N]
-  { this: EdgeLike[N] =>
-    override def equals(other: Any) =
-      super.equals(other) && (other match {
-        case that: LkEdge[_] => this.label == that.label  
-        case _ => false
-      })
-    override def hashCode = super.hashCode + (label.## * 41)  
+  { this: EdgeLike[N] with Eq =>
+    override protected def equals(other: EdgeLike[_]) = other match {
+      case that: LkEdge[_] => this.label == that.label &&
+                              baseEquals(that)  
+      case _ => false
+    }
+    override def hashCode = baseHashCode ^ label.##  
   }
   type  LkHyperEdgeBound[N, +E[X<:N] <: EdgeLikeIn[X]] = LHyperEdgeBound[N,E] with LkEdge[N] 
   /** Everything common to key-weighted hyperedge companion objects. */
@@ -307,7 +307,7 @@ object WkLBase {
 object WLkBase {
   import WBase._, LBase._, LkBase._, WLBase._
   trait WLkEdge[N] extends WEdge[N] with LkEdge[N]
-  { this: EdgeLike[N] =>
+  { this: EdgeLike[N] with Eq =>
     override protected def attributesToString = WEdge.wPrefix + weight.toString +
                                                 LEdge.lkPrefix + label.toString
   }
@@ -324,15 +324,15 @@ object WLkBase {
 object WkLkBase {
   import WLBase._, WkBase._, LkBase._
   trait WkLkEdge[N] extends WLEdge[N] 
-  { this: EdgeLike[N] =>
-    override def equals(other: Any) =
-      super.equals(other) && (other match {
-        case that: EdgeLike[N] with WkLkEdge[_] => this.weight == that.weight &&
-                                                   this.label  == that.label
-        case _ => false
-      })
-    override def hashCode = super.hashCode + (weight.## * 41) +
-                                             (label. ## * 41)  
+  { this: EdgeLike[N] with Eq =>
+    override protected def equals(other: EdgeLike[_]) = other match {
+      case that: WkLkEdge[_] => this.weight == that.weight &&
+                                this.label == that.label &&
+                                baseEquals(that)
+      case _ => false
+    }
+    override def hashCode =
+      baseHashCode ^ (weight.hashCode) ^ label.hashCode
   }
   type  WkLkHyperEdgeBound[N, +E[X<:N] <: EdgeLikeIn[X]] = WLHyperEdgeBound[N,E] with WkLkEdge[N] 
   /** Everything common to weighted, key-labeled hyperedge companion objects. */

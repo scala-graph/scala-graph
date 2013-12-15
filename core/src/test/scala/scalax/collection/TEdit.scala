@@ -384,7 +384,7 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
   def test_diSuccessorsDiHyper {
     val h = factory (1~>1~>5, 1~>2~>5, 1~>3~>5, 1~>4~>9)
     (h get 1 diSuccessors) should be (Set(2, 3, 4, 5, 9))
-    (h get 2 diSuccessors) should be (Set(5))
+    (h get 2 diSuccessors) should be (Set.empty)
     (h get 5 diSuccessors) should be (Set.empty)
   }
   def test_diPredecessorsUnDi {
@@ -401,7 +401,7 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     val h = factory (1~>1~>5, 1~>2~>5, 1~>3~>5, 1~>4~>9)
     (h get 1 diPredecessors) should be (Set.empty)
     (h get 2 diPredecessors) should be (Set(1))
-    (h get 5 diPredecessors) should be (Set(1,2,3))
+    (h get 5 diPredecessors) should be (Set(1))
   }
   def test_neighborsUnDi {
     val g = factory (1~1, 1~2, 1~3, 1~4)
@@ -418,6 +418,10 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (h get 1 neighbors) should be (Set(2,3,4,5,9))
     (h get 2 neighbors) should be (Set(1,5))
     (h get 5 neighbors) should be (Set(1,2,3))
+  }
+  def test_findOutgoingToDi {
+    val g = factory (1~>1, 1~>2, 2~>2, 1~>3)
+    (g get 1 findOutgoingTo (g get 2)) should be (Some(1~>2))
   }
 	def test_degree {
 	  val g = factory (1~1, 1~2, 1~3, 1~4 )
