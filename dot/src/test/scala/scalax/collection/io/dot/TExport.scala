@@ -1,6 +1,7 @@
 package scalax.collection
 package io.dot
 
+import language.{existentials, implicitConversions}
 import scala.collection.SortedMap
 
 import org.scalatest.Suite
@@ -63,17 +64,17 @@ class TExportTest extends Suite with ShouldMatchers {
           |}""".stripMargin
       val expected_sub_A_sorted = """
           |  subgraph A {
-          |    rank = same
           |    A1 
           |    A2 
           |    A3 
+          |    rank = same
           |  }""".stripMargin
       val expected_sub_B_sorted = """
           |  subgraph B {
-          |    rank = same
           |    B1 
           |    B2 
           |    B3 
+          |    rank = same
           |  }""".stripMargin
       (expected_header_sorted + expected_sub_A_sorted + expected_sub_B_sorted + expected_footer,
        expected_header_sorted + expected_sub_B_sorted + expected_sub_A_sorted + expected_footer)

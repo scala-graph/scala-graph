@@ -15,9 +15,9 @@ abstract class AttrSeparator(value: String) {
 }
 /** Holds predefined character sequences to separate specific DOT language elements. */
 object AttrSeparator {
-  /** The separator `"\n"`. */ object NewLine        extends AttrSeparator("\n")
-  /** The separator `";"`.  */ object Semicolon      extends AttrSeparator(";")
-  /** The separator `"; "`. */ object SemicolonSpace extends AttrSeparator("; ")
+  /** The new line separator.*/ object NewLine        extends AttrSeparator(scala.sys.process.BasicIO.Newline)
+  /** The separator `";"`.   */ object Semicolon      extends AttrSeparator(";")
+  /** The separator `"; "`.  */ object SemicolonSpace extends AttrSeparator("; ")
 }
 import Indent._, AttrSeparator._
 /**
