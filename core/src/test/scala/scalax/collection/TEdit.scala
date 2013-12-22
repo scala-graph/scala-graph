@@ -182,6 +182,18 @@ class TEditRootTest
     (gBefore ++= mutableFactory(0, 1~2))                      should equal (gAfter)
     (gBefore ++= mutableFactory(0) ++= mutableFactory(1~2))   should equal (gAfter)
   }
+  def test_upsert {
+    import edge.LDiEdge, edge.LBase._
+    val (label, modLabel) = ("A", "B")
+    val g = mutableFactory(LDiEdge(1, 2)(label), LDiEdge(2, 3)(label))
+
+    g.edges foreach { _.edge match {
+      case LDiEdge(s, t, l) => g upsert (LDiEdge(s.value, t.value)(modLabel)) 
+    }}
+    g should have ('graphSize (2))
+    g.edges foreach { _.label  should be (modLabel)
+    }
+  }
 }
 /**	Contains tests for graph editing to be run for Graph instances created by `factory`.
  *  For instance, this allows the same tests to be run for mutable and immutable Graphs.
@@ -420,8 +432,10 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (h get 5 neighbors) should be (Set(1,2,3))
   }
   def test_findOutgoingToDi {
-    val g = factory (1~>1, 1~>2, 2~>2, 1~>3)
-    (g get 1 findOutgoingTo (g get 2)) should be (Some(1~>2))
+    val g = factory (1~>1, 1~>2, 2~>1)
+    def n(i: Int) = g get i 
+    (n(1) findOutgoingTo n(2)) should be (Some(1~>2))
+    (n(1) findOutgoingTo n(1)) should be (Some(1~>1))
   }
 	def test_degree {
 	  val g = factory (1~1, 1~2, 1~3, 1~4 )

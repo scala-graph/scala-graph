@@ -26,6 +26,7 @@ trait AdjacencyListGraph[N,
   { this: NodeT =>
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
     protected[AdjacencyListGraph] def add   (edge: EdgeT): Boolean = edges add edge
+    protected[AdjacencyListGraph] def upsert(edge: EdgeT): Boolean = edges upsert edge
     protected[AdjacencyListGraph] def remove(edge: EdgeT): Boolean = edges remove edge
   }
 
@@ -44,6 +45,10 @@ trait AdjacencyListGraph[N,
       someNew
     }
     protected[collection] def += (edge: EdgeT): this.type	= { add(edge); this }
+    protected[collection] def upsert(edge: EdgeT): Unit =
+      edge foreach { n =>
+        coll findEntry n getOrElse {coll += n; n} upsert edge
+      }
     protected[collection] def remove (edge: EdgeT): Boolean =
       edge.nodes.toSet forall (n => (coll findEntry n) exists (_ remove edge))
     protected[collection] def -= (edge: EdgeT): this.type = { remove(edge); this }
@@ -74,26 +79,34 @@ trait AdjacencyListGraph[N,
       if (edges ne null)
         edges foreach (this add Edge(_))
     }
+
     override def add(edge: EdgeT) =
       if (nodes add edge) {
         nrEdges += 1
         true
-      }
-      else false
+      } else false
+
     @inline final protected[collection] def addEdge(edge: EdgeT) { add(edge) }
+
+    def upsert(edge: E[N]): EdgeT = {
+      val newEdge = Edge(edge)
+      nodes upsert newEdge
+      newEdge
+    }
+
     override def remove(edge: EdgeT) = 
       if (nodes remove edge) {
         nrEdges -= 1
         true
-      } 
-      else false
+      } else false
+
     def removeWithNodes(edge: EdgeT) = {
       val privateNodes = edge.privateNodes
       if (remove(edge)) {
         nodes --= privateNodes
         true
-      }
-      else false
+      } else false
+
     }
     private var nrEdges = 0
     override def size = nrEdges
@@ -106,4 +119,5 @@ trait AdjacencyListGraph[N,
   @inline final def add(node: N): Boolean = nodes add Node(node)
   @inline final def add(edge: E[N]): Boolean  = edges add Edge(edge)
   @inline final protected def +=# (edge: E[N]): this.type = { add(edge); this }
+  @inline final def upsert(edge: E[N]): EdgeT = edges upsert edge
 }

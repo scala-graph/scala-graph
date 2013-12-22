@@ -8,7 +8,7 @@ import org.scalatest.matchers.ShouldMatchers
 import collection.mutable.{ListBuffer, Map => MutableMap, Set => MutableSet}
 
 import GraphPredef._, GraphEdge._
-import edge.LkDiEdge, edge.Implicits._
+import edge.LkDiEdge, edge.WUnDiEdge, edge.Implicits._
 import immutable.SortedArraySet
 
 import org.scalatest.junit.JUnitRunner
@@ -18,15 +18,20 @@ import org.junit.runner.RunWith
 @RunWith(classOf[JUnitRunner])
 class TArraySetTest extends Suite with ShouldMatchers {
   implicit val hints = ArraySet.Hints(4, 4, 12, 100)
-  class EdgeGenerator {
+  private class LkDiEdgeGenerator {
     private var i = 0
     def draw: LkDiEdge[Int] = { i += 1; LkDiEdge(1, 2)(i) }
   }
+  private class WUnDiEdgeGenerator {
+    private var i = 0
+    def draw: WUnDiEdge[Int] = { i += 1; WUnDiEdge(i, i + 1)(2*i + 1) }
+  }
+
   def test_Growth {
     val arr = ArraySet.emptyWithHints[LkDiEdge[Int]]
     arr.capacity should be (hints.initialCapacity)
 
-    val edges = new EdgeGenerator
+    val edges = new LkDiEdgeGenerator
     def add(numberOfAdditions: Int, expectedCapacity: Int) {
       for (i <- 0 until numberOfAdditions) {
         arr += edges.draw
@@ -44,7 +49,7 @@ class TArraySetTest extends Suite with ShouldMatchers {
     arr.isArray should be (false)
   }
   def test_Compact {
-    val edges = new EdgeGenerator
+    val edges = new LkDiEdgeGenerator
     val toAdd = hints.initialCapacity + 1
     val arr = ArraySet.emptyWithHints[LkDiEdge[Int]] ++=
               (for (i <- 1 to toAdd) yield edges.draw)
@@ -53,7 +58,7 @@ class TArraySetTest extends Suite with ShouldMatchers {
    
   }
   def test_HashOnly {
-    val edges = new EdgeGenerator
+    val edges = new LkDiEdgeGenerator
     val arr = ArraySet.emptyWithHints[LkDiEdge[Int]](ArraySet.Hints.HashOnly)
     def check {
       arr.isArray should be (false)
@@ -68,13 +73,13 @@ class TArraySetTest extends Suite with ShouldMatchers {
     check
   }
   def test_Hints0 {
-    val edges = new EdgeGenerator
+    val edges = new LkDiEdgeGenerator
     val arr = ArraySet.emptyWithHints[LkDiEdge[Int]](ArraySet.Hints(0, 4, 8, 0))
     arr += edges.draw
     arr.capacity should be (4)
   }
   def test_Builder {
-    val edges = new EdgeGenerator
+    val edges = new LkDiEdgeGenerator
     type E = LkDiEdge[Int]
     val arr = ArraySet.emptyWithHints[E]
     val size = hints.initialCapacity + 1
@@ -117,5 +122,31 @@ class TArraySetTest extends Suite with ShouldMatchers {
     a.clone should be ('isEmpty)
     a ++ b  should be (b)
     b ++ c  should be (b.toSet ++ c.toSet)
+  }
+  def upsert(toAdd: Int) {
+    val edges = new WUnDiEdgeGenerator
+    val pos = 1
+    pos < toAdd should be (true)
+
+    val arr = ArraySet.emptyWithHints[WUnDiEdge[Int]] ++=
+              (for (i <- 1 to toAdd) yield edges.draw)
+    arr.size should be (toAdd)
+    
+    def edge = arr.drop(pos).head
+    edge match {
+      case WUnDiEdge(n1, n2, w) =>
+        val newWeight = w + 1
+        val res = arr.upsert(WUnDiEdge(n1, n2)(newWeight))
+        res should be (true)
+        edge.weight should be (newWeight)
+    }
+    arr.size should be (toAdd)
+    (arr upsert edges.draw) should be (false)
+  }
+  def test_upsertArray {
+    upsert(hints.hashTableThreshold - 3)
+  }
+  def test_upsertHashSet {
+    upsert(hints.hashTableThreshold + 3)
   }
 }

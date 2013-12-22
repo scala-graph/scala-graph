@@ -15,7 +15,7 @@ import interfaces.ExtSetMethods
  *  scala.collection.mutable{ResizableArray, Set, HashSet} aimed at increasing the performance
  *  of sets having up to 200 to 250 elements.
  *  
- *  @define COLL `ArraaySet`
+ *  @define COLL `ArraySet`
  */
 trait ArraySet[A]
   extends MutableSet[A]
@@ -38,6 +38,9 @@ trait ArraySet[A]
   protected[collection] def set: Set[A]
   /** Adds `elem` without checking for duplicates. */
   protected[collection] def +=!(elem: A): this.type
+  /** Updates or inserts `elem`.
+   *  @return `true` if an update took place. */
+  protected[collection] def upsert(elem: A): Boolean
   /** Sorts this $COLL according to a comparison function in place.
    *  @see scala.collection.SeqLike */
   def sortWith(lt: (A, A) => Boolean): SortedSet[A] = sorted(Ordering fromLessThan lt)

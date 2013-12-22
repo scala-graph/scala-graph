@@ -59,6 +59,21 @@ class ExtHashSet[A]
       prevEntry.asInstanceOf[A]
     }
   }
+  /** Updates or inserts `elem`.
+   *  @return `true` if an update took place. */
+  protected[collection] def upsert(elem: A): Boolean = {
+    var h = index(elemHashCode(elem))
+    var entry = table(h)
+    while (null != entry) {
+      if (entry == elem) {
+        table(h) = elem.asInstanceOf[AnyRef]
+        return true
+      }
+      h = (h + 1) % table.length
+      entry = table(h)
+    }
+    ! addEntry(elem)
+  }
 }
 object ExtHashSet extends MutableSetFactory[ExtHashSet] {
   override def empty[A] = new ExtHashSet[A]

@@ -169,6 +169,17 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   }
   override def size = if (isHash) hashSet.size
                       else nextFree
+
+  protected[collection] def upsert(elem: A): Boolean = {
+    if (isHash) hashSet upsert elem
+    else {
+      val i = indexOf(elem)
+      val isUpdate = i >= 0 
+      if (isUpdate) arr(i) = elem
+      else add(elem)
+      isUpdate
+    }
+  }
   /** $OPT */
   override def filter(p: (A) => Boolean) =
     if (isHash) super.filter(p)

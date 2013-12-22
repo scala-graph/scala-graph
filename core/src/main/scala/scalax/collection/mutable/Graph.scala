@@ -110,6 +110,10 @@ trait GraphLike[N,
   type EdgeSetT <: EdgeSet
 	trait EdgeSet extends MutableSet[EdgeT] with super.EdgeSet with EdgeSetAux {
     @inline final def += (edge: EdgeT): this.type = { add(edge); this }
+    /**
+     * Same as `upsert` at graph lavel.
+     */
+    def upsert(edge: E[N]): EdgeT
     @inline final def -= (edge: EdgeT): this.type = { remove(edge); this }
     def removeWithNodes(edge: EdgeT): Boolean
   }
@@ -149,6 +153,16 @@ trait GraphLike[N,
       case e: EdgeIn[N,E]      => this +=# e.edge
       case e: EdgeOut[N,E,_,E] => this +=# e.asEdgeTProjection[N,E].toEdgeIn
     }
+  /**
+   * If an inner edge equalling to `edge` is present in this graph, it is replaced
+   * by `edge`, otherwise `edge` will be inserted. Such an update may be useful
+   * whenever non-key parts of an immutable edge are to be modified.
+   * 
+   * @param edge The edge to add to this graph.
+   * @return the new inner edge corresponding to `edge`.
+   */
+  def upsert(edge: E[N]): EdgeT
+
 	@inline final def     - (node: N) = clone -= node
   @inline final def remove(node: N) = nodes find node exists (nodes remove _)
 	@inline final def    -= (node: N): this.type = { remove(node); this }
