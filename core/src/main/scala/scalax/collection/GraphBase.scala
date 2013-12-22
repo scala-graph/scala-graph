@@ -183,9 +183,10 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     @inline final def ~> = outgoing
 
     @inline private[this] def isOutgoingTo(e: EdgeT, to: NodeT): Boolean =
-      (e.hasTarget((_: NodeT) eq to)) &&
-      (if (e.isHyperEdge) e.hasSource((_: NodeT) eq this)
-       else true)
+      if (e.directed)
+        e matches ((_: NodeT) eq this, (_: NodeT) eq to)
+      else
+        e isAt ((_: NodeT) eq to)
     /**
      * All outgoing edges connecting this node with `to`.
      *
@@ -224,9 +225,10 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     @inline final def <~ = incoming
 
     @inline private[this] def isIncomingFrom(e: EdgeT, from: NodeT): Boolean =
-      (e.hasSource((_: NodeT) eq from)) &&
-      (if (e.isHyperEdge) e.hasTarget((_: NodeT) eq this)
-       else true)
+      if (e.directed)
+        e matches ((_: NodeT) eq from, (_: NodeT) eq this)
+      else
+        e isAt ((_: NodeT) eq from)
     /**
      * All incoming edges connecting `from` with this node.
      *
@@ -426,6 +428,9 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
 
   protected type InnerEdge = EdgeOut[N,E,NodeT,E]
   type EdgeT <: InnerEdge with InnerEdgeLike with Serializable
+  object EdgeT {
+    def unapply(e: EdgeT): Option[(NodeT, NodeT)] = Some((e.edge._1, e.edge._2))
+  }
   trait Edge extends Serializable
   trait InnerEdgeLike extends Iterable[NodeT] with Edge
   {

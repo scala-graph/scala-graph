@@ -103,6 +103,13 @@ class TEdgeTest extends Suite with ShouldMatchers
     val wlkDi = (n1 ~%+#> n2)(weight, label)
     wlkDi match { case s :~> t %+ (w, l)   => check(s, t, w, l) }
   }
+  def test_findOutgoingToDi {
+    import edge.LkDiEdge
+    val le = LkDiEdge(1,1)(1)
+    val lg = Graph(le)
+    val ln1 = lg get 1
+    (ln1 findOutgoingTo ln1) should be (Some(le))
+  }
 }
 /* Label type for use in key-labeled edges.
  * Note that using path-dependent label types with Scala 2.9.1-final I had a runtime issue
