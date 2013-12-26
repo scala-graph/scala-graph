@@ -88,17 +88,16 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     /**
      * Checks whether this node has only hooks or no edges at all.
      *  
-     * @return true if this node has only hooks or it does not participate in any edge  
+     * @return `true` if this node has only hooks or it isolated.  
      */
-    def hasOnlyHooks = edges forall (_ forall (_ eq this))
+    def hasOnlyHooks: Boolean
     /**
      * Whether `that` is an adjacent (direct successor) to this node.
      * 
      * @param that The node to check for adjacency.
      * @return `true` if `that` is adjacent to this node.
      */
-    def isDirectPredecessorOf(that: NodeT): Boolean =
-      diSuccessors exists (_ eq that)
+    def isDirectPredecessorOf(that: NodeT): Boolean
     /**
      * Whether `that` is independent of this node meaning that
      * there exists no edge connecting this node with `that`. 
@@ -106,9 +105,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      * @param that The node to check for independency.
      * @return `true` if `that` node is independent of this node.
      */
-    def isIndependentOf(that: NodeT): Boolean =
-      if (this eq that) edges forall (_.nonLooping)
-      else              edges forall (! _.isAt((_: NodeT) ne that))
+    def isIndependentOf(that: NodeT): Boolean
     /**
      * All direct successors of this node, also called ''successor set'' or
      * ''open out-neighborhood'': target nodes of directed incident edges and / or
@@ -116,22 +113,13 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *
      * @return set of all direct successors of this node.
      */
-    def diSuccessors: Set[NodeT] = {
-      val a = ArraySet.empty[NodeT](edges.size)
-      edges foreach { addDiSuccessors(_, (n: NodeT) => a += n) }
-      a
-    }
+    def diSuccessors: Set[NodeT]
+    protected[collection] def addDiSuccessors(edge: EdgeT,
+                                              add: (NodeT) => Unit): Unit
     /** Synonym for `diSuccessors`. */
     @inline final def outNeighbors = diSuccessors 
     /** Synonym for `diSuccessors`. */
     @inline final def ~>| = diSuccessors 
-    protected[collection] def addDiSuccessors(edge: EdgeT,
-                                              add: (NodeT) => Unit): Unit = {
-      val filter =
-        if (edge.isHyperEdge && edge.directed) edge.hasSource((_: NodeT) eq this)
-        else true
-      edge withTargets (n => if ((n ne this) && filter) add(n))
-    }
     /**
      * All direct predecessors of this node, also called ''predecessor set'' or
      * ''open in-neighborhood'': source nodes of directed incident edges and / or
@@ -139,54 +127,39 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *
      * @return set of all direct predecessors of this node.
      */
-    def diPredecessors: Set[NodeT] = {
-      var a = ArraySet.empty[NodeT](edges.size)
-      edges foreach { addDiPredecessors(_, (n: NodeT) => a += n) }
-      a
-    }
+    def diPredecessors: Set[NodeT]
+    protected[collection] def addDiPredecessors(edge: EdgeT,
+                                                add: (NodeT) => Unit)
+
     /** Synonym for `diPredecessors`. */
     @inline final def inNeighbors = diPredecessors 
     /** Synonym for `diPredecessors`. */
     @inline final def <~| = diPredecessors 
-    protected[collection] def addDiPredecessors(edge: EdgeT,
-                                                add: (NodeT) => Unit) {
-      edge withSources (n => if (n ne this) add(n))
-    }
+
     /**
      * All adjacent nodes (direct successors and predecessors) of this node,
      * also called ''open neighborhood'' excluding this node.
      *
      * @return set of all neighbors.
      */
-    def neighbors: Set[NodeT] = {
-      var a = ArraySet.empty[NodeT](edges.size)
-      edges foreach { addNeighbors(_, (n: NodeT) => a += n) }
-      a
-    }
+    def neighbors: Set[NodeT]
+    protected[collection] def addNeighbors(edge: EdgeT,
+                                           add: (NodeT) => Unit)
+    
     /** Synonym for `neighbors`. */
     @inline final def ~| = neighbors 
-    protected[collection] def addNeighbors(edge: EdgeT,
-                                           add: (NodeT) => Unit) {
-      edge foreach (n => if (n ne this) add(n))
-    }
+
     /**
      * All edges outgoing from this node.
      *
      * @return set of all edges outgoing from this node
      *         including undirected edges and hooks.  
      */
-    def outgoing: Set[EdgeT] = edges filter (e =>
-      if (e.directed) e.hasSource((_: NodeT) eq this)
-      else true
-    )
+    def outgoing: Set[EdgeT]
+
     /** Synonym for `outgoing`. */
     @inline final def ~> = outgoing
 
-    @inline private[this] def isOutgoingTo(e: EdgeT, to: NodeT): Boolean =
-      if (e.directed)
-        e matches ((_: NodeT) eq this, (_: NodeT) eq to)
-      else
-        e isAt ((_: NodeT) eq to)
     /**
      * All outgoing edges connecting this node with `to`.
      *
@@ -195,7 +168,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         If `to` equals this node all hooks are returned.
      *         If `to` is not an adjacent an empty set is returned.   
      */
-    def outgoingTo(to: NodeT): Set[EdgeT] = edges filter (isOutgoingTo(_, to))
+    def outgoingTo(to: NodeT): Set[EdgeT]
 
     /** Synonym for `outgoingTo`. */
     @inline final def ~>(to: NodeT) = outgoingTo(to)
@@ -208,7 +181,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         If `to` equals this node a hook may be returned.
      *         If `to` is not an adjacent node `None` is returned.   
      */
-    def findOutgoingTo(to: NodeT): Option[EdgeT] = edges find (isOutgoingTo(_, to))
+    def findOutgoingTo(to: NodeT): Option[EdgeT]
 
     /** Synonym for `findOutgoingTo`. */
     @inline final def ~>?(to: NodeT) = findOutgoingTo(to) 
@@ -217,18 +190,11 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *
      * @return set of all edges incoming to of this including undirected edges.  
      */
-    def incoming: Set[EdgeT] = edges filter (e =>
-      if (e.directed) e.hasTarget((_: NodeT) eq this)
-      else true
-    )
+    def incoming: Set[EdgeT]
+
     /** Synonym for `incoming`. */
     @inline final def <~ = incoming
 
-    @inline private[this] def isIncomingFrom(e: EdgeT, from: NodeT): Boolean =
-      if (e.directed)
-        e matches ((_: NodeT) eq from, (_: NodeT) eq this)
-      else
-        e isAt ((_: NodeT) eq from)
     /**
      * All incoming edges connecting `from` with this node.
      *
@@ -238,10 +204,11 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         If `from` equals this node all hooks are returned.
      *         If `from` is not an adjacent node an empty set is returned.   
      */
-    def incomingFrom(from: NodeT): Set[EdgeT] = edges filter (isIncomingFrom(_, from))
+    def incomingFrom(from: NodeT): Set[EdgeT]
 
     /** Synonym for `incomingFrom`. */
-    @inline final def <~(from: NodeT) = incomingFrom(from) 
+    @inline final def <~(from: NodeT) = incomingFrom(from)
+
     /**
      * An edge at `from` having this node as a successor.
      *
@@ -251,7 +218,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         If `from` equals this node a hook may be returned.
      *         If `from` is not an adjacent node `None` is returned.   
      */
-    def findIncomingFrom(from: NodeT): Option[EdgeT] = edges find (isIncomingFrom(_, from))
+    def findIncomingFrom(from: NodeT): Option[EdgeT]
 
     /** Synonym for `findIncomingFrom`. */
     @inline final def <~?(from: NodeT) = findIncomingFrom(from)

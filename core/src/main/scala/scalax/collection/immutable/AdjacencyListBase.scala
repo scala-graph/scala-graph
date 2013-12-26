@@ -2,6 +2,7 @@ package scalax.collection
 package immutable
 
 import language.higherKinds
+import scala.collection.Set
 import scala.util.Random
 import scala.annotation.unchecked.uncheckedVariance
 
@@ -42,6 +43,80 @@ trait AdjacencyListBase[N,
   trait InnerNodeLike extends super.InnerNodeLike {
     this: NodeT =>
     def edges: ArraySet[EdgeT]
+    
+    final def hasOnlyHooks = edges forall (_ forall (_ eq this))
+
+    final def isDirectPredecessorOf(that: NodeT): Boolean =
+      diSuccessors exists (_ eq that)
+
+    final def isIndependentOf(that: NodeT): Boolean =
+      if (this eq that) edges forall (_.nonLooping)
+      else              edges forall (! _.isAt((_: NodeT) ne that))
+
+    final def diSuccessors: Set[NodeT] = {
+      val a = ArraySet.empty[NodeT](edges.size)
+      edges foreach { addDiSuccessors(_, (n: NodeT) => a += n) }
+      a
+    }
+    final protected[collection] def addDiSuccessors
+        (edge: EdgeT,
+         add: (NodeT) => Unit): Unit = {
+      val filter =
+        if (edge.isHyperEdge && edge.directed) edge.hasSource((_: NodeT) eq this)
+        else true
+      edge withTargets (n => if ((n ne this) && filter) add(n))
+    }
+    
+    final def diPredecessors: Set[NodeT] = {
+      var a = ArraySet.empty[NodeT](edges.size)
+      edges foreach { addDiPredecessors(_, (n: NodeT) => a += n) }
+      a
+    }
+    final protected[collection] def addDiPredecessors(edge: EdgeT,
+                                                      add: (NodeT) => Unit) {
+      edge withSources (n => if (n ne this) add(n))
+    }
+
+    final def neighbors: Set[NodeT] = {
+      var a = ArraySet.empty[NodeT](edges.size)
+      edges foreach { addNeighbors(_, (n: NodeT) => a += n) }
+      a
+    }
+    final protected[collection] def addNeighbors(edge: EdgeT,
+                                                 add: (NodeT) => Unit) {
+      edge foreach (n => if (n ne this) add(n))
+    }
+
+    final def outgoing: Set[EdgeT] = edges filter (e =>
+      if (e.directed) e.hasSource((_: NodeT) eq this)
+      else true
+    )
+    @inline private[this] def isOutgoingTo(e: EdgeT, to: NodeT): Boolean =
+      if (e.directed)
+        e matches ((_: NodeT) eq this, (_: NodeT) eq to)
+      else
+        e isAt ((_: NodeT) eq to)
+
+    final def outgoingTo(to: NodeT): Set[EdgeT] = edges filter (isOutgoingTo(_, to))
+
+    final def findOutgoingTo(to: NodeT): Option[EdgeT] = edges find (isOutgoingTo(_, to))
+
+    final def incoming: Set[EdgeT] = edges filter (e =>
+      if (e.directed) e.hasTarget((_: NodeT) eq this)
+      else true
+    )
+    @inline final private[this] def isIncomingFrom(e: EdgeT, from: NodeT): Boolean =
+      if (e.directed)
+        e matches ((_: NodeT) eq from, (_: NodeT) eq this)
+      else
+        e isAt ((_: NodeT) eq from)
+
+    final def incomingFrom(from: NodeT): Set[EdgeT] =
+      edges filter (isIncomingFrom(_, from))
+
+    final def findIncomingFrom(from: NodeT): Option[EdgeT] =
+      edges find (isIncomingFrom(_, from))
+
     @inline final protected[collection] def +=(edge: EdgeT): this.type = {
       edges add edge; this
     }
