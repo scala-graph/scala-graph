@@ -25,9 +25,47 @@ trait AdjacencyListGraph[N,
     with    InnerNodeLike
   { this: NodeT =>
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
-    protected[AdjacencyListGraph] def add   (edge: EdgeT): Boolean = edges add edge
-    protected[AdjacencyListGraph] def upsert(edge: EdgeT): Boolean = edges upsert edge
-    protected[AdjacencyListGraph] def remove(edge: EdgeT): Boolean = edges remove edge
+    import Adj._
+
+    protected[AdjacencyListGraph] def add(edge: EdgeT): Boolean =
+      if (edges.add(edge)) {
+        if (selfGraph.edges.initialized) addDiSuccOrHook(edge)
+        true
+      } else false
+
+    protected[AdjacencyListGraph] def upsert(edge: EdgeT): Boolean =
+      if (edges.upsert(edge)) {
+        if (selfGraph.edges.initialized) addDiSuccOrHook(edge)
+        true
+      } else false
+ 
+    final protected def addDiSuccOrHook(edge: EdgeT) {
+      if (edge.matches(nodeEqThis, nodeEqThis) && aHook.isEmpty)
+        aHook = Some(this -> edge)
+      addDiSuccessors(edge, (n: NodeT) => diSucc put (n, edge))
+    }
+
+    protected[AdjacencyListGraph] def remove(edge: EdgeT): Boolean =
+      if (edges.remove(edge)) {
+        if (selfGraph.edges.initialized) {
+          
+          def onLooping: Unit = edges.find((e: EdgeT) => e.isLooping).fold(
+            ifEmpty = aHook = None)((e: EdgeT) => aHook = Some(this -> e))
+            
+          def onNonLooping: Unit = edge withTargets (t =>
+            edges.find((e: EdgeT) => e.hasTarget((n: NodeT) => n eq t)).fold(
+              ifEmpty = diSucc remove t)((e: EdgeT) => diSucc put (t, e)))
+          
+          if (edge.isHyperEdge)
+            if (edge.isLooping) {
+              onLooping
+              onNonLooping
+            } else onNonLooping
+          else if (edge.isLooping) onLooping
+          else onNonLooping
+        }
+        true
+      } else false
   }
 
   type NodeSetT = NodeSet
@@ -75,9 +113,12 @@ trait AdjacencyListGraph[N,
   @SerialVersionUID(7974L)
   class EdgeSet extends super[GraphLike].EdgeSet with super.EdgeSet
   {
-    override protected[collection]def initialize(edges: Iterable[E[N]]) {
+    protected[AdjacencyListGraph] var initialized = false
+    
+    override protected[collection] def initialize(edges: Iterable[E[N]]) {
       if (edges ne null)
         edges foreach (this add Edge(_))
+      initialized = true
     }
 
     override def add(edge: EdgeT) =

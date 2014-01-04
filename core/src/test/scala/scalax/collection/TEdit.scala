@@ -78,6 +78,51 @@ class TEditRootTest
     (g -=  2)   should be (mutableFactory(1, 3))
     g.graphSize should be (0)
   }
+  def test_diSucc {
+    val (one, two, oneOne, oneTwo) = (1, 2, 1~>1, 1~>2)
+    val g = mutableFactory(oneOne, oneTwo, one~>3, one~>4)
+    val (n1, n2) = (g get one, g get two)
+    val e11 = g get oneOne
+    
+    g -= 1~>4 // Graph(oneOne, oneTwo, one~>3)
+    (n2 diSuccessors) should be ('isEmpty)
+    (n1 diSuccessors) should be (Set(two,3))
+    (n1 ~>? n1) should be (Some(e11))
+    
+    g -= oneTwo // Graph(oneOne, one~>3)
+    (n1 diSuccessors) should be (Set(3))
+    (n1 ~>? n1) should be (Some(e11))
+    
+    g -= oneOne // Graph(one~>3)
+    (n1 diSuccessors) should be (Set(3))
+    (n1 ~>? n1) should be (None)
+    
+    g ++= List(oneOne, oneTwo) // Graph(oneOne, oneTwo, one~>3)
+    (n1 diSuccessors) should be (Set(two,3))
+    (n1 ~>? n1) should be (Some(e11))
+  }
+  def test_diSuccDiHyper {
+    val (one, two, three, oneOneTwo, oneTwoThree) = (1, 2, 3, 1~>1~>2, 1~>2~>3)
+    val g = mutableFactory(oneOneTwo, oneTwoThree)
+    val (n1, n2) = (g get one, g get two)
+    val e112 = g get oneOneTwo
+
+    (n2 diSuccessors) should be ('isEmpty)
+    (n1 diSuccessors) should be (Set(two, three))
+    (n1 ~>? n1) should be (Some(oneOneTwo))
+    
+    g -= oneTwoThree // Graph(oneOneTwo)
+    (n1 diSuccessors) should be (Set(two))
+    (n1 ~>? n1) should be (Some(oneOneTwo))
+    
+    g -= two // Graph(one)
+    (n1 diSuccessors) should be ('isEmpty)
+    (n1 ~>? n1) should be (None)
+    
+    g += oneOneTwo // Graph(oneOneTwo)
+    (n1 diSuccessors) should be (Set(2))
+    (n1 ~>? n1) should be (Some(oneOneTwo))
+  }
   def test_PlusEdgeEq {
     val g = mutableFactory(2~3)
     def n(i: Int) = g get i

@@ -2,13 +2,14 @@ package scalax.collection
 package immutable
 
 import language.higherKinds
+import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.Set
 import scala.util.Random
-import scala.annotation.unchecked.uncheckedVariance
 
 import GraphPredef._
 import scalax.collection.{Graph => SimpleGraph}
-import mutable.{ArraySet, ExtHashSet}
+import mutable.{ArraySet, ExtHashSet, EqSet => MEqSet, EqMap}
+import mutable.EqMap._
 import generic.{GroupIterator}
 import config.{GraphConfig, AdjacencyListArrayConfig}
 import io._
@@ -41,47 +42,70 @@ trait AdjacencyListBase[N,
 
   type NodeT <: InnerNodeLike
   trait InnerNodeLike extends super.InnerNodeLike {
-    this: NodeT =>
+    thisNode: NodeT =>
+      
     def edges: ArraySet[EdgeT]
     
-    final def hasOnlyHooks = edges forall (_ forall (_ eq this))
+    final private def sizeHint(edgesSize: Int): Int =
+      if (isHyper) size * 2
+      else if (isDirected) if (size < 8) size
+                           else (size / 4) * 3
+           else size
+               
+    @inline final protected def nodeEqThis = (n: NodeT) => n eq this
+    @transient protected object Adj { // lazy adjacents
+      @transient var aHook: Option[(NodeT, EdgeT)] = None
+      @transient val diSucc: EqMap[NodeT, EdgeT] = {
+        val m = EqMap[NodeT, EdgeT](edges.size)
+        edges foreach { e =>
+          if (e.matches(nodeEqThis, nodeEqThis) && aHook.isEmpty)
+            aHook = Some(thisNode -> e)
+          addDiSuccessors(e, (n: NodeT) => m put (n, e))
+        }
+        m
+      }
+    }
+    import Adj._
+
+    final def hasOnlyHooks = diSucc.isEmpty && aHook.isDefined
 
     final def isDirectPredecessorOf(that: NodeT): Boolean =
-      diSuccessors exists (_ eq that)
+      diSucc contains that
 
     final def isIndependentOf(that: NodeT): Boolean =
       if (this eq that) edges forall (_.nonLooping)
-      else              edges forall (! _.isAt((_: NodeT) ne that))
+      else              edges forall (! _.isAt((_: NodeT) eq that))
 
-    final def diSuccessors: Set[NodeT] = {
-      val a = ArraySet.empty[NodeT](edges.size)
-      edges foreach { addDiSuccessors(_, (n: NodeT) => a += n) }
-      a
-    }
-    final protected[collection] def addDiSuccessors
-        (edge: EdgeT,
-         add: (NodeT) => Unit): Unit = {
+    final def diSuccessors: Set[NodeT] = diSucc.toKeySet
+    
+    final protected[collection] def addDiSuccessors(edge: EdgeT,
+                                                    add: (NodeT) => Unit): Unit = {
       val filter =
         if (edge.isHyperEdge && edge.directed) edge.hasSource((_: NodeT) eq this)
         else true
       edge withTargets (n => if ((n ne this) && filter) add(n))
     }
-    
-    final def diPredecessors: Set[NodeT] = {
-      var a = ArraySet.empty[NodeT](edges.size)
-      edges foreach { addDiPredecessors(_, (n: NodeT) => a += n) }
-      a
-    }
+ 
+    final def diPredecessors: Set[NodeT] =
+      if (isDirected) {
+        val m = EqMap[NodeT,EdgeT](edges.size)
+        edges foreach { e => addDiPredecessors(e, (n: NodeT) => m put (n, e)) }
+        m.toKeySet
+      } else diSuccessors
+
     final protected[collection] def addDiPredecessors(edge: EdgeT,
                                                       add: (NodeT) => Unit) {
       edge withSources (n => if (n ne this) add(n))
     }
 
-    final def neighbors: Set[NodeT] = {
-      var a = ArraySet.empty[NodeT](edges.size)
-      edges foreach { addNeighbors(_, (n: NodeT) => a += n) }
-      a
-    }
+    final def neighbors: Set[NodeT] =
+      if (isDirected) {
+        import MEqSet._
+        val m = MEqSet[NodeT](edges.size)
+        edges foreach { addNeighbors(_, (n: NodeT) => m += n) }
+        m.toKeySet
+      } else diSuccessors
+
     final protected[collection] def addNeighbors(edge: EdgeT,
                                                  add: (NodeT) => Unit) {
       edge foreach (n => if (n ne this) add(n))
@@ -99,7 +123,9 @@ trait AdjacencyListBase[N,
 
     final def outgoingTo(to: NodeT): Set[EdgeT] = edges filter (isOutgoingTo(_, to))
 
-    final def findOutgoingTo(to: NodeT): Option[EdgeT] = edges find (isOutgoingTo(_, to))
+    final def findOutgoingTo(to: NodeT): Option[EdgeT] =
+      if (to eq this) aHook map (_._2)
+      else            diSucc getNotNull to
 
     final def incoming: Set[EdgeT] = edges filter (e =>
       if (e.directed) e.hasTarget((_: NodeT) eq this)

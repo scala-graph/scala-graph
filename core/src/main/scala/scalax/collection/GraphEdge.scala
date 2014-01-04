@@ -265,18 +265,6 @@ object GraphEdge {
     protected[collection] def copy[NN](newNodes: Product): CC[NN]
   }
   object EdgeLike {
-    /**
-     * Number of equaling nodes.
-     * @param edgeA left-hand edge
-     * @param edgeB right-hand edge; may be same as left-hand edge
-     * @return Number of nodes in `edgeA` being equal to a node in `edgeB` at any position. 
-     */
-    final def nrEqualingNodes(edgeA: EdgeLike[_], edgeB: EdgeLike[_]): Int = {
-      var nr = 0
-      for (a <- edgeA.iterator; b <- edgeB.iterator)
-        if (a == b) nr += 1
-      nr
-    }
     val nodeSeparator = "~" 
     protected case class Brackets(val left: Char, val right: Char)
     protected val curlyBraces = Brackets('{', '}')
@@ -308,13 +296,21 @@ object GraphEdge {
   protected[collection] sealed trait Eq {
     protected def baseEquals(other: EdgeLike[_]): Boolean
     protected def baseHashCode: Int
+    final protected def nrEqualingNodes(itA: Iterator[_], itB: Iterable[_]): Int = {
+      var nr = 0
+      for (a <- itA; b <- itB)
+        if (a == b) nr += 1
+      nr
+    }
   }
   protected[collection] trait EqHyper extends Eq {
     this: EdgeLike[_] =>
 
-    override protected def baseEquals(other: EdgeLike[_]) =
-      this.arity == other.arity &&
-      this.arity == EdgeLike.nrEqualingNodes(this, other)
+    override protected def baseEquals(other: EdgeLike[_]) = {
+      val thisArity = this.arity
+      thisArity == other.arity &&
+      thisArity == nrEqualingNodes(this.iterator, other)
+    }
 
     override protected def baseHashCode: Int = (0 /: iterator)(_ ^ _.hashCode)
   }
@@ -329,7 +325,7 @@ object GraphEdge {
                (other match {
                   case diHyper: DiHyperEdge[_] =>
                     this.source == diHyper.source &&
-                    EdgeLike.nrEqualingNodes(this, other) == a
+                    nrEqualingNodes(this.targets, Set() ++ diHyper.targets) == a - 1
                   case _ => throw new IllegalArgumentException("Unexpected edge type.")
                 })
     }
