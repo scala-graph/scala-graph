@@ -1,8 +1,9 @@
 package scalax.collection
 
 import language.{higherKinds, implicitConversions}
-import annotation.tailrec
-import collection.mutable.{ArrayBuffer, ListBuffer, Queue, PriorityQueue, Stack,
+import scala.annotation.{switch, tailrec}
+
+import collection.mutable.{ArrayBuffer, ListBuffer, Queue, PriorityQueue, ArrayStack => Stack,
                            Set => MutableSet, Map => MutableMap}
 import GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn, GraphParamOut,
                     NodeIn, NodeOut, EdgeIn, EdgeOut}
@@ -14,11 +15,13 @@ import scalax.collection.mutable.ExtBitSet
 trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   extends GraphTraversal[N,E]
   with State[N,E]
-{
+{ selfGraph =>
+
   import GraphTraversalImpl._
   import GraphTraversal.VisitorReturn._
   import GraphTraversal._
   import State._
+  
   override def findCycle(nodeFilter : (NodeT) => Boolean       = anyNode,
                          edgeFilter : (EdgeT) => Boolean       = anyEdge,
                          maxDepth   :  Int                     = 0,
@@ -27,7 +30,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
                          ordering   : ElemOrdering             = noOrdering): Option[Cycle] =
     if (order == 0) None
     else {
-      val path = CycleBuffer(nodeFilter, edgeFilter)
+      val path = CycleBuffer(nodeFilter, edgeFilter, isDirected)
       val traversal = new Traversal(Successors, nodeFilter, edgeFilter,
                                                 nodeVisitor, edgeVisitor, ordering)
       withHandles(2) { handles => 
@@ -35,10 +38,9 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         for (node <- nodes if ! node.visited) {
           val res = traversal.depthFirstSearchWGB(
                       node,
-                      onPopFound = (n: NodeT) => {
-                        if (path.isEmpty) path. +=: (n)
-                        else              path. +=: (n, path.firstEdge _)},
+                      onPopFound = (n, conn) => path. +=: (n, conn),
                       globalState = handles) 
+          path.close
           if (res.isDefined)
             return Some(path)
         }
@@ -206,16 +208,14 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
                            edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
                            ordering   : ElemOrdering             = noOrdering) =
     {
-      val path = CycleBuffer(nodeFilter, edgeFilter)
+      val path = CycleBuffer(nodeFilter, edgeFilter, isDirected)
       if (new Traversal(Successors, nodeFilter, edgeFilter, nodeVisitor, edgeVisitor, ordering).
           depthFirstSearchWGB (this,
-                               onPopFound = (n: NodeT) => {
-                                 if (path.isEmpty) path. +=: (n)
-                                 else              path. +=: (n, path.firstEdge _) 
-                               }).isDefined)
+                               onPopFound = (n, conn) => path. +=: (n, conn)
+          ).isDefined) {
+        path.close
         Some(path)
-      else
-        None
+      } else None
     }
     final override
     def traverse (direction  : Direction          = Successors,
@@ -414,15 +414,20 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     protected[collection]
     def depthFirstSearchWGB(root      :  NodeT,
                             predicate : (NodeT) => Boolean  = noNode,
-                            onPopFound: (NodeT) => Unit     = noAction,
+                            onPopFound: (NodeT, Iterable[EdgeT]) => Unit,
                             globalState: Array[Handle]= Array.empty[Handle])
         : Option[NodeT] =
     {
       withHandles(2, globalState) { handles =>
         implicit val visitedHandle = handles(0)
         val blackHandle = handles(1)
-        val stack = Stack((root, root)) // (node, predecessor)
-        val path = Stack.empty[NodeT]
+        
+        // (node, predecessor, exclude, 0 to 2 multi edges) with last two for undirected
+        val stack: Stack[(NodeT, NodeT, Boolean, Iterable[EdgeT])] =
+            Stack((root, root, false, Nil))
+        // (node, connecting with prev)
+        val path = Stack.empty[(NodeT, Iterable[EdgeT])]
+        val isDiGraph = selfGraph.isDirected
         def isWhite (node: NodeT) = nonVisited(node)
         def isGray  (node: NodeT) = isVisited(node) && ! (node bit(blackHandle))
         def isBlack (node: NodeT) = node bit(blackHandle)
@@ -443,29 +448,32 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         /* pushed allows to track the path.
          * prev   serves the special handling of undirected edges. */
         @tailrec
-        def loop(pushed: Boolean, prev: Option[NodeT]) {
+        def loop(pushed: Boolean) {
           if (res.isEmpty)
             if (stack.isEmpty)
-              path foreach (setBlack(_))
+              path foreach (t => setBlack(t._1))
             else {
-              var newPrev = prev
-              val exclude = if (pushed) prev else {
-                while ( path.nonEmpty &&
-                       (path.head ne root) &&
-                       (path.head ne stack.head._2)) {
-                  val p = path.pop
-                  if (! isBlack(p))
-                    onNodeUp(p) 
+              val popped = stack.pop
+              val exclude: Option[NodeT] =
+                if (pushed)
+                  if (popped._3) Some(popped._2) else None
+                else {
+                  while ( path.nonEmpty &&
+                         (path.head._1 ne root) &&
+                         (path.head._1 ne popped._2)) {
+                    val p = path.pop._1
+                    if (! isBlack(p))
+                      onNodeUp(p) 
+                  }
+                  Some(path.head._1)
                 }
-                Some(path.head)
-              }
-              val current = stack.pop._1
-              path.push(current)
+              val current = popped._1
+              path.push((current, popped._4))
               if (nonVisited(current)) onNodeDown(current)
               if (doNodeVisitor && extendedVisitor.map{ v =>
                     nodeCnt += 1
                     v(current, nodeCnt, 0,
-                      new WgbInformer[NodeT] {
+                      new WgbInformer[NodeT, EdgeT] {
                         def stackIterator = stack.toIterator 
                         def pathIterator  = path .toIterator 
                       })
@@ -481,27 +489,48 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
                     if (exclude map (_ ne n) getOrElse true)
                       res = Some(n)
                   } else {
-                    stack.push((n, current))
+                    if (isDiGraph)
+                      stack.push((n, current, false, Nil))
+                    else {
+                      val (excl, multi): (Boolean, Iterable[EdgeT]) = {
+                        val conn = current connectionsWith n
+                        (conn.size: @switch) match {
+                          case 0 => throw new NoSuchElementException
+                          case 1 => (true, conn)
+                          case _ => (false, conn)
+                        }
+                      }
+                      stack.push((n, current, excl, multi))
+                    }
                     pushed = true
-                    newPrev = if (current.outgoingTo(n) exists (!_.directed)) Some(current)
-                              else None
                   }
                 }
-                loop(pushed, newPrev)
+                loop(pushed)
               }
             }
         }
-        loop(true, None)
+        loop(true)
   
         if (res.isDefined) {
-          if (onPopFound ne noAction) {
+          if (onPopFound ne null) {
             val resNode = res.get
-            onPopFound(resNode)
-            var continue = true
-            while(continue && path.nonEmpty) {
-              val n = path.pop
-              onPopFound(n)
-              if (n eq resNode) continue = false
+            if (isDiGraph) {
+              onPopFound(resNode, Nil)
+              var continue = true
+              while(continue && path.nonEmpty) {
+                val popped = path.pop 
+                val n = popped._1
+                onPopFound(n, popped._2)
+                if (n eq resNode) continue = false
+              }
+            } else {
+              val rev = path.result // undocumented fast reverse
+              while (rev.head._1 ne resNode) rev.pop
+              rev.drain { popped => 
+                val n = popped._1
+                onPopFound(n, popped._2)
+              }
+              onPopFound(resNode, Nil)
             }
           }
         }
@@ -596,6 +625,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         from.outgoingTo(to).filter(edgeFilter).head
       else
         from.findOutgoingTo(to).get
+
     /**
      * The edge with minimal weight having its tail at `from` and its head at `to`
      * and satisfying `navigation.edgeFilter`.
@@ -613,14 +643,16 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     /**
      * Prepends a pair of (node, edge) to this buffer. The edge is selected
      * calling `selectEdge` with the arguments `node` and `startNode` of
-     * the correct buffer. 
+     * the current buffer. 
      */
     def +=: (node      : NodeT,
              selectEdge: (NodeT, NodeT) => EdgeT): this.type =
       this. +=: (node, selectEdge(node, startNode))
+
     def +=: (node      : NodeT,
              selectEdge: (NodeT, NodeT, (EdgeT) => Boolean) => EdgeT): this.type =
       this. +=: (node, selectEdge(node, startNode, edgeFilter))
+
     def isValid = {
       var mustBeNode = false
       var size = 0
@@ -657,11 +689,39 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     implicit def toBuffer(pathBuf: PathBuffer): ListBuffer[GraphParamOut[N,E]] = pathBuf.buf 
   }
   class CycleBuffer(nodeFilter : (NodeT) => Boolean = anyNode,
-                    edgeFilter : (EdgeT) => Boolean = anyEdge)
+                    edgeFilter : (EdgeT) => Boolean = anyEdge,
+                    isDiGraph  : Boolean)
     extends PathBuffer(nodeFilter, edgeFilter)
     with    Cycle
   {
-    def sameAs(that: GraphTraversal[N,E]#Cycle) =
+    import mutable.EqSet, mutable.EqSet.EqSetMethods
+    final protected val multi = if (isDiGraph) null else EqSet[EdgeT](graphSize / 2) 
+    
+    protected[collection] def close: this.type = {
+      if (! isDiGraph) multi.clear
+      this
+    }
+        
+    final def +=: (n: NodeT, conn: Iterable[EdgeT]): this.type = {
+      if (buf.isEmpty) buf. +=: (n)
+      else if (isDiGraph) +=: (n, firstEdge _)
+      else {
+        val edge = (conn.size: @switch) match {
+          case 0 => n.edges.find (e => ! multi.contains(e) &&
+                                       edgeFilter(e) &&
+                                       e.hasTarget((x: NodeT) => x eq startNode)).get          
+          case 1 => conn.head
+          case _ => conn.find (e => ! multi.contains(e) &&
+                                    edgeFilter(e) &&
+                                    e.hasSource((x: NodeT) => x eq n)).get
+        }
+        +=: (n, edge)
+        multi += edge
+      }
+      this
+    }
+
+    final def sameAs(that: GraphTraversal[N,E]#Cycle) =
       this == that || ( that match {
         case that: GraphTraversalImpl[N,E]#CycleBuffer =>
           this.size == that.size && {
@@ -697,8 +757,9 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   object CycleBuffer
   {
     def apply(nodeFilter : (NodeT) => Boolean = anyNode,
-              edgeFilter : (EdgeT) => Boolean = anyEdge) =
-      new CycleBuffer(nodeFilter, edgeFilter)
+              edgeFilter : (EdgeT) => Boolean = anyEdge,
+              idDirected : Boolean) =
+      new CycleBuffer(nodeFilter, edgeFilter, isDirected)
     /**
      * Enables to treat an instance of CycleBuffer as if it was a ListBuffer. 
      * @param cycleBuf The CycleBuffer to convert.
@@ -727,15 +788,15 @@ object GraphTraversalImpl {
   /** Extended node visitor informer for cycle detecting. 
    *  This informer always returns `0` for `depth`.
    */
-  trait WgbInformer[N] extends NodeInformer {
+  trait WgbInformer[N,E] extends NodeInformer {
     import WgbInformer._
-    def stackIterator: WgbStack[N]
-    def pathIterator:  WgbPath [N]
+    def stackIterator: WgbStack[N,E]
+    def pathIterator:  WgbPath [N,E]
   }
   object WgbInformer {
-    type WgbStack[N] = Iterator[(N, N)]
-    type WgbPath [N] = Iterator[N]
-    def unapply[N](inf: WgbInformer[N]): Option[(WgbStack[N], WgbPath[N])] =
+    type WgbStack[N,E] = Iterator[(N, N, Boolean, Iterable[E])]
+    type WgbPath [N,E] = Iterator[(N, Iterable[E])]
+    def unapply[N,E](inf: WgbInformer[N,E]): Option[(WgbStack[N,E], WgbPath[N,E])] =
       Some(inf.stackIterator, inf.pathIterator)
   }
   /** Extended node visitor informer for best first searches. 

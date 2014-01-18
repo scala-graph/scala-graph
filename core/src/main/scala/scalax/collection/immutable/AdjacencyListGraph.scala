@@ -24,7 +24,11 @@ trait AdjacencyListGraph[N,
     extends NodeBase(value)
     with    InnerNodeLike
   { this: NodeT =>
+    
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
+    
+    import mutable.EqMap._
+    @transient final lazy val diSuccessors: Set[NodeT] = Adj.diSucc.toKeySet
   }
 
   type NodeSetT = NodeSet

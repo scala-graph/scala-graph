@@ -45,6 +45,9 @@ trait AdjacencyListGraph[N,
       addDiSuccessors(edge, (n: NodeT) => diSucc put (n, edge))
     }
 
+    import EqMap._
+    final def diSuccessors: Set[NodeT] = diSucc.toKeySet
+    
     protected[AdjacencyListGraph] def remove(edge: EdgeT): Boolean =
       if (edges.remove(edge)) {
         if (selfGraph.edges.initialized) {

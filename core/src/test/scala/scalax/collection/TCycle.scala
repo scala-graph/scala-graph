@@ -127,4 +127,25 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     uc_22(3).findCycle.get.nodes    should (be (List(3, 1, 2, 4, 7, 6, 3) map uc_22) or
                                             be (List(3, 6, 7, 4, 2, 1, 3) map uc_22))
   }
+  def test_UnDiMulti {
+    val (e1, e2) = (WkUnDiEdge(1, 2)(0), WkUnDiEdge(1, 2)(1))
+    val g = factory(e1, e2)
+    val c = (g get 1).findCycle
+    c should be ('isDefined)
+    c.get.edges should (be (List(e1, e2)) or
+                        be (List(e2, e1)))
+  }
+  def test_Mixed {
+    val g = factory(1 ~ 2, 1 ~> 2, 2 ~ 3)
+    def m(outer: Int) = g get outer
+    val (c1, c2, c3) = ((g get 1).findCycle, (g get 2).findCycle, (g get 3).findCycle)
+    c1 should be ('isDefined)
+    c2 should be ('isDefined)
+    c3 should be ('isDefined)
+    val beExpected = (be (List(1 ~>2, 1 ~ 2)) or
+                      be (List(1 ~ 2, 1 ~>2)))
+    c1.get.edges should beExpected
+    c2.get.edges should beExpected
+    c3.get.edges should beExpected
+ }
 }

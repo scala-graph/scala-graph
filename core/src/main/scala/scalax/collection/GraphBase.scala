@@ -65,6 +65,8 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
    * because `Graph` is also `SetLike` with set elements being nodes or edges.  
    */
   def graphSize = edges.size
+  def isDirected: Boolean
+  def isHyper: Boolean
   
   type NodeT <: InnerNodeLike with Serializable
   trait Node extends Serializable
@@ -85,6 +87,18 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     def edges: ExtSet[EdgeT]
     /** Synonym for `edges`. */  
     @inline final def ~ = edges
+    
+    /**
+     * All edges connecting this node with `other` including outgoing and incoming edges.
+     * This method is useful in case of multigraphs.
+     *
+     * @param other A node which is possibly connected with this node. 
+     * @return All edges connecting this node with `other`.
+     *         If `other` equals this node all hooks are returned.
+     *         If `other` is not connected with this node an empty set is returned.   
+     */
+    def connectionsWith(other: NodeT): Set[EdgeT]
+
     /**
      * Checks whether this node has only hooks or no edges at all.
      *  

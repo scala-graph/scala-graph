@@ -14,7 +14,7 @@ object EqSet {
   implicit class EqSetMethods[A<:AnyRef](val map: EqSet[A]) extends AnyVal {
     def apply(elem: A): Boolean = (map get (elem)) != null
     def += (elem: A): map.type = { map put (elem, true); map }
-    def iterator: Iterator[A] = map.keySet.iterator
+    def iterator: Iterator[A] = map.keysIterator
     def toKeySet: Set[A] = new ImmutableEqSet[A](map)
   }
 }
@@ -27,8 +27,6 @@ object EqMap {
   implicit class EqMapMethods[K<:AnyRef,V<:AnyRef]
       (val map: EqMap[K,V]) extends AnyVal {
 
-    def getNotNull(key: K): Option[V] = map get key
-    def keysIterator: Iterator[K] = map.keySet.iterator
     def toKeySet: Set[K] = new ImmutableEqSet[K](map)
   }
 }

@@ -40,8 +40,11 @@ trait GraphLike[N,
   protected type ThisGraph = this.type
   implicit val edgeManifest: Manifest[E[N]]
   
-  final def isDirected = edgeManifest.runtimeClass.getSimpleName contains "Di"
-  final def isHyper    = edgeManifest.runtimeClass.getSimpleName contains "Hy"
+  final def isDirected = {
+    val name = edgeManifest.runtimeClass.getSimpleName
+    (! (name contains "UnDi")) && (name contains "Di") 
+  }
+  final def isHyper = edgeManifest.runtimeClass.getSimpleName contains "Hy"
 
   /** The companion object of `This`. */
   val graphCompanion: GraphCompanion[This]

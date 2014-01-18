@@ -136,20 +136,24 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      *  
      * @return Iterator over all nodes of this path in proper order.
      */
-    def nodeIterator = (iterator filter (_.isNode)).asInstanceOf[Iterator[NodeT]]
+    def nodeIterator: Iterator[NodeT] =
+      (iterator filter (_.isNode)).asInstanceOf[Iterator[NodeT]]
     /**
      * Iterator over the edges of this path. The result is chached
      * on the first call, so consecutive calls of this method are cheep.
      *  
      * @return Iterator over all edges of this path in proper order.
      */
-    def edgeIterator = (iterator filter (_.isEdge)).asInstanceOf[Iterator[EdgeT]]
+    def edgeIterator: Iterator[EdgeT] =
+      (iterator filter (_.isEdge)).asInstanceOf[Iterator[EdgeT]]
+
     /** List containing all nodes of this path in proper order. */
     def nodes = nodeIterator.toList
     /** List containing all edges of this path in proper order. */
     def edges = edgeIterator.toList
+
     /** The cumulated weight of all edges on this path. */
-    def weight = { var sum = 0L; edgeIterator foreach {sum += _.weight}; sum }  
+    def weight: Long = { var sum = 0L; edgeIterator foreach {sum += _.weight}; sum }  
     /** The number of edges on this path. */
     def length = edgeIterator.size
     def startNode: NodeT
@@ -233,6 +237,8 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
     val orderLessOne = order - 1
     nodes forall (_.diSuccessors.size == orderLessOne)
   }
+  
+  // Must be val since eq does not work for def.
   /** Default node filter letting path all nodes (non-filter). */
   @transient final val anyNode = (n: NodeT) => true
   /** Node predicate always returning `false`. */
