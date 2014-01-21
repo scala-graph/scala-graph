@@ -54,18 +54,18 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 
   def test_nodeFindCycle {
     (acyclic_1 get 1 findCycle) should be (None)
-    c_1(2).findCycle.get.nodes  should be (List(2, 3, 4, 2) map c_1)
+    c_1(2).findCycle.get.nodes.toList should be (List(2, 3, 4, 2) map c_1)
 
     (acyclic_2 get 1 findCycle) should be (None)
-    c_21(1).findCycle.get.nodes should be (List(3, 7, 8, 3) map c_21)
-    c_22(1).findCycle.get.nodes should(be (List(1, 5, 6, 1)             map c_22) or
-                                       be (List(1, 4, 5, 6, 1)          map c_22) or
-                                       be (List(1, 3, 7, 4, 5, 6, 1)    map c_22) or
-                                       be (List(1, 2, 3, 7, 4, 5, 6, 1) map c_22))
-    c_22(4).findCycle.get.nodes should(be (List(5, 6, 1, 5)             map c_22) or
-                                       be (List(4, 5, 6, 1, 4)          map c_22) or
-                                       be (List(4, 5, 6, 1, 3, 7, 4)    map c_22) or
-                                       be (List(4, 5, 6, 1, 2, 3, 7, 4) map c_22))
+    c_21(1).findCycle.get.nodes.toList should be (List(3, 7, 8, 3) map c_21)
+    c_22(1).findCycle.get.nodes.toList should(be (List(1, 5, 6, 1)             map c_22) or
+                                              be (List(1, 4, 5, 6, 1)          map c_22) or
+                                              be (List(1, 3, 7, 4, 5, 6, 1)    map c_22) or
+                                              be (List(1, 2, 3, 7, 4, 5, 6, 1) map c_22))
+    c_22(4).findCycle.get.nodes.toList should(be (List(5, 6, 1, 5)             map c_22) or
+                                              be (List(4, 5, 6, 1, 4)          map c_22) or
+                                              be (List(4, 5, 6, 1, 3, 7, 4)    map c_22) or
+                                              be (List(4, 5, 6, 1, 2, 3, 7, 4) map c_22))
     
     val g = {
       var i, j=0
@@ -74,8 +74,8 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     val (g1, g2) = (g + 4~>2, g + 5~>2)
     val (gCycle_1, gCycle_2) = (g1 get 3 findCycle, g2 get 3 findCycle)
     def outer(out: Int) = g get out
-    gCycle_1.get.nodes should be (List(3, 4,    2, 3) map outer)
-    gCycle_2.get.nodes should be (List(3, 4, 5, 2, 3) map outer)
+    gCycle_1.get.nodes.toList should be (List(3, 4,    2, 3) map outer)
+    gCycle_2.get.nodes.toList should be (List(3, 4, 5, 2, 3) map outer)
 
     def fromEachNode[N,E[X] <: EdgeLikeIn[X]](noCycles: Set[N], cycle: Graph[N,E]#Cycle) {
       val g = cycle.nodes.head.containingGraph
@@ -119,13 +119,16 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 
   def test_UnDiNodeFindCycle {
     (unDiAcyclic_1 get 1 findCycle) should be (None)
-    uc_1(2).findCycle.get.nodes  should (be (List(2, 3, 1, 2) map uc_1) or
-                                         be (List(2, 1, 3, 2) map uc_1))
+    uc_1(2).findCycle.get.nodes.toList should (
+        be (List(2, 3, 1, 2) map uc_1) or
+        be (List(2, 1, 3, 2) map uc_1))
     (unDiAcyclic_2 get 1 findCycle) should be (None)
-    uc_21(1).findCycle.get.nodes    should (be (List(1, 3, 5, 2, 1) map uc_21) or
-                                            be (List(1, 2, 5, 3, 1) map uc_21))
-    uc_22(3).findCycle.get.nodes    should (be (List(3, 1, 2, 4, 7, 6, 3) map uc_22) or
-                                            be (List(3, 6, 7, 4, 2, 1, 3) map uc_22))
+    uc_21(1).findCycle.get.nodes.toList should (
+        be (List(1, 3, 5, 2, 1) map uc_21) or
+        be (List(1, 2, 5, 3, 1) map uc_21))
+    uc_22(3).findCycle.get.nodes.toList should (
+        be (List(3, 1, 2, 4, 7, 6, 3) map uc_22) or
+        be (List(3, 6, 7, 4, 2, 1, 3) map uc_22))
   }
   def test_UnDiMulti {
     val (e1, e2) = (WkUnDiEdge(1, 2)(0), WkUnDiEdge(1, 2)(1))

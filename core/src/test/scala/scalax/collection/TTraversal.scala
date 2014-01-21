@@ -171,7 +171,7 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     val r5 = n5 pathUntil (_ < 4)
     r5     should be ('isDefined)
     val p5 = r5.get
-    p5.nodes should be (expected) 
+    p5.nodes.toList should be (expected) 
 
     p5.size   should be (expected.size + (expected.size - 1))
     p5.length should be (expected.size - 1)
@@ -186,13 +186,13 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     val g = factory(0~1, 1~2, 2~3)
     def n(outer: Int) = g get outer
     (n(0) shortestPathTo n(0)).get.length should be (0)
-    (n(0) shortestPathTo n(3)).get.nodes should be (List(0,1,2,3))
-    (n(1) shortestPathTo n(3)).get.nodes should be (List(  1,2,3))
+    (n(0) shortestPathTo n(3)).get.nodes.toList should be (List(0,1,2,3))
+    (n(1) shortestPathTo n(3)).get.nodes.toList should be (List(  1,2,3))
   }
   def test_shortestPathTo_fix_github9 {
     val g = factory(0~>1 % 3, 0~>2 % 4, 1~>3 % 3, 2~>3 % 1)
     def n(outer: Int) = g get outer
-    (n(0) shortestPathTo n(3)).get.nodes should be (List(0,2,3)) 
+    (n(0) shortestPathTo n(3)).get.nodes.toList should be (List(0,2,3)) 
   }
   def test_shortestPathTo_Di_1 {
     val g = factory(elementsOfWDi_1: _*)
@@ -202,19 +202,19 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     n(5) shortestPathTo n(1) should be (None)
     n(3) shortestPathTo n(1) should be (None)
     
-    (n(1) shortestPathTo n(3)).get.nodes should be (List(1,3)) 
-    (n(4) shortestPathTo n(5)).get.nodes should be (List(4,3,5)) 
-    (n(1) shortestPathTo n(5)).get.nodes should be (List(1,5))
+    (n(1) shortestPathTo n(3)).get.nodes.toList should be (List(1,3)) 
+    (n(4) shortestPathTo n(5)).get.nodes.toList should be (List(4,3,5)) 
+    (n(1) shortestPathTo n(5)).get.nodes.toList should be (List(1,5))
   }
   def test_shortestPathTo_UnDi_1 {
     val g = factory(elementsofWUnDi_1: _*)
     def n(value: Int) = g get value
 
-    (n(2) shortestPathTo n(5)).get.nodes should be (List(2,3,4,5))
-    (n(4) shortestPathTo n(5)).get.nodes should be (List(4,5))
-    (n(1) shortestPathTo n(3)).get.nodes should(be (List(1,3)) or be (List(1,5,3)))
-    (n(5) shortestPathTo n(4)).get.nodes should be (List(5,3,4))
-    (n(3) shortestPathTo n(1)).get.nodes should be (List(3,4,5,1))
+    (n(2) shortestPathTo n(5)).get.nodes.toList should be (List(2,3,4,5))
+    (n(4) shortestPathTo n(5)).get.nodes.toList should be (List(4,5))
+    (n(1) shortestPathTo n(3)).get.nodes.toList should(be (List(1,3)) or be (List(1,5,3)))
+    (n(5) shortestPathTo n(4)).get.nodes.toList should be (List(5,3,4))
+    (n(3) shortestPathTo n(1)).get.nodes.toList should be (List(3,4,5,1))
   }
   // see diagram WUnDi-2.jpg
   val eUnDi_2 = List[WUnDiEdge[Int]](
@@ -225,38 +225,38 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     def n(value: Int) = gUnDi_2 get value
 
     val p1_3 = n(1).shortestPathTo(n(3)).get
-    p1_3.nodes should be (List(1,2,3))
-    p1_3.edges should be (List(eUnDi_2(4), eUnDi_2(1)))
+    p1_3.nodes.toList should be (List(1,2,3))
+    p1_3.edges.toList should be (List(eUnDi_2(4), eUnDi_2(1)))
 
     val p2_1 = (n(2) shortestPathTo n(1)).get
-    p2_1.nodes should be (List(2,3,1))
-    p2_1.edges should be (List(eUnDi_2(1), eUnDi_2(3)))
+    p2_1.nodes.toList should be (List(2,3,1))
+    p2_1.edges.toList should be (List(eUnDi_2(1), eUnDi_2(3)))
 
     val p3_1 = (n(3) shortestPathTo n(1)).get
-    p3_1.nodes should be (List(3,2,1))
-    p3_1.edges should be (List(eUnDi_2(1), eUnDi_2(0)))
+    p3_1.nodes.toList should be (List(3,2,1))
+    p3_1.edges.toList should be (List(eUnDi_2(1), eUnDi_2(0)))
 
     val p3_3 = (n(3) shortestPathTo n(3)).get
-    p3_3.nodes should be (List(3))
-    p3_3.edges should be ('empty)
+    p3_3.nodes.toList should be (List(3))
+    p3_3.edges.toList should be ('empty)
   }
   def test_Filter {
     def n(value: Int) = gUnDi_2 get value
 
     val p2_1_nNE3 = (n(2) pathTo (n(1),
                                   nodeFilter = _ != 3)).get
-    p2_1_nNE3.nodes should be (List(2,1))
-    p2_1_nNE3.edges should be (List(2~1 % 4))
+    p2_1_nNE3.nodes.toList should be (List(2,1))
+    p2_1_nNE3.edges.toList should be (List(2~1 % 4))
 
     val p1_3_wGT4 = (n(1) pathTo (n(3),
                                   edgeFilter = _.weight > 4)).get
-    p1_3_wGT4.nodes should be (List(1,3))
-    p1_3_wGT4.edges should be (List(eUnDi_2(2)))
+    p1_3_wGT4.nodes.toList should be (List(1,3))
+    p1_3_wGT4.edges.toList should be (List(eUnDi_2(2)))
 
     val p1_3_wLT4 = (n(1) pathTo (n(3),
                                   edgeFilter = _.weight < 4)).get
-    p1_3_wLT4.nodes should be (List(1,2,3))
-    p1_3_wLT4.edges should be (List(eUnDi_2(4),eUnDi_2(1)))
+    p1_3_wLT4.nodes.toList should be (List(1,2,3))
+    p1_3_wLT4.edges.toList should be (List(eUnDi_2(4),eUnDi_2(1)))
 }
   def test_Visitor {
     def n(value: Int) = gUnDi_2 get value
@@ -321,12 +321,12 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
 
     val shp1 = (g get jfc) shortestPathTo (g get dme,
                                            edgeFilter = _.airline != "UN")
-    shp1.get.nodes should be (List(jfc, lhr, dme))
-    shp1.get.edges should be (List(flight("BA 174"),flight("SU 242")))
+    shp1.get.nodes.toList should be (List(jfc, lhr, dme))
+    shp1.get.edges.toList should be (List(flight("BA 174"),flight("SU 242")))
      
     val shp2 = (g get lhr) shortestPathTo (g get svx,
                                            edgeFilter = _.airline != "SU")
-    shp2.get.edges should be (List(flight("LH 903"),flight("LH 1480")))
+    shp2.get.edges.toList should be (List(flight("LH 903"),flight("LH 1480")))
 
     val shp3 = (g get dme) shortestPathTo (g get jfc,
                                            nodeFilter = _ != fra)
@@ -334,8 +334,8 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
       
     val shp4 = (g get jfc) shortestPathTo (g get svx,
                                            nodeFilter = _ != dme)
-    shp4.get.nodes should be (List(jfc, fra, svx)) 
-    shp4.get.edges should be (List(flight("UA 8840"), flight("LH 1480")))
+    shp4.get.nodes.toList should be (List(jfc, fra, svx)) 
+    shp4.get.edges.toList should be (List(flight("UA 8840"), flight("LH 1480")))
 
     var visited = Set[g.EdgeT]() 
     (g get jfc) shortestPathTo (g get lhr,

@@ -127,35 +127,19 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
    * The first element is the start node, the second is an edge with its tail
    * being the start node and its head being the third element etc.   
    */
-  trait Path extends Iterable[GraphParamOut[N,E]]
+  trait Path extends Traversable[GraphParamOut[N,E]]
   {
     override def stringPrefix = "Path"
-    /**
-     * Iterator over the nodes of this path. The result is chached
-     * on the first call, so consecutive calls of this method are cheep.
-     *  
-     * @return Iterator over all nodes of this path in proper order.
-     */
-    def nodeIterator: Iterator[NodeT] =
-      (iterator filter (_.isNode)).asInstanceOf[Iterator[NodeT]]
-    /**
-     * Iterator over the edges of this path. The result is chached
-     * on the first call, so consecutive calls of this method are cheep.
-     *  
-     * @return Iterator over all edges of this path in proper order.
-     */
-    def edgeIterator: Iterator[EdgeT] =
-      (iterator filter (_.isEdge)).asInstanceOf[Iterator[EdgeT]]
 
-    /** List containing all nodes of this path in proper order. */
-    def nodes = nodeIterator.toList
-    /** List containing all edges of this path in proper order. */
-    def edges = edgeIterator.toList
+    /** All nodes of this path in proper order. */
+    def nodes: Traversable[NodeT]
+    /** All edges of this path in proper order. */
+    def edges: Traversable[EdgeT]
 
     /** The cumulated weight of all edges on this path. */
-    def weight: Long = { var sum = 0L; edgeIterator foreach {sum += _.weight}; sum }  
+    def weight: Long = { var sum = 0L; edges foreach {sum += _.weight}; sum }  
     /** The number of edges on this path. */
-    def length = edgeIterator.size
+    def length = nodes.size - 1
     def startNode: NodeT
     def endNode:   NodeT
     /**
@@ -169,8 +153,9 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
     /** A path of zero length that is a single node. */
     def zero(node: NodeT) = new Path {
       private[this] val _node = node
-      def iterator: Iterator[GraphParamOut[N,E]] = List(_node).iterator
-      override def length = 0
+      val nodes = List(_node)
+      def edges = Nil
+      def foreach[U](f: GraphParamOut[N,E] => U): Unit = f(_node)
       def startNode = _node
       def endNode = _node
       def isValid = true
@@ -211,26 +196,6 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * `c1 != c2`, `c1 != c3` but `c1 sameAs c2` and `c1 sameAs c3`.  
      */
     def sameAs(that: GraphTraversal[N,E]#Cycle): Boolean
-    /**
-     * Finds cycles with a node/edge set different from `this` cycle's node/edge set but
-     * sharing at least one common node with `this` cycle's node set.
-     * Currently it is not guaranteed that all such cycles will be found
-     * as it could considerably blow up the number of cycles to be returned. 
-     *  
-     * @param nodeFilter $NODEFILTER
-     * @param edgeFilter $EDGEFILTER
-     * @param maxDepth   $MAXDEPTH
-     * @param nodeVisitor $NODEVISITOR $EXTNODEVISITOR $WGBINFORMER
-     * @param edgeVisitor $EDGEVISITOR
-     * @return List of dependent cycles. 
-     */
-    def dependentCycles(nodeFilter : (NodeT) => Boolean       = anyNode,
-                        edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                        maxDepth   :  Int                     = 0,
-                        nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                        edgeVisitor: (EdgeT) => Unit          = noEdgeAction): List[Cycle]
-    /** Same as `dependentCycles(...)` with default arguments. */
-    @inline final def dependentCycles: List[Cycle] = dependentCycles()
   }
 
   def isComplete = {
@@ -768,23 +733,18 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * @param maxDepth $MAXDEPTH
      * @param nodeUpVisitor $NODEUPVISITOR
      *                      $EXTNODEVISITOR $DFSINFORMER
-     * @param onPopFound This function is called for all nodes from the node found
-     *        by `pred` back to `root` skipping backward along the path from `root`
-     *        to the node found. 
      * @return $RESULT 
      */
     def depthFirstSearch (root         : NodeT,
                           pred         : (NodeT) => Boolean = noNode,
                           maxDepth     : Int                = 0,
-                          nodeUpVisitor: (NodeT) => Unit    = noNodeUpAction, 
-                          onPopFound   : (NodeT) => Unit    = noAction): Option[NodeT]
+                          nodeUpVisitor: (NodeT) => Unit    = noNodeUpAction): Option[NodeT]
     /** Synonym for `depthFirstSearch` */
     @inline final def dfs(root         : NodeT,
                           pred         : (NodeT) => Boolean = noNode,
                           maxDepth     : Int                = 0,
-                          nodeUpVisitor: (NodeT) => Unit    = noNodeUpAction, 
-                          onPopFound   : (NodeT) => Unit    = noAction) =
-      depthFirstSearch(root, pred, maxDepth, nodeUpVisitor, onPopFound)
+                          nodeUpVisitor: (NodeT) => Unit    = noNodeUpAction) =
+      depthFirstSearch(root, pred, maxDepth, nodeUpVisitor)
     /**
      * Starting at `root`, functionally traverses this graph up to `maxDepth` layers
      * using the breadth first search algorithm and all filters, visitors etc.
