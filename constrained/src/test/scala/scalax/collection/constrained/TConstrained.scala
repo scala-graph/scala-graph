@@ -26,7 +26,7 @@ class TConstrainedRootTest
 
   def test_mutableEvenNode {
     implicit val config: Config = UserConstraints.EvenNode 
-    val g = Graph(1)
+    val g = Graph[Int,Nothing](1)
     g should be ('isEmpty)
     (g += 2) should have size (1)
     (g += 3) should have size (1)
@@ -53,7 +53,7 @@ class TConstrained [CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
   }
   def test_EvenNode {
     implicit val config: Config = UserConstraints.EvenNode  
-    val g = factory(1,2,3,4)
+    val g = factory[Int,Nothing](1,2,3,4)
     g should be ('isEmpty)
     g + 5 contains 5 should be (false)
     g + 6 contains 6 should be (true)
@@ -63,9 +63,9 @@ class TConstrained [CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
   def test_EvenNodeByException {
     implicit val config: Config = UserConstraints.EvenNodeByException  
     intercept[IllegalArgumentException] {
-            factory(1,2,3,4)
+            factory[Int,Nothing](1,2,3,4)
     }
-    val g = factory(2,4)
+    val g = factory[Int,Nothing](2,4)
     g should have size (2)
     intercept[IllegalArgumentException] { g + 5 }
     g + 6 contains 6 should be (true)
@@ -101,7 +101,7 @@ class TConstrained [CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
   def test_Op {
     import UserConstraints._
     { implicit val config: Config = EvenNode && EvenNode  
-      val g1 = factory(2,4)
+      val g1 = factory[Int,Nothing](2,4)
       g1 should have ('order (2), 'graphSize (0))
     }
     { implicit val config: Config = EvenNode && MinDegree_2  

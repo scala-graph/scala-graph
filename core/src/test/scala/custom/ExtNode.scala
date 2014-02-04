@@ -2,6 +2,7 @@ package custom
 
 import language.higherKinds
 import collection.generic.CanBuildFrom
+import scala.reflect.runtime.universe._
 
 import scalax.collection._
 import scalax.collection.GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn} 
@@ -81,7 +82,7 @@ package immutable {
   class MyExtGraph[N, E[X] <: EdgeLikeIn[X]]
       ( iniNodes: Iterable[N]    = Set[N](),
         iniEdges: Iterable[E[N]] = Set[E[N]]() )
-      ( implicit override val edgeManifest: Manifest[E[N]],
+      ( implicit override val edgeT: TypeTag[E[N]],
         val _config: MyExtGraph.Config with AdjacencyListArrayConfig)
     extends ImmutableGraph[N,E]
     with    AdjacencyListGraph[N,E,MyExtGraph]
@@ -99,7 +100,7 @@ package immutable {
                      ripple:   Boolean,
                      addNodes: Iterable[N],
                      addEdges: Iterable[E[N]])
-                    (implicit edgeManifest: Manifest[E[N]],
+                    (implicit edgeT: TypeTag[E[N]],
                      config: MyExtGraph.Config with AdjacencyListArrayConfig) = {
       this()
       from(that)(delNodes, delEdges, ripple, addNodes, addEdges)
@@ -136,11 +137,11 @@ package immutable {
   }
   object MyExtGraph extends ImmutableGraphCompanion[MyExtGraph]
   {
-    def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeManifest: Manifest[E[N]],
+    def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                         config: Config) = new MyExtGraph[N,E]
     override def from [N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N],
                                                  edges: Iterable[E[N]])
-                                                (implicit edgeManifest: Manifest[E[N]],
+                                                (implicit edgeT: TypeTag[E[N]],
                                                  config: Config) =
       new MyExtGraph[N,E](nodes, edges)
     override def fromStream[N, E[X] <: EdgeLikeIn[X]]
@@ -148,11 +149,11 @@ package immutable {
         nodes:       Iterable[N]                  = Seq.empty[N],
         edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
         edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-       (implicit edgeManifest: Manifest[E[N]],
+       (implicit edgeT: TypeTag[E[N]],
         config: Config = defaultConfig): MyExtGraph[N,E] =
       throw new IllegalAccessError("'fromStream' not implemented.")
     implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](
-        implicit edgeManifest: Manifest[E[N]],
+        implicit edgeT: TypeTag[E[N]],
         config: Config): CanBuildFrom[Coll, GraphParamIn[N,E], MyExtGraph[N,E]] =
       new GraphCanBuildFrom[N,E]
   }
@@ -167,7 +168,7 @@ package mutable {
   class MyExtGraph[N, E[X] <: EdgeLikeIn[X]]
       ( iniNodes: Iterable[N]    = Set[N](),
         iniEdges: Iterable[E[N]] = Set[E[N]]() )
-      ( implicit override val edgeManifest: Manifest[E[N]],
+      ( implicit override val edgeT: TypeTag[E[N]],
         val _config: MyExtGraph.Config with AdjacencyListArrayConfig)
     extends MutableGraph[N,E]
     with    AdjacencyListGraph[N,E,MyExtGraph]
@@ -185,7 +186,7 @@ package mutable {
                      ripple:   Boolean,
                      addNodes: Iterable[N],
                      addEdges: Iterable[E[N]])
-                    (implicit edgeManifest: Manifest[E[N]],
+                    (implicit edgeT: TypeTag[E[N]],
                      config: MyExtGraph.Config with AdjacencyListArrayConfig) = {
       this()
       from(that)(delNodes, delEdges, ripple, addNodes, addEdges)
@@ -219,11 +220,11 @@ package mutable {
   }
   object MyExtGraph extends MutableGraphCompanion[MyExtGraph]
   {
-    def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeManifest: Manifest[E[N]],
+    def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                         config: Config) = new MyExtGraph[N,E]
     override def from [N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N],
                                                  edges: Iterable[E[N]])
-                                                (implicit edgeManifest: Manifest[E[N]],
+                                                (implicit edgeT: TypeTag[E[N]],
                                                  config: Config) =
       new MyExtGraph[N,E](nodes, edges)
     override def fromStream[N, E[X] <: EdgeLikeIn[X]]
@@ -231,11 +232,11 @@ package mutable {
         nodes:       Iterable[N]                  = Seq.empty[N],
         edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
         edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-       (implicit edgeManifest: Manifest[E[N]],
+       (implicit edgeT: TypeTag[E[N]],
         config: Config = defaultConfig): MyExtGraph[N,E] =
       throw new IllegalAccessError("'fromStream' not implemented.")
     implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](
-        implicit edgeManifest: Manifest[E[N]],
+        implicit edgeT: TypeTag[E[N]],
         config: Config): CanBuildFrom[Coll, GraphParamIn[N,E], MyExtGraph[N,E]] =
       new GraphCanBuildFrom[N,E]
   }

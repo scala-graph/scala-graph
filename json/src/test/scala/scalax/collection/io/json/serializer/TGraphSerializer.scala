@@ -56,7 +56,7 @@ class TGraphSerializer[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[
   }
 
   def test_importWEdge {
-    val g = factory.fromJson(graphJsonText, descriptor)
+    val g = factory.fromJson[String,WDiEdge](graphJsonText, descriptor)
     g should equal (graph)
   }
   

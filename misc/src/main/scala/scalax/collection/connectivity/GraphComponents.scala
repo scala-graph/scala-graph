@@ -3,6 +3,7 @@ package scalax.collection.connectivity
 import scala.collection.mutable.ListBuffer
 import scala.collection.{mutable, Set}
 import scala.math.min
+import scala.reflect.runtime.universe._
 
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
@@ -14,7 +15,8 @@ import logging.Logging
  * Provides algorithms for finding graph components.
  * @author Vasco Figueira
  */
-final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N, E])(implicit m: Manifest[N]) extends Logging {
+final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](
+    val g: Graph[N, E])(implicit edgeT: TypeTag[N]) extends Logging {
 
   type DeepSearchStackAggregator = (Seq[g.NodeT]) => Unit
 
@@ -98,7 +100,7 @@ final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N, E])(implic
     // if(outerEdges.isEmpty) should be able to say something like
     // Graph.from(lookup.values) - ditching evidence and using outerEdges.head
 
-    Graph.from(lookup.values, outerEdges)(Manifest.classType(evidence.getClass))
+    Graph.from(lookup.values, outerEdges)
   }
 
   /**
@@ -157,7 +159,7 @@ final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N, E])(implic
  */
 object GraphComponents {
 
-  implicit def graphToComponents[N: Manifest, E[X] <: EdgeLikeIn[X]](g: Graph[N, E]) =
+  implicit def graphToComponents[N: TypeTag, E[X] <: EdgeLikeIn[X]](g: Graph[N, E]) =
     new GraphComponents[N, E](g)
 }
 

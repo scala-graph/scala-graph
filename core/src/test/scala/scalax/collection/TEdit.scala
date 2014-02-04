@@ -1,6 +1,8 @@
 package scalax.collection
 
 import language.{higherKinds, postfixOps}
+import scala.collection.generic.CanBuildFrom
+import scala.reflect.runtime.universe._
 
 import org.scalatest.Suite
 import org.scalatest.Suites
@@ -20,18 +22,18 @@ trait ConfigWrapper[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
 {
   val companion: GraphCompanion[CC]
   implicit val config: companion.Config
-  def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeManifest: Manifest[E[N]],
+  def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                       config: companion.Config): CC[N,E] = companion.empty
   def apply[N, E[X] <: EdgeLikeIn[X]](elems: GraphParamIn[N,E]*)
-                                     (implicit edgeManifest: Manifest[E[N]],
+                                     (implicit edgeT: TypeTag[E[N]],
                                       config: companion.Config) = companion(elems: _*)
   def from [N, E[X] <: EdgeLikeIn[X]](edges: collection.Iterable[E[N]])
-                                     (implicit edgeManifest: Manifest[E[N]],
+                                     (implicit edgeT: TypeTag[E[N]],
                                       config: companion.Config) = companion.from(edges = edges)
   def from [N, E[X] <: EdgeLikeIn[X]](nodes: collection.Iterable[N],
                                       edges: collection.Iterable[E[N]])
-                                     (implicit edgeManifest: Manifest[E[N]],
-                                      config: companion.Config) = companion.from(nodes, edges) 
+                                     (implicit edgeT: TypeTag[E[N]],
+                                      config: companion.Config) = companion.from(nodes, edges)
 }
 @RunWith(classOf[JUnitRunner])
 class TEditRootTest
@@ -48,15 +50,21 @@ class TEditRootTest
 		)
 	with ShouldMatchers
 {
-	// ---------------------------------------- type-specific tests
-	def test_DefaultImmutable {
-		val g = Graph()
+	// ---------------------------------------- immutable tests
+	def test_DefaultIsImmutable {
+		val g = Graph[Nothing,Nothing]()
 		g.isInstanceOf[immutable.Graph[Nothing,Nothing]] should be (true)
 	}
+  def test_CanBuildFromImmutableUnDi {
+    import immutable.Graph
+    val g = Graph(1~2)
+    val m: Graph[Int,UnDiEdge] = g map Helper.icrementNode
+    m.edges.head should be (UnDiEdge(2,3))
+  }
 	// ---------------------------------------- mutable tests
 	val mutableFactory = mutable.Graph 
   def test_PlusEq {
-    val g = mutableFactory(1, 3)
+    val g = mutableFactory[Int,Nothing](1, 3)
     g += 2
     g should have size (3)
     for (i <- 1 to 3)
@@ -69,13 +77,13 @@ class TEditRootTest
     g remove 5 should be (false)
     g -?  2    should be (g)
     (g -?= 2)  should be (g)
-    (g -= 2)   should be (mutableFactory(3, 4))
+    (g -= 2)   should be (mutableFactory[Int,UnDiEdge](3, 4))
     g.clear
     g          should be ('empty)
 	}
   def test_MinusEq_2 {
     val g = mutableFactory(1~2, 2~3)
-    (g -=  2)   should be (mutableFactory(1, 3))
+    (g -=  2)   should be (mutableFactory[Int,UnDiEdge](1, 3))
     g.graphSize should be (0)
   }
   def test_diSucc {
@@ -225,7 +233,7 @@ class TEditRootTest
     val (gBefore, gAfter) = (mutableFactory(1, 2~3), mutableFactory(0, 1~2, 2~3)) 
     (gBefore ++= List[GraphParam[Int,UnDiEdge]](1~2, 2~3, 0)) should equal (gAfter)
     (gBefore ++= mutableFactory(0, 1~2))                      should equal (gAfter)
-    (gBefore ++= mutableFactory(0) ++= mutableFactory(1~2))   should equal (gAfter)
+    (gBefore ++= mutableFactory[Int,UnDiEdge](0) ++= mutableFactory(1~2))   should equal (gAfter)
   }
   def test_upsert {
     import edge.LDiEdge, edge.LBase._
@@ -239,6 +247,12 @@ class TEditRootTest
     g.edges foreach { _.label  should be (modLabel)
     }
   }
+  def test_CanBuildFromMutableUnDi {
+    import mutable.Graph
+    val g = Graph(1~2)
+    val m: Graph[Int,UnDiEdge] = g map Helper.icrementNode
+    m.edges.head should be (UnDiEdge(2,3))
+  }
 }
 /**	Contains tests for graph editing to be run for Graph instances created by `factory`.
  *  For instance, this allows the same tests to be run for mutable and immutable Graphs.
@@ -250,16 +264,16 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 	with	  ShouldMatchers
 {
   implicit val config = factory.config
-	// ---------------------------------------- tests common to any kind of graph
+
 	val seq_1_3	 = Seq(1, 3)
-	val gInt_1_3 = factory(seq_1_3: _*)
-	val gString_A = factory("A")
+	val gInt_1_3 = factory[Int,DiEdge](seq_1_3: _*)
+	val gString_A = factory[String,Nothing]("A")
 
 	def test_0(info : Informer) {
 		info("factory = " + factory.companion.getClass)
 	}
 	def test_Empty {
-		val eg = factory.empty 
+		val eg = factory.empty[Nothing,Nothing] 
 		eg should be ('isEmpty)
 		eg should have size (0)
 		eg should equal (eg.empty)
@@ -284,6 +298,14 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 		h.edges	should have size (2)
 		h	  		should have size (5)
 	}
+	def test_isDirected {
+	  factory(1~2).isDirected should be (false)
+	  factory(edge.WDiEdge(1, 2)(0)).isDirected should be (true)
+	}
+  def test_isHyper {
+    factory(1~2).isHyper should be (false)
+    factory(edge.WDiHyperEdge(1, 2, 3)(0)).isHyper should be (true)
+  }
 	def test_Constructor {
 	  val (n_start, n_end) = (11, 20)
 	  val nodes = List.range(n_start, n_end)
@@ -332,7 +354,7 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 		val (gBefore, gAfter) = (factory(1, 2~3), factory(0, 1~2, 2~3)) 
 		gBefore ++ List[GraphParam[Int,UnDiEdge]](1~2, 2~3, 0) should equal (gAfter)
 		gBefore ++ factory(0, 1~2)                             should equal (gAfter)
-    gBefore ++ factory(0) ++ factory(1~2)                  should equal (gAfter)
+    gBefore ++ factory[Int,UnDiEdge](0) ++ factory(1~2)    should equal (gAfter)
 	}
 	def test_Minus {
 		var g = gString_A - "B"
@@ -347,31 +369,26 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 		h  - 0 should be (h)
 		h  - 1 should be (factory(2, 2~3))
     h -? 2 should be (h)
-    h  - 2 should be (factory(1, 3))
+    h  - 2 should be (factory[Int,UnDiEdge](1, 3))
 	}
 	def test_MinusMinus {
     val g = factory(1, 2~3, 3~4)
-	  g --  List(2, 3~3) should be (factory(1, 3~4))
-    g --  List(2, 3~4) should be (factory(1, 3, 4))
-	  g --! List(1, 3~4) should be (factory(2~3))
+	  g --  List[GraphParam[Int,UnDiEdge]](2, 3~3) should be (factory(1, 3~4))
+    g --  List[GraphParam[Int,UnDiEdge]](2, 3~4) should be (factory[Int,UnDiEdge](1, 3, 4))
+	  g --! List[GraphParam[Int,UnDiEdge]](1, 3~4) should be (factory(2~3))
 	}
-	def test_MapToIntNodes {
-	  // in absence of NodeIn m would be of type Set[Int]
-		val m = gInt_1_3 map {case n: NodeOut[Int] => NodeIn(n.value + 1)
-		                      case _ => fail("Test assumption did not hold.")}
-		m.isInstanceOf[Graph[Int,Nothing]] should be (true)
-		m should have size (2)
-		m.contains(2) should be (true) //m should contain (2)
-		m.contains(4) should be (true) //m should contain (4)
-	}
-	def test_MapToStringNodes {
-		val m = gInt_1_3 map {case NodeOut(n) => NodeIn(n.value.toString + ".")
-                          case _ => fail("Test assumption did not hold.")}
-		m.isInstanceOf[Graph[String,Nothing]] should be (true)
-		m should have size (2)
-		m.contains("1.") should be (true) //m should contain ("1.")
-		m.contains("3.") should be (true) //m should contain ("3.")
-	}
+  def test_CanBuildFromUnDi {
+    val g = factory(0, 1~2)
+    // TODO CC[Int,UnDiEdge]
+  	val m: Graph[Int,UnDiEdge] = g map Helper.icrementNode
+    m find 1 should be ('defined)
+    m.edges.head should be (UnDiEdge(2,3))
+  }
+  def test_CanBuildFromDi {
+    val g = factory(1~>2)
+    val m: Graph[String,UnDiEdge] = g map Helper.nodeToString
+    m.edges.head should be ("1"~"2")
+  }
 	def test_NodeSet {
 	  val o = Array.range(0, 4)
     val g = factory(o(1) ~ o(2), o(2) ~ o(3))
@@ -390,20 +407,20 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     restored.find(_ == n(1)).get.edges should have size (1)
 }
 	def test_Eq {
-		factory() shouldEqual factory()
-		gInt_1_3	shouldEqual factory(seq_1_3: _*)
-		gString_A	shouldEqual factory("A")
+		factory[Int,Nothing]() shouldEqual factory[Int,Nothing]()
+		gInt_1_3	shouldEqual factory[Int,DiEdge](seq_1_3: _*)
+		gString_A	shouldEqual factory[String,Nothing]("A")
 
-		factory()	should not be (factory(1))
-		gInt_1_3	should not be (factory(2, 3))
-		gString_A	should not be (factory("B"))
+		factory[Int,Nothing]()	should not be (factory[Int,Nothing](1))
+		gInt_1_3	should not be (factory[Int,DiEdge](2, 3))
+		gString_A	should not be (factory[String,Nothing]("B"))
 
-		gInt_1_3	should be (factory(1) + 3) 
+		gInt_1_3	should be (factory[Int,DiEdge](1) + 3) 
 	}
 	def test_EdgeAssoc {
     val e = 1 ~ 2 
     e.isInstanceOf[UnDiEdge[Int]] should be (true)
-    val x = factory[Int,UnDiEdge](3~4).nodes
+    val x = factory(3~4).nodes
     // Error in Scala compiler: assertion failed
     // Graph(3).nodes contains 3 //should be (true)  
 
@@ -505,10 +522,9 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
   }
   def test_predicate {
     val g = factory(2~>3, 3~>1, 5)
-    // does not compile because of some problem with factory / implicit def
-//  g  filter ((n: Int) => n > 1) should be (factory(2~>3, 5))
-//  g  filter ((n: Int) => n < 2) should be (factory(1))
-    g  filter g.having(node = _ <  2) should be (factory(1))
+    g  filter ((n: Int) => n > 1) should be (factory(2~>3, 5))
+    g  filter ((n: Int) => n < 2) should be (factory[Int,DiEdge](1))
+    g  filter g.having(node = _ <  2) should be (factory[Int,DiEdge](1))
     g  filter g.having(node = _ >= 2) should be (factory(2~>3, 5))
     g  filter g.having(edge = _._1 == 2)    should be (factory(2~>3))
     g  filter g.having(edge = _ contains 2) should be (factory(2~>3))
@@ -529,5 +545,25 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     val diHyper = 1 ~> 2 ~> 3
     (diHyper match { case DiHyperEdge(_, t1, _*) => t1 }) should be (2)
     (diHyper match { case _ ~~> (t1, t2) => t1 + t2 }) should be (5)
+  }
+}
+object Helper {
+  def icrementNode(p: GraphParam[Int,UnDiEdge]): GraphParam[Int,UnDiEdge] = p match {
+    case in: GraphParamIn[_,UnDiEdge] => throw new IllegalArgumentException 
+    case out: GraphParamOut[_,_] => out match {
+      case n: NodeOut[Int] => NodeIn(n.value + 1)
+      case o: EdgeOut[Int,UnDiEdge,_,UnDiEdge] =>
+        val e = o.asInstanceOf[Graph[Int,UnDiEdge]#EdgeT]
+        UnDiEdge((e.edge._1.value + 1, e.edge._2.value + 1)) 
+    } 
+  }
+  def nodeToString(p: GraphParam[Int,DiEdge]): GraphParam[String,UnDiEdge] = p match {
+    case in: GraphParamIn[_,DiEdge] => throw new IllegalArgumentException 
+    case out: GraphParamOut[_,_] => out match {
+      case n: NodeOut[Int] => NodeIn(n.value.toString)
+      case o: EdgeOut[Int,DiEdge,_,DiEdge] =>
+        val e = o.asInstanceOf[Graph[Int,DiEdge]#EdgeT]
+        UnDiEdge(e.edge._1.value.toString, e.edge._2.value.toString) 
+    } 
   }
 }

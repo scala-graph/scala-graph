@@ -4,6 +4,7 @@ package immutable
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.{Set, Iterable}
 import scala.collection.generic.CanBuildFrom
+import scala.reflect.runtime.universe._
 
 import scalax.collection.{Graph => CommonGraph}
 import scalax.collection.GraphEdge.{EdgeLike, EdgeCompanionBase}
@@ -23,44 +24,44 @@ trait Graph[N, E[X] <: EdgeLikeIn[X]]
 	with    scalax.collection.constrained.Graph[N,E]
 	with	  GraphLike[N, E, Graph] 
 {
-	override def empty: Graph[N,E] = Graph.empty[N,E](edgeManifest, config)
+	override def empty: Graph[N,E] = Graph.empty[N,E](edgeT, config)
 }
 object Graph extends ImmutableGraphCompanion[Graph]
 {
-	override def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeManifest: Manifest[E[N]],
+	override def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                                config: Config): Graph[N,E] =
-	  DefaultGraphImpl.empty[N,E](edgeManifest, config)
+	  DefaultGraphImpl.empty[N,E](edgeT, config)
 
   override protected[collection]
   def fromUnchecked[N, E[X] <: EdgeLikeIn[X]]
 	   (nodes: Iterable[N],
       edges: Iterable[E[N]])
-     (implicit edgeManifest: Manifest[E[N]],
+     (implicit edgeT: TypeTag[E[N]],
       config: Config): DefaultGraphImpl[N,E] =
-    DefaultGraphImpl.fromUnchecked[N,E](nodes, edges)(edgeManifest, config)
+    DefaultGraphImpl.fromUnchecked[N,E](nodes, edges)(edgeT, config)
 
   override def from [N, E[X] <: EdgeLikeIn[X]]
      (nodes: Iterable[N],
       edges: Iterable[E[N]])
-     (implicit edgeManifest: Manifest[E[N]],
+     (implicit edgeT: TypeTag[E[N]],
       config: Config): Graph[N,E] =
-    DefaultGraphImpl.from[N,E](nodes, edges)(edgeManifest, config)
+    DefaultGraphImpl.from[N,E](nodes, edges)(edgeT, config)
 
   override def fromStream [N, E[X] <: EdgeLikeIn[X]]
      (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
       nodes:       Iterable[N]                  = Seq.empty[N],
       edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
       edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-     (implicit edgeManifest: Manifest[E[N]],
+     (implicit edgeT: TypeTag[E[N]],
       config: Config): Graph[N,E] =
     DefaultGraphImpl.fromStream[N,E](nodeStreams, nodes, edgeStreams, edges)(
-                                     edgeManifest, config)
+                                     edgeT, config)
   // TODO: canBuildFrom
 }
 abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
    (iniNodes: Iterable[N]    = Set.empty[N],
     iniEdges: Iterable[E[N]] = Set.empty[E[N]])
-   (implicit override val edgeManifest: Manifest[E[N]],
+   (implicit override val edgeT: TypeTag[E[N]],
     override val config: DefaultGraphImpl.Config)
   extends Graph[N,E]
   with    AdjacencyListGraph[N,E,DefaultGraphImpl]
@@ -75,10 +76,10 @@ abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
   initialize(iniNodes, iniEdges)
 
   @inline final override def empty: DefaultGraphImpl[N,E] =
-    DefaultGraphImpl.empty(edgeManifest, config)
+    DefaultGraphImpl.empty(edgeT, config)
   @inline final override def clone: DefaultGraphImpl[N,E] = {
     DefaultGraphImpl.fromUnchecked(nodes.toNodeInSet, edges.toEdgeInSet)(
-                                   edgeManifest, config)
+                                   edgeT, config)
   }
   @SerialVersionUID(8081L)
   final protected class NodeBase(value: N, hints: ArraySet.Hints)
@@ -89,26 +90,26 @@ abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
 }
 object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl]
 {
-  override def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeManifest: Manifest[E[N]],
+  override def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                                config: Config) =
-    from(Set.empty[N], Set.empty[E[N]])(edgeManifest, config)
+    from(Set.empty[N], Set.empty[E[N]])(edgeT, config)
 
   override protected[collection]
   def fromUnchecked[N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N],
                                               edges: Iterable[E[N]])
-                                             (implicit edgeManifest: Manifest[E[N]],
+                                             (implicit edgeT: TypeTag[E[N]],
                                               config: Config): DefaultGraphImpl[N,E] =
-    new UserConstrainedGraphImpl[N,E](nodes, edges)(edgeManifest, config)
+    new UserConstrainedGraphImpl[N,E](nodes, edges)(edgeT, config)
 
   override def from [N, E[X] <: EdgeLikeIn[X]]
      (nodes: Iterable[N],
       edges: Iterable[E[N]])
-     (implicit edgeManifest: Manifest[E[N]],
+     (implicit edgeT: TypeTag[E[N]],
       config: Config) : DefaultGraphImpl[N,E] =
   { val existElems = nodes.nonEmpty || edges.nonEmpty
     var preCheckResult = PreCheckResult(Abort)
     if (existElems) {
-      val emptyGraph = empty[N,E](edgeManifest, config)
+      val emptyGraph = empty[N,E](edgeT, config)
       val constraint = config.constraintCompanion(emptyGraph)
       preCheckResult = constraint.preCreate(nodes, edges)
       if (preCheckResult.abort) { 
@@ -116,9 +117,9 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl]
         return emptyGraph
       }
     }
-    val newGraph = fromUnchecked[N,E](nodes, edges)(edgeManifest, config)
+    val newGraph = fromUnchecked[N,E](nodes, edges)(edgeT, config)
     if (existElems) {
-      val emptyGraph = empty[N,E](edgeManifest, config)
+      val emptyGraph = empty[N,E](edgeT, config)
       val constraint = config.constraintCompanion(emptyGraph)
       var handle = false
       preCheckResult.followUp match {
@@ -139,12 +140,12 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl]
       iniNodes:    Iterable[N]                  = Seq.empty[N],
       edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
       iniEdges:    Iterable[E[N]]               = Seq.empty[E[N]])
-     (implicit edgeManifest: Manifest[E[N]],
+     (implicit edgeT: TypeTag[E[N]],
       config: Config) : DefaultGraphImpl[N,E] =
   {
     var preCheckResult = PreCheckResult(Abort)
     if (iniNodes.nonEmpty || iniEdges.nonEmpty) {
-      val emptyGraph = empty[N,E](edgeManifest, config)
+      val emptyGraph = empty[N,E](edgeT, config)
       val constraint = config.constraintCompanion(emptyGraph)
       preCheckResult = constraint.preCreate(iniNodes, iniEdges)
       if (preCheckResult.abort) { 
@@ -152,7 +153,7 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl]
         return emptyGraph
       }
     }
-    val newGraph = new UserConstrainedGraphImpl[N,E]()(edgeManifest, config) {
+    val newGraph = new UserConstrainedGraphImpl[N,E]()(edgeT, config) {
       from(nodeStreams, iniNodes, edgeStreams, iniEdges)
     }
     var handle = false
@@ -163,7 +164,7 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl]
     }
     if (handle) {
       newGraph.onAdditionRefused(iniNodes, iniEdges, newGraph)
-      empty[N,E](edgeManifest, config)
+      empty[N,E](edgeT, config)
     } else
       newGraph
   }
@@ -173,9 +174,9 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl]
 class UserConstrainedGraphImpl[N, E[X] <: EdgeLikeIn[X]]
    (iniNodes: Iterable[N]    = Set.empty[N],
     iniEdges: Iterable[E[N]] = Set.empty[E[N]])
-   (implicit override val edgeManifest: Manifest[E[N]],
+   (implicit override val edgeT: TypeTag[E[N]],
     override val config: DefaultGraphImpl.Config)
-  extends DefaultGraphImpl    [N,E](iniNodes, iniEdges)(edgeManifest, config)
+  extends DefaultGraphImpl    [N,E](iniNodes, iniEdges)(edgeT, config)
   with    UserConstrainedGraph[N,E]
 {
   final override val self = this
@@ -183,5 +184,5 @@ class UserConstrainedGraphImpl[N, E[X] <: EdgeLikeIn[X]]
   final override val constraint  = constraintFactory(this)
   final override def copy(nodes: Iterable[N],
                           edges: Iterable[E[N]]) =
-    DefaultGraphImpl.from(nodes, edges)(edgeManifest, config)
+    DefaultGraphImpl.from(nodes, edges)(edgeT, config)
 }

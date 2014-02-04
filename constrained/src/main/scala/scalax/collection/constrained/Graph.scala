@@ -3,6 +3,7 @@ package scalax.collection.constrained
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.{Set, SetLike, GenTraversableOnce}
 import scala.collection.generic.CanBuildFrom
+import scala.reflect.runtime.universe._
 
 import scalax.collection.GraphPredef.{EdgeLikeIn, GraphParam,
        GraphParamIn, GraphParamOut, seqToGraphParam, NodeIn, NodeOut, EdgeIn, EdgeOut}
@@ -46,14 +47,14 @@ trait GraphLike[N,
     graphCompanion.
     fromUnchecked[N,E](nodes.toNodeInSet ++ newNodes,
                        edges.toEdgeInSet ++ newEdges)(
-                       edgeManifest,
+                       edgeT,
                        config).asInstanceOf[This[N,E]]
   override protected def minusMinus(delNodes: Iterable[N],
                                     delEdges: Iterable[E[N]]): This[N,E] = {
     val delNodesEdges = minusMinusNodesEdges(delNodes, delEdges)
     graphCompanion.
       fromUnchecked[N,E](delNodesEdges._1, delNodesEdges._2)(
-                         edgeManifest, config).asInstanceOf[This[N,E]]
+                         edgeT, config).asInstanceOf[This[N,E]]
   }
   /** This flag is used to prevent constraint checking for single additions and
    * subtractions triggered by a multiple addition/subtraction such as `++=`.
@@ -149,33 +150,33 @@ object Graph
   extends GraphConstrainedCompanion[Graph]
 {
   override def newBuilder[N, E[X] <: EdgeLikeIn[X]]
-     (implicit edgeManifest: Manifest[E[N]],
+     (implicit edgeT: TypeTag[E[N]],
       config: Config) =
-    immutable.Graph.newBuilder[N,E](edgeManifest, config)
+    immutable.Graph.newBuilder[N,E](edgeT, config)
 
-  def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeManifest: Manifest[E[N]],
+  def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                       config: Config = defaultConfig): Graph[N,E] =
-    immutable.Graph.empty[N,E](edgeManifest, config)
+    immutable.Graph.empty[N,E](edgeT, config)
   def from[N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N],
                                      edges: Iterable[E[N]])
-                                    (implicit edgeManifest: Manifest[E[N]],
+                                    (implicit edgeT: TypeTag[E[N]],
                                      config: Config = defaultConfig): Graph[N,E] =
-    immutable.Graph.from[N,E](nodes, edges)(edgeManifest, config)
+    immutable.Graph.from[N,E](nodes, edges)(edgeT, config)
   override protected[collection]
   def fromUnchecked[N, E[X] <: EdgeLikeIn[X]](nodes:    Iterable[N],
                                               edges:    Iterable[E[N]])
-                                             (implicit edgeManifest: Manifest[E[N]],
+                                             (implicit edgeT: TypeTag[E[N]],
                                               config: Config = defaultConfig): Graph[N,E] =
-    immutable.Graph.fromUnchecked[N,E](nodes, edges)(edgeManifest, config)
+    immutable.Graph.fromUnchecked[N,E](nodes, edges)(edgeT, config)
   override def fromStream [N, E[X] <: EdgeLikeIn[X]]
      (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
       nodes:       Iterable[N]                  = Seq.empty[N],
       edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
       edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-     (implicit edgeManifest: Manifest[E[N]],
+     (implicit edgeT: TypeTag[E[N]],
       config: Config = defaultConfig): Graph[N,E] =
     immutable.Graph.fromStream[N,E](nodeStreams, nodes, edgeStreams, edges)(
-                                    edgeManifest, config)
+                                    edgeT, config)
 }
 trait UserConstrainedGraph[N, E[X] <: EdgeLikeIn[X]]
   extends Graph[N,E]

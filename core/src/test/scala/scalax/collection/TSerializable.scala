@@ -136,11 +136,11 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
   lazy val store: GraphStore = new GraphByteArray(cl)
 
   def test_empty {
-    val g = factory.empty
+    val g = factory.empty[Nothing,Nothing]
     store.test[Nothing,Nothing] (g)
   }
   def test_IntNodes {
-    val g = factory(-1,1,2)
+    val g = factory[Int,Nothing](-1,1,2)
     store.test[Int,Nothing] (g)
   }
   def test_IntEdges {

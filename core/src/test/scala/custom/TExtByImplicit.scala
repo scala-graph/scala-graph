@@ -99,7 +99,7 @@ class TExtByImplicitTest
      * This is the recommended, type safe way of extending nodes. 
      */
     final class ExtGraph[N, E[X] <: EdgeLikeIn[X], G <: Graph[N,E]](val graph: G) {
-      implicit final class ExtNode(node: graph.type#NodeT) {
+      implicit final class ExtNode(node: graph.NodeT) {
         def inHeadOption = node.inNeighbors.headOption
       }
     }

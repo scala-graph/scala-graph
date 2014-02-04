@@ -72,7 +72,7 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
       val p: GraphParam.Partitions[N,E] = elems
       val graphAdd = SimpleGraph.from(
           p.toOuterNodes, p.toOuterEdges)(
-          self.edgeManifest, self.config.asInstanceOf[SimpleGraph.Config])
+          self.edgeT, self.config.asInstanceOf[SimpleGraph.Config])
       if (graphAdd.isCyclic)
         PreCheckResult(Abort)
       else {

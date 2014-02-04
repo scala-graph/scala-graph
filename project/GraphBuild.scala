@@ -72,6 +72,7 @@ object GraphBuild extends Build {
 //    ),
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "junit" % "junit" % "4.8.2" % "test",
       "org.scalatest" %% "scalatest" % "1.9.2" % "test",
       "org.scalacheck" %% "scalacheck" % "1.10.1" % "test"

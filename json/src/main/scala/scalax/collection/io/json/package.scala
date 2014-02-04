@@ -1,6 +1,7 @@
 package scalax.collection.io
 
 import language.higherKinds
+import scala.reflect.runtime.universe._
 
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge._,
@@ -54,7 +55,7 @@ package object json {
     def fromJson[N, E[X]<:EdgeLikeIn[X]]
         (jsonAST:    JValue,
          descriptor: Descriptor[N])
-        (implicit edgeManifest: Manifest[E[N]],
+        (implicit edgeT: TypeTag[E[N]],
          config: companion.Config = companion.defaultConfig): G[N,E] =
       fromJson[N,E](parse(jsonAST, descriptor), descriptor)
 
@@ -69,7 +70,7 @@ package object json {
     def fromJson[N, E[X]<:EdgeLikeIn[X]]
         (jsonText:   String,
          descriptor: Descriptor[N])
-        (implicit edgeManifest: Manifest[E[N]],
+        (implicit edgeT: TypeTag[E[N]],
          config: companion.Config = companion.defaultConfig): G[N,E] =
       fromJson[N,E](parse(jsonText, descriptor), descriptor)
 
@@ -84,13 +85,13 @@ package object json {
     def fromJson[N, E[X]<:EdgeLikeIn[X]]
         (jsonLists:  List[JsonList],
          descriptor: Descriptor[N])
-        (implicit edgeManifest: Manifest[E[N]],
+        (implicit edgeT: TypeTag[E[N]],
          config: companion.Config): G[N,E] = {
       val target = createStreams[N,E] (jsonLists, descriptor)
       companion.fromStream[N,E] (nodeStreams = target._1,
                                  nodes       = Seq.empty[N],
                                  edgeStreams = target._2,
-                                 edges       = Seq.empty[E[N]])(edgeManifest, config)
+                                 edges       = Seq.empty[E[N]])(edgeT, config)
     }
   }
 

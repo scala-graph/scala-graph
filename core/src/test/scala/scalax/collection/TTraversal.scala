@@ -427,10 +427,10 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     )
     ("" /: result)(_+_) should be ("(A[B1][B2])")
   }
+  abstract class Elem(val name: String) {
+    def balance: Int
+  }
   def test_DownUpSums {
-    abstract class Elem(val name: String) {
-      def balance: Int
-    }
     case class Node(override val name: String) extends Elem(name) {
       var sum: Int = 0
       def balance = sum

@@ -126,7 +126,7 @@ class TJsonDemoTest
   }
   def test_imEx_named {
     val expLibrary = library.toJson(Named.descriptor)
-    Graph.fromJson(expLibrary, Named.descriptor) should equal (library)
+    Graph.fromJson[Library,HyperEdge](expLibrary, Named.descriptor) should equal (library)
   }
   object LibraryPositionedNodeDescriptor {
     import net.liftweb.json._
@@ -186,7 +186,7 @@ class TJsonDemoTest
   }
   def test_imEx_positioned {
     val expLibrary = library.toJson(Positioned.descriptor)
-    Graph.fromJson(expLibrary, Positioned.descriptor) should equal (library)
+    Graph.fromJson[Library,HyperEdge](expLibrary, Positioned.descriptor) should equal (library)
   }
 }
 // --------------------------------- node types of academic library application

@@ -25,7 +25,7 @@ abstract class NodeDescriptor[+N]
               (override val typeId: String                     = Defaults.defaultId,
                customSerializers:   Traversable[Serializer[_]] = Nil,
                extraClasses:        List[Class[_]]             = Nil,
-               furtherManifests:    List[ClassTag[_]]     = Nil)
+               furtherManifests:    List[Manifest[_]]     = Nil)
               (implicit nodeManifest: Manifest[N])
   extends TypeId(typeId)
 {

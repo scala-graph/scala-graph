@@ -4,6 +4,7 @@ package mutable
 import language.{higherKinds, postfixOps}
 import collection.generic.{CanBuildFrom, Growable, Shrinkable}
 import collection.mutable.{Builder, Cloneable, ListBuffer, Set => MutableSet}
+import scala.reflect.runtime.universe._
 
 import scalax.collection.{Graph => CommonGraph, GraphLike => CommonGraphLike}
 import GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn,
@@ -11,7 +12,7 @@ import GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn,
 import immutable.{AdjacencyListBase}
 import generic.{GraphCompanion, MutableGraphCompanion}
 import config.{GraphConfig, AdjacencyListArrayConfig}
-import GraphEdge.EdgeCompanionBase
+import GraphEdge.{EdgeCompanionBase, UnDiEdge}
 import io._
 
 protected[collection]
@@ -48,12 +49,12 @@ class GraphBuilder[N,
                    CC[N,E[X] <: EdgeLikeIn[X]]
                         <: CommonGraphLike[N,E,CC] with CommonGraph[N,E]]
       (companion: GraphCompanion[CC])
-      (implicit edgeManifest: Manifest[E[N]],
+      (implicit edgeT: TypeTag[E[N]],
        config: GraphConfig)
   extends BuilderImpl[N,E,CC]
 {
   def result: This =
-    companion.from(nodes, edges)(edgeManifest, config.asInstanceOf[companion.Config])
+    companion.from(nodes, edges)(edgeT, config.asInstanceOf[companion.Config])
 }
 /**
  * Trait with common mutable Graph methods.
@@ -247,35 +248,36 @@ trait Graph[N, E[X] <: EdgeLikeIn[X]]
 object Graph
   extends MutableGraphCompanion[Graph]
 {
-	def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeManifest: Manifest[E[N]],
+	def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                       config: Config = defaultConfig): Graph[N,E] =
-	  new DefaultGraphImpl[N,E]()(edgeManifest, config)
+	  new DefaultGraphImpl[N,E]()(edgeT, config)
   override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Seq.empty[N],
                                               edges: Iterable[E[N]])
-                                             (implicit edgeManifest: Manifest[E[N]],
+                                             (implicit edgeT: TypeTag[E[N]],
                                               config: Config = defaultConfig): Graph[N,E] =
     DefaultGraphImpl.from[N,E](nodes, edges)(
-                               edgeManifest, config)
+                               edgeT, config)
   override def fromStream[N, E[X] <: EdgeLikeIn[X]]
      (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
       nodes:       Iterable[N]                  = Seq.empty[N],
       edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
       edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-     (implicit edgeManifest: Manifest[E[N]],
+     (implicit edgeT: TypeTag[E[N]],
       config: Config = defaultConfig) : Graph[N,E] =
     DefaultGraphImpl.fromStream[N,E](nodeStreams, nodes, edgeStreams, edges)(
-                                     edgeManifest, config)
+                                     edgeT, config)
 
-  implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](
-      implicit edgeManifest: Manifest[E[N]],
-      config: Config = defaultConfig): GraphCompanion[Graph]#GraphCanBuildFrom[N,E] =
- 	new GraphCanBuildFrom[N,E]()(edgeManifest, config)
+  implicit def cbfUnDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
+                                                 config: Config = defaultConfig) =
+    new GraphCanBuildFrom[N,E]()(edgeT, config).asInstanceOf[
+      GraphCanBuildFrom[N,E]
+      with CanBuildFrom[Graph[_,UnDiEdge], GraphParam[N,E], Graph[N,E]]]
 }
 @SerialVersionUID(73L)
 class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
     ( iniNodes: Iterable[N]    = Set[N](),
       iniEdges: Iterable[E[N]] = Set[E[N]]())
-    ( implicit override val edgeManifest: Manifest[E[N]],
+    ( implicit @transient override val edgeT: TypeTag[E[N]],
       override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
   extends Graph[N,E]
   with    AdjacencyListGraph[N, E, DefaultGraphImpl]
@@ -293,7 +295,7 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
             nodes:       Iterable[N],
             edgeStreams: Iterable[GenEdgeInputStream[N,E]],
             edges:       Iterable[E[N]])
-           (implicit edgeManifest: Manifest[E[N]],
+           (implicit edgeT: TypeTag[E[N]],
                      config      : DefaultGraphImpl.Config)= {
     this()
     from(nodeStreams, nodes, edgeStreams, edges)
@@ -304,7 +306,7 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
                    ripple:   Boolean,
                    addNodes: Iterable[N],
                    addEdges: Iterable[E[N]])
-                  (implicit edgeManifest: Manifest[E[N]],
+                  (implicit edgeT: TypeTag[E[N]],
                    config: DefaultGraphImpl.Config with AdjacencyListArrayConfig) = {
     this()
     from(that)(delNodes, delEdges, ripple, addNodes, addEdges)
@@ -334,28 +336,22 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
 object DefaultGraphImpl
   extends MutableGraphCompanion[DefaultGraphImpl]
 {
-	def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeManifest: Manifest[E[N]],
+	def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                       config: Config = defaultConfig) =
-	  new DefaultGraphImpl[N,E]()(edgeManifest, config)
+	  new DefaultGraphImpl[N,E]()(edgeT, config)
   override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Seq.empty[N],
                                               edges: Iterable[E[N]])
-                                             (implicit edgeManifest: Manifest[E[N]],
+                                             (implicit edgeT: TypeTag[E[N]],
                                               config: Config = defaultConfig) =
     new DefaultGraphImpl[N,E](nodes, edges)(
-                              edgeManifest, config)
+                              edgeT, config)
   override def fromStream[N, E[X] <: EdgeLikeIn[X]]
      (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
       nodes:       Iterable[N]                  = Seq.empty[N],
       edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
       edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-     (implicit edgeManifest: Manifest[E[N]],
+     (implicit edgeT: TypeTag[E[N]],
       config: Config = defaultConfig) : DefaultGraphImpl[N,E] =
     new DefaultGraphImpl[N,E](nodeStreams, nodes, edgeStreams, edges)(
-                              edgeManifest, config)
-
-  implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](
-	    implicit edgeManifest: Manifest[E[N]],
-      config: Config = defaultConfig)
-      : GraphCompanion[DefaultGraphImpl]#GraphCanBuildFrom[N,E] =
-		new GraphCanBuildFrom[N,E]()(edgeManifest, config)
+                              edgeT, config)
 }

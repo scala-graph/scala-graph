@@ -27,7 +27,7 @@ class TDegree[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 	extends	Suite
 	with	  ShouldMatchers
 {
-  val emptyG = factory.empty
+  val emptyG = factory.empty[Int,DiEdge]
   abstract class TGraphDegree[N, E[X] <: EdgeLikeIn[X]](override val g: Graph[N,E])
     extends TGraph[N, E](g)
   {

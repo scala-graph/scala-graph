@@ -223,7 +223,7 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
   }
   def test_importWLEdgeCustom {
     import FixtureWLEdgeCustom._
-    val g = factory.fromJson(jsonText, descriptor)
+    val g = factory.fromJson[String,WLDiEdge](jsonText, descriptor)
     g should equal (graph)
   }
   def test_ImExWLEdgeCustom {
@@ -257,7 +257,7 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
         ]
       }""".filterNot(_.isWhitespace)
     val g = factory.
-      fromJson(jsonText,
+      fromJson[String,DiHyperEdge](jsonText,
                new Descriptor[String](
                    StringNodeDescriptor,
                    new HyperEdgeDescriptor[String,DiHyperEdge,DiHyperEdge.type](
@@ -281,7 +281,7 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
         ]
       }""".filterNot(_.isWhitespace)
     val g: CC[String,WLHyperEdge] = factory.
-      fromJson(jsonText,
+      fromJson[String,WLHyperEdge](jsonText,
                new Descriptor[String](
                    StringNodeDescriptor,
                    new WLHyperEdgeDescriptor[String,WLHyperEdge,WLHyperEdge.type,String](
@@ -301,7 +301,7 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     val e = exp.jsonASTEdges
     val p = exp.jsonAST(n ++ e)
     val t = exp.jsonText(p)
-    factory.fromJson(t, descr) should be (g)
+    factory.fromJson[String,DiHyperEdge](t, descr) should be (g)
   }
 }
 /** Turns a JString into a String thus allowing to omit parameter names.
