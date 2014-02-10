@@ -33,11 +33,11 @@ trait AdjacencyListGraph[N,
         true
       } else false
 
-    protected[AdjacencyListGraph] def upsert(edge: EdgeT): Boolean =
-      if (edges.upsert(edge)) {
-        if (selfGraph.edges.initialized) addDiSuccOrHook(edge)
-        true
-      } else false
+    protected[AdjacencyListGraph] def upsert(edge: EdgeT): Boolean = {
+      val inserted = edges upsert edge
+      if (selfGraph.edges.initialized) addDiSuccOrHook(edge)
+      inserted
+    }
  
     final protected def addDiSuccOrHook(edge: EdgeT) {
       if (edge.matches(nodeEqThis, nodeEqThis) && aHook.isEmpty)
@@ -86,10 +86,14 @@ trait AdjacencyListGraph[N,
       someNew
     }
     protected[collection] def += (edge: EdgeT): this.type	= { add(edge); this }
-    protected[collection] def upsert(edge: EdgeT): Unit =
+    protected[collection] def upsert(edge: EdgeT): Boolean = {
+      var someNew = false
       edge foreach { n =>
-        coll findEntry n getOrElse {coll += n; n} upsert edge
+        val inColl = coll findEntry n getOrElse {coll += n; n}
+        someNew = (inColl upsert edge) || someNew
       }
+      someNew
+    }
     protected[collection] def remove (edge: EdgeT): Boolean =
       edge.nodes.toSet forall (n => (coll findEntry n) exists (_ remove edge))
     protected[collection] def -= (edge: EdgeT): this.type = { remove(edge); this }
@@ -132,10 +136,11 @@ trait AdjacencyListGraph[N,
 
     @inline final protected[collection] def addEdge(edge: EdgeT) { add(edge) }
 
-    def upsert(edge: E[N]): EdgeT = {
-      val newEdge = Edge(edge)
-      nodes upsert newEdge
-      newEdge
+    def upsert(edge: EdgeT): Boolean = {
+      if (nodes upsert edge) {
+        nrEdges += 1
+        true
+      } else false
     }
 
     override def remove(edge: EdgeT) = 
@@ -163,5 +168,5 @@ trait AdjacencyListGraph[N,
   @inline final def add(node: N): Boolean = nodes add Node(node)
   @inline final def add(edge: E[N]): Boolean  = edges add Edge(edge)
   @inline final protected def +=# (edge: E[N]): this.type = { add(edge); this }
-  @inline final def upsert(edge: E[N]): EdgeT = edges upsert edge
+  @inline final def upsert(edge: E[N]): Boolean = edges upsert Edge(edge)
 }

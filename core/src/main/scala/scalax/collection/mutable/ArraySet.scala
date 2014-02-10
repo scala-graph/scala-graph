@@ -39,7 +39,7 @@ trait ArraySet[A]
   /** Adds `elem` without checking for duplicates. */
   protected[collection] def +=!(elem: A): this.type
   /** Updates or inserts `elem`.
-   *  @return `true` if an update took place. */
+   *  @return `true` if an insert took place. */
   protected[collection] def upsert(elem: A): Boolean
   /** Sorts this $COLL according to a comparison function in place.
    *  @see scala.collection.SeqLike */

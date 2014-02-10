@@ -3,7 +3,7 @@ object Version {
   val compiler = if (scala_2_10) "2.10.3" else "2.11.0"
   val compilerIsRC = false
 
-  private val isSnapshot = true
+  private val isSnapshot = false
   private def snapshot = if (isSnapshot) "-SNAPSHOT" else ""
   private val major = "1.7"
   val all         = major + ".3" + snapshot

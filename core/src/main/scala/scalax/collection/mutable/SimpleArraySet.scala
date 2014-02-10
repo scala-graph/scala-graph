@@ -177,7 +177,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       val isUpdate = i >= 0 
       if (isUpdate) arr(i) = elem
       else add(elem)
-      isUpdate
+      ! isUpdate
     }
   }
   /** $OPT */
