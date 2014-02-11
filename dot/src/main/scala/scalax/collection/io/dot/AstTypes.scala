@@ -18,6 +18,7 @@ case class DotRootGraph(directed:            Boolean,
                         override val id:     Option[String],
                         strict:              Boolean = false,
                         override val kvList: Seq[DotAttr] = Seq()) extends DotGraph {
+  require(id map (_.nonEmpty) getOrElse true)
   def headToString = {
     val res = new StringBuilder(32)
     if (strict)   res append "strict "
@@ -31,6 +32,7 @@ case class DotRootGraph(directed:            Boolean,
 case class DotSubGraph(ancestor:            DotGraph,
                        subgraphId:          String,
                        override val kvList: Seq[DotAttr] = Seq()) extends DotGraph {
+  require(subgraphId.nonEmpty)
   val id = Some(subgraphId)
   def headToString = "subgraph %s {".format(id get)
 }
@@ -42,12 +44,18 @@ case class DotSubGraph(ancestor:            DotGraph,
 trait DotStmt
 /** Represents ''node_stmt'' of the DOT language syntax $EXCLSUB. */
 case class DotNodeStmt(nodeId: String,
-                       attrList: Seq[DotAttr] = Seq()) extends DotStmt
+                       attrList: Seq[DotAttr] = Seq()) extends DotStmt {
+  require(nodeId.nonEmpty)
+}
 /** Represents ''edge_stmt'' of the DOT language syntax. */
 case class DotEdgeStmt(node_1Id: String, node_2Id: String,
-                       attrList: Seq[DotAttr] = Seq()) extends DotStmt
+                       attrList: Seq[DotAttr] = Seq()) extends DotStmt {
+  require(node_1Id.nonEmpty && node_2Id.nonEmpty)
+}
 /** Represents ''ID'' '=' ''ID'' of the DOT language syntax. */
-case class DotAttr(name: String, value: String)
+case class DotAttr(name: String, value: String) {
+  require(name.nonEmpty && value.nonEmpty)
+}
 
 protected[dot] case class DotCluster(dotGraph: DotGraph,
                                      dotStmts: MutableSet[DotStmt] = MutableSet()) {
@@ -57,4 +65,3 @@ protected[dot] case class DotCluster(dotGraph: DotGraph,
     case _ => false
   }
 }
-
