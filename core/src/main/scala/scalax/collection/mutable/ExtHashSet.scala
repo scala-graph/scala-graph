@@ -67,12 +67,12 @@ class ExtHashSet[A]
     while (null != entry) {
       if (entry == elem) {
         table(h) = elem.asInstanceOf[AnyRef]
-        return true
+        return false
       }
       h = (h + 1) % table.length
       entry = table(h)
     }
-    ! addEntry(elem)
+    addEntry(elem)
   }
 }
 object ExtHashSet extends MutableSetFactory[ExtHashSet] {

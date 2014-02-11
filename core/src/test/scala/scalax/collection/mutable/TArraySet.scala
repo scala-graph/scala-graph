@@ -137,11 +137,12 @@ class TArraySetTest extends Suite with ShouldMatchers {
       case WUnDiEdge(n1, n2, w) =>
         val newWeight = w + 1
         val res = arr.upsert(WUnDiEdge(n1, n2)(newWeight))
-        res should be (true)
+        res should be (false) // updated
         edge.weight should be (newWeight)
     }
     arr.size should be (toAdd)
-    (arr upsert edges.draw) should be (false)
+    (arr upsert edges.draw) should be (true) // inserted
+    arr.size should be (toAdd + 1)
   }
   def test_upsertArray {
     upsert(hints.hashTableThreshold - 3)
