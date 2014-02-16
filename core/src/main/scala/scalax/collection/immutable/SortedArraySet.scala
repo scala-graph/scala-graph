@@ -6,6 +6,8 @@ import collection.generic.{CanBuildFrom, GenericSetTemplate, GenericCompanion,
                            SortedSetFactory}
 import compat.Platform.arraycopy
 
+import collection.Abstract
+
 @SerialVersionUID(1L)
 class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Array[A]])
                        (implicit val ordering: Ordering[A])
@@ -39,7 +41,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
   }
     null.asInstanceOf[SortedArraySet[A]] // TODO
   def contains(elem: A): Boolean = index(elem) >= 0
-  def iterator: Iterator[A] = new Iterator[A] {
+  def iterator: Iterator[A] = new Abstract.Iterator[A] {
       private[this] var i = 0
       def hasNext = i < self.size
       def next = { val elm = array(i); i += 1; elm }

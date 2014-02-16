@@ -2,9 +2,10 @@ package scalax.collection
 
 import language.{higherKinds, implicitConversions}
 import scala.annotation.{switch, tailrec}
-
 import collection.mutable.{ArrayBuffer, ArraySeq, ArrayStack => Stack, ListBuffer, Queue,
                            PriorityQueue, Set => MutableSet, Map => MutableMap}
+
+import collection.Abstract
 import GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn, GraphParamOut,
                     NodeIn, NodeOut, EdgeIn, EdgeOut}
 import GraphEdge.{EdgeLike}
@@ -580,7 +581,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     
     @inline override val size: Int = s.size + enclosed.count(_.isDefined)
     @inline override def last: T = enclosed(1) map toT getOrElse toT(s(0))
-    def reverse: Traversable[T] = new Traversable[T] {
+    def reverse: Traversable[T] = new Abstract.Traversable[T] {
       def foreach[U](f: T => U): Unit = {
         def fT(elem: S): Unit = f(toT(elem))
         def end(i: Int) = enclosed(i) map fT
@@ -597,7 +598,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       if (i < 0) 0 else i
     } getOrElse s.size
     
-    lazy val source: Traversable[S] = new Traversable[S] {
+    lazy val source: Traversable[S] = new Abstract.Traversable[S] {
       def foreach[U](f: S => U): Unit = {
         enclosed(0) map f
         var i = upper

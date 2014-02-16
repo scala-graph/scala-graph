@@ -5,6 +5,7 @@ import scala.util.Random
 import scala.collection.mutable.{Builder, GrowingBuilder, HashSet, Set, SetLike}
 import scala.collection.generic.{GenericSetTemplate, MutableSetFactory}
 
+import collection.Abstract
 import interfaces.ExtSetMethods
 
 class ExtHashSet[A]
@@ -47,7 +48,7 @@ class ExtHashSet[A]
   }
   /** Returns an `Iterator` over all entries having the passed `hashCode`.
    */
-  def hashCodeIterator(hcode: Int): Iterator[A] = new Iterator[A] {
+  def hashCodeIterator(hcode: Int): Iterator[A] = new Abstract.Iterator[A] {
     private var h = index(hcode)
     private var entry = table(h)
 

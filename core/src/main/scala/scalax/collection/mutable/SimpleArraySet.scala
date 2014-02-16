@@ -9,6 +9,7 @@ import collection.generic.{CanBuildFrom, GenericSetTemplate, GenericCompanion,
                            MutableSetFactory}
 import compat.Platform.arraycopy
 
+import collection.Abstract
 import immutable.SortedArraySet
 
 /** A basic [[ArraySet]] implementation suitable for efficient add operations.
@@ -76,7 +77,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   protected[collection] def map(xs: TraversableOnce[A]): this.type = {this}
   override def iterator: Iterator[A] =
     if (isHash) hashSet.iterator
-    else new Iterator[A] {
+    else new Abstract.Iterator[A] {
       private[this] var i = 0
       private[this] var prevElm: A = _
       def hasNext = {
