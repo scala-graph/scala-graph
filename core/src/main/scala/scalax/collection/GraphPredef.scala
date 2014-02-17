@@ -2,6 +2,7 @@ package scalax.collection
 
 import language.{higherKinds, implicitConversions}
 
+import scala.collection.Abstract
 import GraphEdge.{EdgeLike, EdgeCopy, DiHyperEdgeLike}
 /**
  * This object serves as a container for several `Graph`-related definitions like
@@ -66,6 +67,39 @@ object GraphPredef {
   }
   implicit def graphParamsToPartition[N, E[X]<:EdgeLikeIn[X]]
               (elems: Iterable[GraphParam[N,E]]) = new GraphParam.Partitions[N,E](elems)
+              
+  implicit def nodeSetToOuter[N, E[X]<:EdgeLikeIn[X]](nodes: Graph[N,E]#NodeSetT)
+      : Iterable[N] =
+    new Abstract.Iterable[N] {
+      def iterator = new Abstract.Iterator[N] {
+        private[this] val it = nodes.iterator
+        def hasNext = it.hasNext
+        def next = it.next.value
+      }
+    }
+  
+  implicit def nodeSetToSeq[N, E[X]<:EdgeLikeIn[X]](nodes: Graph[N,E]#NodeSetT)
+      : Seq[GraphParamOut[N,E]] = {
+    val it = nodes.iterator
+    Array.fill[GraphParamOut[N,E]](nodes.size)(it.next)
+  }
+  
+  implicit def edgeSetToOuter[N, E[X]<:EdgeLikeIn[X]](edges: Graph[N,E]#EdgeSetT)
+      : Iterable[E[N]] =
+    new Abstract.Iterable[E[N]] {
+      def iterator = new Abstract.Iterator[E[N]] {
+        private[this] val it = edges.iterator
+        def hasNext = it.hasNext
+        def next = it.next.toEdgeIn
+      }
+    }
+  
+  implicit def edgeSetToSeq[N, E[X]<:EdgeLikeIn[X]](edges: Graph[N,E]#EdgeSetT)
+      : Seq[GraphParamOut[N,E]] = {
+    val it = edges.iterator
+    Array.fill[GraphParamOut[N,E]](edges.size)(it.next)
+  }
+
   /**
    * @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
    * @tparam EI  the kind of the edges (links) this graph is passed to by the user.

@@ -24,7 +24,7 @@ trait ConfigWrapper[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
   implicit val config: companion.Config
   def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                       config: companion.Config): CC[N,E] = companion.empty
-  def apply[N, E[X] <: EdgeLikeIn[X]](elems: GraphParamIn[N,E]*)
+  def apply[N, E[X] <: EdgeLikeIn[X]](elems: GraphParam[N,E]*)
                                      (implicit edgeT: TypeTag[E[N]],
                                       config: companion.Config) = companion(elems: _*)
   def from [N, E[X] <: EdgeLikeIn[X]](edges: collection.Iterable[E[N]])
@@ -324,6 +324,16 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 	  val nodePrefix = NodeIn.stringPrefix
 		gInt_1_3 .toString should fullyMatch regex ("""Graph\(""" + nodePrefix + """[13], """ + nodePrefix + """[13]\)""")
 		gString_A.toString should fullyMatch regex ("""Graph\(""" + nodePrefix + """["A"]\)""")
+	}
+	def test_fromInner {
+	  val gn = factory[Int,UnDiEdge](2,3)
+    factory(gn.nodes: _*)                    should equal (gn)
+    factory.from[Int,Nothing](gn.nodes, Nil) should equal (gn)
+	  
+    val g = factory(2~3)
+    factory(g.edges.head) should equal (g)
+    factory(g.edges: _*)  should equal (g)
+    factory.from[Int,UnDiEdge](edges = g.edges) should equal (g)
 	}
 	def test_plusInt {
 	  val g = factory(1, 2~3)

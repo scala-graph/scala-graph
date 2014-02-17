@@ -8,7 +8,7 @@ import collection.mutable.{Builder, ListBuffer}
 import scala.reflect.runtime.universe._
 
 import GraphEdge.{EdgeLike, EdgeCompanionBase}
-import GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn, NodeIn}
+import GraphPredef.{EdgeLikeIn, GraphParam, NodeIn}
 import config.{GraphConfig, CoreConfig}
 import mutable.GraphBuilder
 import io.{NodeInputStream, GenEdgeInputStream}
@@ -59,7 +59,7 @@ trait GraphCompanion[+CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[
    * @param   elems sequence of nodes and/or edges in an arbitrary order
    * @return  A new graph instance containing the nodes and edges derived from `elems`.
    */
-  def apply[N, E[X] <: EdgeLikeIn[X]](elems: GraphParamIn[N,E]*)
+  def apply[N, E[X] <: EdgeLikeIn[X]](elems: GraphParam[N,E]*)
                                      (implicit edgeT: TypeTag[E[N]],
                                       config: Config): CC[N,E] =
     (newBuilder[N,E] ++= elems).result
@@ -108,7 +108,7 @@ trait GraphCompanion[+CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[
    * @param   elem the element computation returning nodes or edges `nr` times.
    * @return  A graph that contains the results of `nr` evaluations of `elem`.
    */
-  def fill[N, E[X] <: EdgeLikeIn[X]] (nr: Int)(elem: => GraphParamIn[N,E])
+  def fill[N, E[X] <: EdgeLikeIn[X]] (nr: Int)(elem: => GraphParam[N,E])
                                      (implicit edgeT: TypeTag[E[N]],
                                       config: Config): CC[N,E] = {
     val gB = newBuilder[N,E].asInstanceOf[GraphBuilder[N,E,CC]]
@@ -123,7 +123,6 @@ trait GraphCompanion[+CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[
   def newBuilder[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                            config: Config): Builder[GraphParam[N,E], CC[N,E]] =
     new GraphBuilder[N,E,CC](this)
-
   class GraphCanBuildFrom[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                                     config: Config)
     extends CanBuildFrom[Coll @uncheckedVariance, GraphParam[N,E], CC[N,E] @uncheckedVariance]
@@ -141,7 +140,7 @@ trait GraphCoreCompanion[+CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphL
   def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                       config: Config = defaultConfig): CC[N,E]
   override
-  def apply[N, E[X] <: EdgeLikeIn[X]](elems: GraphParamIn[N,E]*)
+  def apply[N, E[X] <: EdgeLikeIn[X]](elems: GraphParam[N,E]*)
                                      (implicit edgeT: TypeTag[E[N]],
                                       config: Config = defaultConfig): CC[N,E] =
     super.apply(elems: _*)(edgeT, config)
@@ -157,7 +156,7 @@ trait GraphCoreCompanion[+CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphL
      (implicit edgeT: TypeTag[E[N]],
       config:                Config             = defaultConfig): CC[N,E]
   override
-  def fill[N, E[X] <: EdgeLikeIn[X]] (nr: Int)(elem: => GraphParamIn[N,E])
+  def fill[N, E[X] <: EdgeLikeIn[X]] (nr: Int)(elem: => GraphParam[N,E])
                                      (implicit edgeT: TypeTag[E[N]],
                                       config: Config = defaultConfig): CC[N,E] =
     super.fill(nr)(elem)(edgeT, config)
