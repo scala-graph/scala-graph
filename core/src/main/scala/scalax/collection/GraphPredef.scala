@@ -2,7 +2,7 @@ package scalax.collection
 
 import language.{higherKinds, implicitConversions}
 
-import scala.collection.Abstract
+import scala.collection.{Abstract, SeqFacade}
 import GraphEdge.{EdgeLike, EdgeCopy, DiHyperEdgeLike}
 /**
  * This object serves as a container for several `Graph`-related definitions like
@@ -79,10 +79,7 @@ object GraphPredef {
     }
   
   implicit def nodeSetToSeq[N, E[X]<:EdgeLikeIn[X]](nodes: Graph[N,E]#NodeSetT)
-      : Seq[GraphParamOut[N,E]] = {
-    val it = nodes.iterator
-    Array.fill[GraphParamOut[N,E]](nodes.size)(it.next)
-  }
+      : Seq[GraphParamOut[N,E]] = new SeqFacade(nodes)
   
   implicit def edgeSetToOuter[N, E[X]<:EdgeLikeIn[X]](edges: Graph[N,E]#EdgeSetT)
       : Iterable[E[N]] =
@@ -95,10 +92,7 @@ object GraphPredef {
     }
   
   implicit def edgeSetToSeq[N, E[X]<:EdgeLikeIn[X]](edges: Graph[N,E]#EdgeSetT)
-      : Seq[GraphParamOut[N,E]] = {
-    val it = edges.iterator
-    Array.fill[GraphParamOut[N,E]](edges.size)(it.next)
-  }
+      : Seq[GraphParamOut[N,E]] = new SeqFacade(edges)
 
   /**
    * @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
