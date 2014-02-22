@@ -40,8 +40,8 @@ trait AdjacencyListBase[N,
     nodes.from(that)(delNodes, delEdges, ripple, addNodes, addEdges)
   }
 
-  type NodeT <: InnerNodeLike
-  trait InnerNodeLike extends super.InnerNodeLike {
+  type NodeT <: InnerNode
+  trait InnerNode extends super.InnerNode {
     thisNode: NodeT =>
       
     def edges: ArraySet[EdgeT]

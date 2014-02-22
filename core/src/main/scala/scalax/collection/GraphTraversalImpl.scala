@@ -67,7 +67,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   }
     
   type NodeT <: InnerNodeTraversalImpl
-  trait InnerNodeTraversalImpl extends super.InnerNodeLike with InnerNodeState
+  trait InnerNodeTraversalImpl extends super.InnerNode with InnerNodeState
   { this: NodeT =>
     override def findSuccessor(pred: (NodeT) => Boolean,
                                nodeFilter : (NodeT) => Boolean       = anyNode,

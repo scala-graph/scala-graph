@@ -257,8 +257,8 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
       } 
   }  
 
-  type NodeT <: InnerNodeLike
-  trait InnerNodeLike extends super.InnerNode
+  type NodeT <: InnerNode
+  trait InnerNode extends super.InnerNode
   { this: NodeT =>
     /**
      * Finds a successor of this node for which the predicate `pred` holds $INTOACC.

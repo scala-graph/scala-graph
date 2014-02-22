@@ -135,8 +135,8 @@ trait GraphLike[N,
     case _ =>
       false
   }
-  type NodeT <: InnerNodeLike 
-  trait InnerNodeLike extends super.InnerNodeLike {
+  type NodeT <: InnerNode 
+  trait InnerNode extends super.InnerNode {
     this: NodeT =>
     /** The `Graph` instance `this` node is contained in. */
     final def containingGraph: ThisGraph = selfGraph.asInstanceOf[ThisGraph]
@@ -144,7 +144,7 @@ trait GraphLike[N,
   protected abstract class NodeBase(override val value: N)
       extends super.NodeBase
          with NodeOut[N]
-         with InnerNodeLike {
+         with InnerNode {
     this: NodeT =>
     final def isContaining[N, E[X]<:EdgeLikeIn[X]](g: GraphBase[N,E]) =
       g eq containingGraph

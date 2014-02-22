@@ -21,8 +21,8 @@ trait AdjacencyListGraph[N,
   type NodeT <: InnerNodeImpl 
   abstract class InnerNodeImpl(value: N, hints: ArraySet.Hints)
     extends NodeBase(value)
-    with    super[GraphLike].InnerNodeLike
-    with    InnerNodeLike
+    with    super[GraphLike].InnerNode
+    with    InnerNode
   { this: NodeT =>
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
     import Adj._

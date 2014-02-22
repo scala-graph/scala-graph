@@ -196,7 +196,7 @@ object State {
   def dump[N, E[X] <: EdgeLikeIn[X]](node: Graph[N,E]#NodeT): ExtBitSet =
     node.containingGraph match {
       case g: State[_,_] => node match {
-        case n: g.InnerNodeLike with g.InnerNodeState => new ExtBitSet(n.dumpState)
+        case n: g.InnerNode with g.InnerNodeState => new ExtBitSet(n.dumpState)
       }
     }
   /** Represents state flags of a graph for dump purposes. */

@@ -86,8 +86,8 @@ trait GraphLike[N,
   {
     from(Seq(nodeStream), Set.empty[N], Seq(edgeStream), Set.empty[E[N]])
   }
-	type NodeT <: InnerNodeLike 
-  trait InnerNodeLike extends super.InnerNodeLike with InnerNodeOps {
+	type NodeT <: InnerNode 
+  trait InnerNode extends super.InnerNode with InnerNodeOps {
     this: NodeT =>
   }
   type NodeSetT <: NodeSet

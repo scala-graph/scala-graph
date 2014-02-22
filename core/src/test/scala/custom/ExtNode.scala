@@ -24,7 +24,7 @@ trait MyExtGraphLike[N,
                            <: MyExtGraphLike[X,Y,This] with Set[GraphParam[X,Y]] with Graph[X,Y]]
   extends GraphLike[N,E,This]
 { this: This[N,E] =>
-  trait InnerNodeLike extends super.InnerNodeLike {
+  trait InnerNode extends super.InnerNode {
     this: NodeT =>
     def helloSuccessors = "Hello " + (sorted(diSuccessors) mkString ",") + "!"
 
@@ -69,7 +69,7 @@ package immutable {
 //      MyExtGraph.from[N,E](nodes, edges)
 //    final protected class NodeBase(value: N, hints: ArraySet.Hints)
 //      extends InnerNodeImpl(value, hints)
-//      with    InnerNodeLike // inner class of  extension trait
+//      with    InnerNode // inner class of  extension trait
 //      with    InnerNodeTraversalImpl
 //    type NodeT = NodeBase
 //    @inline final protected def newNode(n: N) = new NodeT(n, config.adjacencyListHints)
@@ -130,7 +130,7 @@ package immutable {
       MyExtGraph.from[N,E](nodes, edges)
     final protected class NodeBase(value: N, hints: ArraySet.Hints)
       extends InnerNodeImpl(value, hints)
-      with    InnerNodeLike // inner class of  extension trait
+      with    InnerNode // inner class of  extension trait
       with    InnerNodeTraversalImpl
     type NodeT = NodeBase
     @inline final protected def newNodeWithHints(n: N, h: ArraySet.Hints) = new NodeT(n, h)
@@ -213,7 +213,7 @@ package mutable {
                                                              edges.toEdgeInSet)
     final protected class NodeBase(value: N, hints: ArraySet.Hints)
       extends InnerNodeImpl(value, hints)
-      with    InnerNodeLike // inner class of  extension trait
+      with    InnerNode // inner class of  extension trait
       with    InnerNodeTraversalImpl
     type NodeT = NodeBase
     @inline final protected def newNodeWithHints(n: N, h: ArraySet.Hints) = new NodeT(n, h)
