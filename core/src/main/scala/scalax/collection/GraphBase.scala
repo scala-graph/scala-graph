@@ -68,10 +68,10 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
   def isDirected: Boolean
   def isHyper: Boolean
   
-  type NodeT <: InnerNodeLike with Serializable
+  sealed trait InnerElem
+  type NodeT <: InnerNode with Serializable
   trait Node extends Serializable
-  trait InnerNodeLike extends NodeOut[N] with Node
-  {
+  trait InnerNode extends NodeOut[N] with Node with InnerElem {
     /**
      * The outer node as supplied by the user at instantiation time or
      * by adding nodes this graph.
@@ -275,7 +275,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     }
     def canEqual(that: Any) = true
     override def equals(other: Any) = other match {
-      case that: GraphBase[N,E]#InnerNodeLike => 
+      case that: GraphBase[N,E]#InnerNode => 
         (this eq that) || (that canEqual this) && (this.value == that.value)
       case thatN: N => 
         thatN match { case thatR: AnyRef => val thisN = this.value.asInstanceOf[AnyRef]  
@@ -284,6 +284,11 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
       case _ => false
     }
     override def hashCode = value.##
+  }
+  object InnerNode {
+    def unapply(node: InnerNode): Option[NodeT] =
+      if (node isContaining selfGraph) Some(node.asInstanceOf[NodeT])
+      else None
   }
   object Node {
     def apply  (node: N) = newNode(node)
@@ -309,7 +314,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      */
     @inline final implicit def toValue[N](node: NodeT) = node.value
   }
-  protected abstract class NodeBase extends InnerNodeLike
+  protected abstract class NodeBase extends InnerNode
   protected def newNode(n: N): NodeT
 
   /** Base trait for graph `Ordering`s. */
@@ -407,14 +412,12 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
    */
   def nodes: NodeSetT
 
-  protected type InnerEdge = EdgeOut[N,E,NodeT,E]
-  type EdgeT <: InnerEdge with InnerEdgeLike with Serializable
+  type EdgeT <: EdgeOut[N,E,NodeT,E] with InnerEdge with Serializable
   object EdgeT {
     def unapply(e: EdgeT): Option[(NodeT, NodeT)] = Some((e.edge._1, e.edge._2))
   }
   trait Edge extends Serializable
-  trait InnerEdgeLike extends Iterable[NodeT] with Edge
-  {
+  trait InnerEdge extends Iterable[NodeT] with Edge with InnerElem {
     /**
      * The outer edge after transformation by means of the `copy` method.
      * This edge contains references to inner nodes while the original outer
@@ -454,10 +457,10 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
       case unDi @ _                   => unDi.edge._2
     }
 
-    override def canEqual(that: Any) = that.isInstanceOf[GraphBase[N,E]#InnerEdgeLike] ||
+    override def canEqual(that: Any) = that.isInstanceOf[GraphBase[N,E]#InnerEdge] ||
                                        that.isInstanceOf[EdgeLike[_]]
     override def equals(other: Any) = other match {
-      case that: GraphBase[N,E]#InnerEdgeLike => (this eq that) ||
+      case that: GraphBase[N,E]#InnerEdge => (this eq that) ||
                                                  (this.edge eq that.edge) ||
                                                  (this.edge == that.edge)
       case that: EdgeLike[_] => (this.edge eq that) ||
@@ -477,6 +480,11 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
       } 
       edge.copy[N](newNs).asInstanceOf[E[N]]
     }
+  }
+  object InnerEdge {
+    def unapply(edge: InnerEdge): Option[EdgeT] =
+      if (edge.edge._1 isContaining selfGraph) Some(edge.asInstanceOf[EdgeT])
+      else None
   }
   object Edge {
     def apply(innerEdge: E[NodeT]) = newEdge(innerEdge)
@@ -532,7 +540,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
       def compare(e1: EdgeT, e2: EdgeT) = e1.arity compare e2.arity
     }
   }
-  class EdgeBase(override val edge: E[NodeT]) extends InnerEdge with InnerEdgeLike {
+  class EdgeBase(override val edge: E[NodeT]) extends EdgeOut[N,E,NodeT,E] with InnerEdge {
     override def iterator: Iterator[NodeT] = edge.iterator.asInstanceOf[Iterator[NodeT]]
     override def stringPrefix = super.stringPrefix
   }

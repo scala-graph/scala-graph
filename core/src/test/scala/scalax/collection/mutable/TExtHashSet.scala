@@ -22,7 +22,7 @@ class TExtHashSetTest
   val innerEdge = graph get outerEdge
 
   def test_findEntry {
-    /* `inner.edge == outer` returns the expected result because Graph#InnerEdgeLike.equal
+    /* `inner.edge == outer` returns the expected result because Graph#InnerEdge.equal
      * is aware of the inner edge structure. The opposite will be false since, as a rule,
      * outer object types will not be Graph-aware with regard to their equal.
      */

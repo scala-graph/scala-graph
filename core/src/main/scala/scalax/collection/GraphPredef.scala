@@ -27,13 +27,12 @@ object GraphPredef {
    * such as directed hyper-edges and directed edges.
    */
   type DiHyperEdgeLikeIn[N] = DiHyperEdgeLike[N] with EdgeCopy[DiHyperEdgeLike] with EdgeIn[N,DiHyperEdgeLike]
-  /**
-   * This algebraic type serves as the type parameter to SetLike.
-   * 
-   * @author Peter Empen
+  
+  /** This algebraic type includes outer and inner nodes and edges. As such it serves as the
+   *  type parameter to `SetLike` extending `Graph`. 
    */  
-  sealed trait GraphParam [N, +E[X<:N] <: EdgeLike[X]]
-  {
+  sealed trait GraphParam [N, +E[X<:N] <: EdgeLike[X]] {
+    def isDefined = true
     def isNode: Boolean
     def isEdge: Boolean
     def isIn:   Boolean
@@ -43,8 +42,7 @@ object GraphPredef {
     /**
      * Enables to query partitions of a collection of `GraphParam`.
      */
-    final class Partitions[N, E[X]<:EdgeLikeIn[X]](val elems: Iterable[GraphParam[N,E]])
-    {
+    final class Partitions[N, E[X]<:EdgeLikeIn[X]](val elems: Iterable[GraphParam[N,E]]) {
       lazy val partitioned = elems match {
         case g: Graph[N,E] => (g.nodes, g.edges)
         case x             => x partition (_.isNode)
@@ -94,22 +92,18 @@ object GraphPredef {
   implicit def edgeSetToSeq[N, E[X]<:EdgeLikeIn[X]](edges: Graph[N,E]#EdgeSetT)
       : Seq[GraphParamOut[N,E]] = new SeqFacade(edges)
 
-  /**
-   * @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
-   * @tparam EI  the kind of the edges (links) this graph is passed to by the user.
+  /** @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
+   *  @tparam EI  the kind of the edges (links) this graph is passed to by the user.
    */
-  sealed trait GraphParamIn [NI, +EI[X<:NI] <: EdgeLike[X]] extends GraphParam[NI,EI]
-  {
+  sealed trait GraphParamIn [NI, +EI[X<:NI] <: EdgeLike[X]] extends GraphParam[NI,EI] {
     def isIn  = true
     def isOut = false
   }
-  sealed trait GraphParamOut[NO, +EO[X<:NO] <: EdgeLike[X]] extends GraphParam[NO,EO]
-  {
+  sealed trait GraphParamOut[NO, +EO[X<:NO] <: EdgeLike[X]] extends GraphParam[NO,EO] {
     def isIn  = false
     def isOut = true
   }
-  trait GraphParamNode[N]
-  {
+  trait GraphParamNode[N] {
     def value: N
     def isNode = true 
     def isEdge = false
@@ -117,14 +111,14 @@ object GraphPredef {
     override def toString = if (stringPrefix.length > 0) stringPrefix + "(" + value + ")"
                             else value.toString
   }
-  /**
-   * @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
+  
+  /** @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
    */
   case class NodeIn[NI] (override val value: NI) 
     extends GraphParamIn[NI, Nothing]
-    with    GraphParamNode[NI]
-  /**
-   * @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
+       with GraphParamNode[NI]
+
+  /** @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
    */
   trait NodeOut[NI] extends GraphParamOut[NI,Nothing] with GraphParamNode[NI] {
     def isContaining[N, E[X]<:EdgeLikeIn[X]](g: GraphBase[N,E]): Boolean
@@ -149,18 +143,18 @@ object GraphPredef {
   object NodeOut {
     def unapply[NI] (nodeOut: NodeOut[NI]): Option[NI] = Some(nodeOut.value)
   }
-  /**
-   * @tparam N  the type of the nodes.
-   * @tparam E  the kind of the edges.
+  
+  /** @tparam N  the type of the nodes.
+   *  @tparam E  the kind of the edges.
    */
   sealed trait GraphParamEdge
   {
     def isNode = false 
     def isEdge = true
   }
-  /**
-   * Classes implementing `EdgeLike` must be instantiated mixing in this trait.
-   * This is a precondition for passing edge-instances to a `Graph`.
+  
+  /** Classes implementing `EdgeLike` must be instantiated mixing in this trait.
+   *  This is a precondition for passing edge-instances to a `Graph`.
    *
    * @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
    * @tparam EI  the kind of the edges (links) this graph is passed to by the user.
@@ -170,10 +164,10 @@ object GraphPredef {
   { this: EI[NI] =>
     def edge: EI[NI] = this
   }
-  /**
-   * @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
-   * @tparam NO  the type of the nodes (vertices) this graph passes back.
-   * @tparam EC  the kind of the edges (links) contained in edges of type EdgeT this graph passes back.
+  
+  /** @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
+   *  @tparam NO  the type of the nodes (vertices) this graph passes back.
+   *  @tparam EC  the kind of the edges (links) contained in edges of type EdgeT this graph passes back.
    */
   trait EdgeOut [NI, +EI[X<:NI] <: EdgeLike[X], NO <: NodeOut[NI], +EO[X<:NO] <: EdgeLike[X]]
     extends GraphParamOut[NI,EI] with GraphParamEdge
