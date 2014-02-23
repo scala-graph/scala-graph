@@ -15,7 +15,7 @@ import scalax.collection.GraphPredef._,
 class TripleDiHyperEdge[N] private (nodes: Product)
   extends DiHyperEdge[N](nodes)
   with    EdgeCopy[TripleDiHyperEdge]
-  with    EdgeIn[N,TripleDiHyperEdge] 
+  with    OuterEdge[N,TripleDiHyperEdge] 
 {
   private def node(i: Int): N = iterator.drop(i).next match {
     case inner: Graph[N,_]#NodeT @unchecked => inner.value

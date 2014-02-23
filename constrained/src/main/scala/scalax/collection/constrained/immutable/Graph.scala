@@ -8,7 +8,7 @@ import scala.reflect.runtime.universe._
 
 import scalax.collection.{Graph => CommonGraph}
 import scalax.collection.GraphEdge.{EdgeLike, EdgeCompanionBase}
-import scalax.collection.GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn}
+import scalax.collection.GraphPredef.{EdgeLikeIn, Param, InParam}
 import scalax.collection.GraphTraversalImpl
 import scalax.collection.mutable.ArraySet
 import scalax.collection.generic.GraphCompanion

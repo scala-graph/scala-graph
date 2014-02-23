@@ -184,10 +184,10 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
   }
 
   trait EdgeStore {
-    def save   [N, E[X] <: EdgeLikeIn[X]](e: Iterable[GraphParamIn[N,E]])
-    def restore[N, E[X] <: EdgeLikeIn[X]]:   Iterable[GraphParamIn[N,E]]
-    def test   [N, E[X] <: EdgeLikeIn[X]](e: Iterable[GraphParamIn[N,E]])
-        : Iterable[GraphParamIn[N,E]] = {
+    def save   [N, E[X] <: EdgeLikeIn[X]](e: Iterable[InParam[N,E]])
+    def restore[N, E[X] <: EdgeLikeIn[X]]:   Iterable[InParam[N,E]]
+    def test   [N, E[X] <: EdgeLikeIn[X]](e: Iterable[InParam[N,E]])
+        : Iterable[InParam[N,E]] = {
       save[N,E](e)
       val r = restore[N,E]
       r should be (e)
@@ -197,7 +197,7 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
   class EdgeByteArray(cl: ClassLoader) extends EdgeStore {
     private var _saved: Array[Byte] = null
     def saved = _saved
-    def save[N, E[X] <: EdgeLikeIn[X]](e: Iterable[GraphParamIn[N,E]]) {
+    def save[N, E[X] <: EdgeLikeIn[X]](e: Iterable[InParam[N,E]]) {
       val bos = new ByteArrayOutputStream 
       val out = new ObjectOutputStream(bos)
       out writeObject e
@@ -212,7 +212,7 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
           new ObjectInputStream(bis)
       val read = in.readObject
       bis.close
-      read.asInstanceOf[Iterable[GraphParamIn[N,E]]]
+      read.asInstanceOf[Iterable[InParam[N,E]]]
     }
   }
   def test_WUnDi_2_edges {

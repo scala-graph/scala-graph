@@ -4,7 +4,7 @@ package immutable
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.generic.CanBuildFrom
 
-import scalax.collection.GraphPredef.{EdgeLikeIn, NodeIn, EdgeIn, GraphParamIn}
+import scalax.collection.GraphPredef.{EdgeLikeIn, OuterNode, OuterEdge, InParam}
 import scalax.collection.immutable.{AdjacencyListGraph => SimpleAdjacencyListGraph}
 import scalax.collection.config.{GraphConfig, AdjacencyListArrayConfig}
 

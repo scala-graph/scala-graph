@@ -4,7 +4,7 @@ import language.{higherKinds, implicitConversions}
 import collection.{Set, SortedSet, SortedMap}
 import util.Random
 
-import GraphPredef.{EdgeLikeIn, GraphParamNode, NodeIn, NodeOut, EdgeIn, EdgeOut}
+import GraphPredef.{EdgeLikeIn, NodeParam, OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam}
 import GraphEdge.{EdgeLike, EdgeCompanionBase, DiHyperEdgeLike}
 import generic.AnyOrdering
 import mutable.ArraySet
@@ -71,7 +71,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
   sealed trait InnerElem
   type NodeT <: InnerNode with Serializable
   trait Node extends Serializable
-  trait InnerNode extends NodeOut[N] with Node with InnerElem {
+  trait InnerNode extends InnerNodeParam[N] with Node with InnerElem {
     /**
      * The outer node as supplied by the user at instantiation time or
      * by adding nodes this graph.
@@ -412,7 +412,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
    */
   def nodes: NodeSetT
 
-  type EdgeT <: EdgeOut[N,E,NodeT,E] with InnerEdge with Serializable
+  type EdgeT <: InnerEdgeParam[N,E,NodeT,E] with InnerEdge with Serializable
   object EdgeT {
     def unapply(e: EdgeT): Option[(NodeT, NodeT)] = Some((e.edge._1, e.edge._2))
   }
@@ -500,9 +500,9 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
           newN })
       else existing
     }
-    def mkNode(n: GraphParamNode[N]): NodeT = n match {
-      case n: NodeIn[N]  => mkNode(n.value)
-      case n: NodeOut[N] => n.toNodeT[N,E,selfGraph.type](selfGraph)(n => mkNode(n.value))
+    def mkNode(n: NodeParam[N]): NodeT = n match {
+      case n: OuterNode[N]  => mkNode(n.value)
+      case n: InnerNodeParam[N] => n.toNodeT[N,E,selfGraph.type](selfGraph)(n => mkNode(n.value))
     } 
     /**
      * Creates a new inner edge from the outer `edge` using its
@@ -540,7 +540,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
       def compare(e1: EdgeT, e2: EdgeT) = e1.arity compare e2.arity
     }
   }
-  class EdgeBase(override val edge: E[NodeT]) extends EdgeOut[N,E,NodeT,E] with InnerEdge {
+  class EdgeBase(override val edge: E[NodeT]) extends InnerEdgeParam[N,E,NodeT,E] with InnerEdge {
     override def iterator: Iterator[NodeT] = edge.iterator.asInstanceOf[Iterator[NodeT]]
     override def stringPrefix = super.stringPrefix
   }
@@ -606,8 +606,8 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
         case _ => throw new IllegalArgumentException
       } 
       other match {
-        case e: EdgeIn[N,E]      => find(e.edge)
-        case e: EdgeOut[N,E,_,E] => find(e.asEdgeT[N,E,selfGraph.type](selfGraph).toEdgeIn)
+        case e: OuterEdge[N,E]      => find(e.edge)
+        case e: InnerEdgeParam[N,E,_,E] => find(e.asEdgeT[N,E,selfGraph.type](selfGraph).toEdgeIn)
         case _                   => null.asInstanceOf[EdgeT]
       }
     }

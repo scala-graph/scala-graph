@@ -8,7 +8,7 @@ import scala.reflect.runtime.universe._
 
 import scalax.collection.{Graph => CommonGraph}
 import GraphEdge.{EdgeLike, EdgeCompanionBase, UnDiEdge}
-import GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn} 
+import GraphPredef.{EdgeLikeIn, Param, InParam} 
 import generic.{GraphCompanion, ImmutableGraphCompanion, MutableGraphCompanion}
 import config.AdjacencyListArrayConfig
 import mutable.{GraphBuilder, ArraySet}
@@ -45,7 +45,7 @@ object Graph extends ImmutableGraphCompanion[Graph]
                                                  config: Config = defaultConfig) =
     new GraphCanBuildFrom[N,E]()(edgeT, config).asInstanceOf[
       GraphCanBuildFrom[N,E]
-      with CanBuildFrom[Graph[_,UnDiEdge], GraphParam[N,E], Graph[N,E]]]
+      with CanBuildFrom[Graph[_,UnDiEdge], Param[N,E], Graph[N,E]]]
 }
 @SerialVersionUID(71L)
 class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]

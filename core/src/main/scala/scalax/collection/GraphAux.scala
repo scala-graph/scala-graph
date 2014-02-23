@@ -5,7 +5,7 @@ import collection.{Set, SortedSet, SortedMap}
 import collection.mutable.{Set => MutableSet, Map => MutableMap, ListBuffer}
 import reflect.{classTag, ClassTag}
 
-import GraphPredef.{EdgeLikeIn, GraphParamNode, NodeIn, NodeOut, EdgeOut}
+import GraphPredef.{EdgeLikeIn, NodeParam, OuterNode, InnerNodeParam, InnerEdgeParam}
 import GraphEdge.{EdgeLike, EdgeCompanionBase}
 import generic.{GraphCompanion, GraphCoreCompanion}
 import io._

@@ -57,8 +57,8 @@ class TConstrained [CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
     g should be ('isEmpty)
     g + 5 contains 5 should be (false)
     g + 6 contains 6 should be (true)
-    (g ++ List[NodeIn[Int]](1,2,3)) should be ('isEmpty)
-    (g ++ List[NodeIn[Int]](2,4,6)) should have size (3)
+    (g ++ List[OuterNode[Int]](1,2,3)) should be ('isEmpty)
+    (g ++ List[OuterNode[Int]](2,4,6)) should have size (3)
   }
   def test_EvenNodeByException {
     implicit val config: Config = UserConstraints.EvenNodeByException  
@@ -70,9 +70,9 @@ class TConstrained [CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
     intercept[IllegalArgumentException] { g + 5 }
     g + 6 contains 6 should be (true)
     intercept[IllegalArgumentException] {
-      g ++ List[NodeIn[Int]](1,2,3)
+      g ++ List[OuterNode[Int]](1,2,3)
     }
-    ( g ++ List[NodeIn[Int]](2,4,6)) should have size (3)
+    ( g ++ List[OuterNode[Int]](2,4,6)) should have size (3)
   }
   def test_MinDegree {
     import UserConstraints.{MinDegree_2, MinDegreeException}
@@ -171,7 +171,7 @@ object UserConstraints {
       edge forall (self contains _)
     )
     // difficult to say so postpone it until post-check
-    override def preAdd(elems: GraphParamIn[N,E]*) = postCheck
+    override def preAdd(elems: InParam[N,E]*) = postCheck
     // inspecting the would-be graph is much easier
     override def postAdd (newGraph: Graph[N,E],
                           passedNodes: Iterable[N],

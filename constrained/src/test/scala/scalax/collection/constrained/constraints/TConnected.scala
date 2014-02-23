@@ -59,7 +59,7 @@ class TConnectedRootTest
     (g --!= minusEdges) should be (simpleG --!= minusEdges)
 
     (g ++= init) should be (simpleG ++= init)
-    val minus = List[GraphParamIn[Int,UnDiEdge]](1~2, 1)
+    val minus = List[InParam[Int,UnDiEdge]](1~2, 1)
     (g --=  minus)   should be (simpleG --= minus)
   }
 }

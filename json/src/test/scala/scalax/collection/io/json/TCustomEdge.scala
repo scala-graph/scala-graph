@@ -85,7 +85,7 @@ class Transition[N](from: N, to: N, val key: Char, val keyMod: KeyModifier)
     extends DiEdge  [N](NodeProduct(from, to))
     with ExtendedKey[N]
     with EdgeCopy   [Transition]
-    with EdgeIn     [N, Transition]
+    with OuterEdge     [N, Transition]
     with Attributes [N] {
 
   def keyAttributes = Seq(key, keyMod)

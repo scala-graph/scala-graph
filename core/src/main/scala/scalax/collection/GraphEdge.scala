@@ -4,12 +4,12 @@ import language.{higherKinds, postfixOps}
 import scala.annotation.{tailrec, switch}
 import scala.collection.mutable.Set
 
-import GraphPredef.{NodeOut, EdgeIn}
+import GraphPredef.{InnerNodeParam, OuterEdge}
 import edge.LBase.LEdge
 
 /**
  * This object serves as a container for all edge-types to be used in the context of `Graph`.
- * You will usually simply import all its members along with the members of GraphParam:
+ * You will usually simply import all its members along with the members of Param:
  * {{{
  * import scalax.collection.GraphPredef._, scalax.collection.GraphEdge,_
  * }}}
@@ -510,7 +510,7 @@ object GraphEdge {
   class HyperEdge[N] (override val nodes: Product)
     extends EdgeLike[N]
     with    EdgeCopy[HyperEdge]
-    with    EdgeIn[N,HyperEdge]
+    with    OuterEdge[N,HyperEdge]
     with    EqHyper
   {
     validate
@@ -588,7 +588,7 @@ object GraphEdge {
     extends HyperEdge[N](nodes)
     with    DiHyperEdgeLike[N]
     with    EdgeCopy[DiHyperEdge]
-    with    EdgeIn[N,DiHyperEdge]
+    with    OuterEdge[N,DiHyperEdge]
   {
     override protected[collection] def copy[NN](newNodes: Product) =
       new DiHyperEdge[NN](newNodes)
@@ -622,7 +622,7 @@ object GraphEdge {
   class UnDiEdge[N] (nodes: Product)
     extends HyperEdge[N](nodes)
     with    EdgeCopy[UnDiEdge]
-    with    EdgeIn[N,UnDiEdge]
+    with    OuterEdge[N,UnDiEdge]
     with    EqUnDi
   {
     @inline final override protected def isValidArity(size: Int) = size == 2 
@@ -683,7 +683,7 @@ object GraphEdge {
     extends UnDiEdge[N](nodes)
     with    DiEdgeLike[N]
     with    EdgeCopy[DiEdge]
-    with    EdgeIn[N,DiEdge]
+    with    OuterEdge[N,DiEdge]
   {
     override protected[collection] def copy[NN](newNodes: Product) =
       new DiEdge[NN](newNodes)

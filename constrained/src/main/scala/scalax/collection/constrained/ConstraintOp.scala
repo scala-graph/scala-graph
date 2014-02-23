@@ -84,7 +84,7 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X]]
          right, right preCreate(nodes, edges))
   override final def preAdd(node: N   ) = eval(left, left preAdd node, right, right preAdd node)
   override final def preAdd(edge: E[N]) = eval(left, left preAdd edge, right, right preAdd edge)
-  override final def preAdd(elems: GraphParamIn[N,E]*) =
+  override final def preAdd(elems: InParam[N,E]*) =
     eval(left,  left  preAdd (elems: _*),
          right, right preAdd (elems: _*)) 
   override final def postAdd (newGraph   : scalax.collection.constrained.Graph[N,E],

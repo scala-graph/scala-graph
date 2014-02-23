@@ -207,11 +207,11 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X]] {
    * @param elems nodes and/or edges to be added possibly containing duplicates.
    * @return $PRECHECKRET
    */
-  def preAdd   (elems: GraphParamIn[N,E]*): PreCheckResult =
+  def preAdd   (elems: InParam[N,E]*): PreCheckResult =
     PreCheckResult.postCheck(
       elems forall { _ match {
-          case node: NodeIn[N]   => ! preAdd(node.value).abort
-          case edge: EdgeIn[N,E] => ! preAdd(edge.edge ).abort  
+          case node: OuterNode[N]   => ! preAdd(node.value).abort
+          case edge: OuterEdge[N,E] => ! preAdd(edge.edge ).abort  
         }
       })
   /**

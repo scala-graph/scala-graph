@@ -191,7 +191,7 @@ class TStream[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 class MyWEdge[N] (nodes: Product, weight: Long)
   extends WDiEdge[N](nodes, weight)
   with    EdgeCopy[MyWEdge]
-  with    EdgeIn[N,MyWEdge]
+  with    OuterEdge[N,MyWEdge]
   with    WEdge[N]
   with    Serializable
 {

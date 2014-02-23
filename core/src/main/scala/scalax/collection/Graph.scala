@@ -6,8 +6,8 @@ import collection.generic.GenericCompanion
 import collection.mutable.{Set => MSet}
 import scala.reflect.runtime.universe._
 
-import GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn, GraphParamOut,
-                    NodeIn, NodeOut, EdgeIn, EdgeOut}
+import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
+                    OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam}
 import GraphEdge.{EdgeLike, EdgeCompanionBase, DiHyperEdgeLike, UnDiEdge, DiEdge}
 import generic.{GraphCompanion, GraphCoreCompanion}
 import config.GraphConfig
@@ -32,8 +32,8 @@ import io._
 trait GraphLike[N,
                 E[X]  <: EdgeLikeIn[X],
                 +This[X, Y[X]<:EdgeLikeIn[X]]
-                      <: GraphLike[X,Y,This] with Set[GraphParam[X,Y]] with Graph[X,Y]]
-  extends SetLike       [GraphParam[N,E], This[N,E]]
+                      <: GraphLike[X,Y,This] with Set[Param[X,Y]] with Graph[X,Y]]
+  extends SetLike       [Param[N,E], This[N,E]]
   with    GraphTraversal[N,E]
   with    GraphBase     [N,E]
   with    GraphDegree   [N,E]
@@ -143,7 +143,7 @@ trait GraphLike[N,
   }
   protected abstract class NodeBase(override val value: N)
       extends super.NodeBase
-         with NodeOut[N]
+         with InnerNodeParam[N]
          with InnerNode {
     this: NodeT =>
     final def isContaining[N, E[X]<:EdgeLikeIn[X]](g: GraphBase[N,E]) =
@@ -194,16 +194,16 @@ trait GraphLike[N,
    *  @param elem the node or edge the existence of which is to be checked
    *  @return true if `elem` is contained in this graph
    */
-  def contains(elem: GraphParam[N,E]) = elem match {
-    case in: GraphParamIn[N,E] => in match {
-      case n: NodeIn[N]   => nodes contains newNode(n.value)
-      case e: EdgeIn[N,E] => edges contains newEdge(e.edge)
+  def contains(elem: Param[N,E]) = elem match {
+    case in: InParam[N,E] => in match {
+      case n: OuterNode[N]   => nodes contains newNode(n.value)
+      case e: OuterEdge[N,E] => edges contains newEdge(e.edge)
     } 
-    case out: GraphParamOut[_,_] => out match {
-      case n: NodeOut[N] => nodes contains (
+    case out: OutParam[_,_] => out match {
+      case n: InnerNodeParam[N] => nodes contains (
           n.toNodeT[N,E,ThisGraph](selfGraph)(anyNode => newNode(anyNode.value))
         )
-      case e: EdgeOut[N,E,_,E]  => edges contains (
+      case e: InnerEdgeParam[N,E,_,E]  => edges contains (
           e.toEdgeT[N,E,ThisGraph](selfGraph)(anyEdge => newEdge(anyEdge.toEdgeIn))
         ) 
     } 
@@ -290,30 +290,30 @@ trait GraphLike[N,
    *  @return a new supergraph containing all nodes and edges of this graph
    *          plus `elem`.
    */
-  def +(elem: GraphParam[N,E]): This[N,E] = elem match {
-    case in: GraphParamIn[N,E] => in match {
-      case n: NodeIn[N]   => this + n.value
-      case e: EdgeIn[N,E] => this +# e.edge
+  def +(elem: Param[N,E]): This[N,E] = elem match {
+    case in: InParam[N,E] => in match {
+      case n: OuterNode[N]   => this + n.value
+      case e: OuterEdge[N,E] => this +# e.edge
     } 
-    case out: GraphParamOut[_,_] => out match {
-      case n: NodeOut[N] => this + n.value
-      case e: EdgeOut[N,E,_,E]  => this +#
+    case out: OutParam[_,_] => out match {
+      case n: InnerNodeParam[N] => this + n.value
+      case e: InnerEdgeParam[N,E,_,E]  => this +#
                                    e.asEdgeT[N,E,ThisGraph](selfGraph).toEdgeIn
     } 
   }
-  override def ++ (elems: GenTraversableOnce[GraphParam[N,E]]) = bulkOp(elems, true)
-  override def -- (elems: GenTraversableOnce[GraphParam[N,E]]) = bulkOp(elems, false)
+  override def ++ (elems: GenTraversableOnce[Param[N,E]]) = bulkOp(elems, true)
+  override def -- (elems: GenTraversableOnce[Param[N,E]]) = bulkOp(elems, false)
   /** Prepares and calls `plusPlus` or `minusMinus`. */
-  final protected def bulkOp(elems:      GenTraversableOnce[GraphParam[N,E]],
+  final protected def bulkOp(elems:      GenTraversableOnce[Param[N,E]],
                              isPlusPlus: Boolean): This[N,E] = {
     val p = partition(elems)
     if (isPlusPlus) plusPlus  (p.toOuterNodes, p.toOuterEdges)
     else            minusMinus(p.toOuterNodes, p.toOuterEdges)
   }
-  final protected def partition(elems: GenTraversableOnce[GraphParam[N,E]]) =
-    new GraphParam.Partitions[N,E] (elems match {
-      case x: Iterable       [GraphParam[N,E]] => x
-      case x: TraversableOnce[GraphParam[N,E]] => x.toIterable
+  final protected def partition(elems: GenTraversableOnce[Param[N,E]]) =
+    new Param.Partitions[N,E] (elems match {
+      case x: Iterable       [Param[N,E]] => x
+      case x: TraversableOnce[Param[N,E]] => x.toIterable
       case _ => throw new IllegalArgumentException("TraversableOnce expected.")
     })
   /** Implements the heart of `++` calling the `from` factory method of the companion object.
@@ -379,14 +379,14 @@ trait GraphLike[N,
    *  @return the new subgraph of this graph after the "ripple" deletion of the passed node
    *          or the simple deletion of the passed edge.
    */
-  def - (elem: GraphParam[N,E]): This[N,E] = elem match {
-    case in: GraphParamIn[N,E] => in match {
-      case n: NodeIn[N]   => this - n.value
-      case e: EdgeIn[N,E] => this -# e.edge
+  def - (elem: Param[N,E]): This[N,E] = elem match {
+    case in: InParam[N,E] => in match {
+      case n: OuterNode[N]   => this - n.value
+      case e: OuterEdge[N,E] => this -# e.edge
     } 
-    case out: GraphParamOut[_,_] => out match {
-      case n: NodeOut[N] => this - n.value
-      case e: EdgeOut[N,E,_,E]  => this -# e.asEdgeT[N,E,ThisGraph](selfGraph).toEdgeIn
+    case out: OutParam[_,_] => out match {
+      case n: InnerNodeParam[N] => this - n.value
+      case e: InnerEdgeParam[N,E,_,E]  => this -# e.asEdgeT[N,E,ThisGraph](selfGraph).toEdgeIn
     } 
   }
   /** Creates a new subgraph consisting of all nodes and edges of this graph except `elem`.
@@ -397,14 +397,14 @@ trait GraphLike[N,
    *  @return a new subgraph of this graph after the "ripple" deletion of the passed
    *          node or edge.
    */
-  def -!(elem: GraphParam[N,E]): This[N,E] = elem match {
-    case in: GraphParamIn[N,E] => in match {
-      case n: NodeIn[N]   => this - n.value
-      case e: EdgeIn[N,E] => this -!# e.edge
+  def -!(elem: Param[N,E]): This[N,E] = elem match {
+    case in: InParam[N,E] => in match {
+      case n: OuterNode[N]   => this - n.value
+      case e: OuterEdge[N,E] => this -!# e.edge
     } 
-    case out: GraphParamOut[_,_] => out match {
-      case n: NodeOut[N] => this - n.value
-      case e: EdgeOut[N,E,_,E]  => this -!# e.asEdgeT[N,E,ThisGraph](selfGraph).toEdgeIn
+    case out: OutParam[_,_] => out match {
+      case n: InnerNodeParam[N] => this - n.value
+      case e: InnerEdgeParam[N,E,_,E]  => this -!# e.asEdgeT[N,E,ThisGraph](selfGraph).toEdgeIn
     } 
   }
   /** Creates a new subgraph consisting of all nodes and edges of this graph but the elements
@@ -414,11 +414,11 @@ trait GraphLike[N,
    *
    * @param coll collection of nodes and/or edges to be removed; if the element type is N,
    *             it is removed from the node set otherwise from the edge set.
-   *             See `-!(elem: GraphParam[N,E])`.
+   *             See `-!(elem: Param[N,E])`.
    * @return the new subgraph containing all nodes and edges of this graph
    *         after the "ripple" deletion of nodes and the simple deletion of edges in `coll` .
    */
-  def --! (elems: GenTraversableOnce[GraphParam[N,E]]): This[N,E] = {
+  def --! (elems: GenTraversableOnce[Param[N,E]]): This[N,E] = {
     val p = partition(elems)
     val (delNodes, delEdges) = (p.toOuterNodes, p.toOuterEdges)
     val unconnectedNodeCandidates = {
@@ -454,15 +454,15 @@ trait GraphLike[N,
    * @return A partial function combining the passed predicates.
    */
   def having(node: (NodeT) => Boolean = _ => false,
-             edge: (EdgeT) => Boolean = null): PartialFunction[GraphParam[N,E], Boolean] = {
-    val nodePred: PartialFunction[GraphParam[N,E], Boolean] = {
-      case n: NodeOut[N] => node(n.asNodeT[N,E,ThisGraph](selfGraph))
+             edge: (EdgeT) => Boolean = null): PartialFunction[Param[N,E], Boolean] = {
+    val nodePred: PartialFunction[Param[N,E], Boolean] = {
+      case n: InnerNodeParam[N] => node(n.asNodeT[N,E,ThisGraph](selfGraph))
     }
-    val edgePred: PartialFunction[GraphParam[N,E], Boolean] =
+    val edgePred: PartialFunction[Param[N,E], Boolean] =
       if (edge eq null) {
-        case e: EdgeOut[N,E,_,E] => e.asEdgeT[N,E,ThisGraph](selfGraph) forall (node(_))
+        case e: InnerEdgeParam[N,E,_,E] => e.asEdgeT[N,E,ThisGraph](selfGraph) forall (node(_))
       } else {
-        case e: EdgeOut[N,E,_,E] => edge(e.asEdgeT[N,E,ThisGraph](selfGraph))
+        case e: InnerEdgeParam[N,E,_,E] => edge(e.asEdgeT[N,E,ThisGraph](selfGraph))
       }
     nodePred orElse edgePred
   }
@@ -481,7 +481,7 @@ import collection.generic.CanBuildFrom
  * @author Peter Empen
  */
 trait Graph[N, E[X] <: EdgeLikeIn[X]]
-  extends Set[GraphParam[N,E]]
+  extends Set[Param[N,E]]
   with    GraphLike[N,E,Graph]
 {
   override def empty: Graph[N,E] = Graph.empty[N,E]
@@ -519,10 +519,10 @@ object Graph
   implicit def cbfUnDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                                  config: Config = defaultConfig) =
     new GraphCanBuildFrom[N,E]()(edgeT, config).asInstanceOf[GraphCanBuildFrom[N,E]
-        with CanBuildFrom[Graph[_,UnDiEdge], GraphParam[N,E], Graph[N,E]]]
+        with CanBuildFrom[Graph[_,UnDiEdge], Param[N,E], Graph[N,E]]]
 
   implicit def cbfDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                                config: Config = defaultConfig) =
     new GraphCanBuildFrom[N,E]()(edgeT, config).asInstanceOf[GraphCanBuildFrom[N,E]
-        with CanBuildFrom[Graph[_,DiEdge], GraphParam[N,E], Graph[N,E]]]
+        with CanBuildFrom[Graph[_,DiEdge], Param[N,E], Graph[N,E]]]
 }

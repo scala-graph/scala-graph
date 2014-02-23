@@ -67,9 +67,9 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
   /** If `elems` is relatively small, preventively ensure that there is no cycle
    *  within the new elements.
    */
-  override def preAdd(elems: GraphParamIn[N,E]*) = 
+  override def preAdd(elems: InParam[N,E]*) = 
     if (elems.size * 10 < self.size) {
-      val p: GraphParam.Partitions[N,E] = elems
+      val p: Param.Partitions[N,E] = elems
       val graphAdd = SimpleGraph.from(
           p.toOuterNodes, p.toOuterEdges)(
           self.edgeT, self.config.asInstanceOf[SimpleGraph.Config])

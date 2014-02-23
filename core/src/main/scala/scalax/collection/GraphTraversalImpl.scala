@@ -6,8 +6,8 @@ import collection.mutable.{ArrayBuffer, ArraySeq, ArrayStack => Stack, ListBuffe
                            PriorityQueue, Set => MutableSet, Map => MutableMap}
 
 import collection.Abstract
-import GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn, GraphParamOut,
-                    NodeIn, NodeOut, EdgeIn, EdgeOut}
+import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
+                    OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam}
 import GraphEdge.{EdgeLike}
 import mutable.{ArraySet, ExtBitSet}
 import scalax.collection.mutable.ExtBitSet
@@ -639,7 +639,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
                                           edgeFilter: (EdgeT) => Boolean)
       extends Path {
 
-    def foreach[U](f: GraphParamOut[N,E] => U): Unit = {
+    def foreach[U](f: OutParam[N,E] => U): Unit = {
       f(nodes.head)
       val edges = this.edges.toIterator
       for (n <- nodes.tail;
@@ -668,7 +668,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     override def equals(other: Any) = other match {
       case that: GraphTraversalImpl[N,E]#Path => 
         (this eq that) ||
-        that.toArray[GraphParamOut[N,E]].sameElements(toArray[GraphParamOut[N,E]])
+        that.toArray[OutParam[N,E]].sameElements(toArray[OutParam[N,E]])
       case _ => false
     }
     override def hashCode = nodes.## + 27 * edges.##  

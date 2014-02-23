@@ -538,7 +538,7 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
   }
   def test_EdgeOrdering {
     val root = 1
-    val outerEdges = Seq[GraphParamIn[Int,WDiEdge]](
+    val outerEdges = Seq[InParam[Int,WDiEdge]](
         root~>4 % 2, root~>2 % 5, root~>3 % 4,
            3~>6 % 4,    3~>5 % 5,    3~>7 % 2)
     val g = factory(outerEdges: _*)

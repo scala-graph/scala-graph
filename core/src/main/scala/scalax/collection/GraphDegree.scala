@@ -4,7 +4,7 @@ import language.{higherKinds, postfixOps}
 import collection.{Set, SortedSet, SortedMap}
 import collection.mutable.{Set => MutableSet, Map => MutableMap}
 
-import GraphPredef.{EdgeLikeIn, GraphParamNode, NodeIn, NodeOut, EdgeOut}
+import GraphPredef.{EdgeLikeIn, NodeParam, OuterNode, InnerNodeParam, InnerEdgeParam}
 import GraphEdge.{EdgeLike, EdgeException}
 
 /**

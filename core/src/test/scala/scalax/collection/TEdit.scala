@@ -24,7 +24,7 @@ trait ConfigWrapper[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
   implicit val config: companion.Config
   def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                       config: companion.Config): CC[N,E] = companion.empty
-  def apply[N, E[X] <: EdgeLikeIn[X]](elems: GraphParam[N,E]*)
+  def apply[N, E[X] <: EdgeLikeIn[X]](elems: Param[N,E]*)
                                      (implicit edgeT: TypeTag[E[N]],
                                       config: companion.Config) = companion(elems: _*)
   def from [N, E[X] <: EdgeLikeIn[X]](edges: collection.Iterable[E[N]])
@@ -231,7 +231,7 @@ class TEditRootTest
   }
   def test_pluPlusEq {
     val (gBefore, gAfter) = (mutableFactory(1, 2~3), mutableFactory(0, 1~2, 2~3)) 
-    (gBefore ++= List[GraphParam[Int,UnDiEdge]](1~2, 2~3, 0)) should equal (gAfter)
+    (gBefore ++= List[Param[Int,UnDiEdge]](1~2, 2~3, 0)) should equal (gAfter)
     (gBefore ++= mutableFactory(0, 1~2))                      should equal (gAfter)
     (gBefore ++= mutableFactory[Int,UnDiEdge](0) ++= mutableFactory(1~2))   should equal (gAfter)
   }
@@ -318,10 +318,10 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 		seq_1_3 foreach {
 			i => gInt_1_3.contains(i) should be (true) //gInt_1_3 should contain (i)
 		}
-		gInt_1_3.head.isInstanceOf[NodeOut[Int]] should be (true)
+		gInt_1_3.head.isInstanceOf[InnerNodeParam[Int]] should be (true)
 	}
 	def test_toString {
-	  val nodePrefix = NodeIn.stringPrefix
+	  val nodePrefix = OuterNode.stringPrefix
 		gInt_1_3 .toString should fullyMatch regex ("""Graph\(""" + nodePrefix + """[13], """ + nodePrefix + """[13]\)""")
 		gString_A.toString should fullyMatch regex ("""Graph\(""" + nodePrefix + """["A"]\)""")
 	}
@@ -362,7 +362,7 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 		g.contains("C") should be (true) //g should contain ("C")
 
 		val (gBefore, gAfter) = (factory(1, 2~3), factory(0, 1~2, 2~3)) 
-		gBefore ++ List[GraphParam[Int,UnDiEdge]](1~2, 2~3, 0) should equal (gAfter)
+		gBefore ++ List[Param[Int,UnDiEdge]](1~2, 2~3, 0) should equal (gAfter)
 		gBefore ++ factory(0, 1~2)                             should equal (gAfter)
     gBefore ++ factory[Int,UnDiEdge](0) ++ factory(1~2)    should equal (gAfter)
 	}
@@ -383,9 +383,9 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 	}
 	def test_MinusMinus {
     val g = factory(1, 2~3, 3~4)
-	  g --  List[GraphParam[Int,UnDiEdge]](2, 3~3) should be (factory(1, 3~4))
-    g --  List[GraphParam[Int,UnDiEdge]](2, 3~4) should be (factory[Int,UnDiEdge](1, 3, 4))
-	  g --! List[GraphParam[Int,UnDiEdge]](1, 3~4) should be (factory(2~3))
+	  g --  List[Param[Int,UnDiEdge]](2, 3~3) should be (factory(1, 3~4))
+    g --  List[Param[Int,UnDiEdge]](2, 3~4) should be (factory[Int,UnDiEdge](1, 3, 4))
+	  g --! List[Param[Int,UnDiEdge]](1, 3~4) should be (factory(2~3))
 	}
   def test_CanBuildFromUnDi {
     val g = factory(0, 1~2)
@@ -558,20 +558,20 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
   }
 }
 object Helper {
-  def icrementNode(p: GraphParam[Int,UnDiEdge]): GraphParam[Int,UnDiEdge] = p match {
-    case in: GraphParamIn[_,UnDiEdge] => throw new IllegalArgumentException 
-    case out: GraphParamOut[_,_] => out match {
-      case n: NodeOut[Int] => NodeIn(n.value + 1)
-      case o: EdgeOut[Int,UnDiEdge,_,UnDiEdge] =>
+  def icrementNode(p: Param[Int,UnDiEdge]): Param[Int,UnDiEdge] = p match {
+    case in: InParam[_,UnDiEdge] => throw new IllegalArgumentException 
+    case out: OutParam[_,_] => out match {
+      case n: InnerNodeParam[Int] => OuterNode(n.value + 1)
+      case o: InnerEdgeParam[Int,UnDiEdge,_,UnDiEdge] =>
         val e = o.asInstanceOf[Graph[Int,UnDiEdge]#EdgeT]
         UnDiEdge((e.edge._1.value + 1, e.edge._2.value + 1)) 
     } 
   }
-  def nodeToString(p: GraphParam[Int,DiEdge]): GraphParam[String,UnDiEdge] = p match {
-    case in: GraphParamIn[_,DiEdge] => throw new IllegalArgumentException 
-    case out: GraphParamOut[_,_] => out match {
-      case n: NodeOut[Int] => NodeIn(n.value.toString)
-      case o: EdgeOut[Int,DiEdge,_,DiEdge] =>
+  def nodeToString(p: Param[Int,DiEdge]): Param[String,UnDiEdge] = p match {
+    case in: InParam[_,DiEdge] => throw new IllegalArgumentException 
+    case out: OutParam[_,_] => out match {
+      case n: InnerNodeParam[Int] => OuterNode(n.value.toString)
+      case o: InnerEdgeParam[Int,DiEdge,_,DiEdge] =>
         val e = o.asInstanceOf[Graph[Int,DiEdge]#EdgeT]
         UnDiEdge(e.edge._1.value.toString, e.edge._2.value.toString) 
     } 

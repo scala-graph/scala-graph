@@ -16,7 +16,7 @@ class TripleDiEdge[N] private (nodes: Product, val predicate: Predicate)
   extends DiEdge[N](nodes)
   with    ExtendedKey[N]
   with    EdgeCopy[TripleDiEdge]
-  with    EdgeIn[N,TripleDiEdge] 
+  with    OuterEdge[N,TripleDiEdge] 
 {
   private def node(i: Int): N = iterator.drop(i).next match {
     case inner: Graph[N,_]#NodeT @unchecked => inner.value

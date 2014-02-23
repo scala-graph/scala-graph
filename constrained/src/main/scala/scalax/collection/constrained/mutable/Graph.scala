@@ -9,8 +9,8 @@ import scala.reflect.runtime.universe._
 
 import scalax.collection.{Graph => CommonGraph, GraphTraversalImpl}
 import scalax.collection.GraphEdge.{EdgeLike, EdgeCompanionBase}
-import scalax.collection.GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn, GraphParamOut,
-                                      GraphParamNode, NodeIn, NodeOut, EdgeIn, EdgeOut}
+import scalax.collection.GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
+                                      NodeParam, OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam}
 import scalax.collection.mutable.{ArraySet, BuilderImpl}
 import scalax.collection.config.AdjacencyListArrayConfig
 import scalax.collection.io._
@@ -36,8 +36,8 @@ trait GraphLike[N,
                +This[X, Y[X]<:EdgeLikeIn[X]] <: GraphLike[X,Y,This] with Graph[X,Y]]
 	extends scalax.collection.mutable.GraphLike[N, E, This]
 	with	  scalax.collection.constrained.GraphLike[N, E, This]
-  with    Growable  [GraphParam[N,E]]
-	with	  Shrinkable[GraphParam[N,E]] 
+  with    Growable  [Param[N,E]]
+	with	  Shrinkable[Param[N,E]] 
 	with	  Cloneable [Graph[N,E]] 
   with    Mutable
 { selfGraph: This[N,E] =>
@@ -101,10 +101,10 @@ trait GraphLike[N,
                 nodes     = Set(node),
                 edges     = Set.empty[E[N]])
 
-  override def ++=(elems: TraversableOnce[GraphParam[N,E]]): this.type =
+  override def ++=(elems: TraversableOnce[Param[N,E]]): this.type =
   { elems match {
-      case elems: Iterable[GraphParam[N,E]] => 
-        val p = new GraphParam.Partitions[N,E](elems)
+      case elems: Iterable[Param[N,E]] => 
+        val p = new Param.Partitions[N,E](elems)
         val inFiltered = p.toInParams.toSet.filter(elem => ! (this contains elem)).toSeq 
         var handle = false
         val preCheckResult = preAdd(inFiltered: _*)
@@ -117,7 +117,7 @@ trait GraphLike[N,
             if (! postAdd(this, outerNodes, outerEdges, preCheckResult)) {
               handle = true
               withoutChecks {
-                super.--=(allNodes(outerNodes, outerEdges) map (n => NodeIn(n)))
+                super.--=(allNodes(outerNodes, outerEdges) map (n => OuterNode(n)))
               }
             }
           }
@@ -128,7 +128,7 @@ trait GraphLike[N,
     }
     this
   } 
-  override def --=(elems: TraversableOnce[GraphParam[N,E]]): this.type =
+  override def --=(elems: TraversableOnce[Param[N,E]]): this.type =
   { lazy val p = partition(elems)
     lazy val (outerNodes, outerEdges) = (p.toOuterNodes.toSet, p.toOuterEdges.toSet)
     def innerNodes =

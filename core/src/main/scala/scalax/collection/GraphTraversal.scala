@@ -3,7 +3,7 @@ package scalax.collection
 import language.{higherKinds, postfixOps}
 import collection.mutable.ListBuffer
 
-import GraphPredef.{EdgeLikeIn, GraphParamOut, NodeOut, EdgeOut}
+import GraphPredef.{EdgeLikeIn, OutParam, InnerNodeParam, InnerEdgeParam}
 
 /**
  * Defines traversal-related algorithmic interfaces.
@@ -127,7 +127,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
    * The first element is the start node, the second is an edge with its tail
    * being the start node and its head being the third element etc.   
    */
-  trait Path extends Traversable[GraphParamOut[N,E]]
+  trait Path extends Traversable[OutParam[N,E]]
   {
     override def stringPrefix = "Path"
 
@@ -155,7 +155,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
       private[this] val _node = node
       val nodes = List(_node)
       def edges = Nil
-      def foreach[U](f: GraphParamOut[N,E] => U): Unit = f(_node)
+      def foreach[U](f: OutParam[N,E] => U): Unit = f(_node)
       def startNode = _node
       def endNode = _node
       def isValid = true

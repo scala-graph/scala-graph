@@ -5,7 +5,7 @@ import collection.generic.CanBuildFrom
 import scala.reflect.runtime.universe._
 
 import scalax.collection._
-import scalax.collection.GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn} 
+import scalax.collection.GraphPredef.{EdgeLikeIn, Param, InParam} 
 import scalax.collection.GraphEdge._
 import scalax.collection.generic.GraphCompanion
 import scalax.collection.immutable.AdjacencyListBase
@@ -21,7 +21,7 @@ import scalax.collection.io._
 trait MyExtGraphLike[N,
                      E[X]  <: EdgeLikeIn[X],
                      +This[X, Y[X]<:EdgeLikeIn[X]]
-                           <: MyExtGraphLike[X,Y,This] with Set[GraphParam[X,Y]] with Graph[X,Y]]
+                           <: MyExtGraphLike[X,Y,This] with Set[Param[X,Y]] with Graph[X,Y]]
   extends GraphLike[N,E,This]
 { this: This[N,E] =>
   trait InnerNode extends super.InnerNode {
@@ -154,7 +154,7 @@ package immutable {
       throw new IllegalAccessError("'fromStream' not implemented.")
     implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](
         implicit edgeT: TypeTag[E[N]],
-        config: Config): CanBuildFrom[Coll, GraphParamIn[N,E], MyExtGraph[N,E]] =
+        config: Config): CanBuildFrom[Coll, InParam[N,E], MyExtGraph[N,E]] =
       new GraphCanBuildFrom[N,E]
   }
 }
@@ -237,7 +237,7 @@ package mutable {
       throw new IllegalAccessError("'fromStream' not implemented.")
     implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](
         implicit edgeT: TypeTag[E[N]],
-        config: Config): CanBuildFrom[Coll, GraphParamIn[N,E], MyExtGraph[N,E]] =
+        config: Config): CanBuildFrom[Coll, InParam[N,E], MyExtGraph[N,E]] =
       new GraphCanBuildFrom[N,E]
   }
 }

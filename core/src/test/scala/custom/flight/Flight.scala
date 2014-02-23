@@ -37,7 +37,7 @@ class Flight[N](nodes: Product,
   extends DiEdge[N](nodes)
   with    ExtendedKey[N]
   with    EdgeCopy[Flight]
-  with    EdgeIn[N,Flight] 
+  with    OuterEdge[N,Flight] 
 {
   def keyAttributes = Seq(flightNo)
   override def weight = duration.toInt

@@ -8,7 +8,7 @@ import scala.collection.mutable.{Builder, ListBuffer}
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.runtime.universe._
 
-import scalax.collection.GraphPredef.{EdgeLikeIn, GraphParam, GraphParamIn}
+import scalax.collection.GraphPredef.{EdgeLikeIn, Param, InParam}
 import scalax.collection.generic.GraphCompanion
 import scalax.collection.mutable.ArraySet
 import scalax.collection.config.GraphConfig
@@ -33,7 +33,7 @@ trait GraphConstrainedCompanion[+GC[N,E[X]<:EdgeLikeIn[X]] <:
       config: Config) : GC[N,E]
   override def newBuilder[N, E[X] <: EdgeLikeIn[X]]
      (implicit edgeT: TypeTag[E[N]],
-      config: Config): Builder[GraphParam[N,E], GC[N,E]] =
+      config: Config): Builder[Param[N,E], GC[N,E]] =
     new GraphBuilder[N,E,GC](this)(edgeT, config)
 }
 abstract class GraphConstrainedCompanionAlias
@@ -47,7 +47,7 @@ abstract class GraphConstrainedCompanionAlias
                         config: GraphConfig): Graph[N,E] =
     companion.empty(edgeT, constraintCompanion)
 
-  def apply[N](elems: GraphParamIn[N,E]*)
+  def apply[N](elems: InParam[N,E]*)
               (implicit edgeT: TypeTag[E[N]],
                config: GraphConfig): Graph[N,E] = companion(elems: _*)(edgeT, constraintCompanion)
 
@@ -72,7 +72,7 @@ trait MutableGraphCompanion[+GC[N,E[X]<:EdgeLikeIn[X]] <:
 {
   override def newBuilder[N, E[X] <: EdgeLikeIn[X]]
      (implicit edgeT: TypeTag[E[N]],
-      config: Config): Builder[GraphParam[N,E], GC[N,E] @uncheckedVariance] =
+      config: Config): Builder[Param[N,E], GC[N,E] @uncheckedVariance] =
     new GraphBuilder[N,E,GC](this)(edgeT, config)
 }
 trait ImmutableGraphCompanion[+GC[N,E[X]<:EdgeLikeIn[X]] <:

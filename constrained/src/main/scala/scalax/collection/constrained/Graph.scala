@@ -5,8 +5,8 @@ import scala.collection.{Set, SetLike, GenTraversableOnce}
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.runtime.universe._
 
-import scalax.collection.GraphPredef.{EdgeLikeIn, GraphParam,
-       GraphParamIn, GraphParamOut, seqToGraphParam, NodeIn, NodeOut, EdgeIn, EdgeOut}
+import scalax.collection.GraphPredef.{EdgeLikeIn, Param,
+       InParam, OutParam, seqToGraphParam, OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam}
 import scalax.collection.GraphEdge.{EdgeLike, EdgeCompanionBase}
 import scalax.collection.{GraphLike => SimpleGraphLike, Graph => SimpleGraph}
 import scalax.collection.config.GraphConfig
@@ -32,7 +32,7 @@ import config._
 trait GraphLike[N,
                 E[X]  <: EdgeLikeIn[X],
                 +This[X, Y[X]<:EdgeLikeIn[X]]
-                      <: GraphLike[X,Y,This] with Set[GraphParam[X,Y]] with Graph[X,Y]]
+                      <: GraphLike[X,Y,This] with Set[Param[X,Y]] with Graph[X,Y]]
   extends SimpleGraphLike[N,E,This]
   with    Constrained[N,E]
 { this: This[N,E] =>
@@ -69,14 +69,14 @@ trait GraphLike[N,
   }
 
   import PreCheckFollowUp._
-  override def ++ (elems: GenTraversableOnce[GraphParam[N,E]]): this.type =
+  override def ++ (elems: GenTraversableOnce[Param[N,E]]): this.type =
   { var graph = this
     val it = elems match {
-      case x: Iterable       [GraphParam[N,E]] => x
-      case x: TraversableOnce[GraphParam[N,E]] => x.toIterable
+      case x: Iterable       [Param[N,E]] => x
+      case x: TraversableOnce[Param[N,E]] => x.toIterable
       case _ => throw new IllegalArgumentException("TraversableOnce expected.")
     }
-    val p = new GraphParam.Partitions[N,E](it filter (elm => !(this contains elm)))
+    val p = new Param.Partitions[N,E](it filter (elm => !(this contains elm)))
     val inFiltered = p.toInParams.toSet.toSeq
     val (outerNodes, outerEdges) = (p.toOuterNodes, p.toOuterEdges)
     var handle = false
@@ -94,7 +94,7 @@ trait GraphLike[N,
 
     graph.asInstanceOf[this.type]
   } 
-  override def -- (elems: GenTraversableOnce[GraphParam[N,E]]) =
+  override def -- (elems: GenTraversableOnce[Param[N,E]]) =
   { var graph = this
 
     lazy val p = partition(elems)
@@ -134,7 +134,7 @@ trait GraphLike[N,
  * @author Peter Empen
  */
 trait Graph[N, E[X] <: EdgeLikeIn[X]]
-  extends Set        [GraphParam[N,E]]
+  extends Set        [Param[N,E]]
   with    SimpleGraph[N,E]
   with    GraphLike  [N,E,Graph]
 {
@@ -194,7 +194,7 @@ trait UserConstrainedGraph[N, E[X] <: EdgeLikeIn[X]]
                                     constraint preCreate (nodes, edges)
   override def preAdd(node: N   ) = constraint preAdd node
   override def preAdd(edge: E[N]) = constraint preAdd edge
-  override def preAdd(elems: GraphParamIn[N,E]*) = constraint preAdd (elems: _*)
+  override def preAdd(elems: InParam[N,E]*) = constraint preAdd (elems: _*)
   override def postAdd (newGraph   : Graph[N,E],
                         passedNodes: Iterable[N],
                         passedEdges: Iterable[E[N]],

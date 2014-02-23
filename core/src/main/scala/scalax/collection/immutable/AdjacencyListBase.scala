@@ -24,7 +24,7 @@ import io._
 trait AdjacencyListBase[N,
                         E[X] <: EdgeLikeIn[X],
                        +This[X, Y[X]<:EdgeLikeIn[X]]
-                        <: GraphLike[X,Y,This] with Set[GraphParam[X,Y]] with SimpleGraph[X,Y]]
+                        <: GraphLike[X,Y,This] with Set[Param[X,Y]] with SimpleGraph[X,Y]]
   extends GraphLike[N,E,This]
   with    GraphAux [N,E]
 { this: This[N,E] =>
