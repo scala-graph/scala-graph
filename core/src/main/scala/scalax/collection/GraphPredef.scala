@@ -53,13 +53,13 @@ object GraphPredef {
       def toOuterNodes: Iterable[N]    = nodeParams map (_.value)
       def toOuterEdges: Iterable[E[N]] = edgeParams map {_ match {
         case e: OuterEdge[N,E] => e.edge
-        case e: InnerEdgeParam[N,E,_,E] => e.asEdgeTProjection[N,E].toEdgeIn
+        case e: InnerEdgeParam[N,E,_,E] => e.asEdgeTProjection[N,E].toOuter
       }}
 
       def toInParams: Iterable[InParam[N,E]] = elems map {_ match {
         case in: InParam[N,E] => in
         case n: InnerNodeParam[N]         => OuterNode(n.value)
-        case e: InnerEdgeParam[N,E,_,E] => e.asEdgeTProjection[N,E].toEdgeIn.asInstanceOf[OuterEdge[N,E]]
+        case e: InnerEdgeParam[N,E,_,E] => e.asEdgeTProjection[N,E].toOuter.asInstanceOf[OuterEdge[N,E]]
       }}
     }
   }
@@ -85,7 +85,7 @@ object GraphPredef {
       def iterator = new Abstract.Iterator[E[N]] {
         private[this] val it = edges.iterator
         def hasNext = it.hasNext
-        def next = it.next.toEdgeIn
+        def next = it.next.toOuter
       }
     }
   

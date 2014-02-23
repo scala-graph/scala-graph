@@ -78,7 +78,7 @@ abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
   @inline final override def empty: DefaultGraphImpl[N,E] =
     DefaultGraphImpl.empty(edgeT, config)
   @inline final override def clone: DefaultGraphImpl[N,E] = {
-    DefaultGraphImpl.fromUnchecked(nodes.toNodeInSet, edges.toEdgeInSet)(
+    DefaultGraphImpl.fromUnchecked(nodes.toOuter, edges.toOuter)(
                                    edgeT, config)
   }
   @SerialVersionUID(8081L)

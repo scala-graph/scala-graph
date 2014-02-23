@@ -37,7 +37,7 @@ class Export[N, E[X] <: EdgeLikeIn[X]] (graph:      Graph[N,E],
   }
   def jsonASTEdges: Iterable[JField] = {
     implicit val descriptor = this.descriptor
-    val classEdgesMap = (for (e <- graph.edges) yield e.toEdgeIn) groupBy (_.getClass)
+    val classEdgesMap = (for (e <- graph.edges) yield e.toOuter) groupBy (_.getClass)
     for (classEdges <- classEdgesMap) yield
       descriptor.edgeDescriptor(classEdges._1) match {
         case d: EdgeDescriptorBase[N,E,_] =>

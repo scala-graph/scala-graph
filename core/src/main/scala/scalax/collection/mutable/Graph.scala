@@ -30,7 +30,7 @@ trait BuilderImpl [N,
       case n: OuterNode [N] => nodes.+=:(n.value)
       case n: InnerNodeParam[N] => nodes.+=:(n.value)
       case e: OuterEdge[N,E]      => edges.+=:(e.edge)
-      case e: InnerEdgeParam[N,E,_,E] => edges.+=:(e.asEdgeTProjection[N,E].toEdgeIn)
+      case e: InnerEdgeParam[N,E,_,E] => edges.+=:(e.asEdgeTProjection[N,E].toOuter)
     }
   }
   override def +=(elem: Param[N,E]): this.type = {
@@ -73,7 +73,7 @@ trait GraphLike[N,
   with    Mutable
 { this: This[N,E] =>
 	override def clone: This[N,E] =
-    graphCompanion.from[N,E](nodes.toNodeInSet, edges.toEdgeInSet)
+    graphCompanion.from[N,E](nodes.toOuter, edges.toOuter)
   /**
    * Populates this graph with the nodes and edges read from `nodeStream` and `edgeStream`.
    * 
@@ -152,7 +152,7 @@ trait GraphLike[N,
       case n: OuterNode [N] => this += n.value	
       case n: InnerNodeParam[N] => this += n.value
       case e: OuterEdge[N,E]      => this +=# e.edge
-      case e: InnerEdgeParam[N,E,_,E] => this +=# e.asEdgeTProjection[N,E].toEdgeIn
+      case e: InnerEdgeParam[N,E,_,E] => this +=# e.asEdgeTProjection[N,E].toOuter
     }
   /**
    * If an inner edge equaling to `edge` is present in this graph, it is replaced
@@ -185,14 +185,14 @@ trait GraphLike[N,
       case n: OuterNode [N] => this -= n.value 
       case n: InnerNodeParam[N] => this -= n.value
       case e: OuterEdge[N,E]      => this -=# e.edge
-      case e: InnerEdgeParam[N,E,_,E] => this -=# e.asEdgeTProjection[N,E].toEdgeIn
+      case e: InnerEdgeParam[N,E,_,E] => this -=# e.asEdgeTProjection[N,E].toOuter
   	}
   def -!=(elem: Param[N,E]): this.type =
     elem match {
       case n: OuterNode [N] => this  -= n.value 
       case n: InnerNodeParam[N] => this  -= n.value
       case e: OuterEdge[N,E]      => this -!=# e.edge
-      case e: InnerEdgeParam[N,E,_,E] => this -!=# e.asEdgeTProjection[N,E].toEdgeIn
+      case e: InnerEdgeParam[N,E,_,E] => this -!=# e.asEdgeTProjection[N,E].toOuter
     }
   /**
    * Shrinks this graph to its intersection with `coll`.
@@ -207,7 +207,7 @@ trait GraphLike[N,
       case n: InnerNodeParam[N] => if(! collSet.contains(n.value)) this -= n.value
       case e: OuterEdge[N,E]      => if(! collSet.contains(e)) this -= e
       case e: InnerEdgeParam[N,E,_,E] =>
-        val outer: InParam[N,E] = e.asEdgeTProjection[N,E].toEdgeIn.
+        val outer: InParam[N,E] = e.asEdgeTProjection[N,E].toOuter.
                                        asInstanceOf[OuterEdge[N,E]] // TODO
         if(! collSet.contains(outer)) this -= outer 
     }}

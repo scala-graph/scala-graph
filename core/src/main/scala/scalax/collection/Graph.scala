@@ -117,11 +117,11 @@ trait GraphLike[N,
       (this eq that) ||
       (this.order     == that.order    ) &&
       (this.graphSize == that.graphSize) &&
-      { val thatNodes = that.nodes.toNodeInSet 
+      { val thatNodes = that.nodes.toOuter 
         try this.nodes forall (thisN => thatNodes(thisN.value))
         catch { case _: ClassCastException => false }          } &&
-      { val thatEdges = that.edges.toEdgeInSet 
-        try this.edges forall (thisE => thatEdges(thisE.toEdgeIn))
+      { val thatEdges = that.edges.toOuter 
+        try this.edges forall (thisE => thatEdges(thisE.toOuter))
         catch { case _: ClassCastException => false }          }
     case that: TraversableOnce[_] =>
       val thatSet = that.toSet
@@ -130,7 +130,7 @@ trait GraphLike[N,
         try this.nodes forall (thisN => thatNodes(thisN.value))
         catch { case _: ClassCastException => false }          } &&
       { val thatEdges = thatSet.asInstanceOf[Set[E[N]]]
-        try this.edges forall (thisE => thatEdges(thisE.toEdgeIn))
+        try this.edges forall (thisE => thatEdges(thisE.toOuter))
         catch { case _: ClassCastException => false }          }
     case _ =>
       false
@@ -204,7 +204,7 @@ trait GraphLike[N,
           n.toNodeT[N,E,ThisGraph](selfGraph)(anyNode => newNode(anyNode.value))
         )
       case e: InnerEdgeParam[N,E,_,E]  => edges contains (
-          e.toEdgeT[N,E,ThisGraph](selfGraph)(anyEdge => newEdge(anyEdge.toEdgeIn))
+          e.toEdgeT[N,E,ThisGraph](selfGraph)(anyEdge => newEdge(anyEdge.toOuter))
         ) 
     } 
   }
@@ -298,7 +298,7 @@ trait GraphLike[N,
     case out: OutParam[_,_] => out match {
       case n: InnerNodeParam[N] => this + n.value
       case e: InnerEdgeParam[N,E,_,E]  => this +#
-                                   e.asEdgeT[N,E,ThisGraph](selfGraph).toEdgeIn
+                                   e.asEdgeT[N,E,ThisGraph](selfGraph).toOuter
     } 
   }
   override def ++ (elems: GenTraversableOnce[Param[N,E]]) = bulkOp(elems, true)
@@ -319,8 +319,8 @@ trait GraphLike[N,
   /** Implements the heart of `++` calling the `from` factory method of the companion object.
    *  $REIMPLFACTORY */
   protected def plusPlus(newNodes: Iterable[N], newEdges: Iterable[E[N]]): This[N,E] =
-    graphCompanion.from[N,E](nodes.toNodeInSet ++ newNodes,
-                             edges.toEdgeInSet ++ newEdges).asInstanceOf[This[N,E]]
+    graphCompanion.from[N,E](nodes.toOuter ++ newNodes,
+                             edges.toOuter ++ newEdges).asInstanceOf[This[N,E]]
   /** Implements the heart of `--` calling the `from` factory method of the companion object.
    *  $REIMPLFACTORY */
   protected def minusMinus(delNodes: Iterable[N], delEdges: Iterable[E[N]]): This[N,E] = {
@@ -331,10 +331,10 @@ trait GraphLike[N,
    *  when delNodes and delEdges are to be deleted by `--`.
    */
   protected def minusMinusNodesEdges(delNodes: Iterable[N], delEdges: Iterable[E[N]]) =
-    ( nodes.toNodeInSet -- delNodes,
+    ( nodes.toOuter -- delNodes,
       { val delNodeSet = delNodes.toSet
         val restEdges = 
-          for(e <- edges.toEdgeInSet if e forall (n =>
+          for(e <- edges.toOuter if e forall (n =>
               ! (delNodeSet contains n))) yield e
         restEdges -- delEdges
       }
@@ -386,7 +386,7 @@ trait GraphLike[N,
     } 
     case out: OutParam[_,_] => out match {
       case n: InnerNodeParam[N] => this - n.value
-      case e: InnerEdgeParam[N,E,_,E]  => this -# e.asEdgeT[N,E,ThisGraph](selfGraph).toEdgeIn
+      case e: InnerEdgeParam[N,E,_,E]  => this -# e.asEdgeT[N,E,ThisGraph](selfGraph).toOuter
     } 
   }
   /** Creates a new subgraph consisting of all nodes and edges of this graph except `elem`.
@@ -404,7 +404,7 @@ trait GraphLike[N,
     } 
     case out: OutParam[_,_] => out match {
       case n: InnerNodeParam[N] => this - n.value
-      case e: InnerEdgeParam[N,E,_,E]  => this -!# e.asEdgeT[N,E,ThisGraph](selfGraph).toEdgeIn
+      case e: InnerEdgeParam[N,E,_,E]  => this -!# e.asEdgeT[N,E,ThisGraph](selfGraph).toOuter
     } 
   }
   /** Creates a new subgraph consisting of all nodes and edges of this graph but the elements

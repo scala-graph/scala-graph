@@ -62,8 +62,8 @@ package immutable {
 //    initialize(iniNodes, iniEdges)
 //  
 //    @inline final override def empty = MyExtGraph.empty[N,E]
-//    @inline final override def clone = MyExtGraph.from [N,E](_nodes.toNodeInSet,
-//                                                             _edges.toEdgeInSet)
+//    @inline final override def clone = MyExtGraph.from [N,E](_nodes.toOuter,
+//                                                             _edges.toOuter)
 //    @inline final override def copy(nodes: Iterable[N],
 //                                    edges: Iterable[E[N]])=
 //      MyExtGraph.from[N,E](nodes, edges)
@@ -123,8 +123,8 @@ package immutable {
     initialize(iniNodes, iniEdges)
   
     @inline final override def empty = MyExtGraph.empty[N,E]
-    @inline final override def clone = MyExtGraph.from [N,E](nodes.toNodeInSet,
-                                                             edges.toEdgeInSet)
+    @inline final override def clone = MyExtGraph.from [N,E](nodes.toOuter,
+                                                             edges.toOuter)
     @inline final override def copy(nodes: Iterable[N],
                                     edges: Iterable[E[N]])=
       MyExtGraph.from[N,E](nodes, edges)
@@ -209,8 +209,8 @@ package mutable {
     initialize(iniNodes, iniEdges)
   
     @inline final override def empty = MyExtGraph.empty[N,E]
-    @inline final override def clone = MyExtGraph.from [N,E](nodes.toNodeInSet,
-                                                             edges.toEdgeInSet)
+    @inline final override def clone = MyExtGraph.from [N,E](nodes.toOuter,
+                                                             edges.toOuter)
     final protected class NodeBase(value: N, hints: ArraySet.Hints)
       extends InnerNodeImpl(value, hints)
       with    InnerNode // inner class of  extension trait

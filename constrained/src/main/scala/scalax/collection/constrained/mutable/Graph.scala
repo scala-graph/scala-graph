@@ -221,7 +221,7 @@ abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
 
   @inline final override def empty = DefaultGraphImpl.empty(edgeT, config)
   @inline final override def clone(): this.type = {
-    graphCompanion.from[N,E](nodes.toNodeInSet, edges.toEdgeInSet)(
+    graphCompanion.from[N,E](nodes.toOuter, edges.toOuter)(
                              edgeT, config).asInstanceOf[this.type]
   }
   @SerialVersionUID(8082L)

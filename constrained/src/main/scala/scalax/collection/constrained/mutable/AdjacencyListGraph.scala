@@ -67,12 +67,12 @@ trait AdjacencyListGraph[N,
       var added, handle = false
       if (checkSuspended) added = doAdd 
       else {
-        val preCheckResult = preAdd(edge.toEdgeIn)
+        val preCheckResult = preAdd(edge.toOuter)
         preCheckResult.followUp match { 
           case Complete  => added = doAdd
           case PostCheck => added = doAdd
             if (added)
-              if (! postAdd(selfGraph, Set.empty[N], Set(edge.toEdgeIn), preCheckResult)) {
+              if (! postAdd(selfGraph, Set.empty[N], Set(edge.toOuter), preCheckResult)) {
                 handle = true
                 remove(edge)
               }
@@ -80,7 +80,7 @@ trait AdjacencyListGraph[N,
         }
       }
       if (handle)
-        onAdditionRefused(Set.empty[N], Set(edge.toEdgeIn), AdjacencyListGraph.this)
+        onAdditionRefused(Set.empty[N], Set(edge.toOuter), AdjacencyListGraph.this)
       added && ! handle
     }
     /** generic constrained subtraction */
@@ -95,7 +95,7 @@ trait AdjacencyListGraph[N,
           case Complete  => removed = remove(edge)
           case PostCheck => removed = remove(edge)
             if (removed)
-              if (! postSubtract(selfGraph, Set.empty[N], Set(edge.toEdgeIn), preCheckResult)) {
+              if (! postSubtract(selfGraph, Set.empty[N], Set(edge.toOuter), preCheckResult)) {
                 handle = true
                 selfGraph  += edge
               }

@@ -379,7 +379,9 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     /**
      * Converts this node set to a set of outer nodes.
      */
-    def toNodeInSet: Set[N] = this map (n => n.value)
+    def toOuter: Set[N] = this map (n => n.value)
+    @deprecated("Use toOuter instead", "1.8.0") def toNodeInSet = toOuter
+
     /**
      * Finds the inner node corresponding to `outerNode`.
      *
@@ -469,8 +471,8 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     }
     override def hashCode = edge.##
     override def toString = edge.toString
-    /** Reconstructs the outer edge by means of the `copy`method. */
-    def toEdgeIn: E[N] = {
+    /** Reconstructs the outer edge by means of the `copy` method. */
+    def toOuter: E[N] = {
       val newNs = (edge.arity: @scala.annotation.switch) match {
         case 2 => Tuple2(edge._1.value, edge._2.value)
         case 3 => Tuple3(edge._1.value, edge._2.value, edge._n(2).value)
@@ -480,6 +482,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
       } 
       edge.copy[N](newNs).asInstanceOf[E[N]]
     }
+    @deprecated("Use toOuter instead", "1.8.0") def toEdgeIn = toOuter
   }
   object InnerEdge {
     def unapply(edge: InnerEdge): Option[EdgeT] =
@@ -598,7 +601,9 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     /**
      * Converts this edge set to a set of outer edges.
      */
-    def toEdgeInSet: Set[E[N]] = (this map (_.toEdgeIn))
+    def toOuter: Set[E[N]] = (this map (_.toOuter))
+    @deprecated("Use toOuter instead", "1.8.0") def toEdgeInSet = toOuter
+    
     final def draw(random: Random) = (nodes draw random).edges draw random
     final def findEntry[B](other: B, correspond: (EdgeT, B) => Boolean) = {
       def find(edge: E[N]): EdgeT = correspond match {
@@ -607,7 +612,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
       } 
       other match {
         case e: OuterEdge[N,E]      => find(e.edge)
-        case e: InnerEdgeParam[N,E,_,E] => find(e.asEdgeT[N,E,selfGraph.type](selfGraph).toEdgeIn)
+        case e: InnerEdgeParam[N,E,_,E] => find(e.asEdgeT[N,E,selfGraph.type](selfGraph).toOuter)
         case _                   => null.asInstanceOf[EdgeT]
       }
     }

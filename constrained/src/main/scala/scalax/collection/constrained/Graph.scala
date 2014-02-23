@@ -45,8 +45,8 @@ trait GraphLike[N,
   override protected def plusPlus(newNodes: Iterable[N],
                                   newEdges: Iterable[E[N]]): This[N,E] =
     graphCompanion.
-    fromUnchecked[N,E](nodes.toNodeInSet ++ newNodes,
-                       edges.toEdgeInSet ++ newEdges)(
+    fromUnchecked[N,E](nodes.toOuter ++ newNodes,
+                       edges.toOuter ++ newEdges)(
                        edgeT,
                        config).asInstanceOf[This[N,E]]
   override protected def minusMinus(delNodes: Iterable[N],

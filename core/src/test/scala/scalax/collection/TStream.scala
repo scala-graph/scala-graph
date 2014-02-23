@@ -122,7 +122,7 @@ class TStream[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
           }
     check {val g = factory.fromStream[Int,WLDiEdge](
                                       edgeStreams = Seq(new WLDiEdgeStream(WLDiEdge)))
-           g.edges map (_.toEdgeIn)
+           g.edges map (_.toOuter)
           }
     def check(edges: Set[WLDiEdge[Int]]) {
       edges should have size (weights.size)
@@ -174,7 +174,7 @@ class TStream[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
           }
     check {val g = factory.fromStream[String,MyWEdge](
                            edgeStreams = Seq(new MyWEdgeStream(MyWEdge)))
-           g.edges map (_.toEdgeIn)
+           g.edges map (_.toOuter)
           }
     def check(edges: Set[MyWEdge[String]]) {
       edges should have size (weights.size)

@@ -55,16 +55,16 @@ trait AdjacencyListGraph[N,
   override def + (node: N) = 
     checkedAdd (contained = nodes contains Node(node),
                 preAdd    = preAdd(node),
-                copy      = copy(nodes.toNodeInSet.toBuffer += node,
-                                 edges.toEdgeInSet),
+                copy      = copy(nodes.toOuter.toBuffer += node,
+                                 edges.toOuter),
                 nodes     = Set(node),
                 edges     = Set.empty[E[N]])
 
   override protected def +#(edge: E[N]) =
     checkedAdd (contained = edges contains Edge(edge),
                 preAdd    = preAdd(edge),
-                copy      = copy(nodes.toNodeInSet,
-                                 edges.toEdgeInSet.toBuffer += edge),
+                copy      = copy(nodes.toOuter,
+                                 edges.toOuter.toBuffer += edge),
                 nodes     = Set.empty[N],
                 edges     = Set(edge))
   /** generic constrained subtraction of nodes */
@@ -98,17 +98,17 @@ trait AdjacencyListGraph[N,
   override def - (n: N) = checkedSubtractNode(
     n, true,
     (outeNode: N, innerNode: NodeT) =>
-      copy (nodes.toNodeInSet.toBuffer  -= outeNode,
-            edges.toEdgeInSet.toBuffer --= (innerNode.edges map (_.toEdgeIn))))
+      copy (nodes.toOuter.toBuffer  -= outeNode,
+            edges.toOuter.toBuffer --= (innerNode.edges map (_.toOuter))))
   override def -? (n: N) = checkedSubtractNode(
     n, false,
     (outerNode: N, innerNode: NodeT) => {
-      var newNodes = nodes.toNodeInSet.toBuffer
-      var newEdges = edges.toEdgeInSet.toBuffer
+      var newNodes = nodes.toOuter.toBuffer
+      var newEdges = edges.toOuter.toBuffer
       nodes.subtract(innerNode,
                      false,
                      innerNode => newNodes  -= outerNode,
-                     innerNode => newEdges --= (innerNode.edges map (_.toEdgeIn)))
+                     innerNode => newEdges --= (innerNode.edges map (_.toOuter)))
       copy(newNodes, newEdges)
     }
   )
@@ -141,10 +141,10 @@ trait AdjacencyListGraph[N,
   }
   override protected def -# (e: E[N]) = checkedSubtractEdge(
     e, true, (outerEdge: E[N], innerEdge: EdgeT) =>
-                copy(nodes.toNodeInSet, edges.toEdgeInSet.toBuffer -= outerEdge))
+                copy(nodes.toOuter, edges.toOuter.toBuffer -= outerEdge))
   override protected def -!#(e: E[N]) = checkedSubtractEdge(
     e, false,
     (outerEdge: E[N], innerEdge: EdgeT) =>
-      copy (nodes.toNodeInSet.toBuffer --= innerEdge.privateNodes map (n => n.value),
-            edges.toEdgeInSet.toBuffer -= e))
+      copy (nodes.toOuter.toBuffer --= innerEdge.privateNodes map (n => n.value),
+            edges.toOuter.toBuffer -= e))
 }
