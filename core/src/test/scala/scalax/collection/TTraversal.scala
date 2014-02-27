@@ -4,6 +4,7 @@ import language.{higherKinds, postfixOps}
 import collection.mutable.{ListBuffer, Set, Stack}
 
 import GraphPredef._, GraphEdge._
+import GraphTraversal._
 import GraphTraversal.VisitorReturn._
 import generic.GraphCoreCompanion
 import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
@@ -276,9 +277,8 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     def n(outer: Int) = UnDi_1.node(outer)
 
     var lastCount = 0
-    n(1) pathTo (
-        n(4),
-        nodeVisitor = ExtendedNodeVisitor((node, count, depth, informer) => {
+    n(1).innerNodeTraverser.withKind(DepthFirst) foreach {
+      ExtendedNodeVisitor((node, count, depth, informer) => {
           count should be (lastCount + 1)
           lastCount += 1
 
@@ -294,8 +294,9 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
             case _ => fail
           }
           Continue
-        })
-    )
+        }
+      )
+    }
   }
   def test_shortestPathFunctional {
     import custom.flight._, custom.flight.Helper._, custom.flight.FlightImplicits._
@@ -357,50 +358,20 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
       val expectedSumLayer2ExclGt4 = 9
     }
     { import UnDi_1._
-      var sum = 0
-      def add(visited: g.NodeT) = { sum += visited; Continue }
 
-      sum = 0
-      node(4).traverseNodes() { add(_) }
-      sum should be (expectedSumAll)
+      val bfs_4 = node(4).outerNodeTraverser
+      bfs_4                .sum should be (expectedSumAll)
+      bfs_4.withMaxDepth(1).sum should be (expectedSumLayer1)
+      bfs_4.withMaxDepth(2).sum should be (expectedSumLayer2)
 
-      sum = 0
-      node(4).traverseNodes(maxDepth = 1) { add }
-      sum should be (expectedSumLayer1)
+      val dfs_4 = bfs_4.withKind(DepthFirst)
+      dfs_4.withMaxDepth(1).sum should be (expectedSumLayer1)
+      dfs_4.withMaxDepth(2).sum should be (expectedSumLayer2)
 
-      sum = 0
-      node(4).traverseNodes(maxDepth = 2) { add }
-      sum should be (expectedSumLayer2)
-
-      sum = 0
-      node(4).traverseNodes(breadthFirst = false, maxDepth = 1) { add }
-      sum should be (expectedSumLayer1)
-
-      sum = 0
-      node(4).traverseNodes(breadthFirst = false, maxDepth = 2) { add }
-      sum should be (expectedSumLayer2)
-
-      sum = 0
-      node(4).traverseNodes(nodeFilter = _ <= 4) { add }
-      sum should be (expectedSumAllExclGt4)
-
-      sum = 0
-      node(4).traverseNodes(nodeFilter = _ <= 4, maxDepth = 2) { add }
-      sum should be (expectedSumLayer2ExclGt4)
-      
-      val traversal = g.newTraversal(nodeFilter  = _ <= 4,
-                                     nodeVisitor = add)
-      sum = 0
-      traversal bfs node(4)
-      sum should be (expectedSumAllExclGt4)
-      
-      sum = 0
-      traversal (node(4), maxDepth = 2)
-      sum should be (expectedSumLayer2ExclGt4)
-
-      sum = 0
-      traversal dfs node(4)
-      sum should be (expectedSumAllExclGt4)
+      val sub_4 = bfs_4.withSubgraph(nodes = _ <= 4)
+      sub_4                     .sum should be (expectedSumAllExclGt4)
+      sub_4.withMaxDepth(2)     .sum should be (expectedSumLayer2ExclGt4)
+      sub_4.withKind(DepthFirst).sum should be (expectedSumAllExclGt4)
     }
   }
   def test_DownUp {
@@ -457,7 +428,6 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     }}
   }
   def test_TraversalDirection {
-    import scalax.collection.GraphTraversal._
     // https://groups.google.com/forum/?fromgroups=#!topic/scala-internals/9NMPfU4xdhU
     object DDi_1 extends TGraph[Int, DiEdge](factory(elementsOfDi_1: _*)) {
       val expectedSumSuccessorsOf_4   = 12
@@ -471,95 +441,72 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
       val expectedSumLayer1AnyConnectedsOf_2 = 6
     }
     { import DDi_1._
-      var sum = 0
-      def add(visited: g.NodeT) = { sum += visited; Continue }
+      val predecessors = Parameters(direction = Predecessors)
+      val anyConnected = Parameters(direction = AnyConnected)
+      val maxDepth_1   = Parameters(maxDepth = 1)
 
-      sum = 0
-      node(4).traverseNodes(Successors) { add }
-      sum should be (expectedSumSuccessorsOf_4)
+      node(4).outerNodeTraverser              .sum should be (expectedSumSuccessorsOf_4)
+      node(4).outerNodeTraverser(predecessors).sum should be (expectedSumPredecessorsOf_4)
 
-      sum = 0
-      node(4).traverseNodes(Predecessors) { add }
-      sum should be (expectedSumPredecessorsOf_4)
+      node(2).outerNodeTraverser              .sum should be (expectedSumSuccessorsOf_2)
+      node(2).outerNodeTraverser(predecessors).sum should be (expectedSumPredecessorsOf_2)
+      node(2).outerNodeTraverser(anyConnected).sum should be (expectedSumAnyConnected)
 
-      sum = 0
-      node(2).traverseNodes(Successors) { add }
-      sum should be (expectedSumSuccessorsOf_2)
-
-      sum = 0
-      node(2).traverseNodes(Predecessors) { add }
-      sum should be (expectedSumPredecessorsOf_2)
-      
-      sum = 0
-      node(2).traverseNodes(AnyConnected) { add }
-      sum should be (expectedSumAnyConnected)
-
-      sum = 0
-      node(2).traverseNodes(Successors, maxDepth = 1) { add }
-      sum should be (expectedSumLayer1SuccessorsOf_2)
-
-      sum = 0
-      node(2).traverseNodes(Predecessors, maxDepth = 1) { add }
-      sum should be (expectedSumLayer1PredecessorsOf_2)
-      
-      sum = 0
-      node(2).traverseNodes(AnyConnected, maxDepth = 1) { add }
-      sum should be (expectedSumLayer1AnyConnectedsOf_2)
+      node(2).outerNodeTraverser(maxDepth_1)  .sum should be (expectedSumLayer1SuccessorsOf_2)
+      node(2).outerNodeTraverser(maxDepth_1.withDirection(Predecessors)).
+                                               sum should be (expectedSumLayer1PredecessorsOf_2)
+      node(2).outerNodeTraverser(maxDepth_1.withDirection(AnyConnected)).
+                                               sum should be (expectedSumLayer1AnyConnectedsOf_2)
     }
   }
   def test_NodeOrdering {
-    val root = 0
     val g = factory(0~>4, 0~>2, 0~>3, 0~>1,
                     1~>13, 1~>11, 1~>12,
                     2~>22, 2~>21, 2~>23,
                     3~>32, 3~>33, 3~>31,
                     4~>42, 4~>41, 4~>43)
-    val resultOrder = new Array[Int](g.order)
+    val root = g get 0
     val nodeOrdering = g.NodeOrdering(Ordering.Int.compare(_,_))
-    var i = 0
-    def add(visited: g.NodeT) = {
-      resultOrder(i) = visited.value
-      i += 1
-      Continue
-    }
 
-    (g get root).traverseNodes(ordering = nodeOrdering)(add)
-    resultOrder should be (
+    val orderedTraverser = root.outerNodeTraverser.withOrdering(nodeOrdering)
+    orderedTraverser.toList should be (
         List(0 to 4: _*) ++
         List(11 to 13: _*) ++ List(21 to 23: _*) ++
-        List(31 to 33: _*) ++ List(41 to 43: _*) toArray)
+        List(31 to 33: _*) ++ List(41 to 43: _*))
 
-    i = 0
-    (g get root).traverseNodes(breadthFirst = false,
-                               ordering     = nodeOrdering)(add)
-    resultOrder should be ((0 ::
+    orderedTraverser.withKind(DepthFirst).toList should be ((0 ::
         List(1) ::: List(11 to 13: _*) ::: List(2) ::: List(21 to 23: _*) :::
-        List(3) ::: List(31 to 33: _*) ::: List(4) ::: List(41 to 43: _*)) toArray)
+        List(3) ::: List(31 to 33: _*) ::: List(4) ::: List(41 to 43: _*)))
   }
   def test_EdgeOrdering {
-    val root = 1
-    val outerEdges = Seq[InParam[Int,WDiEdge]](
-        root~>4 % 2, root~>2 % 5, root~>3 % 4,
-           3~>6 % 4,    3~>5 % 5,    3~>7 % 2)
+    val outerEdges = List[InParam[Int,WDiEdge]](
+        1~>4 % 2, 1~>2 % 5, 1~>3 % 4,
+        3~>6 % 4, 3~>5 % 5, 3~>7 % 2)
     val g = factory(outerEdges: _*)
+    val root = g get 1
     def edgeOrdering = g EdgeOrdering(g.Edge.WeightOrdering.reverse.compare)
-    val resultOrder = new Array[Int](g.order)
-    var i = 0
-    def add(visited: g.NodeT) = {
-      resultOrder(i) = visited.value
-      i += 1
-      Continue
-    }
 
-    (g get root).traverseNodes(ordering = edgeOrdering)(add)
-    resultOrder should be (List(1 to 7: _*) toArray)
-    
-    i = 0
-    (g get root).traverseNodes(breadthFirst = false,
-                               ordering     = edgeOrdering)(add)
-    resultOrder should be (List(1,2,3,5,6,7,4) toArray)
+    val orderedTraverser = root.outerNodeTraverser.withOrdering(edgeOrdering)
+    orderedTraverser                     .toList should be (List(1 to 7: _*))
+    orderedTraverser.withKind(DepthFirst).toList should be (List(1,2,3,5,6,7,4))
   }
+  def test_mapTraverser {
+    val t = Di_1.g.nodes.head.outerNodeTraverser
+    t map (_ + 1) should be (t.toList map (_ + 1))
+  }
+  def test_elemTraverser {
+    import Di_1._
+    import g.{InnerNode, InnerEdge}
+    
+    val t = g.nodes.head.innerElemTraverser
+    def nodePred(n: g.NodeT) = n.degree > 1
+    def edgePred(e: g.EdgeT) = e forall nodePred
 
+    val nodes = t collect { case InnerNode(n) if nodePred(n) => n } 
+    val edges = t collect { case InnerEdge(e) if edgePred(e) => e }
+    nodes.toSet should be (g.nodes filter nodePred)
+    edges.toSet should be (g.edges filter edgePred)
+  }
   def test_ShortestPathExistsIfPathExists {
     import org.scalacheck._
     import Arbitrary.arbitrary

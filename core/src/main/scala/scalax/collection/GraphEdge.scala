@@ -13,6 +13,7 @@ import edge.LBase.LEdge
  * {{{
  * import scalax.collection.GraphPredef._, scalax.collection.GraphEdge,_
  * }}}
+ * @define SHORTCUT Allows to replace the edge object with it's shortcut like
  * @author Peter Empen
  */
 object GraphEdge {
@@ -23,11 +24,10 @@ object GraphEdge {
    * are immutable.
    * 
    * @tparam N the user type of the nodes (ends) of this edge.
-   * @author Peter Empen
    * @define CalledByValidate This function is called on every edge-instantiation
    *         by `validate` that throws EdgeException if this method returns `false`.
-   * @define SHORTCUT Allows to replace the edge object with it's shortcut like
    * @define ISAT In case this edge is undirected this method maps to `isAt`
+   * @author Peter Empen
    */
   sealed trait EdgeLike[+N] extends Iterable[N] with Eq with Serializable
   {

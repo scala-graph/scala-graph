@@ -16,7 +16,7 @@ import immutable.SortedArraySet
  * Element removal could be optimized by another implementation.  
  * 
  * @param hints Optimization hints controlling the growth of the underlying
- *        [[scala.collection.mutable.ArrayBuffer]].
+ *        [[scala.collection.mutable.ArrayBuffer!]].
  * @define OPT Optimized by use of unchecked insertions.
  * @author Peter Empen 
  */

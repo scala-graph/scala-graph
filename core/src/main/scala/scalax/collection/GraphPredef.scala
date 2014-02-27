@@ -92,13 +92,16 @@ object GraphPredef {
   implicit def edgeSetToSeq[N, E[X]<:EdgeLikeIn[X]](edges: Graph[N,E]#EdgeSetT)
       : Seq[OutParam[N,E]] = new SeqFacade(edges)
 
-  /** @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
-   *  @tparam EI  the kind of the edges (links) this graph is passed to by the user.
+  /** @tparam N  the type of the nodes (vertices) this graph is passed to by the user.
+   *  @tparam E  the kind of the edges (links) this graph is passed to by the user.
    */
-  sealed trait InParam [NI, +EI[X<:NI] <: EdgeLike[X]] extends Param[NI,EI] {
+  sealed trait InParam[N, +E[X<:N] <: EdgeLike[X]] extends Param[N,E] {
     def isIn  = true
     def isOut = false
   }
+  /** Same as `InParam`. */
+  type OuterElem[N, +E[X<:N] <: EdgeLike[X]] = InParam[N,E]
+
   sealed trait OutParam[NO, +EO[X<:NO] <: EdgeLike[X]] extends Param[NO,EO] {
     def isIn  = false
     def isOut = true

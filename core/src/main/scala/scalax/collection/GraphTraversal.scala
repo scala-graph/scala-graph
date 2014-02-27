@@ -3,7 +3,7 @@ package scalax.collection
 import language.{higherKinds, postfixOps}
 import collection.mutable.ListBuffer
 
-import GraphPredef.{EdgeLikeIn, OutParam, InnerNodeParam, InnerEdgeParam}
+import GraphPredef.{EdgeLikeIn, OuterElem, OuterEdge, OutParam, InnerNodeParam, InnerEdgeParam}
 
 /**
  * Defines traversal-related algorithmic interfaces.
@@ -62,15 +62,26 @@ import GraphPredef.{EdgeLikeIn, OutParam, InnerNodeParam, InnerEdgeParam}
  *         `EdgeOrdering` it is guaranteed that the smaller an edge's ranking the sooner
  *         its relevant end(s) will be processed. 
  * @define RESULT the node found if any.
- * @define ROOT the node to start the traversal from.
  * @define PRED The traversal stops at the first node except for `root` for which
  *         this predicate holds true and returns it.
  *         The default value `noNode` leads to a full traversal.
- *
+ *         
+ * @define EXTENDSTYPE which extends `scala.collection.Traversable` with elements of type
+ * @define SETROOT and sets its `root` to this node
+ * @define TOSTART To start a traversal call any appropriate method inherited from `Traversable`
+ *         on this instance.
+ * @define ROOT The node where subsequent graph traversals start.
+ * @define PARAMETERS The properties controlling subsequent traversals.
+ * @define SUBGRAPHNODES Restricts subsequent graph traversals to visit only nodes holding this predicate.      
+ * @define SUBGRAPHEDGES Restricts subsequent graph traversals to walk only along edges that hold this predicate.
+ * @define DFSOF Controls `DepthFirst` graph traversals of
+ * @define DOWNUPBOOLEAN where the `Boolean` parameter is `true` if the traversal takes place
+ *         in downward and `false` if it takes place in upward direction.
  * @author Peter Empen
  */
-trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
-{
+trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
+  selfGraph =>
+
   import GraphTraversal.VisitorReturn._
   import GraphTraversal._
 
@@ -540,8 +551,8 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
                   ordering   : ElemOrdering             = noOrdering): Option[Cycle]
     /** Same as `findCycle(...)` with default arguments. */
     @inline final def findCycle: Option[Cycle] = findCycle()
-    /**
-     * Traverses this graph starting at this (root) node for side-effects allowing
+
+    /** Traverses this graph starting at this (root) node for side-effects allowing
      * 
      * a) to filter nodes and/or edges,
      * b) to carry out any side effect at visited nodes and/or edges and
@@ -556,6 +567,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * @param nodeVisitor $NODEVISITOR
      * @param edgeVisitor $EDGEVISITOR
      */
+    @deprecated("use innerElemTraverser or outerElemTraverser instead.", "1.8.0")
     def traverse (direction  : Direction          = Successors,
                   nodeFilter : (NodeT) => Boolean = anyNode,
                   edgeFilter : (EdgeT) => Boolean = anyEdge,
@@ -574,7 +586,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * }
      * }}} 
      */
-    @inline final
+    @deprecated("use innerNodeTraverser or outerNodeTraverser instead.", "1.8.0") @inline final
     def traverseNodes(direction  : Direction          = Successors,
                       nodeFilter : (NodeT) => Boolean = anyNode,
                       edgeFilter : (EdgeT) => Boolean = anyEdge,
@@ -632,7 +644,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
      * }
      * }}} 
      */
-    @inline final
+    @deprecated("use innerEdgeTraverser or outerEdgeTraverser instead.", "1.8.0") @inline final
     def traverseEdges(direction  : Direction          = Successors,
                       nodeFilter : (NodeT) => Boolean = anyNode,
                       edgeFilter : (EdgeT) => Boolean = anyEdge,
@@ -641,8 +653,359 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
                       ordering   : ElemOrdering       = noOrdering)
                      (edgeVisitor: (EdgeT) => Unit       ) =
       traverse(direction, nodeFilter, edgeFilter, breadthFirst, maxDepth, ordering)(
-               edgeVisitor = edgeVisitor)   
+               edgeVisitor = edgeVisitor)
+ 
+    /** Instantiates an `InnerNodeTraverser` $EXTENDSTYPE `NodeT` $SETROOT. $TOSTART
+     *  @param parameters $PARAMETERS
+     */
+    @inline final def innerNodeTraverser(implicit parameters: Parameters = Parameters()) =
+      InnerNodeTraverser(this, parameters)
+
+    /** Instantiates an `OuterNodeTraverser` $EXTENDSTYPE `N` $SETROOT. $TOSTART
+     *  @param parameters $PARAMETERS   
+     */
+    @inline final def outerNodeTraverser(implicit parameters: Parameters = Parameters()) =
+      OuterNodeTraverser(this, parameters)
+
+    /** Instantiates an `InnerEdgeTraverser` $EXTENDSTYPE `EdgeT` $SETROOT. $TOSTART
+     *  @param parameters $PARAMETERS
+     */
+    @inline final def innerEdgeTraverser(implicit parameters: Parameters = Parameters()) =
+      InnerEdgeTraverser(this, parameters)
+
+    /** Instantiates an `OuterEdgeTraverser` $EXTENDSTYPE `E[N]` $SETROOT. $TOSTART
+     *  @param parameters $PARAMETERS   
+     */
+    @inline final def outerEdgeTraverser(implicit parameters: Parameters = Parameters()) =
+      OuterEdgeTraverser(this, parameters)
+
+    /** Instantiates an `InnerElemTraverser` $EXTENDSTYPE `InnerElem` $SETROOT. $TOSTART
+     *  @param parameters $PARAMETERS
+     */
+    @inline final def innerElemTraverser(implicit parameters: Parameters = Parameters()) =
+      InnerElemTraverser(this, parameters)
+
+    /** Instantiates an `OuterElemTraverser` $EXTENDSTYPE `OuterElem` $SETROOT. $TOSTART
+     *  @param parameters $PARAMETERS   
+     */
+    @inline final def outerElemTraverser(implicit parameters: Parameters = Parameters()) =
+      OuterElemTraverser(this, parameters)
+      
+    /** Instantiates an `InnerNodeDownUpTraverser` $EXTENDSTYPE `(Boolean, NodeT)` $SETROOT.
+     *  $TOSTART
+     *  @param parameters $PARAMETERS   
+     */
+    @inline final def innerNodeDownUpTraverser(implicit parameters: Parameters = Parameters()) =
+      InnerNodeDownUpTraverser(this, parameters)
+
+    /** Instantiates an `OuterNodeDownUpTraverser` $EXTENDSTYPE `(Boolean, N)` $SETROOT.
+     *  $TOSTART
+     *  @param parameters $PARAMETERS   
+     */
+    @inline final def outerNodeDownUpTraverser(implicit parameters: Parameters = Parameters()) =
+      OuterNodeDownUpTraverser(this, parameters)
   }
+  
+  /** @define UPDATED Creates a new `Traverser` based on this except for an updated
+   */
+  protected trait Traverser[A, This <: Traverser[A,This]] extends Traversable[A] {
+    this: This =>
+
+    def root: NodeT
+    def parameters: Parameters
+    def subgraphNodes: (NodeT) => Boolean
+    def subgraphEdges: (EdgeT) => Boolean
+    def ordering: ElemOrdering
+      
+    protected def newTraverser:
+        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering) => This
+
+    @inline final protected def chose[U]
+        (f: NodeT => U, legacy: NodeT => VisitorReturn) = f match {
+      case e: ExtendedNodeVisitor => e
+      case _ => legacy
+    }
+
+    protected final def foreach[U](
+        nodeVisitor: NodeT => VisitorReturn,
+        edgeVisitor: EdgeT => Unit): Unit =
+      root.traverse(
+        parameters.direction, subgraphNodes, subgraphEdges,
+        parameters.kind.isBsf, parameters.maxDepth, ordering)(nodeVisitor, edgeVisitor)
+
+    /** $UPDATED `root`. */
+    final def withRoot(root: NodeT): This =
+      if (this.root eq root) this
+      else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
+    
+    /** $UPDATED `parameters`. */
+    final def withParameters(parameters: Parameters): This =
+      if (this.parameters == parameters) this
+      else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
+    
+    /** $UPDATED `subgraphNodes` and/or `subgraphEdges`. */
+    final def withSubgraph(nodes: (NodeT) => Boolean = anyNode,
+                           edges: (EdgeT) => Boolean = anyEdge): This =
+      if ((this.subgraphNodes eq nodes) &&
+          (this.subgraphEdges eq edges)) this
+      else newTraverser(root, parameters, nodes, edges, ordering)
+      
+    /** $UPDATED `ordering`. */
+    final def withOrdering(ordering: ElemOrdering): This =
+      if (this.ordering eq ordering) this
+      else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
+
+    /** $UPDATED `kind`. */
+    final def withKind(kind: Kind): This =
+      if (parameters.kind eq kind) this
+      else withParameters(parameters.withKind(kind))
+
+    /** $UPDATED `direction`. */
+    final def withDirection(direction: Direction): This =
+      if (parameters.direction == direction) this
+      else withParameters(parameters.withDirection(direction))
+
+    /** $UPDATED `maxDepth`. */
+    final def withMaxDepth(maxDepth: Int): This =
+      if (parameters.maxDepth == maxDepth) this
+      else withParameters(parameters.withMaxDepth(maxDepth))
+
+    /** Starts a traversal and creates a new graph populated with the elements visited.
+     */
+    def toGraph: Graph[N, E] = selfGraph match {
+      case g: Graph[N, E] =>
+        val b = Graph.newBuilder(g.edgeT, Graph.defaultConfig)
+        val edgeTraverser = this match {
+          case t: InnerEdgeTraverser => t
+          case t: Traverser[A, This] => InnerEdgeTraverser(root, parameters,
+            subgraphNodes, subgraphEdges, ordering)
+        }
+        edgeTraverser foreach { e: EdgeT => b += e }
+        b.result
+    }
+  }
+
+  /** Controls graph traversals of inner nodes based on `scala.collection.Traversable[NodeT]`.
+   *  $TOSTART.
+   *    
+   * @param root $ROOT
+   * @param parameters $PARAMETERS
+   * @param subgraphNodes $SUBGRAPHNODES      
+   * @param subgraphEdges $SUBGRAPHEDGES
+   * @param ordering $ORD      
+   */
+  case class InnerNodeTraverser(
+      override val root         : NodeT,
+      override val parameters   : Parameters         = Parameters(),
+      override val subgraphNodes: (NodeT) => Boolean = anyNode,
+      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      override val ordering     : ElemOrdering       = noOrdering)
+      extends Traverser[NodeT,InnerNodeTraverser] {
+    
+    final protected def newTraverser:
+        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
+        => InnerNodeTraverser = copy _
+   
+    final def foreach[U](f: NodeT => U): Unit = {
+      @inline def legacy(n: NodeT): VisitorReturn = { f(n); Continue } 
+      foreach(chose(f, legacy), noEdgeAction)
+    }
+  }
+
+  /** Controls graph traversals of outer nodes based on `scala.collection.Traversable[N]`.
+   *  $TOSTART.
+   *    
+   * @param root $ROOT
+   * @param parameters $PARAMETERS
+   * @param subgraphNodes $SUBGRAPHNODES      
+   * @param subgraphEdges $SUBGRAPHEDGES
+   * @param ordering $ORD      
+   */
+  case class OuterNodeTraverser(
+      override val root         : NodeT,
+      override val parameters   : Parameters         = Parameters(),
+      override val subgraphNodes: (NodeT) => Boolean = anyNode,
+      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      override val ordering     : ElemOrdering       = noOrdering)
+      extends Traverser[N,OuterNodeTraverser] {
+    
+    final protected def newTraverser:
+        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
+        => OuterNodeTraverser = copy _
+
+    final def foreach[U](f: N => U): Unit = {
+      @inline def legacy(n: NodeT): VisitorReturn = { f(n.value); Continue } 
+      foreach(legacy, noEdgeAction)
+    }
+  }
+
+  /** Controls graph traversals of inner edges based on `scala.collection.Traversable[EdgeT]`.
+   *  $TOSTART.
+   *    
+   * @param root $ROOT
+   * @param parameters $PARAMETERS
+   * @param subgraphNodes $SUBGRAPHNODES      
+   * @param subgraphEdges $SUBGRAPHEDGES
+   * @param ordering $ORD      
+   */
+  case class InnerEdgeTraverser(
+      override val root         : NodeT,
+      override val parameters   : Parameters         = Parameters(),
+      override val subgraphNodes: (NodeT) => Boolean = anyNode,
+      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      override val ordering     : ElemOrdering       = noOrdering)
+      extends Traverser[EdgeT,InnerEdgeTraverser] {
+    
+    final protected def newTraverser:
+        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
+        => InnerEdgeTraverser = copy _
+   
+    def foreach[U](f: EdgeT => U): Unit = foreach(noNodeAction, (e: EdgeT) => f(e))
+  }
+
+  /** Controls graph traversals of outer edges based on `scala.collection.Traversable[E[N]]`.
+   *  $TOSTART.
+   *    
+   * @param root $ROOT
+   * @param parameters $PARAMETERS
+   * @param subgraphNodes $SUBGRAPHNODES      
+   * @param subgraphEdges $SUBGRAPHEDGES
+   * @param ordering $ORD      
+   */
+  case class OuterEdgeTraverser(
+      override val root         : NodeT,
+      override val parameters   : Parameters         = Parameters(),
+      override val subgraphNodes: (NodeT) => Boolean = anyNode,
+      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      override val ordering     : ElemOrdering       = noOrdering)
+      extends Traverser[E[N],OuterEdgeTraverser] {
+    
+    final protected def newTraverser:
+        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
+        => OuterEdgeTraverser = copy _
+
+    final def foreach[U](f: E[N] => U): Unit = foreach(noNodeAction, (e: EdgeT) => f(e.toOuter))
+  }
+
+  /** Controls graph traversals of inner nodes and edges based on `scala.collection.Traversable[InnerElem]`.
+   *  $TOSTART.
+   *    
+   * @param root $ROOT
+   * @param parameters $PARAMETERS
+   * @param subgraphNodes $SUBGRAPHNODES      
+   * @param subgraphEdges $SUBGRAPHEDGES
+   * @param ordering $ORD      
+   */
+  case class InnerElemTraverser(
+      override val root         : NodeT,
+      override val parameters   : Parameters         = Parameters(),
+      override val subgraphNodes: (NodeT) => Boolean = anyNode,
+      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      override val ordering     : ElemOrdering       = noOrdering)
+      extends Traverser[InnerElem,InnerElemTraverser] {
+    
+    final protected def newTraverser:
+        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
+        => InnerElemTraverser = copy _
+   
+    final def foreach[U](f: InnerElem => U): Unit = {
+      @inline def legacy(n: NodeT): VisitorReturn = { f(n); Continue } 
+      foreach(chose(f, legacy), (e: EdgeT) => f(e))
+    }
+  }
+
+  /** Controls graph traversals of outer nodes and edges based on `scala.collection.Traversable[OuterElem]`.
+   *  $TOSTART.
+   *    
+   * @param root $ROOT
+   * @param parameters $PARAMETERS
+   * @param subgraphNodes $SUBGRAPHNODES      
+   * @param subgraphEdges $SUBGRAPHEDGES
+   * @param ordering $ORD      
+   */
+  case class OuterElemTraverser(
+      override val root         : NodeT,
+      override val parameters   : Parameters         = Parameters(),
+      override val subgraphNodes: (NodeT) => Boolean = anyNode,
+      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      override val ordering     : ElemOrdering       = noOrdering)
+      extends Traverser[OuterElem[N,E],OuterElemTraverser] {
+    
+    final protected def newTraverser:
+        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
+        => OuterElemTraverser = copy _
+   
+    final def foreach[U](f: OuterElem[N,E] => U): Unit = {
+      @inline def legacy(n: NodeT): VisitorReturn = { f(n.value); Continue } 
+      foreach(legacy, (e: EdgeT) => f(e.toOuter.asInstanceOf[OuterEdge[N,E]]))
+    }
+  }
+
+  protected trait DownUpTraverser[A, This <: Traverser[_,This]] {
+    this: This =>
+
+    final protected def downUpForeach[U](down: NodeT => VisitorReturn, up  : NodeT => Unit): Unit =
+      newTraversal( parameters.direction, subgraphNodes, subgraphEdges,
+                    down, noEdgeAction, ordering).
+      depthFirstSearch(root, maxDepth = parameters.maxDepth, nodeUpVisitor = up)
+  }
+
+  /** $DFSOF inner nodes based on `scala.collection.Traversable[(Boolean, NodeT)]` $DOWNUPBOOLEAN
+   *  $TOSTART.
+   *    
+   * @param root $ROOT
+   * @param parameters $PARAMETERS A kind different from DepthFirst will be ignored.
+   * @param subgraphNodes $SUBGRAPHNODES      
+   * @param subgraphEdges $SUBGRAPHEDGES
+   * @param ordering $ORD      
+   */
+  case class InnerNodeDownUpTraverser(
+      override val root         : NodeT,
+      override val parameters   : Parameters         = Parameters(),
+      override val subgraphNodes: (NodeT) => Boolean = anyNode,
+      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      override val ordering     : ElemOrdering       = noOrdering)
+      extends Traverser[(Boolean, NodeT),InnerNodeDownUpTraverser]
+         with DownUpTraverser[NodeT,InnerNodeDownUpTraverser] {
+    
+    final protected def newTraverser:
+        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
+        => InnerNodeDownUpTraverser = copy _
+   
+    final def foreach[U](f: ((Boolean, NodeT)) => U): Unit = downUpForeach(
+        (n: NodeT) => { f(true,  n); Continue },
+        (n: NodeT) => f(false, n)
+      )
+  }
+
+  /** $DFSOF outer nodes based on `scala.collection.Traversable[(Boolean, N)]` $DOWNUPBOOLEAN
+   *  $TOSTART.
+   *    
+   * @param root $ROOT
+   * @param parameters $PARAMETERS A kind different from DepthFirst will be ignored.
+   * @param subgraphNodes $SUBGRAPHNODES      
+   * @param subgraphEdges $SUBGRAPHEDGES
+   * @param ordering $ORD      
+   */
+  case class OuterNodeDownUpTraverser(
+      override val root         : NodeT,
+      override val parameters   : Parameters         = Parameters(),
+      override val subgraphNodes: (NodeT) => Boolean = anyNode,
+      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      override val ordering     : ElemOrdering       = noOrdering)
+      extends Traverser[(Boolean, N),OuterNodeDownUpTraverser]
+         with DownUpTraverser[N,OuterNodeDownUpTraverser] {
+    
+    final protected def newTraverser:
+        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
+        => OuterNodeDownUpTraverser = copy _
+   
+    final def foreach[U](f: ((Boolean, N)) => U): Unit = downUpForeach(
+        (n: NodeT) => { f(true,  n.value); Continue },
+        (n: NodeT) =>   f(false, n.value)
+      )
+  }
+
   /** Abstract class for functional traversals.
    * 
    * In addition to the `traverse` methods defined for nodes, this concept supports
@@ -661,7 +1024,6 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
    *         during the current traversal
    * @define FILTREV whether to sort in reverse order. Only applicable when `ordering` is
    *         different from `noOrdering`.
-
    */
   abstract class Traversal(direction  : Direction,
                            nodeFilter : (NodeT) => Boolean,
@@ -775,6 +1137,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
    * @param edgeVisitor $EDGEVISITOR
    * @param ordering   $ORD
    */
+  @deprecated("use one of the *Traverser classes instead.", "1.8.0") 
   def newTraversal(direction  : Direction                = Successors,
                    nodeFilter : (NodeT) => Boolean       = anyNode,
                    edgeFilter : (EdgeT) => Boolean       = anyEdge,
@@ -782,6 +1145,17 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E]
                    edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
                    ordering   : ElemOrdering             = noOrdering): Traversal
 }
+
+/**
+ * @define DIRECTION Determines which connected nodes the traversal has to follow.
+ *         The default value is `Successors`.
+ * @define MAXDEPTH A positive value limits the number of layers for BFS respectively
+ *         the number of consecutive child visits before siblings are visited for DFS.
+ *         `0` - the default - indicates that the traversal should have
+ *         an unlimited depth meaning that it will be continued either until
+ *         it's canceled by `nodeVisitor` or until all nodes have been visited.
+ * @define UPDATED Creates a new `Traverser` based on this except for an updated
+ */
 object GraphTraversal {
   object VisitorReturn extends Enumeration {
     type VisitorReturn = Value
@@ -795,5 +1169,46 @@ object GraphTraversal {
   trait NodeInformer
   @transient object NodeInformer {
     def empty = new NodeInformer {}
+  }
+
+  /** Kind of traversal. */
+  trait Kind {
+    def isBsf = this eq BreathFirst
+  }
+  case object BreathFirst extends Kind
+  case object DepthFirst extends Kind
+
+  /** @param direction  $DIRECTION
+    * @param maxDepth   $MAXDEPTH
+    * @define UPDATED Creates a new `Parameters` based on this except for an updated 
+    */
+  case class Parameters(kind     : Kind = BreathFirst,
+                        direction: Direction = Successors,
+                        maxDepth : Int = 0) {
+    
+    /** $UPDATED `kind`. */
+    def withKind(kind: Kind): Parameters =
+      if (this.kind eq kind) this else copy(kind = kind)
+
+    /** $UPDATED `direction`. */
+    def withDirection(direction: Direction): Parameters =
+      if (this.direction == direction) this else copy(direction = direction)
+
+    /** $UPDATED `maxDepth`. */
+    def withMaxDepth(maxDepth: Int): Parameters =
+      if (this.maxDepth == maxDepth) this else copy(maxDepth = maxDepth)
+  }
+  object Parameters {
+    
+    /** Default `Parameters`. */
+    def apply = new Parameters()
+    
+    /** Creates `Parameters` of kind `BreathFirst` with specific `direction` and `maxDepth`. */
+    def Bfs(direction: Direction = Successors, maxDepth : Int = 0) =
+      Parameters(direction = direction, maxDepth = maxDepth)
+    
+    /** Creates `Parameters` of kind `DepthFirst` with specific `direction` and `maxDepth`. */
+    def Dfs(direction: Direction = Successors, maxDepth : Int = 0) =
+      Parameters(kind = DepthFirst, direction = direction, maxDepth = maxDepth)
   }
 }

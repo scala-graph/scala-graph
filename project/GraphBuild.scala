@@ -67,15 +67,16 @@ object GraphBuild extends Build {
     unmanagedSourceDirectories in Compile <<= (scalaSource in Compile)(Seq(_)),
     unmanagedSourceDirectories in Test    <<= (scalaSource in Test)   (Seq(_)),
     scalacOptions in (Compile, doc) += "-diagrams",
+	autoAPIMappings := true,
 //    scalacOptions in doc ++= Seq(
 //      "-doc-root-content", "src/main/scala/rootdoc.txt"
 //    ),
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+	  "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "junit" % "junit" % "4.8.2" % "test",
-      "org.scalatest" %% "scalatest" % "1.9.2" % "test",
-      "org.scalacheck" %% "scalacheck" % "1.10.1" % "test"
+      "org.scalatest"  %% "scalatest"  % "1.9.2"  % "test",
+	  "org.scalacheck" %% "scalacheck" % "1.10.1" % "test"
     )
   ) ++ GraphSonatype.settings ++ (
     if (Version.compilerIsRC) Seq(

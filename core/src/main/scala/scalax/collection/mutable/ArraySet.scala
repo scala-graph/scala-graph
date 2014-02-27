@@ -28,7 +28,7 @@ trait ArraySet[A]
   /** Compacts the current representation depending on [[ArraySet.Hints.compactUpToUsed]]. */
   def compact: Unit
   def find(elem: A): Option[A]
-  /** The valid hints or `None` for an underlining [[ArraySet.empty]]. */
+  /** The hints valid for this [[ArraySet!]]. */
   def hints: ArraySet.Hints
   /** For `isArray == true`, the current capacity of the internal array else 0. */
   def capacity: Int

@@ -5,7 +5,7 @@ import scalax.collection.mutable.EqHashMap
 /** Wrapper class mimicking a `scala.collection.immutable.Set`
  *  without copying the contents of the underlying `EqHashMap`.
  *  
- *  #define ON Creates a new `Set` as an O(N) operation
+ *  @define ON Creates a new `Set` as an O(N) operation
  */
 final class EqSet[K <: AnyRef](map: EqHashMap[K,_]) extends Set[K] {
   
