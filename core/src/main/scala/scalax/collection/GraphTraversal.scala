@@ -1,6 +1,6 @@
 package scalax.collection
 
-import language.{higherKinds, postfixOps}
+import language.{higherKinds, implicitConversions, postfixOps}
 import collection.mutable.ListBuffer
 
 import GraphPredef.{EdgeLikeIn, OuterElem, OuterEdge, OutParam, InnerNodeParam, InnerEdgeParam}
@@ -80,7 +80,7 @@ import GraphPredef.{EdgeLikeIn, OuterElem, OuterEdge, OutParam, InnerNodeParam, 
  * @author Peter Empen
  */
 trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
-  selfGraph =>
+  thisGraph =>
 
   import GraphTraversal.VisitorReturn._
   import GraphTraversal._
@@ -268,289 +268,9 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       } 
   }  
 
-  type NodeT <: InnerNode
-  trait InnerNode extends super.InnerNode
+  type NodeT <: TraverserInnerNode
+  trait TraverserInnerNode extends super.InnerNode
   { this: NodeT =>
-    /**
-     * Finds a successor of this node for which the predicate `pred` holds $INTOACC.
-     * $VISITORS
-     *
-     * This node itself does not count as a match. This is also true if it has a hook.
-     * If several successors exist the algorithm selects the first of them it founds.
-     * 
-     * @param pred The predicate which must hold true for the resulting node.
-     * @param nodeFilter $NODEFILTER
-     * @param edgeFilter $EDGEFILTER
-     * @param nodeVisitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
-     * @param edgeVisitor $EDGEVISITOR
-     * @param ordering   $ORD
-     * @return A node with the predicate `pred` or None if either
-     *         a) there is no node with `pred` or
-     *         b) there exists no path to such a node at all
-     *         c) there exists a path to such a node but due to
-     *            user filtering or canceling the traversal this path had to be disregarded.
-     */
-    def findSuccessor(pred       : (NodeT) => Boolean,
-                      nodeFilter : (NodeT) => Boolean       = anyNode,
-                      edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                      nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                      edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-                      ordering   : ElemOrdering             = noOrdering): Option[NodeT]
-    /**
-     * Checks whether `potentialSuccessor` is a successor of this node $INTOACC.
-     * $VISITORS
-     * Same as `isPredecessorOf`. 
-     *
-     * @param potentialSuccessor The node which is potentially a successor of this node. 
-     * @param nodeFilter $NODEFILTER
-     * @param edgeFilter $EDGEFILTER
-     * @param nodeVisitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
-     * @param edgeVisitor $EDGEVISITOR
-     * @param ordering   $ORD
-     * @return `true` if a path exists from this node to `potentialSuccessor` and
-     *         it had not to be excluded due to user filtering or canceling the traversal.
-     */
-    @inline final
-    def hasSuccessor(potentialSuccessor: NodeT,
-                     nodeFilter : (NodeT) => Boolean       = anyNode,
-                     edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                     nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                     edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-                     ordering   : ElemOrdering             = noOrdering): Boolean =
-      findSuccessor(_ eq potentialSuccessor,
-                    nodeFilter, edgeFilter, nodeVisitor, edgeVisitor, ordering).isDefined
-    /** Same as `hasSuccessor`. */
-    @inline final
-    def isPredecessorOf(potentialSuccessor: NodeT,
-                        nodeFilter : (NodeT) => Boolean       = anyNode,
-                        edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                        nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                        edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-                        ordering   : ElemOrdering             = noOrdering): Boolean =
-      hasSuccessor(potentialSuccessor,
-                   nodeFilter, edgeFilter, nodeVisitor, edgeVisitor, ordering)
-    /**
-     * Finds a predecessor of this node for which the predicate `pred` holds $INTOACC.
-     * $VISITORS
-     *
-     * This node itself does not count as a match. This is also true if it has a hook.
-     * If several predecessors exist the algorithm selects the first of them found.
-     * 
-     * @param pred The predicate which must hold true for the resulting node.
-     * @param nodeFilter $NODEFILTER
-     * @param edgeFilter $EDGEFILTER
-     * @param nodeVisitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
-     * @param edgeVisitor $EDGEVISITOR
-     * @param ordering   $ORD
-     * @return A node with the predicate `pred` or None if either
-     *         a) there is no node with `pred` or
-     *         b) there exists no path from such a node to this node at all or
-     *         c) there exists a path from such a node to this node but due to
-     *            user filtering or canceling the traversal this path had to be disregarded.
-     */
-    def findPredecessor(pred       : (NodeT) => Boolean,
-                        nodeFilter : (NodeT) => Boolean       = anyNode,
-                        edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                        nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                        edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-                        ordering   : ElemOrdering             = noOrdering): Option[NodeT]
-    /**
-     * Checks whether `potentialPredecessor` is a predecessor of this node $INTOACC.
-     * $VISITORS
-     * Same as `isSuccessorOf`. 
-     *
-     * @param potentialPredecessor The node which is potentially a predecessor of this node. 
-     * @param nodeFilter $NODEFILTER
-     * @param edgeFilter $EDGEFILTER
-     * @param nodeVisitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
-     * @param edgeVisitor $EDGEVISITOR
-     * @param ordering   $ORD
-     * @return `true` if a path exists from `potentialPredecessor` to this node and
-     *         it had not to be excluded due to user filtering or canceling the traversal.
-     */
-    @inline final
-    def hasPredecessor(potentialPredecessor: NodeT,
-                       nodeFilter : (NodeT) => Boolean       = anyNode,
-                       edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                       nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                       edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-                       ordering   : ElemOrdering             = noOrdering): Boolean =
-      findPredecessor(_ eq potentialPredecessor,
-                      nodeFilter, edgeFilter, nodeVisitor, edgeVisitor, ordering).isDefined
-    /** Same as `hasPredecessor`. */
-    @inline final
-    def isSuccessorOf(potentialPredecessor: NodeT,
-                      nodeFilter : (NodeT) => Boolean       = anyNode,
-                      edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                      nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                      edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-                      ordering   : ElemOrdering             = noOrdering): Boolean =
-      hasPredecessor(potentialPredecessor,
-                     nodeFilter, edgeFilter, nodeVisitor, edgeVisitor, ordering)
-    /**
-     * Finds a node (not necessarily directly) connected with this node
-     * for which the predicate `pred` holds $INTOACC.
-     * For directed or mixed graphs the node to be found is weekly connected with this node.
-     * $VISITORS
-     *
-     * This node itself does not count as a match. This is also true if it has a hook.
-     * If several connected nodes exist with `pred` the algorithm selects the first
-     * of them it founds.
-     * 
-     * @param pred The predicate which must hold true for the resulting node.
-     * @param nodeFilter $NODEFILTER
-     * @param edgeFilter $EDGEFILTER
-     * @param nodeVisitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
-     * @param edgeVisitor $EDGEVISITOR
-     * @param ordering   $ORD
-     * @return A node with the predicate `pred` or None if either
-     *         a) there is no node with `pred` or
-     *         b) there exists no connection to such a node at all
-     *         c) there exists a connection to such a node but due to
-     *            user filtering or canceling the traversal this connection had to be disregarded.
-     */
-    def findConnected(pred       : (NodeT) => Boolean,
-                      nodeFilter : (NodeT) => Boolean       = anyNode,
-                      edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                      nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                      edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-                      ordering   : ElemOrdering             = noOrdering): Option[NodeT]
-    /**
-     * Checks whether `potentialConnected` is a node (not necessarily directly)
-     * connected with this node $INTOACC.
-     * For directed or mixed graphs it is satisfactory that `potentialConnected` is
-     * weekly connected with this node.
-     * $VISITORS
-     *
-     * @param potentialConnected The node which is potentially connected with this node. 
-     * @param nodeFilter $NODEFILTER
-     * @param edgeFilter $EDGEFILTER
-     * @param nodeVisitor $NODEVISITOR
-     *                    $EXTNODEVISITOR $DFSINFORMER
-     * @param edgeVisitor $EDGEVISITOR
-     * @param ordering   $ORD
-     * @return `true` if a path exists from this node to `potentialConnected` and
-     *         it had not to be excluded due to user filtering or canceling the traversal.
-     */
-    @inline final
-    def isConnectedWith(potentialConnected: NodeT,
-                        nodeFilter : (NodeT) => Boolean       = anyNode,
-                        edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                        nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                        edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-                        ordering   : ElemOrdering             = noOrdering): Boolean =
-      findConnected(_ eq potentialConnected,
-                    nodeFilter, edgeFilter, nodeVisitor, edgeVisitor, ordering).isDefined
-    /**
-     * Finds a path from this node to a successor of this node for which the predicate
-     * `pred` holds $INTOACC.
-     *
-     * This node itself does not count as a match. This is also true if it has a hook.
-     * If several successors exist the algorithm selects any first matching node.
-     * 
-     * @param pred The predicate which must hold true for the successor. 
-     * @param nodeFilter $NODEFILTER
-     * @param edgeFilter $EDGEFILTER
-     * @param nodeVisitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
-     * @param edgeVisitor $EDGEVISITOR
-     * @param ordering   $ORD
-     * @return A path to a node with the predicate `pred` or None if either
-     *         a) there is no node with `pred` or
-     *         b) there exists no path to such a node at all
-     *         c) there exists a path to such a node but due to the given filter
-     *            conditions this path had to be disregarded.
-     */
-    def pathUntil(pred       : (NodeT) => Boolean,
-                  nodeFilter : (NodeT) => Boolean       = anyNode,
-                  edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                  nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                  edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-                  ordering   : ElemOrdering             = noOrdering): Option[Path]
-    /**
-     * Finds a path from this node to `potentialSuccessor`.
-     *
-     * @param potentialSuccessor The node a path is to be found to.
-     * @return A path to `potentialSuccessor` or None if either
-     *         a) there is no node with `pred` or
-     *         b) there exists no path to such a node at all
-     */
-    @inline final
-    def pathTo(potentialSuccessor: NodeT): Option[Path] =
-      if (potentialSuccessor eq this) Some(Path.zero(this))
-      else
-        pathUntil(_ eq potentialSuccessor,
-                  anyNode, anyEdge, noNodeAction, noEdgeAction)
-    /**
-     * Finds a path from this node to `potentialSuccessor` $INTOACC.
-     *
-     * @param potentialSuccessor The node a path is to be found to.
-     * @param nodeFilter $NODEFILTER
-     * @param edgeFilter $EDGEFILTER
-     * @param nodeVisitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
-     * @param edgeVisitor $EDGEVISITOR
-     * @param ordering   $ORD
-     * @return A path to `potentialSuccessor` or None if either
-     *         a) there is no node with `pred` or
-     *         b) there exists no path to such a node at all
-     *         c) there exists a path to such a node but due to the given filter
-     *         conditions this path had to be disregarded.
-     */
-    @inline final
-    def pathTo(potentialSuccessor: NodeT,
-               nodeFilter : (NodeT) => Boolean       = anyNode,
-               edgeFilter : (EdgeT) => Boolean       = anyEdge,
-               nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-               edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-               ordering   : ElemOrdering             = noOrdering): Option[Path] =
-      pathUntil(_ eq potentialSuccessor,
-                nodeFilter, edgeFilter, nodeVisitor, edgeVisitor, ordering)
-    /**
-     * Finds the shortest path from this node to `potentialSuccessor`.
-     * 
-     * The calculation is based on the weight of the edges on the path. As a default,
-     * edges have a weight of 1 what can be overridden by custom edges. 
-     *
-     * @param potentialSuccessor The node the shortest path is to be found to.
-     * @param nodeFilter $NODEFILTER
-     * @param edgeFilter $EDGEFILTER
-     * @param nodeVisitor $NODEVISITOR $EXTNODEVISITOR $DIJKSTRAINFORMER
-     * @param edgeVisitor $EDGEVISITOR
-     * @param ordering   $ORD
-     * @return The shortest path to `potentialSuccessor` or None if either
-     *         a) there exists no path to `potentialSuccessor` or
-     *         b) there exists a path to `potentialSuccessor` but due to the given
-     *            filtering conditions this path had to be disregarded.
-     */
-    def shortestPathTo(potentialSuccessor: NodeT,
-                       nodeFilter : (NodeT) => Boolean       = anyNode,
-                       edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                       nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                       edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-                       ordering   : ElemOrdering             = noOrdering): Option[Path]
-    /**
-     * Finds a cycle starting the search at this node $INTOACC, if any.
-     * The resulting cycle may start at any node connected with `this` node.
-     * 
-     * @param nodeFilter $NODEFILTER
-     * @param edgeFilter $EDGEFILTER
-     * @param maxDepth   $MAXDEPTH
-     * @param nodeVisitor $NODEVISITOR $EXTNODEVISITOR $WGBINFORMER
-     * @param edgeVisitor $EDGEVISITOR
-     * @param ordering   $ORD
-     * @return A cycle or None if either
-     *         a) there exists no cycle in the component `this` node belongs to or
-     *         b) there exists a cycle in the component but due to the given
-     *            filtering conditions or a `Cancel` return by a visitor this cycle
-     *            had to be disregarded.
-     */
-    def findCycle(nodeFilter : (NodeT) => Boolean       = anyNode,
-                  edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                  maxDepth   : Int                      = 0,
-                  nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                  edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-                  ordering   : ElemOrdering             = noOrdering): Option[Cycle]
-    /** Same as `findCycle(...)` with default arguments. */
-    @inline final def findCycle: Option[Cycle] = findCycle()
 
     /** Traverses this graph starting at this (root) node for side-effects allowing
      * 
@@ -568,14 +288,17 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
      * @param edgeVisitor $EDGEVISITOR
      */
     @deprecated("use innerElemTraverser or outerElemTraverser instead.", "1.8.0")
-    def traverse (direction  : Direction          = Successors,
-                  nodeFilter : (NodeT) => Boolean = anyNode,
-                  edgeFilter : (EdgeT) => Boolean = anyEdge,
-                  breadthFirst:Boolean            = true,
-                  maxDepth   : Int                = 0,
-                  ordering   : ElemOrdering       = noOrdering)
-                 (nodeVisitor: (NodeT) => VisitorReturn  = noNodeAction,
-                  edgeVisitor: (EdgeT) => Unit           = noEdgeAction)
+    final def traverse (direction  : Direction          = Successors,
+                        nodeFilter : (NodeT) => Boolean = anyNode,
+                        edgeFilter : (EdgeT) => Boolean = anyEdge,
+                        breadthFirst:Boolean            = true,
+                        maxDepth   : Int                = 0,
+                        ordering   : ElemOrdering       = noOrdering)
+                       (nodeVisitor: (NodeT) => VisitorReturn  = noNodeAction,
+                        edgeVisitor: (EdgeT) => Unit           = noEdgeAction) =
+      newTraversal(direction, nodeFilter,  edgeFilter, nodeVisitor, edgeVisitor, ordering).
+          apply(this, noNode, breadthFirst, maxDepth)
+
     /**
      * Shortcut for calling `traverse` with a non-default `nodeVisitor` and
      * the default `edgeVisitor` allowing a `foreach`-like call syntax:
@@ -659,56 +382,59 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
      *  @param parameters $PARAMETERS
      */
     @inline final def innerNodeTraverser(implicit parameters: Parameters = Parameters()) =
-      InnerNodeTraverser(this, parameters)
+      thisGraph.innerNodeTraverser(this, parameters)
 
     /** Instantiates an `OuterNodeTraverser` $EXTENDSTYPE `N` $SETROOT. $TOSTART
      *  @param parameters $PARAMETERS   
      */
     @inline final def outerNodeTraverser(implicit parameters: Parameters = Parameters()) =
-      OuterNodeTraverser(this, parameters)
+      thisGraph.outerNodeTraverser(this, parameters)
 
     /** Instantiates an `InnerEdgeTraverser` $EXTENDSTYPE `EdgeT` $SETROOT. $TOSTART
      *  @param parameters $PARAMETERS
      */
     @inline final def innerEdgeTraverser(implicit parameters: Parameters = Parameters()) =
-      InnerEdgeTraverser(this, parameters)
+      thisGraph.innerEdgeTraverser(this, parameters)
 
     /** Instantiates an `OuterEdgeTraverser` $EXTENDSTYPE `E[N]` $SETROOT. $TOSTART
      *  @param parameters $PARAMETERS   
      */
     @inline final def outerEdgeTraverser(implicit parameters: Parameters = Parameters()) =
-      OuterEdgeTraverser(this, parameters)
+      thisGraph.outerEdgeTraverser(this, parameters)
 
     /** Instantiates an `InnerElemTraverser` $EXTENDSTYPE `InnerElem` $SETROOT. $TOSTART
      *  @param parameters $PARAMETERS
      */
     @inline final def innerElemTraverser(implicit parameters: Parameters = Parameters()) =
-      InnerElemTraverser(this, parameters)
+      thisGraph.innerElemTraverser(this, parameters)
 
     /** Instantiates an `OuterElemTraverser` $EXTENDSTYPE `OuterElem` $SETROOT. $TOSTART
      *  @param parameters $PARAMETERS   
      */
     @inline final def outerElemTraverser(implicit parameters: Parameters = Parameters()) =
-      OuterElemTraverser(this, parameters)
+      thisGraph.outerElemTraverser(this, parameters)
       
     /** Instantiates an `InnerNodeDownUpTraverser` $EXTENDSTYPE `(Boolean, NodeT)` $SETROOT.
      *  $TOSTART
      *  @param parameters $PARAMETERS   
      */
     @inline final def innerNodeDownUpTraverser(implicit parameters: Parameters = Parameters()) =
-      InnerNodeDownUpTraverser(this, parameters)
+      thisGraph.innerNodeDownUpTraverser(this, parameters)
 
     /** Instantiates an `OuterNodeDownUpTraverser` $EXTENDSTYPE `(Boolean, N)` $SETROOT.
      *  $TOSTART
      *  @param parameters $PARAMETERS   
      */
     @inline final def outerNodeDownUpTraverser(implicit parameters: Parameters = Parameters()) =
-      OuterNodeDownUpTraverser(this, parameters)
+      thisGraph.outerNodeDownUpTraverser(this, parameters)
+  }
+  object TraverserInnerNode {
+    implicit def toDefaultTraverser(n: NodeT): InnerNodeTraverser = innerNodeTraverser(n)
   }
   
   /** @define UPDATED Creates a new `Traverser` based on this except for an updated
    */
-  protected trait Traverser[A, This <: Traverser[A,This]] extends Traversable[A] {
+  protected abstract class Traverser[A, This <: Traverser[A,This]] extends Traversable[A] {
     this: This =>
 
     def root: NodeT
@@ -720,18 +446,13 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     protected def newTraverser:
         (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering) => This
 
-    @inline final protected def chose[U]
-        (f: NodeT => U, legacy: NodeT => VisitorReturn) = f match {
-      case e: ExtendedNodeVisitor => e
-      case _ => legacy
-    }
+    protected def nodeVisitor[U](f: A => U): (NodeT) => VisitorReturn
+    protected def edgeVisitor[U](f: A => U): (EdgeT) => Unit
 
-    protected final def foreach[U](
-        nodeVisitor: NodeT => VisitorReturn,
-        edgeVisitor: EdgeT => Unit): Unit =
+    def foreach[U](f: A => U): Unit =
       root.traverse(
         parameters.direction, subgraphNodes, subgraphEdges,
-        parameters.kind.isBsf, parameters.maxDepth, ordering)(nodeVisitor, edgeVisitor)
+        parameters.kind.isBsf, parameters.maxDepth, ordering)(nodeVisitor(f), edgeVisitor(f))
 
     /** $UPDATED `root`. */
     final def withRoot(root: NodeT): This =
@@ -770,20 +491,191 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       if (parameters.maxDepth == maxDepth) this
       else withParameters(parameters.withMaxDepth(maxDepth))
 
-    /** Starts a traversal and creates a new graph populated with the elements visited.
+    /** Completes a traversal and creates a new graph populated with the elements visited.
      */
-    def toGraph: Graph[N, E] = selfGraph match {
+    final def toGraph: Graph[N, E] = thisGraph match {
       case g: Graph[N, E] =>
         val b = Graph.newBuilder(g.edgeT, Graph.defaultConfig)
         val edgeTraverser = this match {
           case t: InnerEdgeTraverser => t
-          case t: Traverser[A, This] => InnerEdgeTraverser(root, parameters,
+          case t: Traverser[A, This] => innerEdgeTraverser(root, parameters,
             subgraphNodes, subgraphEdges, ordering)
         }
         edgeTraverser foreach { e: EdgeT => b += e }
         b.result
     }
+    
+    // `val` allows using reference equality
+    @inline final protected val emptyVisitor: (A) => Unit = _ => Unit
+    
+    /** Finds a successor of `root` for which the predicate `pred` holds $INTOACC.
+     *  $VISITORS
+     *  `root` itself does not count as a match. This is also true if it has a hook.
+     *  If several successors exist any one of them may be selected.
+     * 
+     * @param pred The predicate which must hold true for the resulting node.
+     * @param visitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
+     * @return A node with the predicate `pred` or None if either
+     *         a) there is no node with `pred` or
+     *         b) there exists no path to such a node at all
+     *         c) there exists a path to such a node but due to
+     *            user filtering or canceling the traversal this path had to be disregarded.
+     */
+    final def findSuccessor(pred: (NodeT) => Boolean)
+                           (implicit visitor: A => Unit = emptyVisitor): Option[NodeT] =
+      newTraversal(Successors, subgraphNodes, subgraphEdges, nodeVisitor(visitor),
+                   edgeVisitor(visitor), ordering)(root, pred, parameters.kind.isBsf, 0)
+
+    /** Checks whether `potentialSuccessor` is a successor of this node $INTOACC.
+     *  $VISITORS
+     *  Same as `isPredecessorOf`. 
+     *
+     * @param potentialSuccessor The node which is potentially a successor of this node. 
+     * @param visitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
+     * @return `true` if a path exists from this node to `potentialSuccessor` and
+     *         it had not to be excluded due to user filtering or canceling the traversal.
+     */
+    @inline final def hasSuccessor(potentialSuccessor: NodeT)
+                                  (implicit visitor: A => Unit = emptyVisitor): Boolean =
+      findSuccessor(_ eq potentialSuccessor)(visitor).isDefined
+
+    /** Same as `hasSuccessor`. */
+    @inline final def isPredecessorOf(potentialSuccessor: NodeT)
+                                     (implicit visitor: A => Unit = emptyVisitor): Boolean =
+      hasSuccessor(potentialSuccessor)(visitor)
+
+    /** Finds a predecessor of this node for which the predicate `pred` holds $INTOACC.
+     *  $VISITORS
+     *
+     * This node itself does not count as a match. This is also true if it has a hook.
+     * If several predecessors exist the algorithm selects the first of them found.
+     * 
+     * @param pred The predicate which must hold true for the resulting node.
+     * @param visitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
+     * @return A node with the predicate `pred` or None if either
+     *         a) there is no node with `pred` or
+     *         b) there exists no path from such a node to this node at all or
+     *         c) there exists a path from such a node to this node but due to
+     *            user filtering or canceling the traversal this path had to be disregarded.
+     */
+    final def findPredecessor(pred: (NodeT) => Boolean)
+                             (implicit visitor: A => Unit = emptyVisitor): Option[NodeT] =
+      newTraversal(Predecessors, subgraphNodes, subgraphEdges, nodeVisitor(visitor),
+                   edgeVisitor(visitor), ordering)(root, pred, parameters.kind.isBsf, 0)
+
+    /** Checks whether `potentialPredecessor` is a predecessor of this node $INTOACC.
+     *  $VISITORS
+     *  Same as `isSuccessorOf`. 
+     *
+     * @param potentialPredecessor The node which is potentially a predecessor of this node. 
+     * @param visitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
+     * @return `true` if a path exists from `potentialPredecessor` to this node and
+     *         it had not to be excluded due to user filtering or canceling the traversal.
+     */
+    @inline final def hasPredecessor(potentialPredecessor: NodeT)
+                                    (implicit visitor: A => Unit = emptyVisitor): Boolean =
+      findPredecessor(_ eq potentialPredecessor)(visitor).isDefined
+
+    /** Same as `hasPredecessor`. */
+    @inline final def isSuccessorOf(potentialPredecessor: NodeT)
+                                   (implicit visitor: A => Unit = emptyVisitor): Boolean =
+      hasPredecessor(potentialPredecessor)(visitor)
+
+    /** Finds a node (not necessarily directly) connected with this node
+     *  for which the predicate `pred` holds $INTOACC.
+     *  For directed or mixed graphs the node to be found is weekly connected with this node.
+     *  $VISITORS
+     *
+     * This node itself does not count as a match. This is also true if it has a hook.
+     * If several connected nodes exist with `pred` the algorithm selects the first
+     * of them it founds.
+     * 
+     * @param pred The predicate which must hold true for the resulting node.
+     * @param visitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
+     * @return A node with the predicate `pred` or None if either
+     *         a) there is no node with `pred` or
+     *         b) there exists no connection to such a node at all
+     *         c) there exists a connection to such a node but due to
+     *            user filtering or canceling the traversal this connection had to be disregarded.
+     */
+    final def findConnected(pred: (NodeT) => Boolean)
+                           (implicit visitor: A => Unit = emptyVisitor): Option[NodeT] =
+      newTraversal(AnyConnected, subgraphNodes, subgraphEdges, nodeVisitor(visitor),
+                   edgeVisitor(visitor), ordering)(root, pred, parameters.kind.isBsf, 0)
+
+    /** Checks whether `potentialConnected` is a node (not necessarily directly)
+     *  connected with this node $INTOACC.
+     *  For directed or mixed graphs it is satisfactory that `potentialConnected` is
+     *  weekly connected with this node.
+     *  $VISITORS
+     *
+     * @param potentialConnected The node which is potentially connected with this node. 
+     * @param visitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
+     * @return `true` if a path exists from this node to `potentialConnected` and
+     *         it had not to be excluded due to user filtering or canceling the traversal.
+     */
+    @inline final def isConnectedWith(potentialConnected: NodeT)
+                                     (implicit visitor: A => Unit = emptyVisitor): Boolean =
+      findConnected(_ eq potentialConnected)(visitor).isDefined
+
+    /** Finds a path from this node to a successor of this node for which the predicate
+     * `pred` holds $INTOACC.
+     *
+     * This node itself does not count as a match. This is also true if it has a hook.
+     * If several successors exist the algorithm selects any first matching node.
+     * 
+     * @param pred The predicate which must hold true for the successor. 
+     * @param visitor $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
+     * @return A path to a node with the predicate `pred` or None if either
+     *         a) there is no node with `pred` or
+     *         b) there exists no path to such a node at all
+     *         c) there exists a path to such a node but due to the given filter
+     *            conditions this path had to be disregarded.
+     */
+    def pathUntil(pred: (NodeT) => Boolean)
+                 (implicit visitor: A => Unit = emptyVisitor): Option[Path]
+
+    /** Finds a path from this node to `potentialSuccessor`.
+     *
+     * @param potentialSuccessor The node a path is to be found to.
+     * @return A path to `potentialSuccessor` or None if either
+     *         a) there is no node with `pred` or
+     *         b) there exists no path to such a node at all
+     */
+    final def pathTo(potentialSuccessor: NodeT)
+                    (implicit visitor: A => Unit = emptyVisitor): Option[Path] =
+      if (potentialSuccessor eq root) Some(Path.zero(root))
+      else pathUntil(_ eq potentialSuccessor)(visitor)
+
+    /** Finds the shortest path from this node to `potentialSuccessor`.
+     * 
+     * The calculation is based on the weight of the edges on the path. As a default,
+     * edges have a weight of 1 what can be overridden by custom edges. 
+     *
+     * @param potentialSuccessor The node the shortest path is to be found to.
+     * @param visitor $NODEVISITOR $EXTNODEVISITOR $DIJKSTRAINFORMER
+     * @return The shortest path to `potentialSuccessor` or None if either
+     *         a) there exists no path to `potentialSuccessor` or
+     *         b) there exists a path to `potentialSuccessor` but due to the given
+     *            filtering conditions this path had to be disregarded.
+     */
+    def shortestPathTo(potentialSuccessor: NodeT)
+                      (implicit visitor: A => Unit = emptyVisitor): Option[Path]
+
+    /** Finds a cycle starting the search at this node $INTOACC, if any.
+     *  The resulting cycle may start at any node connected with `this` node.
+     * 
+     * @param visitor $NODEVISITOR $EXTNODEVISITOR $WGBINFORMER
+     * @return A cycle or None if either
+     *         a) there exists no cycle in the component `this` node belongs to or
+     *         b) there exists a cycle in the component but due to the given
+     *            filtering conditions or a `Cancel` return by a visitor this cycle
+     *            had to be disregarded.
+     */
+    def findCycle(implicit visitor: A => Unit = emptyVisitor): Option[Cycle]
   }
+
+  protected abstract class InnerNodeTraverser extends Traverser[NodeT,InnerNodeTraverser]
 
   /** Controls graph traversals of inner nodes based on `scala.collection.Traversable[NodeT]`.
    *  $TOSTART.
@@ -794,23 +686,14 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
    */
-  case class InnerNodeTraverser(
-      override val root         : NodeT,
-      override val parameters   : Parameters         = Parameters(),
-      override val subgraphNodes: (NodeT) => Boolean = anyNode,
-      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
-      override val ordering     : ElemOrdering       = noOrdering)
-      extends Traverser[NodeT,InnerNodeTraverser] {
-    
-    final protected def newTraverser:
-        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
-        => InnerNodeTraverser = copy _
-   
-    final def foreach[U](f: NodeT => U): Unit = {
-      @inline def legacy(n: NodeT): VisitorReturn = { f(n); Continue } 
-      foreach(chose(f, legacy), noEdgeAction)
-    }
-  }
+  def innerNodeTraverser(
+      root         : NodeT,
+      parameters   : Parameters         = Parameters(),
+      subgraphNodes: (NodeT) => Boolean = anyNode,
+      subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      ordering     : ElemOrdering       = noOrdering): InnerNodeTraverser
+
+  protected abstract class OuterNodeTraverser extends Traverser[N,OuterNodeTraverser]
 
   /** Controls graph traversals of outer nodes based on `scala.collection.Traversable[N]`.
    *  $TOSTART.
@@ -821,23 +704,14 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
    */
-  case class OuterNodeTraverser(
-      override val root         : NodeT,
-      override val parameters   : Parameters         = Parameters(),
-      override val subgraphNodes: (NodeT) => Boolean = anyNode,
-      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
-      override val ordering     : ElemOrdering       = noOrdering)
-      extends Traverser[N,OuterNodeTraverser] {
+  def outerNodeTraverser(
+      root         : NodeT,
+      parameters   : Parameters         = Parameters(),
+      subgraphNodes: (NodeT) => Boolean = anyNode,
+      subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      ordering     : ElemOrdering       = noOrdering): OuterNodeTraverser
     
-    final protected def newTraverser:
-        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
-        => OuterNodeTraverser = copy _
-
-    final def foreach[U](f: N => U): Unit = {
-      @inline def legacy(n: NodeT): VisitorReturn = { f(n.value); Continue } 
-      foreach(legacy, noEdgeAction)
-    }
-  }
+  protected abstract class InnerEdgeTraverser extends Traverser[EdgeT,InnerEdgeTraverser]
 
   /** Controls graph traversals of inner edges based on `scala.collection.Traversable[EdgeT]`.
    *  $TOSTART.
@@ -848,20 +722,14 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
    */
-  case class InnerEdgeTraverser(
-      override val root         : NodeT,
-      override val parameters   : Parameters         = Parameters(),
-      override val subgraphNodes: (NodeT) => Boolean = anyNode,
-      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
-      override val ordering     : ElemOrdering       = noOrdering)
-      extends Traverser[EdgeT,InnerEdgeTraverser] {
-    
-    final protected def newTraverser:
-        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
-        => InnerEdgeTraverser = copy _
-   
-    def foreach[U](f: EdgeT => U): Unit = foreach(noNodeAction, (e: EdgeT) => f(e))
-  }
+  def innerEdgeTraverser(
+      root         : NodeT,
+      parameters   : Parameters         = Parameters(),
+      subgraphNodes: (NodeT) => Boolean = anyNode,
+      subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      ordering     : ElemOrdering       = noOrdering): InnerEdgeTraverser
+      
+  protected abstract class OuterEdgeTraverser extends Traverser[E[N],OuterEdgeTraverser]
 
   /** Controls graph traversals of outer edges based on `scala.collection.Traversable[E[N]]`.
    *  $TOSTART.
@@ -872,20 +740,14 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
    */
-  case class OuterEdgeTraverser(
-      override val root         : NodeT,
-      override val parameters   : Parameters         = Parameters(),
-      override val subgraphNodes: (NodeT) => Boolean = anyNode,
-      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
-      override val ordering     : ElemOrdering       = noOrdering)
-      extends Traverser[E[N],OuterEdgeTraverser] {
-    
-    final protected def newTraverser:
-        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
-        => OuterEdgeTraverser = copy _
-
-    final def foreach[U](f: E[N] => U): Unit = foreach(noNodeAction, (e: EdgeT) => f(e.toOuter))
-  }
+  def outerEdgeTraverser(
+      root         : NodeT,
+      parameters   : Parameters         = Parameters(),
+      subgraphNodes: (NodeT) => Boolean = anyNode,
+      subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      ordering     : ElemOrdering       = noOrdering): OuterEdgeTraverser 
+ 
+  protected abstract class InnerElemTraverser extends Traverser[InnerElem,InnerElemTraverser]
 
   /** Controls graph traversals of inner nodes and edges based on `scala.collection.Traversable[InnerElem]`.
    *  $TOSTART.
@@ -896,23 +758,14 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
    */
-  case class InnerElemTraverser(
-      override val root         : NodeT,
-      override val parameters   : Parameters         = Parameters(),
-      override val subgraphNodes: (NodeT) => Boolean = anyNode,
-      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
-      override val ordering     : ElemOrdering       = noOrdering)
-      extends Traverser[InnerElem,InnerElemTraverser] {
-    
-    final protected def newTraverser:
-        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
-        => InnerElemTraverser = copy _
-   
-    final def foreach[U](f: InnerElem => U): Unit = {
-      @inline def legacy(n: NodeT): VisitorReturn = { f(n); Continue } 
-      foreach(chose(f, legacy), (e: EdgeT) => f(e))
-    }
-  }
+  def innerElemTraverser(
+      root         : NodeT,
+      parameters   : Parameters         = Parameters(),
+      subgraphNodes: (NodeT) => Boolean = anyNode,
+      subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      ordering     : ElemOrdering       = noOrdering): InnerElemTraverser
+      
+  trait OuterElemTraverser extends Traverser[OuterElem[N,E],OuterElemTraverser]
 
   /** Controls graph traversals of outer nodes and edges based on `scala.collection.Traversable[OuterElem]`.
    *  $TOSTART.
@@ -923,32 +776,15 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
    */
-  case class OuterElemTraverser(
-      override val root         : NodeT,
-      override val parameters   : Parameters         = Parameters(),
-      override val subgraphNodes: (NodeT) => Boolean = anyNode,
-      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
-      override val ordering     : ElemOrdering       = noOrdering)
-      extends Traverser[OuterElem[N,E],OuterElemTraverser] {
-    
-    final protected def newTraverser:
-        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
-        => OuterElemTraverser = copy _
-   
-    final def foreach[U](f: OuterElem[N,E] => U): Unit = {
-      @inline def legacy(n: NodeT): VisitorReturn = { f(n.value); Continue } 
-      foreach(legacy, (e: EdgeT) => f(e.toOuter.asInstanceOf[OuterEdge[N,E]]))
-    }
-  }
-
-  protected trait DownUpTraverser[A, This <: Traverser[_,This]] {
-    this: This =>
-
-    final protected def downUpForeach[U](down: NodeT => VisitorReturn, up  : NodeT => Unit): Unit =
-      newTraversal( parameters.direction, subgraphNodes, subgraphEdges,
-                    down, noEdgeAction, ordering).
-      depthFirstSearch(root, maxDepth = parameters.maxDepth, nodeUpVisitor = up)
-  }
+  def outerElemTraverser(
+      root         : NodeT,
+      parameters   : Parameters         = Parameters(),
+      subgraphNodes: (NodeT) => Boolean = anyNode,
+      subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      ordering     : ElemOrdering       = noOrdering): OuterElemTraverser
+      
+  protected abstract class InnerNodeDownUpTraverser
+      extends Traverser[(Boolean, NodeT),InnerNodeDownUpTraverser]
 
   /** $DFSOF inner nodes based on `scala.collection.Traversable[(Boolean, NodeT)]` $DOWNUPBOOLEAN
    *  $TOSTART.
@@ -959,24 +795,15 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
    */
-  case class InnerNodeDownUpTraverser(
-      override val root         : NodeT,
-      override val parameters   : Parameters         = Parameters(),
-      override val subgraphNodes: (NodeT) => Boolean = anyNode,
-      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
-      override val ordering     : ElemOrdering       = noOrdering)
-      extends Traverser[(Boolean, NodeT),InnerNodeDownUpTraverser]
-         with DownUpTraverser[NodeT,InnerNodeDownUpTraverser] {
-    
-    final protected def newTraverser:
-        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
-        => InnerNodeDownUpTraverser = copy _
-   
-    final def foreach[U](f: ((Boolean, NodeT)) => U): Unit = downUpForeach(
-        (n: NodeT) => { f(true,  n); Continue },
-        (n: NodeT) => f(false, n)
-      )
-  }
+  def innerNodeDownUpTraverser(
+      root         : NodeT,
+      parameters   : Parameters         = Parameters(),
+      subgraphNodes: (NodeT) => Boolean = anyNode,
+      subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      ordering     : ElemOrdering       = noOrdering): InnerNodeDownUpTraverser
+      
+  protected abstract class OuterNodeDownUpTraverser
+      extends Traverser[(Boolean, N),OuterNodeDownUpTraverser]
 
   /** $DFSOF outer nodes based on `scala.collection.Traversable[(Boolean, N)]` $DOWNUPBOOLEAN
    *  $TOSTART.
@@ -987,25 +814,13 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
    */
-  case class OuterNodeDownUpTraverser(
-      override val root         : NodeT,
-      override val parameters   : Parameters         = Parameters(),
-      override val subgraphNodes: (NodeT) => Boolean = anyNode,
-      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
-      override val ordering     : ElemOrdering       = noOrdering)
-      extends Traverser[(Boolean, N),OuterNodeDownUpTraverser]
-         with DownUpTraverser[N,OuterNodeDownUpTraverser] {
-    
-    final protected def newTraverser:
-        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
-        => OuterNodeDownUpTraverser = copy _
-   
-    final def foreach[U](f: ((Boolean, N)) => U): Unit = downUpForeach(
-        (n: NodeT) => { f(true,  n.value); Continue },
-        (n: NodeT) =>   f(false, n.value)
-      )
-  }
-
+  def outerNodeDownUpTraverser(
+      root         : NodeT,
+      parameters   : Parameters         = Parameters(),
+      subgraphNodes: (NodeT) => Boolean = anyNode,
+      subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      ordering     : ElemOrdering       = noOrdering): OuterNodeDownUpTraverser
+      
   /** Abstract class for functional traversals.
    * 
    * In addition to the `traverse` methods defined for nodes, this concept supports

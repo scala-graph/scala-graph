@@ -64,15 +64,12 @@ class Connected[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
   protected def isConnected(include: Set[self.NodeT],
                             excludeNodes: Set[self.NodeT],
                             excludeEdges: Set[self.EdgeT]) = include.headOption map { head =>
-    var cnt = 0
-    head.traverseNodes( direction    = AnyConnected,
-                        nodeFilter   = n => (include contains n) &&
-                                            ! (excludeNodes contains n),
-                        edgeFilter   = e => ! (excludeEdges contains e),
-                        breadthFirst = false) { n =>
-      cnt += 1
-      Continue
-    }
+    val cnt = head.
+        withDirection(AnyConnected).
+        withSubgraph(
+            nodes = n => (include contains n) && ! (excludeNodes contains n),
+            edges = e => ! (excludeEdges contains e)
+        ).size
     cnt == include.size
   } getOrElse true
 

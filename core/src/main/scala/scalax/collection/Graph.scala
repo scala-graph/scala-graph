@@ -136,7 +136,7 @@ trait GraphLike[N,
       false
   }
   type NodeT <: InnerNode 
-  trait InnerNode extends super.InnerNode {
+  trait InnerNode extends super.InnerNode with TraverserInnerNode {
     this: NodeT =>
     /** The `Graph` instance `this` node is contained in. */
     final def containingGraph: ThisGraph = selfGraph.asInstanceOf[ThisGraph]

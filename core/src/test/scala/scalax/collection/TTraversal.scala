@@ -244,18 +244,15 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
   def test_Filter {
     def n(value: Int) = gUnDi_2 get value
 
-    val p2_1_nNE3 = (n(2) pathTo (n(1),
-                                  nodeFilter = _ != 3)).get
+    val p2_1_nNE3 = n(2).withSubgraph(nodes = _ != 3).pathTo(n(1)).get
     p2_1_nNE3.nodes.toList should be (List(2,1))
     p2_1_nNE3.edges.toList should be (List(2~1 % 4))
 
-    val p1_3_wGT4 = (n(1) pathTo (n(3),
-                                  edgeFilter = _.weight > 4)).get
+    val p1_3_wGT4 = n(1).withSubgraph(edges = _.weight > 4).pathTo(n(3)).get
     p1_3_wGT4.nodes.toList should be (List(1,3))
     p1_3_wGT4.edges.toList should be (List(eUnDi_2(2)))
 
-    val p1_3_wLT4 = (n(1) pathTo (n(3),
-                                  edgeFilter = _.weight < 4)).get
+    val p1_3_wLT4 = n(1).withSubgraph(edges = _.weight < 4).pathTo(n(3)).get
     p1_3_wLT4.nodes.toList should be (List(1,2,3))
     p1_3_wLT4.edges.toList should be (List(eUnDi_2(4),eUnDi_2(1)))
 }
@@ -264,10 +261,13 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
 
     var nodes = ListBuffer[gUnDi_2.NodeT]()
     var edges = ListBuffer[gUnDi_2.EdgeT]()
-    val p2_1_nNE3 = (n(2) pathTo (n(1),
-                                  nodeFilter  = _ != 3,
-                                  nodeVisitor = (n: gUnDi_2.NodeT) => {nodes += n; Continue},
-                                  edgeVisitor = (e: gUnDi_2.EdgeT) => {edges += e} )).get
+    val traverser = n(2).innerElemTraverser.withSubgraph(nodes = _ != 3)
+    val p2_1_nNE3 = traverser.pathTo(n(1)) {
+      _ match {
+        case gUnDi_2.InnerNode(n) => nodes += n
+        case gUnDi_2.InnerEdge(e) => edges += e
+      }
+    }.get
     nodes should be (List(n(2), n(1)))
     edges.toList.sorted(gUnDi_2.Edge.WeightOrdering) should be (List(eUnDi_2(1), eUnDi_2(5), eUnDi_2(0)))
   }
@@ -320,27 +320,24 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     def flight(flightNo: String) = flights find (_.flightNo == flightNo) get
     val g = factory.from[Airport, Flight](Set.empty, flights)
 
-    val shp1 = (g get jfc) shortestPathTo (g get dme,
-                                           edgeFilter = _.airline != "UN")
+    val shp1 = (g get jfc).withSubgraph(edges = _.airline != "UN") shortestPathTo (g get dme)
     shp1.get.nodes.toList should be (List(jfc, lhr, dme))
     shp1.get.edges.toList should be (List(flight("BA 174"),flight("SU 242")))
      
-    val shp2 = (g get lhr) shortestPathTo (g get svx,
-                                           edgeFilter = _.airline != "SU")
+    val shp2 = (g get lhr).withSubgraph(edges = _.airline != "SU") shortestPathTo (g get svx)
     shp2.get.edges.toList should be (List(flight("LH 903"),flight("LH 1480")))
 
-    val shp3 = (g get dme) shortestPathTo (g get jfc,
-                                           nodeFilter = _ != fra)
+    val shp3 = (g get dme).withSubgraph(nodes = _ != fra) shortestPathTo (g get jfc)
     shp3 should be (None)
       
-    val shp4 = (g get jfc) shortestPathTo (g get svx,
-                                           nodeFilter = _ != dme)
+    val shp4 = (g get jfc).withSubgraph(nodes = _ != dme) shortestPathTo (g get svx)
     shp4.get.nodes.toList should be (List(jfc, fra, svx)) 
     shp4.get.edges.toList should be (List(flight("UA 8840"), flight("LH 1480")))
 
     var visited = Set[g.EdgeT]() 
-    (g get jfc) shortestPathTo (g get lhr,
-                                edgeVisitor = (e: g.EdgeT) => { visited += e })
+    (g get jfc).innerEdgeTraverser.shortestPathTo(g get lhr) { e =>
+      visited += e
+    }
     val visitedSorted = visited.toList.sortWith((a: g.EdgeT, b: g.EdgeT) => a.flightNo < b.flightNo)
     visitedSorted.sameElements(
         List(flight("BA 174"),
