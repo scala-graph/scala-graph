@@ -5,7 +5,7 @@ import scala.annotation.{switch, tailrec}
 import collection.mutable.{ArrayBuffer, ArraySeq, ArrayStack => Stack, ListBuffer, Queue,
                            PriorityQueue, Set => MutableSet, Map => MutableMap}
 
-import collection.Abstract
+import collection.{Abstract, EqSetFacade}
 import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
                     OuterNode, InnerNodeParam, OuterEdge, OuterElem, InnerEdgeParam}
 import GraphEdge.{EdgeLike}
@@ -16,33 +16,13 @@ import scalax.collection.mutable.ExtBitSet
 trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   extends GraphTraversal[N,E]
   with State[N,E]
-{ selfGraph =>
+{ thisGraph =>
 
   import GraphTraversalImpl._
   import GraphTraversal.VisitorReturn._
   import GraphTraversal._
   import State._
   
-  override def findCycle(nodeFilter : (NodeT) => Boolean       = anyNode,
-                         edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                         maxDepth   :  Int                     = 0,
-                         nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                         edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-                         ordering   : ElemOrdering             = noOrdering): Option[Cycle] =
-    if (order == 0) None
-    else {
-      val traversal = new Traversal(Successors, nodeFilter, edgeFilter,
-                                                nodeVisitor, edgeVisitor, ordering)
-      withHandles(2) { handles => 
-        implicit val visitedHandle = handles(0) 
-        for (node <- nodes if ! node.visited) {
-          val res = traversal.depthFirstSearchWGB(node, globalState = handles) 
-          if (res._1.isDefined)
-            return cycle(res, edgeFilter)
-        }
-      }
-      None
-    }
   protected type CycleStackElem = (NodeT, Iterable[EdgeT])
   final protected def cycle(results: (Option[NodeT], Stack[CycleStackElem]),
                             edgeFilter : (EdgeT) => Boolean): Option[Cycle] = {
@@ -58,7 +38,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
           new ReverseStackTraversable[CycleStackElem, NodeT](
               stack, toNode, Some(doWhile), enclosing)
       }
-      if (selfGraph.isDirected) {
+      if (thisGraph.isDirected) {
         new AnyEdgeLazyCycle  (reverse, edgeFilter)
       } else {
         new MultiEdgeLazyCycle(reverse, edgeFilter)
@@ -71,15 +51,83 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     this: NodeT =>
   }
 
+  private[this] def emptyRoot: NodeT = null.asInstanceOf[NodeT]
+  
+  protected class ComponentImpl(
+      override val root         : NodeT, 
+      override val parameters   : Parameters,
+      override val subgraphNodes: (NodeT) => Boolean,
+      override val subgraphEdges: (EdgeT) => Boolean,
+      override val ordering     : ElemOrdering,
+      override val nodes        : Set[NodeT])
+      extends Component {
+    
+    lazy val edges: Set[EdgeT] = {
+      val edges = new ArrayBuffer[EdgeT](nodes.size * 2)
+      for (n <- nodes) n.edges foreach (edges += _)
+      new EqSetFacade(edges)
+    }
+  }
+  
+  protected case class ComponentTraverser(
+      override val root         : NodeT              = emptyRoot, 
+      override val parameters   : Parameters         = Parameters(),
+      override val subgraphNodes: (NodeT) => Boolean = anyNode,
+      override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      override val ordering     : ElemOrdering       = noOrdering)
+      extends super.ComponentTraverser {
+    
+    final protected def newTraverser:
+        (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
+        => ComponentTraverser = copy _
+
+    protected lazy val components: Iterable[ComponentImpl] = {
+      val components = new ArrayBuffer[NodeT]
+      val traverser = InnerNodeTraverser(
+          root, parameters, subgraphNodes, subgraphEdges, ordering)
+      withHandle() {  implicit visitedHandle =>
+        for (node <- nodes if ! node.visited && subgraphNodes(node)) yield {
+          val componentNodes = new ArrayBuffer[NodeT](
+              math.min(order, math.max(order / 6, 128)))
+          traverser.withRoot(node) foreach { n =>
+            n.visited = true
+            componentNodes += n
+          }
+          new ComponentImpl(node, parameters, subgraphNodes, subgraphEdges, ordering,
+              new EqSetFacade(componentNodes))
+        }
+      }
+    }
+    
+    def foreach[U](f: Component => U): Unit = components foreach f
+    
+    def findCycle(implicit visitor: InnerElem => Unit = emptyVisitor): Option[Cycle] =
+      if (order == 0) None
+      else {
+        val traverser = InnerElemTraverser(
+            root, parameters, subgraphNodes, subgraphEdges, ordering)
+        withHandles(2) { handles => 
+          implicit val visitedHandle = handles(0)
+          for (node <- nodes if ! node.visited && subgraphNodes(node)) {
+            val res = traverser.withRoot(node). // compiler issue
+                      asInstanceOf[InnerElemTraverser].depthFirstSearchWGB(handles) 
+            if (res._1.isDefined)
+              return cycle(res, subgraphEdges)
+          }
+        }
+        None
+      }
+  }
+  
+  def componentTraverser(
+      parameters   : Parameters         = Parameters(),
+      subgraphNodes: (NodeT) => Boolean = anyNode,
+      subgraphEdges: (EdgeT) => Boolean = anyEdge,
+      ordering     : ElemOrdering       = noOrdering) =
+    ComponentTraverser(emptyRoot, parameters, subgraphNodes, subgraphEdges, ordering)
+  
   protected trait Impl[A] {
     this: Traverser[A,_] =>
-
-    final protected def chose[U](f: NodeT => U, legacy: NodeT => VisitorReturn) =
-      if (f eq emptyVisitor) noNodeAction
-      else f match {
-        case e: ExtendedNodeVisitor => e
-        case _ => legacy
-      }
 
     final def pathUntil(pred: (NodeT) => Boolean)
                        (implicit visitor: A => Unit = emptyVisitor): Option[Path] = {
@@ -197,6 +245,13 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         subgraphEdges
       )
     }
+    
+    final def depthFirstSearchWGB(globalState: Array[Handle]= Array.empty[Handle])(
+                                  implicit visitor: A => Unit = emptyVisitor)
+        : (Option[NodeT], Stack[CycleStackElem]) =
+      newTraversal( parameters.direction, subgraphNodes, subgraphEdges,
+                    nodeVisitor(visitor), edgeVisitor(visitor), ordering).
+          depthFirstSearchWGB(root, globalState = globalState)
   }
 
   protected case class InnerNodeTraverser(
@@ -620,7 +675,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
             Stack((root, root, false, Nil))
         // (node, connecting with prev)
         val path = Stack.empty[CycleStackElem]
-        val isDiGraph = selfGraph.isDirected
+        val isDiGraph = thisGraph.isDirected
         def isWhite (node: NodeT) = nonVisited(node)
         def isGray  (node: NodeT) = isVisited(node) && ! (node bit(blackHandle))
         def isBlack (node: NodeT) = node bit(blackHandle)

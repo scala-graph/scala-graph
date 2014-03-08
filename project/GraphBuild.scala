@@ -66,11 +66,11 @@ object GraphBuild extends Build {
     // prevents sbteclipse from including java source directories
     unmanagedSourceDirectories in Compile <<= (scalaSource in Compile)(Seq(_)),
     unmanagedSourceDirectories in Test    <<= (scalaSource in Test)   (Seq(_)),
-    scalacOptions in (Compile, doc) += "-diagrams",
+    scalacOptions in (Compile, doc) ++= List("-diagrams", "-implicits"),
+    scalacOptions in (Compile, doc) <++= baseDirectory map { d =>
+      Seq("-doc-root-content", d / "rootdoc.txt" getPath)
+    },
 	autoAPIMappings := true,
-//    scalacOptions in doc ++= Seq(
-//      "-doc-root-content", "src/main/scala/rootdoc.txt"
-//    ),
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     libraryDependencies ++= Seq(
 	  "org.scala-lang" % "scala-reflect" % scalaVersion.value,

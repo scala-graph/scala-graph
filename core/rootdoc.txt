@@ -1,0 +1,15 @@
+Welcome to the ''Graph for Scala'' API reference.
+Some suggested navigation entry points:
+
+  - '''graph editing''':
+    - operators of [[scalax.collection.Graph `Graph`]]
+    - or the operators of [[scalax.collection.mutable.Graph `mutable.Graph`]] and its inner nodes.
+
+  - '''predefined edges''':
+    - classes in the [[scalax.collection.GraphEdge$ `GraphEdge`]] object
+    - classes in the [[scalax.collection.edge.package `edge`]] package
+    - implicit members of the [[scalax.collection.GraphPredef$ `GraphPredef`]] object and
+    - operators in the accompanying [[scalax.collection.edge.Implicits$ `Implicits`]] object.
+
+  - '''graph traversal''':
+    - methods of [[scalax.collection.GraphTraversal `GraphTraversal`]] and its inner nodes.
