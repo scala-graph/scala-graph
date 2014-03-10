@@ -26,12 +26,11 @@ class TStateTest extends Suite with ShouldMatchers {
   def countNodes(recursion: Int = 0): Int = {
     assert(recursion >= 0)
     var nrNodes = 0
-    g.nodes.head.traverseNodes() { _ =>
-      nrNodes += {
+    g.nodes.head.innerNodeTraverser foreach { _ =>
+      nrNodes += (
         if (recursion == 0) 1
         else countNodes(recursion - 1)
-      }
-      Continue
+      )
     }
     nrNodes
   }
@@ -46,10 +45,9 @@ class TStateTest extends Suite with ShouldMatchers {
       countNodes() should be (nrNodesExpected)
   }
   def test_InnerLoop {
-    g.nodes.head.traverseNodes() { _ =>
+    g.nodes.head.innerNodeTraverser foreach ( _ =>
       test_Loop
-      Continue
-    }
+    )
   }
   def test_Recursion {
     val depth = 5
@@ -60,15 +58,14 @@ class TStateTest extends Suite with ShouldMatchers {
     def countNodesDeep(recursion: Int): Int = {
       assert(recursion >= 0)
       var nrNodes = 0
-      g.nodes.head.traverseNodes() { n =>
-        nrNodes += {
+      g.nodes.head.innerNodeTraverser foreach ( n =>
+        nrNodes += (
           // if (n eq recurseAt) println(State.dump(recurseAt).summary)
           if (recursion == 0) 0
           else if (n eq recurseAt) countNodesDeep(recursion - 1)
           else 1
-        }
-        Continue
-      }
+        )
+      )
       nrNodes
     }
     for(i <- 1 to 2) countNodesDeep(aLotOfTimes)

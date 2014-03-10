@@ -375,24 +375,25 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     val g = Di_1.g
     def innerNode(outer: Int) = g get outer
     val stack: Stack[Int] = Stack()
-    def down(n: g.NodeT) = { stack.push(n.value); Continue }
-    def up  (n: g.NodeT) = { stack.pop should be (n.value) }
     
-    innerNode(4).traverseDownUp()(down, up)
+    innerNode(4).innerNodeDownUpTraverser foreach (_ match {
+      case (down, node) =>
+        if (down) stack.push(node.value)
+        else      stack.pop should be (node.value)
+    })
     stack should be ('empty)
   }
   def test_DownUpBraces {
     val root = "A"
     val g = factory(root~>"B1", root~>"B2")
-    val result = ListBuffer.empty[String]
-    (g get root).traverseDownUp()(
-      nodeDown = (n: g.NodeT) => {
-        result += (if (n == root) "(" else "[") += n
-        Continue
-      },
-      nodeUp   = (n: g.NodeT) =>
-        result += (if (n == root) ")" else "]")
-    )
+    val innerRoot = g get root
+    val result = (ListBuffer.empty[String] /: innerRoot.innerNodeDownUpTraverser) {
+        (buf, param) => param match {
+          case (down, node) => 
+            if (down) buf += (if (node eq innerRoot) "(" else "[") += node.toString
+            else      buf += (if (node eq innerRoot) ")" else "]")
+        }
+    }
     ("" /: result)(_+_) should be ("(A[B1][B2])")
   }
   abstract class Elem(val name: String) {
@@ -411,12 +412,15 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
         nA ~> Leaf("LA1",1), nA ~> Leaf("LA2",2),
         nB ~> Leaf("B1" ,3), nB ~> nBA,
         nBA~> Leaf("BA1",10),nBA~> Leaf("BA2",11), nBA~> Leaf("BA3",12))
-    (g get root).traverseDownUp()(
-      nodeDown = g.noNodeAction,
-      nodeUp   = (node: g.NodeT) => node.value match {
-        case n: Node => n.sum = (0 /: node.diSuccessors)(_ + _.balance)
-        case _ =>
-      }
+
+    (g get root).innerNodeDownUpTraverser foreach (_ match {
+        case (down, node) =>
+          if (! down) 
+            node.value match {
+              case n: Node => n.sum = (0 /: node.diSuccessors)(_ + _.balance)
+              case _ =>
+            } 
+        }
     )
     val expected = Map(root->39, nA->3, nB->36, nBA->33)
     g.nodes foreach { _.value match {

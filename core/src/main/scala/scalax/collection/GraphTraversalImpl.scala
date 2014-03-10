@@ -826,6 +826,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     
     @inline def foreach[U](f: T => U): Unit = source foreach (s => f(toT(s)))
     
+    override def stringPrefix = "Nodes"
     @inline override val size: Int = s.size + enclosed.count(_.isDefined)
     @inline override def last: T = enclosed(1) map toT getOrElse toT(s(0))
     def reverse: Traversable[T] = new Abstract.Traversable[T] {
@@ -863,6 +864,8 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   final protected class MapPathTraversable[T](map: MutableMap[T,T], to: T, start: T)
       extends Traversable[T] {
     
+    override def stringPrefix = "Nodes"
+
     private lazy val s: Seq[T] = {
       val stack = Stack.empty[T]
       @tailrec def loop(k: T): Unit = {
@@ -883,7 +886,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   /** Path based on the passed collection of nodes with lazy evaluation of edges.
    */
   protected abstract class LazyPath(val nodes : Traversable[NodeT],
-                                          edgeFilter: (EdgeT) => Boolean)
+                                    edgeFilter: (EdgeT) => Boolean)
       extends Path {
 
     def foreach[U](f: OutParam[N,E] => U): Unit = {
@@ -928,7 +931,9 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       extends LazyPath(nodes, edgeFilter) {
     
     final lazy val edges = {
-      val buf = new ArrayBuffer[EdgeT](nodes.size)
+      val buf = new ArrayBuffer[EdgeT](nodes.size) {
+        override def stringPrefix = "Edges"
+      }
       (nodes.head /: nodes.tail){ (prev: NodeT, n: NodeT) =>
         buf += selectEdge(prev, n)
         n
@@ -976,7 +981,9 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     final protected val multi = EqSet[EdgeT](graphSize / 2) 
         
     final lazy val edges = {
-      val buf = new ArrayBuffer[EdgeT](nodes.size)
+      val buf = new ArrayBuffer[EdgeT](nodes.size) {
+        override def stringPrefix = "Edges"
+      }
       (nodes.head /: nodes.source.tail){ (prev: NodeT, elem: CycleStackElem) =>
         val (n, conn) = elem
         val edge = (conn.size: @switch) match {

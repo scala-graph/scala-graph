@@ -56,11 +56,11 @@ import GraphPredef.{EdgeLikeIn, OuterElem, OuterEdge, OutParam, InnerNodeParam, 
  * @define BREADTHFIRST If `true` the traversal is based on a breath first
  *         (BFS, layer-for-layer) search, otherwise on a depth first search (DFS).
  *         The default value is BFS.
- * @define MAXDEPTH A positive value limits the number of layers for BFS respectively
- *         the number of consecutive child visits before siblings are visited for DFS.
- *         `0` - the default - indicates that the traversal should have
- *         an unlimited depth meaning that it will be continued either until
- *         it's canceled by `nodeVisitor` or until all nodes have been visited.
+ * @define MAXDEPTH A positive value limiting the number of layers for Bfs respectively
+ *         the number of consecutive child visits before siblings are visited for Dfs.
+ *         `0`, the default value, indicates that the traversal should have
+ *         an unlimited depth meaning that it will be continued until either
+ *         it's canceled or all nodes have been visited.
  * @define KIND The kind of traversal including breadth-first and depth-fist search.
  * @define ORD If a `NodeOrdering` or `EdgeOrdering` different from `noOrdering` is supplied
  *         neighbor nodes will be sorted during the traversal. Thus it is guaranteed that
@@ -371,7 +371,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
      * @param nodeDown $NODEVISITOR $EXTNODEVISITOR $DFSINFORMER
      * @param nodeUp   $NODEUPVISITOR $EXTNODEVISITOR $DFSINFORMER
      */
-    @inline final
+    @deprecated("use innerNodeDownUpTraverser or outerNodeDownUpTraverser instead.", "1.8.0") @inline final
     def traverseDownUp(direction  : Direction          = Successors,
                        nodeFilter : (NodeT) => Boolean = anyNode,
                        edgeFilter : (EdgeT) => Boolean = anyEdge,
