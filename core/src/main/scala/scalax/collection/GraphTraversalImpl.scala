@@ -827,7 +827,10 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     @inline def foreach[U](f: T => U): Unit = source foreach (s => f(toT(s)))
     
     override def stringPrefix = "Nodes"
-    @inline override val size: Int = s.size + enclosed.count(_.isDefined)
+      
+    private[this] var _size: Option[Int] = None
+    @inline override val size: Int = _size getOrElse super.size
+
     @inline override def last: T = enclosed(1) map toT getOrElse toT(s(0))
     def reverse: Traversable[T] = new Abstract.Traversable[T] {
       def foreach[U](f: T => U): Unit = {
@@ -850,11 +853,13 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       def foreach[U](f: S => U): Unit = {
         enclosed(0) map f
         var i = upper
+        var size = i
         while (i > 0) {
           i -= 1
           f(s(i))
         }
         enclosed(1) map f
+        if (_size.isEmpty) _size = Some(size + enclosed.count(_.isDefined))
       }
     }
   }
@@ -1004,36 +1009,16 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     }
   }
   
-  protected trait CycleMethods extends Cycle {
-    
-    final def sameAs(that: GraphTraversal[N,E]#Cycle) =
-      this == that || ( that match {
-        case that: GraphTraversalImpl[N,E]#Cycle =>
-          this.size == that.size && {
-            val thisList = to[List]
-            val idx = thisList.indexOf(that.head)
-            if (idx >= 0) {
-              val thisDoubled = thisList ++ (thisList.tail)
-              val thatList = that.to[List]
-              (thisDoubled startsWith (thatList        , idx)) ||
-              (thisDoubled startsWith (thatList.reverse, idx))
-            }
-            else false
-          }
-        case _ => false
-      })
-  }
-  
   protected class AnyEdgeLazyCycle(override val nodes : Traversable[NodeT],
       edgeFilter: (EdgeT) => Boolean)
       extends AnyEdgeLazyPath(nodes, edgeFilter)
-         with CycleMethods
+         with Cycle    
 
   protected class MultiEdgeLazyCycle(
       override val nodes : ReverseStackTraversable[CycleStackElem, NodeT],
       edgeFilter: (EdgeT) => Boolean)
       extends MultiEdgeLazyPath(nodes, edgeFilter)
-         with CycleMethods    
+         with Cycle    
 }
 object GraphTraversalImpl {
   import GraphTraversal._

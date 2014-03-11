@@ -180,7 +180,10 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     /** The cumulated weight of all edges on this path. */
     def weight: Long = { var sum = 0L; edges foreach {sum += _.weight}; sum }  
     /** The number of edges on this path. */
-    def length = nodes.size - 1
+    def length: Int = nodes.size - 1
+    /** The number of nodes and edges on this path. */
+    override def size: Int = 2 * length + 1
+
     def startNode: NodeT
     def endNode:   NodeT
     /**
@@ -216,7 +219,23 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    */
   trait Cycle extends Path {
     override def stringPrefix = "Cycle"
-      
+
+    /** Same as `sameAs` but also comparing this cycle with any `Traversable`.
+     */
+    final def sameElements(that: Traversable[_]): Boolean =
+      this.size == that.size && {
+        val thisList = to[List]
+        // thisList.indexOf(that.head) may fail due to asymmetric equality
+        val idx = thisList.indexWhere(_ == that.head)
+        if (idx >= 0) {
+          val thisDoubled = thisList ++ (thisList.tail)
+          val thatList = that.to[List]
+          (thisDoubled startsWith (thatList        , idx)) ||
+          (thisDoubled startsWith (thatList.reverse, idx))
+        }
+        else false
+      }
+
     /** Semantically compares `this` cycle with `that` cycle. While `==` returns `true`
      *  only if the cycles contain the same elements in the same order, this comparison
      *  returns also `true` if the elements of `that` cycle can be shifted and optionally
@@ -228,7 +247,12 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
      * 
      * `c1 != c2`, `c1 != c3` but `c1 sameAs c2` and `c1 sameAs c3`.  
      */
-    def sameAs(that: GraphTraversal[N,E]#Cycle): Boolean
+    final def sameAs(that: GraphTraversal[N,E]#Cycle): Boolean =
+      this == that || ( that match {
+        case that: GraphTraversal[N,E]#Cycle => sameElements(that)
+        case _ => false
+      })
+
   }
 
   /** Whether all nodes are pairwise adjacent.
