@@ -54,3 +54,11 @@ class SetFacade[A](t: Traversable[A]) extends immutable.Set[A] {
 final class EqSetFacade[A <: AnyRef](t: Traversable[A]) extends SetFacade[A](t) {
    final override def contains(elem: A) = t exists (_ eq elem)
 }
+
+object Util {
+
+  /** A power of 2 >= `target`.
+   */
+  def powerOf2(target: Int): Int =
+    scala.collection.mutable.HashTable.powerOfTwo(target)
+}

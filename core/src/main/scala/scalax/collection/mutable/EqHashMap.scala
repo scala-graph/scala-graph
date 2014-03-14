@@ -3,6 +3,8 @@ package scalax.collection.mutable
 import scala.collection.mutable.{Map, MapLike}
 import scala.language.implicitConversions
 
+import scala.collection.Util.powerOf2
+
 class EqHashMap[K <: AnyRef, V](sizeHint: Int = EqHashMap.defCapacity)
     extends Map[K,V]
     with    MapLike[K,V,EqHashMap[K,V]] {
@@ -143,20 +145,21 @@ class EqHashMap[K <: AnyRef, V](sizeHint: Int = EqHashMap.defCapacity)
   
   override def put(key: K, value: V): Option[V] = {
     val k = maskNull(key)
-    val len = table.length
+    val tab = table
+    val len = tab.length
     var i = hash(k, len)
-    var item = table(i)
+    var item = tab(i)
     while (item ne null) {
-      if (item == k) {
-        val oldValue = table(i + 1)
+      if (item eq k) {
+        val oldValue = tab(i + 1)
         table(i + 1) = value.asInstanceOf[AnyRef]
         return Some(oldValue)
       }
       i = nextKeyIndex(i, len);
-      item = table(i)
+      item = tab(i)
     }
-    table(i) = k
-    table(i + 1) = value.asInstanceOf[AnyRef]
+    tab(i) = k
+    tab(i + 1) = value.asInstanceOf[AnyRef]
     _size += 1
     if (_size >= threshold) resize(len)
     None
@@ -236,28 +239,26 @@ class EqHashMap[K <: AnyRef, V](sizeHint: Int = EqHashMap.defCapacity)
 }
 object EqHashMap {
   private final val defCapacity = 32;
-  private final val minCapacity = 4;
+  private final val minCapacity = 8;
   private final val maxCapacity = 1 << 29;
 
   private[mutable] def capacity(sizeHint: Int): Int = {
-    val min = (3 * (if(sizeHint < minCapacity) minCapacity else sizeHint)) / 2
-    if (min > maxCapacity || min < 0) maxCapacity
-    else {
-      var ret = min
-      while (ret < min) ret <<= 1
-      ret
-    }
+    val min = 3 * sizeHint / 2
+    if (min < minCapacity) minCapacity
+    else if (min > maxCapacity || min < 0) maxCapacity
+    else powerOf2(min)
   }
 
   private val _emptyKey = new AnyRef
 
-  private[mutable] def hash(o: AnyRef, length: Int): Int = {
+  @inline final private[mutable] def hash(o: AnyRef, length: Int): Int = {
     val h = System.identityHashCode(o)
     // Multiply by -127 and left-shift to use least bit as part of hash
     ((h << 1) - (h << 8)) & (length - 1)
   }
 
-  private[mutable] def nextKeyIndex(i: Int, len: Int): Int = if (i + 2 < len) i + 2 else 0
+  @inline final private[mutable] def nextKeyIndex(i: Int, len: Int): Int =
+    if (i + 2 < len) i + 2 else 0
 
   def apply[K <: AnyRef, V](elems : (K,V)*) = empty ++= elems
   def empty[K <: AnyRef, V]: EqHashMap[K,V] = empty(defCapacity)
