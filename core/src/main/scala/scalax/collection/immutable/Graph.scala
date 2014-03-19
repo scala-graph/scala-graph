@@ -31,16 +31,6 @@ object Graph extends ImmutableGraphCompanion[Graph]
                                               config: Config = defaultConfig) : Graph[N,E] =
     DefaultGraphImpl.from[N,E](nodes, edges)(
                                edgeT, config)
-  override def fromStream[N, E[X] <: EdgeLikeIn[X]]
-     (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
-      nodes:       Iterable[N]                  = Seq.empty[N],
-      edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
-      edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-     (implicit edgeT: TypeTag[E[N]],
-      config: Config = defaultConfig) : Graph[N,E] =
-    DefaultGraphImpl.fromStream[N,E](nodeStreams, nodes, edgeStreams, edges)(
-                                     edgeT, config)
-                                     
   implicit def cbfUnDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                                  config: Config = defaultConfig) =
     new GraphCanBuildFrom[N,E]()(edgeT, config).asInstanceOf[
@@ -65,15 +55,6 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
   override final val edges = new EdgeSet
   initialize(iniNodes, iniEdges)
 
-  def this(nodeStreams: Iterable[NodeInputStream[N]],
-           nodes:       Iterable[N],
-           edgeStreams: Iterable[GenEdgeInputStream[N,E]],
-           edges:       Iterable[E[N]])
-          (implicit edgeT: TypeTag[E[N]],
-           config: DefaultGraphImpl.Config) = {
-    this()
-    from(nodeStreams, nodes, edgeStreams, edges)
-  }
   override protected[this] def newBuilder =
     new GraphBuilder[N,E,DefaultGraphImpl](DefaultGraphImpl)
   @inline final override def empty: DefaultGraphImpl[N,E] =
@@ -99,15 +80,6 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl]
                                              (implicit edgeT: TypeTag[E[N]],
                                               config: Config = defaultConfig) =
     new DefaultGraphImpl[N,E](nodes, edges)(
-                              edgeT, config)
-  override def fromStream[N, E[X] <: EdgeLikeIn[X]]
-     (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
-      nodes:       Iterable[N]                  = Seq.empty[N],
-      edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
-      edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-     (implicit edgeT: TypeTag[E[N]],
-      config: Config = defaultConfig): DefaultGraphImpl[N,E] =
-    new DefaultGraphImpl[N,E](nodeStreams, nodes, edgeStreams, edges)(
                               edgeT, config)
   implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                                       config: Config = defaultConfig)

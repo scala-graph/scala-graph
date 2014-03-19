@@ -506,15 +506,6 @@ object Graph
                                       config: Config = defaultConfig): Graph[N,E] =
     immutable.Graph.from[N,E](nodes, edges)(
                               edgeT, config)
-  def fromStream [N, E[X] <: EdgeLikeIn[X]]
-     (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
-      nodes:       Iterable[N]                  = Seq.empty[N],
-      edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
-      edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-     (implicit edgeT: TypeTag[E[N]],
-      config: Config = defaultConfig): Graph[N,E] =
-    immutable.Graph.fromStream[N,E](nodeStreams, nodes, edgeStreams, edges)(
-                                    edgeT, config)
 
   implicit def cbfUnDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                                  config: Config = defaultConfig) =

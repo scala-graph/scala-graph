@@ -6,10 +6,10 @@ object Version {
   private val isSnapshot = true
   private def snapshot = if (isSnapshot) "-SNAPSHOT" else ""
   private val major = "1.8"
-  val all         = major + ".0" + snapshot
+  val all         = major + ".1" + snapshot
   val core        = major + ".1" + snapshot
-  val constrained = major + ".0" + snapshot
-  val dot         = major + ".0" + snapshot
-  val json        = major + ".0" + snapshot
-  val misc        = major + ".0" + snapshot
+  val constrained = major + ".1" + snapshot
+  val dot         = major + ".1" + snapshot
+  val json        = major + ".1" + snapshot
+  val misc        = major + ".1" + snapshot
 }

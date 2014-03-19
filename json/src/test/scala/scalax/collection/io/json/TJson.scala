@@ -76,13 +76,14 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 
   def test_parseMixed {
     import FixtureMixed._
-    val lists = graphParse(jsonText, descriptor)
+    val lists = graphParse(jsonText, descriptor).toList
 
     lists should have size (4)
     lists(0) match {
-      case NodeList(nodeTypeId, nodes) =>
+      case NodeList(nodeTypeId, _nodes) =>
         nodeTypeId should be (defaultId)
-        nodes should have size (5)
+        _nodes should have size (5)
+        val nodes = _nodes.toList
         nodes(0) match {
           case JArray(fields) => fields.toString should be
                                 ("List(JString(A))")
@@ -96,9 +97,10 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
       case _ => fail
     }
     lists(1) match {
-      case EdgeList(edgeTypeId, edges) =>
+      case EdgeList(edgeTypeId, _edges) =>
         edgeTypeId should be (defaultId)
-        edges should have size (2)
+        _edges should have size (2)
+        val edges = _edges.toList
         edges(0) match {
           case JArray(fields) => fields.toString should be
                                 ("List(JString(A), JString(B))")
@@ -112,9 +114,10 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
       case _ => fail
     }
     lists(2) match {
-      case EdgeList(edgeTypeId, edges) =>
+      case EdgeList(edgeTypeId, _edges) =>
         edgeTypeId should be ("WkDiEdge")
-        edges should have size (2)
+        _edges should have size (2)
+        val edges = _edges.toList
         edges(0) match {
           case JArray(fields) => fields.toString should be
                                 ("List(JString(A), JString(B), JInt(3))")
@@ -128,9 +131,10 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
       case _ => fail
     }
     lists(3) match {
-      case EdgeList(edgeTypeId, edges) =>
+      case EdgeList(edgeTypeId, _edges) =>
         edgeTypeId should be ("UnDiEdge")
-        edges should have size (2)
+        _edges should have size (2)
+        val edges = _edges.toList
         edges(0) match {
           case JObject(fields) => fields.toString should be
                                  ("List(JField(v1,JString(X)), JField(v2,JString(Y)))")
@@ -209,8 +213,8 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     val jsonText = """
       { "nodes" : [["A"], ["B"]],
         "edges": [
-          ["A", "B", 100, "Label-1"],
-          ["B", "A", 200, "Label-2"],
+          ["A", "B", 100, "CLabel-1"],
+          ["B", "A", 200, "CLabel-2"],
         ]
       }""".filterNot(_.isWhitespace)
     val descriptor = new Descriptor[String](
@@ -219,7 +223,7 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
                              WLDiEdge, "", Some(new WLEdgeSerializer[String]
                                                    (new StringSerializer)))
                      )
-    val graph = factory(("A"~%+>"B")(100, "Label-1"),("B"~%+>"A")(200, "Label-2"))
+    val graph = factory(("A"~%+>"B")(100, "CLabel-1"),("B"~%+>"A")(200, "CLabel-2"))
   }
   def test_importWLEdgeCustom {
     import FixtureWLEdgeCustom._

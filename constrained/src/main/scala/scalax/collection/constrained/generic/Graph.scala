@@ -12,7 +12,6 @@ import scalax.collection.GraphPredef.{EdgeLikeIn, Param, InParam}
 import scalax.collection.generic.GraphCompanion
 import scalax.collection.mutable.ArraySet
 import scalax.collection.config.GraphConfig
-import scalax.collection.io._
 
 import constraints.NoneConstraint
 import mutable.GraphBuilder
@@ -55,16 +54,6 @@ abstract class GraphConstrainedCompanionAlias
               edges: Iterable[E[N]])
              (implicit edgeT: TypeTag[E[N]],
               config: GraphConfig): Graph[N,E] = companion.from(nodes, edges)(edgeT, constraintCompanion)
-
-  def fromStream[N]
-     (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
-      nodes:       Iterable[N]                  = Seq.empty[N],
-      edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
-      edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-     (implicit edgeT: TypeTag[E[N]],
-      config: GraphConfig): Graph[N,E] =
-    companion.fromStream(nodeStreams, nodes, edgeStreams, edges)(
-                         edgeT, constraintCompanion)
 }
 trait MutableGraphCompanion[+GC[N,E[X]<:EdgeLikeIn[X]] <:
                              mutable.Graph[N,E] with mutable.GraphLike[N,E,GC]]

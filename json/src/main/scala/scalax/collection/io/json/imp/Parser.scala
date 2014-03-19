@@ -8,14 +8,14 @@ import error.JsonGraphError._, descriptor._, descriptor.Defaults._
 
 // ---------------------------- data structures representing the parse result 
 protected[json]
-sealed abstract class JsonList(jsonValues: List[JValue])
+sealed abstract class JsonList(jsonValues: Iterable[JValue])
   extends Iterable[JValue]
 {
   override def iterator = jsonValues.iterator
 }
 protected[json]
 sealed abstract class ElemList(elemTypeId: String,
-                        elems: List[JValue])
+                        elems: Iterable[JValue])
   extends JsonList(elems)
 {
   def toString(nodeOrEdge: String) =
@@ -24,32 +24,33 @@ sealed abstract class ElemList(elemTypeId: String,
 }
 protected[json]
 case class NodeList protected[imp] (val nodeTypeId: String,
-                                       val nodes: List[JValue])
+                                    val nodes: Iterable[JValue])
   extends ElemList(nodeTypeId, nodes)
 {
   override def toString = toString("Node")
 }
 protected[json]
 case class EdgeList protected[imp] (val edgeTypeId: String,
-                                       val edges:      List[JValue])
+                                    val edges: Iterable[JValue])
   extends ElemList(edgeTypeId, edges)
 {
   override def toString = toString("Edge")
 }
 object Parser {
   // ----------------------------------- parsing JSON text to NodeList/EdgeList 
-  def parse[N,C <: EdgeCompanionBase[EdgeLike]]
-    (json:       String,
-     descriptor: Descriptor[N]): List[ElemList] = parse(JsonParser.parse(json), descriptor)
+  def parse[N,C <: EdgeCompanionBase[EdgeLike]](
+      json:       String,
+      descriptor: Descriptor[N]): Iterable[ElemList] =
+    parse(JsonParser.parse(json), descriptor)
 
-  def parse[N,C <: EdgeCompanionBase[EdgeLike]]
-    (jsonAST:    JValue,
-     descriptor: Descriptor[N]): List[ElemList] =
+  def parse[N,C <: EdgeCompanionBase[EdgeLike]](
+      jsonAST:    JValue,
+      descriptor: Descriptor[N]): Iterable[ElemList] =
   {
     for (JField(name, values) <- jsonAST
          if descriptor.sectionIds contains name) yield
     {
-      def makeList(elemTypeId: String, arr: List[JValue]) =
+      def makeList(elemTypeId: String, arr: Iterable[JValue]) =
         if (descriptor.sectionIds.isNodes(name))
           if (descriptor.nodeDescriptor(elemTypeId).isEmpty)
             throw err(InvalidElemTypeId, elemTypeId)
@@ -72,7 +73,7 @@ object Parser {
                 case _ => throw err(NonArray, value.toString, value.getClass.toString)
               }
           }
-        case JArray (arr) => makeList(elemTypeId, arr)
+        case JArray(arr) => makeList(elemTypeId, arr)
         case _ => throw err(NonObjArrValue, values.toString, values.getClass.toString)
       }
       elemList

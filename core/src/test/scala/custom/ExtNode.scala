@@ -11,7 +11,6 @@ import scalax.collection.generic.GraphCompanion
 import scalax.collection.immutable.AdjacencyListBase
 import scalax.collection.mutable.ArraySet
 import config.AdjacencyListArrayConfig
-import scalax.collection.io._
 
 // here goes the real extension -----------------------------------------------
 
@@ -144,14 +143,6 @@ package immutable {
                                                 (implicit edgeT: TypeTag[E[N]],
                                                  config: Config) =
       new MyExtGraph[N,E](nodes, edges)
-    override def fromStream[N, E[X] <: EdgeLikeIn[X]]
-       (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
-        nodes:       Iterable[N]                  = Seq.empty[N],
-        edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
-        edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-       (implicit edgeT: TypeTag[E[N]],
-        config: Config = defaultConfig): MyExtGraph[N,E] =
-      throw new IllegalAccessError("'fromStream' not implemented.")
     implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](
         implicit edgeT: TypeTag[E[N]],
         config: Config): CanBuildFrom[Coll, InParam[N,E], MyExtGraph[N,E]] =
@@ -227,14 +218,6 @@ package mutable {
                                                 (implicit edgeT: TypeTag[E[N]],
                                                  config: Config) =
       new MyExtGraph[N,E](nodes, edges)
-    override def fromStream[N, E[X] <: EdgeLikeIn[X]]
-       (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
-        nodes:       Iterable[N]                  = Seq.empty[N],
-        edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
-        edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-       (implicit edgeT: TypeTag[E[N]],
-        config: Config = defaultConfig): MyExtGraph[N,E] =
-      throw new IllegalAccessError("'fromStream' not implemented.")
     implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](
         implicit edgeT: TypeTag[E[N]],
         config: Config): CanBuildFrom[Coll, InParam[N,E], MyExtGraph[N,E]] =

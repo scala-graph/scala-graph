@@ -13,7 +13,6 @@ import scalax.collection.GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
                                       NodeParam, OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam}
 import scalax.collection.mutable.{ArraySet, BuilderImpl}
 import scalax.collection.config.AdjacencyListArrayConfig
-import scalax.collection.io._
 
 import scalax.collection.constrained.{Graph => CGraph, GraphLike => CGraphLike}
 import PreCheckFollowUp._
@@ -189,15 +188,6 @@ object Graph
       config: Config): Graph[N,E] =
     DefaultGraphImpl.from[N,E](nodes, edges)(edgeT, config)
 
-  override def fromStream [N, E[X] <: EdgeLikeIn[X]]
-     (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
-      nodes:       Iterable[N]                  = Seq.empty[N],
-      edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
-      edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-     (implicit edgeT: TypeTag[E[N]],
-      config: Config): Graph[N,E] =
-    DefaultGraphImpl.fromStream[N,E](nodeStreams, nodes, edgeStreams, edges)(
-                                     edgeT, config)
   // TODO: canBuildFrom
 }
 abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
@@ -275,39 +265,6 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl]
         emptyGraph
       } else
         newGraph
-    } else
-      newGraph
-  }
-  override def fromStream [N, E[X] <: EdgeLikeIn[X]]
-     (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
-      iniNodes:    Iterable[N]                  = Seq.empty[N],
-      edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
-      iniEdges:    Iterable[E[N]]               = Seq.empty[E[N]])
-     (implicit edgeT: TypeTag[E[N]],
-      config: Config) : DefaultGraphImpl[N,E] =
-  {
-    var preCheckResult = PreCheckResult(Abort)
-    if (iniNodes.nonEmpty || iniEdges.nonEmpty) {
-      val emptyGraph = empty[N,E](edgeT, config)
-      val constraint = config.constraintCompanion(emptyGraph)
-      preCheckResult = constraint.preCreate(iniNodes, iniEdges)
-      if (preCheckResult.abort) { 
-        constraint onAdditionRefused (iniNodes, iniEdges, emptyGraph) 
-        return emptyGraph
-      }
-    }
-    val newGraph = new UserConstrainedGraphImpl[N,E]()(edgeT, config) {
-      from(nodeStreams, iniNodes, edgeStreams, iniEdges)
-    }
-    var handle = false
-    preCheckResult.followUp match {
-      case Complete  =>
-      case PostCheck => handle = ! newGraph.postAdd(newGraph, iniNodes, iniEdges, preCheckResult)
-      case Abort     => handle = true
-    }
-    if (handle) {
-      newGraph.onAdditionRefused(iniNodes, iniEdges, newGraph)
-      empty[N,E](edgeT, config)
     } else
       newGraph
   }

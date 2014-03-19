@@ -37,7 +37,7 @@ package object json {
   type  LHyperEdgeDescriptor[N,E[X]<: LHyperEdge[X] with  LEdge[X],+C<: LHyperEdgeCompanion[E],L<:AnyRef] = descriptor. LHyperEdgeDescriptor[N,E,C,L] 
   type WLHyperEdgeDescriptor[N,E[X]<:WLHyperEdge[X] with WLEdge[X],+C<:WLHyperEdgeCompanion[E],L<:AnyRef] = descriptor.WLHyperEdgeDescriptor[N,E,C,L] 
 
-  import imp._, imp.Parser.parse, imp.Stream.createStreams
+  import imp._, imp.Parser.parse, imp.Stream.createOuterElems
   import net.liftweb.json.JValue
   
   implicit final class JsonGraphCoreCompanion[+G[N, E[X] <: EdgeLikeIn[X]]
@@ -83,15 +83,13 @@ package object json {
      * @return new `Graph` instance populated from `jsonText`
      */
     def fromJson[N, E[X]<:EdgeLikeIn[X]]
-        (jsonLists:  List[JsonList],
+        (jsonLists:  Iterable[JsonList],
          descriptor: Descriptor[N])
         (implicit edgeT: TypeTag[E[N]],
          config: companion.Config): G[N,E] = {
-      val target = createStreams[N,E] (jsonLists, descriptor)
-      companion.fromStream[N,E] (nodeStreams = target._1,
-                                 nodes       = Seq.empty[N],
-                                 edgeStreams = target._2,
-                                 edges       = Seq.empty[E[N]])(edgeT, config)
+      val target = createOuterElems[N,E] (jsonLists, descriptor)
+      companion.from[N,E] (nodes = target._1,
+                           edges = target._2)(edgeT, config)
     }
   }
 

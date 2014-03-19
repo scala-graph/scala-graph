@@ -10,7 +10,6 @@ import scalax.collection.GraphPredef.{EdgeLikeIn, Param,
 import scalax.collection.GraphEdge.{EdgeLike, EdgeCompanionBase}
 import scalax.collection.{GraphLike => SimpleGraphLike, Graph => SimpleGraph}
 import scalax.collection.config.GraphConfig
-import scalax.collection.io._
 
 import generic.GraphConstrainedCompanion
 import config._
@@ -168,15 +167,6 @@ object Graph
                                              (implicit edgeT: TypeTag[E[N]],
                                               config: Config = defaultConfig): Graph[N,E] =
     immutable.Graph.fromUnchecked[N,E](nodes, edges)(edgeT, config)
-  override def fromStream [N, E[X] <: EdgeLikeIn[X]]
-     (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
-      nodes:       Iterable[N]                  = Seq.empty[N],
-      edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
-      edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-     (implicit edgeT: TypeTag[E[N]],
-      config: Config = defaultConfig): Graph[N,E] =
-    immutable.Graph.fromStream[N,E](nodeStreams, nodes, edgeStreams, edges)(
-                                    edgeT, config)
 }
 trait UserConstrainedGraph[N, E[X] <: EdgeLikeIn[X]]
   extends Graph[N,E]

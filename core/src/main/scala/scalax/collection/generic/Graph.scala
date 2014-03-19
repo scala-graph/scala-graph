@@ -11,7 +11,6 @@ import GraphEdge.{EdgeLike, EdgeCompanionBase}
 import GraphPredef.{EdgeLikeIn, Param, OuterNode}
 import config.{GraphConfig, CoreConfig}
 import mutable.GraphBuilder
-import io.{NodeInputStream, GenEdgeInputStream}
 
 /**
  * Methods common to `Graph` companion objects in the core module.
@@ -27,15 +26,9 @@ import io.{NodeInputStream, GenEdgeInputStream}
  *         edge class. 
  * @define EDGES all edges to be included in the edge set of the graph to be
  *         created. Edge ends will be added to the node set automatically.
- * @define NSTREAMS list of node input streams to be processed. All nodes read from any
- *         of these streams will be added to this graph. Note that only isolated nodes
- *         must be included in a stream or in `nodes`, non-isolated nodes are optional.
  * @define INNODES The isolated (and optionally any other) outer nodes that the node set of
  *         this graph is to be populated with. This parameter may be used as an alternative
  *         or in addition to `nodeStreams`.
- * @define ESTREAMS list of edge input streams, each with its own edge factory,
- *         to be processed. All edges and edge ends (nodes) read from any of these streams
- *         will be added to this graph.
  * @define INEDGES The outer edges that the edge set of this graph is to be populated with.
  *         Nodes being the end of any of these edges will be added to the node set.
  *         This parameter is meant be used as an alternative or in addition to `edgeStreams`.
@@ -78,28 +71,6 @@ trait GraphCompanion[+CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[
                                       edges: collection.Iterable[E[N]])
                                      (implicit edgeT: TypeTag[E[N]],
                                       config: Config): CC[N,E]
-  /**
-   * Creates a graph with nodes and edges read in from the input streams
-   * `nodeStreams`/`edgeStreams` and from `nodes`/`edges`.
-   * 
-   * Node/edge streams are an efficient way to populate `Graph` instances from external
-   * resources such as a database. The user has to implement his input stream classes
-   * deriving them from `NodeInputStream`/`EdgeInputStream`.   
-   * 
-   * @tparam N type of nodes.
-   * @tparam E kind of type of edges.
-   * @param nodeStreams $NSTREAMS
-   * @param nodes       $INNODES
-   * @param edgeStreams $ESTREAMS
-   * @param edges       $INEDGES
-   */
-  def fromStream [N, E[X] <: EdgeLikeIn[X]]
-     (nodeStreams: Iterable[NodeInputStream[N]],
-      nodes:       Iterable[N],
-      edgeStreams: Iterable[GenEdgeInputStream[N,E]],
-      edges:       Iterable[E[N]])
-     (implicit edgeT: TypeTag[E[N]],
-      config: Config): CC[N,E]
   /**
    * Produces a graph containing the results of some element computation a number of times.
    * $DUPLEXCL
@@ -148,13 +119,6 @@ trait GraphCoreCompanion[+CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphL
                                       edges: collection.Iterable[E[N]])
                                      (implicit edgeT: TypeTag[E[N]],
                                       config: Config = defaultConfig): CC[N,E]
-  def fromStream [N, E[X] <: EdgeLikeIn[X]]
-     (nodeStreams: Iterable[NodeInputStream[N]] = Seq.empty[NodeInputStream[N]],
-      nodes:       Iterable[N]                  = Seq.empty[N],
-      edgeStreams: Iterable[GenEdgeInputStream[N,E]] = Seq.empty[GenEdgeInputStream[N,E]],
-      edges:       Iterable[E[N]]               = Seq.empty[E[N]])
-     (implicit edgeT: TypeTag[E[N]],
-      config:                Config             = defaultConfig): CC[N,E]
   override
   def fill[N, E[X] <: EdgeLikeIn[X]] (nr: Int)(elem: => Param[N,E])
                                      (implicit edgeT: TypeTag[E[N]],

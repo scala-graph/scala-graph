@@ -285,13 +285,17 @@ object GraphEdge {
         case _ => List[N](node_1, node_2) ::: List(nodes: _*) 
       }
     }
-    @inline final def apply[N](nodes: Iterable[N]): Product =
-      if (nodes.size == 2)
-        apply(nodes.head, nodes.tail)
-      else {
-        val nodesTail = nodes.tail
-        apply(nodes.head, nodesTail.head, nodesTail.tail.toSeq: _*)
-      }
+    final def apply[N](nodes: Iterable[N]): Product = nodes match {
+      case n1 :: n2 :: rest =>
+        if (rest eq Nil) apply(n1, n2)
+        else             apply(n1, n2, rest: _*)
+      case _ =>
+        val it = nodes.iterator
+        val n1 = it.next
+        val n2 = it.next
+        if (it.hasNext) apply(n1, n2, it.toList: _*)
+        else            apply(n1, n2)
+    }
   }
   protected[collection] sealed trait Eq {
     protected def baseEquals(other: EdgeLike[_]): Boolean

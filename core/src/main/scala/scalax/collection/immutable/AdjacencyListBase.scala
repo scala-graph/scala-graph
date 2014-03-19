@@ -26,7 +26,6 @@ trait AdjacencyListBase[N,
                        +This[X, Y[X]<:EdgeLikeIn[X]]
                         <: GraphLike[X,Y,This] with Set[Param[X,Y]] with SimpleGraph[X,Y]]
   extends GraphLike[N,E,This]
-  with    GraphAux [N,E]
 { this: This[N,E] =>
   protected type Config <: GraphConfig with AdjacencyListArrayConfig
   
@@ -151,20 +150,12 @@ trait AdjacencyListBase[N,
   protected def newNodeWithHints(node: N, hints: ArraySet.Hints): NodeT
 
   type NodeSetT <: NodeSet
-  trait NodeSet extends NodeSetAux with super.NodeSet {
+  trait NodeSet extends super.NodeSet {
     protected val coll = ExtHashSet.empty[NodeT]
     override protected[collection] def initialize(nodes: collection.Iterable[N],
                                                   edges: collection.Iterable[E[N]]) = {
       if (nodes ne null) 
         coll ++= nodes map (Node(_))
-    }
-    override protected[collection] def from (
-        nodeStreams: Iterable[NodeInputStream[N]],
-        nodes:       Iterable[N],
-        edgeStreams: Iterable[GenEdgeInputStream[N,E]],
-        edges:       Iterable[E[N]]) {
-      for (n <- new NodeAux.NodeContStream(nodeStreams, nodes))
-        coll += Node(n)
     }
     override protected def copy = {
       val nodeSet = newNodeSet 
@@ -252,16 +243,7 @@ trait AdjacencyListBase[N,
   protected def newEdgeTArray(size: Int): Array[EdgeT]
 
   type EdgeSetT <: EdgeSet
-  trait EdgeSet extends super.EdgeSet with EdgeSetAux {
-    override protected[collection] def from(
-        nodeStreams: Iterable[NodeInputStream[N]],
-        nodes:       Iterable[N],
-        edgeStreams: Iterable[GenEdgeInputStream[N,E]],
-        edges:       Iterable[E[N]])
-    {
-      for (e <- new EdgeAux.EdgeContStream(edgeStreams, edges))
-        addEdge(Edge(e))
-    }
+  trait EdgeSet extends super.EdgeSet {
     protected[AdjacencyListBase] def addEdge(edge: EdgeT): Unit
     final override def contains(node: NodeT): Boolean =
       nodes find node exists (_.edges.nonEmpty)
