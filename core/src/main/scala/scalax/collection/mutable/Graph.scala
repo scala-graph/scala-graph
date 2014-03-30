@@ -1,48 +1,63 @@
 package scalax.collection
 package mutable
 
-import language.{higherKinds, postfixOps}
-import collection.generic.{CanBuildFrom, Growable, Shrinkable}
-import collection.mutable.{Builder, Cloneable, ListBuffer, Set => MutableSet}
+import scala.language.{higherKinds, postfixOps}
+import scala.collection.generic.{CanBuildFrom, Growable, Shrinkable}
+import scala.collection.mutable.{Builder, Cloneable, ArrayBuffer, Set => MutableSet}
 import scala.reflect.runtime.universe._
+import scala.math.max
 
 import scalax.collection.{Graph => CommonGraph, GraphLike => CommonGraphLike}
 import GraphPredef.{EdgeLikeIn, Param, InParam,
                     OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam} 
 import immutable.{AdjacencyListBase}
 import generic.{GraphCompanion, MutableGraphCompanion}
-import config.{GraphConfig, AdjacencyListArrayConfig}
+import config._
 import GraphEdge.{EdgeCompanionBase, UnDiEdge}
 import io._
 
 protected[collection]
-trait BuilderImpl [N,
-                   E[X] <: EdgeLikeIn[X],
-                   CC[N,E[X] <: EdgeLikeIn[X]] <: CommonGraph[N,E] with
-                                                  CommonGraphLike[N,E,CC]]
-  extends Builder[Param[N,E], CC[N,E]]
-{
+abstract class BuilderImpl[N,
+                           E[X] <: EdgeLikeIn[X],
+                           CC[N,E[X] <: EdgeLikeIn[X]] <: CommonGraph[N,E] with
+                                                          CommonGraphLike[N,E,CC]](
+    implicit edgeT: TypeTag[E[N]],
+    config: GraphConfig)
+    extends Builder[Param[N,E], CC[N,E]] {
+
   protected type This = CC[N,E]
-  protected val nodes = ListBuffer.empty[N]
-  protected val edges = ListBuffer.empty[E[N]]
+  protected val nodes = new ArrayBuffer[N]   (config.orderHint)
+  protected val edges = new ArrayBuffer[E[N]](
+    config match {
+      case CoreConfig(order, adjList) => order * max(adjList.initialCapacity, 16)
+      case _ => config.orderHint * 32
+    }
+  )
+
   protected def add(elem: Param[N,E]) {
     elem match {
-      case n: OuterNode [N] => nodes.+=:(n.value)
-      case n: InnerNodeParam[N] => nodes.+=:(n.value)
-      case e: OuterEdge[N,E]      => edges.+=:(e.edge)
-      case e: InnerEdgeParam[N,E,_,E] => edges.+=:(e.asEdgeTProjection[N,E].toOuter)
+      case n: OuterNode [N]     => nodes += n.value
+      case n: InnerNodeParam[N] => nodes += n.value
+      case e: OuterEdge[N,E]          => edges += e.edge
+      case e: InnerEdgeParam[N,E,_,E] => edges += e.asEdgeTProjection[N,E].toOuter
     }
   }
+
   override def +=(elem: Param[N,E]): this.type = {
     add(elem)
     this
   }
+
   /* overridden for increased performance */
   override def ++=(elems: TraversableOnce[Param[N,E]]): this.type = {
     elems foreach add
     this
   }
-  def clear() { nodes.clear; edges.clear }
+
+  def clear() {
+    nodes.clear
+    edges.clear
+  }
 }
 class GraphBuilder[N,
                    E[X] <: EdgeLikeIn[X],
