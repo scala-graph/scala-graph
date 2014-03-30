@@ -180,6 +180,7 @@ class TEditRootTest
     val str = "A"
     val label: StringLabel = Some(str)
     val g = mutableFactory(2~3, (2 ~+# 3)(label))
+    g should have ('order (2), 'graphSize (2))
 
     import edge.LBase.{LEdgeImplicits}
     object StringLabelImplicit extends LEdgeImplicits[StringLabel]

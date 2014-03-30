@@ -58,8 +58,10 @@ object WBase {
 /** Base traits for key-weighted edges. */
 object WkBase {
   import WBase._
-  trait WkEdge[N] extends WEdge[N]
-  { this: EdgeLike[N] with Eq =>
+  trait WkEdge[N]
+      extends WEdge[N]
+      with    Keyed {
+    this: EdgeLike[N] with Eq =>
     override protected def equals(other: EdgeLike[_]) =
       this.weight == other.weight && (other match {
         case wkEdge: WkEdge[_] => baseEquals(wkEdge)   
@@ -231,8 +233,10 @@ object LkBase {
   /** Everything common to all predefined labeled edge classes with a label being a key attribute.
    *  Such labeled and keyed edge classes are named `Lk<EdgeType>Edge` by convention.
    */
-  trait LkEdge[N] extends LEdge[N]
-  { this: EdgeLike[N] with Eq =>
+  trait LkEdge[N]
+      extends LEdge[N]
+      with    Keyed {
+    this: EdgeLike[N] with Eq =>
     override protected def equals(other: EdgeLike[_]) = other match {
       case that: LkEdge[_] => this.label == that.label &&
                               baseEquals(that)  

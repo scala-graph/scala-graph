@@ -394,7 +394,8 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
             else      buf += (if (node eq innerRoot) ")" else "]")
         }
     }
-    ("" /: result)(_+_) should be ("(A[B1][B2])")
+    ("" /: result)(_+_) should (be ("(A[B1][B2])") or
+                                be ("(A[B2][B1])")  )
   }
   abstract class Elem(val name: String) {
     def balance: Int

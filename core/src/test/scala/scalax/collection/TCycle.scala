@@ -140,15 +140,13 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
   }
   def test_Mixed {
     val g = factory(1 ~ 2, 1 ~> 2, 2 ~ 3)
-    def m(outer: Int) = g get outer
-    val (c1, c2, c3) = ((g get 1).findCycle, (g get 2).findCycle, (g get 3).findCycle)
-    c1 should be ('isDefined)
-    c2 should be ('isDefined)
-    c3 should be ('isDefined)
-    val beExpected = (be (List(1 ~>2, 1 ~ 2)) or
-                      be (List(1 ~ 2, 1 ~>2)))
-    c1.get.edges should beExpected
-    c2.get.edges should beExpected
-    c3.get.edges should beExpected
+    val cycleEdges = List(1 ~>2, 1 ~ 2)
+    g.graphSize should be (3)
+    g.nodes foreach { n =>
+      val c = n.findCycle
+      (n, c.isDefined) should be ((n, true))
+      c.get.edges should (be (cycleEdges) or
+                          be (cycleEdges.reverse))
+    }
  }
 }

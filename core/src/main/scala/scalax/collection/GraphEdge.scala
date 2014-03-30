@@ -206,17 +206,21 @@ object GraphEdge {
      *  b) `p1` holds for a source and `p2` for a target of this directed edge. */
     def matches(p1: N => Boolean, p2: N => Boolean): Boolean
 
-    override def canEqual(that: Any) = that.isInstanceOf[EdgeLike[_]]
-    override def equals(other: Any) = other match {
+    override def canEqual(that: Any): Boolean = that.isInstanceOf[EdgeLike[_]]
+
+    override def equals(other: Any): Boolean = other match {
       case that: EdgeLike[_] => 
         (this eq that) ||
-        (that canEqual this) &&
+        (that canEqual this) && 
         (this.directed == that.directed) &&
+        (this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]) &&
         equals(that) 
       case _ => false
     }
-    /**
-     * Precondition: this.directed == that.directed.
+
+    /** Preconditions:
+     *  `this.directed == that.directed &&`
+     *  `this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]`
      */
     protected def equals(other: EdgeLike[_]): Boolean = baseEquals(other)
     
@@ -297,6 +301,7 @@ object GraphEdge {
         else            apply(n1, n2)
     }
   }
+  protected[collection] trait Keyed
   protected[collection] sealed trait Eq {
     protected def baseEquals(other: EdgeLike[_]): Boolean
     protected def baseHashCode: Int
