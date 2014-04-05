@@ -2,6 +2,7 @@ import sbt._
 import Keys._
 
 object GraphBuild extends Build {
+
   lazy val all = Project(
     id = "Graph-all",
     base = file("."),
@@ -12,14 +13,17 @@ object GraphBuild extends Build {
 	  ),
     aggregate = Seq(core, constrained, dot, json)
   )
+
   lazy val core = Project(
     id = "Graph-core",
     base = file("core"),
     settings = defaultSettings ++ Seq(
       name      := "Graph Core",
-      version   := Version.core
+      version   := Version.core,
+	  libraryDependencies += "com.assembla.scala-incubator" %% "graph-test" % "1.8.1" % "test"
     )
   )
+
   lazy val constrained = Project(
     id = "Graph-constrained",
     base = file("constrained"),
@@ -28,6 +32,7 @@ object GraphBuild extends Build {
       version   := Version.constrained
     )
   ) dependsOn (core % "compile->compile;test->test")
+
   lazy val dot = Project(
     id = "Graph-dot",
     base = file("dot"),
@@ -36,23 +41,34 @@ object GraphBuild extends Build {
       version   := Version.dot
     )
   ) dependsOn (core)
+
   lazy val json = Project(
     id = "Graph-json",
     base = file("json"),
     settings = defaultSettings ++ Seq(
       name      := "Graph JSON",
       version   := Version.json,
-      libraryDependencies ++= Seq("net.liftweb" % "lift-json_2.10" % "2.5.1")
+      libraryDependencies += "net.liftweb" % "lift-json_2.10" % "2.5.1"
     )
   ) dependsOn (core)
+
+  lazy val test = Project(
+    id = "Graph-test",
+    base = file("testutil"),
+    settings = defaultSettings ++ Seq(
+      name      := "Graph Test",
+      version   := Version.test,
+	  libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.11.3"
+    )
+  ) dependsOn (core)
+
   lazy val misc = Project(
     id = "Graph-misc",
     base = file("misc"),
     settings = defaultSettings ++ Seq(
       name      := "Graph Miscellaneous",
       version   := Version.misc,
-	  libraryDependencies ++= Seq("ch.qos.logback" % "logback-classic" % "1.0.7"
-      )
+	  libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.0.7"
     )
   ) dependsOn (core)
 
@@ -75,8 +91,8 @@ object GraphBuild extends Build {
     libraryDependencies ++= Seq(
 	  "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "junit" % "junit" % "4.8.2" % "test",
-      "org.scalatest"  %% "scalatest"  % "1.9.2"  % "test",
-	  "org.scalacheck" %% "scalacheck" % "1.10.1" % "test"
+      "org.scalatest"  %% "scalatest"  % "2.1.2"  % "test",
+	  "org.scalacheck" %% "scalacheck" % "1.11.3" % "test"
     )
   ) ++ GraphSonatype.settings ++ (
     if (Version.compilerIsRC) Seq(
