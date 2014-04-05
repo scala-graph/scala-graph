@@ -149,7 +149,7 @@ trait State[N, E[X] <: EdgeLikeIn[X]] {
     val clearExt = if(doClearExt) ~flagsExt else null
     nodes foreach {n =>
       n.flags &= clear
-      if (doClearExt) n.flagsExt &= clearExt
+      if (doClearExt && (n.flagsExt ne null)) n.flagsExt &= clearExt
     }
   }
 }

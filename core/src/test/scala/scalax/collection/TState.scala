@@ -1,17 +1,19 @@
 package scalax.collection
 
-import language.postfixOps
-import collection.mutable.{ListBuffer, Map => MutableMap}
-import concurrent.{future, Future, Await}
-import concurrent.ExecutionContext.Implicits._
-import concurrent.duration._
+import scala.language.postfixOps
+import scala.collection.mutable.{ListBuffer, Map => MutableMap}
+import scala.concurrent.{future, Future, Await}
+import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.duration._
+import scala.util.Random
 
 import GraphPredef._, GraphEdge._
 import GraphTraversal.VisitorReturn._
+import generator.{RandomGraph, NodeDegreeRange}
 
 import org.scalatest.Suite
 import org.scalatest.Informer
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -19,7 +21,7 @@ import org.junit.runner.RunWith
 /** Ensure that stateful data handling used for traversals is thread-safe. 
  */
 @RunWith(classOf[JUnitRunner])
-class TStateTest extends Suite with ShouldMatchers {
+class TStateTest extends Suite with Matchers {
   val g = Graph(Data.elementsOfUnDi_2: _*)
 
   // a sample traversal with recursive calls in its node visitor
@@ -82,5 +84,25 @@ class TStateTest extends Suite with ShouldMatchers {
     }
     // each traversal must yield the same result
     stat should be (Map(nrNodesExpected -> aLotOfTimes))
+  }
+  def test_clear {
+    /* State.clearNodeStates could cause NPE after lots of unconnected traversals.
+     */
+    val order = 5000
+    val r = new Random(10 * order)
+    def intNodeFactory = r.nextInt
+    val g = new RandomGraph[Int,DiEdge,Graph](
+        Graph,
+        order, 
+        intNodeFactory, 
+        NodeDegreeRange(0,2), 
+        Set(DiEdge),
+        false) {
+      val graphConfig = graphCompanion.defaultConfig
+    }.draw
+    val rootNodes = List.fill(50)(g.nodes.draw(r))
+    for {node <- g.nodes
+         root <- rootNodes}
+      node.hasSuccessor(root)
   }
 }
