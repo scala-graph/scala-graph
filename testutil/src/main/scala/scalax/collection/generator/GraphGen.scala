@@ -10,7 +10,6 @@ import org.scalacheck.util.Buildable._
 
 import GraphPredef.EdgeLikeIn, GraphEdge._
 import generic.GraphCompanion
-import parameters.NodeDegreeRange
 
 /** A `Graph` generator in terms of
  *  [[http://www.scalacheck.org/files/scalacheck_2.10-1.11.3-api/org/scalacheck/Gen$.html org.scalacheck.Gen]].
@@ -28,6 +27,8 @@ import parameters.NodeDegreeRange
  *        for the graph to be generated.
  * @param edgeCompanions The edge types to be used in the generated graph.
  * @param connected Whether the generated graph should be connected.
+ * 
+ * @author Peter Empen
  */
 class GraphGen[N,
                E[N] <: EdgeLikeIn[N],

@@ -15,7 +15,6 @@ import org.scalatest.prop.Checkers._
 import GraphPredef._, GraphEdge._
 import mutable.{Graph => MGraph}
 import generic.GraphCompanion
-import parameters.NodeDegreeRange
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith

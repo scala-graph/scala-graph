@@ -10,7 +10,6 @@ import scala.reflect.ClassTag
 
 import GraphPredef._, GraphEdge._
 import generic.GraphCompanion
-import parameters.NodeDegreeRange
 
 /** Supports random graph creation for graphs of any type with variable metrics. 
  * 
@@ -25,6 +24,8 @@ import parameters.NodeDegreeRange
  *        for the graph to be generated.
  * @param edgeCompanions The edge types to be used in the generated graph.
  * @param connected Whether the generated graph should be connected.
+ * 
+ * @author Peter Empen
  */
 abstract class RandomGraph[N,
                            E[X] <: EdgeLikeIn[X],
