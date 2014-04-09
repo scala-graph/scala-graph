@@ -122,6 +122,13 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
            })
       resizeArray(capacity, nextFree)
   }
+  protected final def indexOf[B](elem: B, pred: (A, B) => Boolean): Int = {
+    var i = 0
+    while (i < nextFree)
+      if (pred(arr(i), elem)) return i
+      else i += 1
+    -1
+  }
   /* Optimized 'arr contains c'. */
   protected final def indexOf(elem: A): Int = {
     var i = 0
@@ -220,8 +227,8 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   def findEntry[B](other: B, correspond: (A, B) => Boolean): A =
     if (isHash) hashSet findEntry (other, correspond)
     else {
-      val elem = arr find (elem => elem.hashCode == other.hashCode && correspond(elem, other))
-      (if (elem.isEmpty) null else elem.get).asInstanceOf[A]
+      val idx = indexOf(other, (a: A, b: B) => a.hashCode == b.hashCode && correspond(a, b))
+      (if (idx < 0) null else arr(idx)).asInstanceOf[A]
     }
   def draw(random: Random): A =
     if (isHash) hashSet draw random
