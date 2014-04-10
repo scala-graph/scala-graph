@@ -536,11 +536,16 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
       newNodes
     }
     @inline final implicit def innerEdgeToEdgeCont(edge: EdgeT): E[NodeT] = edge.edge
-    final object WeightOrdering extends Ordering[EdgeT] {
-      def compare(e1: EdgeT, e2: EdgeT) = e1.weight compare e2.weight
+
+    def defaultWeight(edge: EdgeT) = edge.weight
+    def weightOrdering[T: Numeric](weight: EdgeT => T): Ordering[EdgeT]  = {
+      Ordering by weight
     }
-    final object ArityOrdering extends Ordering[EdgeT] {
-      def compare(e1: EdgeT, e2: EdgeT) = e1.arity compare e2.arity
+    object WeightOrdering extends Ordering[EdgeT] {
+      def compare(e1: EdgeT, e2: EdgeT): Int = e1.weight compare e2.weight
+    }
+    object ArityOrdering extends Ordering[EdgeT] {
+      def compare(e1: EdgeT, e2: EdgeT): Int = e1.arity compare e2.arity
     }
   }
   class EdgeBase(override val edge: E[NodeT]) extends InnerEdgeParam[N,E,NodeT,E] with InnerEdge {

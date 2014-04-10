@@ -142,16 +142,21 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       }
     }
 
-    final def shortestPathTo(potentialSuccessor: NodeT)
-                            (implicit visitor: A => Unit = emptyVisitor): Option[Path] = {
+    final def shortestPathTo[T: Numeric](
+        potentialSuccessor: NodeT,
+        weight            : EdgeT => T,
+        visitor           : A => Unit = emptyVisitor): Option[Path] = {
       withHandle() { implicit visitedHandle => 
+        val num = implicitly[Numeric[T]] 
+        import num._
         @inline def visited(n: NodeT) = n.visited
 
         val nodeVisitor = this.nodeVisitor(visitor) 
         val edgeVisitor = this.edgeVisitor(visitor)
 
-        type NodeWeight = (NodeT,Long)
-        val dest      = MutableMap[NodeT,Long](root -> 0L)
+        type NodeWeight = (NodeT,T)
+        val weightOrdering = Edge.weightOrdering(weight)
+        val dest      = MutableMap[NodeT,T](root -> zero)
         val mapToPred = MutableMap[NodeT,NodeT]()
         val traversal = new Traversal(Successors, subgraphNodes, subgraphEdges,
                                       nodeVisitor, edgeVisitor, ordering) 
@@ -166,9 +171,9 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         // not implicit due to issues #4405 and #4407
         object ordNodeWeight extends Ordering[NodeWeight] {
           def compare(x: NodeWeight,
-                      y: NodeWeight) = y._2.compare(x._2)
+                      y: NodeWeight) = num.compare(y._2, x._2)
         }
-        val qNodes = new PriorityQueue[NodeWeight]()(ordNodeWeight) += ((root->0L))
+        val qNodes = new PriorityQueue[NodeWeight]()(ordNodeWeight) += ((root -> zero))
   
         def sortedAdjacentsNodes(node: NodeT): Option[PriorityQueue[NodeWeight]] = 
           traversal.filteredDiSuccessors(node, visited, false) match {
@@ -176,13 +181,13 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
               Some(adj.
                    foldLeft(new PriorityQueue[NodeWeight]()(ordNodeWeight))(
                      (q,n) => q += ((n, dest(node) +
-                                        node.outgoingTo(n).filter(subgraphEdges(_)).
-                                        min(Edge.WeightOrdering).weight))))
+                                        weight(node.outgoingTo(n).filter(subgraphEdges(_)).
+                                               min(weightOrdering))))))
             case _ => None
           }
         def relax(pred: NodeT, succ: NodeT) {
-          val cost = dest(pred) + pred.outgoingTo(succ).filter(subgraphEdges(_)).
-                                  min(Edge.WeightOrdering).weight
+          val cost = dest(pred) + weight(pred.outgoingTo(succ).filter(subgraphEdges(_)).
+                                         min(weightOrdering))
           if(!dest.isDefinedAt(succ) || cost < dest(succ)) {
             dest      += (succ->cost)
             mapToPred += (succ->pred)
@@ -211,7 +216,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
               if (doNodeVisitor && extendedVisitor.map { v =>
                 nodeCnt += 1
                 v(node, nodeCnt, 0,
-                  new DijkstraInformer[NodeT] {
+                  new DijkstraInformer[NodeT,T] {
                     def queueIterator = qNodes.toIterator
                     def costsIterator = dest.toIterator
                   })
@@ -1064,16 +1069,16 @@ object GraphTraversalImpl {
   /** Extended node visitor informer for calculating shortest paths. 
    *  This informer always returns `0` for `depth`.
    */
-  trait DijkstraInformer[N] extends NodeInformer {
+  abstract class DijkstraInformer[N, T: Numeric] extends NodeInformer {
     import DijkstraInformer._
-    def queueIterator: DijkstraQueue[N]
-    def costsIterator: DijkstraCosts[N]
+    def queueIterator: DijkstraQueue[N,T]
+    def costsIterator: DijkstraCosts[N,T]
   }
   object DijkstraInformer {
-    type DijkstraQueue[N] = Iterator[(N, Long)]
-    type DijkstraCosts[N] = Iterator[(N, Long)]
-    def unapply[N](inf: DijkstraInformer[N])
-        : Option[(DijkstraQueue[N], DijkstraCosts[N])] =
+    type DijkstraQueue[N,T] = Iterator[(N,T)]
+    type DijkstraCosts[N,T] = Iterator[(N,T)]
+    def unapply[N, T: Numeric](inf: DijkstraInformer[N,T])
+        : Option[(DijkstraQueue[N,T], DijkstraCosts[N,T])] =
       Some(inf.queueIterator, inf.costsIterator)
   }
 } 

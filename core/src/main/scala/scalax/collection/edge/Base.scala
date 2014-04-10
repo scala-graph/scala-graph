@@ -348,9 +348,7 @@ object WkLkBase {
     extends WLEdgeCompanion[E] 
 }
 /** Base traits for custom edges - hence the `C` prefix. Note that custom edges need only
- *  to mix in `CBase.Attributes` in the context of [[scalax.collection.io.EdgeInputStream]]
- *  that is if they are outer edges loaded by `fromStream`. This is also the case when
- *  importing by `fromJson`.
+ *  to mix in `CBase.Attributes` when importing by `fromJson`.
  */
 object CBase {
   /** To be mixed in by the custom edge class. */

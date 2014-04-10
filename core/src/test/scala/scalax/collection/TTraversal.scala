@@ -207,6 +207,18 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     (n(4) shortestPathTo n(5)).get.nodes.toList should be (List(4,3,5)) 
     (n(1) shortestPathTo n(5)).get.nodes.toList should be (List(1,5))
   }
+  def test_shortestPathTo_Di_1_Float {
+    val g = factory(elementsOfWDi_1: _*)
+    def n(outer: Int) = g get outer
+    
+    def weight(e: g.EdgeT): Float = 0.5f + e.weight
+    def reverseWeight(e: g.EdgeT): Long = 41 - e.weight
+
+    n(5) shortestPathTo (n(4), weight) should be (None)
+    
+    (n(1) shortestPathTo (n(3),        weight)).get.nodes.toList should be (List(1,3)) 
+    (n(1) shortestPathTo (n(3), reverseWeight)).get.nodes.toList should be (List(1,2,3)) 
+  }
   def test_shortestPathTo_UnDi_1 {
     val g = factory(elementsofWUnDi_1: _*)
     def n(value: Int) = g get value
@@ -335,7 +347,7 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     shp4.get.edges.toList should be (List(flight("UA 8840"), flight("LH 1480")))
 
     var visited = Set[g.EdgeT]() 
-    (g get jfc).innerEdgeTraverser.shortestPathTo(g get lhr) { e =>
+    (g get jfc).innerEdgeTraverser.shortestPathTo(g get lhr) { e: g.EdgeT =>
       visited += e
     }
     val visitedSorted = visited.toList.sortWith((a: g.EdgeT, b: g.EdgeT) => a.flightNo < b.flightNo)

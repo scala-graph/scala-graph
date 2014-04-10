@@ -580,7 +580,16 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       subgraphEdges: (EdgeT) => Boolean = anyEdge,
       ordering     : ElemOrdering       = noOrdering): ComponentTraverser
 
-  /** The `root`-related methods [[Traverser]] will inherit. 
+  /** The `root`-related methods [[Traverser]] will inherit.
+   *  
+   * @define SHORTESTPATH Finds the shortest path from `root` to `potentialSuccessor`
+   *         $CONSIDERING The calculation is based on the weight of the edges on the path.
+   *         Edges have a default weight of `1L` that can be overridden by custom edges.
+   *         A weight function yielding any numeric type may also be passed to `shortestPathTo`.
+   * @define POTENTIALSUCC The node the shortest path is to be found to.
+   * @define SHORTESTPATHRET The shortest path to `potentialSuccessor` or `None` if either
+   *         a. there exists no path to `potentialSuccessor` or
+   *         a. there exists a path to `potentialSuccessor` but $DUETOSUBG
    */
   protected abstract class TraverserMethods[A, +This <: TraverserMethods[A,This]]
       extends FluentProperties[This] {
@@ -729,18 +738,27 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       if (potentialSuccessor eq root) Some(Path.zero(root))
       else pathUntil(_ eq potentialSuccessor)(visitor)
 
-    /** Finds the shortest path from `root` to `potentialSuccessor` $CONSIDERING
-     * The calculation is based on the weight of the edges on the path. As a default,
-     * edges have a weight of 1 that can be overridden by custom edges. 
+    /** $SHORTESTPATH 
      *
-     * @param potentialSuccessor The node the shortest path is to be found to.
+     * @param potentialSuccessor $POTENTIALSUCC
      * @param visitor $OPTVISITOR
-     * @return The shortest path to `potentialSuccessor` or `None` if either
-     *         a. there exists no path to `potentialSuccessor` or
-     *         a. there exists a path to `potentialSuccessor` but $DUETOSUBG
+     * @return $SHORTESTPATHRET
      */
-    def shortestPathTo(potentialSuccessor: NodeT)
-                      (implicit visitor: A => Unit = emptyVisitor): Option[Path]
+    final def shortestPathTo(potentialSuccessor: NodeT)
+                            (implicit visitor  : A => Unit = emptyVisitor): Option[Path] =
+      shortestPathTo(potentialSuccessor, Edge.defaultWeight, visitor)
+
+    /** $SHORTESTPATH
+     *  
+     * @param potentialSuccessor $POTENTIALSUCC
+     * @param weight Function to determine the weight of edges. If supplied, this function
+     *        takes precedence over edge weights. 
+     * @param visitor $OPTVISITOR
+     * @return $SHORTESTPATHRET 
+     */
+    def shortestPathTo[T: Numeric](potentialSuccessor: NodeT,
+                                   weight            : EdgeT => T,
+                                   visitor  : A => Unit = emptyVisitor): Option[Path]
 
     /** Finds a cycle starting the search at `root` $INTOACC, if any.
      *  The resulting cycle may start at any node connected with `this` node.
