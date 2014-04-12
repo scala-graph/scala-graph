@@ -698,28 +698,21 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         }
         var res: Option[NodeT] = None
         var nodeCnt = 0
-        /* pushed allows to track the path.
-         * prev   serves the special handling of undirected edges. */
-        @tailrec
-        def loop(pushed: Boolean) {
+        @tailrec def loop(pushed: Boolean) {
           if (res.isEmpty)
             if (stack.isEmpty)
               path foreach (t => setBlack(t._1))
             else {
               val popped = stack.pop
-              val exclude: Option[NodeT] =
-                if (pushed)
-                  if (popped._3) Some(popped._2) else None
-                else {
-                  while ( path.nonEmpty &&
-                         (path.head._1 ne root) &&
-                         (path.head._1 ne popped._2)) {
-                    val p = path.pop._1
-                    if (! isBlack(p))
-                      onNodeUp(p) 
-                  }
-                  Some(path.head._1)
+              if (! pushed)
+                while ( path.nonEmpty &&
+                       (path.head._1 ne root) &&
+                       (path.head._1 ne popped._2)) {
+                  val p = path.pop._1
+                  if (! isBlack(p))
+                    onNodeUp(p) 
                 }
+              val exclude: Option[NodeT] = if (popped._3) Some(popped._2) else None
               val current = popped._1
               path.push((current, popped._4))
               if (nonVisited(current)) onNodeDown(current)
@@ -994,16 +987,22 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       val buf = new ArrayBuffer[EdgeT](nodes.size) {
         override def stringPrefix = "Edges"
       }
+      val isDiGraph = thisGraph.isDirected
       (nodes.head /: nodes.source.tail){ (prev: NodeT, elem: CycleStackElem) =>
         val (n, conn) = elem
+        def get(edges: Iterable[EdgeT], pred: (EdgeT) => Boolean) = {
+          def ok(e: EdgeT): Boolean = ! multi.contains(e) && edgeFilter(e) && pred(e) 
+          if (isDiGraph)
+            (edges find ok).get
+          else {
+            val (di, unDi) = edges filter ok partition (_.isDirected)
+            di.headOption getOrElse (unDi.head) 
+          }
+        }
         val edge = (conn.size: @switch) match {
-          case 0 => n.edges.find (e => ! multi.contains(e) &&
-                                       edgeFilter(e) &&
-                                       e.hasTarget((x: NodeT) => x eq prev)).get          
+          case 0 => get(n.edges, (e: EdgeT) => e.hasTarget((x: NodeT) => x eq prev))          
           case 1 => conn.head
-          case _ => conn.find (e => ! multi.contains(e) &&
-                                    edgeFilter(e) &&
-                                    e.hasSource((x: NodeT) => x eq n)).get
+          case _ => get(conn,    (e: EdgeT) => e.hasSource((x: NodeT) => x eq n)) 
         }
         buf += edge
         multi += edge
