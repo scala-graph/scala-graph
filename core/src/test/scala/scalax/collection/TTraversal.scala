@@ -1,19 +1,24 @@
 package scalax.collection
 
-import language.{higherKinds, postfixOps}
-import collection.mutable.{ListBuffer, Set, Stack}
+import scala.language.{higherKinds, postfixOps}
+import scala.collection.mutable.{ListBuffer, Set => MSet, Stack}
+import scala.util.Random
 
 import GraphPredef._, GraphEdge._
 import GraphTraversal._
 import GraphTraversal.VisitorReturn._
 import generic.GraphCoreCompanion
 import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
+import generator.GraphGen
 
 import org.scalatest.Suite
 import org.scalatest.Suites
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.prop.PropertyChecks
+
+import org.scalacheck._
+import Arbitrary.arbitrary
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -32,12 +37,14 @@ class TTraversalRootTest
  *	by the Graph factory and passed to the constructor. For instance,
  *	this allows the same tests to be run for mutable and immutable Graphs.
  */
-private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
-			(val factory: GraphCoreCompanion[CC])
+private class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
+			(val factory: GraphCoreCompanion[G])
 	extends	Suite
 	with	ShouldMatchers
 	with	PropertyChecks
 {
+  implicit val config = PropertyCheckConfig(minSuccessful = 5, maxDiscarded = 5)
+  
   def test_findSuccessor_tiny {
     val g = factory(1~>2)
     val (n1, n2) = (g get 1, g get 2)
@@ -346,7 +353,7 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     shp4.get.nodes.toList should be (List(jfc, fra, svx)) 
     shp4.get.edges.toList should be (List(flight("UA 8840"), flight("LH 1480")))
 
-    var visited = Set[g.EdgeT]() 
+    var visited = MSet[g.EdgeT]() 
     (g get jfc).innerEdgeTraverser.shortestPathTo(g get lhr) { e: g.EdgeT =>
       visited += e
     }
@@ -522,49 +529,20 @@ private class TTraversal[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     edges.toSet should be (g.edges filter edgePred)
   }
   def test_ShortestPathExistsIfPathExists {
-    import org.scalacheck._
-    import Arbitrary.arbitrary
-    import Gen._
+    implicit val arbitraryWDiGraph = Arbitrary {
+      import GraphGen.SmallInt._
+      new GraphGen[Int,WDiEdge,G](
+          factory, order, nodeGen, nodeDegrees, Set(WDiEdge), connected).apply
+    }
+    val r = new Random
+    
+    forAll(arbitrary[G[Int,WDiEdge]]) { g: G[Int, WDiEdge] =>
+      def drawNode = g.nodes.draw(r) 
+      val (n1, n2) = (drawNode, drawNode) 
+      val path = n1 pathTo n2
+      val shortestPath = n1 shortestPathTo n2
 
-    val numEdges = 100
-    val nodeIdGen = Gen.choose(1, 20)
-
-    implicit val arbGraph: Arbitrary[Graph[Int, WDiEdge]] =
-      Arbitrary {
-        val nodeGen = for {
-          n1 <- nodeIdGen
-          n2 <- nodeIdGen
-          weight <- Gen.choose(1, 100)
-        } yield (n1 min n2) ~> (n1 max n2) % weight
-
-        val graphGen = for {
-          edges <- Gen.listOfN(numEdges, nodeGen)
-        } yield factory(edges: _*)
-
-        graphGen
-      }
-
-    def pathBetween(g: Graph[Int, WDiEdge], n1: Int, n2: Int) = for {
-      nodeT1 <- g.find(n1)
-      nodeT2 <- g.find(n2)
-      path <- nodeT1.pathTo(nodeT2)
-    } yield path
-
-    def shortestPathBetween(g: Graph[Int, WDiEdge], n1: Int, n2: Int) = for {
-      nodeT1 <- g.find(n1)
-      nodeT2 <- g.find(n2)
-      path <- nodeT1.shortestPathTo(nodeT2)
-    } yield path
-
-    forAll(arbitrary[Graph[Int, WDiEdge]], nodeIdGen, nodeIdGen) {
-      (g: Graph[Int, WDiEdge], n1: Int, n2: Int) =>
-        val lower = n1 min n2
-        val higher = n1 max n2
-
-        val path = pathBetween(g, lower, higher)
-        val shortestPath = shortestPathBetween(g, lower, higher)
-
-        path.isDefined should equal (shortestPath.isDefined)
+      path.isDefined should equal (shortestPath.isDefined)
     }
   }
 }
