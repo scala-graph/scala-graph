@@ -486,14 +486,14 @@ object GraphEdge {
     def unapply[N](e: LoopFreeEdge[N]) = Some(e)
   }
   /** Marker trait for companion objects of any kind of edge. */
-  trait EdgeCompanionBase[+E[N] <: EdgeLike[N]]
+  trait EdgeCompanionBase
   /**
    * The abstract methods of this trait must be implemented by companion objects
    * of simple (non-weighted, non-labeled) hyperedges.
    * 
    * @author Peter Empen
    */
-  trait HyperEdgeCompanion[+E[N] <: EdgeLike[N]] extends EdgeCompanionBase[E] {
+  trait HyperEdgeCompanion[+E[N] <: EdgeLike[N]] extends EdgeCompanionBase {
     def apply[N](node_1: N, node_2: N, nodes: N*): E[N]
     /** @param nodes must be of arity >= 2 */
     protected[collection] def from [N](nodes: Product): E[N]
@@ -504,7 +504,7 @@ object GraphEdge {
    * 
    * @author Peter Empen
    */
-  trait EdgeCompanion[+E[N] <: EdgeLike[N]] extends EdgeCompanionBase[E] {
+  trait EdgeCompanion[+E[N] <: EdgeLike[N]] extends EdgeCompanionBase {
     def apply[N](node_1: N, node_2: N): E[N]
     /** @param nodes must be of arity == 2 */
     protected[collection] def from [N](nodes: Product): E[N]

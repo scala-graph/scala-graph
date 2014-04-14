@@ -75,7 +75,7 @@ class TGraphGenTest
     implicit val arbitraryGraph = GraphGen.tinyConnectedIntDi[Graph](Graph)
         
     def `should conform to tiny metrics` {
-      forAll(arbitrary[IntDiGraph]) { (g: IntDiGraph) =>
+      forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
         checkMetrics(g, GraphGen.TinyInt)
       }
     }
@@ -85,7 +85,7 @@ class TGraphGenTest
     implicit val arbitraryGraph = GraphGen.smallConnectedIntDi[Graph](Graph)
         
     def `should conform to small metrics` {
-      forAll(arbitrary[IntDiGraph]) { (g: IntDiGraph) =>
+      forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
         checkMetrics(g, GraphGen.SmallInt)
       }
     }

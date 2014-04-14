@@ -2,6 +2,7 @@ package scalax.collection
 package generator
 
 import scala.language.higherKinds
+import scala.collection.mutable.{Set => MSet}
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 import scala.util.Random
@@ -12,7 +13,7 @@ import org.scalatest.{DoNotDiscover, Spec}
 import GraphPredef._, GraphEdge._
 import mutable.{Graph => MGraph}
 import generic.GraphCompanion
-import parameters.NodeDegreeRange
+import edge.{WDiEdge, LDiEdge}
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -32,7 +33,7 @@ class TRandomGraphTest extends Spec with Matchers {
   def generator[N,
                 E[X] <: EdgeLikeIn[X],
                 G[X,Y[Z] <: EdgeLikeIn[Z]] <: Graph[X,Y] with GraphLike[X,Y,G]]
-      (edgeCompanion: EdgeCompanionBase[E],
+      (edgeCompanion: EdgeCompanionBase,
        gCompanion:    GraphCompanion[G],
        connected:     Boolean)
       (implicit edgeTag: TypeTag[E[N]],
@@ -93,6 +94,24 @@ class TRandomGraphTest extends Spec with Matchers {
     def `should have expected size` {
       checkOrder(g)
       checkSize(g)
+    }
+  }
+  object `default weighted random graph edges` {
+    implicit val metrics = RandomGraph.TinyInt
+    val g = generator[Int,WDiEdge,Graph](WDiEdge, Graph, true).draw
+    
+    def `should have distinct weights` {
+      val weights = MSet.empty[Long] ++ (g.edges map (_.weight))
+      weights.size should be (g.graphSize)
+    }
+  }
+  object `default labeled random graph edges` {
+    implicit val metrics = RandomGraph.SmallInt
+    val g = generator[Int,LDiEdge,Graph](LDiEdge, Graph, true).draw
+    
+    def `should have distinct labels` {
+      val labels = MSet.empty[Any] ++ (g.edges map (_.label))
+      labels.size should be (g.graphSize)
     }
   }
   object IgnoreThis {

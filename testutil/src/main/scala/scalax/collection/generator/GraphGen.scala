@@ -37,8 +37,10 @@ class GraphGen[N,
     val order:          Int,
     nodeGen:            Gen[N],
     nodeDegrees:        NodeDegreeRange,
-    edgeCompanions:     Set[EdgeCompanionBase[E]],
-    connected:          Boolean = true)
+    edgeCompanions:     Set[EdgeCompanionBase],
+    connected:          Boolean = true,
+    weightFactory:      Option[Gen[Long]] = None,
+    labelFactory:       Option[Gen[ Any]] = None)
    (implicit edgeTag: TypeTag[E[N]],
     nodeTag: ClassTag[N]) {
 
@@ -47,27 +49,34 @@ class GraphGen[N,
   
   protected[generator] val outerNodeSet = Arbitrary(nodeSetGen)
   
-  private def ensureNodeGen: N = {
-    var cnt = 0
-    var node: Option[N] = None
-    while (node.isEmpty && cnt < 100) {
-      node = nodeGen.apply(Gen.Parameters.default)
-      cnt += 1
+  private final class NonFailing[N](gen: Gen[N], genName: String) {
+    def draw = {
+      var cnt = 0
+      var value: Option[N] = None
+      while (value.isEmpty && cnt < 100) {
+        value = gen.apply(Gen.Parameters.default)
+        cnt += 1
+      }
+      value getOrElse (throw new IllegalArgumentException(
+          s"$genName generator fails to generate enough valid values. Try to ease its filter condition."))
     }
-    node getOrElse (throw new IllegalArgumentException(
-        "The supplied node generator fails to generate valid values. Try to ease its filter condition."))
   } 
 
-  private def generator =
+  private def generator = {
+    val nonFailingWeights = weightFactory map (new NonFailing(_, "weight"))
+    val nonFailingLabels  =  labelFactory map (new NonFailing(_, "label"))
     new RandomGraph[N,E,G](
         graphCompanion,
         order, 
-        ensureNodeGen, 
+        new NonFailing(nodeGen, "node").draw, 
         nodeDegrees, 
         edgeCompanions,
-        connected) {
+        connected,
+        weightFactory map (f => () => nonFailingWeights.get.draw),
+        labelFactory  map (f => () => nonFailingLabels .get.draw)) {
       val graphConfig = graphCompanion.defaultConfig
     }
+  }
   
   def apply: Gen[G[N,E]] = Gen.const(0) map ( _ => generator.draw)  
 }
@@ -97,7 +106,7 @@ object GraphGen {
       import TinyInt._
       new GraphGen[Int,DiEdge,G](
           companion, order, nodeGen, nodeDegrees, Set(DiEdge), connected).apply
-  }
+    }
   
   def smallConnectedIntDi[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
       (companion: GraphCompanion[G]): Arbitrary[G[Int,DiEdge]] =
@@ -105,5 +114,5 @@ object GraphGen {
       import SmallInt._
       new GraphGen[Int,DiEdge,G](
           companion, order, nodeGen, nodeDegrees, Set(DiEdge), connected).apply
-  }
+    }
 }
