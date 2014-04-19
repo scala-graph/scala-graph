@@ -233,7 +233,8 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
           map.get(potentialSuccessor).map ( _ =>
             new MinWeightEdgeLazyPath(
                 new MapPathTraversable[NodeT](map, potentialSuccessor, root),
-                subgraphEdges)
+                subgraphEdges,
+                Edge.weightOrdering(weight))
           ) orElse (
             if(root eq potentialSuccessor) Some(Path.zero(potentialSuccessor)) else None
           )
@@ -963,14 +964,15 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   /** `LazyPath` with edges selected by minimal weight.
    */
   protected class MinWeightEdgeLazyPath(override val nodes : Traversable[NodeT],
-                                        edgeFilter: (EdgeT) => Boolean)
+                                        edgeFilter: (EdgeT) => Boolean,
+                                        weightOrdering: Ordering[EdgeT])
       extends SimpleLazyPath(nodes, edgeFilter) {
     
     final def selectEdge (from: NodeT, to: NodeT): EdgeT =
       if (isCustomEdgeFilter(edgeFilter))
-        from outgoingTo to filter edgeFilter min(Edge.WeightOrdering)
+        from outgoingTo to filter edgeFilter min(weightOrdering)
       else
-        from outgoingTo to min(Edge.WeightOrdering)
+        from outgoingTo to min(weightOrdering)
   }
 
   /** `LazyPath` with edge selection such that there exists no duplicate edge in the path.
