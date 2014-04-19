@@ -4,6 +4,7 @@ import language.{higherKinds, implicitConversions, postfixOps}
 import collection.mutable.ListBuffer
 
 import GraphPredef.{EdgeLikeIn, OuterElem, OuterEdge, OutParam, InnerNodeParam, InnerEdgeParam}
+import mutable.EqHashMap
 
 /** Graph-related functionality such as traversal, path finding, cycle detection etc.
  *  All algorithms including breadth-first, depth-first, white-gray-black search and
@@ -87,6 +88,14 @@ import GraphPredef.{EdgeLikeIn, OuterElem, OuterEdge, OutParam, InnerNodeParam, 
  * @define SUBGRAPHEDGES Restricts subsequent graph traversals to walk only along edges that hold this predicate.
  * @define DOWNUPBOOLEAN where the `Boolean` parameter is `true` if the traversal takes place
  *         in downward and `false` if it takes place in upward direction.
+ * @define PATHSYNTAX `::= ''node'' { ''edge'' ''node'' }`
+ * @define WALKPATH A walk/path contains at least one node followed by any number of
+ *         consecutive pairs of an edge and a node.
+ *         The first element is the start node, the second is an edge with its source
+ *         being the start node and its target being the third element etc.
+ * @define SANECHECK This optional check is sane if there is reasonable doubt
+ *         about the correctness of some algorithm results.
+ * 
  * @author Peter Empen
  */
 trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
@@ -157,52 +166,121 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
   @inline final def findCycle(visitor: InnerElem => Unit) =
     componentTraverser().findCycle(visitor)
 
-  /**
-   * Represents a path in this graph listing the nodes and connecting edges on it
-   * with the following syntax:
+  /** Represents a walk in this graph where
    * 
-   * `path ::= ''node'' { ''edge'' ''node'' }`
+   * `walk` $PATHSYNTAX
    * 
-   * All nodes and edges on the path are distinct. A path contains at least
-   * one node followed by any number of consecutive pairs of an edge and a node.
-   * The first element is the start node, the second is an edge with its tail
-   * being the start node and its head being the third element etc.   
+   * $WALKPATH
+   * 
+   * @define CUMWEIGHT The cumulated weight of all edges on this path/walk.    
    */
-  trait Path extends Traversable[OutParam[N,E]]
+  trait Walk extends Traversable[InnerElem]
   {
-    override def stringPrefix = "Path"
+    override def stringPrefix = "Walk"
 
-    /** All nodes of this path in proper order. */
+    /** All nodes on this path/walk in proper order. */
     def nodes: Traversable[NodeT]
-    /** All edges of this path in proper order. */
+    /** All edges of this path/walk in proper order. */
     def edges: Traversable[EdgeT]
 
-    /** The cumulated weight of all edges on this path. */
-    def weight: Long = { var sum = 0L; edges foreach {sum += _.weight}; sum }  
-    /** The number of edges on this path. */
+    /** $CUMWEIGHT */
+    final def weight: Long = (0L /: edges)((sum, edge) => sum + edge.weight)
+    /** $CUMWEIGHT
+     *  @param f The weight function overriding edge weights. */
+    final def weight[T: Numeric](f: EdgeT => T): T = {
+      val num = implicitly[Numeric[T]] 
+      import num._
+     (num.zero /: edges)((sum, edge) => sum + f(edge))
+    }
+
+    /** The number of edges on this path/walk. */
     def length: Int = nodes.size - 1
-    /** The number of nodes and edges on this path. */
+    /** The number of nodes and edges on this path/walk. */
     override def size: Int = 2 * length + 1
 
     def startNode: NodeT
     def endNode:   NodeT
-    /**
-     * Returns whether the contents of this path are valid with respect
-     * to path semantics. This check is appropriate whenever there may be
-     * any doubt about the correctness of the result of an algorithm. 
+    
+    def foreach[U](f: InnerElem => U): Unit = {
+      f(nodes.head)
+      val edges = this.edges.toIterator
+      for (n <- nodes.tail;
+           e = edges.next) {
+        f(e)
+        f(n)
+      }
+    }
+
+    /** Returns whether the nodes and edges of this walk are valid with respect
+     *  to this graph. $SANECHECK  
      */
-    def isValid: Boolean
+    def isValid: Boolean = {
+      val isValidNode = nodeValidator.apply _
+      nodes.headOption filter isValidNode map { startNode =>
+        val edges = this.edges.toIterator
+        (nodes.head /: nodes.tail){ (prev: NodeT, n: NodeT) =>
+          if (isValidNode(n) && edges.hasNext) {
+            val e = edges.next
+            if (! e.matches((x: NodeT) => x eq prev,
+                            (x: NodeT) => x eq n   )) return false
+            n
+          } else return false
+        }
+        true
+      } getOrElse false
+    }
+
+    protected trait NodeValidator {
+      def apply(node: NodeT): Boolean
+    }
+    protected def nodeValidator: NodeValidator =
+      new NodeValidator { 
+        def apply(node: NodeT): Boolean = true
+    }
+  }
+  protected trait ZeroWalk {
+    this: Walk =>
+    protected def single: NodeT
+    val nodes = List(single)
+    def edges = Nil
+    def startNode = single
+    def endNode = single
+    override def isValid = true
+  }
+  object Walk {
+    /** A walk of zero length that is a single node. */
+    def zero(node: NodeT) =
+      new Walk with ZeroWalk {
+        protected final def single = node
+      }
+  }
+  
+  /** Represents a path in this graph where
+   * 
+   * `path` $PATHSYNTAX
+   * 
+   * Nodes and edges on the path are distinct. $WALKPATH
+   */
+  trait Path extends Walk
+  {
+    override def stringPrefix = "Path"
+
+    /** Returns whether the nodes and edges on this path are valid with respect
+     *  to this graph. $SANECHECK  
+     */
+    override def isValid: Boolean = super.isValid
+    
+    override protected def nodeValidator: NodeValidator =
+      new NodeValidator { 
+        private[this] val nodeSet = new EqHashMap[NodeT,Null](nodes.size)
+        def apply(node: NodeT): Boolean = nodeSet.put(node, null).isEmpty
+    }
   }
   object Path {
     /** A path of zero length that is a single node. */
-    def zero(node: NodeT) = new Path {
-      private[this] val _node = node
-      val nodes = List(_node)
-      def edges = Nil
-      def foreach[U](f: OutParam[N,E] => U): Unit = f(_node)
-      def startNode = _node
-      def endNode = _node
-      def isValid = true
+    def zero(node: NodeT) =
+      new Path with ZeroWalk {
+        protected final def single = node
     }
   }
   
@@ -499,8 +577,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    *  
    * @define UPDATED Creates a new [[FluentProperties]] based on `this` except for an updated
    */
-  protected abstract class FluentProperties[+This <: FluentProperties[This]]
-      extends {
+  protected abstract class FluentProperties[+This <: FluentProperties[This]] {
     this: This with Properties =>
       
     protected def newTraverser:

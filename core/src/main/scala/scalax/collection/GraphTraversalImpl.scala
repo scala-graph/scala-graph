@@ -889,40 +889,18 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
 
   /** Path based on the passed collection of nodes with lazy evaluation of edges.
    */
-  protected abstract class LazyPath(val nodes : Traversable[NodeT],
-                                    edgeFilter: (EdgeT) => Boolean)
+  protected abstract class LazyPath(val nodes : Traversable[NodeT])
       extends Path {
 
-    def foreach[U](f: OutParam[N,E] => U): Unit = {
-      f(nodes.head)
-      val edges = this.edges.toIterator
-      for (n <- nodes.tail;
-           e = edges.next) {
-        f(e)
-        f(n)
-      }
-    }
     def startNode = nodes.head
     def endNode   = nodes.last
-    def isValid: Boolean = {
-      nodes.headOption map { startNode =>
-        val edges = this.edges.toIterator
-        (nodes.head /: nodes.tail){ (prev: NodeT, n: NodeT) =>
-          if (edges.hasNext) {
-            val e = edges.next
-            if (! e.matches((x: NodeT) => x eq prev,
-                            (x: NodeT) => x eq n   )) return false
-            n
-          } else return false
-        }
-        true
-      } getOrElse false
-    }
+
+    private type AnyGraph = GraphTraversalImpl[N,E]
 
     override def equals(other: Any) = other match {
-      case that: GraphTraversalImpl[N,E]#Path => 
+      case that: AnyGraph#Path => 
         (this eq that) ||
-        that.toArray[OutParam[N,E]].sameElements(toArray[OutParam[N,E]])
+        that.toArray[AnyGraph#InnerElem].sameElements(toArray[InnerElem])
       case _ => false
     }
     override def hashCode = nodes.## + 27 * edges.##  
@@ -930,9 +908,8 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   
   /** `LazyPath` with deferred edges selection.
    */
-  protected abstract class SimpleLazyPath(override val nodes : Traversable[NodeT],
-                                          edgeFilter: (EdgeT) => Boolean)
-      extends LazyPath(nodes, edgeFilter) {
+  protected abstract class SimpleLazyPath(override val nodes : Traversable[NodeT])
+      extends LazyPath(nodes) {
     
     final lazy val edges = {
       val buf = new ArrayBuffer[EdgeT](nodes.size) {
@@ -952,7 +929,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
    */
   protected class AnyEdgeLazyPath(override val nodes : Traversable[NodeT],
                                   edgeFilter: (EdgeT) => Boolean)
-      extends SimpleLazyPath(nodes, edgeFilter) {
+      extends SimpleLazyPath(nodes) {
     
     final protected def selectEdge(from: NodeT, to: NodeT): EdgeT =
       if (isCustomEdgeFilter(edgeFilter))
@@ -966,7 +943,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   protected class MinWeightEdgeLazyPath(override val nodes : Traversable[NodeT],
                                         edgeFilter: (EdgeT) => Boolean,
                                         weightOrdering: Ordering[EdgeT])
-      extends SimpleLazyPath(nodes, edgeFilter) {
+      extends SimpleLazyPath(nodes) {
     
     final def selectEdge (from: NodeT, to: NodeT): EdgeT =
       if (isCustomEdgeFilter(edgeFilter))
@@ -980,7 +957,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   protected class MultiEdgeLazyPath(
       override val nodes : ReverseStackTraversable[CycleStackElem, NodeT],
       edgeFilter: (EdgeT) => Boolean)
-      extends LazyPath(nodes, edgeFilter) {
+      extends LazyPath(nodes) {
     
     import mutable.EqSet, mutable.EqSet.EqSetMethods
     final protected val multi = EqSet[EdgeT](graphSize / 2) 
