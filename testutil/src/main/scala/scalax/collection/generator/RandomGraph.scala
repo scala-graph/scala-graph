@@ -62,10 +62,16 @@ abstract class RandomGraph[N,
     def reset: Unit = { weightCount = 0 }
   }
 
-  protected[RandomGraph] final class DefaultLabelFactory {
-    private[this] val (startChar, endChar) = (('A'.toInt - 1).toChar, 'Z')
-    private[this] val start = Array[Char](startChar)
-    private[this] var labelBuffer = start
+  /** A stateful String generator with deterministic results.
+   */
+  protected[RandomGraph] final class DefaultLabelFactory(
+      startChar: Char = 'A',
+      endChar  : Char = 'Z') {
+    private[this] var labelBuffer = Array[Char]((startChar.toInt - 1).toChar)
+    
+    /** Given `startChar = 'A'`, consecutive calls return the character combinations 
+     *  `A, B, ..., AA, AB, ..., BA, BB, ...`.
+     */
     def apply: () => Any  = { () =>
       val len  = labelBuffer.length
       def loop(i: Int): Array[Char] = {
@@ -84,7 +90,6 @@ abstract class RandomGraph[N,
       labelBuffer = loop(len - 1)
       labelBuffer.mkString
     }
-    def reset: Unit = { labelBuffer = start }
   }
  
   private def addExact[A](nrToAdd:     Int,
