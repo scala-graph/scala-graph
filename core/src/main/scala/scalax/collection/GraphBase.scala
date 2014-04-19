@@ -419,7 +419,11 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     def unapply(e: EdgeT): Option[(NodeT, NodeT)] = Some((e.edge._1, e.edge._2))
   }
   trait Edge extends Serializable
-  trait InnerEdge extends Iterable[NodeT] with Edge with InnerElem {
+  trait InnerEdge
+      extends Iterable[NodeT] with InnerEdgeParam[N,E,NodeT,E] with Edge with InnerElem {
+    
+    override def stringPrefix = super[InnerEdgeParam].stringPrefix
+    
     /**
      * The outer edge after transformation by means of the `copy` method.
      * This edge contains references to inner nodes while the original outer
