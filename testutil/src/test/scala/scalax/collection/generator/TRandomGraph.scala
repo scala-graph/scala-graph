@@ -33,7 +33,7 @@ class TRandomGraphTest extends Spec with Matchers {
   def generator[N,
                 E[X] <: EdgeLikeIn[X],
                 G[X,Y[Z] <: EdgeLikeIn[Z]] <: Graph[X,Y] with GraphLike[X,Y,G]]
-      (edgeCompanion: EdgeCompanionBase,
+      (edgeCompanion: EdgeCompanionBase[E],
        gCompanion:    GraphCompanion[G],
        connected:     Boolean)
       (implicit edgeTag: TypeTag[E[N]],

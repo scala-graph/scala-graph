@@ -37,7 +37,7 @@ abstract class RandomGraph[N,
     val order:          Int,
     nodeFactory:        => N,
     nodeDegree:         NodeDegreeRange,
-    edgeCompanions:     Set[EdgeCompanionBase],
+    edgeCompanions:     Set[EdgeCompanionBase[E]],
     connected:          Boolean,
     weightFactory:      Option[() => Long] = None,
     labelFactory:       Option[() => Any]  = None)
@@ -313,9 +313,9 @@ abstract class RandomGraph[N,
     
     val r = Random
     def drawCompanion = companions(r.nextInt(nrOfCompanions)).
-        asInstanceOf[EdgeCompanionBase]
+        asInstanceOf[EdgeCompanionBase[E]]
 
-    def throwUnsupportedEdgeCompanionException(c: EdgeCompanionBase) =
+    def throwUnsupportedEdgeCompanionException(c: EdgeCompanionBase[E]) =
       throw new IllegalArgumentException(s"The edge companion '$c' not supported.")
   }
 
@@ -369,8 +369,12 @@ abstract class RandomGraph[N,
    */
   def empty: G[N,E] = graphCompanion.empty
 }
-/** Provides templates for random graph metrics including shortcuts for metrics
- *  of small random graphs with a node type of `Int`.  
+
+/** Provides convenience metrics and methods for the generation of random graphs.
+ *  
+ * @define COMPANION The graph companion object such as `scalax.collection.Graph`
+ *         to be used to generate graphs.
+ * @define METRICS The `Metrics` to be applied to the generated graph.
  */
 object RandomGraph {
  
@@ -381,7 +385,7 @@ object RandomGraph {
       order:          Int,
       nodeFactory:    => N,
       nodeDegree:     NodeDegreeRange,
-      edgeCompanions: Set[EdgeCompanionBase],
+      edgeCompanions: Set[EdgeCompanionBase[E]],
       connected:      Boolean,
       weightFactory:  Option[() => Long],
       labelFactory:   Option[() => Any])
@@ -398,8 +402,7 @@ object RandomGraph {
             G[X,Y[Z] <: EdgeLikeIn[Z]] <: Graph[X,Y] with GraphLike[X,Y,G]](
       graphCompanion: GraphCompanion[G],
       metrics:        Metrics[N],
-      edgeCompanions: Set[EdgeCompanionBase],
-      connected:      Boolean)
+      edgeCompanions: Set[EdgeCompanionBase[E]])
      (implicit        edgeTag: TypeTag[E[N]],
       nodeTag:        ClassTag[N]): RandomGraph[N,E,G] =
     new RandomGraph[N,E,G](
@@ -407,11 +410,13 @@ object RandomGraph {
         metrics.connected) {
       val graphConfig = graphCompanion.defaultConfig
     }
-  
+
+  /** Template for `Metrics` with `connected` set to `true`
+   *  and some lazy values useful for checking the metrics of generated graphs.
+   */
   trait MetricsBase[N] {
     def order: Int
     def nodeDegrees: NodeDegreeRange
-    def maxEdgeArity = 2
     def connected = true
     protected def minMax = 10 * order
 
@@ -435,12 +440,62 @@ object RandomGraph {
     def nodeGen = r.nextInt(10 * order)
   }
 
+  /** Predefined metrics of a 'tiny' graph with the node type of `Int`,
+   *  an order of `5` and a node degree range of `2` to `4`.
+   */
   object TinyInt extends IntFactory {
     val order = 5
     val nodeDegrees = NodeDegreeRange(2,4)
   }
+  
+  /** Predefined metrics of a 'small' graph with the node type of `Int`,
+   *  an order of `20` and a node degree range of `2` to `5`.
+   */
   object SmallInt extends IntFactory {
     val order = 20
     val nodeDegrees = NodeDegreeRange(2,5)
   }
+
+  /** Returns a generator for tiny, connected, non-labeled directed graphs
+   *  with the metrics defined by `TinyInt`.
+   *
+   *  @param companion $COMPANION
+   */
+  def tinyConnectedIntDi[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
+      (graphCompanion: GraphCompanion[G]): RandomGraph[Int,DiEdge,G] =
+    RandomGraph[Int,DiEdge,G](graphCompanion, TinyInt, Set(DiEdge))
+  
+  /** Returns a generator for small, connected, non-labeled directed graphs
+   *  with the metrics defined by `SmallInt`.
+   *
+   *  @param companion $COMPANION
+   */
+  def smallConnectedIntDi[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
+      (graphCompanion: GraphCompanion[G]): RandomGraph[Int,DiEdge,G] =
+    RandomGraph[Int,DiEdge,G](graphCompanion, SmallInt, Set(DiEdge))
+  
+  /** Returns a generator for non-labeled directed graphs of any metrics and any type.
+   *
+   * @param companion $COMPANION
+   * @param metrics $METRICS
+   */
+  def diGraph[N, G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
+     (graphCompanion:   GraphCompanion[G],
+      metrics:          Metrics[N])
+     (implicit edgeTag: TypeTag[DiEdge[N]],
+      nodeTag:          ClassTag[N]): RandomGraph[N,DiEdge,G] =
+    RandomGraph[N,DiEdge,G](graphCompanion, metrics, Set(DiEdge))
+
+  /** Returns a generator for non-labeled undirected graphs of any metrics and any type.
+   *
+   * @param companion $COMPANION
+   * @param metrics $METRICS
+   */
+  def unDiGraph[N, G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
+     (graphCompanion:   GraphCompanion[G],
+      metrics:          Metrics[N])
+     (implicit edgeTag: TypeTag[UnDiEdge[N]],
+      nodeTag:          ClassTag[N]): RandomGraph[N,UnDiEdge,G] =
+    RandomGraph[N,UnDiEdge,G](graphCompanion, metrics, Set[EdgeCompanionBase[UnDiEdge]](UnDiEdge))
+
 }

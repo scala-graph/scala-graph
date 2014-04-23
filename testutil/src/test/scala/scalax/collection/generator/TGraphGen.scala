@@ -57,7 +57,7 @@ class TGraphGenTest
     import metrics._
 
     val degrees = g.degreeSeq
-    val tolerableMaxExceed: Int = (maxEdgeArity - 1)
+    val tolerableMaxExceed: Int = if (g.isHyper) 8 else 1
 
     g.order       should be (order)
     g.isConnected should be (connected)

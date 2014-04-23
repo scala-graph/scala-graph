@@ -37,7 +37,7 @@ class GraphGen[N,
     val order:          Int,
     nodeGen:            Gen[N],
     nodeDegrees:        NodeDegreeRange,
-    edgeCompanions:     Set[EdgeCompanionBase],
+    edgeCompanions:     Set[EdgeCompanionBase[E]],
     connected:          Boolean = true,
     weightFactory:      Option[Gen[Long]] = None,
     labelFactory:       Option[Gen[ Any]] = None)
@@ -81,38 +81,116 @@ class GraphGen[N,
   def apply: Gen[G[N,E]] = Gen.const(0) map ( _ => generator.draw)  
 }
 
-/** Provides templates for arbitrary graph metrics including shortcuts for metrics
- *  of small arbitrary graphs with a node type of `Int`.  
+/** Provides convenience metrics and methods for the generation of graphs
+ *  by means of `org.scalacheck.Arbitrary[G[N,E]]`.
+ *  
+ * @define COMPANION The graph companion object such as `scalax.collection.Graph`
+ *         to be used to generate graphs.
+ * @define METRICS The `Metrics` to be applied to the generated graph.
  */
 object GraphGen {
   
+  def apply[N,
+            E[X] <: EdgeLikeIn[X],
+            G[X,Y[Z] <: EdgeLikeIn[Z]] <: Graph[X,Y] with GraphLike[X,Y,G]](
+      graphCompanion: GraphCompanion[G],
+      order:          Int,
+      nodeGen:        Gen[N],
+      nodeDegrees:    NodeDegreeRange,
+      edgeCompanions: Set[EdgeCompanionBase[E]],
+      connected:      Boolean,
+      weightFactory:  Option[Gen[Long]],
+      labelFactory:   Option[Gen[Any]])
+     (implicit        edgeTag: TypeTag[E[N]],
+      nodeTag:        ClassTag[N]): GraphGen[N,E,G] =
+    new GraphGen[N,E,G](
+        graphCompanion, order, nodeGen, nodeDegrees, edgeCompanions, connected,
+        weightFactory, labelFactory)
+        
+  def apply[N,
+            E[X] <: EdgeLikeIn[X],
+            G[X,Y[Z] <: EdgeLikeIn[Z]] <: Graph[X,Y] with GraphLike[X,Y,G]](
+      graphCompanion: GraphCompanion[G],
+      metrics:        Metrics[N],
+      edgeCompanions: Set[EdgeCompanionBase[E]])
+     (implicit        edgeTag: TypeTag[E[N]],
+      nodeTag:        ClassTag[N]): GraphGen[N,E,G] =
+    new GraphGen[N,E,G](
+        graphCompanion, metrics.order, metrics.nodeGen, metrics.nodeDegrees,
+        edgeCompanions, metrics.connected)
+        
+  /** Represents graph metrics like `order`, `nodeDegrees` and `connected` 
+   *  excluding the type of nodes, edges and the type of the graph to be generated.
+   */
   trait Metrics[N] extends RandomGraph.MetricsBase[N] {
     def nodeGen: Gen[N]
   }
+  
+  /** Predefined metrics of a 'tiny' graph with the node type of `Int`,
+   *  an order of `5` and a node degree range of `2` to `4`
+   *  including `org.scalacheck.Gen[Int]`.
+   */
   object TinyInt extends Metrics[Int] {
     val order = 5
     val nodeGen = Gen.choose(1, minMax)
     val nodeDegrees = NodeDegreeRange(2,4)
   }
+  
+  /** Predefined metrics of a 'small' graph with the node type of `Int`,
+   *  an order of `20` and a node degree range of `2` to `5`
+   *  including `org.scalacheck.Gen[Int]`.
+   */
   object SmallInt extends Metrics[Int] {
     val order = 20
     val nodeGen = Gen.choose(1, minMax)
     val nodeDegrees = NodeDegreeRange(2,5)
   }
 
+  /** Returns an `org.scalacheck.Arbitrary[G[Int,DiEdge]]` for tiny, connected,
+   *  non-labeled directed graphs with the metrics defined by `TinyInt`.
+   *
+   *  @param companion $COMPANION
+   */
   def tinyConnectedIntDi[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
-      (companion: GraphCompanion[G]): Arbitrary[G[Int,DiEdge]] =
-    Arbitrary {
-      import TinyInt._
-      new GraphGen[Int,DiEdge,G](
-          companion, order, nodeGen, nodeDegrees, Set(DiEdge), connected).apply
-    }
+      (graphCompanion: GraphCompanion[G]): Arbitrary[G[Int,DiEdge]] =
+    diGraph[Int,G](graphCompanion, TinyInt)
   
+  /** Returns an `org.scalacheck.Arbitrary[G[Int,DiEdge]]` for small, connected,
+   *  non-labeled directed graphs with the metrics defined by `SmallInt`.
+   *
+   * @param companion $COMPANION
+   */
   def smallConnectedIntDi[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
-      (companion: GraphCompanion[G]): Arbitrary[G[Int,DiEdge]] =
+      (graphCompanion: GraphCompanion[G]): Arbitrary[G[Int,DiEdge]] =
+    diGraph[Int,G](graphCompanion, SmallInt)
+  
+  /** Returns an `org.scalacheck.Arbitrary[G[N,DiEdge]]` for non-labeled directed graphs
+   *  of any metrics and any type.
+   *
+   * @param companion $COMPANION
+   * @param metrics $METRICS
+   */
+  def diGraph[N, G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
+     (graphCompanion:   GraphCompanion[G],
+      metrics:          Metrics[N])
+     (implicit edgeTag: TypeTag[DiEdge[N]],
+      nodeTag:          ClassTag[N]): Arbitrary[G[N,DiEdge]] =
     Arbitrary {
-      import SmallInt._
-      new GraphGen[Int,DiEdge,G](
-          companion, order, nodeGen, nodeDegrees, Set(DiEdge), connected).apply
+      GraphGen[N,DiEdge,G](graphCompanion, metrics, Set[EdgeCompanionBase[DiEdge]](DiEdge)).apply
+    }
+
+  /** Returns an `org.scalacheck.Arbitrary[G[N,UnDiEdge]]` for non-labeled undirected graphs
+   *  of any metrics and any type.
+   *
+   * @param companion $COMPANION
+   * @param metrics $METRICS
+   */
+  def unDiGraph[N, G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
+     (graphCompanion:   GraphCompanion[G],
+      metrics:          Metrics[N])
+     (implicit edgeTag: TypeTag[UnDiEdge[N]],
+      nodeTag:          ClassTag[N]): Arbitrary[G[N,UnDiEdge]] =
+    Arbitrary {
+      GraphGen[N,UnDiEdge,G](graphCompanion, metrics, Set[EdgeCompanionBase[UnDiEdge]](UnDiEdge)).apply
     }
 }
