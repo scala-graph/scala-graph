@@ -145,7 +145,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     final def shortestPathTo[T: Numeric](
         potentialSuccessor: NodeT,
         weight            : EdgeT => T,
-        visitor           : A => Unit = emptyVisitor): Option[Path] = {
+        visitor           : A => Unit): Option[Path] = {
       withHandle() { implicit visitedHandle => 
         val num = implicitly[Numeric[T]] 
         import num._
@@ -896,7 +896,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     def endNode   = nodes.last
 
     private type AnyGraph = GraphTraversalImpl[N,E]
-
+    
     override def equals(other: Any) = other match {
       case that: AnyGraph#Path => 
         (this eq that) ||

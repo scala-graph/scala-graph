@@ -19,6 +19,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
                         ordering.asInstanceOf[Ordering[Object]])
 
   override def empty = SortedArraySet.empty
+
   override def + (elem: A): SortedArraySet[A] =
     if (contains(elem)) this
     else {
@@ -28,6 +29,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
       newArr(size) = elem
       new SortedArraySet(newArr)
     }
+
   override def - (elem: A): SortedArraySet[A] = {
     val idx = index(elem)
     if (idx == -1) this
@@ -39,23 +41,32 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
       new SortedArraySet(newArr)
     }
   }
-    null.asInstanceOf[SortedArraySet[A]] // TODO
+
+  def keysIteratorFrom(start: A): Iterator[A] =
+    search(start, ordering.lt) map iterator getOrElse Iterator.empty
+
   def contains(elem: A): Boolean = index(elem) >= 0
-  def iterator: Iterator[A] = new Abstract.Iterator[A] {
-      private[this] var i = 0
+
+  protected final def iterator(from: Int): Iterator[A] =
+    new Abstract.Iterator[A] {
+      private[this] var i = from
       def hasNext = i < self.size
       def next = { val elm = array(i); i += 1; elm }
     }
+    
+  def iterator: Iterator[A] = iterator(0)
+
+  protected final def search(elem: A, cond: (A, A) => Boolean): Option[Int] = {
+    var i = 0
+    var found = -1
+    while (found == -1 && i < size)
+      if (cond(array(i), elem)) i += 1
+      else found = i
+    if (found == -1) None else Some(found)
+  }
+
   def rangeImpl(from: Option[A], until: Option[A]): SortedArraySet[A] = {
     if (size == 0 || (from == None && until == None)) return this
-    def search(elem: A, cond: (A, A) => Boolean): Option[Int] = {
-      var i = 0
-      var found = -1
-      while (found == -1 && i < size)
-        if (cond(array(i), elem)) i += 1
-        else found = i
-      if (found == -1) None else Some(found)
-    }
     val idxFrom =  from  flatMap (search(_, ordering.lt)) getOrElse 0
     val idxTill = (until flatMap ( e =>
         search(e, ordering.lt) orElse (
@@ -72,6 +83,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
       new SortedArraySet(newArr.asInstanceOf[Array[A]])
     }
   }
+  
   protected final def index(elem: A): Int = { // 'arr contains c' works but would be too slow
     var i = 0
     while (i < size)
@@ -79,10 +91,12 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
       else i += 1
     -1
   }
+  
   def find(elem: A): Option[A] = {
     val i = index(elem)
     if (i >= 0) Some(array(i)) else None
   }
+  
   override def size: Int = array.length
 }
 object SortedArraySet extends SortedSetFactory[SortedArraySet] {

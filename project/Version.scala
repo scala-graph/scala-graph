@@ -1,6 +1,6 @@
 object Version {
-  val scala_2_10 = true
-  val compiler = if (scala_2_10) "2.10.3" else "2.11.0"
+  val compiler = "2.10.3"
+  val compiler_2 = "2.11.0"
   val compilerIsRC = false
 
   private val isSnapshot = false

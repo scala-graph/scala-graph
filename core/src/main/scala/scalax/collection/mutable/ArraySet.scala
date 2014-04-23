@@ -40,7 +40,7 @@ trait ArraySet[A]
   protected[collection] def +=!(elem: A): this.type
   /** Updates or inserts `elem`.
    *  @return `true` if an insert took place. */
-  protected[collection] def upsert(elem: A): Boolean
+  protected[collection] def upsert(elem: A with AnyRef): Boolean
   /** Sorts this $COLL according to a comparison function in place.
    *  @see scala.collection.SeqLike */
   def sortWith(lt: (A, A) => Boolean): SortedSet[A] = sorted(Ordering fromLessThan lt)

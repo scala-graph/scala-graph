@@ -178,7 +178,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   override def size = if (isHash) hashSet.size
                       else nextFree
 
-  protected[collection] def upsert(elem: A): Boolean = {
+  protected[collection] def upsert(elem: A with AnyRef): Boolean = {
     if (isHash) hashSet upsert elem
     else {
       val i = indexOf(elem)

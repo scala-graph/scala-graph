@@ -22,7 +22,7 @@ object WBase {
   }
   type  WHyperEdgeBound[N, +E[X<:N] <: EdgeLikeIn[X]] = HyperEdge[N] with WEdge[N] with Serializable 
   trait WEdgeCompanionBase[E[X] <: EdgeLikeIn[X] with WHyperEdgeBound[_,E]]
-    extends EdgeCompanionBase
+    extends EdgeCompanionBase[E]
   {
     /** @param nodes must be of `arity >= 2` for hyperedges and of `arity == 2` for edges. */
     @inline final protected[collection]
@@ -93,7 +93,7 @@ object LBase {
   }
   type  LHyperEdgeBound[N, +E[X<:N] <: EdgeLikeIn[X]] = HyperEdge[N] with LEdge[N] with Serializable 
   trait LEdgeCompanionBase[E[X] <: EdgeLikeIn[X] with LHyperEdgeBound[_,E]]
-    extends EdgeCompanionBase
+    extends EdgeCompanionBase[E]
   {
     /** @param nodes must be of `arity >= 2` for hyperedges and of `arity == 2` for edges. */
     @inline final protected[collection]
@@ -267,7 +267,7 @@ object WLBase {
   type  WLHyperEdgeBound[N, +E[X<:N] <: EdgeLikeIn[X]] = HyperEdge[N] with WLEdge[N] with Serializable 
   /** Everything common to predefined weighted and labeled hyperedge companion objects. */
   trait WLEdgeCompanionBase[E[X] <: EdgeLikeIn[X] with WLHyperEdgeBound[_,E]]
-    extends EdgeCompanionBase
+    extends EdgeCompanionBase[E]
   {
     /** @param nodes must be of `arity >= 2` for hyperedges and of `arity == 2` for edges. */
     @inline final protected[collection]
@@ -363,7 +363,7 @@ object CBase {
   }
   type  CHyperEdgeBound[N, +E[X<:N] <: EdgeLikeIn[X]] = HyperEdge[N] with Attributes[N] with Serializable 
   trait CEdgeCompanionBase[E[X] <: EdgeLikeIn[X] with CHyperEdgeBound[_,E]]
-    extends EdgeCompanionBase
+    extends EdgeCompanionBase[E]
   {
     protected[collection] type P <: Product
     @inline final def from [N](nodes: Product, attr: P): E[N] = newEdge[N](nodes, attr)

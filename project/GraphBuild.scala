@@ -74,6 +74,7 @@ object GraphBuild extends Build {
 
   lazy val defaultSettings = Defaults.defaultSettings ++ Seq(
     scalaVersion := Version.compiler,
+	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2),
     organization := "com.assembla.scala-incubator",
     parallelExecution in Test := false,
     scalacOptions in (Compile, doc) <++= (name, version) map {
@@ -89,11 +90,15 @@ object GraphBuild extends Build {
 	autoAPIMappings := true,
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     libraryDependencies ++= Seq(
-	  "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "junit" % "junit" % "4.8.2" % "test",
-      "org.scalatest"  %% "scalatest"  % "2.1.2"  % "test",
-	  "org.scalacheck" %% "scalacheck" % "1.11.3" % "test"
-    )
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "org.scalatest"  %% "scalatest"  % "2.1.3"  % "test",
+      "org.scalacheck" %% "scalacheck" % "1.11.3" % "test") /*
+    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 10)) => 
+      case Some((2, scalaMajor)) if scalaMajor >= 11 => 
+      case _ =>
+    }) */
   ) ++ GraphSonatype.settings ++ (
     if (Version.compilerIsRC) Seq(
       // https://groups.google.com/forum/?fromgroups=#!topic/scala-internals/h2YhIEg8lMc

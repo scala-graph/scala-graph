@@ -1,7 +1,8 @@
 package scalax.collection
 
-import language.{higherKinds, implicitConversions, postfixOps}
-import collection.mutable.ListBuffer
+import scala.language.{higherKinds, implicitConversions, postfixOps}
+import scala.collection.mutable.{ArrayBuffer, Builder}
+import scala.math.min
 
 import GraphPredef.{EdgeLikeIn, OuterElem, OuterEdge, OutParam, InnerNodeParam, InnerEdgeParam}
 import mutable.EqHashMap
@@ -166,6 +167,8 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
   @inline final def findCycle(visitor: InnerElem => Unit) =
     componentTraverser().findCycle(visitor)
 
+  @inline final protected def defaultPathSize: Int = min(256, nodes.size * 2)
+
   /** Represents a walk in this graph where
    * 
    * `walk` $PATHSYNTAX
@@ -281,7 +284,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     def zero(node: NodeT) =
       new Path with ZeroWalk {
         protected final def single = node
-    }
+      }
   }
   
   /** Represents a cycle in this graph listing the nodes and connecting edges on it
@@ -821,9 +824,22 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
      * @param visitor $OPTVISITOR
      * @return $SHORTESTPATHRET
      */
-    final def shortestPathTo(potentialSuccessor: NodeT)
-                            (implicit visitor  : A => Unit = emptyVisitor): Option[Path] =
+    @inline final
+    def shortestPathTo(potentialSuccessor: NodeT)
+                      (implicit visitor  : A => Unit = emptyVisitor): Option[Path] =
       shortestPathTo(potentialSuccessor, Edge.defaultWeight, visitor)
+
+    /** $SHORTESTPATH
+     *  
+     * @param potentialSuccessor $POTENTIALSUCC
+     * @param weight Function to determine the weight of edges. If supplied, this function
+     *        takes precedence over edge weights. 
+     * @return $SHORTESTPATHRET 
+     */
+    @inline final
+    def shortestPathTo[T: Numeric](potentialSuccessor: NodeT,
+                                   weight            : EdgeT => T): Option[Path] =
+      shortestPathTo(potentialSuccessor, weight, emptyVisitor)
 
     /** $SHORTESTPATH
      *  
@@ -835,7 +851,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
      */
     def shortestPathTo[T: Numeric](potentialSuccessor: NodeT,
                                    weight            : EdgeT => T,
-                                   visitor  : A => Unit = emptyVisitor): Option[Path]
+                                   visitor           : A => Unit): Option[Path]
 
     /** Finds a cycle starting the search at `root` $INTOACC, if any.
      *  The resulting cycle may start at any node connected with `this` node.

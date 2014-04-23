@@ -62,12 +62,18 @@ class ExtHashSet[A]
   }
   /** Updates or inserts `elem`.
    *  @return `true` if an update took place. */
-  protected[collection] def upsert(elem: A): Boolean = {
-    var h = index(elemHashCode(elem))
+  protected[collection] def upsert(elem: A with AnyRef): Boolean = {
+    /* 2.11
+    val update = removeElem(elem)
+    addElem(elem)
+    update
+    */
+    /* 2.10 */
+    var h = index(elem.##)
     var entry = table(h)
     while (null != entry) {
       if (entry == elem) {
-        table(h) = elem.asInstanceOf[AnyRef]
+        table(h) = elem
         return false
       }
       h = (h + 1) % table.length

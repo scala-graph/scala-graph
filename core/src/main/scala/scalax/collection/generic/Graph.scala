@@ -41,7 +41,7 @@ trait GraphCompanion[+CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[
   /** The default configuration to be used in absence of a user-supplied configuration. */
   def defaultConfig: Config
 
-  protected type Coll = CC[_,Nothing]
+  protected[this] type Coll = CC[_,Nothing]
   /** Creates an empty `Graph` instance. */
   def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
                                       config: Config): CC[N,E]
