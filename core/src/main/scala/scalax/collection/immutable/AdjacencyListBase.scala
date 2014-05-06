@@ -52,7 +52,7 @@ trait AdjacencyListBase[N,
            else size
                
     @inline final protected def nodeEqThis = (n: NodeT) => n eq this
-    @transient protected[collection] object Adj { // lazy adjacents
+    @transient protected[collection] object Adj extends Serializable { // lazy adjacents
       @transient var aHook: Option[(NodeT, EdgeT)] = None
       @transient val diSucc: EqHashMap[NodeT, EdgeT] = {
         val m = new EqHashMap[NodeT, EdgeT](edges.size)

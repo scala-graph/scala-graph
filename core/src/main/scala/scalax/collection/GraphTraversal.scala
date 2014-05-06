@@ -385,7 +385,8 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    */
   trait ExtendedNodeVisitor
       extends (NodeT => VisitorReturn)
-      with ((NodeT, Int, Int, => NodeInformer) => VisitorReturn) {
+      with ((NodeT, Int, Int, => NodeInformer) => VisitorReturn) 
+      with Serializable {
     def apply(node: NodeT) = apply(node, 0, 0, NodeInformer.empty)
   }
   object ExtendedNodeVisitor {
