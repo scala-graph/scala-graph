@@ -7,7 +7,6 @@ import scala.collection.Set
 import scalax.collection.GraphPredef._
 import scalax.collection.{Graph => SimpleGraph}
 import scalax.collection.GraphTraversal.AnyConnected
-import scalax.collection.GraphTraversal.VisitorReturn._
 
 import PreCheckFollowUp._
 
