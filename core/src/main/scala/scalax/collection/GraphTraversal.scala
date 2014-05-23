@@ -176,46 +176,6 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       }
   }
   
-  /** A `Builder` for valid walks in this graph.
-   * 
-   * @param start The node this walk starts at.
-   * @param sizeHint Expected maximum number of nodes on this walk. 
-   */  
-  class WalkBuilder(start: NodeT, sizeHint: Int = defaultPathSize)
-      extends Builder[InnerElem, Walk] {
-    self =>
-      
-    var wasNode = true
-    private[this] val nodes = new ArrayBuffer[NodeT](sizeHint)
-    private[this] val edges = new ArrayBuffer[EdgeT](sizeHint)
-    clear
-
-    protected def nodeOk(n: InnerNode): Boolean = ! wasNode
-
-    protected def edgeOk(n: InnerEdge): Boolean = wasNode
-
-    def += (elem: InnerElem): this.type = {
-      elem match {
-        case n: InnerNode => if (nodeOk(n)) { nodes += n.asNodeT[N,E,thisGraph.type](thisGraph); wasNode = true }
-        case e: InnerEdge => if (edgeOk(e)) { edges += e.asEdgeT[N,E,thisGraph.type](thisGraph); wasNode = false }
-      }
-      this
-    }
-    
-    def clear: Unit = {
-      nodes.clear; nodes += start
-      edges.clear
-      wasNode = true
-    }
-    
-    def result: Walk = new Walk {
-      val nodes = self.nodes
-      val edges = self.edges
-      val startNode = start
-      val endNode = nodes(nodes.size - 1)
-    }
-  }
-  
   /** Represents a path in this graph where
    * 
    * `path` $PATHSYNTAX
@@ -725,7 +685,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
 
   /** Controls the properties of inner-node graph traversals. $TOSTART
    */
-  protected abstract class InnerNodeTraverser extends Traverser[NodeT,InnerNodeTraverser]
+  abstract class InnerNodeTraverser extends Traverser[NodeT,InnerNodeTraverser]
 
   /** Creates a [[InnerNodeTraverser]] based on `scala.collection.Traversable[NodeT]`.
    *    
@@ -744,7 +704,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
 
   /** Controls the properties of outer-node graph traversals. $TOSTART
    */
-  protected abstract class OuterNodeTraverser extends Traverser[N,OuterNodeTraverser]
+  abstract class OuterNodeTraverser extends Traverser[N,OuterNodeTraverser]
 
   /** Creates a [[OuterNodeTraverser]] based on `scala.collection.Traversable[N]`.
    *    
@@ -763,7 +723,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     
   /** Controls the properties of inner-edge graph traversals. $TOSTART
    */
-  protected abstract class InnerEdgeTraverser extends Traverser[EdgeT,InnerEdgeTraverser]
+  abstract class InnerEdgeTraverser extends Traverser[EdgeT,InnerEdgeTraverser]
 
   /** Creates a [[InnerEdgeTraverser]] based on `scala.collection.Traversable[EdgeT]`.
    *    
@@ -782,7 +742,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       
   /** Controls the properties of outer-edge graph traversals. $TOSTART
    */
-  protected abstract class OuterEdgeTraverser extends Traverser[E[N],OuterEdgeTraverser]
+  abstract class OuterEdgeTraverser extends Traverser[E[N],OuterEdgeTraverser]
 
   /** Creates a [[OuterEdgeTraverser]] based on `scala.collection.Traversable[E[N]]`.
    *    
@@ -839,7 +799,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       
   /** Controls the properties of inner-node down-up graph traversals. $TOSTART
    */
-  protected abstract class InnerNodeDownUpTraverser
+  abstract class InnerNodeDownUpTraverser
       extends Traverser[(Boolean, NodeT),InnerNodeDownUpTraverser]
 
   /** Creates a [[InnerNodeDownUpTraverser]] based on `scala.collection.Traversable[(Boolean, NodeT)]`
@@ -860,7 +820,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       
   /** Controls the properties of outer-node down-up graph traversals. $TOSTART
    */
-  protected abstract class OuterNodeDownUpTraverser
+  abstract class OuterNodeDownUpTraverser
       extends Traverser[(Boolean, N),OuterNodeDownUpTraverser]
 
   /** Creates a [[OuterNodeDownUpTraverser]] based on `scala.collection.Traversable[(Boolean, N)]`
@@ -965,13 +925,12 @@ object GraphTraversal {
       Parameters(kind = DepthFirst, direction = direction, maxDepth = maxDepth)
   }
 
-  /** Implements an empty visitor based on a value. It solely aims to outperform `Option[Visitor]`
-   *  for instance with respect to `Option`'s `foreach` that yields a virtual method call.
+  /** Implements an empty visitor based on a value.
    */
   object Visitor {
-    private final val _empty = (a: Any) => ()
+    private final val _empty: Any => Unit = null
     @inline final def   empty  [A,U]: A => U = _empty.asInstanceOf[A => U]
     @inline final def isEmpty  [A,U](visitor: A => U) = visitor eq _empty   
-    @inline final def isDefined[A,U](visitor: A => U) = ! isEmpty(visitor)   
+    @inline final def isDefined[A,U](visitor: A => U) = visitor ne _empty   
   }
 }
