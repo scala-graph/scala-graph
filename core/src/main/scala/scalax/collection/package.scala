@@ -16,8 +16,14 @@ package object collection {
    * [[scala.collection.Set]] extended by some useful methods in the context of Graph.
    */
   type ExtSet[A] = scala.collection.Set[A] with interfaces.ExtSetMethods[A]
+  
   /**
    * Same as `private[scala] scala.collection.AbstractIterator`.
    */
   private[scalax] abstract class AbstractIterator[+A] extends Iterator[A]
+  
+  protected[scalax] type AnySet[A] = scala.collection.Set[A]
+
+  protected[scalax] type MSet[A] = scala.collection.mutable.Set[A]
+  @inline final protected[scalax] def MSet = scala.collection.mutable.Set
 }

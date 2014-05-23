@@ -1,8 +1,8 @@
 package scalax.collection
 
 import language.{higherKinds, postfixOps}
-import collection.{Set, SortedSet, SortedMap}
-import collection.mutable.{Set => MutableSet, Map => MutableMap}
+import collection.{SortedSet, SortedMap}
+import collection.mutable.{Map => MutableMap}
 
 import GraphPredef.{EdgeLikeIn, NodeParam, OuterNode, InnerNodeParam, InnerEdgeParam}
 import GraphEdge.{EdgeLike, EdgeException}
@@ -145,10 +145,10 @@ trait GraphDegree[N, E[X] <: EdgeLikeIn[X]]
    * @param $DEGREEFILTER
    */
   def degreeNodesMap (implicit nodeDegree  : DegreeFunction = Degree,
-                               degreeFilter: Int => Boolean = AnyDegree): SortedMap[Int, Set[NodeT]] =
+                               degreeFilter: Int => Boolean = AnyDegree): SortedMap[Int, AnySet[NodeT]] =
   {
-    val r: SortedMap[Int, Set[NodeT]] =
-           SortedMap[Int, Set[NodeT]]()(IntReverseOrdering) ++ (nodes groupBy nodeDegree) 
+    val r: SortedMap[Int, AnySet[NodeT]] =
+           SortedMap[Int, AnySet[NodeT]]()(IntReverseOrdering) ++ (nodes groupBy nodeDegree) 
     if(degreeFilter == AnyDegree) r 
     else                          r filter (t => degreeFilter(t._1))
   }

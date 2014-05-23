@@ -3,7 +3,6 @@ package scalax.collection
 import language.higherKinds
 import collection.{SetLike, GenTraversableOnce}
 import collection.generic.GenericCompanion
-import collection.mutable.{Set => MSet}
 import scala.reflect.runtime.universe._
 
 import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
@@ -32,7 +31,7 @@ import io._
 trait GraphLike[N,
                 E[X]  <: EdgeLikeIn[X],
                 +This[X, Y[X]<:EdgeLikeIn[X]]
-                      <: GraphLike[X,Y,This] with Set[Param[X,Y]] with Graph[X,Y]]
+                      <: GraphLike[X,Y,This] with AnySet[Param[X,Y]] with Graph[X,Y]]
   extends SetLike       [Param[N,E], This[N,E]]
   with    GraphTraversal[N,E]
   with    GraphBase     [N,E]
@@ -481,7 +480,7 @@ import collection.generic.CanBuildFrom
  * @author Peter Empen
  */
 trait Graph[N, E[X] <: EdgeLikeIn[X]]
-  extends Set[Param[N,E]]
+  extends AnySet[Param[N,E]]
   with    GraphLike[N,E,Graph]
 {
   override def empty: Graph[N,E] = Graph.empty[N,E]

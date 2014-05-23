@@ -2,12 +2,10 @@ package scalax.collection
 package mutable
 
 import util.Random
-import collection.{GenSet, SortedSet}
-import collection.mutable.{SetLike => MutableSetLike,
-                           Builder, GrowingBuilder, ArrayBuffer}
-import collection.generic.{CanBuildFrom, GenericSetTemplate, GenericCompanion,
-                           MutableSetFactory}
-import compat.Platform.arraycopy
+import scala.collection.{GenSet, SortedSet}
+import scala.collection.mutable.{SetLike => MutableSetLike, Builder, GrowingBuilder, ArrayBuffer}
+import scala.collection.generic.{CanBuildFrom, GenericCompanion, GenericSetTemplate, MutableSetFactory}
+import scala.compat.Platform.arraycopy
 
 import collection.Abstract
 import immutable.SortedArraySet

@@ -15,7 +15,7 @@ final class EqSet[K <: AnyRef](map: EqHashMap[K,_]) extends Set[K] {
   /** $ON unless `elem` is already contained.*/
   def +(elem: K) = if (map contains elem) this else {
     val newMap = map.clone
-    newMap.asInstanceOf[EqHashMap[K,Any]] put (elem, null)
+    newMap.asInstanceOf[EqHashMap[K,Any]] put (elem, true)
     new EqSet(newMap)
   }
 
@@ -26,4 +26,6 @@ final class EqSet[K <: AnyRef](map: EqHashMap[K,_]) extends Set[K] {
       newMap -= elem
       new EqSet(newMap)
     } else this
+
+  override def size = map.size
 }

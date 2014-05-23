@@ -1,11 +1,10 @@
 package scalax.collection
 package mutable
 
-import collection.Set
 import collection.SortedSet
-import collection.mutable.{Set => MutableSet, SetLike => MutableSetLike}
-import collection.generic.{CanBuildFrom, GenericSetTemplate, GenericCompanion,
-                           MutableSetFactory}
+import collection.mutable.{SetLike => MutableSetLike}
+import collection.generic.{CanBuildFrom, FilterMonadic, GenericCompanion,
+                           GenericSetTemplate, MutableSetFactory}
 
 import interfaces.ExtSetMethods
 
@@ -18,7 +17,7 @@ import interfaces.ExtSetMethods
  *  @define COLL `ArraySet`
  */
 trait ArraySet[A]
-  extends MutableSet[A]
+  extends MSet[A]
   with    GenericSetTemplate[A, ArraySet]
   with    MutableSetLike[A, ArraySet[A]]
   with    ExtSetMethods[A]
@@ -35,7 +34,7 @@ trait ArraySet[A]
   /** Whether the internal representation is currently based on `Array`. */
   def isArray: Boolean
   protected[collection] def array: Array[A]
-  protected[collection] def set: Set[A]
+  protected[collection] def set: MSet[A]
   /** Adds `elem` without checking for duplicates. */
   protected[collection] def +=!(elem: A): this.type
   /** Updates or inserts `elem`.
