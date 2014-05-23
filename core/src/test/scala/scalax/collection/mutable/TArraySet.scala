@@ -1,7 +1,7 @@
 package scalax.collection
 package mutable
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
 
@@ -16,7 +16,7 @@ import org.junit.runner.RunWith
 
 /** Tests [[ArraySet]]. */
 @RunWith(classOf[JUnitRunner])
-class TArraySetTest extends Suite with ShouldMatchers {
+class TArraySetTest extends Spec with ShouldMatchers {
   implicit val hints = ArraySet.Hints(4, 4, 12, 100)
   private class LkDiEdgeGenerator {
     private var i = 0

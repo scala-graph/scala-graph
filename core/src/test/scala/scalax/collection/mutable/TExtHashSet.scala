@@ -1,7 +1,7 @@
 package scalax.collection
 package mutable
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.matchers.ShouldMatchers
 
 import GraphPredef._, GraphEdge._
@@ -12,7 +12,7 @@ import org.junit.runner.RunWith
 /** Tests [[ExtHashSet]]. */
 @RunWith(classOf[JUnitRunner])
 class TExtHashSetTest
-  extends Suite
+  extends Spec
   with    ShouldMatchers
 {
   import Data._

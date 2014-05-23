@@ -1,6 +1,6 @@
 package demo
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.Suites
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
 class TJsonDemoTest
-	extends	Suite
+	extends	Spec
 	with	ShouldMatchers
 {
   val (programming, inDepth) = (

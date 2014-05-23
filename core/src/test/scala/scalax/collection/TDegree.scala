@@ -3,7 +3,7 @@ package scalax.collection
 import language.{higherKinds, postfixOps}
 import collection.{SortedSet, SortedMap}
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.Suites
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
@@ -24,7 +24,7 @@ class TDegreeRootTest
  */
 class TDegree[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphCoreCompanion[CC])
-	extends	Suite
+	extends	Spec
 	with	  ShouldMatchers
 {
   val emptyG = factory.empty[Int,DiEdge]

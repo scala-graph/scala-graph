@@ -11,7 +11,7 @@ import GraphPredef._, GraphEdge._
 import GraphTraversal.VisitorReturn._
 import generator.{RandomGraph, NodeDegreeRange}
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.Informer
 import org.scalatest.Matchers
 
@@ -21,7 +21,7 @@ import org.junit.runner.RunWith
 /** Ensure that stateful data handling used for traversals is thread-safe. 
  */
 @RunWith(classOf[JUnitRunner])
-class TStateTest extends Suite with Matchers {
+class TStateTest extends Spec with Matchers {
   val g = Graph(Data.elementsOfUnDi_2: _*)
 
   // a sample traversal with recursive calls in its node visitor

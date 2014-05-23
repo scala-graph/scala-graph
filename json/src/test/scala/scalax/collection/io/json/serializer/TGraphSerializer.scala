@@ -5,7 +5,7 @@ import language.higherKinds
 
 import net.liftweb.json._
 
-import org.scalatest.{Suite, Suites}
+import org.scalatest.{Spec, Suites}
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -28,7 +28,7 @@ class TGraphSerializerRootTest
  */
 class TGraphSerializer[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
-    extends Suite
+    extends Spec
     with ShouldMatchers {
 
   object GraphFixture {

@@ -3,7 +3,7 @@ package constraints
 
 import scala.language.{higherKinds, postfixOps}
 
-import org.scalatest.{Suite, Suites}
+import org.scalatest.{Spec, Suites}
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
 
@@ -36,7 +36,7 @@ class TAcyclicRootTest
 
 class TAcyclic [CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphConstrainedCompanion[CC])
-  extends Suite
+  extends Spec
   with    ShouldMatchers
 {
   import AcyclicWithException._

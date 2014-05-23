@@ -4,7 +4,7 @@ import java.io._
 
 import language.higherKinds
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.Suites
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
@@ -25,8 +25,8 @@ class TSerializableRootTest
  */
 class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphCoreCompanion[CC])
-	extends	Suite
-	with	  ShouldMatchers
+	extends	Spec
+	with	ShouldMatchers
 	with    BeforeAndAfterEach
 {
   def test_0(info : Informer) {

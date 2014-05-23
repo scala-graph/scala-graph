@@ -1,6 +1,6 @@
 package scalax.collection
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
 
@@ -14,7 +14,7 @@ import custom.flight._,
        custom.flight.FlightImplicits._
 
 @RunWith(classOf[JUnitRunner])
-class TEdgeTest extends Suite with ShouldMatchers
+class TEdgeTest extends Spec with ShouldMatchers
 {
   object FlightLabel extends LEdgeImplicits[Flight]
   import FlightLabel._

@@ -11,7 +11,7 @@ import generic.GraphCoreCompanion
 import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
 import generator.GraphGen
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.Suites
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
@@ -39,7 +39,7 @@ class TTraversalRootTest
  */
 private class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
 			(val factory: GraphCoreCompanion[G])
-	extends	Suite
+	extends	Spec
 	with	ShouldMatchers
 	with	PropertyChecks
 {

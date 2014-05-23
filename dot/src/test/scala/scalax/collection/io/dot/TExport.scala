@@ -4,7 +4,7 @@ package io.dot
 import language.{existentials, implicitConversions}
 import scala.collection.SortedMap
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
 
@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
 
 /** Tests [[ArraySet]]. */
 @RunWith(classOf[JUnitRunner])
-class TExportTest extends Suite with ShouldMatchers {
+class TExportTest extends Spec with ShouldMatchers {
   def test_Wikipedia {
     // example from http://en.wikipedia.org/wiki/DOT_language
     implicit def toLDiEdge[N](diEdge: DiEdge[N]) = LDiEdge(diEdge._1, diEdge._2)("")
