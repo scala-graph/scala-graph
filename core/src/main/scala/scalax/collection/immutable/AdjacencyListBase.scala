@@ -3,7 +3,7 @@ package immutable
 
 import language.higherKinds
 import scala.annotation.unchecked.uncheckedVariance
-import scala.collection.Set
+import scala.collection.{Set => AnySet}
 import scala.util.Random
 
 import GraphPredef._
@@ -24,7 +24,7 @@ import io._
 trait AdjacencyListBase[N,
                         E[X] <: EdgeLikeIn[X],
                        +This[X, Y[X]<:EdgeLikeIn[X]]
-                        <: GraphLike[X,Y,This] with Set[Param[X,Y]] with SimpleGraph[X,Y]]
+                        <: GraphLike[X,Y,This] with AnySet[Param[X,Y]] with SimpleGraph[X,Y]]
   extends GraphLike[N,E,This]
 { this: This[N,E] =>
   protected type Config <: GraphConfig with AdjacencyListArrayConfig
@@ -69,7 +69,7 @@ trait AdjacencyListBase[N,
     }
     import Adj._
 
-    final def connectionsWith(other: NodeT) = edges filter (_.isAt(other))
+    final def connectionsWith(other: NodeT) = edges withSetFilter (_.isAt(other))
     
     final def hasOnlyHooks = diSucc.isEmpty && aHook.isDefined
 
@@ -92,7 +92,7 @@ trait AdjacencyListBase[N,
       if (isDirected) {
         val m = new EqHashMap[NodeT,EdgeT](edges.size)
         edges foreach { e => addDiPredecessors(e, (n: NodeT) => m put (n, e)) }
-        m.toKeySet
+        new EqSet(m)
       } else diSuccessors
 
     final protected[collection] def addDiPredecessors(edge: EdgeT,
@@ -105,7 +105,7 @@ trait AdjacencyListBase[N,
         import MEqSet._
         val m = MEqSet[NodeT](edges.size)
         edges foreach { addNeighbors(_, (n: NodeT) => m += n) }
-        m.toKeySet
+        new immutable.EqSet(m)
       } else diSuccessors
 
     final protected[collection] def addNeighbors(edge: EdgeT,
@@ -113,7 +113,7 @@ trait AdjacencyListBase[N,
       edge foreach (n => if (n ne this) add(n))
     }
 
-    final def outgoing: Set[EdgeT] = edges filter (e =>
+    final def outgoing = edges withSetFilter (e =>
       if (e.directed) e.hasSource((_: NodeT) eq this)
       else true
     )
@@ -123,13 +123,13 @@ trait AdjacencyListBase[N,
       else
         e isAt ((_: NodeT) eq to)
 
-    final def outgoingTo(to: NodeT): Set[EdgeT] = edges filter (isOutgoingTo(_, to))
+    final def outgoingTo(to: NodeT) = edges withSetFilter (isOutgoingTo(_, to))
 
     final def findOutgoingTo(to: NodeT): Option[EdgeT] =
       if (to eq this) aHook map (_._2)
       else            diSucc get to
 
-    final def incoming: Set[EdgeT] = edges filter (e =>
+    final def incoming = edges withSetFilter (e =>
       if (e.directed) e.hasTarget((_: NodeT) eq this)
       else true
     )
@@ -139,8 +139,8 @@ trait AdjacencyListBase[N,
       else
         e isAt ((_: NodeT) eq from)
 
-    final def incomingFrom(from: NodeT): Set[EdgeT] =
-      edges filter (isIncomingFrom(_, from))
+    final def incomingFrom(from: NodeT) =
+      edges withSetFilter (isIncomingFrom(_, from))
 
     final def findIncomingFrom(from: NodeT): Option[EdgeT] =
       edges find (isIncomingFrom(_, from))

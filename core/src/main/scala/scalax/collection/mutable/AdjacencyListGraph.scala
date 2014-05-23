@@ -2,7 +2,6 @@ package scalax.collection
 package mutable
 
 import language.higherKinds
-import collection.Set
 
 import GraphPredef.EdgeLikeIn
 import immutable.AdjacencyListBase
@@ -46,7 +45,7 @@ trait AdjacencyListGraph[N,
     }
 
     import EqMap._
-    final def diSuccessors: Set[NodeT] = diSucc.toKeySet
+    final def diSuccessors: Set[NodeT] = new immutable.EqSet(diSucc)
     
     protected[AdjacencyListGraph] def remove(edge: EdgeT): Boolean =
       if (edges.remove(edge)) {
