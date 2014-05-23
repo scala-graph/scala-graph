@@ -2,25 +2,22 @@ package scalax.collection
 
 import language.{higherKinds, implicitConversions}
 import scala.annotation.{switch, tailrec}
-import collection.mutable.{ArrayBuffer, ArraySeq, ArrayStack => Stack, ListBuffer, Queue,
-                           PriorityQueue, Set => MutableSet, Map => MutableMap}
+import collection.mutable.{ArrayBuffer, ArrayStack => Stack, Map => MMap}
 
 import collection.{Abstract, EqSetFacade}
 import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
                     OuterNode, InnerNodeParam, OuterEdge, OuterElem, InnerEdgeParam}
-import GraphEdge.{EdgeLike}
-import mutable.{ArraySet, ExtBitSet}
-import scalax.collection.mutable.ExtBitSet
-import scalax.collection.mutable.ExtBitSet
+import GraphEdge.EdgeLike
 
-trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
+protected trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   extends GraphTraversal[N,E]
-  with State[N,E]
-{ thisGraph =>
+     with TraverserImpl[N,E]
+     with State[N,E]
+{ thisGraph: TraverserImpl[N,E] =>
 
   import GraphTraversalImpl._
-  import GraphTraversal.VisitorReturn._
   import GraphTraversal._
+  import Visitor._
   import State._
   
   protected type CycleStackElem = (NodeT, Iterable[EdgeT])
@@ -101,7 +98,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     
     def foreach[U](f: Component => U): Unit = components foreach f
     
-    def findCycle(implicit visitor: InnerElem => Unit = emptyVisitor): Option[Cycle] =
+    def findCycle[U](implicit visitor: InnerElem => U = empty): Option[Cycle] =
       if (order == 0) None
       else {
         val traverser = InnerElemTraverser(
@@ -110,7 +107,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
           implicit val visitedHandle = handles(0)
           for (node <- nodes if ! node.visited && subgraphNodes(node)) {
             val res = traverser.withRoot(node). // compiler issue
-                      asInstanceOf[InnerElemTraverser].depthFirstSearchWGB(handles) 
+                      asInstanceOf[InnerElemTraverser].Runner(noNode, visitor).dfsWGB(handles) 
             if (res._1.isDefined)
               return cycle(res, subgraphEdges)
           }
@@ -126,140 +123,6 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       ordering     : ElemOrdering       = noOrdering) =
     ComponentTraverser(emptyRoot, parameters, subgraphNodes, subgraphEdges, ordering)
   
-  protected trait Impl[A] {
-    this: Traverser[A,_] =>
-
-    final def pathUntil(pred: (NodeT) => Boolean)
-                       (implicit visitor: A => Unit = emptyVisitor): Option[Path] = {
-      val (target, path) = 
-          new Traversal(Successors, subgraphNodes, subgraphEdges, nodeVisitor(visitor),
-                        edgeVisitor(visitor), ordering)._depthFirstSearch(root, pred)
-      target map { _ =>
-        new AnyEdgeLazyPath(
-          new ReverseStackTraversable[(NodeT, Int), NodeT]
-              (path, (elem: (NodeT, Int)) => elem._1),
-          subgraphEdges)
-      }
-    }
-
-    final def shortestPathTo[T: Numeric](
-        potentialSuccessor: NodeT,
-        weight            : EdgeT => T,
-        visitor           : A => Unit): Option[Path] = {
-      withHandle() { implicit visitedHandle => 
-        val num = implicitly[Numeric[T]] 
-        import num._
-        @inline def visited(n: NodeT) = n.visited
-
-        val nodeVisitor = this.nodeVisitor(visitor) 
-        val edgeVisitor = this.edgeVisitor(visitor)
-
-        type NodeWeight = (NodeT,T)
-        val weightOrdering = Edge.weightOrdering(weight)
-        val dest      = MutableMap[NodeT,T](root -> zero)
-        val mapToPred = MutableMap[NodeT,NodeT]()
-        val traversal = new Traversal(Successors, subgraphNodes, subgraphEdges,
-                                      nodeVisitor, edgeVisitor, ordering) 
-        val doNodeVisitor = isCustomNodeVisitor(nodeVisitor)
-        val extendedVisitor =
-          if (doNodeVisitor)
-            nodeVisitor match {
-              case e: ExtendedNodeVisitor => Some(e)
-              case _ => None
-            }
-          else None
-        // not implicit due to issues #4405 and #4407
-        object ordNodeWeight extends Ordering[NodeWeight] {
-          def compare(x: NodeWeight,
-                      y: NodeWeight) = num.compare(y._2, x._2)
-        }
-        val qNodes = new PriorityQueue[NodeWeight]()(ordNodeWeight) += ((root -> zero))
-  
-        def sortedAdjacentsNodes(node: NodeT): Option[PriorityQueue[NodeWeight]] = 
-          traversal.filteredDiSuccessors(node, visited, false) match {
-            case adj if adj.nonEmpty =>
-              Some(adj.
-                   foldLeft(new PriorityQueue[NodeWeight]()(ordNodeWeight))(
-                     (q,n) => q += ((n, dest(node) +
-                                        weight(node.outgoingTo(n).filter(subgraphEdges(_)).
-                                               min(weightOrdering))))))
-            case _ => None
-          }
-        def relax(pred: NodeT, succ: NodeT) {
-          val cost = dest(pred) + weight(pred.outgoingTo(succ).filter(subgraphEdges(_)).
-                                         min(weightOrdering))
-          if(!dest.isDefinedAt(succ) || cost < dest(succ)) {
-            dest      += (succ->cost)
-            mapToPred += (succ->pred)
-          }
-        }
-        var nodeCnt = 0
-        var canceled = false
-        @tailrec def rec(pq: PriorityQueue[NodeWeight]) {
-          if(pq.nonEmpty && (pq.head._1 ne potentialSuccessor)) { 
-            val nodeWeight = pq.dequeue
-            val node = nodeWeight._1
-            if (!node.visited) {
-              sortedAdjacentsNodes(node) match {
-                case Some(ordNodes) =>
-                  if (ordNodes.nonEmpty) pq ++= (ordNodes)
-                  @tailrec def loop(pq2: PriorityQueue[NodeWeight]) {
-                    if (pq2.nonEmpty) {
-                      relax(node, pq2.dequeue._1)
-                      loop(pq2)
-                    }
-                  }
-                  loop(ordNodes)
-                case None =>
-              }
-              node.visited = true
-              if (doNodeVisitor && extendedVisitor.map { v =>
-                nodeCnt += 1
-                v(node, nodeCnt, 0,
-                  new DijkstraInformer[NodeT,T] {
-                    def queueIterator = qNodes.toIterator
-                    def costsIterator = dest.toIterator
-                  })
-              }.getOrElse(nodeVisitor(node)) == Cancel) {
-                canceled = true
-                return
-              }
-            }
-            rec(pq)
-          }
-        }
-        rec(qNodes) 
-        def traverseMapNodes(map: MutableMap[NodeT,NodeT]): Option[Path] = {
-          map.get(potentialSuccessor).map ( _ =>
-            new MinWeightEdgeLazyPath(
-                new MapPathTraversable[NodeT](map, potentialSuccessor, root),
-                subgraphEdges,
-                Edge.weightOrdering(weight))
-          ) orElse (
-            if(root eq potentialSuccessor) Some(Path.zero(potentialSuccessor)) else None
-          )
-        }
-        if (canceled) None
-        else traverseMapNodes(mapToPred)
-      }
-    }
-                      
-    final def findCycle(implicit visitor: A => Unit = emptyVisitor): Option[Cycle] = {
-      cycle( 
-        new Traversal(Successors, subgraphNodes, subgraphEdges, nodeVisitor(visitor),
-                      edgeVisitor(visitor), ordering).depthFirstSearchWGB(root),
-        subgraphEdges
-      )
-    }
-    
-    final def depthFirstSearchWGB(globalState: Array[Handle]= Array.empty[Handle])(
-                                  implicit visitor: A => Unit = emptyVisitor)
-        : (Option[NodeT], Stack[CycleStackElem]) =
-      newTraversal( parameters.direction, subgraphNodes, subgraphEdges,
-                    nodeVisitor(visitor), edgeVisitor(visitor), ordering).
-          depthFirstSearchWGB(root, globalState = globalState)
-  }
-
   protected case class InnerNodeTraverser(
       override val root         : NodeT,
       override val parameters   : Parameters         = Parameters(),
@@ -267,17 +130,14 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
       override val ordering     : ElemOrdering       = noOrdering)
       extends super.InnerNodeTraverser
-         with Impl[NodeT] {
+         with Impl[NodeT,InnerNodeTraverser] {
     
     final protected def newTraverser:
         (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
         => InnerNodeTraverser = copy _
 
-    final protected def nodeVisitor[U](f: NodeT => U): (NodeT) => VisitorReturn = {
-      @inline def legacy(n: NodeT): VisitorReturn = { f(n); Continue }
-      chose(f, legacy)
-    }
-    final protected def edgeVisitor[U](f: NodeT => U): (EdgeT) => Unit = noEdgeAction
+    final protected def nodeVisitor[U](f: NodeT => U): (NodeT) => U = f
+    final protected def edgeVisitor[U](f: NodeT => U): (EdgeT) => U = empty
   }
   
   def innerNodeTraverser(
@@ -295,16 +155,16 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
       override val ordering     : ElemOrdering       = noOrdering)
       extends super.OuterNodeTraverser
-         with Impl[N] {
+         with Impl[N,OuterNodeTraverser] {
     
     final protected def newTraverser:
         (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
         => OuterNodeTraverser = copy _
 
-    final protected def nodeVisitor[U](f: N => U): (NodeT) => VisitorReturn =
-      (n: NodeT) => { f(n.value); Continue }
+    final protected def nodeVisitor[U](f: N => U): (NodeT) => U =
+      if (isDefined(f)) (n: NodeT) => f(n.value) else empty
 
-    final protected def edgeVisitor[U](f: N => U): (EdgeT) => Unit = noEdgeAction
+    final protected def edgeVisitor[U](f: N => U): (EdgeT) => U = empty
   }
 
   def outerNodeTraverser(
@@ -322,14 +182,15 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
       override val ordering     : ElemOrdering       = noOrdering)
       extends super.InnerEdgeTraverser
-         with Impl[EdgeT] {
+         with Impl[EdgeT,InnerEdgeTraverser] {
     
     final protected def newTraverser:
         (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
         => InnerEdgeTraverser = copy _
 
-    final protected def nodeVisitor[U](f: EdgeT => U): (NodeT) => VisitorReturn = noNodeAction
-    final protected def edgeVisitor[U](f: EdgeT => U): (EdgeT) => Unit = (e: EdgeT) => f(e)
+    final protected def nodeVisitor[U](f: EdgeT => U): (NodeT) => U = empty
+    final protected def edgeVisitor[U](f: EdgeT => U): (EdgeT) => U =
+      if (isDefined(f)) (e: EdgeT) => f(e) else empty
   }
   
   def innerEdgeTraverser(
@@ -347,14 +208,15 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
       override val ordering     : ElemOrdering       = noOrdering)
       extends super.OuterEdgeTraverser
-         with Impl[E[N]] {
+         with Impl[E[N],OuterEdgeTraverser] {
     
     final protected def newTraverser:
         (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
         => OuterEdgeTraverser = copy _
 
-    final protected def nodeVisitor[U](f: E[N] => U): (NodeT) => VisitorReturn = noNodeAction
-    final protected def edgeVisitor[U](f: E[N] => U): (EdgeT) => Unit = (e: EdgeT) => f(e.toOuter)
+    final protected def nodeVisitor[U](f: E[N] => U): (NodeT) => U = empty
+    final protected def edgeVisitor[U](f: E[N] => U): (EdgeT) => U =
+      if (isDefined(f)) (e: EdgeT) => f(e.toOuter) else empty
   }
   
   def outerEdgeTraverser(
@@ -372,17 +234,16 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
       override val ordering     : ElemOrdering       = noOrdering)
       extends super.InnerElemTraverser
-         with Impl[InnerElem] {
+         with Impl[InnerElem,InnerElemTraverser] {
     
     final protected def newTraverser:
         (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
         => InnerElemTraverser = copy _
         
-    final protected def nodeVisitor[U](f: InnerElem => U): (NodeT) => VisitorReturn = {
-      @inline def legacy(n: NodeT): VisitorReturn = { f(n); Continue } 
-      chose(f, legacy)
-    }
-    final protected def edgeVisitor[U](f: InnerElem => U): (EdgeT) => Unit = (e: EdgeT) => f(e)
+    final protected def nodeVisitor[U](f: InnerElem => U): (NodeT) => U =
+      if (isDefined(f)) (n: NodeT) => f(n) else f
+    final protected def edgeVisitor[U](f: InnerElem => U): (EdgeT) => U =
+      if (isDefined(f)) (e: EdgeT) => f(e) else f
   }
   
   def innerElemTraverser(
@@ -400,17 +261,19 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
       override val ordering     : ElemOrdering       = noOrdering)
       extends super.OuterElemTraverser
-         with Impl[OuterElem[N,E]] {
+         with Impl[OuterElem[N,E],OuterElemTraverser] {
     
     final protected def newTraverser:
         (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
         => OuterElemTraverser = copy _
 
-    final protected def nodeVisitor[U](f: OuterElem[N,E] => U): (NodeT) => VisitorReturn =
-      (n: NodeT) => { f(n.value); Continue }
+    final protected def nodeVisitor[U](f: OuterElem[N,E] => U): (NodeT) => U =
+      if (isDefined(f)) (n: NodeT) => f(n.value)
+      else empty
 
-    final protected def edgeVisitor[U](f: OuterElem[N,E] => U): (EdgeT) => Unit =
-      (e: EdgeT) => f(e.toOuter.asInstanceOf[OuterEdge[N,E]])
+    final protected def edgeVisitor[U](f: OuterElem[N,E] => U): (EdgeT) => U =
+      if (isDefined(f)) (e: EdgeT) => f(e.toOuter.asInstanceOf[OuterEdge[N,E]])
+      else empty
   }
 
   def outerElemTraverser(
@@ -421,15 +284,16 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       ordering     : ElemOrdering       = noOrdering) =
     OuterElemTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
 
-  protected trait DownUpTraverser[A] {
-    this: Traverser[A,_] =>
+  protected trait DownUpTraverser[A, +This <: DownUpTraverser[A,This]]
+      extends Impl[A,This] {
+    this: This =>
 
-    final protected def downUpForeach[U](down: NodeT => VisitorReturn, up  : NodeT => Unit): Unit =
-      newTraversal( parameters.direction, subgraphNodes, subgraphEdges,
-                    down, noEdgeAction, ordering).
-      depthFirstSearch(root, maxDepth = parameters.maxDepth, nodeUpVisitor = up)
+    final protected def downUpForeach[U](down: A => Unit, up  : NodeT => Unit): Unit =
+      Runner(noNode, down).dfsNode(up)
 
-    final protected def edgeVisitor[U](f: (A) => U): (EdgeT) => Unit = noEdgeAction
+    final def fUnit[U](f: A => U): A => Unit = (a: A) => f(a)
+
+    final protected def edgeVisitor[U](f: (A) => U): (EdgeT) => U = empty
   }
 
   protected case class InnerNodeDownUpTraverser(
@@ -439,19 +303,19 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
       override val ordering     : ElemOrdering       = noOrdering)
       extends super.InnerNodeDownUpTraverser
-         with DownUpTraverser[(Boolean, NodeT)]
-         with Impl[(Boolean, NodeT)] {
+         with DownUpTraverser[(Boolean, NodeT),InnerNodeDownUpTraverser] {
     
     final protected def newTraverser:
         (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
         => InnerNodeDownUpTraverser = copy _
         
     final override def foreach[U](f: ((Boolean, NodeT)) => U): Unit = downUpForeach(
-        nodeVisitor(f),
-        (n: NodeT) => f(false, n)
-      )
-    final protected def nodeVisitor[U](f: ((Boolean, NodeT)) => U): (NodeT) => VisitorReturn =
-      (n: NodeT) => { f(true,  n); Continue } 
+      fUnit(f),
+      (n: NodeT) => f(false, n)
+    )
+    
+    final protected def nodeVisitor[U](f: ((Boolean, NodeT)) => U): (NodeT) => U =
+      if (isDefined(f)) (n: NodeT) => f(true, n) else empty 
   }
   
   def innerNodeDownUpTraverser(
@@ -469,19 +333,19 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
       override val ordering     : ElemOrdering       = noOrdering)
       extends super.OuterNodeDownUpTraverser
-         with DownUpTraverser[(Boolean, N)]
-         with Impl[(Boolean, N)] {
+         with DownUpTraverser[(Boolean, N),OuterNodeDownUpTraverser] {
     
     final protected def newTraverser:
         (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
         => OuterNodeDownUpTraverser = copy _
 
     final override def foreach[U](f: ((Boolean, N)) => U): Unit = downUpForeach(
-        nodeVisitor(f),
-        (n: NodeT) => f(false, n)
-      )
-    final protected def nodeVisitor[U](f: ((Boolean, N)) => U): (NodeT) => VisitorReturn =
-      (n: NodeT) => { f(true,  n.value); Continue } 
+      fUnit(f),
+      (n: NodeT) => f(false, n)
+    )
+
+    final protected def nodeVisitor[U](f: ((Boolean, N)) => U): (NodeT) => U =
+      if (isDefined(f)) (n: NodeT) => f(true,  n.value) else empty 
   }
   
   def outerNodeDownUpTraverser(
@@ -491,327 +355,6 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       subgraphEdges: (EdgeT) => Boolean = anyEdge,
       ordering     : ElemOrdering       = noOrdering) =
     OuterNodeDownUpTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
-
-  class Traversal(direction  : Direction,
-                  nodeFilter : (NodeT) => Boolean,
-                  edgeFilter : (EdgeT) => Boolean,
-                  nodeVisitor: (NodeT) => VisitorReturn,
-                  edgeVisitor: (EdgeT) => Unit,
-                  ordering   : ElemOrdering)
-    extends super.Traversal(direction, nodeFilter, edgeFilter, nodeVisitor, edgeVisitor, ordering)
-  {
-    final protected val addMethod = direction match {
-      case Successors   => Node.addDiSuccessors _
-      case Predecessors => Node.addDiPredecessors _
-      case AnyConnected => Node.addNeighbors _
-    }
-    final protected val addFilteredMethod = direction match {
-      case Successors   => filteredDiSuccessors _
-      case Predecessors => filteredDiPredecessors _
-      case AnyConnected => filteredNeighbors _
-    }
-    final protected val edgesMethod = direction match {
-      case Successors   => (n: NodeT) => n.outgoing
-      case Predecessors => (n: NodeT) => n.incoming
-      case AnyConnected => (n: NodeT) => n.edges
-    }
-    @transient final protected val doNodeFilter = isCustomNodeFilter(nodeFilter)
-    @transient final protected val doEdgeFilter = isCustomEdgeFilter(edgeFilter)
-    @transient final protected val doFilter     = doNodeFilter || doEdgeFilter
-    @transient final protected val doNodeVisitor= isCustomNodeVisitor(nodeVisitor)
-    @transient final protected val doEdgeVisitor= isCustomEdgeVisitor(edgeVisitor)
-    @transient final protected val (doNodeSort, nodeOrdering, reverseNodeOrdering,
-                                    doEdgeSort, edgeOrdering, reverseEdgeOrdering) =
-      ordering match {
-        case nO: NodeOrdering => (true,  nO,   nO.reverse,
-                                  false, null, null)
-        case eO: EdgeOrdering => (false, null, null,
-                                  true,  eO,   eO.reverse)
-        case _ : NoOrdering   => (false, null, null,
-                                  false, null, null)
-      }
-    protected[collection]
-    def filteredDi(direction: Direction,
-                   node     :  NodeT,
-                   isVisited: (NodeT) => Boolean,
-                   reverse  : Boolean): Iterable[NodeT] =
-    {
-      val edges: Iterable[EdgeT] = {
-        val edges = {
-          val es = edgesMethod(node)
-          if (doEdgeFilter) es filter edgeFilter
-          else              es
-        }
-        if(doEdgeSort) {
-          def sorted(ordering: Ordering[EdgeT]) = edges match {
-            case a: ArraySet[EdgeT] => a.sorted(ordering)
-            case s                  => s.toList.sorted(ordering)
-          }
-          if(reverse) sorted(reverseEdgeOrdering)
-          else        sorted(edgeOrdering)
-        } else        edges
-      }
-      val succ = ArraySet.empty[NodeT](edges.size)
-      if (doFilter) {
-        def addFilteredNeighbors(edge: EdgeT) {
-          addMethod(node, edge,
-                   (n: NodeT) => if (nodeFilter(n) && ! isVisited(n))
-                                 succ += n)
-          if (doEdgeVisitor) edgeVisitor(edge)
-        }
-        edges foreach addFilteredNeighbors
-      } else {
-        edges foreach { (e: EdgeT) =>
-          addMethod(node, e,
-                    (n: NodeT) => if (! isVisited(n)) succ += n)
-          if (doEdgeVisitor) edgeVisitor(e)
-        }
-      }
-      if(doNodeSort)
-        if(reverse) succ.sorted(reverseNodeOrdering)
-        else        succ.sorted(nodeOrdering)
-      else          succ
-    }
-    @inline final override protected[collection]
-    def filteredDiSuccessors(node     :  NodeT,
-                             isVisited: (NodeT) => Boolean,
-                             reverse  : Boolean): Iterable[NodeT] =
-      filteredDi(Successors, node, isVisited, reverse)
-    @inline final override protected[collection]
-    def filteredDiPredecessors(node     :  NodeT,
-                               isVisited: (NodeT) => Boolean,
-                               reverse  : Boolean): Iterable[NodeT] =
-      filteredDi(Predecessors, node, isVisited, reverse)
-    @inline final override protected[collection]
-    def filteredNeighbors(node     :  NodeT,
-                          isVisited: (NodeT) => Boolean,
-                          reverse  : Boolean): Iterable[NodeT] =
-      filteredDi(AnyConnected, node, isVisited, reverse)
-
-    override def apply(root        : NodeT,
-                       pred        : (NodeT) => Boolean = noNode,
-                       breadthFirst: Boolean            = true,
-                       maxDepth    : Int                = 0): Option[NodeT] =
-    {
-      if (breadthFirst) breadthFirstSearch(root, pred, maxDepth)
-      else              depthFirstSearch  (root, pred, maxDepth)
-    }
-    override def depthFirstSearch(
-        root         : NodeT,
-        pred         : (NodeT) => Boolean = noNode,
-        maxDepth     : Int                = 0,
-        nodeUpVisitor: (NodeT) => Unit    = noNodeUpAction): Option[NodeT] =
-      _depthFirstSearch(root, pred, maxDepth, nodeUpVisitor)._1
-
-    final protected[GraphTraversalImpl] def _depthFirstSearch(
-        root         : NodeT,
-        pred         : (NodeT) => Boolean = noNode,
-        maxDepth     : Int                = 0,
-        nodeUpVisitor: (NodeT) => Unit    = noNodeUpAction): (Option[NodeT], Stack[(NodeT, Int)]) =
-    withHandle() { implicit visitedHandle => 
-      val stack: Stack[(NodeT, Int)] = Stack((root, 0))
-      val path:  Stack[(NodeT, Int)] = Stack()
-      val untilDepth: Int = if (maxDepth > 0) maxDepth else java.lang.Integer.MAX_VALUE
-      @inline def isVisited(n: NodeT): Boolean = n.visited  
-      val extendedVisitor = nodeVisitor match {
-        case e: ExtendedNodeVisitor => Some(e)
-        case _ => None
-      }
-      val doNodeUpVisitor = isCustomNodeUpVisitor(nodeUpVisitor)
-      var res: Option[NodeT] = None
-      var nodeCnt = 0
-      root.visited = true
-      @tailrec def loop {
-        if(stack.nonEmpty) {
-          val (current, depth) = {
-            val popped = stack.pop
-            val depth = popped._2
-            if (depth > 0)
-              while (path.head._2 >= depth) {
-                if (doNodeUpVisitor) nodeUpVisitor(path.head._1)
-                path.pop
-              }
-            path.push(popped)
-            popped
-          }
-          if (doNodeVisitor && extendedVisitor.map{ v =>
-                nodeCnt += 1
-                v(current, nodeCnt, depth,
-                  new DfsInformer[NodeT] {
-                    def stackIterator = stack.toIterator 
-                    def pathIterator  = path .toIterator 
-                  })
-              }.getOrElse(nodeVisitor(current)) == Cancel)
-              return
-          if (pred(current) && (current ne root)) {
-            res = Some(current)
-          } else {
-            if (depth < untilDepth)
-              for (n <- addFilteredMethod(current, isVisited, true)
-                        filterNot (isVisited(_))) {
-                stack.push((n, depth + 1))
-                n.visited = true
-              }
-            loop
-          }
-        }
-      }
-      loop
-      if (doNodeUpVisitor) path foreach (e => nodeUpVisitor(e._1))
-      (res, path)
-    }
-    /**
-     * Tail-recursive white-gray-black DFS implementation for cycle detection.
-     * 
-     * @param root start node for the search
-     * @param predicate node predicate marking an end condition for the search
-     */
-    protected[collection]
-    def depthFirstSearchWGB(root      :  NodeT,
-                            predicate : (NodeT) => Boolean  = noNode,
-                            globalState: Array[Handle]= Array.empty[Handle])
-        : (Option[NodeT], Stack[CycleStackElem]) =
-    {
-      withHandles(2, globalState) { handles =>
-        implicit val visitedHandle = handles(0)
-        val blackHandle = handles(1)
-        
-        // (node, predecessor, exclude, 0 to 2 multi edges) with last two for undirected
-        val stack: Stack[(NodeT, NodeT, Boolean, Iterable[EdgeT])] =
-            Stack((root, root, false, Nil))
-        // (node, connecting with prev)
-        val path = Stack.empty[CycleStackElem]
-        val isDiGraph = thisGraph.isDirected
-        def isWhite (node: NodeT) = nonVisited(node)
-        def isGray  (node: NodeT) = isVisited(node) && ! (node bit(blackHandle))
-        def isBlack (node: NodeT) = node bit(blackHandle)
-        def setGray (node: NodeT) { node.visited = true }
-        def setBlack(node: NodeT) { node.bit_=(true)(blackHandle) } 
-  
-        def onNodeDown(node: NodeT) { setGray (node) } 
-        def onNodeUp  (node: NodeT) { setBlack(node) }
-  
-        def isVisited (node: NodeT) = node.visited
-        def nonVisited(node: NodeT) = ! isVisited(node)
-        val extendedVisitor = nodeVisitor match {
-          case e: ExtendedNodeVisitor => Some(e)
-          case _ => None
-        }
-        var res: Option[NodeT] = None
-        var nodeCnt = 0
-        @tailrec def loop(pushed: Boolean) {
-          if (res.isEmpty)
-            if (stack.isEmpty)
-              path foreach (t => setBlack(t._1))
-            else {
-              val popped = stack.pop
-              if (! pushed)
-                while ( path.nonEmpty &&
-                       (path.head._1 ne root) &&
-                       (path.head._1 ne popped._2)) {
-                  val p = path.pop._1
-                  if (! isBlack(p))
-                    onNodeUp(p) 
-                }
-              val exclude: Option[NodeT] = if (popped._3) Some(popped._2) else None
-              val current = popped._1
-              path.push((current, popped._4))
-              if (nonVisited(current)) onNodeDown(current)
-              if (doNodeVisitor && extendedVisitor.map{ v =>
-                    nodeCnt += 1
-                    v(current, nodeCnt, 0,
-                      new WgbInformer[NodeT, EdgeT] {
-                        def stackIterator = stack.toIterator 
-                        def pathIterator  = path .toIterator 
-                      })
-                  }.getOrElse(nodeVisitor(current)) == Cancel)
-                return
-              if (predicate(current) && (current ne root))
-                res = Some(current)
-              else {
-                var pushed = false
-                for (n <- addFilteredMethod(current, isBlack(_), true)
-                          filterNot (isBlack(_))) { 
-                  if (isGray(n)) {
-                    if (exclude map (_ ne n) getOrElse true)
-                      res = Some(n)
-                  } else {
-                    if (isDiGraph)
-                      stack.push((n, current, false, Nil))
-                    else {
-                      val (excl, multi): (Boolean, Iterable[EdgeT]) = {
-                        val conn = current connectionsWith n
-                        (conn.size: @switch) match {
-                          case 0 => throw new NoSuchElementException
-                          case 1 => (true, conn)
-                          case _ => (false, conn)
-                        }
-                      }
-                      stack.push((n, current, excl, multi))
-                    }
-                    pushed = true
-                  }
-                }
-                loop(pushed)
-              }
-            }
-        }
-        loop(true)
-        (res, path)
-      }
-    }
-    override def breadthFirstSearch(root    : NodeT,
-                                    pred    : (NodeT) => Boolean = noNode,
-                                    maxDepth: Int                = 0): Option[NodeT] =
-    {
-      withHandle() { implicit visitedHandle => 
-        val untilDepth = if (maxDepth > 0) maxDepth else java.lang.Integer.MAX_VALUE
-        var depth = 0
-        var nodeCnt = 0
-        val q = Queue[(NodeT, Int)](root -> depth)
-        val doNodeVisitor = isCustomNodeVisitor(nodeVisitor)
-        val extendedVisitor =
-          if (doNodeVisitor)
-            nodeVisitor match {
-              case e: ExtendedNodeVisitor => Some(e)
-              case _ => None
-            }
-          else None
-        @inline def visited(n: NodeT) = n.visited  
-        @inline def visitAndCanceled(n: NodeT) = {
-          n.visited = true
-          doNodeVisitor && extendedVisitor.map{ v =>
-            nodeCnt += 1
-            v(n, nodeCnt, depth,
-              new BfsInformer[NodeT] {
-                def queueIterator = q.toIterator 
-              })
-          }.getOrElse(nodeVisitor(n)) == Cancel
-        }
-        if (visitAndCanceled(root)) return None
-        while (q.nonEmpty) { 
-          val (prevNode, prevDepth) = q.dequeue
-          if (prevDepth < untilDepth) {
-            depth = prevDepth + 1
-            for (node <- addFilteredMethod(prevNode, visited, false)) { 
-              if (visitAndCanceled(node)) return None
-              if (pred(node)) return Some(node)
-              q enqueue (node -> depth)  
-            }
-          }
-        }
-        None
-      }
-    }
-  }
-  
-  override def newTraversal(direction  : Direction                = Successors,
-                            nodeFilter : (NodeT) => Boolean       = anyNode,
-                            edgeFilter : (EdgeT) => Boolean       = anyEdge,
-                            nodeVisitor: (NodeT) => VisitorReturn = noNodeAction,
-                            edgeVisitor: (EdgeT) => Unit          = noEdgeAction,
-                            ordering   : ElemOrdering             = noOrdering) =    
-    new Traversal(direction, nodeFilter, edgeFilter, nodeVisitor, edgeVisitor, ordering)
 
   /** Efficient reverse `foreach` overcoming `ArrayStack`'s deficiency
    *  not to overwrite `reverseIterator`.
@@ -830,34 +373,34 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     private[this] var _size: Option[Int] = None
     @inline override val size: Int = _size getOrElse super.size
 
-    @inline override def last: T = enclosed(1) map toT getOrElse toT(s(0))
+    @inline override def last: T = enclosed(1).fold(ifEmpty = toT(s(0)))(toT)
     def reverse: Traversable[T] = new Abstract.Traversable[T] {
       def foreach[U](f: T => U): Unit = {
         def fT(elem: S): Unit = f(toT(elem))
-        def end(i: Int) = enclosed(i) map fT
+        def end(i: Int) = enclosed(i) foreach fT
         end(1)
         s foreach fT
         end(0)
       }
     }
     
-    private lazy val upper = dropWhile map { pred =>
+    private lazy val upper = dropWhile.fold(ifEmpty = s.size){ pred =>
       var i = s.size - 1
       while (i >= 0 && pred(s(i)))
         i -= 1
       if (i < 0) 0 else i
-    } getOrElse s.size
+    } 
     
     lazy val source: Traversable[S] = new Abstract.Traversable[S] {
       def foreach[U](f: S => U): Unit = {
-        enclosed(0) map f
+        enclosed(0) foreach f
         var i = upper
         var size = i
         while (i > 0) {
           i -= 1
           f(s(i))
         }
-        enclosed(1) map f
+        enclosed(1) foreach f
         if (_size.isEmpty) _size = Some(size + enclosed.count(_.isDefined))
       }
     }
@@ -865,7 +408,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   
   /** Enables lazy traversing of a `Map` with `key = source, value = target`.
    */
-  final protected class MapPathTraversable[T](map: MutableMap[T,T], to: T, start: T)
+  final protected class MapPathTraversable[T](map: MMap[T,T], to: T, start: T)
       extends Traversable[T] {
     
     override def stringPrefix = "Nodes"
@@ -947,7 +490,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     
     final def selectEdge (from: NodeT, to: NodeT): EdgeT =
       if (isCustomEdgeFilter(edgeFilter))
-        from outgoingTo to filter edgeFilter min(weightOrdering)
+        from outgoingTo to withFilter edgeFilter min(weightOrdering)
       else
         from outgoingTo to min(weightOrdering)
   }

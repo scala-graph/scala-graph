@@ -182,38 +182,33 @@ trait GraphLike[N,
   @inline final protected def -!#   (edge: E[N]) = clone -!=# edge
   @inline final def removeWithNodes (edge: E[N]) = edges removeWithNodes Edge(edge)
 
-  def -= (elem: Param[N,E]): this.type =
-    elem match {
-      case n: OuterNode [N] => this -= n.value 
-      case n: InnerNodeParam[N] => this -= n.value
-      case e: OuterEdge[N,E]      => this -=# e.edge
-      case e: InnerEdgeParam[N,E,_,E] => this -=# e.asEdgeTProjection[N,E].toOuter
-  	}
-  def -!=(elem: Param[N,E]): this.type =
-    elem match {
-      case n: OuterNode [N] => this  -= n.value 
-      case n: InnerNodeParam[N] => this  -= n.value
-      case e: OuterEdge[N,E]      => this -!=# e.edge
-      case e: InnerEdgeParam[N,E,_,E] => this -!=# e.asEdgeTProjection[N,E].toOuter
-    }
-  /**
-   * Shrinks this graph to its intersection with `coll`.
+  def -= (elem: Param[N,E]): this.type = elem match {
+    case n: OuterNode [N] => this -= n.value 
+    case n: InnerNodeParam[N] => this -= n.value
+    case e: OuterEdge[N,E]      => this -=# e.edge
+    case e: InnerEdgeParam[N,E,_,E] => this -=# e.asEdgeTProjection[N,E].toOuter
+	}
+  def -!=(elem: Param[N,E]): this.type = elem match {
+    case n: OuterNode [N] => this  -= n.value 
+    case n: InnerNodeParam[N] => this  -= n.value
+    case e: OuterEdge[N,E]      => this -!=# e.edge
+    case e: InnerEdgeParam[N,E,_,E] => this -!=# e.asEdgeTProjection[N,E].toOuter
+  }
+  
+  /** Shrinks this graph to its intersection with `coll`.
    *
    * @param coll Collection of nodes and/or edges to intersect with;
    * @return this graph shrinked by the nodes and edges not contained in `coll`.
    */
-  def &=(coll: Iterable[Param[N,E]]): This[N,E] = {
-    val collSet = coll.toSet
-    foreach { _ match {
-      case n: OuterNode [N] => if(! collSet.contains(n)) this -= n 
-      case n: InnerNodeParam[N] => if(! collSet.contains(n.value)) this -= n.value
-      case e: OuterEdge[N,E]      => if(! collSet.contains(e)) this -= e
-      case e: InnerEdgeParam[N,E,_,E] =>
-        val outer: InParam[N,E] = e.asEdgeTProjection[N,E].toOuter.
-                                       asInstanceOf[OuterEdge[N,E]] // TODO
-        if(! collSet.contains(outer)) this -= outer 
-    }}
-    this.asInstanceOf[This[N,E]]
+  def &=(coll: Iterable[Param[N,E]]): this.type = {
+    import EqSet._
+    val toKeep = MSet.empty[Param[N,E]] ++= coll
+    val toRemove = EqSet[Param[N,E]](order)
+    def check(p: Param[N,E]): Unit = { if(! toKeep.contains(p)) toRemove += p }
+    
+    this foreach check
+    toRemove.toKeySet foreach -=
+    this
   }
   /**
    * Removes all elements of `coll` from this graph. Edges will be
@@ -225,7 +220,7 @@ trait GraphLike[N,
    */
   @inline final
   def --!=(coll: Iterable[Param[N,E]]): This[N,E] =
-    (this.asInstanceOf[This[N,E]] /: coll)(_ -!= _) 
+    (this /: coll)(_ -!= _) 
 }
 /**
  * The main trait for mutable graphs bundling the functionality of traits concerned with
@@ -272,8 +267,8 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
     ( implicit @transient override val edgeT: TypeTag[E[N]],
       override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
   extends Graph[N,E]
-  with    AdjacencyListGraph[N, E, DefaultGraphImpl]
-  with    GraphTraversalImpl[N,E]
+     with AdjacencyListGraph[N, E, DefaultGraphImpl]
+     with GraphTraversalImpl[N,E]
 {
   @transient override final val graphCompanion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config

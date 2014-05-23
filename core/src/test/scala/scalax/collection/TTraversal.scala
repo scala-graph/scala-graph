@@ -1,12 +1,11 @@
 package scalax.collection
 
 import scala.language.{higherKinds, postfixOps}
-import scala.collection.mutable.{ListBuffer, Set => MSet, Stack}
+import scala.collection.mutable.{ListBuffer, Stack}
 import scala.util.Random
 
 import GraphPredef._, GraphEdge._
 import GraphTraversal._
-import GraphTraversal.VisitorReturn._
 import generic.GraphCoreCompanion
 import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
 import generator.GraphGen
@@ -312,7 +311,6 @@ private class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike
             case DfsInformer(stack, path) => ;
             case _ => fail
           }
-          Continue
         }
       )
     }

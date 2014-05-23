@@ -91,7 +91,7 @@ class TExtByImplicitTest
     /* Consume node enrichment.
      */
     implicit val g = Graph(1 ~> 2, 2 ~> 3, 2 ~> 1)
-    (g get 1).inHeadOption.map(_.shortestPathTo(g get 3)) should be ('isDefined)
+    (g get 1).inHeadOption.map(_.shortestPathTo(g get 3)()) should be ('isDefined)
   }
 
   def test_nodeEnrichment_3 {

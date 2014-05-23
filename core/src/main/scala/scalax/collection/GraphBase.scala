@@ -1,9 +1,10 @@
 package scalax.collection
 
-import language.{higherKinds, implicitConversions}
-import collection.{Set, SortedSet, SortedMap}
-import util.Random
+import scala.language.{higherKinds, implicitConversions}
+import scala.collection.{SortedSet, SortedMap}
+import scala.util.Random
 
+import scala.collection.FilterableSet
 import GraphPredef.{EdgeLikeIn, NodeParam, OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam}
 import GraphEdge.{EdgeLike, EdgeCompanionBase, DiHyperEdgeLike}
 import generic.AnyOrdering
@@ -97,7 +98,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         If `other` equals this node all hooks are returned.
      *         If `other` is not connected with this node an empty set is returned.   
      */
-    def connectionsWith(other: NodeT): Set[EdgeT]
+    def connectionsWith(other: NodeT): Set[EdgeT] with FilterableSet[EdgeT]
 
     /**
      * Checks whether this node has only hooks or no edges at all.
@@ -169,7 +170,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      * @return set of all edges outgoing from this node
      *         including undirected edges and hooks.  
      */
-    def outgoing: Set[EdgeT]
+    def outgoing: Set[EdgeT] with FilterableSet[EdgeT]
 
     /** Synonym for `outgoing`. */
     @inline final def ~> = outgoing
@@ -182,7 +183,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         If `to` equals this node all hooks are returned.
      *         If `to` is not an adjacent an empty set is returned.   
      */
-    def outgoingTo(to: NodeT): Set[EdgeT]
+    def outgoingTo(to: NodeT): Set[EdgeT] with FilterableSet[EdgeT]
 
     /** Synonym for `outgoingTo`. */
     @inline final def ~>(to: NodeT) = outgoingTo(to)
@@ -204,7 +205,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *
      * @return set of all edges incoming to of this including undirected edges.  
      */
-    def incoming: Set[EdgeT]
+    def incoming: Set[EdgeT] with FilterableSet[EdgeT]
 
     /** Synonym for `incoming`. */
     @inline final def <~ = incoming
@@ -218,7 +219,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *         If `from` equals this node all hooks are returned.
      *         If `from` is not an adjacent node an empty set is returned.   
      */
-    def incomingFrom(from: NodeT): Set[EdgeT]
+    def incomingFrom(from: NodeT): Set[EdgeT] with FilterableSet[EdgeT]
 
     /** Synonym for `incomingFrom`. */
     @inline final def <~(from: NodeT) = incomingFrom(from)
@@ -344,7 +345,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     (a: NodeT, b: NodeT) => anyOrdering.compare(a.value, b.value)
   )
   type NodeSetT <: NodeSet
-  trait NodeSet extends Set[NodeT] with ExtSetMethods[NodeT] with Serializable {
+  trait NodeSet extends AnySet[NodeT] with ExtSetMethods[NodeT] with Serializable {
     /**
      * This method is called by the primary constructor. It must be defined by the trait
      * responsible for the implementation of the graph representation.
@@ -379,7 +380,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     /**
      * Converts this node set to a set of outer nodes.
      */
-    def toOuter: Set[N] = this map (n => n.value)
+    def toOuter: AnySet[N] = this map (n => n.value)
     @deprecated("Use toOuter instead", "1.8.0") def toNodeInSet = toOuter
 
     /**
@@ -421,7 +422,8 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
   trait Edge extends Serializable
   trait InnerEdge
       extends Iterable[NodeT] with InnerEdgeParam[N,E,NodeT,E] with Edge with InnerElem {
-    
+    this: EdgeT =>
+
     override def stringPrefix = super[InnerEdgeParam].stringPrefix
     
     /**
@@ -447,9 +449,13 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      * @return set of connecting edges including hooks.
      */
     def adjacents: Set[EdgeT] = {
-      var a = ArraySet[EdgeT]()
-      edge foreach {n => a ++= n.edges}
-      a -= a.find(_ == edge).get
+      var a = new mutable.EqHashMap[EdgeT,Null]
+      this foreach ( n =>
+        n.edges foreach ( e =>
+          a put (e, null)
+      ))
+      a -= this
+      new immutable.EqSet(a)
     }
     /** Synonym for `adjacents`. */
     @inline final def ~~ = adjacents
@@ -500,7 +506,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     protected var freshNodes = Map[N,NodeT]()
     protected def mkNode(n: N): NodeT = {
       val existing = nodes lookup n
-      if (null == existing)
+      if (null eq existing)
         freshNodes getOrElse (n, {
           val newN = newNode(n)
           freshNodes += (n -> newN)
@@ -553,6 +559,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     }
   }
   class EdgeBase(override val edge: E[NodeT]) extends InnerEdgeParam[N,E,NodeT,E] with InnerEdge {
+    this: EdgeT =>
     override def iterator: Iterator[NodeT] = edge.iterator.asInstanceOf[Iterator[NodeT]]
     override def stringPrefix = super.stringPrefix
   }
@@ -567,7 +574,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     }
   )
   type EdgeSetT <: EdgeSet
-  trait EdgeSet extends Set[EdgeT] with ExtSetMethods[EdgeT] with Serializable {
+  trait EdgeSet extends AnySet[EdgeT] with ExtSetMethods[EdgeT] with Serializable {
     /**
      * This method is called by the primary constructor. It must be defined by the trait
      * responsible for the implementation of the graph representation.
@@ -610,7 +617,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     /**
      * Converts this edge set to a set of outer edges.
      */
-    def toOuter: Set[E[N]] = (this map (_.toOuter))
+    def toOuter: AnySet[E[N]] = this map (_.toOuter)
     @deprecated("Use toOuter instead", "1.8.0") def toEdgeInSet = toOuter
     
     final def draw(random: Random) = (nodes draw random).edges draw random

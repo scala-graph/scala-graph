@@ -175,8 +175,15 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
     }
 
     val g = factory(e)
+    g.nodes.head.diSuccessors // force lazy initialization
     val back = store.test[MyNode,WLDiEdge] (g)
+    
     back.graphSize should be (1)
+    
+    val inner_1 = (back get n1) 
+    inner_1.diSuccessors should have size (1)
+    inner_1.diSuccessors.head should be (n2)
+    
     val backEdge = back.edges.head
     backEdge.source.s should be (List(a1, b1)) 
     backEdge.target.s should be (List(a2, b2))

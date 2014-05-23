@@ -8,7 +8,6 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 import GraphPredef._, GraphEdge._
-import GraphTraversal.VisitorReturn._
 import generator.{RandomGraph, NodeDegreeRange}
 
 import org.scalatest.Spec

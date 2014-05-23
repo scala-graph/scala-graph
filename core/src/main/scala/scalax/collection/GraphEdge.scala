@@ -2,7 +2,6 @@ package scalax.collection
 
 import language.{higherKinds, postfixOps}
 import scala.annotation.{tailrec, switch}
-import scala.collection.mutable.Set
 
 import GraphPredef.{InnerNodeParam, OuterEdge}
 import edge.LBase.LEdge
@@ -134,7 +133,7 @@ object GraphEdge {
      */
     def isLooping = if (arity == 2) _1 == _2
                     else if (directed) iterator.drop(1) exists (_ == _1)
-                    else (Set() ++= iterator).size < arity
+                    else (MSet() ++= iterator).size < arity
     /** Same as `! looping`. */                
     final def nonLooping = ! isLooping 
     /**
@@ -334,7 +333,7 @@ object GraphEdge {
                (other match {
                   case diHyper: DiHyperEdge[_] =>
                     this.source == diHyper.source &&
-                    nrEqualingNodes(this.targets, Set() ++ diHyper.targets) == a - 1
+                    nrEqualingNodes(this.targets, MSet() ++ diHyper.targets) == a - 1
                   case _ => throw new IllegalArgumentException("Unexpected edge type.")
                 })
     }

@@ -14,7 +14,7 @@ import mutable.ExtBitSet
  * 
  *  @author Peter Empen
  */
-trait State[N, E[X] <: EdgeLikeIn[X]] {
+protected trait State[N, E[X] <: EdgeLikeIn[X]] {
   this: GraphTraversalImpl[N,E] =>
 
   import State._

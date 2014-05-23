@@ -1,7 +1,8 @@
 package custom
 
-import language.higherKinds
-import collection.generic.CanBuildFrom
+import scala.language.higherKinds
+import scala.collection.generic.CanBuildFrom
+import scala.collection.{Set => AnySet}
 import scala.reflect.runtime.universe._
 
 import scalax.collection._
@@ -20,7 +21,7 @@ import config.AdjacencyListArrayConfig
 trait MyExtGraphLike[N,
                      E[X]  <: EdgeLikeIn[X],
                      +This[X, Y[X]<:EdgeLikeIn[X]]
-                           <: MyExtGraphLike[X,Y,This] with Set[Param[X,Y]] with Graph[X,Y]]
+                           <: MyExtGraphLike[X,Y,This] with AnySet[Param[X,Y]] with Graph[X,Y]]
   extends GraphLike[N,E,This]
 { this: This[N,E] =>
   trait InnerNode extends super.InnerNode {
@@ -44,36 +45,6 @@ package immutable {
   import scalax.collection.immutable.{Graph => ImmutableGraph, AdjacencyListGraph}
   import scalax.collection.generic.ImmutableGraphCompanion
 
-//  abstract class ExtendableNode[N,
-//                                E[X] <: EdgeLikeIn[X],
-//                               +This[X, Y[X]<:EdgeLikeIn[X]] <: AdjacencyListGraph[X,Y,This] with ImmutableGraph[X,Y]]
-//    extends ImmutableGraph[N,E]
-//    with    AdjacencyListGraph[N,E,This]
-//    with    GraphTraversalImpl[N,E]
-//    with    Serializable
-//  {
-//    val graphCompanion = MyExtGraph
-//    protected type Config = MyExtGraph.Config
-//    override final def config = _config.asInstanceOf[graphCompanion.Config with Config]
-//
-//    protected val _nodes = new NodeSet 
-//    protected val _edges = EdgeSet
-//    initialize(iniNodes, iniEdges)
-//  
-//    @inline final override def empty = MyExtGraph.empty[N,E]
-//    @inline final override def clone = MyExtGraph.from [N,E](_nodes.toOuter,
-//                                                             _edges.toOuter)
-//    @inline final override def copy(nodes: Iterable[N],
-//                                    edges: Iterable[E[N]])=
-//      MyExtGraph.from[N,E](nodes, edges)
-//    final protected class NodeBase(value: N, hints: ArraySet.Hints)
-//      extends InnerNodeImpl(value, hints)
-//      with    InnerNode // inner class of  extension trait
-//      with    InnerNodeTraversalImpl
-//    type NodeT = NodeBase
-//    @inline final protected def newNode(n: N) = new NodeT(n, config.adjacencyListHints)
-//    @inline final protected def newNodeWithHints(n: N, h: ArraySet.Hints) = new NodeT(n, h)
-//  }
   /** Custom immutable Graph based on the default implementation
    *  and extended by `MyExtGraphLike`.
    *  You just need to replace the occurrences of `MyExtGraphLike`.  
