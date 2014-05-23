@@ -1,8 +1,13 @@
-package scalax.collection.interfaces
+package scalax.collection
+package interfaces
 
-import util.Random
+import scala.util.Random
+
+import collection.FilteredSet
 
 trait ExtSetMethods[A] {
+  this: AnySet[A] =>
+
   /** Returns a random element of the set if it is `nonEmpty` otherwise throws
    *  `IllegalArgumentException`.
    *  
@@ -10,6 +15,7 @@ trait ExtSetMethods[A] {
    *                by the caller just once for any sequence of calls  
    */
   def draw(random: Random): A
+  
   /** Finds an entry in the collection based on `toMatch`'s `hashCode` and a correspondence
    *  function but not on the argument type.
    *  
@@ -19,4 +25,7 @@ trait ExtSetMethods[A] {
    *  @return the entry corresponding to `toMatch` or null if not contained
    */
   def findEntry[B](toMatch: B, correspond: (A, B) => Boolean): A
+
+  /** Returns a lazily filtered immutable Set. */
+  def withSetFilter(p: (A) => Boolean): FilteredSet[A] = new FilteredSet(this, p)
 }
