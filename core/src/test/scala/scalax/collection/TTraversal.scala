@@ -1,7 +1,7 @@
 package scalax.collection
 
 import scala.language.{higherKinds, postfixOps}
-import scala.collection.mutable.{ListBuffer, Set => MSet, Stack}
+import scala.collection.mutable.{ListBuffer, Stack}
 import scala.util.Random
 
 import GraphPredef._, GraphEdge._
