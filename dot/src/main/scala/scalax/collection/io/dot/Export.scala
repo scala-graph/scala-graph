@@ -8,7 +8,6 @@ import util.matching.Regex
 import mutable.{Graph => MGraph}
 import GraphPredef.EdgeLikeIn
 import GraphEdge.DiEdge
-import GraphTraversal.VisitorReturn._
 
 /**
  * Contains methods to transform `graph` to the DOT language.
@@ -128,72 +127,71 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
       res append sep
       if (sep == AttrSeparator.NewLine) indent(ofGraph)
     }
-    (dotAST get root).traverseDownUp()(
-      nodeDown = cluster => {
-        val regIdString = "[a-zA-Z_\200-\377][0-9a-zA-Z_\200-\377]*".r
-        val regIdNumeral = "[-]?(.[0-9]+|[0-9]+(.[0-9]*)?)".r
-        def toID(s: String): String = {
-          def exactMatch(r: Regex) = r findPrefixMatchOf s exists (_.end == s.length)
-          if (""""<""".contains(s.head) && """">""".contains(s.last) ||
-              exactMatch(regIdNumeral) ||
-              exactMatch(regIdString)) s
-          else """"%s"""".format(s)
-        }
-        def outKvList(kvList: Seq[DotAttr]) {
-          kvList foreach { attr =>
-            separate(true)
-            res append toID(attr.name)
-            res append " = "
-            res append toID(attr.value)
+    (dotAST get root).innerNodeDownUpTraverser foreach ( _ match {
+      case (down, cluster) =>
+        if (down) {
+          val regIdString = "[a-zA-Z_\200-\377][0-9a-zA-Z_\200-\377]*".r
+          val regIdNumeral = "[-]?(.[0-9]+|[0-9]+(.[0-9]*)?)".r
+          def toID(s: String): String = {
+            def exactMatch(r: Regex) = r findPrefixMatchOf s exists (_.end == s.length)
+            if (""""<""".contains(s.head) && """">""".contains(s.last) ||
+                exactMatch(regIdNumeral) ||
+                exactMatch(regIdString)) s
+            else """"%s"""".format(s)
           }
-        }
-        def outAttrList(attrList: Seq[DotAttr]) {
-          if (attrList.nonEmpty) {
-            res append " ["
-            attrList foreach { attr =>
+          def outKvList(kvList: Seq[DotAttr]) {
+            kvList foreach { attr =>
+              separate(true)
               res append toID(attr.name)
-              if (attr.value.nonEmpty) {
-                res append " = %s".format(toID(attr.value))
-              }
-              res append ", "
+              res append " = "
+              res append toID(attr.value)
             }
-            res delete (res.size - 2, res.size)
-            res append ']'
           }
-        }
-        val head = cluster.dotGraph.headToString
-        val graphKvList = cluster.dotGraph match {
-          case DotRootGraph(directed, id, strict, kvList) =>
-            indent(true)
-            res append head
-            kvList
-          case DotSubGraph(ancestor, id, kvList) =>
+          def outAttrList(attrList: Seq[DotAttr]) {
+            if (attrList.nonEmpty) {
+              res append " ["
+              attrList foreach { attr =>
+                res append toID(attr.name)
+                if (attr.value.nonEmpty) {
+                  res append " = %s".format(toID(attr.value))
+                }
+                res append ", "
+              }
+              res delete (res.size - 2, res.size)
+              res append ']'
+            }
+          }
+          val head = cluster.dotGraph.headToString
+          val graphKvList = cluster.dotGraph match {
+            case DotRootGraph(directed, id, strict, kvList) =>
+              indent(true)
+              res append head
+              kvList
+            case DotSubGraph(ancestor, id, kvList) =>
+              separate(true)
+              res append head
+              kvList
+          }
+          level += 1
+          outKvList(graphKvList)
+          
+          cluster.dotStmts foreach { dotStmt =>
             separate(true)
-            res append head
-            kvList
-        }
-        level += 1
-        outKvList(graphKvList)
-        
-        cluster.dotStmts foreach { dotStmt =>
-          separate(true)
-          val attrList = dotStmt match {
-            case DotNodeStmt(nodeId, attrList) =>
-              res append "%s ".format(toID(nodeId))
-              attrList
-            case DotEdgeStmt(node_1Id, node_2Id, attrList) =>
-              res append "%s %s %s".format(toID(node_1Id), edgeOp, toID(node_2Id))
-              attrList
+            val attrList = dotStmt match {
+              case DotNodeStmt(nodeId, attrList) =>
+                res append "%s ".format(toID(nodeId))
+                attrList
+              case DotEdgeStmt(node_1Id, node_2Id, attrList) =>
+                res append "%s %s %s".format(toID(node_1Id), edgeOp, toID(node_2Id))
+                attrList
+            }
+            outAttrList(attrList)
           }
-          outAttrList(attrList)
+        } else {
+          level -= 1
+          separate(true)
+          res append '}'
         }
-
-        Continue
-      },
-      nodeUp = cluster => {
-        level -= 1
-        separate(true)
-        res append '}'
       }
     )
     res.toString
