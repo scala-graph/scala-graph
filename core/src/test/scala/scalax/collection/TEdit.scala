@@ -4,7 +4,7 @@ import language.{higherKinds, postfixOps}
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.runtime.universe._
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.Suites
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
@@ -261,8 +261,8 @@ class TEditRootTest
  */
 class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: ConfigWrapper[CC])
-	extends	Suite
-	with	  ShouldMatchers
+	extends	Spec
+	with	ShouldMatchers
 {
   implicit val config = factory.config
 

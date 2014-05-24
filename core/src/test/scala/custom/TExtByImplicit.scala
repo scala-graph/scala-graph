@@ -6,14 +6,14 @@ import scalax.collection.Graph
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
 class TExtByImplicitTest
-	extends	Suite
+	extends	Spec
 	with	  ShouldMatchers
 {
   def test_graphEnrichment {

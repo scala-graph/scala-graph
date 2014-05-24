@@ -287,9 +287,16 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    *  1. a reference to a specific informer that may be pattern matched
    *     to collect even further data specific to the implementation.
    */
+<<<<<<< HEAD
+  trait ExtendedNodeVisitor
+      extends (NodeT => VisitorReturn)
+      with ((NodeT, Int, Int, => NodeInformer) => VisitorReturn) 
+      with Serializable {
+=======
   trait ExtendedNodeVisitor[U]
       extends (NodeT => U)
       with ((NodeT, Int, Int, => NodeInformer) => U) {
+>>>>>>> upstream/master
     def apply(node: NodeT) = apply(node, 0, 0, NodeInformer.empty)
   }
   object ExtendedNodeVisitor {

@@ -1,6 +1,6 @@
 package scalax.collection.centrality
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.matchers.ShouldMatchers
 
 import scalax.collection.GraphEdge._
@@ -11,7 +11,7 @@ import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
-class TKatzTest extends Suite with ShouldMatchers {
+class TKatzTest extends Spec with ShouldMatchers {
 
   def test_Wikipedia {
     val ( kim,  pria,  sri,  jose,  diego,  agneta,  aziz,  bob,  john,  jane,  samantha) =

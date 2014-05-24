@@ -7,7 +7,7 @@ import scalax.collection.GraphPredef._,
 import immutable.{MyExtGraph => Graph}
 import mutable.{MyExtGraph => MutableGraph}
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.matchers.ShouldMatchers
 
 import org.scalatest.junit.JUnitRunner
@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
 class TExtNodeTest
-	extends	Suite
+	extends	Spec
 	with	  ShouldMatchers
 {
   def test_helloAdjacents {

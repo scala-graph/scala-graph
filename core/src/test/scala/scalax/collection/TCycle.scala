@@ -11,7 +11,7 @@ import generic.GraphCoreCompanion
 import edge._, edge.WBase._, edge.LBase._, edge.WLBase._
 import io._
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.Suites
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
@@ -33,7 +33,7 @@ class TCycleRootTest
  */
 class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphCoreCompanion[CC])
-	extends	Suite
+	extends	Spec
 	with	ShouldMatchers
 {
   // ----------------------------------------------------------------- directed

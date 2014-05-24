@@ -1,7 +1,7 @@
 package scalax.collection
 package rdf
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.matchers.ShouldMatchers
 
 import org.scalatest.junit.JUnitRunner
@@ -13,7 +13,7 @@ import org.junit.runner.RunWith
  *  @author Peter Empen
  */
 @RunWith(classOf[JUnitRunner])
-class TTripleDiHyperEdge extends Suite with ShouldMatchers {
+class TTripleDiHyperEdge extends Spec with ShouldMatchers {
 
   type Triple[N] = TripleDiHyperEdge[N]
   val Triple = TripleDiHyperEdge

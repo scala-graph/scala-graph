@@ -3,7 +3,7 @@ package constraints
 
 import scala.language.{higherKinds, postfixOps}
 
-import org.scalatest.{Suite, Suites}
+import org.scalatest.{Spec, Suites}
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
 
@@ -66,7 +66,7 @@ class TConnectedRootTest
 
 class TConnected [CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphConstrainedCompanion[CC])
-  extends Suite
+  extends Spec
   with    ShouldMatchers
 {
   implicit val config: Config = Connected 

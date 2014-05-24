@@ -2,7 +2,7 @@ package scalax.collection.io.json
 
 import language.higherKinds
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.Suites
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
@@ -38,7 +38,7 @@ class TCustomEdgeRootTest
  */
 class TCustomEdge[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
-	extends	Suite
+	extends	Spec
 	with	ShouldMatchers
 {
   val jsonText = """

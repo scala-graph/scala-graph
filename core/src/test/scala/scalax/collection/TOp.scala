@@ -5,7 +5,7 @@ import language.{higherKinds, postfixOps}
 import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.Suites
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
@@ -53,7 +53,7 @@ class TOpRootTest
  */
 class TOp[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphCoreCompanion[CC])
-	extends	Suite
+	extends	Spec
 	with	ShouldMatchers
 {
   val g = factory(1~2, 2~3, 2~4, 3~5, 4~5)

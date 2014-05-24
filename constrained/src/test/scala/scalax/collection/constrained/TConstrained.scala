@@ -3,7 +3,7 @@ package scalax.collection.constrained
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.Set
   
-import org.scalatest.{Suite, Suites}
+import org.scalatest.{Spec, Suites}
 import org.scalatest.Informer
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.Ignore
@@ -45,7 +45,7 @@ class TConstrainedRootTest
 
 class TConstrained [CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphConstrainedCompanion[CC])
-  extends Suite
+  extends Spec
   with    ShouldMatchers
 {
   def test_0(info : Informer) {
