@@ -12,7 +12,7 @@ import GraphPredef.EdgeLikeIn
 import immutable.SortedArraySet
 import mutable.{ArraySet, EqSet}
 
-protected trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
+trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
   thisGraph: GraphTraversalImpl[N,E] =>
 
   import GraphTraversalImpl._

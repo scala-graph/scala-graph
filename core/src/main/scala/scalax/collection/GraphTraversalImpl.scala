@@ -10,7 +10,7 @@ import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
 import GraphEdge.EdgeLike
 import mutable.EqSet
 
-protected trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
+trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   extends GraphTraversal[N,E]
      with TraverserImpl[N,E]
      with State[N,E]
