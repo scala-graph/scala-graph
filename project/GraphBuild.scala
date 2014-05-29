@@ -20,7 +20,7 @@ object GraphBuild extends Build {
     settings = defaultSettings ++ Seq(
       name      := "Graph Core",
       version   := Version.core,
-	  libraryDependencies += "com.assembla.scala-incubator" %% "graph-test" % "1.8.1" % "test"
+	  libraryDependencies += "com.assembla.scala-incubator" %% "graph-test" % "1.9.0" % "test"
     )
   )
 
