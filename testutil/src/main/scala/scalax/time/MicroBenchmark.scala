@@ -16,6 +16,7 @@ object MicroBenchmark {
   }
   implicit def longToNanoSecond(ns: Long): NanoSecond = NanoSecond(ns)
   implicit def nanoSecondToLong(ns: NanoSecond): Long = ns.self
+  
   // allows to call functions requiring implicit Numeric such as sum 
   implicit object NanoSecondNumeric extends Numeric[NanoSecond] {
     val num = Numeric.LongIsIntegral
@@ -64,11 +65,15 @@ object MicroBenchmark {
     val fact = (10 pow decimals).toInt
     (float * fact).floor / fact
   }
+  
   // relation of elapsed times a : b
   def relativeTime[A](warmUp: Int = 1,
                       repetitions: Int = 1,
                       decimals: Int = 2)(a: => A, b: => A): Float = {
-    def m(x: => A): Result[A] = measure(warmUp, repetitions)(x)
+    val touch: Boolean = if (warmUp > 0) { a; b; true } else false
+    val warmUpLeft = if (touch) warmUp - 1 else warmUp
+    
+    def m(x: => A): Result[A] = measure(warmUpLeft, repetitions)(x)
     val (mA, mB) = (m(a), m(b))
     assert(mA.result == mB.result)
     mA.relativeTo(decimals)(mB)
@@ -76,22 +81,31 @@ object MicroBenchmark {
 
   final class ByName[A](x: => A) { def apply(): A = x }
   implicit def toHolder[A](block: => A) = new ByName(block)
+
   def measureAll[A](warmUp: Int = 1,
                     repetitions: Int = 1)(
-                    a: => A, b: => A, s: ByName[A]*): List[Result[A]] = {
-    def m(x: => A): Result[A] = measure(warmUp, repetitions)(x)
-    for( block <- toHolder(a) :: toHolder(b) :: s.toList)
-      yield measure(warmUp, repetitions)(block())
+                    blocks: ByName[A]*): List[Result[A]] = {
+    val touch: Boolean = if (warmUp > 0) { blocks foreach (_()); true} else false
+    val warmUpLeft = if (touch) warmUp - 1 else warmUp
+    val results =
+      for( b <- blocks)
+      yield measure(warmUpLeft, repetitions)(b())
+    results.toList
   }
+  
+  def relativeTimes[A](results: List[Result[A]]) = {
+    val mA = results.head
+    1f :: (results.tail map { res =>
+      assert(res.result == mA.result)
+      res.relativeTo(0)(mA)
+    })
+  }
+  
   def relativeTimes[A](warmUp: Int = 1,
                        repetitions: Int = 1,
                        decimals: Int = 2)(
-                       a: => A, b: => A, s: ByName[A]*): List[Float] = {
-    val mAll = measureAll[A](warmUp, repetitions)(a, b, s: _*)
-    val mA = mAll.head
-    1f :: (mAll.tail map { res =>
-      assert(res.result == mA.result)
-      res.relativeTo(decimals)(mA)
-    })
+                       blocks: ByName[A]*): List[Float] = {
+    val results = measureAll[A](warmUp, repetitions)(blocks: _*)
+    relativeTimes(results)
   }
 }

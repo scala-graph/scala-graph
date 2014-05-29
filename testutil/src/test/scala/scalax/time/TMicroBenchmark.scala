@@ -22,7 +22,7 @@ class TMicroBenchmarkTest
         r.toList.toSet.toArray.toList.sorted 
       )
       relTimes sliding 2 foreach {l =>
-        l.head should be < l.tail.head
+        l.head should be <= l.tail.head
       }
     }
   }

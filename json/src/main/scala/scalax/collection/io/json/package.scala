@@ -13,8 +13,8 @@ import scalax.collection.config.GraphConfig
  * Facilitates populating graphs with nodes/edges from JSON text
  * and exporting `Graph`instances to JSON text.
  * 
- * The '''Graph4Scala-JSON-UserGuide''' is available at 
- * [[http://www.assembla.com/spaces/scala-graph/documents]].
+ * See also the 
+ * [[http://www.scala-graph.org/guides/json Graph for Scala JSON User Guide]].
  *
  * @define DESCR top level JSON import/export descriptor to be filled with all `NodeDescriptor`s
  *         and `EdgeDescriptors`.

@@ -2,8 +2,9 @@ package scalax
 /**
  * Contains the base traits and objects needed to use '''Graph for Scala'''.
  *
- * The '''Graph4Scala-UserGuide''' is available at 
- * [[http://www.assembla.com/spaces/scala-graph/documents]].
+ * See also the 
+ * [[http://www.scala-graph.org/guides/core-introduction Graph for Scala Core User Guide]].
+ * 
  * @author Peter Empen
  */
 package object collection {
