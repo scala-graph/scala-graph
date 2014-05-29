@@ -8,6 +8,7 @@ import collection.{Abstract, EqSetFacade}
 import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
                     OuterNode, InnerNodeParam, OuterEdge, OuterElem, InnerEdgeParam}
 import GraphEdge.EdgeLike
+import mutable.EqSet
 
 protected trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   extends GraphTraversal[N,E]
@@ -43,6 +44,124 @@ protected trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     }
   }
     
+  class WalkBuilder(override val start: NodeT,
+                    sizeHint:           Int = defaultPathSize,
+                    edgeSelector:       (NodeT, NodeT) => Option[EdgeT])
+      extends super.WalkBuilder {
+    self =>
+      
+    private[this] var lastNode: Option[NodeT] = Some(start)
+    private[this] var lastEdge: Option[EdgeT] = None
+    protected[this] val nodes = new ArrayBuffer[NodeT](sizeHint) += start
+    protected[this] val edges = new ArrayBuffer[EdgeT](sizeHint)
+
+    def add(node: NodeT): Boolean = 
+      if( lastNode.fold[Boolean](
+            // lastEdge, node
+            ifEmpty = lastEdge.get.hasTarget(node))(
+            // lastNode, node
+            edgeSelector(_, node).fold(
+              ifEmpty = false) {
+              e => edges += e
+                   true
+            }
+          )) {
+        nodes += node
+        lastNode = Some(node)
+        lastEdge = None
+        true
+      } else false
+
+    final def add(edge: EdgeT): Boolean =
+      if( lastEdge.fold[Boolean](
+            // lastNode, edge
+            ifEmpty = edge.hasSource(lastNode.get)){
+            // lastEdge, edge
+            lastEdge =>
+              var sources, targets = Set.empty[NodeT]
+              edge.    withSources(t => sources = sources + t)
+              lastEdge.withTargets(t => targets = targets + t)
+              val intersection = sources intersect targets
+              if (intersection.isEmpty) false
+              else
+                select(intersection).fold[Boolean](
+                  false){
+                  n => nodes += n 
+                       true
+                }
+          }) {
+        edges += edge
+        lastNode = None
+        lastEdge = Some(edge)
+        true
+      } else false
+      
+    /* @param fromNodes Non-empty set of nodes to select from.
+     */
+    protected def select(fromNodes: Set[NodeT]): Option[NodeT] =
+      Some(fromNodes.head)
+
+    def clear: Unit = {
+      nodes.clear; nodes += start
+      edges.clear
+      lastNode = Some(start)
+      lastEdge = None
+    }
+    
+    def result: Walk = new Walk {
+      val nodes = self.nodes
+      val edges = self.edges
+      val startNode = start
+      val endNode = nodes(nodes.size - 1)
+    }
+  }
+  
+  def newWalkBuilder(
+      start: NodeT)(
+      implicit sizeHint: Int = defaultPathSize,
+      edgeSelector:      (NodeT, NodeT) => Option[EdgeT]): WalkBuilder =
+    new WalkBuilder(start, sizeHint, edgeSelector)
+  
+  class PathBuilder(override val start: NodeT,
+                    sizeHint:           Int = defaultPathSize,
+                    edgeSelector:       (NodeT, NodeT) => Option[EdgeT])
+      extends WalkBuilder(start, sizeHint, edgeSelector)
+         with super.PathBuilder {
+    self =>
+      
+    import EqSet._
+    private[this] val uniqueNodes = EqSet[NodeT](sizeHint) += start
+    
+    override def add(node: NodeT): Boolean =
+      if (uniqueNodes contains node) false
+      else if (super.add(node)) {
+        uniqueNodes += node
+        true
+      } else false
+    
+    override protected def select(fromNodes: Set[NodeT]): Option[NodeT] =
+      fromNodes find (! uniqueNodes(_))
+      
+    override def clear: Unit = {
+      super.clear
+      uniqueNodes.clear
+      uniqueNodes += start
+    }
+
+    override def result: Path = new Path {
+      val nodes = self.nodes
+      val edges = self.edges
+      val startNode = start
+      val endNode = nodes(nodes.size - 1)
+    }
+  }
+  
+  def newPathBuilder(
+      start: NodeT)(
+      implicit sizeHint: Int = defaultPathSize,
+      edgeSelector:      (NodeT, NodeT) => Option[EdgeT]): PathBuilder =
+    new PathBuilder(start, sizeHint, edgeSelector)
+  
   type NodeT <: InnerNodeTraversalImpl
   trait InnerNodeTraversalImpl extends TraverserInnerNode with InnerNodeState {
     this: NodeT =>

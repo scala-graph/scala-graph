@@ -5,8 +5,13 @@ import GraphPredef._, GraphEdge._, edge._, edge.Implicits._
 
 abstract class TGraph[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N,E]) {
   def node(outer: N   ) = g get outer
+  def n   (outer: N   ) = node(outer)
   def edge(outer: E[N]) = g get outer
+  def e   (outer: E[N]) = edge(outer)
 }
+
+/** The Graph for Scala representation of graph pictures located in `scala/test/doc`.
+ */
 object Data {
   // WDi-1.jpg without weights
   val outerElemsOfDi_1 = Seq(1~>2, 2~>3, 4~>3, 3~>5, 1~>5, 1~>3)

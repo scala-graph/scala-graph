@@ -52,6 +52,14 @@ import mutable.EqHashMap
  *         being the start node and its target being the third element etc.
  * @define SANECHECK This optional check is sane if there is reasonable doubt
  *         about the correctness of some algorithm results.
+ * @define BUILDERADDS Nodes and edges may be added either alternating or node by node
+ *         respectively edge by edge. Either way, the builder ensures that the added
+ *         elements build a valid
+ * @define BUILDERREC It is recommended using `add` instead of `+=` to track failed
+ *         additions.
+ * @define EDGESELECTOR Determines the edge to be selected between neighbor nodes
+   *        if an edge is not supplied explicitly. This is only relevant in case of
+   *        multigraphs.
  * 
  * @author Peter Empen
  */
@@ -159,22 +167,77 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
         def apply(node: NodeT): Boolean = true
     }
   }
-  protected trait ZeroWalk {
-    this: Walk =>
-    protected def single: NodeT
-    val nodes = List(single)
-    def edges = Nil
-    def startNode = single
-    def endNode = single
-    override def isValid = true
-  }
   object Walk {
+    protected[GraphTraversal] trait Zero {
+      this: Walk =>
+      protected def single: NodeT
+      val nodes = List(single)
+      def edges = Nil
+      def startNode = single
+      def endNode = single
+      override def isValid = true
+    }
+    
     /** A walk of zero length that is a single node. */
     def zero(node: NodeT) =
-      new Walk with ZeroWalk {
+      new Walk with Zero {
         protected final def single = node
       }
   }
+  
+  /** A `Builder` for valid walks in this graph.
+   * 
+   * $BUILDERADDS walk.
+   *   
+   * A node addition fails if the node to be added is not a direct successor of the
+   * previously added node or of the target node of the previously added edge.
+   * An edge addition fails if the edge to be added is not an outgoing edge from the
+   * previously added node or of the target node of the previously added edge.  
+   *  
+   * $BUILDERREC
+   * 
+   * @deinfe ADDELEM Tries to add `elem` to the tail of the path/walk.
+   * @deinfe ADDNODE Tries to add `node` to the tail of the path/walk.
+   * @define ADDEDGE Tries to add `edge` to the tail of the path/walk.
+   * @define ADDSUCCESS Whether the addition was successful. 
+   */  
+  trait WalkBuilder
+      extends Builder[InnerElem, Walk] {
+    
+    /** The node this walk starts at. */
+    def start: NodeT
+      
+    /** $ADDELEM
+     *  @return $ADDSUCCESS */
+    @inline final def add(elem: InnerElem): Boolean = elem match {
+      case n: InnerNode => this add n.asNodeT[N,E,thisGraph.type](thisGraph)
+      case e: InnerEdge => this add e.asEdgeT[N,E,thisGraph.type](thisGraph)
+    }
+    /** $ADDNODE
+     *  @return $ADDSUCCESS */
+    def add(node: NodeT): Boolean
+    /** $ADDEDGE
+     *  @return $ADDSUCCESS */
+    def add(edge: EdgeT): Boolean
+
+    /** $ADDELEM */
+    def += (elem: InnerElem): this.type = { add(elem); this }
+    /** $ADDNODE */
+    @inline final def += (node: NodeT): this.type = { add(node); this }
+    /** $ADDEDGE */
+    @inline final def += (edge: EdgeT): this.type = { add(edge); this }
+  }
+  
+  /** Instantiates a [[WalkBuilder]] for this graph.
+   * 
+   * @param start The node this walk starts at.
+   * @param sizeHint Expected maximum number of nodes on this walk.
+   * @param edgeSelector $EDGESELECTOR 
+   */  
+  def newWalkBuilder(
+      start: NodeT)(
+      implicit sizeHint: Int = defaultPathSize,
+      edgeSelector:      (NodeT, NodeT) => Option[EdgeT] = anyEdgeSelector): WalkBuilder
   
   /** Represents a path in this graph where
    * 
@@ -200,11 +263,39 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
   object Path {
     /** A path of zero length that is a single node. */
     def zero(node: NodeT) =
-      new Path with ZeroWalk {
+      new Path with Walk.Zero {
         protected final def single = node
       }
   }
   
+  /** A `Builder` for valid paths in this graph.
+   * 
+   * $BUILDERADDS path.
+   *   
+   * A node addition fails if either the node to be added is already contained or
+   * the node is not a direct successor of the previously added node or
+   * of the target node of the previously added edge.
+   * An edge addition fails if either the edge to be added is is already contained or
+   * the edge is not an outgoing edge from the previously added node or
+   * of the target node of the previously added edge.  
+   *  
+   * $BUILDERREC
+   */  
+  trait PathBuilder
+      extends WalkBuilder
+         with Builder[InnerElem, Path]
+  
+  /** Instantiates a [[PathBuilder]] for this graph.
+   * 
+   * @param start The node this path starts at.
+   * @param sizeHint Expected maximum number of nodes on this path.
+   * @param edgeSelector $EDGESELECTOR 
+   */  
+  def newPathBuilder(
+      start: NodeT)(
+      implicit sizeHint: Int = defaultPathSize,
+      edgeSelector:      (NodeT, NodeT) => Option[EdgeT] = anyEdgeSelector): PathBuilder
+
   /** Represents a cycle in this graph listing the nodes and connecting edges on it
    *  with the following syntax:
    * 
@@ -276,6 +367,11 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
   @inline final def isCustomNodeFilter(f: (NodeT) => Boolean)  = f ne anyNode   
   /** `true` if `f` is not equivalent to `anyEdge`. */ 
   @inline final def isCustomEdgeFilter(f: (EdgeT) => Boolean)  = f ne anyEdge   
+
+  /** An arbitrary edge between `from` and `to` that is available most efficiently. 
+   */
+  @inline final def anyEdgeSelector(from: NodeT, to: NodeT): Option[EdgeT] =
+    from findOutgoingTo to
 
   /** Template for extended node visitors.
    *  While the default node visitor of the type `NodeT => U`

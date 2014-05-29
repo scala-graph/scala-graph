@@ -7,7 +7,7 @@ import scalax.collection.GraphEdge._
 import scalax.collection.Graph
 
 import org.scalatest.Suite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -18,7 +18,7 @@ import org.junit.runner.RunWith
 @RunWith(classOf[JUnitRunner])
 class TraversingTest
     extends Suite
-       with ShouldMatchers {
+       with Matchers {
 
   import scalax.collection.edge.{WDiEdge, WUnDiEdge}
   import scalax.collection.edge.Implicits._
@@ -33,11 +33,12 @@ class TraversingTest
     p.isValid && p.startNode == toN(sample.head) &&
                  p.endNode   == toN(sample.last) should be (true)
   }
-         
+
+  val g = Graph(1~2 % 4, 2~3 % 2, 1~>3 % 5, 1~5  % 3,
+                3~5 % 2, 3~4 % 1, 4~>4 % 1, 4~>5 % 0)
+  def n(outer: Int): g.NodeT = g get outer
+  
   def test_forAResult {
-    val g = Graph(1~2 % 4, 2~3 % 2, 1~>3 % 5, 1~5  % 3,
-                  3~5 % 2, 3~4 % 1, 4~>4 % 1, 4~>5 % 0)
-    def n(outer: Int): g.NodeT = g get outer
     
     n(1) findSuccessor (_.outDegree >  3)              should be (None) 
     n(1) findSuccessor (_.outDegree >= 3)              should be (Some(3)) 
@@ -179,5 +180,18 @@ class TraversingTest
       for (c <- disconnected.componentTraverser())
         yield c.nodes.head.outerNodeTraverser.sum
                                  sums should be (List(6, 18))
+  }
+  
+  def test_Builder {
+    val builder = g.newPathBuilder(n(1))
+    builder += n(3) += n(4)
+    builder.result               .toString should be ("Path(1, 1~>3 %5, 3, 3~4 %1, 4)")
+   
+    builder.clear
+    builder += n(4) += n(3)
+    builder.result               .toString should be ("Path(1, 1~>3 %5, 3)")
+    
+    builder.clear
+    builder add n(4)             should be (false)
   }
 }
