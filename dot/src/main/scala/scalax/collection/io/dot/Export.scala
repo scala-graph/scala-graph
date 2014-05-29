@@ -24,31 +24,35 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
    *
    * @param dotRoot attributes of the root DOT graph.
    * @param edgeTransformer $RESP1 the edge $RESP2 inner edge to a `DotEdgeStmt`.
-   *        It is called once for each edge of this `graph`.
+   *        It is called once for each edge of this graph unless `hyperEdgeTransformer` is defined.
+   * @param hEdgeTransformer $RESP1 the edge $RESP2 inner edge to a sequence of `DotEdgeStmt`.
+   *        If supplied, it is called once for each hyperedge of this graph.
    * @param cNodeTransformer $RESP1 the '''c'''onnected node $RESP2 inner node to a `DotNodeStmt`.
    *        If supplied, it is called once for each connected node.
    * @param iNodeTransformer $RESP1 the '''i'''solated node $RESP2 inner node to a `DotNodeStmt`.
    *        If supplied, it is called once for each isolated node.
    * @param spacing separation and indentation rules to be followed when building
-   *        the DOT language representation of `graph`.
+   *        the DOT language representation of graph.
    */
   def toDot(dotRoot:          DotRootGraph,
-            edgeTransformer:  Graph[N,E]#EdgeT          => Option[(DotGraph, DotEdgeStmt)],
-            cNodeTransformer: Option[(Graph[N,E]#NodeT) => Option[(DotGraph, DotNodeStmt)]] = None,
-            iNodeTransformer: Option[ Graph[N,E]#NodeT  => Option[(DotGraph, DotNodeStmt)]] = None,
+            edgeTransformer:  EdgeTransformer[N,E],
+            hEdgeTransformer: Option[HyperEdgeTransformer[N,E]] = None,
+            cNodeTransformer: Option[NodeTransformer[N,E]] = None,
+            iNodeTransformer: Option[NodeTransformer[N,E]] = None,
             spacing:          Spacing = DefaultSpacing): String =
   {
     val (dotAST: DotAST, root: DotCluster) =
-      toAST(dotRoot, edgeTransformer, cNodeTransformer, iNodeTransformer)
+      toAST(dotRoot, edgeTransformer, hEdgeTransformer, cNodeTransformer, iNodeTransformer)
     format(dotRoot, dotAST, root, spacing)
   }
   /** Builds the AST for `graph` employing `dotRoot` and the supplied transformers.
    *  $NORMALLY
    */
   def toAST(dotRoot:          DotRootGraph,
-            edgeTransformer:  Graph[N,E]#EdgeT          => Option[(DotGraph, DotEdgeStmt)],
-            cNodeTransformer: Option[(Graph[N,E]#NodeT) => Option[(DotGraph, DotNodeStmt)]] = None,
-            iNodeTransformer: Option[ Graph[N,E]#NodeT  => Option[(DotGraph, DotNodeStmt)]] = None)
+            edgeTransformer:  EdgeTransformer[N,E],
+            hEdgeTransformer: Option[HyperEdgeTransformer[N,E]] = None,
+            cNodeTransformer: Option[NodeTransformer[N,E]] = None,
+            iNodeTransformer: Option[NodeTransformer[N,E]] = None)
       : (DotAST, DotCluster) =
   {
     val root = DotCluster(dotRoot)
@@ -62,31 +66,38 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
         case _ =>
       }
     }
+    
     /* First we visit all edges because they have precedence over nodes when deciding
        on which (sub)graph they should be assigned to.
      */
     val visitedCNodes = MSet.empty[graph.NodeT]
     graph.edges foreach { edge =>
-      edgeTransformer(edge) foreach { _ match {
-        case (dotGraph, edgeStmt) =>
-          val cluster = dotAST addAndGet DotCluster(dotGraph)
-          connectClusters(dotGraph, cluster)
-
-          if (cluster.dotStmts add edgeStmt)
-            cNodeTransformer map { visitor =>
-              edge foreach { node =>
-                if (visitedCNodes add node)
-                  visitor(node) foreach { _ match {
-                    case (dotGraph, nodeStmt) =>
-                      val cluster = dotAST addAndGet DotCluster(dotGraph)
-                      connectClusters(dotGraph, cluster)
-                      
-                      cluster.dotStmts += nodeStmt 
-                  }
-                }}
-            }
-        case _ =>
-      }}
+      def dotEdge(edge: graph.EdgeT, dotGraph: DotGraph, edgeStmt: DotEdgeStmt): Unit = {
+        val cluster = dotAST addAndGet DotCluster(dotGraph)
+        connectClusters(dotGraph, cluster)
+  
+        if (cluster.dotStmts add edgeStmt)
+          cNodeTransformer map { visitor =>
+            edge foreach { node =>
+              if (visitedCNodes add node)
+                visitor(node) foreach { _ match {
+                  case (dotGraph, nodeStmt) =>
+                    val cluster = dotAST addAndGet DotCluster(dotGraph)
+                    connectClusters(dotGraph, cluster)
+                    
+                    cluster.dotStmts += nodeStmt 
+                }
+              }}
+          }
+      }
+      if (edge.edge.isHyperEdge && hEdgeTransformer.isDefined)
+        hEdgeTransformer.get(edge) foreach {
+          case (dotGraph, edgeStmt) => dotEdge(edge, dotGraph, edgeStmt)
+        }
+      else
+        edgeTransformer(edge) foreach {
+          case (dotGraph, edgeStmt) => dotEdge(edge, dotGraph, edgeStmt)
+        }
     }
     visitedCNodes.clear
     /* Second we process all isolated nodes.

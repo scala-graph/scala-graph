@@ -18,8 +18,9 @@ import org.junit.runner.RunWith
 /** Tests [[ArraySet]]. */
 @RunWith(classOf[JUnitRunner])
 class TExportTest extends Suite with ShouldMatchers {
+  
+  // example at http://en.wikipedia.org/wiki/DOT_language
   def test_Wikipedia {
-    // example from http://en.wikipedia.org/wiki/DOT_language
     implicit def toLDiEdge[N](diEdge: DiEdge[N]) = LDiEdge(diEdge._1, diEdge._2)("")
     val g = Graph[String,LDiEdge](
         ("A1"~+>"A2")("f"), ("A2"~+>"A3")("g"),        "A1"~>"B1",
@@ -109,18 +110,40 @@ class TExportTest extends Suite with ShouldMatchers {
     dot_sorted should (be (expected_1) or
                        be (expected_2))
   }
+  
   def test_header {
-     val g = Graph.empty[String, UnDiEdge]
-     val dot = g.toDot(
-         dotRoot = DotRootGraph (directed = false,
-                                 id       = None,
-                                 kvList   = Seq(DotAttr("attr_1", """"one""""),
-                                                DotAttr("attr_2", "<two>"))),
-         edgeTransformer  = _ => None,
-         spacing          = Spacing(TwoSpaces))
+    val g = Graph.empty[String, UnDiEdge]
+    val dot = g.toDot(
+        dotRoot = DotRootGraph (directed = false,
+                                id       = None,
+                                kvList   = Seq(DotAttr("attr_1", """"one""""),
+                                               DotAttr("attr_2", "<two>"))),
+        edgeTransformer  = _ => None,
+        spacing          = Spacing(TwoSpaces))
     val expected = """graph {
       |  attr_1 = "one"
       |  attr_2 = <two>
+      |}""".stripMargin
+    dot should be (expected)
+  }
+  
+  def test_diHyper {
+    val hg = Graph(1~>2~>3)
+    val root = DotRootGraph (directed = true, id = None)
+    val dot = hg.toDot(
+        dotRoot = root,
+        edgeTransformer = e => None,
+        hEdgeTransformer = Some( h => {
+            val source = h.edge.source.toString
+            h.edge.targets.toTraversable map (target =>
+              (root, DotEdgeStmt(source, target.toString))
+            )
+          }
+        ), 
+        spacing          = Spacing(TwoSpaces))
+    val expected = """digraph {
+      |  1 -> 2
+      |  1 -> 3
       |}""".stripMargin
     dot should be (expected)
   }
