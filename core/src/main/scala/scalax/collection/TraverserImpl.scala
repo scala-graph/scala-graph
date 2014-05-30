@@ -12,6 +12,11 @@ import GraphPredef.EdgeLikeIn
 import immutable.SortedArraySet
 import mutable.{ArraySet, EqSet}
 
+/** Default implementation of the graph algorithms to maintain the functionality
+ *  defined by [[GraphTraversal]].
+ *   
+ *  @author Peter Empen
+ */
 trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
   thisGraph: GraphTraversalImpl[N,E] =>
 

@@ -10,6 +10,11 @@ import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
 import GraphEdge.EdgeLike
 import mutable.EqSet
 
+/** Default implementation of the functionality defined by [[GraphTraversal]]
+ *  except for algorithms that are placed in [[TraverserImpl]].
+ *   
+ *  @author Peter Empen
+ */
 trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   extends GraphTraversal[N,E]
      with TraverserImpl[N,E]

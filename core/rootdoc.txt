@@ -12,4 +12,4 @@ Some suggested navigation entry points:
     - operators in the accompanying [[scalax.collection.edge.Implicits$ `Implicits`]] object.
 
   - '''graph traversal''':
-    - methods of [[scalax.collection.GraphTraversal `GraphTraversal`]] and its inner nodes.
+    - methods of [[scalax.collection.GraphTraversal `GraphTraversal`]] and [[scalax.collection.GraphTraversal$TraverserInnerNode `TraverserInnerNode`]].

@@ -58,8 +58,8 @@ import mutable.EqHashMap
  * @define BUILDERREC It is recommended using `add` instead of `+=` to track failed
  *         additions.
  * @define EDGESELECTOR Determines the edge to be selected between neighbor nodes
-   *        if an edge is not supplied explicitly. This is only relevant in case of
-   *        multigraphs.
+ *         if an edge is not supplied explicitly. This is only relevant in case of
+ *         multigraphs.
  * 
  * @author Peter Empen
  */
@@ -196,8 +196,8 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    *  
    * $BUILDERREC
    * 
-   * @deinfe ADDELEM Tries to add `elem` to the tail of the path/walk.
-   * @deinfe ADDNODE Tries to add `node` to the tail of the path/walk.
+   * @define ADDELEM Tries to add `elem` to the tail of the path/walk.
+   * @define ADDNODE Tries to add `node` to the tail of the path/walk.
    * @define ADDEDGE Tries to add `edge` to the tail of the path/walk.
    * @define ADDSUCCESS Whether the addition was successful. 
    */  
