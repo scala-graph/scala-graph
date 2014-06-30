@@ -106,10 +106,9 @@ object Stream {
               buf += {
                 val params: CEdgeParameters[P] =
                     d.extract(jsonEdge).asInstanceOf[CEdgeParameters[P]]
-                val companion: CEdgeCompanion[E] = d.edgeCompanion
-                companion(
+                d.edgeCompanion(
                     lookupNode(params.n1), lookupNode(params.n2),
-                    params.attributes.asInstanceOf[companion.P])
+                    params.attributes.asInstanceOf[d.edgeCompanion.P]).asInstanceOf[E[N]]
               }
 
           case d: EdgeDescriptor[N,UnDiEdge,EdgeCompanion[UnDiEdge]] with
@@ -165,9 +164,8 @@ object Stream {
               buf += {
                 val params: CHyperEdgeParameters[P] =
                     d.extract(jsonEdge).asInstanceOf[CHyperEdgeParameters[P]]
-                val companion: CHyperEdgeCompanion[E] = d.edgeCompanion
-                companion(params.nodeIds map lookupNode,
-                          params.attributes.asInstanceOf[companion.P])
+                d.edgeCompanion(params.nodeIds map lookupNode,
+                                params.attributes.asInstanceOf[d.edgeCompanion.P]).asInstanceOf[E[N]]
               }
 
           case d: HyperEdgeDescriptor[N,HyperEdge,HyperEdgeCompanion[HyperEdge]] with

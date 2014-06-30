@@ -2,11 +2,14 @@ package scalax.collection.io.json
 package serializer
 
 import language.higherKinds
+import scala.reflect.runtime.currentMirror
+import scala.reflect.runtime.universe._
 
 import net.liftweb.json._
 
 import scalax.collection.GraphPredef._
 import scalax.collection.Graph
+import scalax.collection.config.CoreConfig
 
 /** This custom serializer is to be registered whenever a class to be (de)serialized   
  *  contains on or more `Graph` instances.
@@ -20,7 +23,7 @@ final class GraphSerializer[N, E[X] <: EdgeLikeIn[X]]
   override def deserialize(implicit format: Formats) = {
     case (TypeInfo(clazz, _), json) if clazz == classOf[Graph[N,E]] => json match {
       case JObject(_) =>
-        Graph.fromJson[N,E](json, descriptor)
+        Graph.fromJson[N,E](json, descriptor)(typeTag[E[N]], CoreConfig())
       case x => throw new MappingException(
         "Can't convert " + x + " to " + clazz.getSimpleName)
     }

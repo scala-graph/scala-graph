@@ -1,6 +1,6 @@
 object Version {
-  val compiler = "2.10.3"
-  val compiler_2 = "2.11.1"
+  val compiler = "2.11.1"
+  val compiler_2 = "2.10.3"
   val compilerIsRC = false
 
   private val isSnapshot = false
@@ -10,7 +10,7 @@ object Version {
   val core        = major + ".0" + snapshot
   val constrained = major + ".0" + snapshot
   val dot         = major + ".0" + snapshot
-  val json        = major + ".0" + snapshot
+  val json        = major + ".1" + snapshot
   val test        = major + ".0" + snapshot
   val misc        = major + ".0" + snapshot
 }

@@ -56,7 +56,7 @@ package object json {
         (jsonAST:    JValue,
          descriptor: Descriptor[N])
         (implicit edgeT: TypeTag[E[N]],
-         config: companion.Config = companion.defaultConfig): G[N,E] =
+         config: companion.Config): G[N,E] =
       fromJson[N,E](parse(jsonAST, descriptor), descriptor)
 
     /**

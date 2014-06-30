@@ -48,7 +48,7 @@ object GraphBuild extends Build {
     settings = defaultSettings ++ Seq(
       name      := "Graph JSON",
       version   := Version.json,
-      libraryDependencies += "net.liftweb" % "lift-json_2.10" % "2.5.1"
+      libraryDependencies += "net.liftweb" %% "lift-json" % "2.6-M4"
     )
   ) dependsOn (core)
 
