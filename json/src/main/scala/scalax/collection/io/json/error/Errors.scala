@@ -6,7 +6,6 @@ object JsonGraphError extends Enumeration with JsonGraphIssue {
   type JsonGraphError = Value
   val NonObjArrValue,
       NonArray,
-      ObjectSizeNEQ1,
       InvalidElemTypeId,
       EmptyNodeFieldList,
       InsufficientNodes,
@@ -22,8 +21,6 @@ object JsonGraphError extends Enumeration with JsonGraphIssue {
            """"{}" is of JSON type {}. Values of nodes/edges JSON fields must be of type JSON object or array."""
       case m if m == NonArray          =>
            """"{}" is of JSON type {}. Nodes and edges must be JSON arrays.""" 
-      case m if m == ObjectSizeNEQ1    =>
-           """Typed edge JSON objects must contain exactly one field.""" 
       case m if m == InvalidElemTypeId =>
            """The node/edgeTypeId "{}" found in the JSON text is not contained in the descriptor's node/edgeDescriptors."""
       case m if m == EmptyNodeFieldList=>

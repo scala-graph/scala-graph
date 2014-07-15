@@ -18,6 +18,8 @@ class EdgeSerializer extends Serializer[EdgeParameters] {
     case (TypeInfo(clazz, _), json) => json match { 
       case JArray(JString(n1) :: JString(n2) :: Nil) =>
            new EdgeParameters(n1, n2) 
+      case JObject(JField(_, JString(n1)) :: JField(_, JString(n2)) :: Nil) =>
+           new EdgeParameters(n1, n2) 
       case x => throw new MappingException(
                 "Can't convert " + x + " to " + clazz.getSimpleName) 
     } 

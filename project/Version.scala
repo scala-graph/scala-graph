@@ -10,7 +10,7 @@ object Version {
   val core        = major + ".0" + snapshot
   val constrained = major + ".0" + snapshot
   val dot         = major + ".0" + snapshot
-  val json        = major + ".1" + snapshot
+  val json        = major + ".2" + snapshot
   val test        = major + ".0" + snapshot
   val misc        = major + ".0" + snapshot
 }

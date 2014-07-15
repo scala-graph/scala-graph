@@ -73,12 +73,19 @@ class Descriptor[N]
   protected val nodeDescriptors = Seq(defaultNodeDescriptor) ++ namedNodeDescriptors
   protected val edgeDescriptors = Seq(defaultEdgeDescriptor) ++ namedEdgeDescriptors
 
-  def nodeDescriptor(typeId: String) =
-    if (typeId == defaultId) Some(defaultNodeDescriptor)
-    else                     namedNodeDescriptors find (_.typeId == typeId)
-  def edgeDescriptor(typeId: String) =
-    if (typeId == defaultId) Some(defaultEdgeDescriptor)
-    else                     namedEdgeDescriptors find (_.typeId == typeId)
+  def nodeDescriptor(typeId: String): Option[NodeDescriptor[N]] =
+    if (typeId == defaultId ||
+        typeId == defaultNodeDescriptor.typeId)
+      Some(defaultNodeDescriptor)
+    else
+      namedNodeDescriptors find (_.typeId == typeId)
+
+  def edgeDescriptor(typeId: String): Option[GenEdgeDescriptor[N]] =
+    if (typeId == defaultId ||
+        typeId == defaultEdgeDescriptor.typeId)
+      Some(defaultEdgeDescriptor)
+    else
+      namedEdgeDescriptors find (_.typeId == typeId)
   
   protected lazy val nodeDescriptorsByManifest: Map[ClassTag[_],NodeDescriptor[N]] = {
     val ret = collection.mutable.Map.empty[ClassTag[_], NodeDescriptor[N]] 

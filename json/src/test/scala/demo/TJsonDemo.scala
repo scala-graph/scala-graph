@@ -87,42 +87,39 @@ class TJsonDemoTest
 
     import net.liftweb.json._
     val pretty = Printer.pretty(JsonAST.render(JsonParser.parse(exported)))
-    //println(pretty)
-    /*
-      {
+    /*{
         "nodes":{
           "Books":[{
-            "title":"Programming in Scala",
-            "isbn":"978-0-9815316-2-5"
-          },{
             "title":"Scala in Depth",
             "isbn":"978-1-9351827-0-2"
+          },{
+            "title":"Programming in Scala",
+            "isbn":"978-0-9815316-2-5"
+          }],
+          "Authors":[{
+            "surName":"Odersky",
+            "firstName":"Martin"
+          },{
+            "surName":"Spoon",
+            "firstName":"Lex"
+          },{
+            "surName":"Venners",
+            "firstName":"Bill"
+          },{
+            "surName":"Suereth",
+            "firstName":"Joshua D."
           }]
         },
-        "nodes":[{
-          "surName":"Odersky",
-          "firstName":"Martin"
-        },{
-          "surName":"Spoon",
-          "firstName":"Lex"
-        },{
-          "surName":"Suereth",
-          "firstName":"Joshua D."
-        },{
-          "surName":"Venners",
-          "firstName":"Bill"
-        }],
         "edges":{
+          "DiHyperEdge":[{
+            "nodeIds":["978-0-9815316-2-5","OM","SL","VB"]
+          }],
           "DiEdge":[{
             "n1":"978-1-9351827-0-2",
             "n2":"SJ"
           }]
-        },
-        "edges":[{
-          "nodeIds":["978-0-9815316-2-5","OM","SL","VB"]
-        }]
-      }
-     */
+        }
+      }*/
   }
   def test_imEx_named {
     val expLibrary = library.toJson(Named.descriptor)

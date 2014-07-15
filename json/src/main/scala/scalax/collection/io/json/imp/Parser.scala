@@ -15,7 +15,7 @@ sealed abstract class JsonList(jsonValues: Iterable[JValue])
 }
 protected[json]
 sealed abstract class ElemList(elemTypeId: String,
-                        elems: Iterable[JValue])
+                               elems: Iterable[JValue])
   extends JsonList(elems)
 {
   def toString(nodeOrEdge: String) =
@@ -47,10 +47,10 @@ object Parser {
       jsonAST:    JValue,
       descriptor: Descriptor[N]): Iterable[ElemList] =
   {
-    for (JField(name, values) <- jsonAST
-         if descriptor.sectionIds contains name) yield
-    {
-      def makeList(elemTypeId: String, arr: Iterable[JValue]) =
+    (for (JField(name, values) <- jsonAST
+         if descriptor.sectionIds contains name)
+     yield {
+      def makeList(elemTypeId: String, arr: Iterable[JValue]): ElemList =
         if (descriptor.sectionIds.isNodes(name))
           if (descriptor.nodeDescriptor(elemTypeId).isEmpty)
             throw err(InvalidElemTypeId, elemTypeId)
@@ -62,21 +62,19 @@ object Parser {
           else
             EdgeList(elemTypeId, arr)
 
-      var elemTypeId = defaultId
-      val elemList = values match {
-        case JObject(obj) =>
-          if (obj.size != 1) err(ObjectSizeNEQ1)
-          obj.head match {
+      values match {
+        case JObject(objects) =>
+          for(obj <- objects) yield {obj match {
             case JField(elemTypeId, value) =>
               value match {
                 case JArray(arr) => makeList(elemTypeId, arr)
                 case _ => throw err(NonArray, value.toString, value.getClass.toString)
               }
-          }
-        case JArray(arr) => makeList(elemTypeId, arr)
-        case _ => throw err(NonObjArrValue, values.toString, values.getClass.toString)
+          }}
+        case JArray(arr) => Iterable(makeList(defaultId, arr))
+        case JNothing    => Iterable(makeList(defaultId, Iterable.empty))
+        case _           => throw err(NonObjArrValue, values.toString, values.getClass.toString)
       }
-      elemList
-    }
+    }).flatten
   }
 }

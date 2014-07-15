@@ -303,7 +303,7 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     val exp = new Export[String,DiHyperEdge](g, descr)
     val n = exp.jsonASTNodes
     val e = exp.jsonASTEdges
-    val p = exp.jsonAST(n ++ e)
+    val p = exp.jsonAST(List(n, e))
     val t = exp.jsonText(p)
     factory.fromJson[String,DiHyperEdge](t, descr) should be (g)
   }

@@ -32,6 +32,6 @@ final class GraphSerializer[N, E[X] <: EdgeLikeIn[X]]
     case graph: Graph[N, E] =>
       val export = new exp.Export(graph, descriptor)
       import export._
-      jsonAST(jsonASTNodes ++ jsonASTEdges)
+      jsonAST(List(jsonASTNodes, jsonASTEdges))
   }
 }

@@ -104,7 +104,7 @@ package object json {
     def toJson(descriptor: Descriptor[N]): String = {
       val export = new exp.Export[N,E](graph, descriptor)
       import export._
-      jsonText(jsonAST(jsonASTNodes ++ jsonASTEdges))
+      jsonText(jsonAST(List(jsonASTNodes, jsonASTEdges)))
     }
   }
     
