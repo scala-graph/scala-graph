@@ -49,19 +49,17 @@ object Katz {
 
       val weightBuilder = Map.newBuilder[G#NodeT, Float]
       nodes.asInstanceOf[g.NodeSetT] foreach { n =>
-        import scalax.collection.GraphTraversal.VisitorReturn._
         import scalax.collection.GraphTraversalImpl._
         import g.ExtendedNodeVisitor
 
         var weight = 0f
-        def visitor = ExtendedNodeVisitor((node, count, depth, informer) =>
-          if (depth > maxDepth) Cancel
-          else {
-            weight += degrees(node.asInstanceOf[G#NodeT]) * Factor(depth)
-            Continue
-          }
-        )
-        n.traverse()(nodeVisitor = visitor)
+        n.innerNodeTraverser.withMaxDepth(maxDepth) foreach {
+          ExtendedNodeVisitor((node, count, depth, informer) => {
+              weight += degrees(node.asInstanceOf[G#NodeT]) * Factor(depth)
+            }
+          ) 
+        }
+        
         weightBuilder += ((n.asInstanceOf[G#NodeT], weight))
       }
       weightBuilder.result
