@@ -167,17 +167,16 @@ class TJsonDemoTest
 
     import net.liftweb.json._
     val pretty = Printer.pretty(JsonAST.render(JsonParser.parse(exported)))
-    //println(pretty)
-    /*
-      {
+    // println(pretty)
+    /*{
         "nodes":{
-          "Books":[["Programming in Scala","978-0-9815316-2-5"],["Scala in Depth","978-1-9351827-0-2"]]
+          "Books":[["Scala in Depth","978-1-9351827-0-2"],["Programming in Scala","978-0-9815316-2-5"]],
+          "Authors":[["Odersky","Martin"],["Spoon","Lex"],["Venners","Bill"],["Suereth","Joshua D."]]
         },
-        "nodes":[["Odersky","Martin"],["Spoon","Lex"],["Suereth","Joshua D."],["Venners","Bill"]],
         "edges":{
+          "DiHyperEdge":[["978-0-9815316-2-5","OM","SL","VB"]],
           "DiEdge":[["978-1-9351827-0-2","SJ"]]
-        },
-        "edges":[["978-0-9815316-2-5","OM","SL","VB"]]
+        }
       }
      */
   }
