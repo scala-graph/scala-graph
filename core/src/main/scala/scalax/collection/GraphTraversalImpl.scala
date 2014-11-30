@@ -8,7 +8,7 @@ import collection.{Abstract, EqSetFacade}
 import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
                     OuterNode, InnerNodeParam, OuterEdge, OuterElem, InnerEdgeParam}
 import GraphEdge.EdgeLike
-import mutable.EqSet
+import mutable.EqHashSet
 
 /** Default implementation of the functionality defined by [[GraphTraversal]]
  *  except for algorithms that are placed in [[TraverserImpl]].
@@ -134,8 +134,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
          with super.PathBuilder {
     self =>
       
-    import EqSet._
-    private[this] val uniqueNodes = EqSet[NodeT](sizeHint) += start
+    private[this] val uniqueNodes = new EqHashSet[NodeT](sizeHint) += start
     
     override def add(node: NodeT): Boolean =
       if (uniqueNodes contains node) false
@@ -626,8 +625,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       edgeFilter: (EdgeT) => Boolean)
       extends LazyPath(nodes) {
     
-    import mutable.EqSet, mutable.EqSet.EqSetMethods
-    final protected val multi = EqSet[EdgeT](graphSize / 2) 
+    final protected val multi = new EqHashSet[EdgeT](graphSize / 2) 
         
     final lazy val edges = {
       val buf = new ArrayBuffer[EdgeT](nodes.size) {

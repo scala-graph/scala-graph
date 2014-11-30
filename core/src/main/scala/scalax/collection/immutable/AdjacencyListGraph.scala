@@ -3,6 +3,7 @@ package immutable
 
 import language.higherKinds
 
+import scala.collection.EqSetFacade
 import GraphPredef.EdgeLikeIn
 import mutable.ArraySet
 
@@ -26,7 +27,6 @@ trait AdjacencyListGraph[N,
     
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
     
-    import mutable.EqMap._
     @transient final lazy val diSuccessors: Set[NodeT] = new immutable.EqSet(Adj.diSucc)
   }
 

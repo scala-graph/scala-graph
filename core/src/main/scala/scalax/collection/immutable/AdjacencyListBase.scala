@@ -6,10 +6,10 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.{Set => AnySet}
 import scala.util.Random
 
+import scala.collection.EqSetFacade
 import GraphPredef._
 import scalax.collection.{Graph => SimpleGraph}
-import mutable.{ArraySet, ExtHashSet, EqSet => MEqSet, EqHashMap}
-import mutable.EqMap._
+import mutable.{ArraySet, ExtHashSet, EqHashSet, EqHashMap}
 import generic.{GroupIterator}
 import config.{GraphConfig, AdjacencyListArrayConfig}
 import io._
@@ -102,10 +102,9 @@ trait AdjacencyListBase[N,
 
     final def neighbors: Set[NodeT] =
       if (isDirected) {
-        import MEqSet._
-        val m = MEqSet[NodeT](edges.size)
+        val m = new EqHashSet[NodeT](edges.size)
         edges foreach { addNeighbors(_, (n: NodeT) => m += n) }
-        new immutable.EqSet(m)
+        new EqSetFacade(m)
       } else diSuccessors
 
     final protected[collection] def addNeighbors(edge: EdgeT,

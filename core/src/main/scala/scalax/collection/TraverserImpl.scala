@@ -10,7 +10,7 @@ import scala.math.abs
 import collection.FilteredSet
 import GraphPredef.EdgeLikeIn
 import immutable.SortedArraySet
-import mutable.{ArraySet, EqSet}
+import mutable.{ArraySet, EqHashSet}
 
 /** Default implementation of the graph algorithms to maintain the functionality
  *  defined by [[GraphTraversal]].
@@ -173,25 +173,23 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
             addMethod(node, e, withNode)
             if (doEdgeVisitor) edgeVisitor(e)
           }
-        import EqSet.EqSetMethods
         if (doEdgeSort) {
           /* The node set to be returned must reflect edge ordering.
            * doEdgeSort and doNodeSort are mutually exclusive.
            */
-          val set = EqSet[NodeT](estimatedNodes)
+          val set = new EqHashSet[NodeT](estimatedNodes)
           val succ = new ArrayBuffer[NodeT](estimatedNodes)
           withEdges( n =>
             if (filter(n) && set.add(n)) succ += n
           )
           succ
         } else {
-          val succ = EqSet[NodeT](estimatedNodes)
+          val succ = new EqHashSet[NodeT](estimatedNodes)
           withEdges( n =>
             if (filter(n)) succ += n
           )
-          val succSet = succ.toKeySet
-          if(doNodeSort) sortedNodes(succSet, succ.size, reverse)
-          else succSet
+          if(doNodeSort) sortedNodes(succ, succ.size, reverse)
+          else succ
         }
       }
       

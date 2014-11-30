@@ -201,13 +201,12 @@ trait GraphLike[N,
    * @return this graph shrinked by the nodes and edges not contained in `coll`.
    */
   def &=(coll: Iterable[Param[N,E]]): this.type = {
-    import EqSet._
     val toKeep = MSet.empty[Param[N,E]] ++= coll
-    val toRemove = EqSet[Param[N,E]](order)
+    val toRemove = new EqHashSet[Param[N,E]](order)
     def check(p: Param[N,E]): Unit = { if(! toKeep.contains(p)) toRemove += p }
     
     this foreach check
-    toRemove.toKeySet foreach -=
+    toRemove foreach -=
     this
   }
   /**
