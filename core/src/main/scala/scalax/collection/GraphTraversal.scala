@@ -93,6 +93,11 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       implicit visitor: InnerElem => U = empty): Option[Cycle] =
     componentTraverser().findCycle(visitor)
 
+  @inline final def topologicalSort[U](
+                                  implicit visitor: NodeT => U = empty): List[N] =
+    componentTraverser().topologicalSort(visitor)
+
+
   @inline final protected def defaultPathSize: Int = min(256, nodes.size * 2)
 
   /** Represents a walk in this graph where
@@ -415,6 +420,12 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     @inline final def outerNodeTraverser(implicit parameters: Parameters = Parameters()) =
       thisGraph.outerNodeTraverser(this, parameters)
 
+    /** Instantiates an [[TopologicalTraverser]] $EXTENDSTYPE `N` $SETROOT. $TOSTART
+      *  @param parameters $PARAMETERS
+      */
+    @inline final def topologicalTraverser(implicit parameters: Parameters = Parameters()) =
+      thisGraph.topologicalTraverser(this, parameters)
+
     /** Instantiates an [[InnerEdgeTraverser]] $EXTENDSTYPE `EdgeT` $SETROOT. $TOSTART
      *  @param parameters $PARAMETERS
      */
@@ -534,6 +545,9 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
          with Traversable[Component] {
     
     def findCycle[U](implicit visitor: InnerElem => U = empty): Option[Cycle]
+
+    def topologicalSort[U](implicit visitor: NodeT => U = empty): List[N]
+
   }
   
   /** Creates a [[ComponentTraverser]] responsible for invoking graph traversal methods
@@ -745,6 +759,16 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
      *  a. there exists a cycle in the component but $DUETOSUBG
      */
     def findCycle[U](implicit visitor: A => U = empty): Option[Cycle]
+
+    /** Does a topological sort starting at `root` $INTOACC, if any.
+      *
+      * @param visitor $OPTVISITOR
+      * @return A cycle or `None` if either
+      *  a. there exists no cycle in the component depicting by `root` or
+      *  a. there exists a cycle in the component but $DUETOSUBG
+      */
+    def topologicalSort[U](implicit visitor: NodeT => U = empty): List[NodeT]
+
   }
 
   /** Controls the properties of consecutive graph traversals starting at a root node.
@@ -934,6 +958,24 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       subgraphNodes: (NodeT) => Boolean = anyNode,
       subgraphEdges: (EdgeT) => Boolean = anyEdge,
       ordering     : ElemOrdering       = noOrdering): OuterNodeDownUpTraverser      
+
+  abstract class TopologicalTraverser
+    extends Traverser[NodeT,TopologicalTraverser]
+
+  /** Creates a [[TopologicalTraverser]] based on `scala.collection.Traversable[E[N]]`.
+    *
+    * @param root $ROOT
+    * @param parameters $PARAMETERS
+    * @param subgraphNodes $SUBGRAPHNODES
+    * @param subgraphEdges $SUBGRAPHEDGES
+    * @param ordering $ORD
+    */
+  def topologicalTraverser(
+                          root         : NodeT,
+                          parameters   : Parameters         = Parameters(),
+                          subgraphNodes: (NodeT) => Boolean = anyNode,
+                          subgraphEdges: (EdgeT) => Boolean = anyEdge,
+                          ordering     : ElemOrdering       = noOrdering): TopologicalTraverser
 }
 
 /** Contains traversal parameter definitions such as direction constants.

@@ -1,5 +1,6 @@
 package scalax.collection
 
+import scala.reflect.runtime.universe._
 import scala.language.higherKinds
 import scala.annotation.{switch, tailrec}
 import scala.collection.generic.FilterMonadic
@@ -8,9 +9,10 @@ import scala.collection.mutable.{ArrayBuffer, ArrayStack => Stack,
 import scala.math.abs
 
 import collection.FilteredSet
-import GraphPredef.EdgeLikeIn
+import scalax.collection.GraphPredef.{OuterNode, EdgeLikeIn}
 import immutable.SortedArraySet
 import mutable.{ArraySet, EqHashSet}
+import scalax.collection.GraphEdge.DiEdge
 
 /** Default implementation of the graph algorithms to maintain the functionality
  *  defined by [[GraphTraversal]].
@@ -72,6 +74,29 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
       }
     }
     
+    final def topologicalSort[U](implicit visitor: NodeT => U = empty): List[NodeT] = {
+        val traverser = TopologicalTraverser(
+          root, parameters, subgraphNodes, subgraphEdges, ordering)
+      withHandle() {  implicit visitedHandle =>
+          val topsorted = List[NodeT]()
+          for (node <- nodes if ! node.visited && subgraphNodes(node)) {
+            val res = traverser.withRoot(node). // compiler issue
+              asInstanceOf[TopologicalTraverser].Runner(noNode, visitor).dfsWGB()
+            res._1.isDefined match {
+              case false =>
+                val stack = res._2
+                stack.map(pair => {
+                  val (node, _) = pair
+                  node
+                }).toList
+              case true =>
+                List[NodeT]()
+            }
+          }
+          return topsorted
+        }
+      }
+
     final def shortestPathTo[T:Numeric, U](potentialSuccessor: NodeT,
                                            weight            : EdgeT => T,
                                            visitor           : A => U): Option[Path] =
@@ -529,6 +554,20 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           (res, path)
         }
       }
+
+      def right(m: Memo): Either[NodeT, Memo] = Right(m)
+
+      def dfs(node: NodeT, memo: Memo): Either[NodeT, Memo] = {
+        if (memo.grey.contains(node)) Left[NodeT, Memo](node)
+        else if (memo.black.contains(node)) right(memo)
+        else searchAll(node.outNeighbors.toIterable, memo.copy(grey = memo.grey :+ node))
+          .right.map(a => Memo(node :: a.sorted, memo.grey, a.black :+ node))
+      }
+
+      def searchAll(nodes: Iterable[NodeT], memo: Memo): Either[NodeT, Memo] = {
+        (right(memo) /: nodes)((accu, node) => accu.right.flatMap(m => dfs(node, m)))
+      }
+
     }
 
     protected[collection] object Runner {
