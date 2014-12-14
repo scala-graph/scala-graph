@@ -598,5 +598,17 @@ class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
 
     val list = typicalDay.topologicalSort
     list should be(List("listening to music", "inspiration", "making music", "shopping", "coffee", "driving to work", "coding", "driving home", "gaming", "supper", "sleeping"))
+
+    val graph = Graph[Int,DiEdge](
+      0 ~> 1,
+      2 ~> 4,
+      2 ~> 5,
+      0 ~> 3,
+      1 ~> 4,
+      4 ~> 3
+    )
+    val list2 = graph.topologicalSort
+    list2 should be(List(2, 5, 0, 1, 4, 3))
+
   }
 }
