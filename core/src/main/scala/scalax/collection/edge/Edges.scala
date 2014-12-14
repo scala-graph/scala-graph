@@ -41,7 +41,7 @@ import WkBase._
 /** key-weighted undirected edge. */
 abstract class WkUnDiEdge[N](nodes: Product, weight: Long)
   extends WUnDiEdge[N](nodes, weight)
-  with    OuterEdge   [N,WkUnDiEdge]
+  with    OuterEdge[N,WkUnDiEdge]
   with    WkEdge   [N]
   with    EqUnDi
 object WkUnDiEdge extends WkEdgeCompanion[WkUnDiEdge] {
@@ -106,7 +106,7 @@ import LkBase._
 /** key-labeled undirected edge. */
 abstract class LkUnDiEdge[N](nodes: Product)
   extends LUnDiEdge[N](nodes) 
-  with    OuterEdge   [N,LkUnDiEdge]
+  with    OuterEdge[N,LkUnDiEdge]
   with    LkEdge   [N]
   with    EqUnDi
 object LkUnDiEdge extends LkEdgeCompanion[LkUnDiEdge] {
@@ -213,7 +213,7 @@ import WLkBase._
 /** weighted, key-labeled undirected edge. */
 abstract class WLkUnDiEdge[N](nodes: Product, weight: Long)
   extends WLUnDiEdge[N](nodes, weight) 
-  with    OuterEdge   [N,WLkUnDiEdge]
+  with    OuterEdge[N,WLkUnDiEdge]
   with    LkEdge   [N]
   with    WLkEdge  [N]
   with    EqUnDi

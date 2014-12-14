@@ -16,7 +16,7 @@ object GraphBuild extends Build {
 
   lazy val core = Project(
     id = "Graph-core",
-    base = file("core"),
+    base = file("Core"),
     settings = defaultSettings ++ Seq(
       name      := "Graph Core",
       version   := Version.core,
@@ -26,7 +26,7 @@ object GraphBuild extends Build {
 
   lazy val constrained = Project(
     id = "Graph-constrained",
-    base = file("constrained"),
+    base = file("Constrained"),
     settings = defaultSettings ++ Seq(
       name      := "Graph Constrained",
       version   := Version.constrained
@@ -35,7 +35,7 @@ object GraphBuild extends Build {
 
   lazy val dot = Project(
     id = "Graph-dot",
-    base = file("dot"),
+    base = file("Dot"),
     settings = defaultSettings ++ Seq(
       name      := "Graph DOT",
       version   := Version.dot
@@ -44,7 +44,7 @@ object GraphBuild extends Build {
 
   lazy val json = Project(
     id = "Graph-json",
-    base = file("json"),
+    base = file("Json"),
     settings = defaultSettings ++ Seq(
       name      := "Graph JSON",
       version   := Version.json,
@@ -54,7 +54,7 @@ object GraphBuild extends Build {
 
   lazy val test = Project(
     id = "Graph-test",
-    base = file("testutil"),
+    base = file("TestUtil"),
     settings = defaultSettings ++ Seq(
       name      := "Graph Test",
       version   := Version.test,
@@ -64,7 +64,7 @@ object GraphBuild extends Build {
 
   lazy val misc = Project(
     id = "Graph-misc",
-    base = file("misc"),
+    base = file("Misc"),
     settings = defaultSettings ++ Seq(
       name      := "Graph Miscellaneous",
       version   := Version.misc,
@@ -74,7 +74,7 @@ object GraphBuild extends Build {
 
   lazy val defaultSettings = Defaults.defaultSettings ++ Seq(
     scalaVersion := Version.compiler,
-	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2),
+  	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2),
     organization := "com.assembla.scala-incubator",
     parallelExecution in Test := false,
     scalacOptions in (Compile, doc) <++= (name, version) map {
@@ -95,6 +95,7 @@ object GraphBuild extends Build {
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.scala-lang" % "scala-xml" % "2.11.0-M4" % "test",
       "org.scalatest"  %% "scalatest"  % "2.1.3"  % "test",
+//    "org.scala-lang.modules" %% "scala-xml"  % "1.0.2" % "test", // ScalaTest
       "org.scalacheck" %% "scalacheck" % "1.11.3" % "test") /*
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 10)) => 

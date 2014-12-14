@@ -44,8 +44,8 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
     ( implicit @transient override val edgeT: TypeTag[E[N]],
       override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
   extends Graph[N,E]
-  with    AdjacencyListGraph[N,E,DefaultGraphImpl]
-  with    GraphTraversalImpl[N,E]
+     with AdjacencyListGraph[N,E,DefaultGraphImpl]
+     with GraphTraversalImpl[N,E]
 {
   @transient override final val graphCompanion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config

@@ -306,8 +306,20 @@ object GraphEdge {
     protected def baseHashCode: Int
     final protected def nrEqualingNodes(itA: Iterator[_], itB: Iterable[_]): Int = {
       var nr = 0
-      for (a <- itA; b <- itB)
-        if (a == b) nr += 1
+      val bLen = itB.size
+      val used = new Array[Boolean](bLen)
+      for (a <- itA) {
+        val bs = itB.iterator
+        var j = 0
+        while(j < bLen) {
+          val b = bs.next
+          if (! used(j) && a == b) {
+            nr += 1
+            used(j) = true
+          }
+          j += 1
+        }
+      }
       nr
     }
   }
@@ -331,10 +343,10 @@ object GraphEdge {
                 this._2 == other._2
       case a => other.arity == a && 
                (other match {
-                  case diHyper: DiHyperEdge[_] =>
+                  case diHyper: DiHyperEdgeLike[_] =>
                     this.source == diHyper.source &&
                     nrEqualingNodes(this.targets, MSet() ++ diHyper.targets) == a - 1
-                  case _ => throw new IllegalArgumentException("Unexpected edge type.")
+                  case _ => false
                 })
     }
     
