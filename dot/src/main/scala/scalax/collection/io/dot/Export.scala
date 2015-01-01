@@ -1,9 +1,9 @@
 package scalax.collection
 package io.dot
 
-import language.higherKinds
-import collection.mutable.{Map => MMap, Set => MSet, StringBuilder}
-import util.matching.Regex
+import scala.language.higherKinds
+import scala.collection.mutable.{Map => MMap, Set => MSet, StringBuilder}
+import scala.util.matching.Regex
 
 import mutable.{Graph => MGraph}
 import GraphPredef.EdgeLikeIn
@@ -59,7 +59,7 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
     val dotAST: DotAST = DotAST(root)
     def connectClusters(dotGraph: DotGraph, cluster: dotAST.NodeT) {
       dotGraph match {
-        case DotSubGraph(ancestor, _, _) =>
+        case DotSubGraph(ancestor,_,_,_) =>
           val ancestorNode = dotAST addAndGet DotCluster(ancestor)
           implicit def edgeType = DiEdge
           ancestorNode connectWith cluster
@@ -141,30 +141,28 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
     (dotAST get root).innerNodeDownUpTraverser foreach ( _ match {
       case (down, cluster) =>
         if (down) {
-          val regIdString = "[a-zA-Z_\200-\377][0-9a-zA-Z_\200-\377]*".r
-          val regIdNumeral = "[-]?(.[0-9]+|[0-9]+(.[0-9]*)?)".r
-          def toID(s: String): String = {
-            def exactMatch(r: Regex) = r findPrefixMatchOf s exists (_.end == s.length)
-            if (""""<""".contains(s.head) && """">""".contains(s.last) ||
-                exactMatch(regIdNumeral) ||
-                exactMatch(regIdString)) s
-            else """"%s"""".format(s)
+          def format(kv: DotAttr): String = s"${kv.name} = ${kv.value}"
+          def outStmtList(stmtList: Seq[DotAttrStmt]) {
+            stmtList foreach { _ match { 
+              case DotAttrStmt(t, attrs) =>
+                separate(true)
+                res append t.toString
+                res append s" [${attrs map format mkString ", "}]"
+            }}
           }
-          def outKvList(kvList: Seq[DotAttr]) {
+          def outIdList(kvList: Seq[DotAttr]) {
             kvList foreach { attr =>
               separate(true)
-              res append toID(attr.name)
-              res append " = "
-              res append toID(attr.value)
+              res append format(attr)
             }
           }
           def outAttrList(attrList: Seq[DotAttr]) {
             if (attrList.nonEmpty) {
               res append " ["
               attrList foreach { attr =>
-                res append toID(attr.name)
-                if (attr.value.nonEmpty) {
-                  res append " = %s".format(toID(attr.value))
+                res append attr.name
+                if (attr.value().nonEmpty) {
+                  res append s" = ${attr.value}"
                 }
                 res append ", "
               }
@@ -173,27 +171,28 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
             }
           }
           val head = cluster.dotGraph.headToString
-          val graphKvList = cluster.dotGraph match {
-            case DotRootGraph(directed, id, strict, kvList) =>
+          val (graphStmtList, graphKvList) = cluster.dotGraph match {
+            case DotRootGraph(_,_,_, attrStmts, kvList) =>
               indent(true)
               res append head
-              kvList
-            case DotSubGraph(ancestor, id, kvList) =>
+              (attrStmts, kvList)
+            case DotSubGraph(_,_, attrStmts, kvList) =>
               separate(true)
               res append head
-              kvList
+              (attrStmts, kvList)
           }
           level += 1
-          outKvList(graphKvList)
+          outStmtList(graphStmtList)
+          outIdList(graphKvList)
           
           cluster.dotStmts foreach { dotStmt =>
             separate(true)
             val attrList = dotStmt match {
               case DotNodeStmt(nodeId, attrList) =>
-                res append "%s ".format(toID(nodeId))
+                res append s"${nodeId()}"
                 attrList
               case DotEdgeStmt(node_1Id, node_2Id, attrList) =>
-                res append "%s %s %s".format(toID(node_1Id), edgeOp, toID(node_2Id))
+                res append s"${node_1Id()} $edgeOp ${node_2Id()}"
                 attrList
             }
             outAttrList(attrList)
