@@ -147,7 +147,7 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
             def exactMatch(r: Regex) = r findPrefixMatchOf s exists (_.end == s.length)
             if (""""<""".contains(s.head) && """">""".contains(s.last) ||
                 exactMatch(regIdNumeral) ||
-                exactMatch(regIdString)) s
+                exactMatch(regIdString) || s.contains(":")) s
             else """"%s"""".format(s)
           }
           def outKvList(kvList: Seq[DotAttr]) {
