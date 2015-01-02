@@ -7,7 +7,7 @@ import collection.mutable.{ArrayBuffer, ArrayStack => Stack, Map => MMap}
 import collection.{Abstract, EqSetFacade}
 import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
                     OuterNode, InnerNodeParam, OuterEdge, OuterElem, InnerEdgeParam}
-import GraphEdge.EdgeLike
+import scalax.collection.GraphEdge.{DiEdgeLike, DiHyperEdgeLike, DiEdge, EdgeLike}
 import mutable.EqHashSet
 
 /** Default implementation of the functionality defined by [[GraphTraversal]]
@@ -188,7 +188,10 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       new EqSetFacade(edges)
     }
   }
-  
+
+  case class Memo(sorted: List[NodeT] = Nil, grey: List[NodeT] = List[NodeT](), black: List[NodeT] = List[NodeT]())
+
+
   protected case class ComponentTraverser(
       override val root         : NodeT              = emptyRoot, 
       override val parameters   : Parameters         = Parameters(),
@@ -226,7 +229,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       else {
         val traverser = InnerElemTraverser(
             root, parameters, subgraphNodes, subgraphEdges, ordering)
-        withHandles(2) { handles => 
+        withHandles(2) { handles =>
           implicit val visitedHandle = handles(0)
           for (node <- nodes if ! node.visited && subgraphNodes(node)) {
             val res = traverser.withRoot(node). // compiler issue
@@ -237,6 +240,20 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         }
         None
       }
+
+    final def topologicalSort[U](implicit visitor: NodeT => U = empty): List[N] = {
+      val traverser = TopologicalTraverser(
+        root, parameters, subgraphNodes, subgraphEdges, ordering)
+          val res = traverser.withRoot(nodes.head). // compiler issue
+            asInstanceOf[TopologicalTraverser].Runner(noNode, visitor).
+            searchAll(nodes, Memo()).right.map(_.sorted.map(_.value))
+      res.isRight match {
+        case true =>
+          res.right.get
+        case false =>
+          List[N](res.left.get.value)
+      }
+    }
   }
   
   def componentTraverser(
@@ -478,6 +495,33 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       subgraphEdges: (EdgeT) => Boolean = anyEdge,
       ordering     : ElemOrdering       = noOrdering) =
     OuterNodeDownUpTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
+
+
+  protected case class TopologicalTraverser(
+    override val root: NodeT,
+    override val parameters: Parameters = Parameters(),
+    override val subgraphNodes: (NodeT) => Boolean = anyNode,
+    override val subgraphEdges: (EdgeT) => Boolean = anyEdge,
+    override val ordering: ElemOrdering = noOrdering)
+    extends super.TopologicalTraverser
+    with Impl[NodeT, TopologicalTraverser] {
+
+    final protected def newTraverser:
+    (NodeT, Parameters, (NodeT) => Boolean, (EdgeT) => Boolean, ElemOrdering)
+      => TopologicalTraverser = copy _
+
+    final protected def nodeVisitor[U](f: NodeT => U): (NodeT) => U =
+      if (isDefined(f)) (n: NodeT) => f(n) else empty
+
+    final protected def edgeVisitor[U](f: NodeT => U): (EdgeT) => U = empty
+  }
+
+  def topologicalTraverser(root: NodeT,
+                           parameters: Parameters = Parameters.Dfs(AnyConnected,0),
+                           subgraphNodes: (NodeT) => Boolean = anyNode,
+                           subgraphEdges: (EdgeT) => Boolean = anyEdge,
+                           ordering: ElemOrdering = defaultNodeOrdering) =
+    TopologicalTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
 
   /** Efficient reverse `foreach` overcoming `ArrayStack`'s deficiency
    *  not to overwrite `reverseIterator`.
