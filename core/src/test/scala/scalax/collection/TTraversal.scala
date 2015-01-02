@@ -570,6 +570,14 @@ class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
   }
 
   def test_TopologicalSort {
+    def checkOrdering[A](graph: Graph[A,DiEdge], seq: Seq[A]): Unit =
+      (Set.empty[graph.NodeT] /: seq) { (allowedPredecessors, activity) =>
+        val inner = graph get activity
+        if (! (inner.diPredecessors forall allowedPredecessors.contains))
+          fail(s"$inner is misplaced in $seq")
+        allowedPredecessors + inner
+      }
+      
     object Activities {
       val ( coffee,  coding, inspiration, shopping, sleeping, supper, gaming) =
           ('coffee,'coding,'inspiration,'shopping,'sleeping,'supper, 'gaming)
@@ -597,8 +605,8 @@ class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
       listening_to_music)
 
     val sorted = typicalDay.topologicalSort
-    sorted should be(List(listening_to_music, inspiration, making_music, shopping, coffee, driving_to_work, coding, driving_home, gaming, supper, sleeping))
-    
+    checkOrdering(typicalDay, sorted)
+
     val graph = Graph[Int,DiEdge](
       0 ~> 1,
       2 ~> 4,
@@ -608,6 +616,6 @@ class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
       4 ~> 3
     )
     val list2 = graph.topologicalSort
-    list2 should be(List(2, 5, 0, 1, 4, 3))
+    checkOrdering(graph, list2)
   }
 }
