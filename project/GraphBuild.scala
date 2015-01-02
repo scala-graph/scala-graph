@@ -93,7 +93,7 @@ object GraphBuild extends Build {
       "junit" % "junit" % "4.8.2" % "test",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.scalatest"  %% "scalatest"  % "2.1.3"  % "test",
-//    "org.scala-lang.modules" %% "scala-xml"  % "1.0.2" % "test", // ScalaTest
+      "org.scala-lang.modules" %% "scala-xml"  % "1.0.2" % "test", // for ScalaTest
       "org.scalacheck" %% "scalacheck" % "1.11.3" % "test") /*
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 10)) => 
