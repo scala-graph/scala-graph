@@ -94,7 +94,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     componentTraverser().findCycle(visitor)
 
   @inline final def topologicalSort[U](
-                                  implicit visitor: NodeT => U = empty): List[N] =
+      implicit visitor: NodeT => U = empty): List[N] =
     componentTraverser().topologicalSort(visitor)
 
 
@@ -547,7 +547,6 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     def findCycle[U](implicit visitor: InnerElem => U = empty): Option[Cycle]
 
     def topologicalSort[U](implicit visitor: NodeT => U = empty): List[N]
-
   }
   
   /** Creates a [[ComponentTraverser]] responsible for invoking graph traversal methods
@@ -763,12 +762,9 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     /** Does a topological sort starting at `root` $INTOACC, if any.
       *
       * @param visitor $OPTVISITOR
-      * @return A cycle or `None` if either
-      *  a. there exists no cycle in the component depicting by `root` or
-      *  a. there exists a cycle in the component but $DUETOSUBG
+      * @return list of inner nodes in topological order.
       */
     def topologicalSort[U](implicit visitor: NodeT => U = empty): List[NodeT]
-
   }
 
   /** Controls the properties of consecutive graph traversals starting at a root node.
