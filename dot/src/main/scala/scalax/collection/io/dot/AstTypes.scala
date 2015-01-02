@@ -81,10 +81,10 @@ object Elem extends Enumeration {
   type Type = Value
   val graph, node, edge = Value
 }
-/** Represents ''ID'' '=' ''ID'' of the DOT language grammar. */
+/** Represents ''ID'' '=' ''ID'' of the DOT language syntax. */
 case class DotAttrStmt(`type`: Elem.Type, attrList: Seq[DotAttr])
 
-/** Represents ''ID'' '=' ''ID'' of the DOT language grammar. */
+/** Represents ''ID'' '=' ''ID'' of the DOT language syntax. */
 case class DotAttr(name: Id, value: Id)
 
 sealed trait DotGraph  {
@@ -98,7 +98,7 @@ sealed trait DotGraph  {
   }
   def headToString: String
 }
-/** Represents ''graph'' of the DOT language grammar without embedded
+/** Represents ''graph'' of the DOT language syntax without embedded
     ''node_stmt'', ''edge_stmt'' and ''subgraph''. */
 case class DotRootGraph(directed:              Boolean,
                         override val id:       Option[Id],
@@ -114,7 +114,7 @@ case class DotRootGraph(directed:              Boolean,
   }
   override def toString = headToString + attrList.mkString + " }"
 }
-/** Represents ''subgraph'' of the DOT language grammar without embedded
+/** Represents ''subgraph'' of the DOT language syntax without embedded
     ''node_stmt'', ''edge_stmt'' and ''subgraph''. */
 case class DotSubGraph(ancestor:              DotGraph,
                        subgraphId:            Id,
@@ -124,18 +124,18 @@ case class DotSubGraph(ancestor:              DotGraph,
   def headToString = "subgraph %s {".format(id get)
 }
 
-/** Represents ''stmt'' of the DOT language grammar.
+/** Represents ''stmt'' of the DOT language syntax $EXCLSUB.
  *
  *  @define EXCLSUB with the exception of ''subgraph'' which is covered by the return
  *          value of the user-supplied `*Transformer` functions passed to `toDot`. 
  */
 sealed trait DotStmt
 
-/** Represents ''node_stmt'' of the DOT language grammar $EXCLSUB. */
+/** Represents ''node_stmt'' of the DOT language syntax $EXCLSUB. */
 case class DotNodeStmt(nodeId:   NodeId,
                        attrList: Seq[DotAttr] = Seq()) extends DotStmt
                        
-/** Represents ''edge_stmt'' of the DOT language grammar $EXCLSUB. */
+/** Represents ''edge_stmt'' of the DOT language syntax. */
 case class DotEdgeStmt(node_1Id: NodeId,
                        node_2Id: NodeId,
                        attrList: Seq[DotAttr] = Seq()) extends DotStmt

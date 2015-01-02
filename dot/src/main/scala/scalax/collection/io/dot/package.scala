@@ -43,6 +43,7 @@ package object dot {
     implicit def toId(l: Long)  : Id = Id(l)
     implicit def toId(f: Float) : Id = Id(f)
     implicit def toId(d: Double): Id = Id(d)
+    implicit def toIdOption(s: String): Option[Id] = if (s.isEmpty) None else Some(s)
     
     implicit def toNodeId(s: String): NodeId = NodeId(s)
     implicit def toNodeId(i: Int)   : NodeId = NodeId(i)
