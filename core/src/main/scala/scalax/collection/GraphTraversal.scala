@@ -97,11 +97,9 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       implicit visitor: NodeT => U = empty): List[N] =
     componentTraverser().topologicalSort(visitor)
 
-
   @inline final protected def defaultPathSize: Int = min(256, nodes.size * 2)
 
   /** Represents a walk in this graph where
-   * 
    * `walk` $PATHSYNTAX
    * 
    * $WALKPATH
@@ -420,7 +418,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     @inline final def outerNodeTraverser(implicit parameters: Parameters = Parameters()) =
       thisGraph.outerNodeTraverser(this, parameters)
 
-    /** Instantiates an [[TopologicalTraverser]] $EXTENDSTYPE `N` $SETROOT. $TOSTART
+    /** Instantiates an [[TopologicalTraverser]] $EXTENDSTYPE `NodeT` $SETROOT. $TOSTART
       *  @param parameters $PARAMETERS
       */
     @inline final def topologicalTraverser(implicit parameters: Parameters = Parameters()) =
