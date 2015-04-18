@@ -88,24 +88,22 @@ trait AdjacencyListBase[N,
       edge withTargets (n => if ((n ne this) && filter) add(n))
     }
  
-    final def diPredecessors: Set[NodeT] =
-      if (isDirected) {
-        val m = new EqHashMap[NodeT,EdgeT](edges.size)
-        edges foreach { e => addDiPredecessors(e, (n: NodeT) => m put (n, e)) }
-        new EqSet(m)
-      } else diSuccessors
+    final def diPredecessors: Set[NodeT] = {
+      val m = new EqHashMap[NodeT,EdgeT](edges.size)
+      edges foreach { e => addDiPredecessors(e, (n: NodeT) => m put (n, e)) }
+      new EqSet(m)
+    }
 
     final protected[collection] def addDiPredecessors(edge: EdgeT,
                                                       add: (NodeT) => Unit) {
       edge withSources (n => if (n ne this) add(n))
     }
 
-    final def neighbors: Set[NodeT] =
-      if (isDirected) {
-        val m = new EqHashSet[NodeT](edges.size)
-        edges foreach { addNeighbors(_, (n: NodeT) => m += n) }
-        new EqSetFacade(m)
-      } else diSuccessors
+    final def neighbors: Set[NodeT] = {
+      val m = new EqHashSet[NodeT](edges.size)
+      edges foreach { addNeighbors(_, (n: NodeT) => m += n) }
+      new EqSetFacade(m)
+    }
 
     final protected[collection] def addNeighbors(edge: EdgeT,
                                                  add: (NodeT) => Unit) {

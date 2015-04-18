@@ -91,15 +91,16 @@ object GraphBuild extends Build {
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     libraryDependencies ++= Seq(
       "junit" % "junit" % "4.8.2" % "test",
-      "org.scala-lang" % "scala-library" % scalaVersion.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.scala-lang" % "scala-xml" % "2.11.0-M4" % "test",
-      "org.scalatest"  %% "scalatest"  % "2.1.3"  % "test",
-      "org.scala-lang.modules" %% "scala-xml"  % "1.0.2" % "test", // for ScalaTest
+//      "org.scala-lang" % "scala-xml" % "2.11.0-M4" % "test",
+      "org.scalatest"  %% "scalatest" % "2.1.3"  % "test",
       "org.scalacheck" %% "scalacheck" % "1.11.3" % "test") /*
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 10)) => 
-      case Some((2, scalaMajor)) if scalaMajor >= 11 => 
+      case Some((2, 10)) =>
+      case Some((2, scalaMajor)) if scalaMajor >= 11 =>  Seq(
+          "org.scala-lang" % "scala-library" % scalaVersion.value,
+          "org.scala-lang.modules" %% "scala-xml" % "1.0.2" % "test" // for ScalaTest
+        )
       case _ =>
     }) */
   ) ++ GraphSonatype.settings ++ (

@@ -466,6 +466,11 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (g get 1 diSuccessors) should be (Set(2, 3, 4))
     (g get 2 diSuccessors) should be (Set.empty)
   }
+  def test_diSuccessorsMixed {
+    val g = factory (1~>1, 2~>3, 4~3)
+    (g get 2 diSuccessors) should be (Set(3))
+    (g get 3 diSuccessors) should be (Set(4))
+  }
   def test_diSuccessorsDiHyper {
     val h = factory (1~>1~>5, 1~>2~>5, 1~>3~>5, 1~>4~>9)
     (h get 1 diSuccessors) should be (Set(2, 3, 4, 5, 9))
@@ -481,6 +486,11 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     val g = factory (1~>1, 1~>2, 1~>3, 1~>4)
     (g get 1 diPredecessors) should be (Set.empty)
     (g get 2 diPredecessors) should be (Set(1))
+  }
+  def test_diPredecessorsMixed {
+    val g = factory (1~>2, 2~>3, 4~3)
+    (g get 2 diPredecessors) should be (Set(1))
+    (g get 3 diSuccessors) should be (Set(4))
   }
   def test_diPredecessorsDiHyper {
     val h = factory (1~>1~>5, 1~>2~>5, 1~>3~>5, 1~>4~>9)
