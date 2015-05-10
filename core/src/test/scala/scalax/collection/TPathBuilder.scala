@@ -21,10 +21,10 @@ trait WalkBehaviors {
   import AGraph.UnDi_1._
   
   def walk(builder: => g.WalkBuilder) {
-    it should "accept neighbors"       in { builder add n(3)        should be (true) }
-    it should "deny non-neighbors"     in { builder add n(4)        should be (false) }
-    it should "accept outgoing edge"   in { builder add (g get 1~2) should be (true) }
-    it should "deny non-outgoing edge" in { builder add (g get 2~3) should be (false) }
+    it should "accept neighbors"         in { builder add n(3)        should be (true) }
+    it should "refuse non-neighbors"     in { builder add n(4)        should be (false) }
+    it should "accept outgoing edge"     in { builder add (g get 1~2) should be (true) }
+    it should "refuse non-outgoing edge" in { builder add (g get 2~3) should be (false) }
   }
 }
 
@@ -46,9 +46,17 @@ class TPathBuilderTest extends FlatSpec with WalkBehaviors with Matchers {
 
   "A PathBuilder" should behave like walk(pathBuilder)
   
-  "A PathBuilder" should "deny duplicate nodes" in {
+  "A PathBuilder" should "refuse duplicate nodes" in {
     (pathBuilder += n(2)) add n(1)         should be (false)
     (pathBuilder += n(2) += n(3)) add n(2) should be (false)
+  }
+
+  "A PathBuilder" should "refuse duplicate edges" in {
+    (pathBuilder += n(2) += n(3)) add e(2~3) should be (false)
+  }
+
+  "PathBuilder result" should "discard a terminating edge" in {
+    (pathBuilder += n(2) += e(2~3)).result.edges should have size (1)
   }
 
   it should "yield the expected Path" in {

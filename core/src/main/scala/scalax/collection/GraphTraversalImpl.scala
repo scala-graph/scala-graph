@@ -55,8 +55,8 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       extends super.WalkBuilder {
     self =>
       
-    private[this] var lastNode: Option[NodeT] = Some(start)
-    private[this] var lastEdge: Option[EdgeT] = None
+    protected[this] var lastNode: Option[NodeT] = Some(start)
+    private[this]   var lastEdge: Option[EdgeT] = None
     protected[this] val nodes = new ArrayBuffer[NodeT](sizeHint) += start
     protected[this] val edges = new ArrayBuffer[EdgeT](sizeHint)
 
@@ -77,15 +77,16 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         true
       } else false
 
-    final def add(edge: EdgeT): Boolean =
+    def add(edge: EdgeT): Boolean =
       if( lastEdge.fold[Boolean](
             // lastNode, edge
-            ifEmpty = edge.hasSource(lastNode.get)){
+            ifEmpty = edge.hasSource(lastNode.get)
+          ) {
             // lastEdge, edge
             lastEdge =>
               var sources, targets = Set.empty[NodeT]
-              edge.    withSources(t => sources = sources + t)
-              lastEdge.withTargets(t => targets = targets + t)
+              edge.    withSources(sources += _)
+              lastEdge.withTargets(targets += _)
               val intersection = sources intersect targets
               if (intersection.isEmpty) false
               else
@@ -112,10 +113,14 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       lastNode = Some(start)
       lastEdge = None
     }
+
+    protected final def resultEdges = lastEdge.fold[IndexedSeq[EdgeT]] (
+        ifEmpty = edges
+      )(_ => edges.view(0, edges.size - 1))
     
     def result: Walk = new Walk {
       val nodes = self.nodes
-      val edges = self.edges
+      val edges = resultEdges
       val startNode = start
       val endNode = nodes(nodes.size - 1)
     }
@@ -143,6 +148,10 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         true
       } else false
     
+    override def add(edge: EdgeT): Boolean =
+      if (lastNode.isDefined && edge.targets.forall(nodes contains _)) false
+      else super.add(edge)
+      
     override protected def select(fromNodes: Set[NodeT]): Option[NodeT] =
       fromNodes find (! uniqueNodes(_))
       
@@ -154,7 +163,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
 
     override def result: Path = new Path {
       val nodes = self.nodes
-      val edges = self.edges
+      val edges = resultEdges
       val startNode = start
       val endNode = nodes(nodes.size - 1)
     }

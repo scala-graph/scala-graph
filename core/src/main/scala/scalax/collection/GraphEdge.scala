@@ -190,10 +190,19 @@ object GraphEdge {
     /** `true` if any target end of this edge fulfills `pred`. */
     def hasTarget(pred: N => Boolean): Boolean
     
-    /** Applies `f` to the source end resp. to all source ends of this edge. */
-    def withSources(f: N => Unit): Unit
-    /** Applies `f` to the target end resp. to all target ends of this edge. */
-    def withTargets(f: N => Unit): Unit
+    /** Applies `f` to all source ends of this edge without new memory allocation. */
+    def withSources[U](f: N => U): Unit
+    /** All source ends of this edge. */
+    def sources: Traversable[N] = new Traversable[N] {
+      def foreach[U](f: N => U): Unit = withSources(f)
+    }
+    
+    /** Applies `f` to the target ends of this edge without new memory allocation. */
+    def withTargets[U](f: N => U): Unit
+    /** All target ends of this edge. */
+    def targets: Traversable[N] = new Traversable[N] {
+      def foreach[U](f: N => U): Unit = withTargets(f)
+    }
 
     /** `true` if<br />
      *  a) both `n1` and `n2` are at this edge for an undirected edge<br />
@@ -345,7 +354,7 @@ object GraphEdge {
                (other match {
                   case diHyper: DiHyperEdgeLike[_] =>
                     this.source == diHyper.source &&
-                    nrEqualingNodes(this.targets, MSet() ++ diHyper.targets) == a - 1
+                    nrEqualingNodes(this.targets.toIterator, MSet() ++ diHyper.targets) == a - 1
                   case _ => false
                 })
     }
@@ -404,17 +413,14 @@ object GraphEdge {
      *  one of the target nodes for a directed hyperedge. */
     @inline final def target = _2
 
-    /** The target nodes of this directed edgeor hyperedge. */
-    @inline final def targets = iterator drop 1
-
     override def hasSource[M>:N](node: M) = this._1 == node
     override def hasSource(pred: N => Boolean) = pred(this._1)
 
-    override def hasTarget[M>:N](node: M) = targets contains node
+    override def hasTarget[M>:N](node: M) = targets exists (_ == node)
     override def hasTarget(pred: N => Boolean) = targets exists pred
 
-    override def withSources(f: N => Unit) = f(this._1)
-    override def withTargets(f: N => Unit) = targets foreach f
+    override def withSources[U](f: N => U) = f(this._1)
+    override def withTargets[U](f: N => U) = (iterator drop 1) foreach f
 
     override def matches[M >: N](n1: M, n2: M): Boolean =
       source == n1 && (targets exists (_ == n2))
@@ -434,8 +440,8 @@ object GraphEdge {
     final override def hasTarget[M>:N](node: M) = this._2 == node
     final override def hasTarget(pred: N => Boolean) = pred(this._2)
 
-    final override def withSources(f: N => Unit) = f(this._1)
-    final override def withTargets(f: N => Unit) = f(this._2)
+    final override def withTargets[U](f: N => U) = f(this._2)
+    final override def withSources[U](f: N => U) = f(this._1)
     
     override def matches[M >: N](n1: M, n2: M): Boolean = diBaseEquals(n1, n2)
     override def matches(p1: N => Boolean, p2: N => Boolean): Boolean =
@@ -555,8 +561,8 @@ object GraphEdge {
     override def hasTarget[M>:N](node: M) = isAt(node)
     override def hasTarget(pred: N => Boolean) = isAt(pred)
 
-    override def withSources(f: N => Unit) = iterator foreach f
-    override def withTargets(f: N => Unit) = withSources(f)
+    override def withSources[U](f: N => U) = iterator foreach f
+    override def withTargets[U](f: N => U) = withSources(f)
 
     final protected def matches(fList: List[N => Boolean]): Boolean = {
       val it = iterator
@@ -668,8 +674,8 @@ object GraphEdge {
     override def isAt[M>:N](node: M) = this._1 == node || this._2 == node
     override def isAt(pred: N => Boolean) = pred(this._1) || pred(this._2)    
 
-    override def withSources(f: N => Unit) = { f(this._1); f(this._2) }
-    override def withTargets(f: N => Unit) = withSources(f)
+    override def withSources[U](f: N => U) = { f(this._1); f(this._2) }
+    override def withTargets[U](f: N => U) = withSources(f)
 
     override def matches[M >: N](n1: M, n2: M): Boolean = unDiBaseEquals(n1, n2)
     override def matches(p1: N => Boolean, p2: N => Boolean): Boolean =
