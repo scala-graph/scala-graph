@@ -325,6 +325,7 @@ object GraphEdge {
           if (! used(j) && a == b) {
             nr += 1
             used(j) = true
+            j = bLen
           }
           j += 1
         }
