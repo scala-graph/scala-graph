@@ -233,6 +233,7 @@ trait AdjacencyListBase[N,
     }
     @inline final def contains(node: NodeT) = coll contains node
     @inline final def iterator: Iterator[NodeT] = coll.iterator
+    @inline final override def size: Int = coll.size
     @inline final def draw(random: Random) = coll draw random
     @inline final def findEntry[B](toMatch: B, correspond: (NodeT, B) => Boolean): NodeT =
       coll findEntry (toMatch, correspond)
