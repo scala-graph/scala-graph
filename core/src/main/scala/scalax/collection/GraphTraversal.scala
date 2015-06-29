@@ -263,7 +263,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
         def apply(node: NodeT): Boolean = nodeSet.put(node, null).isEmpty
     }
   }
-  object Path {
+  object Path extends Serializable {
     /** A path of zero length that is a single node. */
     def zero(node: NodeT) =
       new Path with Walk.Zero {

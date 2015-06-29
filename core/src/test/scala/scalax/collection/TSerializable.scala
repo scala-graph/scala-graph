@@ -5,9 +5,9 @@ import java.io._
 import language.higherKinds
 
 import org.scalatest.Suite
-import org.scalatest.Suites
+import org.scalatest.{FlatSpec, Suites}
 import org.scalatest.Informer
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.BeforeAndAfterEach
 
 import GraphPredef._, GraphEdge._
@@ -25,12 +25,11 @@ class TSerializableRootTest
  */
 class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphCoreCompanion[CC])
-	extends	Suite
-	with	  ShouldMatchers
+	extends	FlatSpec
+	with	  Matchers
 	with    BeforeAndAfterEach
 {
-  def test_0(info : Informer) {
-    info("factory = " + factory.getClass)
+  s"Tests based on ${factory.getClass}" should "start" in {
   }
   // resolves ClassNotFound issue with SBT
   private class CustomObjectInputStream(in: InputStream, cl: ClassLoader) extends ObjectInputStream(in) {
@@ -133,30 +132,32 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
   lazy val cl = classOf[TSerializableRootTest].getClassLoader
 
   /** normally we test with byte arrays but may be set to GraphFile instead */
-  lazy val store: GraphStore = new GraphByteArray(cl)
+  private lazy val store: GraphStore = new GraphByteArray(cl)
+  
+  private val work = "be serializable"
 
-  def test_empty {
+  "An empty graph" should work in {
     val g = factory.empty[Nothing,Nothing]
     store.test[Nothing,Nothing] (g)
   }
-  def test_IntNodes {
+  "A graph of type [Int,Nothing]" should work in {
     val g = factory[Int,Nothing](-1,1,2)
     store.test[Int,Nothing] (g)
   }
-  def test_IntEdges {
+  "A graph of type [Int,UnDiEdge]" should work in {
     val g = factory(-1~1, 2~>1)
     store.test[Int,UnDiEdge] (g)
   }
-  def test_StringEdges {
+  "A graph of type [String,UnDiEdge]" should work in {
     val g = factory("a"~"b", "b"~>"c")
     store.test[String,UnDiEdge] (g)
   }
-  def test_WDi_1 {
+  "A graph of type [Int,DiEdge]" should work in {
     import Data.elementsOfDi_1
     val g = factory(elementsOfDi_1: _*)
     store.test[Int,DiEdge] (g)
   }
-  def test_Complex {
+  "A graph of [MyNode,WLDiEdge]" should work in {
     import edge.WLDiEdge
 
     val (a1,a2,b1,b2) = ("a1","a2","b1","b2")
@@ -175,7 +176,6 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
     }
 
     val g = factory(e)
-    g.nodes.head.diSuccessors // force lazy initialization
     val back = store.test[MyNode,WLDiEdge] (g)
     
     back.graphSize should be (1)
@@ -188,6 +188,28 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
     backEdge.source.s should be (List(a1, b1)) 
     backEdge.target.s should be (List(a2, b2))
     backEdge.label should be (label)
+  }
+  "After calling diSuccessors the graph" should work in {
+    import Data.elementsOfDi_1
+    val g = factory(elementsOfDi_1: _*)
+    g.nodes.head.diSuccessors
+    val back = store.test[Int,DiEdge] (g)
+    back should be (g)
+  }
+  "After calling pathTo the graph" should work in {
+    import Data.elementsOfDi_1
+    val g = factory(elementsOfDi_1: _*)
+    g.nodes.head.diSuccessors
+    val n = g.nodes.head
+    n.pathTo(n)
+    val back = store.test[Int,DiEdge] (g)
+    back should be (g)
+  }
+  "A deserialized graph" should "be traversable" in {
+    import Data.elementsOfDi_1
+    val g = factory(elementsOfDi_1: _*)
+    val back = store.test[Int,DiEdge] (g)
+    back.nodes.head.outerEdgeTraverser.size should be (g.size)
   }
 
   trait EdgeStore {
@@ -222,7 +244,7 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
       read.asInstanceOf[Iterable[InParam[N,E]]]
     }
   }
-  def test_WUnDi_2_edges {
+  "A graph of [Int,WUnDiEdge]" should work in {
     import edge.WUnDiEdge, Data.elementsofWUnDi_2
     new EdgeByteArray(cl).test[Int,WUnDiEdge] (elementsofWUnDi_2)
   }

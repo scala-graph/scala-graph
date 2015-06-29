@@ -321,8 +321,8 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
   /** Base trait for graph `Ordering`s. */
   protected sealed trait ElemOrdering
   /** The empty ElemOrdering. */
-  sealed class NoOrdering extends ElemOrdering
-  @transient final val noOrdering = new NoOrdering
+  sealed class NoOrdering extends ElemOrdering with Serializable 
+  final val noOrdering = new NoOrdering
   /** Ordering for the path dependent type NodeT. */
   sealed trait NodeOrdering extends Ordering[NodeT] with ElemOrdering
   object NodeOrdering {
@@ -333,15 +333,15 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
   }
   sealed trait EdgeOrdering extends Ordering[EdgeT] with ElemOrdering
   /** Ordering for the path dependent type EdgeT. */
-  object EdgeOrdering {
+  object EdgeOrdering extends Serializable {
     /** Creates a new EdgeOrdering with `compare` calling the supplied `cmp`. */
     def apply(cmp: (EdgeT, EdgeT) => Int) = new EdgeOrdering {
       def compare(a: EdgeT, b: EdgeT): Int = cmp(a, b)
     }
   }
 
-  @transient final protected lazy val anyOrdering = new AnyOrdering[N]
-  @transient final lazy val defaultNodeOrdering = NodeOrdering(
+  final protected lazy val anyOrdering = new AnyOrdering[N]
+  final lazy val defaultNodeOrdering = NodeOrdering(
     (a: NodeT, b: NodeT) => anyOrdering.compare(a.value, b.value)
   )
   type NodeSetT <: NodeSet
@@ -570,7 +570,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
   protected def newEdge(innerEdge: E[NodeT]): EdgeT
   @inline final protected implicit def edgeToEdgeCont(e: E[N]): E[NodeT] = Edge.edgeToEdgeCont(e)
 
-  @transient final lazy val defaultEdgeOrdering = EdgeOrdering (
+  final lazy val defaultEdgeOrdering = EdgeOrdering (
     (a: EdgeT, b: EdgeT) => {
       val unequal = (a.edge zip b.edge) find (z => z._1 != z._2)
       unequal map (t => anyOrdering.compare(t._1.value, t._2.value)) getOrElse
