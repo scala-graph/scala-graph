@@ -263,13 +263,13 @@ object Graph
 class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
     ( iniNodes: Iterable[N]    = Set[N](),
       iniEdges: Iterable[E[N]] = Set[E[N]]())
-    ( implicit @transient override val edgeT: TypeTag[E[N]],
+    ( implicit override val edgeT: TypeTag[E[N]],
       override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
   extends Graph[N,E]
      with AdjacencyListGraph[N, E, DefaultGraphImpl]
      with GraphTraversalImpl[N,E]
 {
-  @transient override final val graphCompanion = DefaultGraphImpl
+  override final val graphCompanion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
   @inline final def newNodeSet: NodeSetT = new NodeSet

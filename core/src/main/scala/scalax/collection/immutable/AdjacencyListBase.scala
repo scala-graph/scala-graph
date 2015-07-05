@@ -52,9 +52,9 @@ trait AdjacencyListBase[N,
            else size
                
     @inline final protected def nodeEqThis = (n: NodeT) => n eq this
-    @transient protected[collection] object Adj extends Serializable { // lazy adjacents
-      @transient var aHook: Option[(NodeT, EdgeT)] = None
-      @transient val diSucc: EqHashMap[NodeT, EdgeT] = 
+    protected[collection] object Adj extends Serializable { // lazy adjacents
+      var aHook: Option[(NodeT, EdgeT)] = None
+      val diSucc: EqHashMap[NodeT, EdgeT] = 
         if (edges eq null) // Java deserialization must cope with null edges 
           new EqHashMap[NodeT, EdgeT]
         else {

@@ -360,11 +360,11 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
   
   // Must be val since eq does not work for def.
   /** Default node filter letting traverse all nodes (non-filter). */
-  @transient final val anyNode = (n: NodeT) => true
+  final val anyNode = (n: NodeT) => true
   /** Node predicate always returning `false`. */
-  @transient final val noNode = (n: NodeT) => false
+  final val noNode = (n: NodeT) => false
   /** Default edge filter letting path all edges (non-filter). */
-  @transient final val anyEdge = (e: EdgeT) => true
+  final val anyEdge = (e: EdgeT) => true
 
   /** `true` if `f` is not equivalent to `anyNode`. */ 
   @inline final def isCustomNodeFilter(f: (NodeT) => Boolean)  = f ne anyNode   
@@ -1005,7 +1005,7 @@ object GraphTraversal {
    *  or any other implementation that is currently not known.   
    */
   trait NodeInformer
-  @transient object NodeInformer {
+  object NodeInformer extends Serializable {
     def empty = new NodeInformer {}
   }
 

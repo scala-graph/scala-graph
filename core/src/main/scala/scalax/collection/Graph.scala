@@ -40,10 +40,8 @@ trait GraphLike[N,
   protected type ThisGraph = this.type
   implicit val edgeT: TypeTag[E[N]]
   
-  @transient lazy val isDirected =
-    edgeT.tpe.baseClasses contains (typeOf[DiHyperEdgeLike[_]].typeSymbol)
-  @transient lazy val isHyper = !(
-    edgeT.tpe.baseClasses contains (typeOf[UnDiEdge[_]].typeSymbol))
+  lazy val isDirected = edgeT.tpe.baseClasses contains (typeOf[DiHyperEdgeLike[_]].typeSymbol)
+  lazy val isHyper = !(edgeT.tpe.baseClasses contains (typeOf[UnDiEdge[_]].typeSymbol))
 
   /** The companion object of `This`. */
   val graphCompanion: GraphCompanion[This]

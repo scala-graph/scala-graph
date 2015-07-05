@@ -27,7 +27,7 @@ trait AdjacencyListGraph[N,
     
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
     
-    @transient final lazy val diSuccessors: Set[NodeT] = new immutable.EqSet(Adj.diSucc)
+    final lazy val diSuccessors: Set[NodeT] = new immutable.EqSet(Adj.diSucc)
   }
 
   type NodeSetT = NodeSet

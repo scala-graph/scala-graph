@@ -209,7 +209,8 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
     import Data.elementsOfDi_1
     val g = factory(elementsOfDi_1: _*)
     val back = store.test[Int,DiEdge] (g)
-    back.nodes.head.outerEdgeTraverser.size should be (g.size)
+    def op(g: CC[Int,DiEdge]): Int = g.nodes.head.outerNodeTraverser.size
+    op(back) should be (op(g))
   }
 
   trait EdgeStore {

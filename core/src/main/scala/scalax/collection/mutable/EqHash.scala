@@ -13,7 +13,7 @@ trait EqHash[A<:AnyRef, This <: EqHash[A,This]] {
   protected var _size = 0
   @inline final override def size = _size
     
-  @transient protected var (threshold: Int, table: Array[AnyRef]) = {
+  protected var (threshold: Int, table: Array[AnyRef]) = {
     val cap = capacity(sizeHint)
     val length = len(cap)
     (length / 3, new Array[AnyRef](length))

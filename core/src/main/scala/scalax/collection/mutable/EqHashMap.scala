@@ -7,7 +7,8 @@ import scala.language.implicitConversions
 class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
     extends Map[K,V]
     with    MapLike[K,V,EqHashMap[K,V]]
-    with    EqHash[(K,V),EqHashMap[K,V]] {
+    with    EqHash[(K,V),EqHashMap[K,V]]
+    with    Serializable {
 
   import EqHash.{defCapacity, evenHash}
   import EqHashMap._

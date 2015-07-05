@@ -19,10 +19,10 @@ protected trait State[N, E[X] <: EdgeLikeIn[X]] {
 
   import State._
   /** Flags in `inUse` refer to required but unclosed handles. */
-  @transient private var inUse = new FlagStore
+  private var inUse = new FlagStore
   /** Flags in `dirty` refer to released handles with dirty flags at the nodes. */
-  @transient private var dirty = new FlagStore
-  @transient private val monitor = new Object
+  private var dirty = new FlagStore
+  private val monitor = new Object with Serializable
 
   protected def dump(store: FlagStore): ExtBitSet = {
     val words = store.flagsExt.cloneWords
@@ -100,14 +100,14 @@ protected trait State[N, E[X] <: EdgeLikeIn[X]] {
     res
   }
   trait InnerNodeState {
-    @transient protected[State] var flags: FlagWord = 0
-    @transient protected[State] var flagsExt: FlagWords = null
+    protected[State] var flags: FlagWord = 0
+    protected[State] var flagsExt: FlagWords = null
     @inline final protected def withFlagsExt[T](block: (ExtBitSet) => T): T =
       block {
         if (flagsExt == null) flagsExt = initFlagSet
         flagsExt
       }
-    @transient private val monitor = new Object
+    private val monitor = new Object with Serializable
 
     def dumpState: Array[Long] = {      
       val dump = new Array[Long]( 1 + (if (flagsExt == null) 0 else flagsExt.nrWords))
@@ -172,8 +172,8 @@ object State {
   def emptyHandle = new Handle(singleWord, 0)
   def initFlagSet = new ExtBitSet
 
-  protected class FlagStore(var flags:    FlagWord = 0,
-                            var flagsExt: ExtBitSet = initFlagSet) {
+  protected final class FlagStore(var flags:    FlagWord = 0,
+                                  var flagsExt: ExtBitSet = initFlagSet) extends Serializable {
 
     /** Whether `store` is set with respect to `handle`. */
     def apply(handle: Handle): Boolean =
