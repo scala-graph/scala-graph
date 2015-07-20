@@ -54,17 +54,22 @@ trait AdjacencyListBase[N,
     @inline final protected def nodeEqThis = (n: NodeT) => n eq this
     protected[collection] object Adj extends Serializable { // lazy adjacents
       var aHook: Option[(NodeT, EdgeT)] = None
-      val diSucc: EqHashMap[NodeT, EdgeT] = 
-        if (edges eq null) // Java deserialization must cope with null edges 
+
+      @transient private var _diSucc: EqHashMap[NodeT, EdgeT] = _
+      final def diSucc: EqHashMap[NodeT, EdgeT] =
+        if (edges eq null)
           new EqHashMap[NodeT, EdgeT]
         else {
-          val m = new EqHashMap[NodeT, EdgeT](edges.size)
-          edges foreach { e =>
-            if (e.matches(nodeEqThis, nodeEqThis) && aHook.isEmpty)
-              aHook = Some(thisNode -> e)
-            addDiSuccessors(e, (n: NodeT) => m put (n, e))
+          if (_diSucc eq null) {
+            val m = new EqHashMap[NodeT, EdgeT](edges.size)
+            edges foreach { e =>
+              if (e.matches(nodeEqThis, nodeEqThis) && aHook.isEmpty)
+                aHook = Some(thisNode -> e)
+              addDiSuccessors(e, (n: NodeT) => m put(n, e))
+            }
+            _diSucc = m
           }
-          m
+          _diSucc
         }
     }
     import Adj._

@@ -6,8 +6,7 @@ import scala.collection.mutable.{Set, SetLike}
 class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity)
     extends Set[A]
     with    SetLike[A,EqHashSet[A]]
-    with    EqHash[A,EqHashSet[A]]
-    with    Serializable {
+    with    EqHash[A,EqHashSet[A]] {
 
   import EqHash.{defCapacity, anyHash}
   import EqHashSet._

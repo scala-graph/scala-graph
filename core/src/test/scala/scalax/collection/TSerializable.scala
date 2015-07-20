@@ -212,6 +212,14 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
     def op(g: CC[Int,DiEdge]): Int = g.nodes.head.outerNodeTraverser.size
     op(back) should be (op(g))
   }
+  "A deserialized graph" should "have the same successors" in {
+    import Data.elementsOfDi_1
+    val g = factory(elementsOfDi_1: _*)
+    def outerSuccessors(g: CC[Int,DiEdge])= g.nodes map(innerNode => innerNode.value -> innerNode.diSuccessors.map(_.value)) 
+    val diSuccBefore = outerSuccessors(g)
+    val back = store.test[Int,DiEdge] (g)
+    outerSuccessors(back) should be (diSuccBefore)
+  }
 
   trait EdgeStore {
     def save   [N, E[X] <: EdgeLikeIn[X]](e: Iterable[InParam[N,E]])

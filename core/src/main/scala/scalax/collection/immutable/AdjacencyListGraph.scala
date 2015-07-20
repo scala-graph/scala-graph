@@ -26,8 +26,11 @@ trait AdjacencyListGraph[N,
   { this: NodeT =>
     
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
-    
-    final lazy val diSuccessors: Set[NodeT] = new immutable.EqSet(Adj.diSucc)
+    @transient protected var _diSuccessors: immutable.EqSet[NodeT] = _
+    final def diSuccessors: Set[NodeT] = {
+      if (_diSuccessors eq null) _diSuccessors = new immutable.EqSet(Adj.diSucc)
+      _diSuccessors
+    }
   }
 
   type NodeSetT = NodeSet
