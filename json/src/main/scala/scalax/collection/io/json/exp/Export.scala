@@ -36,7 +36,7 @@ class Export[N, E[X] <: EdgeLikeIn[X]] (graph:      Graph[N,E],
         if (descr eq descriptor.defaultNodeDescriptor)
           JArray(jNodes)
         else
-          jField
+          JObject(List(jField))
     }
     JField(
       descriptor.sectionIds.nodesId,
