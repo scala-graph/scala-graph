@@ -16,7 +16,7 @@ object GraphBuild extends Build {
 
   lazy val core = Project(
     id = "Graph-core",
-    base = file("Core"),
+    base = file("core"),
     settings = defaultSettings ++ Seq(
       name      := "Graph Core",
       version   := Version.core,
@@ -26,7 +26,7 @@ object GraphBuild extends Build {
 
   lazy val constrained = Project(
     id = "Graph-constrained",
-    base = file("Constrained"),
+    base = file("constrained"),
     settings = defaultSettings ++ Seq(
       name      := "Graph Constrained",
       version   := Version.constrained
@@ -35,7 +35,7 @@ object GraphBuild extends Build {
 
   lazy val dot = Project(
     id = "Graph-dot",
-    base = file("Dot"),
+    base = file("dot"),
     settings = defaultSettings ++ Seq(
       name      := "Graph DOT",
       version   := Version.dot
@@ -44,7 +44,7 @@ object GraphBuild extends Build {
 
   lazy val json = Project(
     id = "Graph-json",
-    base = file("Json"),
+    base = file("json"),
     settings = defaultSettings ++ Seq(
       name      := "Graph JSON",
       version   := Version.json,
@@ -54,7 +54,7 @@ object GraphBuild extends Build {
 
   lazy val test = Project(
     id = "Graph-test",
-    base = file("TestUtil"),
+    base = file("testutil"),
     settings = defaultSettings ++ Seq(
       name      := "Graph Test",
       version   := Version.test,
@@ -64,7 +64,7 @@ object GraphBuild extends Build {
 
   lazy val misc = Project(
     id = "Graph-misc",
-    base = file("Misc"),
+    base = file("misc"),
     settings = defaultSettings ++ Seq(
       name      := "Graph Miscellaneous",
       version   := Version.misc,
