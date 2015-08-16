@@ -40,7 +40,7 @@ trait AdjacencyListGraph[N,
  
     final protected def addDiSuccOrHook(edge: EdgeT) {
       if (edge.matches(nodeEqThis, nodeEqThis) && aHook.isEmpty)
-        aHook = Some(this -> edge)
+        _aHook = Some(this -> edge)
       addDiSuccessors(edge, (n: NodeT) => diSucc put (n, edge))
     }
 
@@ -51,7 +51,7 @@ trait AdjacencyListGraph[N,
         if (selfGraph.edges.initialized) {
           
           def onLooping: Unit = edges.find((e: EdgeT) => e.isLooping).fold(
-            ifEmpty = aHook = None)((e: EdgeT) => aHook = Some(this -> e))
+            ifEmpty = _aHook = None)((e: EdgeT) => _aHook = Some(this -> e))
             
           def onNonLooping: Unit = edge withTargets (t =>
             edges.find((e: EdgeT) => e.hasTarget((n: NodeT) => n eq t)).fold(
