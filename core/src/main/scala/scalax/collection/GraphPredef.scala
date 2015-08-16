@@ -241,15 +241,15 @@ object GraphPredef {
 //                                               (p: EC[NO] => Boolean) = edgePredicate[NI,NO,EC](p)
 
   final implicit class EdgeAssoc[N1](val n1: N1) extends AnyVal {
-    @inline def ~ [N >: N1, N2 <: N](n2: N2) = new UnDiEdge[N](Tuple2(n1, n2)) 
-    @inline def ~>[N >: N1, N2 <: N](n2: N2) = new   DiEdge[N](Tuple2(n1, n2))
+    @inline def ~ [N >: N1](n2: N) = new UnDiEdge[N](Tuple2(n1, n2)) 
+    @inline def ~>[N >: N1](n2: N) = new   DiEdge[N](Tuple2(n1, n2))
   }
 
   final implicit class HyperEdgeAssoc[NOld](val e: EdgeLikeIn[NOld]) extends AnyVal {
-    @inline def ~ [N >: NOld, NX <: N](n: NX) = { assume (e.undirected)
+    @inline def ~ [N >: NOld](n: N) = { assume (e.undirected)
       new   HyperEdge[N](NodeProduct(e.iterator.toBuffer += n))
     }
-    @inline def ~>[N >: NOld, NX <: N](n: NX) = { assume (e.directed)
+    @inline def ~>[N >: NOld](n: N) = { assume (e.directed)
       new DiHyperEdge[N](NodeProduct(e.iterator.toBuffer += n))
     }
   }
