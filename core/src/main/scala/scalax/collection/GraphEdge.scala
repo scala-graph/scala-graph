@@ -26,6 +26,7 @@ object GraphEdge {
    * @define CalledByValidate This function is called on every edge-instantiation
    *         by `validate` that throws EdgeException if this method returns `false`.
    * @define ISAT In case this edge is undirected this method maps to `isAt`
+   * @define BAG bag that is an unordered collection of nodes with duplicates allowed
    * @author Peter Empen
    */
   sealed trait EdgeLike[+N] extends Iterable[N] with Eq with Serializable
@@ -344,6 +345,8 @@ object GraphEdge {
 
     override protected def baseHashCode: Int = (0 /: iterator)(_ ^ _.hashCode)
   }
+  /** Equality for targets treated as a $BAG.
+   *  Targets are equal if they contain the same nodes irrespective of their position. */
   protected[collection] trait EqDiHyper extends Eq {
     this: DiHyperEdgeLike[_] =>
 
@@ -355,7 +358,7 @@ object GraphEdge {
                (other match {
                   case diHyper: DiHyperEdgeLike[_] =>
                     this.source == diHyper.source &&
-                    nrEqualingNodes(this.targets.toIterator, MSet() ++ diHyper.targets) == a - 1
+                    nrEqualingNodes(this.targets.toIterator, diHyper.targets.toIterable) == a - 1
                   case _ => false
                 })
     }
@@ -605,8 +608,8 @@ object GraphEdge {
    */
   val ~~ = HyperEdge
   
-  /**
-   * Represents a directed edge (link) in a hypergraph with unlimited number of nodes.
+  /** Represents a directed edge in a hypergraph with a single source and an unlimited number
+   *  of taget nodes. Target nodes are treated as a $BAG.
    * 
    * @author Peter Empen
    */
@@ -636,7 +639,7 @@ object GraphEdge {
     def unapplySeq[N](e: DiHyperEdge[N]) =
       if (e eq null) None else Some(e.from, e.nodeSeq drop 1)
   }
-  /** $SHORTCUT `diHyperedge match {case source ~~ (t1, t2) => f(source, t1, t2)}`.
+  /** $SHORTCUT `diHyperedge match {case source ~~> (t1, t2) => f(source, t1, t2)}`.
    */
   val ~~> = DiHyperEdge
   

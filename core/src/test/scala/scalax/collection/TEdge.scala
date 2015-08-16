@@ -14,6 +14,12 @@ import custom.flight._,
 @RunWith(classOf[JUnitRunner])
 class TEdgeTest extends Spec with Matchers
 {
+  def `DiHyperEdge targets are sequencies` { // fixes #47
+    val e = DiHyperEdge(1,2,2)
+	val g = Graph(e)
+    g.contains(e) should be (true)
+ }
+
   object FlightLabel extends LEdgeImplicits[Flight]
   import FlightLabel._
 
