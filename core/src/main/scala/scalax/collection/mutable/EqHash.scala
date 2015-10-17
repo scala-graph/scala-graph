@@ -118,7 +118,7 @@ trait EqHash[A<:AnyRef, This <: EqHash[A,This]] {
   protected abstract class EqHashIterator[A] extends Iterator[A] {
     protected val tab = table
     private[this] val len = tab.length
-    private[this] var index = if (size != 0) 0 else len
+    private[this] var index = if (_size != 0) 0 else len
     private[this] var lastReturnedIndex = -1
     private[this] var indexValid = false
 
