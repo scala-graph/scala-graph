@@ -11,7 +11,6 @@ import GraphPredef._, GraphEdge._
 import generator.{RandomGraph, NodeDegreeRange}
 
 import org.scalatest.Suite
-import org.scalatest.Informer
 import org.scalatest.Matchers
 
 import org.scalatest.junit.JUnitRunner
@@ -84,9 +83,9 @@ class TStateTest extends Suite with Matchers {
     // each traversal must yield the same result
     stat should be (Map(nrNodesExpected -> aLotOfTimes))
   }
+  
+  /* Assert that State.clearNodeStates no more causes NPE after lots of unconnected traversals. */
   def test_clear {
-    /* State.clearNodeStates could cause NPE after lots of unconnected traversals.
-     */
     val order = 5000
     val r = new Random(10 * order)
     def intNodeFactory = r.nextInt
@@ -103,5 +102,23 @@ class TStateTest extends Suite with Matchers {
     for {node <- g.nodes
          root <- rootNodes}
       node.hasSuccessor(root)
+  }
+  
+  /* Assert that Github issue #34 'Racing condition' is fixed. */
+  def test_stress {
+    import Data._
+    object g extends TGraph[Int, DiEdge  ](Graph(elementsOfDi_1: _*))
+    def n(outer: Int) = g.node(outer)
+    val (n1, n2) = (n(2), n(5))
+
+    val times = 200000
+    val errors = ListBuffer.empty[Int]
+    def run: Boolean = {
+      (1 to times).par forall { i =>
+        (n1 pathTo n2).nonEmpty
+      }
+    }
+    for (i <- 1 to 3)
+    	run should be (true)
   }
 }

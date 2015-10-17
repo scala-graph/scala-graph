@@ -104,15 +104,14 @@ protected trait State[N, E[X] <: EdgeLikeIn[X]] {
     protected[State] var flagsExt: FlagWords = null
     @inline final protected def withFlagsExt[T](block: (ExtBitSet) => T): T =
       block {
-        if (flagsExt == null) flagsExt = initFlagSet
+        if (flagsExt eq null) flagsExt = initFlagSet
         flagsExt
       }
-    private val monitor = new Object with Serializable
 
     def dumpState: Array[Long] = {      
-      val dump = new Array[Long]( 1 + (if (flagsExt == null) 0 else flagsExt.nrWords))
+      val dump = new Array[Long]( 1 + (if (flagsExt eq null) 0 else flagsExt.nrWords))
       dump(0) = flags
-      if (flagsExt != null)
+      if (flagsExt ne null)
         Array.copy(flagsExt.cloneWords, 0, dump, 1, flagsExt.nrWords)
       dump
     }
