@@ -48,7 +48,7 @@ object GraphBuild extends Build {
     settings = defaultSettings ++ Seq(
       name      := "Graph JSON",
       version   := Version.json,
-      libraryDependencies += "net.liftweb" %% "lift-json" % "2.6-M4"
+      libraryDependencies += "net.liftweb" %% "lift-json" % "2.6.2"
     )
   ) dependsOn (core)
 
@@ -58,7 +58,7 @@ object GraphBuild extends Build {
     settings = defaultSettings ++ Seq(
       name      := "Graph Test",
       version   := Version.test,
-	  libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.11.3"
+	  libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.12.5"
     )
   ) dependsOn (core)
 
@@ -92,17 +92,17 @@ object GraphBuild extends Build {
     libraryDependencies ++= Seq(
       "junit" % "junit" % "4.8.2" % "test",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-//      "org.scala-lang" % "scala-xml" % "2.11.0-M4" % "test",
-      "org.scalatest"  %% "scalatest" % "2.1.3"  % "test",
-      "org.scalacheck" %% "scalacheck" % "1.11.3" % "test") /*
+      "org.scalatest"  %% "scalatest"  % "2.2.5"  % "test",
+      "org.scalacheck" %% "scalacheck" % "1.12.5" % "test",
+      "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test"),
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 10)) =>
+      case Some((2, 10)) => Nil
       case Some((2, scalaMajor)) if scalaMajor >= 11 =>  Seq(
           "org.scala-lang" % "scala-library" % scalaVersion.value,
-          "org.scala-lang.modules" %% "scala-xml" % "1.0.2" % "test" // for ScalaTest
+          "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test" // required by ScalaTest
         )
-      case _ =>
-    }) */
+      case _ => Nil
+    })
   ) ++ GraphSonatype.settings ++ (
     if (Version.compilerIsRC) Seq(
       // https://groups.google.com/forum/?fromgroups=#!topic/scala-internals/h2YhIEg8lMc
