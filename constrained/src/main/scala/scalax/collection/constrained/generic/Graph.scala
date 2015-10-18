@@ -6,7 +6,7 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.Iterable
 import scala.collection.mutable.{Builder, ListBuffer}
 import scala.collection.generic.CanBuildFrom
-import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 import scalax.collection.GraphPredef.{EdgeLikeIn, Param, InParam}
 import scalax.collection.generic.GraphCompanion
@@ -28,10 +28,10 @@ trait GraphConstrainedCompanion[+GC[N,E[X]<:EdgeLikeIn[X]] <:
   protected[collection] def fromUnchecked[N, E[X] <: EdgeLikeIn[X]]
      (nodes: Iterable[N],
       edges: Iterable[E[N]])
-     (implicit edgeT: TypeTag[E[N]],
+     (implicit edgeT: ClassTag[E[N]],
       config: Config) : GC[N,E]
   override def newBuilder[N, E[X] <: EdgeLikeIn[X]]
-     (implicit edgeT: TypeTag[E[N]],
+     (implicit edgeT: ClassTag[E[N]],
       config: Config): Builder[Param[N,E], GC[N,E]] =
     new GraphBuilder[N,E,GC](this)(edgeT, config)
 }
@@ -42,17 +42,17 @@ abstract class GraphConstrainedCompanionAlias
      constraintCompanion: ConstraintCompanion[Constraint])
     (implicit adjacencyListHints: ArraySet.Hints = ArraySet.Hints())
 {
-  def empty[N](implicit edgeT: TypeTag[E[N]],
+  def empty[N](implicit edgeT: ClassTag[E[N]],
                         config: GraphConfig): Graph[N,E] =
     companion.empty(edgeT, constraintCompanion)
 
   def apply[N](elems: InParam[N,E]*)
-              (implicit edgeT: TypeTag[E[N]],
+              (implicit edgeT: ClassTag[E[N]],
                config: GraphConfig): Graph[N,E] = companion(elems: _*)(edgeT, constraintCompanion)
 
   def from[N](nodes: Iterable[N],
               edges: Iterable[E[N]])
-             (implicit edgeT: TypeTag[E[N]],
+             (implicit edgeT: ClassTag[E[N]],
               config: GraphConfig): Graph[N,E] = companion.from(nodes, edges)(edgeT, constraintCompanion)
 }
 trait MutableGraphCompanion[+GC[N,E[X]<:EdgeLikeIn[X]] <:
@@ -60,7 +60,7 @@ trait MutableGraphCompanion[+GC[N,E[X]<:EdgeLikeIn[X]] <:
   extends GraphConstrainedCompanion[GC]
 {
   override def newBuilder[N, E[X] <: EdgeLikeIn[X]]
-     (implicit edgeT: TypeTag[E[N]],
+     (implicit edgeT: ClassTag[E[N]],
       config: Config): Builder[Param[N,E], GC[N,E] @uncheckedVariance] =
     new GraphBuilder[N,E,GC](this)(edgeT, config)
 }

@@ -13,3 +13,9 @@ Some suggested navigation entry points:
 
   - '''graph traversal''':
     - methods of [[scalax.collection.GraphTraversal `GraphTraversal`]] and [[http://www.scala-graph.org/api/core/api/#scalax.collection.GraphTraversal$TraverserInnerNode `TraverserInnerNode`]].
+
+  - '''random graphs'''
+    [[scalax.collection.generator.RandomGraph `RandomGraph`]].
+
+  - '''Scalacheck graph generators'''
+    [[scalax.collection.generator.GraphGen `GraphGen`]].

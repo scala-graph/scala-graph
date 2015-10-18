@@ -2,7 +2,6 @@ package scalax.collection
 package generator
 
 import scala.language.higherKinds
-import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
 import org.scalacheck.{Arbitrary, Gen}
@@ -41,7 +40,7 @@ class GraphGen[N,
     connected:          Boolean = true,
     weightFactory:      Option[Gen[Long]] = None,
     labelFactory:       Option[Gen[ Any]] = None)
-   (implicit edgeTag: TypeTag[E[N]],
+   (implicit edgeTag:   ClassTag[E[N]],
     nodeTag: ClassTag[N]) {
 
   protected[generator] def nodeSetGen: Gen[Set[N]] =
@@ -101,7 +100,7 @@ object GraphGen {
       connected:      Boolean,
       weightFactory:  Option[Gen[Long]],
       labelFactory:   Option[Gen[Any]])
-     (implicit        edgeTag: TypeTag[E[N]],
+     (implicit        edgeTag: ClassTag[E[N]],
       nodeTag:        ClassTag[N]): GraphGen[N,E,G] =
     new GraphGen[N,E,G](
         graphCompanion, order, nodeGen, nodeDegrees, edgeCompanions, connected,
@@ -113,7 +112,7 @@ object GraphGen {
       graphCompanion: GraphCompanion[G],
       metrics:        Metrics[N],
       edgeCompanions: Set[EdgeCompanionBase[E]])
-     (implicit        edgeTag: TypeTag[E[N]],
+     (implicit        edgeTag: ClassTag[E[N]],
       nodeTag:        ClassTag[N]): GraphGen[N,E,G] =
     new GraphGen[N,E,G](
         graphCompanion, metrics.order, metrics.nodeGen, metrics.nodeDegrees,
@@ -173,7 +172,7 @@ object GraphGen {
   def diGraph[N, G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
      (graphCompanion:   GraphCompanion[G],
       metrics:          Metrics[N])
-     (implicit edgeTag: TypeTag[DiEdge[N]],
+     (implicit edgeTag: ClassTag[DiEdge[N]],
       nodeTag:          ClassTag[N]): Arbitrary[G[N,DiEdge]] =
     Arbitrary {
       GraphGen[N,DiEdge,G](graphCompanion, metrics, Set[EdgeCompanionBase[DiEdge]](DiEdge)).apply
@@ -188,7 +187,7 @@ object GraphGen {
   def unDiGraph[N, G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
      (graphCompanion:   GraphCompanion[G],
       metrics:          Metrics[N])
-     (implicit edgeTag: TypeTag[UnDiEdge[N]],
+     (implicit edgeTag: ClassTag[UnDiEdge[N]],
       nodeTag:          ClassTag[N]): Arbitrary[G[N,UnDiEdge]] =
     Arbitrary {
       GraphGen[N,UnDiEdge,G](graphCompanion, metrics, Set[EdgeCompanionBase[UnDiEdge]](UnDiEdge)).apply

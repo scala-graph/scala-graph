@@ -1,7 +1,7 @@
 package scalax.collection.io
 
 import language.higherKinds
-import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge._,
@@ -55,7 +55,7 @@ package object json {
     def fromJson[N, E[X]<:EdgeLikeIn[X]]
         (jsonAST:    JValue,
          descriptor: Descriptor[N])
-        (implicit edgeT: TypeTag[E[N]],
+        (implicit edgeT: ClassTag[E[N]],
          config: companion.Config): G[N,E] =
       fromJson[N,E](parse(jsonAST, descriptor), descriptor)
 
@@ -70,7 +70,7 @@ package object json {
     def fromJson[N, E[X]<:EdgeLikeIn[X]]
         (jsonText:   String,
          descriptor: Descriptor[N])
-        (implicit edgeT: TypeTag[E[N]],
+        (implicit edgeT: ClassTag[E[N]],
          config: companion.Config = companion.defaultConfig): G[N,E] =
       fromJson[N,E](parse(jsonText, descriptor), descriptor)
 
@@ -85,7 +85,7 @@ package object json {
     def fromJson[N, E[X]<:EdgeLikeIn[X]]
         (jsonLists:  Iterable[JsonList],
          descriptor: Descriptor[N])
-        (implicit edgeT: TypeTag[E[N]],
+        (implicit edgeT: ClassTag[E[N]],
          config: companion.Config): G[N,E] = {
       val target = createOuterElems[N,E] (jsonLists, descriptor)
       companion.from[N,E] (nodes = target._1,

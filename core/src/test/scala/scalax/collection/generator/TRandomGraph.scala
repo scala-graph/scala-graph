@@ -3,7 +3,6 @@ package generator
 
 import scala.language.higherKinds
 import scala.collection.mutable.{Set => MSet}
-import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 import scala.util.Random
 
@@ -36,7 +35,7 @@ class TRandomGraphTest extends Spec with Matchers {
       (edgeCompanion: EdgeCompanionBase[E],
        gCompanion:    GraphCompanion[G],
        connected:     Boolean)
-      (implicit edgeTag: TypeTag[E[N]],
+      (implicit edgeTag: ClassTag[E[N]],
        nodeTag: ClassTag[N],
        metrics: Metrics[N]) =
     new RandomGraph[N,E,G](

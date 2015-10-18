@@ -3,7 +3,7 @@ package scalax.collection
 import language.higherKinds
 import collection.{SetLike, GenTraversableOnce}
 import collection.generic.GenericCompanion
-import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
                     OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam}
@@ -38,10 +38,10 @@ trait GraphLike[N,
   with    GraphDegree   [N,E]
 { selfGraph: This[N,E] =>
   protected type ThisGraph = this.type
-  implicit val edgeT: TypeTag[E[N]]
+  implicit val edgeT: ClassTag[E[N]]
   
-  lazy val isDirected = edgeT.tpe.baseClasses contains (typeOf[DiHyperEdgeLike[_]].typeSymbol)
-  lazy val isHyper = !(edgeT.tpe.baseClasses contains (typeOf[UnDiEdge[_]].typeSymbol))
+  lazy val isDirected =   classOf[DiHyperEdgeLike[_]].isAssignableFrom(edgeT.runtimeClass)
+  lazy val isHyper    = ! classOf[UnDiEdge[_]]       .isAssignableFrom(edgeT.runtimeClass)
 
   /** The companion object of `This`. */
   val graphCompanion: GraphCompanion[This]
@@ -491,25 +491,25 @@ trait Graph[N, E[X] <: EdgeLikeIn[X]]
 object Graph
   extends GraphCoreCompanion[Graph]
 {
-  override def newBuilder[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
+  override def newBuilder[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                                     config: Config) =
     immutable.Graph.newBuilder[N,E](edgeT, config)
-  def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
+  def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                       config: Config = defaultConfig): Graph[N,E] =
     immutable.Graph.empty[N,E](edgeT, config)
   def from [N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Seq.empty[N],
                                       edges: Iterable[E[N]])
-                                     (implicit edgeT: TypeTag[E[N]],
+                                     (implicit edgeT: ClassTag[E[N]],
                                       config: Config = defaultConfig): Graph[N,E] =
     immutable.Graph.from[N,E](nodes, edges)(
                               edgeT, config)
 
-  implicit def cbfUnDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
+  implicit def cbfUnDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                                  config: Config = defaultConfig) =
     new GraphCanBuildFrom[N,E]()(edgeT, config).asInstanceOf[GraphCanBuildFrom[N,E]
         with CanBuildFrom[Graph[_,UnDiEdge], Param[N,E], Graph[N,E]]]
 
-  implicit def cbfDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
+  implicit def cbfDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                                config: Config = defaultConfig) =
     new GraphCanBuildFrom[N,E]()(edgeT, config).asInstanceOf[GraphCanBuildFrom[N,E]
         with CanBuildFrom[Graph[_,DiEdge], Param[N,E], Graph[N,E]]]

@@ -2,7 +2,6 @@ package scalax.collection.edge.labeled.mutable
 
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge.{DiEdge, EdgeCopy, NodeProduct}
-import scala.reflect.runtime.universe
 import scalax.collection.Graph
 
 /** Type-safe directed labeled edge with a mutable label.

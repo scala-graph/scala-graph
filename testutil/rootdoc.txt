@@ -1,8 +1,0 @@
-This module of ''Graph for Scala'' helps you to create random graphs with predefined metrics.
-If you are interested in
-
-  - '''random graph instances'''
-    start at [[scalax.collection.generator.RandomGraph `RandomGraph`]].
-
-  - '''graph generators for Scalacheck '''
-    go to [[scalax.collection.generator.GraphGen `GraphGen`]].

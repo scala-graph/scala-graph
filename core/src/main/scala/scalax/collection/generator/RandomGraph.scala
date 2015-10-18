@@ -5,7 +5,6 @@ import scala.language.higherKinds
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, Set => MSet}
 import scala.math.pow
 import scala.util.Random
-import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
 import GraphPredef._, GraphEdge._
@@ -41,7 +40,7 @@ abstract class RandomGraph[N,
     connected:          Boolean,
     weightFactory:      Option[() => Long] = None,
     labelFactory:       Option[() => Any]  = None)
-   (implicit edgeTag: TypeTag[E[N]],
+   (implicit edgeTag:   ClassTag[E[N]],
     nodeTag: ClassTag[N])
 {
   require(order > 0)
@@ -389,7 +388,7 @@ object RandomGraph {
       connected:      Boolean,
       weightFactory:  Option[() => Long],
       labelFactory:   Option[() => Any])
-     (implicit        edgeTag: TypeTag[E[N]],
+     (implicit        edgeTag: ClassTag[E[N]],
       nodeTag:        ClassTag[N]): RandomGraph[N,E,G] =
     new RandomGraph[N,E,G](
         graphCompanion, order, nodeFactory, nodeDegree, edgeCompanions,
@@ -403,7 +402,7 @@ object RandomGraph {
       graphCompanion: GraphCompanion[G],
       metrics:        Metrics[N],
       edgeCompanions: Set[EdgeCompanionBase[E]])
-     (implicit        edgeTag: TypeTag[E[N]],
+     (implicit        edgeTag: ClassTag[E[N]],
       nodeTag:        ClassTag[N]): RandomGraph[N,E,G] =
     new RandomGraph[N,E,G](
         graphCompanion, metrics.order, metrics.nodeGen, metrics.nodeDegrees, edgeCompanions,
@@ -482,7 +481,7 @@ object RandomGraph {
   def diGraph[N, G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
      (graphCompanion:   GraphCompanion[G],
       metrics:          Metrics[N])
-     (implicit edgeTag: TypeTag[DiEdge[N]],
+     (implicit edgeTag: ClassTag[DiEdge[N]],
       nodeTag:          ClassTag[N]): RandomGraph[N,DiEdge,G] =
     RandomGraph[N,DiEdge,G](graphCompanion, metrics, Set(DiEdge))
 
@@ -494,7 +493,7 @@ object RandomGraph {
   def unDiGraph[N, G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
      (graphCompanion:   GraphCompanion[G],
       metrics:          Metrics[N])
-     (implicit edgeTag: TypeTag[UnDiEdge[N]],
+     (implicit edgeTag: ClassTag[UnDiEdge[N]],
       nodeTag:          ClassTag[N]): RandomGraph[N,UnDiEdge,G] =
     RandomGraph[N,UnDiEdge,G](graphCompanion, metrics, Set[EdgeCompanionBase[UnDiEdge]](UnDiEdge))
 

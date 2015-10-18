@@ -2,7 +2,7 @@ package scalax.collection
 
 import language.{higherKinds, postfixOps}
 import scala.collection.generic.CanBuildFrom
-import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 import org.scalatest.Suite
 import org.scalatest.Suites
@@ -22,17 +22,17 @@ trait ConfigWrapper[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
 {
   val companion: GraphCompanion[CC]
   implicit val config: companion.Config
-  def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
+  def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                       config: companion.Config): CC[N,E] = companion.empty
   def apply[N, E[X] <: EdgeLikeIn[X]](elems: Param[N,E]*)
-                                     (implicit edgeT: TypeTag[E[N]],
+                                     (implicit edgeT: ClassTag[E[N]],
                                       config: companion.Config) = companion(elems: _*)
   def from [N, E[X] <: EdgeLikeIn[X]](edges: collection.Iterable[E[N]])
-                                     (implicit edgeT: TypeTag[E[N]],
+                                     (implicit edgeT: ClassTag[E[N]],
                                       config: companion.Config) = companion.from(edges = edges)
   def from [N, E[X] <: EdgeLikeIn[X]](nodes: collection.Iterable[N],
                                       edges: collection.Iterable[E[N]])
-                                     (implicit edgeT: TypeTag[E[N]],
+                                     (implicit edgeT: ClassTag[E[N]],
                                       config: companion.Config) = companion.from(nodes, edges)
 }
 @RunWith(classOf[JUnitRunner])

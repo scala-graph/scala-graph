@@ -3,7 +3,7 @@ package scalax.collection.connectivity
 import scala.collection.mutable.ListBuffer
 import scala.collection.{mutable, Set}
 import scala.math.min
-import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
@@ -16,7 +16,7 @@ import logging.Logging
  * @author Vasco Figueira
  */
 final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](
-    val g: Graph[N, E])(implicit edgeT: TypeTag[N]) extends Logging {
+    val g: Graph[N, E])(implicit edgeT: ClassTag[N]) extends Logging {
 
   type DeepSearchStackAggregator = (Seq[g.NodeT]) => Unit
 
@@ -159,7 +159,7 @@ final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](
  */
 object GraphComponents {
 
-  implicit def graphToComponents[N: TypeTag, E[X] <: EdgeLikeIn[X]](g: Graph[N, E]) =
+  implicit def graphToComponents[N: ClassTag, E[X] <: EdgeLikeIn[X]](g: Graph[N, E]) =
     new GraphComponents[N, E](g)
 }
 

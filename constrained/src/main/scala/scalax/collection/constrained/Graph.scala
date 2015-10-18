@@ -3,7 +3,7 @@ package scalax.collection.constrained
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.{Set, SetLike, GenTraversableOnce}
 import scala.collection.generic.CanBuildFrom
-import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 import scalax.collection.GraphPredef.{EdgeLikeIn, Param,
        InParam, OutParam, seqToGraphParam, OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam}
@@ -149,22 +149,22 @@ object Graph
   extends GraphConstrainedCompanion[Graph]
 {
   override def newBuilder[N, E[X] <: EdgeLikeIn[X]]
-     (implicit edgeT: TypeTag[E[N]],
+     (implicit edgeT: ClassTag[E[N]],
       config: Config) =
     immutable.Graph.newBuilder[N,E](edgeT, config)
 
-  def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
+  def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                       config: Config = defaultConfig): Graph[N,E] =
     immutable.Graph.empty[N,E](edgeT, config)
   def from[N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N],
                                      edges: Iterable[E[N]])
-                                    (implicit edgeT: TypeTag[E[N]],
+                                    (implicit edgeT: ClassTag[E[N]],
                                      config: Config = defaultConfig): Graph[N,E] =
     immutable.Graph.from[N,E](nodes, edges)(edgeT, config)
   override protected[collection]
   def fromUnchecked[N, E[X] <: EdgeLikeIn[X]](nodes:    Iterable[N],
                                               edges:    Iterable[E[N]])
-                                             (implicit edgeT: TypeTag[E[N]],
+                                             (implicit edgeT: ClassTag[E[N]],
                                               config: Config = defaultConfig): Graph[N,E] =
     immutable.Graph.fromUnchecked[N,E](nodes, edges)(edgeT, config)
 }

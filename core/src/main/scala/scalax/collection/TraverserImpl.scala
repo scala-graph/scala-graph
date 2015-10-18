@@ -1,6 +1,5 @@
 package scalax.collection
 
-import scala.reflect.runtime.universe._
 import scala.language.higherKinds
 import scala.annotation.{switch, tailrec}
 import scala.collection.generic.FilterMonadic

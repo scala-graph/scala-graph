@@ -3,7 +3,7 @@ package custom
 import scala.language.higherKinds
 import scala.collection.generic.CanBuildFrom
 import scala.collection.{Set => AnySet}
-import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 import scalax.collection._
 import scalax.collection.GraphPredef.{EdgeLikeIn, Param, InParam} 
@@ -52,7 +52,7 @@ package immutable {
   class MyExtGraph[N, E[X] <: EdgeLikeIn[X]]
       ( iniNodes: Iterable[N]    = Set[N](),
         iniEdges: Iterable[E[N]] = Set[E[N]]() )
-      ( implicit override val edgeT: TypeTag[E[N]],
+      ( implicit override val edgeT: ClassTag[E[N]],
         val _config: MyExtGraph.Config with AdjacencyListArrayConfig)
     extends ImmutableGraph[N,E]
     with    AdjacencyListGraph[N,E,MyExtGraph]
@@ -70,7 +70,7 @@ package immutable {
                      ripple:   Boolean,
                      addNodes: Iterable[N],
                      addEdges: Iterable[E[N]])
-                    (implicit edgeT: TypeTag[E[N]],
+                    (implicit edgeT: ClassTag[E[N]],
                      config: MyExtGraph.Config with AdjacencyListArrayConfig) = {
       this()
       from(that)(delNodes, delEdges, ripple, addNodes, addEdges)
@@ -107,15 +107,15 @@ package immutable {
   }
   object MyExtGraph extends ImmutableGraphCompanion[MyExtGraph]
   {
-    def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
+    def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                         config: Config) = new MyExtGraph[N,E]
     override def from [N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N],
                                                  edges: Iterable[E[N]])
-                                                (implicit edgeT: TypeTag[E[N]],
+                                                (implicit edgeT: ClassTag[E[N]],
                                                  config: Config) =
       new MyExtGraph[N,E](nodes, edges)
     implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](
-        implicit edgeT: TypeTag[E[N]],
+        implicit edgeT: ClassTag[E[N]],
         config: Config): CanBuildFrom[Coll, InParam[N,E], MyExtGraph[N,E]] =
       new GraphCanBuildFrom[N,E]
   }
@@ -130,7 +130,7 @@ package mutable {
   class MyExtGraph[N, E[X] <: EdgeLikeIn[X]]
       ( iniNodes: Iterable[N]    = Set[N](),
         iniEdges: Iterable[E[N]] = Set[E[N]]() )
-      ( implicit override val edgeT: TypeTag[E[N]],
+      ( implicit override val edgeT: ClassTag[E[N]],
         val _config: MyExtGraph.Config with AdjacencyListArrayConfig)
     extends MutableGraph[N,E]
     with    AdjacencyListGraph[N,E,MyExtGraph]
@@ -148,7 +148,7 @@ package mutable {
                      ripple:   Boolean,
                      addNodes: Iterable[N],
                      addEdges: Iterable[E[N]])
-                    (implicit edgeT: TypeTag[E[N]],
+                    (implicit edgeT: ClassTag[E[N]],
                      config: MyExtGraph.Config with AdjacencyListArrayConfig) = {
       this()
       from(that)(delNodes, delEdges, ripple, addNodes, addEdges)
@@ -182,15 +182,15 @@ package mutable {
   }
   object MyExtGraph extends MutableGraphCompanion[MyExtGraph]
   {
-    def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
+    def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                         config: Config) = new MyExtGraph[N,E]
     override def from [N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N],
                                                  edges: Iterable[E[N]])
-                                                (implicit edgeT: TypeTag[E[N]],
+                                                (implicit edgeT: ClassTag[E[N]],
                                                  config: Config) =
       new MyExtGraph[N,E](nodes, edges)
     implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](
-        implicit edgeT: TypeTag[E[N]],
+        implicit edgeT: ClassTag[E[N]],
         config: Config): CanBuildFrom[Coll, InParam[N,E], MyExtGraph[N,E]] =
       new GraphCanBuildFrom[N,E]
   }

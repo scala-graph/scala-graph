@@ -4,7 +4,7 @@ package mutable
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.generic.{CanBuildFrom, Growable, Shrinkable}
 import scala.collection.mutable.{Builder, Cloneable, ArrayBuffer, Set => MutableSet}
-import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 import scala.math.max
 
 import scalax.collection.{Graph => CommonGraph, GraphLike => CommonGraphLike}
@@ -21,7 +21,7 @@ abstract class BuilderImpl[N,
                            E[X] <: EdgeLikeIn[X],
                            CC[N,E[X] <: EdgeLikeIn[X]] <: CommonGraph[N,E] with
                                                           CommonGraphLike[N,E,CC]](
-    implicit edgeT: TypeTag[E[N]],
+    implicit edgeT: ClassTag[E[N]],
     config: GraphConfig)
     extends Builder[Param[N,E], CC[N,E]] {
 
@@ -64,7 +64,7 @@ class GraphBuilder[N,
                    CC[N,E[X] <: EdgeLikeIn[X]]
                         <: CommonGraphLike[N,E,CC] with CommonGraph[N,E]]
       (companion: GraphCompanion[CC])
-      (implicit edgeT: TypeTag[E[N]],
+      (implicit edgeT: ClassTag[E[N]],
        config: GraphConfig)
   extends BuilderImpl[N,E,CC]
 {
@@ -244,16 +244,16 @@ trait Graph[N, E[X] <: EdgeLikeIn[X]]
 object Graph
   extends MutableGraphCompanion[Graph]
 {
-	def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
+	def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                       config: Config = defaultConfig): Graph[N,E] =
 	  new DefaultGraphImpl[N,E]()(edgeT, config)
   override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Seq.empty[N],
                                               edges: Iterable[E[N]])
-                                             (implicit edgeT: TypeTag[E[N]],
+                                             (implicit edgeT: ClassTag[E[N]],
                                               config: Config = defaultConfig): Graph[N,E] =
     DefaultGraphImpl.from[N,E](nodes, edges)(
                                edgeT, config)
-  implicit def cbfUnDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
+  implicit def cbfUnDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                                  config: Config = defaultConfig) =
     new GraphCanBuildFrom[N,E]()(edgeT, config).asInstanceOf[
       GraphCanBuildFrom[N,E]
@@ -263,7 +263,7 @@ object Graph
 class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
     ( iniNodes: Iterable[N]    = Set[N](),
       iniEdges: Iterable[E[N]] = Set[E[N]]())
-    ( implicit override val edgeT: TypeTag[E[N]],
+    ( implicit override val edgeT: ClassTag[E[N]],
       override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
   extends Graph[N,E]
      with AdjacencyListGraph[N, E, DefaultGraphImpl]
@@ -283,7 +283,7 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
                    ripple:   Boolean,
                    addNodes: Iterable[N],
                    addEdges: Iterable[E[N]])
-                  (implicit edgeT: TypeTag[E[N]],
+                  (implicit edgeT: ClassTag[E[N]],
                    config: DefaultGraphImpl.Config with AdjacencyListArrayConfig) = {
     this()
     from(that)(delNodes, delEdges, ripple, addNodes, addEdges)
@@ -313,12 +313,12 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
 object DefaultGraphImpl
   extends MutableGraphCompanion[DefaultGraphImpl]
 {
-	def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: TypeTag[E[N]],
+	def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                       config: Config = defaultConfig) =
 	  new DefaultGraphImpl[N,E]()(edgeT, config)
   override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Seq.empty[N],
                                               edges: Iterable[E[N]])
-                                             (implicit edgeT: TypeTag[E[N]],
+                                             (implicit edgeT: ClassTag[E[N]],
                                               config: Config = defaultConfig) =
     new DefaultGraphImpl[N,E](nodes, edges)(
                               edgeT, config)

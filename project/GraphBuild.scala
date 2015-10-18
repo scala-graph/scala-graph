@@ -20,7 +20,7 @@ object GraphBuild extends Build {
     settings = defaultSettings ++ Seq(
       name      := "Graph Core",
       version   := Version.core,
-	  libraryDependencies += "com.assembla.scala-incubator" %% "graph-test" % "1.9.0" % "test"
+      libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.12.5"
     )
   )
 
@@ -52,16 +52,6 @@ object GraphBuild extends Build {
     )
   ) dependsOn (core)
 
-  lazy val test = Project(
-    id = "Graph-test",
-    base = file("testutil"),
-    settings = defaultSettings ++ Seq(
-      name      := "Graph Test",
-      version   := Version.test,
-	  libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.12.5"
-    )
-  ) dependsOn (core)
-
   lazy val misc = Project(
     id = "Graph-misc",
     base = file("misc"),
@@ -72,7 +62,7 @@ object GraphBuild extends Build {
     )
   ) dependsOn (core)
 
-  lazy val defaultSettings = Defaults.defaultSettings ++ Seq(
+  private lazy val defaultSettings = Defaults.defaultSettings ++ Seq(
     scalaVersion := Version.compiler,
   	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2),
     organization := "com.assembla.scala-incubator",
@@ -87,13 +77,11 @@ object GraphBuild extends Build {
     scalacOptions in (Compile, doc) <++= baseDirectory map { d =>
       Seq("-doc-root-content", d / "rootdoc.txt" getPath)
     },
-	autoAPIMappings := true,
+    autoAPIMappings := true,
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     libraryDependencies ++= Seq(
-      "junit" % "junit" % "4.8.2" % "test",
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.scalatest"  %% "scalatest"  % "2.2.5"  % "test",
-      "org.scalacheck" %% "scalacheck" % "1.12.5" % "test",
+      "junit" % "junit" % "4.8.2"                       % "test",
+      "org.scalatest"  %% "scalatest"  % "2.2.5"        % "test",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test"),
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 10)) => Nil

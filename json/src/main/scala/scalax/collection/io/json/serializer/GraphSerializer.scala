@@ -2,8 +2,7 @@ package scalax.collection.io.json
 package serializer
 
 import language.higherKinds
-import scala.reflect.runtime.currentMirror
-import scala.reflect.runtime.universe._
+import scala.reflect.classTag
 
 import net.liftweb.json._
 
@@ -23,7 +22,7 @@ final class GraphSerializer[N, E[X] <: EdgeLikeIn[X]]
   override def deserialize(implicit format: Formats) = {
     case (TypeInfo(clazz, _), json) if clazz == classOf[Graph[N,E]] => json match {
       case JObject(_) =>
-        Graph.fromJson[N,E](json, descriptor)(typeTag[E[N]], CoreConfig())
+        Graph.fromJson[N,E](json, descriptor)(classTag[E[N]], CoreConfig())
       case x => throw new MappingException(
         "Can't convert " + x + " to " + clazz.getSimpleName)
     }
