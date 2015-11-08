@@ -1,5 +1,7 @@
 import sbt._
 import Keys._
+import org.scalajs.sbtplugin.ScalaJSPlugin
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
 object GraphBuild extends Build {
 
@@ -21,8 +23,8 @@ object GraphBuild extends Build {
       name      := "Graph Core",
       version   := Version.core,
       libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.12.5"
-    )
-  )
+    ) ++ ScalaJSPlugin.projectSettings
+  ).enablePlugins(ScalaJSPlugin)
 
   lazy val constrained = Project(
     id = "Graph-constrained",
@@ -86,7 +88,6 @@ object GraphBuild extends Build {
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 10)) => Nil
       case Some((2, scalaMajor)) if scalaMajor >= 11 =>  Seq(
-          "org.scala-lang" % "scala-library" % scalaVersion.value,
           "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test" // required by ScalaTest
         )
       case _ => Nil
