@@ -107,7 +107,7 @@ class EdgeDescriptor[N,
  */
 class WEdgeDescriptor[N,
                       E[X] <: UnDiEdge[X] with WEdge[X],
-                     +C <: WEdgeCompanionBase[E]]
+                     +C <: WEdgeCompanion[E]]
      (edgeCompanion:    C,
       customSerializer: Option[Serializer[_ <: WEdgeParameters]] = None,
       extraClasses:     List[Class[_]] = Nil,
@@ -138,7 +138,7 @@ class WEdgeDescriptor[N,
  */
 class LEdgeDescriptor[N,
                       E[X] <: UnDiEdge[X] with LEdge[X],
-                     +C    <: LEdgeCompanionBase[E],
+                     +C    <: LEdgeCompanion[E],
                       L    <: AnyRef]
      (edgeCompanion:    C,
       val aLabel:       L,
@@ -172,7 +172,7 @@ class LEdgeDescriptor[N,
  */
 class WLEdgeDescriptor[N,
                        E[X] <: UnDiEdge[X] with WLEdge[X],
-                      +C    <: WLEdgeCompanionBase[E],
+                      +C    <: WLEdgeCompanion[E],
                        L    <: AnyRef]
      (edgeCompanion:    C,
       val aLabel:       L,
@@ -250,9 +250,8 @@ class CEdgeDescriptor[N,
                                     edgeManifest)
 {
   override def extract(jsonEdge: JValue) = jsonEdge.extract[HyperEdgeParameters]
-  override protected def toParameters(edge: E[N])(
-                                      implicit descriptor: Descriptor[N]) =
-    new HyperEdgeParameters(nodeIds(edge, descriptor))
+  override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]) =
+    new HyperEdgeParameters(nodeIds(edge, descriptor), CollectionKind.from(edge).toString)
 }
 /** Determines how to extract data relevant for weighted, non-labeled
  * hyperedges from a JValue and how to decompose such an outer edge to a JValue.
@@ -275,10 +274,8 @@ class CEdgeDescriptor[N,
                                     edgeManifest)
 {
   override def extract(jsonEdge: JValue) = jsonEdge.extract[WHyperEdgeParameters]
-  override protected def toParameters(edge: E[N])(
-                                      implicit descriptor: Descriptor[N]) =
-    new WHyperEdgeParameters(nodeIds(edge, descriptor),
-                             edge.weight)
+  override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]) =
+    new WHyperEdgeParameters(nodeIds(edge, descriptor), CollectionKind.from(edge).toString, edge.weight)
 }
 /** Determines how to extract data relevant for non-weighted, labeled
  * hyperedges from a JValue and how to decompose such an outer edge to a JValue.
@@ -305,10 +302,9 @@ class CEdgeDescriptor[N,
                                     edgeManifest)
 {
   override def extract(jsonEdge: JValue) = jsonEdge.extract[LHyperEdgeParameters[L]]
-  override protected def toParameters(edge: E[N])(
-                                      implicit descriptor: Descriptor[N]): LHyperEdgeParameters[L] =
-    new LHyperEdgeParameters(nodeIds(edge, descriptor),
-                             edge.label).asInstanceOf[LHyperEdgeParameters[L]]
+  override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]): LHyperEdgeParameters[L] =
+    new LHyperEdgeParameters(nodeIds(edge, descriptor), CollectionKind.from(edge).toString, edge.label).
+      asInstanceOf[LHyperEdgeParameters[L]]
 }
 /** Determines how to extract data relevant for weighted, labeled
  * hyperedges from a JValue and how to decompose such an outer edge to a JValue.
@@ -335,11 +331,9 @@ class CEdgeDescriptor[N,
                                     edgeManifest)
 {
   override def extract(jsonEdge: JValue) = jsonEdge.extract[WLHyperEdgeParameters[L]]
-  override protected def toParameters(edge: E[N])(
-                                      implicit descriptor: Descriptor[N]): WLHyperEdgeParameters[L] =
-    new WLHyperEdgeParameters(nodeIds(edge, descriptor),
-                              edge.weight,
-                              edge.label).asInstanceOf[WLHyperEdgeParameters[L]]
+  override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]): WLHyperEdgeParameters[L] =
+    new WLHyperEdgeParameters(nodeIds(edge, descriptor), CollectionKind.from(edge).toString, edge.weight, edge.label).
+      asInstanceOf[WLHyperEdgeParameters[L]]
 }
 /** Determines how to extract data relevant for custom edges
  * from a JValue and how to decompose such an outer edge to a JValue.
@@ -366,9 +360,8 @@ class CHyperEdgeDescriptor[N,
                                     edgeManifest)
 {
   override def extract(jsonEdge: JValue) = jsonEdge.extract[CEdgeParameters[P]]
-  override protected def toParameters(edge: E[N])(
-                                      implicit descriptor: Descriptor[N]) = {
-    new CHyperEdgeParameters[edge.P](nodeIds(edge, descriptor),
-                                     edge.attributes).asInstanceOf[CHyperEdgeParameters[P]]
+  override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]) = {
+    new CHyperEdgeParameters[edge.P](nodeIds(edge, descriptor), CollectionKind.from(edge).toString, edge.attributes).
+      asInstanceOf[CHyperEdgeParameters[P]]
   }
 }

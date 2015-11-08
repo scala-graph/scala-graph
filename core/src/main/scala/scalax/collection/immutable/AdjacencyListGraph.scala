@@ -5,6 +5,7 @@ import language.higherKinds
 
 import scala.collection.EqSetFacade
 import GraphPredef.EdgeLikeIn
+import GraphEdge.OrderedEndpoints
 import mutable.ArraySet
 
 /** Implements an incident list based immutable graph representation.
@@ -54,7 +55,10 @@ trait AdjacencyListGraph[N,
 
   type EdgeT = EdgeBase
   @inline final protected def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
-  @inline final override protected def newEdge(innerEdge: E[NodeT]) = new EdgeT(innerEdge)
+  final override protected def newEdge(innerEdge: E[NodeT]): EdgeT =
+    if (innerEdge.isInstanceOf[OrderedEndpoints]) new EdgeT(innerEdge) with OrderedEndpoints
+    else                                          new EdgeT(innerEdge)
+    
   type EdgeSetT = EdgeSet
   @SerialVersionUID(7873L)
   class EdgeSet extends super.EdgeSet

@@ -1,11 +1,12 @@
 package scalax.collection
 
+import scala.language.higherKinds
+
 import org.scalatest.{Spec, Matchers}
-
-import GraphPredef._, GraphEdge._, edge._, edge.LBase._, edge.Implicits._
-
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+
+import GraphPredef._, GraphEdge._, edge._, edge.LBase._, edge.Implicits._
 
 import custom.flight._,
        custom.flight.Helper._,
@@ -14,11 +15,42 @@ import custom.flight._,
 @RunWith(classOf[JUnitRunner])
 class TEdgeTest extends Spec with Matchers
 {
-  def `DiHyperEdge targets are sequencies` { // fixes #47
-    val e = DiHyperEdge(1,2,2)
-	val g = Graph(e)
-    g.contains(e) should be (true)
- }
+  trait OrderedEndpointsTest[E[X] <: EdgeLike[X]] {
+    def ordered(edges: Traversable[_]): Boolean =
+      edges forall (_.isInstanceOf[OrderedEndpoints])
+    def outerEdges(implicit kind: CollectionKind = Bag): List[E[_]]
+  
+    def `are treated as a bag by default` {
+      val edges = outerEdges()
+      edges(1) should be (edges(2))
+      val g = Graph(edges: _*)
+      g.graphSize      should be (2)
+      ordered(g.edges) should be (false)
+    }
+    def `may be defined to be sorted.` {
+      val edges = outerEdges(Sequence)
+      edges(1) should not equal (edges(2))
+      val g = Graph(edges: _*)
+      g.graphSize should be (3)
+      ordered(g.edges)                  should be (true)
+      ordered((g - g.edges.head).edges) should be (true)
+    } 
+  }
+  object `DiHyperEdge target nodes` extends OrderedEndpointsTest[DiHyperEdge] {
+    def outerEdges(implicit kind: CollectionKind = Bag): List[DiHyperEdge[Int]] = {
+      DiHyperEdge(1,2,2)   ::
+      DiHyperEdge(1,2,2,3) ::
+      DiHyperEdge(1,2,3,2) :: Nil
+    }
+  }
+  object `LHyperEdge target nodes` extends OrderedEndpointsTest[LHyperEdge] {
+    import edge.LHyperEdge, edge.Implicits._
+    def outerEdges(implicit kind: CollectionKind = Bag): List[LHyperEdge[Int]] = {
+      (1 ~ 2 ~+ 2)    ('a') ::
+      (1 ~ 2 ~ 2 ~+ 3)('b') ::
+      (1 ~ 2 ~ 3 ~+ 2)('c') :: Nil
+    }
+  }
 
   object FlightLabel extends LEdgeImplicits[Flight]
   import FlightLabel._
@@ -141,8 +173,6 @@ class TEdgeTest extends Spec with Matchers
   }
 }
 /* Label type for use in key-labeled edges.
- * Note that using path-dependent label types with Scala 2.9.1-final I had a runtime issue
- * which could be resolved by moving the label class to the top-level.
  */
 case class Flight(val flightNo: String,
                   val departure: DayTime = DayTime(0,0),

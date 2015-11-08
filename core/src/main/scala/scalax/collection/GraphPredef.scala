@@ -147,9 +147,6 @@ object GraphPredef {
     def unapply[NI] (nodeOut: InnerNodeParam[NI]): Option[NI] = Some(nodeOut.value)
   }
   
-  /** @tparam N  the type of the nodes.
-   *  @tparam E  the kind of the edges.
-   */
   sealed trait EdgeParam
   {
     def isNode = false 
@@ -168,9 +165,10 @@ object GraphPredef {
     def edge: EI[NI] = this
   }
   
-  /** @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
-   *  @tparam NO  the type of the nodes (vertices) this graph passes back.
-   *  @tparam EC  the kind of the edges (links) contained in edges of type EdgeT this graph passes back.
+  /** @tparam NI  the type of the nodes the graph is passed to.
+   *  @tparam EI  the kind of the edges the graph is passed to.
+   *  @tparam NO  the type of the nodes created internally.
+   *  @tparam EO  the kind of the edges created internally.
    */
   trait InnerEdgeParam [NI, +EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], +EO[X<:NO] <: EdgeLike[X]]
     extends OutParam[NI,EI] with EdgeParam
@@ -246,11 +244,13 @@ object GraphPredef {
   }
 
   final implicit class HyperEdgeAssoc[NOld](val e: EdgeLikeIn[NOld]) extends AnyVal {
-    @inline def ~ [N >: NOld](n: N) = { assume (e.undirected)
-      new   HyperEdge[N](NodeProduct(e.iterator.toBuffer += n))
+    def ~ [N >: NOld](n: N)(implicit endpointsKind: CollectionKind = Bag): HyperEdge[N] = {
+      require(e.undirected)
+      HyperEdge.from[N](NodeProduct(e.iterator.toBuffer += n))
     }
-    @inline def ~>[N >: NOld](n: N) = { assume (e.directed)
-      new DiHyperEdge[N](NodeProduct(e.iterator.toBuffer += n))
+    def ~>[N >: NOld](n: N)(implicit targetsKind: CollectionKind = Bag): DiHyperEdge[N] = {
+      require(e.directed)
+      DiHyperEdge.from[N](NodeProduct(e.iterator.toBuffer += n))
     }
   }
 }

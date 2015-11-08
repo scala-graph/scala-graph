@@ -9,9 +9,9 @@ import scala.reflect.ClassTag
 
 import GraphPredef._, GraphEdge._
 import generic.GraphCompanion
-import edge. WBase.{ WEdgeCompanionBase,  WEdgeCompanion,  WHyperEdgeCompanion}
-import edge. LBase.{ LEdgeCompanionBase,  LEdgeCompanion,  LHyperEdgeCompanion}
-import edge.WLBase.{WLEdgeCompanionBase, WLEdgeCompanion, WLHyperEdgeCompanion}
+import edge. WBase.{ WEdgeCompanion,  WHyperEdgeCompanion}
+import edge. LBase.{ LEdgeCompanion,  LHyperEdgeCompanion}
+import edge.WLBase.{WLEdgeCompanion, WLHyperEdgeCompanion}
 
 /** Supports random graph creation for graphs of any type with variable metrics. 
  * 
@@ -279,9 +279,9 @@ abstract class RandomGraph[N,
 
     def draw(n1: N, n2: N): E[N] =
       (c match {
-        case c: WLEdgeCompanionBase[E] => c.from(n1, n2)(weightFactory(), labelFactory())
-        case c:  WEdgeCompanionBase[E] => c.from(n1, n2)(weightFactory())
-        case c:  LEdgeCompanionBase[E] => c.from(n1, n2)( labelFactory())
+        case c:     WLEdgeCompanion[E] => c.from(n1, n2)(weightFactory(), labelFactory())
+        case c:      WEdgeCompanion[E] => c.from(n1, n2)(weightFactory())
+        case c:      LEdgeCompanion[E] => c.from(n1, n2)( labelFactory())
         case c:       EdgeCompanion[E] => c(n1, n2)
         case c:  HyperEdgeCompanion[E] => c(n1, n2)
         case x                         => RandomEdge.throwUnsupportedEdgeCompanionException(x)

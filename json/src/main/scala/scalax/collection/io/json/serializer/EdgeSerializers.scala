@@ -3,6 +3,7 @@ package serializer
 
 import net.liftweb.json._
 
+import scalax.collection.GraphEdge.{CollectionKind, Bag}
 import scalax.collection.io.edge._,
        scalax.collection.io.edge.Types._
 
@@ -111,8 +112,7 @@ class WLEdgeSerializer[L: Manifest] (labelSerializers: Serializer[L]*)
   } 
 }
 trait HyperEdgeChecker {
-  def checkNodeIds (jsonIds: List[JValue],
-                    parameters: HyperEdgeNodeIds) {
+  final def checkNodeIds(jsonIds: List[JValue], parameters: HyperEdgeNodeIds) {
     jsonIds.size match {
       case size if size < 2
            => throw err(InsufficientNodes, jsonIds.toString)
@@ -120,6 +120,11 @@ trait HyperEdgeChecker {
            => throw err(UnexpectedNodeId,  jsonIds.toString)
       case _ => None
     }
+  }
+  protected final def prepareNodes(jsonIds: List[JValue]): List[String] = {
+    val par = jsonIds collect {case JString(nId) => nId}
+    checkNodeIds(jsonIds, par)
+    par
   }
 }
 /** Lift-JSON `Serializer` to serialize `HyperEdgeParameters` to JSON arrays of the form
@@ -129,19 +134,23 @@ class HyperEdgeSerializer
   extends Serializer[HyperEdgeParameters]
   with    HyperEdgeChecker
 { 
-  private val clazz = classOf[HyperEdgeParameters] 
+  private final val clazz = classOf[HyperEdgeParameters] 
+  @inline private final def parameters(jsonIds: List[JValue], kind: String): HyperEdgeParameters = {
+    new HyperEdgeParameters(prepareNodes(jsonIds), kind)
+  } 
   override def deserialize(implicit format: Formats) = { 
     case (TypeInfo(clazz, _), json) => json match { 
-      case JArray(jsonIds) =>
-        val par = jsonIds collect {case JString(nId) => nId}
-        checkNodeIds(jsonIds, par)
-        new HyperEdgeParameters(par)
+      case JArray(JArray(jsonIds) :: JString(kind) :: Nil) =>
+        parameters(jsonIds, kind)
+      case JArray(JArray(jsonIds) :: Nil) => // backward compatible with 1.9 
+        parameters(jsonIds, Bag.toString)
       case x => throw new MappingException(
                 "Can't convert " + x + " to " + clazz.getSimpleName) 
     } 
   } 
   override def serialize(implicit format: Formats) = { 
-    case HyperEdgeParameters(nodeIds) => Extraction.decompose(nodeIds) 
+    case HyperEdgeParameters(nodeIds, kind) =>
+      JArray(Extraction.decompose(nodeIds) :: JString(kind) :: Nil) 
   } 
 } 
 /** Lift-JSON `Serializer` to serialize `WHyperEdgeParameters` to JSON arrays of the form
@@ -152,20 +161,23 @@ class WHyperEdgeSerializer
   extends Serializer[WHyperEdgeParameters]
   with    HyperEdgeChecker
 { 
-  private val clazz = classOf[WHyperEdgeParameters] 
+  private final val clazz = classOf[WHyperEdgeParameters] 
+  @inline private final def parameters(jsonIds: List[JValue], kind: String, weight: BigInt): WHyperEdgeParameters = {
+    new WHyperEdgeParameters(prepareNodes(jsonIds), kind, weight.toLong)
+  } 
   override def deserialize(implicit format: Formats) = { 
     case (TypeInfo(clazz, _), json) => json match { 
-      case JArray(JArray(jsonIds) :: JInt(weight) :: Nil) =>
-        val par = jsonIds collect {case JString(nId) => nId}
-        checkNodeIds(jsonIds, par)
-        new WHyperEdgeParameters(par, weight.toLong)
+      case JArray(JArray(jsonIds) :: JString(kind) :: JInt(weight) :: Nil) =>
+        parameters(jsonIds, kind, weight)
+      case JArray(JArray(jsonIds) :: JInt(weight) :: Nil) => // backward compatible with 1.9 
+        parameters(jsonIds, Bag.toString, weight)
       case x => throw new MappingException(
                 "Can't convert " + x + " to " + clazz.getSimpleName) 
     } 
   } 
   override def serialize(implicit format: Formats) = { 
-    case WHyperEdgeParameters(nodeIds, weight) =>
-      JArray(Extraction.decompose(nodeIds) :: JInt(weight) :: Nil) 
+    case WHyperEdgeParameters(nodeIds, kind, weight) =>
+      JArray(Extraction.decompose(nodeIds) :: JString(kind) :: JInt(weight) :: Nil) 
   } 
 } 
 /** Lift-JSON `Serializer` to serialize `LHyperEdgeParameters` to JSON arrays of the form
@@ -179,20 +191,24 @@ class LHyperEdgeSerializer[L: Manifest] (labelSerializers: Serializer[L]*)
   with    Serializer[LHyperEdgeParameters[L]]
   with    HyperEdgeChecker
 { 
-  private val clazz = classOf[LHyperEdgeParameters[L]] 
+  private final val clazz = classOf[LHyperEdgeParameters[L]] 
+  @inline private final def parameters(jsonIds: List[JValue], kind: String, jsonLabel: JValue): LHyperEdgeParameters[L] = {
+    new LHyperEdgeParameters[L](prepareNodes(jsonIds), kind, LabelSerialization.extract(jsonLabel))
+  } 
   override def deserialize(implicit format: Formats) = { 
     case (TypeInfo(clazz, _), json) => json match { 
-      case JArray(JArray(jsonIds) :: jsonLabel :: Nil) =>
-        val par = jsonIds collect {case JString(nId) => nId}
-        checkNodeIds(jsonIds, par)
-        new LHyperEdgeParameters[L](par, LabelSerialization.extract(jsonLabel))
+      case JArray(JArray(jsonIds) :: JString(kind) :: jsonLabel :: Nil) =>
+        parameters(jsonIds, kind, jsonLabel)
+      case JArray(JArray(jsonIds) :: jsonLabel :: Nil) => // backward compatible with 1.9 
+        parameters(jsonIds, Bag.toString, jsonLabel)
       case x => throw new MappingException(
                 "Can't convert " + x + " to " + clazz.getSimpleName) 
     } 
   } 
   override def serialize(implicit format: Formats) = { 
-    case LHyperEdgeParameters(nodeIds, label) =>
+    case LHyperEdgeParameters(nodeIds, kind, label) =>
       JArray(Extraction.decompose(nodeIds) ::
+             JString(kind) ::
              LabelSerialization.decompose(label.asInstanceOf[L]) :: Nil) 
   } 
 } 
@@ -207,20 +223,25 @@ class WLHyperEdgeSerializer[L: Manifest] (labelSerializers: Serializer[L]*)
   with    Serializer[WLHyperEdgeParameters[L]]
   with    HyperEdgeChecker
 { 
-  private val clazz = classOf[WLHyperEdgeParameters[L]] 
-  override def deserialize(implicit format: Formats) = { 
+  private final val clazz = classOf[WLHyperEdgeParameters[L]] 
+  @inline private final def parameters(jsonIds: List[JValue], kind: String,
+                                       weight: BigInt, jsonLabel: JValue): WLHyperEdgeParameters[L] = {
+    new WLHyperEdgeParameters[L](prepareNodes(jsonIds), kind,
+                                 weight.toLong, LabelSerialization.extract(jsonLabel))
+  } 
+  override def deserialize(implicit format: Formats) = {
     case (TypeInfo(clazz, _), json) => json match { 
-      case JArray(JArray(jsonIds) :: JInt(weight) :: jsonLabel :: Nil) =>
-        val par = jsonIds collect {case JString(nId) => nId}
-        checkNodeIds(jsonIds, par)
-        new WLHyperEdgeParameters[L](par, weight.toLong, LabelSerialization.extract(jsonLabel))
+      case JArray(JArray(jsonIds) :: JString(kind) :: JInt(weight) :: jsonLabel :: Nil) =>
+        parameters(jsonIds, kind, weight, jsonLabel)
+      case JArray(JArray(jsonIds) :: JInt(weight) :: jsonLabel :: Nil) => // backward compatible with 1.9 
+        parameters(jsonIds, Bag.toString, weight, jsonLabel)
       case x => throw new MappingException(
                 "Can't convert " + x + " to " + clazz.getSimpleName) 
     } 
   } 
   override def serialize(implicit format: Formats) = { 
-    case WLHyperEdgeParameters(nodeIds, weight, label) =>
-      JArray(Extraction.decompose(nodeIds) :: JInt(weight) ::
+    case WLHyperEdgeParameters(nodeIds, kind, weight, label) =>
+      JArray(Extraction.decompose(nodeIds) :: JString(kind) :: JInt(weight) ::
              LabelSerialization.decompose(label.asInstanceOf[L]) :: Nil) 
   } 
 } 

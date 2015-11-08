@@ -4,6 +4,7 @@ package mutable
 import language.higherKinds
 
 import GraphPredef.EdgeLikeIn
+import GraphEdge.OrderedEndpoints
 import immutable.AdjacencyListBase
 
 /** Implements an incident list based mutable graph representation.
@@ -113,7 +114,10 @@ trait AdjacencyListGraph[N,
                                         selfGraph.nodes --= privateNodes; true
                                       } else false
   }
-  @inline final override protected def newEdge(innerEdge: E[NodeT]) = new EdgeT(innerEdge)
+  @inline final override protected def newEdge(innerEdge: E[NodeT]): EdgeT =
+    if (innerEdge.isInstanceOf[OrderedEndpoints]) new EdgeT(innerEdge) with OrderedEndpoints
+    else                                          new EdgeT(innerEdge)
+  
   type EdgeSetT = EdgeSet
   @SerialVersionUID(7974L)
   class EdgeSet extends super[GraphLike].EdgeSet with super.EdgeSet

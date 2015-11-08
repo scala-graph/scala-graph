@@ -5,8 +5,6 @@ import scala.language.higherKinds
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.Graph
-import scalax.collection.config.CoreConfig
-import scalax.collection.mutable.ArraySet.Hints
 
 import org.scalatest.Suite
 import org.scalatest.matchers.ShouldMatchers
@@ -26,10 +24,13 @@ class CustomizingTest
   import scalax.collection.mutable.ArraySet.Hints
   implicit val myConfig = CoreConfig(orderHint = 5000, Hints(64, 0, 64, 75))
   
-  implicit class ExtGraph[N, E[X] <: EdgeLikeIn[X]](g: Graph[N,E]) {
+  implicit class ExtGraph[N, E[X] <: EdgeLikeIn[X]](protected val g: Graph[N,E]) {
     def foo = "bar"
+    def aNode: Option[g.NodeT] = g.nodes.headOption
   }
-  Graph(1~2).foo
+  val g = Graph(1~2)
+  g.foo
+  g.aNode
   
   implicit class ExtGraphNode[N, E[X] <: EdgeLikeIn[X]](node_ : Graph[N,E]#NodeT) {
     type NodeT = graph.NodeT
@@ -66,5 +67,5 @@ class CustomizingTest
   }
 
   val flight = ham ~> ny ## "007"
-  val g = Graph(flight)
+  val g2 = Graph(flight)
 }

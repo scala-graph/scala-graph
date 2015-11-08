@@ -14,6 +14,7 @@ project/plugins/project/
 .classpath
 .settings/
 .scala_dependencies
+.cache
 
 # Mac OS specific
 .DS_Store

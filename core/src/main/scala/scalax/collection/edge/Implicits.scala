@@ -28,21 +28,21 @@ object Implicits {
 
   // ------------------------------------------------------------------------- L*
   final class LUnDiEdgeAssoc[N](e: UnDiEdge[N]) {
-    def + [L](label: L) = LUnDiEdge[N,L](e.nodes)(label)
+    def + [L](label: L) = LUnDiEdge.from[N,L](e.nodes)(label)
   }
   implicit def edge2LUnDiEdgeAssoc[N](e: UnDiEdge[N]) = new LUnDiEdgeAssoc[N](e)
 
   final class LDiEdgeAssoc[N](e: DiEdge[N]) {
-    def + [L](label: L) = LDiEdge[N,L](e.nodes)(label)
+    def + [L](label: L) = LDiEdge.from[N,L](e.nodes)(label)
   }
   implicit def edge2LDiEdgeAssoc[N](e: DiEdge[N]) = new LDiEdgeAssoc[N](e)
 
-  final class LHyperEdgeAssoc[N](e: HyperEdge[N]) {
+  final class LHyperEdgeAssoc[N](e: HyperEdge[N])(implicit kind: CollectionKind = Bag) {
     def + [L](label: L) = LHyperEdge.from[N,L](e.nodes)(label)
   }
   implicit def edge2LHyperEdgeAssoc[N](e: HyperEdge[N]) = new LHyperEdgeAssoc[N](e)
 
-  final class LDiHyperEdgeAssoc[N](e: DiHyperEdge[N]) {
+  final class LDiHyperEdgeAssoc[N](e: DiHyperEdge[N])(implicit kind: CollectionKind = Bag) {
     def + [L](label: L) = LDiHyperEdge.from[N,L](e.nodes)(label)
   }
   implicit def edge2LDiHyperEdgeAssoc[N](e: DiHyperEdge[N]) = new LDiHyperEdgeAssoc[N](e)
@@ -71,23 +71,25 @@ object Implicits {
   
   // ------------------------------------------------------------------ HyperEdge
   final class XHyperEdgeAssoc[NOld](e: EdgeLike[NOld]) {
-    def ~%    [N >: NOld, NX <: N](n: NX)(w: Long) = new WHyperEdge[N](NodeProduct(e.iterator.toBuffer[N] += n), w)
-    def ~%#   [N >: NOld, NX <: N](n: NX)(w: Long) =    WkHyperEdge[N](e.iterator.toBuffer[N] += n)(w)
-    def ~+    [N >: NOld, NX <: N, L](n: NX)(l: L) =     LHyperEdge[N,L](e.iterator.toBuffer[N] += n)(l)
-    def ~+#   [N >: NOld, NX <: N, L](n: NX)(l: L) =    LkHyperEdge[N,L](e.iterator.toBuffer[N] += n)(l)
-    def ~%+   [N >: NOld, NX <: N, L](n: NX)(w: Long, l: L) =   WLHyperEdge[N,L](e.iterator.toBuffer[N] += n)(w, l)
-    def ~%#+  [N >: NOld, NX <: N, L](n: NX)(w: Long, l: L) =  WkLHyperEdge[N,L](e.iterator.toBuffer[N] += n)(w, l)
-    def ~%+#  [N >: NOld, NX <: N, L](n: NX)(w: Long, l: L) =  WLkHyperEdge[N,L](e.iterator.toBuffer[N] += n)(w, l)
-    def ~%#+# [N >: NOld, NX <: N, L](n: NX)(w: Long, l: L) = WkLkHyperEdge[N,L](e.iterator.toBuffer[N] += n)(w, l)
+    private final def product[N >: NOld](e: EdgeLike[NOld], n: N): Product = NodeProduct(e.iterator.toBuffer[N] += n)
     
-    def ~%>    [N >: NOld, NX <: N](n: NX)(w: Long) = new WDiHyperEdge[N](NodeProduct(e.iterator.toBuffer[N] += n), w)
-    def ~%#>   [N >: NOld, NX <: N](n: NX)(w: Long) =    WkDiHyperEdge[N](e.iterator.toBuffer[N] += n)(w)
-    def ~+>    [N >: NOld, NX <: N, L](n: NX)(l: L) =     LDiHyperEdge[N,L](e.iterator.toBuffer[N] += n)(l)
-    def ~+#>   [N >: NOld, NX <: N, L](n: NX)(l: L) =    LkDiHyperEdge[N,L](e.iterator.toBuffer[N] += n)(l)
-    def ~%+>   [N >: NOld, NX <: N, L](n: NX)(w: Long, l: L) =   WLDiHyperEdge[N,L](e.iterator.toBuffer[N] += n)(w, l)
-    def ~%#+>  [N >: NOld, NX <: N, L](n: NX)(w: Long, l: L) =  WkLDiHyperEdge[N,L](e.iterator.toBuffer[N] += n)(w, l)
-    def ~%+#>  [N >: NOld, NX <: N, L](n: NX)(w: Long, l: L) =  WLkDiHyperEdge[N,L](e.iterator.toBuffer[N] += n)(w, l)
-    def ~%#+#> [N >: NOld, NX <: N, L](n: NX)(w: Long, l: L) = WkLkDiHyperEdge[N,L](e.iterator.toBuffer[N] += n)(w, l)
+    def ~%    [N >: NOld](n: N)(w: Long)(implicit endpointsKind: CollectionKind = Bag) =  WHyperEdge.from[N](product(e, n))(w)
+    def ~%#   [N >: NOld](n: N)(w: Long)(implicit endpointsKind: CollectionKind = Bag) = WkHyperEdge.from[N](product(e, n))(w)
+    def ~+    [N >: NOld, L](n: N)(l: L)(implicit endpointsKind: CollectionKind = Bag) =  LHyperEdge.from[N,L](product(e, n))(l)
+    def ~+#   [N >: NOld, L](n: N)(l: L)(implicit endpointsKind: CollectionKind = Bag) = LkHyperEdge.from[N,L](product(e, n))(l)
+    def ~%+   [N >: NOld, L](n: N)(w: Long, l: L)(implicit endpointsKind: CollectionKind = Bag) =   WLHyperEdge.from[N,L](product(e, n))(w, l)
+    def ~%#+  [N >: NOld, L](n: N)(w: Long, l: L)(implicit endpointsKind: CollectionKind = Bag) =  WkLHyperEdge.from[N,L](product(e, n))(w, l)
+    def ~%+#  [N >: NOld, L](n: N)(w: Long, l: L)(implicit endpointsKind: CollectionKind = Bag) =  WLkHyperEdge.from[N,L](product(e, n))(w, l)
+    def ~%#+# [N >: NOld, L](n: N)(w: Long, l: L)(implicit endpointsKind: CollectionKind = Bag) = WkLkHyperEdge.from[N,L](product(e, n))(w, l)
+    
+    def ~%>    [N >: NOld](n: N)(w: Long)(implicit targetsKind: CollectionKind = Bag)   =  WDiHyperEdge.from[N](product(e, n))(w)
+    def ~%#>   [N >: NOld](n: N)(w: Long)(implicit targetsKind: CollectionKind = Bag)   = WkDiHyperEdge.from[N](product(e, n))(w)
+    def ~+>    [N >: NOld, L](n: N)(l: L)(implicit endpointsKind: CollectionKind = Bag) =  LDiHyperEdge.from[N,L](product(e, n))(l)
+    def ~+#>   [N >: NOld, L](n: N)(l: L)(implicit endpointsKind: CollectionKind = Bag) = LkDiHyperEdge.from[N,L](product(e, n))(l)
+    def ~%+>   [N >: NOld, L](n: N)(w: Long, l: L)(implicit endpointsKind: CollectionKind = Bag) =   WLDiHyperEdge.from[N,L](product(e, n))(w, l)
+    def ~%#+>  [N >: NOld, L](n: N)(w: Long, l: L)(implicit endpointsKind: CollectionKind = Bag) =  WkLDiHyperEdge.from[N,L](product(e, n))(w, l)
+    def ~%+#>  [N >: NOld, L](n: N)(w: Long, l: L)(implicit endpointsKind: CollectionKind = Bag) =  WLkDiHyperEdge.from[N,L](product(e, n))(w, l)
+    def ~%#+#> [N >: NOld, L](n: N)(w: Long, l: L)(implicit endpointsKind: CollectionKind = Bag) = WkLkDiHyperEdge.from[N,L](product(e, n))(w, l)
   }
   implicit def edge2XHyperEdgeAssoc[NOld](e: EdgeLike[NOld]) = new XHyperEdgeAssoc(e)
   

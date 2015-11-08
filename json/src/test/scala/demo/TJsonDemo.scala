@@ -174,7 +174,7 @@ class TJsonDemoTest
           "Authors":[["Odersky","Martin"],["Spoon","Lex"],["Venners","Bill"],["Suereth","Joshua D."]]
         },
         "edges":{
-          "DiHyperEdge":[["978-0-9815316-2-5","OM","SL","VB"]],
+          "DiHyperEdge":[["978-0-9815316-2-5","OM","SL","VB"], "Bag"],
           "DiEdge":[["978-1-9351827-0-2","SJ"]]
         }
       }

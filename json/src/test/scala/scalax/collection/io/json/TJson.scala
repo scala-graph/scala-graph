@@ -39,12 +39,8 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 	extends	Suite
 	with	ShouldMatchers
 {
+  val quotedBag = s""""${Bag.toString}""""
   object FixtureMixed {
-    /* JSON text to import:
-     * - edge list with the default edge type
-     * - two edge lists with given edge types
-     * - some noise to be ignored
-     */
     val jsonText = """
       { "nodes" : [["A"], ["B"], ["C"], ["X"], ["Y"]],
         "edges": [
@@ -237,11 +233,11 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
   }
 
   object FixtureDiHyperEdgeCustom {
-    val jsonText = """
+    val jsonText = s"""
       { "nodes" : [["A"], ["B"], ["C"]],
         "edges": [
-          ["A", "B"],
-          ["B", "A", "C"],
+          [["A", "B"],      $quotedBag],
+          [["B", "A", "C"], $quotedBag],
         ]
       }""".filterNot(_.isWhitespace)
     val descriptor = new Descriptor[String](
@@ -253,13 +249,6 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
   }
   def test_importDiHyperEdgeCustom {
     import FixtureDiHyperEdgeCustom._
-    val jsonText = """
-      { "nodes" : [["A"], ["B"], ["C"]],
-        "edges": [
-          ["A", "B"],
-          ["B", "A", "C"],
-        ]
-      }""".filterNot(_.isWhitespace)
     val g = factory.
       fromJson[String,DiHyperEdge](jsonText,
                new Descriptor[String](
@@ -277,11 +266,11 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
   }
 
   def test_importWLHyperEdge {
-    val jsonText = """
+    val jsonText = s"""
       { "nodes" : [["A"], ["B"], ["C"]],
         "edges": [
-          [["A", "B"]     , 100, "Label-1"],
-          [["B", "A", "C"], 200, "Label-2"],
+          [["A", "B"],      $quotedBag, 100, "Label-1"],
+          [["B", "A", "C"], $quotedBag, 200, "Label-2"],
         ]
       }""".filterNot(_.isWhitespace)
     val g: CC[String,WLHyperEdge] = factory.

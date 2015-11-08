@@ -130,7 +130,7 @@ object Stream {
                 val params: WLHyperEdgeParameters[L] =
                     d.extract(jsonEdge).asInstanceOf[WLHyperEdgeParameters[L]]
                 d.edgeCompanion(params.nodeIds map lookupNode)(
-                                params.weight, params.label)
+                                params.weight, params.label)(CollectionKind.from(params.endpointsKind))
               }
 
           case d: LHyperEdgeDescriptor[N,LHyperEdge,LHyperEdgeCompanion[LHyperEdge],_] with
@@ -141,8 +141,7 @@ object Stream {
               buf += {
                 val params: LHyperEdgeParameters[L] =
                     d.extract(jsonEdge).asInstanceOf[LHyperEdgeParameters[L]]
-                d.edgeCompanion(params.nodeIds map lookupNode)(
-                                params.label)
+                d.edgeCompanion(params.nodeIds map lookupNode)(params.label)(CollectionKind.from(params.endpointsKind))
               }
 
           case d: WHyperEdgeDescriptor[N,WHyperEdge,WHyperEdgeCompanion[WHyperEdge]] with
@@ -152,8 +151,7 @@ object Stream {
               buf += {
                 val params: WHyperEdgeParameters =
                     d.extract(jsonEdge).asInstanceOf[WHyperEdgeParameters]
-                d.edgeCompanion(params.nodeIds map lookupNode)(
-                                params.weight)
+                d.edgeCompanion(params.nodeIds map lookupNode)(params.weight)(CollectionKind.from(params.endpointsKind))                                
               }
 
           case d: CHyperEdgeDescriptor[N,CHyperEdge,CHyperEdgeCompanion[CHyperEdge],_] with
@@ -165,7 +163,8 @@ object Stream {
                 val params: CHyperEdgeParameters[P] =
                     d.extract(jsonEdge).asInstanceOf[CHyperEdgeParameters[P]]
                 d.edgeCompanion(params.nodeIds map lookupNode,
-                                params.attributes.asInstanceOf[d.edgeCompanion.P]).asInstanceOf[E[N]]
+                                params.attributes.asInstanceOf[d.edgeCompanion.P])(
+                                CollectionKind.from(params.endpointsKind)).asInstanceOf[E[N]]
               }
 
           case d: HyperEdgeDescriptor[N,HyperEdge,HyperEdgeCompanion[HyperEdge]] with

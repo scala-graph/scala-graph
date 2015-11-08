@@ -13,6 +13,7 @@ import edge.LBase.LEdge
  * import scalax.collection.GraphPredef._, scalax.collection.GraphEdge,_
  * }}}
  * @define SHORTCUT Allows to replace the edge object with it's shortcut like
+ * @define ORDIHYPER or the source/target ends of a directed hyperedge
  * @author Peter Empen
  */
 object GraphEdge {
@@ -71,7 +72,7 @@ object GraphEdge {
     }
     /**
      * Number of nodes linked by this Edge. At least two nodes are linked. In case of
-     * a hook, the two nodes are identical. Hyper-edges may link more than two nodes.
+     * a hook, the two nodes are identical. Hyperedges may link more than two nodes.
      */
     final def arity = nodes match {
       case i: Iterable[N] => i.size
@@ -138,19 +139,20 @@ object GraphEdge {
     /** Same as `! looping`. */                
     final def nonLooping = ! isLooping 
     /**
-     * The weight of this edge defaulting to 1L.
+     * The weight of this edge with a default of 1.
      * 
-     * Note that `weight` is normally not part of the edge key (hashCode) meaning that
-     * edges of different weights connecting the same nodes will be treated as equal
-     * and not added more than once. If you need multi-edges based on different weights 
+     * Note that `weight` is normally not part of the edge key (hashCode). As a result,
+     * edges with different weights connecting the same nodes will be evaluated as equal
+     * and thus added once and only once to the graph.
+     * In case you need multi-edges based on different weights 
      * you should either make use of a predefined key-weighted edge type such as `WDiEdge` 
      * or define a custom edge class that mixes in `ExtendedKey` and adds `weight` to
      * `keyAttributes`. 
      * 
-     * In case of weights of a type other than `Long` you either convert values of
-     * that type to `Long` prior to edge creation or define a custom edge class 
-     * to include your own `val` of that type and override `def weight` to provide
-     * a conversion.  
+     * For weight types other than `Long` you may either convert then to `Long`
+     * prior to edge creation or define a custom edge class that includes the
+     * weight of the appropriate type and overrides `def weight` to provide the
+     * required conversion to `Long`.  
      */
     def weight: Long = 1
     /**
@@ -159,9 +161,10 @@ object GraphEdge {
      * assert, for instance by calling `isLabeled`, that the edge instance is labeled
      * before calling this method.
      * 
-     * Note that `label` is normally not part of the edge key (hashCode) meaning that
-     * edges of different labels connecting the same nodes will be treated as equal
-     * and not added more than once. If you need multi-edges based on different labels 
+     * Note that `label` is normally not part of the edge key (hashCode). As a result,
+     * edges with different labels connecting the same nodes will be evaluated as equal
+     * and thus added once and only once to the graph.
+     * In case you need multi-edges based on different labels 
      * you should either make use of a predefined key-labeled edge type such as `LDiEdge` 
      * or define a custom edge class that mixes in `ExtendedKey` and adds `label` to
      * `keyAttributes`. 
@@ -279,7 +282,7 @@ object GraphEdge {
   }
   object EdgeLike {
     val nodeSeparator = "~" 
-    protected case class Brackets(val left: Char, val right: Char)
+    protected case class Brackets(left: Char, right: Char)
     protected val curlyBraces = Brackets('{', '}')
     def unapply[N](e: EdgeLike[N]) = Some(e)
   }
@@ -289,7 +292,7 @@ object GraphEdge {
    * @author Peter Empen
    */
   object NodeProduct {
-    @inline final def apply[N](node_1: N, node_2: N)     : Product = Tuple2(node_1, node_2)
+    @inline final def apply[N](node_1: N, node_2: N): Tuple2[N,N] = Tuple2(node_1, node_2)
     @inline def apply[N](node_1: N, node_2: N, nodes: N*): Product = {
       (nodes.size: @scala.annotation.switch) match {
         case 1 => Tuple3(node_1, node_2, nodes(0))
@@ -311,10 +314,44 @@ object GraphEdge {
     }
   }
   protected[collection] trait Keyed
+  
+  /** Defines how to handle the ends of hyperedges, or the source/target ends of directed hyperedges,
+   *  with respect to equality. */
+  sealed abstract class CollectionKind(val duplicatesAllowed: Boolean, val orderSignificant: Boolean)
+  object CollectionKind {
+    protected[collection] def from(duplicatesAllowed: Boolean, orderSignificant: Boolean): CollectionKind =
+      if (duplicatesAllowed)
+        if (orderSignificant) Sequence else Bag
+      else
+        throw new IllegalArgumentException("'duplicatesAllowed == false' is not supported for endpoints kind.")
+    
+    protected[collection] def from(s: String): CollectionKind =
+      if      (s == Bag.toString)      Bag 
+      else if (s == Sequence.toString) Sequence
+      else throw new IllegalArgumentException(s"Unexpected representation of '$s' for endpoints kind.")
+      
+    protected[collection] def from(edge: EdgeLike[_]): CollectionKind =
+      CollectionKind.from(true, edge.isInstanceOf[OrderedEndpoints])
+      
+    def unapply(kind: CollectionKind): Option[(Boolean, Boolean)] =
+      Some((kind.duplicatesAllowed, kind.orderSignificant))
+  }
+  /** Marks a hyperedge, $ORDIHYPER, to handle the endpoints
+   *  as an unordered collection of nodes with duplicates allowed. */
+  case object Bag extends CollectionKind(true, false)
+  /** Marks a hyperedge, $ORDIHYPER, to handle the endpoints
+   *  as an ordered collection of nodes with duplicates allowed. */
+  case object Sequence extends CollectionKind(true, true)
+  
+  /** Marks (directed) hyperedge endpoints to have a significant order. */
+  protected[collection] trait OrderedEndpoints
+  
   protected[collection] sealed trait Eq {
     protected def baseEquals(other: EdgeLike[_]): Boolean
     protected def baseHashCode: Int
-    final protected def nrEqualingNodes(itA: Iterator[_], itB: Iterable[_]): Int = {
+  }
+  protected[collection] object Eq {
+    def nrEqualingNodes(itA: Iterator[_], itB: Iterable[_]): Int = {
       var nr = 0
       val bLen = itB.size
       val used = new Array[Boolean](bLen)
@@ -333,34 +370,47 @@ object GraphEdge {
       }
       nr
     }
+    def equalTargets(left : EdgeLike[_], leftEnds : Traversable[_],
+                     right: EdgeLike[_], rightEnds: Traversable[_], arity: Int): Boolean = {
+      val thisOrdered = left .isInstanceOf[OrderedEndpoints]
+      val thatOrdered = right.isInstanceOf[OrderedEndpoints]
+      thisOrdered == thatOrdered && (
+        if (thisOrdered) leftEnds.toSeq sameElements rightEnds.toSeq
+        else Eq.nrEqualingNodes(leftEnds.toIterator, rightEnds.toIterable) == arity
+      )
+    } 
   }
+  
   protected[collection] trait EqHyper extends Eq {
     this: EdgeLike[_] =>
-
     override protected def baseEquals(other: EdgeLike[_]) = {
-      val thisArity = this.arity
-      thisArity == other.arity &&
-      thisArity == nrEqualingNodes(this.iterator, other)
+      val (thisArity, thatArity) = (arity, other.arity)
+      if (thisArity == thatArity)
+        Eq.equalTargets(this, this.sources, other, other.sources, thisArity)
+      else false
     }
-
     override protected def baseHashCode: Int = (0 /: iterator)(_ ^ _.hashCode)
   }
-  /** Equality for targets treated as a $BAG.
+  
+  /** Equality for targets handled as a $BAG.
    *  Targets are equal if they contain the same nodes irrespective of their position. */
   protected[collection] trait EqDiHyper extends Eq {
     this: DiHyperEdgeLike[_] =>
 
-    override protected def baseEquals(other: EdgeLike[_]) = (arity: @switch) match {
-      case 2 => other.arity == 2 &&
-                this._1 == other._1 &&
-                this._2 == other._2
-      case a => other.arity == a && 
-               (other match {
-                  case diHyper: DiHyperEdgeLike[_] =>
-                    this.source == diHyper.source &&
-                    nrEqualingNodes(this.targets.toIterator, diHyper.targets.toIterable) == a - 1
-                  case _ => false
-                })
+    override protected def baseEquals(other: EdgeLike[_]) = {
+      val (thisArity, thatArity) = (arity, other.arity)
+      if (thisArity == thatArity)
+        if (thisArity == 2)
+          this._1 == other._1 &&
+          this._2 == other._2
+        else
+          other match {
+            case diHyper: DiHyperEdgeLike[_] =>
+              this.source == diHyper.source &&
+              Eq.equalTargets(this, this.targets, other, other.targets, arity - 1)
+            case _ => false
+          }
+      else false
     }
     
     override protected def baseHashCode = {
@@ -373,8 +423,8 @@ object GraphEdge {
     this: EdgeLike[_] =>
 
     @inline final protected def unDiBaseEquals(n1: Any, n2: Any) =
-      (this._1 == n1 && this._2 == n2 ||
-       this._1 == n2 && this._2 == n1)
+      this._1 == n1 && this._2 == n2 ||
+      this._1 == n2 && this._2 == n1
       
     override protected def baseEquals(other: EdgeLike[_]) =
       other.arity == 2 && unDiBaseEquals(other._1, other._2)
@@ -515,9 +565,9 @@ object GraphEdge {
    * @author Peter Empen
    */
   trait HyperEdgeCompanion[+E[N] <: EdgeLike[N]] extends EdgeCompanionBase[E] {
-    def apply[N](node_1: N, node_2: N, nodes: N*): E[N]
+    def apply[N](node_1: N, node_2: N, nodes: N*)(implicit endpointsKind: CollectionKind = Bag): E[N]
     /** @param nodes must be of arity >= 2 */
-    protected[collection] def from [N](nodes: Product): E[N]
+    protected[collection] def from[N](nodes: Product)(implicit endpointsKind: CollectionKind): E[N]
   }
   /**
    * The abstract methods of this trait must be implemented by companion objects
@@ -528,7 +578,7 @@ object GraphEdge {
   trait EdgeCompanion[+E[N] <: EdgeLike[N]] extends EdgeCompanionBase[E] {
     def apply[N](node_1: N, node_2: N): E[N]
     /** @param nodes must be of arity == 2 */
-    protected[collection] def from [N](nodes: Product): E[N]
+    protected[collection] def from[N](nodes: Product): E[N]
   }
   // ------------------------------------------------------------------------ *
   /** Represents an undirected hyperedge (hyperlink) in a hypergraph
@@ -547,7 +597,9 @@ object GraphEdge {
     protected def isValidArity(size: Int) = size >= 2
 
     override protected[collection]
-    def copy[NN](newNodes: Product) = new HyperEdge[NN](newNodes)
+    def copy[NN](newNodes: Product) =
+      if (this.isInstanceOf[OrderedEndpoints]) new HyperEdge[NN](newNodes) with OrderedEndpoints
+      else                                     new HyperEdge[NN](newNodes)
 
     /** Iterator for the nodes (end-points) of this edge.
      */
@@ -592,15 +644,15 @@ object GraphEdge {
    * Factory for undirected hyper-edges.
    * `GraphPredef` also supports implicit conversion from `node_1 ~ node_2 ~ node_3`
    * to `HyperEdge`.
-   * 
-   * @author Peter Empen
    */
   object HyperEdge extends HyperEdgeCompanion[HyperEdge] {
-    def apply[N](node_1: N, node_2: N, nodes: N*) = new HyperEdge[N](
-                                                    NodeProduct(node_1, node_2, nodes: _*))
-    def apply[N](nodes: Iterable[N]) = new HyperEdge[N](nodes.toList)
-    protected[collection]
-    def from [N](nodes: Product)     = new HyperEdge[N](nodes)
+    def apply[N](node_1: N, node_2: N, nodes: N*)(implicit endpointsKind: CollectionKind = Bag): HyperEdge[N] =
+      from(NodeProduct(node_1, node_2, nodes: _*))
+    def apply[N](nodes: Iterable[N])(implicit endpointsKind: CollectionKind): HyperEdge[N] =
+      from(nodes.toList)
+    protected[collection] def from [N](nodes: Product)(implicit endpointsKind: CollectionKind): HyperEdge[N] =
+      if (endpointsKind.orderSignificant) new HyperEdge[N](nodes) with OrderedEndpoints
+      else                                new HyperEdge[N](nodes)
     def unapplySeq[N](e: HyperEdge[N]) =
       if (e eq null) None else Some(e._1, e.nodeSeq drop 1)
   }
@@ -609,9 +661,7 @@ object GraphEdge {
   val ~~ = HyperEdge
   
   /** Represents a directed edge in a hypergraph with a single source and an unlimited number
-   *  of taget nodes. Target nodes are treated as a $BAG.
-   * 
-   * @author Peter Empen
+   *  of taget nodes. Target nodes are handled as a $BAG.
    */
   @SerialVersionUID(51L)
   class DiHyperEdge[N] (nodes: Product)
@@ -620,8 +670,9 @@ object GraphEdge {
     with    EdgeCopy[DiHyperEdge]
     with    OuterEdge[N,DiHyperEdge]
   {
-    override protected[collection] def copy[NN](newNodes: Product) =
-      new DiHyperEdge[NN](newNodes)
+    override protected[collection] def copy[NN](newNodes: Product): DiHyperEdge[NN] =
+      if (this.isInstanceOf[OrderedEndpoints]) new DiHyperEdge[NN](newNodes) with OrderedEndpoints
+      else                                     new DiHyperEdge[NN](newNodes)
   }
   /**
    * Factory for directed hyper-edges.
@@ -631,11 +682,13 @@ object GraphEdge {
    * @author Peter Empen
    */
   object DiHyperEdge extends HyperEdgeCompanion[DiHyperEdge] {
-    def apply[N]  (from: N, to_1: N, to_n: N*) = new DiHyperEdge[N](
-                                                 NodeProduct(from, to_1, to_n: _*))
-    def apply[N]  (nodes: Iterable[N]) = new DiHyperEdge[N](nodes.toList)
-    protected[collection]
-    def from [N](nodes: Product)       = new DiHyperEdge[N](nodes)
+    def apply[N]  (from: N, to_1: N, to_n: N*)(implicit targetsKind: CollectionKind = Bag): DiHyperEdge[N] =
+      DiHyperEdge.from(NodeProduct(from, to_1, to_n: _*))
+    def apply[N]  (nodes: Iterable[N])(implicit targetsKind: CollectionKind): DiHyperEdge[N] =
+      DiHyperEdge.from(nodes.toList)
+    protected[collection] def from [N](nodes: Product)(implicit targetsKind: CollectionKind): DiHyperEdge[N] =
+      if (targetsKind.orderSignificant) new DiHyperEdge[N](nodes) with OrderedEndpoints
+      else                              new DiHyperEdge[N](nodes)
     def unapplySeq[N](e: DiHyperEdge[N]) =
       if (e eq null) None else Some(e.from, e.nodeSeq drop 1)
   }
@@ -695,8 +748,7 @@ object GraphEdge {
   object UnDiEdge extends EdgeCompanion[UnDiEdge] {
     def apply[N]  (node_1: N, node_2: N) = new UnDiEdge[N](NodeProduct(node_1, node_2))
     def apply[N]  (nodes: Tuple2[N,N])   = new UnDiEdge[N](nodes)
-    protected[collection]
-    def from [N](nodes: Product)         = new UnDiEdge[N](nodes)
+    protected[collection] def from [N](nodes: Product) = new UnDiEdge[N](nodes)
     def unapply[N](e: UnDiEdge[N]) = if (e eq null) None else Some(e._1, e._2)
   }
   /** $SHORTCUT `edge match {case n1 ~ n2 => f(n1, n2)}`.
@@ -727,8 +779,7 @@ object GraphEdge {
   object DiEdge extends EdgeCompanion[DiEdge] {
     def apply[N](from: N, to: N)     = new DiEdge[N](NodeProduct(from, to))
     def apply[N](nodes: Tuple2[N,N]) = new DiEdge[N](nodes)
-    protected[collection]
-    def from [N](nodes: Product)     = new DiEdge[N](nodes)
+    protected[collection] def from [N](nodes: Product) = new DiEdge[N](nodes)
     def unapply[N](e: DiEdge[N]) = if (e eq null) None else Some(e.source, e.target)
   }
   /** $SHORTCUT `edge match {case source ~> target => f(source, target)}`.
