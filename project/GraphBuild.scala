@@ -1,5 +1,7 @@
 import sbt._
 import Keys._
+import org.scalajs.sbtplugin.ScalaJSPlugin
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
 object GraphBuild extends Build {
 
@@ -21,8 +23,8 @@ object GraphBuild extends Build {
       name      := "Graph Core",
       version   := Version.core,
       libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.12.5"
-    )
-  )
+    ) ++ ScalaJSPlugin.projectSettings
+  ).enablePlugins(ScalaJSPlugin)
 
   lazy val constrained = Project(
     id = "Graph-constrained",
