@@ -208,7 +208,7 @@ object GraphPredef {
   @inline implicit def anyToNode[N]     (n: N) = OuterNode(n)
   @inline implicit def seqToGraphParam[N, E[X<:N] <: EdgeLikeIn[X]](s: Seq[N]): Seq[InParam[N,E]] =
     s map {_ match {case e: EdgeLike[N] with EdgeCopy[EdgeLike] with OuterEdge[N,E] => e
-                    case e: EdgeLike[N] => throw new IllegalArgumentException(
+                    case e: EdgeLike[_] => throw new IllegalArgumentException(
                         "Before being passed to a graph, edge-types need to mix in EdgeCopy and OuterEdge.")
 // TODO               case e: InnerEdgeParam [N,InnerNodeParam[N,E,EdgeCont[N]],E,EdgeCont[N]] =>
 //                            e.edge match {case e: DiEdge[N] => newDiEdgeIn[N](e.nodes)}

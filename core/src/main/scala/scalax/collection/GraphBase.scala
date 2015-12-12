@@ -68,7 +68,24 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
   def graphSize = edges.size
   def isDirected: Boolean
   def isHyper: Boolean
+  def isMulti: Boolean
   
+  type NodeFilter = NodeT => Boolean
+  type EdgeFilter = EdgeT => Boolean
+  
+  // Must be val since eq does not work for def.
+  /** Default node filter letting traverse all nodes (non-filter). */
+  final val anyNode: NodeFilter = _ => true
+  /** Node predicate always returning `false`. */
+  final val noNode : NodeFilter = _ => false
+  /** Default edge filter letting path all edges (non-filter). */
+  final val anyEdge: EdgeFilter = _ => true
+
+  /** `true` if `f` is not equivalent to `anyNode`. */ 
+  @inline final def isCustomNodeFilter(f: NodeFilter)  = f ne anyNode   
+  /** `true` if `f` is not equivalent to `anyEdge`. */ 
+  @inline final def isCustomEdgeFilter(f: EdgeFilter)  = f ne anyEdge   
+
   sealed trait InnerElem
   type NodeT <: InnerNode with Serializable
   trait Node extends Serializable
@@ -129,20 +146,28 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      * @return set of all direct successors of this node.
      */
     def diSuccessors: Set[NodeT]
+    
+    /** Whether this node has any successors. */
+    def hasSuccessors: Boolean
+    
     protected[collection] def addDiSuccessors(edge: EdgeT,
                                               add: (NodeT) => Unit): Unit
     /** Synonym for `diSuccessors`. */
     @inline final def outNeighbors = diSuccessors 
     /** Synonym for `diSuccessors`. */
-    @inline final def ~>| = diSuccessors 
-    /**
-     * All direct predecessors of this node, also called ''predecessor set'' or
+    @inline final def ~>| = diSuccessors
+    
+    /** All direct predecessors of this node, also called ''predecessor set'' or
      * ''open in-neighborhood'': source nodes of directed incident edges and / or
      * adjacent nodes of undirected incident edges excluding this node.
      *
      * @return set of all direct predecessors of this node.
      */
     def diPredecessors: Set[NodeT]
+    
+    /** Whether this node has any predecessors. */
+    def hasPredecessors: Boolean
+    
     protected[collection] def addDiPredecessors(edge: EdgeT,
                                                 add: (NodeT) => Unit)
 
@@ -238,52 +263,49 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     /** Synonym for `findIncomingFrom`. */
     @inline final def <~?(from: NodeT) = findIncomingFrom(from)
 
-    /**
-     * The degree of this node.
-     *
+    /** The degree of this node.
      * @return the number of edges that connect to this node. An edge that connects
      *         to this node at more than one ends (loop) is counted as much times as
-     *         it is connected to this node.
-     */
-    def degree: Int = {
-      var cnt: Int = 0
-      edges foreach { e => cnt += e.count(_ eq this) }
-      cnt
-    }
-    /** Returns whether this node's degree equals to 0.
-     */
+     *         it is connected to this node. */
+    def degree: Int
+    
+    /** `true` if this node's degree equals to 0. */
     @inline final def isIsolated = degree == 0
-    /** Returns whether this node's degree equals to 1.
-     */
+    
+    /** `true` if this node's degree equals to 1. */
     @inline final def isLeaf = degree == 1
-    /**
-     * The outgoing degree of this node.
-     *
+    
+    /** The outgoing degree of this node.
      * @return the number of edges that go out from this node including undirected edges.
-     *         Every loop on this node is counted twice. 
+     *         Loops count once each. */
+    def outDegree: Int
+    
+    /** The outgoing degree of this node after applying some filters to the outgoing edges and successors.
      */
-    def outDegree: Int = {
-      edges count (_.hasSource((n: NodeT) => n eq this))
-    }
-    /**
-     * The incoming degree of this node.
-     *
+    def outDegree(nodeFilter: NodeFilter, edgeFilter: EdgeFilter = anyEdge,
+                  includeHooks: Boolean = false, ignoreMultiEdges: Boolean = true): Int
+    
+    /** The incoming degree of this node.
      * @return the number of edges that come in to this node including undirected edges.
-     *         Every loop on this node is counted twice. 
+     *         Loops count once each. */
+    def inDegree: Int
+    
+    /** The incoming degree of this node after applying some filters to the incoming edges and predecessors.
      */
-    def inDegree: Int = {
-      edges count (_.hasTarget((n: NodeT) => n eq this))
-    }
+    def inDegree(nodeFilter: NodeFilter, edgeFilter: EdgeFilter = anyEdge,
+                 includeHooks: Boolean = false, ignoreMultiEdges: Boolean = true): Int
+
     def canEqual(that: Any) = true
+    
     override def equals(other: Any) = other match {
       case that: GraphBase[N,E]#InnerNode => 
         (this eq that) || (that canEqual this) && (this.value == that.value)
-      case thatN: N => 
-        thatN match { case thatR: AnyRef => val thisN = this.value.asInstanceOf[AnyRef]  
-                                           (thisN eq thatR) || (thisN == thatR)
-                      case thatV => this.value == thatV }
-      case _ => false
+      case thatR: AnyRef => 
+        val thisN = this.value.asInstanceOf[AnyRef]  
+        (thisN eq thatR) || (thisN == thatR)
+      case thatV => this.value == thatV
     }
+    
     override def hashCode = value.##
   }
   object InnerNode {
@@ -319,16 +341,23 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
   protected def newNode(n: N): NodeT
 
   /** Base trait for graph `Ordering`s. */
-  protected sealed trait ElemOrdering
+  protected sealed trait ElemOrdering {
+    protected def noneCompare: Int = throw new IllegalArgumentException("Unexpected use of None.")
+    def isDefined: Boolean = true
+  }
   /** The empty ElemOrdering. */
-  sealed class NoOrdering extends ElemOrdering with Serializable 
-  final val noOrdering = new NoOrdering
+  object NoOrdering extends ElemOrdering with Serializable
+  
   /** Ordering for the path dependent type NodeT. */
   sealed trait NodeOrdering extends Ordering[NodeT] with ElemOrdering
   object NodeOrdering {
     /** Creates a new NodeOrdering with `compare` calling the supplied `cmp`. */
     def apply(cmp: (NodeT, NodeT) => Int) = new NodeOrdering {
       def compare(a: NodeT, b: NodeT): Int = cmp(a, b)
+    }
+    object None extends NodeOrdering {
+      def compare(a: NodeT, b: NodeT): Int = noneCompare
+      override def isDefined = false
     }
   }
   sealed trait EdgeOrdering extends Ordering[EdgeT] with ElemOrdering
@@ -337,6 +366,10 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     /** Creates a new EdgeOrdering with `compare` calling the supplied `cmp`. */
     def apply(cmp: (EdgeT, EdgeT) => Int) = new EdgeOrdering {
       def compare(a: EdgeT, b: EdgeT): Int = cmp(a, b)
+    }
+    object None extends EdgeOrdering {
+      def compare(a: EdgeT, b: EdgeT): Int = noneCompare
+      override def isDefined = false
     }
   }
 
@@ -629,15 +662,15 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     @deprecated("Use toOuter instead", "1.8.0") def toEdgeInSet = toOuter
     
     final def draw(random: Random) = (nodes draw random).edges draw random
-    final def findEntry[B](other: B, correspond: (EdgeT, B) => Boolean) = {
+    final def findEntry[B](other: B, correspond: (EdgeT, B) => Boolean): EdgeT = {
       def find(edge: E[N]): EdgeT = correspond match {
         case c: ((EdgeT, E[N]) => Boolean) => nodes.lookup(edge._1).edges findEntry (edge, c) 
         case _ => throw new IllegalArgumentException
       } 
       other match {
-        case e: OuterEdge[N,E]      => find(e.edge)
+        case e: OuterEdge[N,E]          => find(e.edge)
         case e: InnerEdgeParam[N,E,_,E] => find(e.asEdgeT[N,E,selfGraph.type](selfGraph).toOuter)
-        case _                   => null.asInstanceOf[EdgeT]
+        case _                          => null.asInstanceOf[EdgeT]
       }
     }
   }

@@ -7,7 +7,7 @@ import scala.reflect.ClassTag
 
 import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
                     OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam}
-import GraphEdge.{EdgeLike, EdgeCompanionBase, DiHyperEdgeLike, UnDiEdge, DiEdge}
+import GraphEdge.{EdgeLike, EdgeCompanionBase, DiHyperEdgeLike, UnDiEdge, DiEdge, Keyed}
 import generic.{GraphCompanion, GraphCoreCompanion}
 import config.GraphConfig
 import io._
@@ -42,6 +42,7 @@ trait GraphLike[N,
   
   lazy val isDirected =   classOf[DiHyperEdgeLike[_]].isAssignableFrom(edgeT.runtimeClass)
   lazy val isHyper    = ! classOf[UnDiEdge[_]]       .isAssignableFrom(edgeT.runtimeClass)
+  lazy val isMulti    =   classOf[Keyed]             .isAssignableFrom(edgeT.runtimeClass)
 
   /** The companion object of `This`. */
   val graphCompanion: GraphCompanion[This]
@@ -450,8 +451,8 @@ trait GraphLike[N,
    *             between nodes to be included by `nodes` will also be included. 
    * @return A partial function combining the passed predicates.
    */
-  def having(node: (NodeT) => Boolean = _ => false,
-             edge: (EdgeT) => Boolean = null): PartialFunction[Param[N,E], Boolean] = {
+  def having(node: NodeFilter = _ => false,
+             edge: EdgeFilter = null): PartialFunction[Param[N,E], Boolean] = {
     val nodePred: PartialFunction[Param[N,E], Boolean] = {
       case n: InnerNodeParam[N] => node(n.asNodeT[N,E,ThisGraph](selfGraph))
     }

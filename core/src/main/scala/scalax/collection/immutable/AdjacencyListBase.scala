@@ -90,6 +90,8 @@ trait AdjacencyListBase[N,
       if (this eq that) edges forall (_.nonLooping)
       else              edges forall (! _.isAt((_: NodeT) eq that))
 
+    final def hasSuccessors: Boolean = diSuccessors exists (_ ne this)
+
     final protected[collection] def addDiSuccessors(edge: EdgeT,
                                                     add: (NodeT) => Unit): Unit = {
       val filter =
@@ -103,6 +105,8 @@ trait AdjacencyListBase[N,
       edges foreach { e => addDiPredecessors(e, (n: NodeT) => m put (n, e)) }
       new EqSet(m)
     }
+
+    final def hasPredecessors: Boolean = edges exists (_.hasSource((n: NodeT) => n ne this))
 
     final protected[collection] def addDiPredecessors(edge: EdgeT,
                                                       add: (NodeT) => Unit) {
@@ -152,6 +156,40 @@ trait AdjacencyListBase[N,
     final def findIncomingFrom(from: NodeT): Option[EdgeT] =
       edges find (isIncomingFrom(_, from))
 
+    final def degree: Int = (0 /: edges)((cum, e) => cum + e.count(_ eq this) )
+    
+    final def outDegree: Int = edges count (_.hasSource((n: NodeT) => n eq this))
+
+    final def outDegree(nodeFilter: NodeFilter, edgeFilter: EdgeFilter = anyEdge,
+                        includeHooks: Boolean = false, ignoreMultiEdges: Boolean = true): Int = {
+      val doEdgeFilter = isCustomEdgeFilter(edgeFilter)
+      def edgePred(e: EdgeT): Boolean =
+          (if (doEdgeFilter) edgeFilter(e) else true) &&
+          e.hasSource((n: NodeT) => n eq this) &&
+          e.hasTarget(nodeFilter) &&
+          (if (includeHooks) true else ! e.isLooping)
+      if (ignoreMultiEdges && isMulti)
+        (edges filter edgePred).flatMap(_.targets).toSet.size
+      else
+        edges count edgePred
+    }
+
+    final def inDegree: Int = edges count (_.hasTarget((n: NodeT) => n eq this))
+
+    final def inDegree(nodeFilter: NodeFilter, edgeFilter: EdgeFilter = anyEdge,
+                       includeHooks: Boolean = false, ignoreMultiEdges: Boolean = true): Int = {
+      val doEdgeFilter = isCustomEdgeFilter(edgeFilter)
+      def edgePred(e: EdgeT): Boolean =
+          (if (doEdgeFilter) edgeFilter(e) else true) &&
+          e.hasTarget((n: NodeT) => n eq this) &&
+          e.hasSource(nodeFilter) &&
+          (if (includeHooks) true else ! e.isLooping)
+      if (ignoreMultiEdges && isMulti)
+        (edges filter edgePred).flatMap(_.sources).toSet.size
+      else
+        edges count edgePred
+    }
+    
     @inline final protected[collection] def +=(edge: EdgeT): this.type = {
       edges add edge; this
     }
@@ -259,9 +297,9 @@ trait AdjacencyListBase[N,
     final override def contains(node: NodeT): Boolean =
       nodes find node exists (_.edges.nonEmpty)
     final override def find(elem: E[N] ): Option[EdgeT] =
-      nodes find (elem._1) flatMap (_.edges find (_.edge == elem))
+      nodes find elem._1 flatMap (_.edges find (_.edge == elem))
     final def contains(edge: EdgeT): Boolean =
-      nodes find (edge.edge._1) exists (_.edges contains edge)
+      nodes find edge.edge._1 exists (_.edges contains edge)
     final def iterator: Iterator[EdgeT] = edgeIterator
   }
 

@@ -6,7 +6,7 @@ object GraphBuild extends Build {
   lazy val all = Project(
     id = "Graph-all",
     base = file("."),
-    settings = defaultSettings ++ Seq(
+    settings = Seq(
       name      := "Graph for Scala",
       version   := Version.all,
       publishTo := None
@@ -86,7 +86,6 @@ object GraphBuild extends Build {
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 10)) => Nil
       case Some((2, scalaMajor)) if scalaMajor >= 11 =>  Seq(
-          "org.scala-lang" % "scala-library" % scalaVersion.value,
           "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test" // required by ScalaTest
         )
       case _ => Nil

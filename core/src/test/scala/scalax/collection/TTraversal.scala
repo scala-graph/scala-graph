@@ -5,7 +5,7 @@ import scala.collection.mutable.{ListBuffer, Stack}
 import scala.util.Random
 
 import GraphPredef._, GraphEdge._
-import GraphTraversal._
+import GraphTraversal._, GraphTraversal.Parameters._ 
 import generic.GraphCoreCompanion
 import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
 import generator.GraphGen
@@ -566,90 +566,6 @@ class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
       val shortestPath = n1 shortestPathTo n2
 
       path.isDefined should equal (shortestPath.isDefined)
-    }
-  }
-
-  protected class TopologicalChecker[N, E[X] <: EdgeLikeIn[X]](val graph: G[N,E]) {
-      
-    def checkOuterNodes(seq: Traversable[N]): Unit =
-      checkInnerNodes(seq map (graph get _))
-
-    type OrderedInnerNodes = Traversable[graph.NodeT]
-    
-    def checkInnerNodes(seq: OrderedInnerNodes, root: Option[graph.NodeT] = None): Unit = {
-      checkOrder(seq)
-      checkCompletenis(seq, root)
-    }
-
-    def checkOrder(seq: OrderedInnerNodes): Unit = 
-      (Set.empty[graph.NodeT] /: seq) { (allowedPredecessors, innerNode) =>
-      if (! (innerNode.diPredecessors forall allowedPredecessors.contains))
-        fail(s"$innerNode is misplaced in $seq")
-        allowedPredecessors + innerNode
-      }
-    
-    def checkCompletenis(seq: OrderedInnerNodes, root: Option[graph.NodeT]): Unit = {
-      val component = root.fold(
-        ifEmpty = graph.nodes.toSet
-      )(_.innerNodeTraverser().toSet
-      )
-      val set = seq.toSet
-      if (set != component)
-        fail(s"Ordering is incomplete: ${set} != component ${component}.")
-    }
-  }
- 
-  def `test topological sorting of daily activities` {
-          
-    object Activities {
-      val ( coffee,  coding, inspiration, shopping, sleeping, supper, gaming) =
-          ('coffee,'coding,'inspiration,'shopping,'sleeping,'supper, 'gaming)
-      val (making_music, driving_to_work, driving_home, listening_to_music) =
-          (Symbol("making music"), Symbol("driving to work"), Symbol("driving home"), Symbol("listening to music"))
-    }
-    import Activities._
-    
-    val typicalDay = factory[Symbol,DiEdge](
-      coffee ~> coding,
-      inspiration ~> coding,
-      shopping ~> coffee,
-      coding ~> sleeping,
-      supper ~> sleeping,
-      gaming ~> sleeping,
-      making_music ~> sleeping,
-      inspiration ~> making_music,
-      shopping ~> supper,
-      driving_home ~> supper,
-      driving_home ~> sleeping,
-      coding ~> driving_home,
-      driving_to_work ~> coding,
-      driving_to_work ~> driving_home,
-      driving_home ~> gaming,
-      listening_to_music)
-      
-    val checker = new TopologicalChecker(typicalDay) {
-      val sorted = graph.topologicalSort
-      checkOuterNodes(sorted)
-    }
-  }
- 
-  def `test topological sorting of a tiny graph` {
-
-    val (n0, n5) = (0, 5)
-    val graph = factory[Int,DiEdge](
-      n0~> 1,
-      2 ~> 4,
-      2 ~> n5,
-      0 ~> 3,
-      1 ~> 4,
-      4 ~> 3
-    )
-    val checker = new TopologicalChecker(graph) {
-      checkOuterNodes(graph.topologicalSort)
-      List(n0, n5) map { outer =>
-        val inner = graph get outer
-        checkInnerNodes(inner.topologicalTraverser.toList, Some(inner))
-      }
     }
   }
 }
