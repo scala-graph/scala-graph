@@ -14,6 +14,7 @@ import edge.LBase.LEdge
  * }}}
  * @define SHORTCUT Allows to replace the edge object with it's shortcut like
  * @define ORDIHYPER or the source/target ends of a directed hyperedge
+   * @define BAG bag that is an unordered collection of nodes with duplicates allowed
  * @author Peter Empen
  */
 object GraphEdge {
@@ -27,7 +28,6 @@ object GraphEdge {
    * @define CalledByValidate This function is called on every edge-instantiation
    *         by `validate` that throws EdgeException if this method returns `false`.
    * @define ISAT In case this edge is undirected this method maps to `isAt`
-   * @define BAG bag that is an unordered collection of nodes with duplicates allowed
    * @author Peter Empen
    */
   sealed trait EdgeLike[+N] extends Iterable[N] with Eq with Serializable
