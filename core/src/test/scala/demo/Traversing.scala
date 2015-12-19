@@ -6,7 +6,7 @@ import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.Graph
 
-import org.scalatest.Suite
+import org.scalatest.Spec
 import org.scalatest.Matchers
 
 import org.scalatest.junit.JUnitRunner
@@ -16,8 +16,8 @@ import org.junit.runner.RunWith
  *  Traversing Graphs]]. 
  */
 @RunWith(classOf[JUnitRunner])
-class TraversingTest
-    extends Suite
+final class TraversingTest
+    extends Spec
        with Matchers {
 
   import scalax.collection.edge.{WDiEdge, WUnDiEdge}
@@ -38,7 +38,7 @@ class TraversingTest
                 3~5 % 2, 3~4 % 1, 4~>4 % 1, 4~>5 % 0)
   def n(outer: Int): g.NodeT = g get outer
   
-  def test_forAResult {
+  def `for a result` {
     
     n(1) findSuccessor (_.outDegree >  3)              should be (None) 
     n(1) findSuccessor (_.outDegree >= 3)              should be (Some(3)) 
@@ -76,7 +76,7 @@ class TraversingTest
     pO2.map(_.nodes)             .get.toList should be (List(4, 5, 1, 2)) 
   }
 
-  def test_CycleDetecting {
+  def `cycle detecting` {
     val g = Graph(1~>2, 1~>3, 2~>3, 3~>4, 4~>2)
     val fc1 = g.findCycle
                                  fc1.get.sameElements(List(
@@ -88,7 +88,7 @@ class TraversingTest
     for (c1 <- fc1; c2 <- fc2) yield c1 sameAs c2      should be (true)
   }
   
-  def test_Ordering {
+  def `ordered traversal` {
     val root = 1
     val g = Graph(root~>4 % 2, root~>2 % 5, root~>3 % 4,
                      3~>6 % 4,    3~>5 % 5,    3~>7 % 2)
@@ -99,7 +99,7 @@ class TraversingTest
     traverser.toList             should be (List(1,2,3,4,5,6,7))
   }
   
-  def test_Traversers {
+  def `traversers with fluent properties` {
     val g = Graph(1~>2 % 1, 1~>3 % 2, 2~>3 % 3, 3~>4 % 1)
     val n1 = g get 1
     
@@ -120,7 +120,7 @@ class TraversingTest
                                  1, 2, 3, 1~>3 % 2, 2~>3 % 3))
   }
   
-  def test_DownUp {
+  def `DownUp traverser` {
     import scala.collection.mutable.ArrayBuffer
 
     val root = "A"
@@ -137,7 +137,7 @@ class TraversingTest
                                       or be ("(A[B2][B1])"))
   }
 
-  def test_Extended {
+  def `extended traverser` {
     val g = Graph(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4, 4 ~> 2)
 
     import g.ExtendedNodeVisitor
@@ -171,7 +171,7 @@ class TraversingTest
                                  center.get should be (2)
   }
 
-  def test_Components {
+  def `components traverser` {
     def someEdges(i: Int) =
       List((i) ~> (i + 1), (i) ~> (i + 2), (i + 1) ~> (i + 2))
 
@@ -182,7 +182,7 @@ class TraversingTest
                                  sums should be (List(6, 18))
   }
   
-  def test_Builder {
+  def `path builder` {
     val builder = g.newPathBuilder(n(1))
     builder += n(3) += n(4)
     builder.result               .toString should be ("Path(1, 1~>3 %5, 3, 3~4 %1, 4)")
