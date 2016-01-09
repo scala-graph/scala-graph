@@ -93,11 +93,11 @@ object MicroBenchmark {
     results.toList
   }
   
-  def relativeTimes[A](results: List[Result[A]]) = {
+  def relativeTimes[A](results: List[Result[A]], decimals: Int) = {
     val mA = results.head
     1f :: (results.tail map { res =>
       assert(res.result == mA.result)
-      res.relativeTo(0)(mA)
+      res.relativeTo(decimals)(mA)
     })
   }
   
@@ -106,6 +106,6 @@ object MicroBenchmark {
                        decimals: Int = 2)(
                        blocks: ByName[A]*): List[Float] = {
     val results = measureAll[A](warmUp, repetitions)(blocks: _*)
-    relativeTimes(results)
+    relativeTimes(results, decimals)
   }
 }

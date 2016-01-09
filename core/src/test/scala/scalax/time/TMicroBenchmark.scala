@@ -21,9 +21,10 @@ class TMicroBenchmarkTest
         r.toList.toArray.toList.sorted, 
         r.toList.toSet.toArray.toList.sorted 
       )
-      relTimes sliding 2 foreach {l =>
-        l.head should be <= l.tail.head
-      }
+      relTimes sliding 2 foreach (_ match {
+        case a :: b :: _ => a should be < b
+        case _ => throw new IllegalStateException
+      })
     }
   }
 }
