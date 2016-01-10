@@ -1,12 +1,9 @@
 package scalax.collection.immutable
 
-import collection.SortedSetLike
-import collection.immutable.SortedSet
-import collection.generic.{CanBuildFrom, GenericSetTemplate, GenericCompanion,
-                           SortedSetFactory}
+import scala.collection.{AbstractIterator, SortedSetLike}
+import scala.collection.immutable.SortedSet
+import scala.collection.generic.{CanBuildFrom, GenericSetTemplate, GenericCompanion, SortedSetFactory}
 import compat.Platform.arraycopy
-
-import collection.Abstract
 
 @SerialVersionUID(1L)
 class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Array[A]])
@@ -48,7 +45,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
   def contains(elem: A): Boolean = index(elem) >= 0
 
   protected final def iterator(from: Int): Iterator[A] =
-    new Abstract.Iterator[A] {
+    new AbstractIterator[A] {
       private[this] var i = from
       def hasNext = i < self.size
       def next = { val elm = array(i); i += 1; elm }

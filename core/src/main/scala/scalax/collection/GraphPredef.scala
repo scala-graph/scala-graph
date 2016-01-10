@@ -2,7 +2,7 @@ package scalax.collection
 
 import language.{higherKinds, implicitConversions}
 
-import scala.collection.{Abstract, SeqFacade}
+import scala.collection.{AbstractIterable, AbstractIterator, SeqFacade}
 import GraphEdge.{EdgeLike, EdgeCopy, DiHyperEdgeLike}
 /**
  * This object serves as a container for several `Graph`-related definitions like
@@ -68,8 +68,8 @@ object GraphPredef {
               
   implicit def nodeSetToOuter[N, E[X]<:EdgeLikeIn[X]](nodes: Graph[N,E]#NodeSetT)
       : Iterable[N] =
-    new Abstract.Iterable[N] {
-      def iterator = new Abstract.Iterator[N] {
+    new AbstractIterable[N] {
+      def iterator = new AbstractIterator[N] {
         private[this] val it = nodes.iterator
         def hasNext = it.hasNext
         def next = it.next.value
@@ -81,8 +81,8 @@ object GraphPredef {
   
   implicit def edgeSetToOuter[N, E[X]<:EdgeLikeIn[X]](edges: Graph[N,E]#EdgeSetT)
       : Iterable[E[N]] =
-    new Abstract.Iterable[E[N]] {
-      def iterator = new Abstract.Iterator[E[N]] {
+    new AbstractIterable[E[N]] {
+      def iterator = new AbstractIterator[E[N]] {
         private[this] val it = edges.iterator
         def hasNext = it.hasNext
         def next = it.next.toOuter

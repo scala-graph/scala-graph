@@ -2,12 +2,11 @@ package scalax.collection
 package mutable
 
 import util.Random
-import scala.collection.{GenSet, SortedSet}
+import scala.collection.{AbstractIterator, GenSet, SortedSet}
 import scala.collection.mutable.{SetLike => MutableSetLike, Builder, GrowingBuilder, ArrayBuffer}
 import scala.collection.generic.{CanBuildFrom, GenericCompanion, GenericSetTemplate, MutableSetFactory}
 import scala.compat.Platform.arraycopy
 
-import collection.Abstract
 import immutable.SortedArraySet
 
 /** A basic [[ArraySet]] implementation suitable for efficient add operations.
@@ -75,7 +74,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   protected[collection] def map(xs: TraversableOnce[A]): this.type = {this}
   override def iterator: Iterator[A] =
     if (isHash) hashSet.iterator
-    else new Abstract.Iterator[A] {
+    else new AbstractIterator[A] {
       private[this] var i = 0
       private[this] var prevElm: A = _
       def hasNext = {
