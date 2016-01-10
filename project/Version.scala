@@ -6,9 +6,9 @@ object Version {
   private val isSnapshot = false
   private val snapshot = if (isSnapshot) "-SNAPSHOT" else ""
   private val major = "1.10"
-  val all         = s"$major.0$snapshot"
-  val core        = s"$major.0$snapshot"
-  val constrained = s"$major.0$snapshot"
+  val all         = s"$major.1$snapshot"
+  val core        = s"$major.1$snapshot"
+  val constrained = s"$major.1$snapshot"
   val dot         = s"$major.1$snapshot"
   val json        = s"$major.0$snapshot"
   val misc        = s"$major.0$snapshot"

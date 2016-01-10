@@ -23,14 +23,14 @@ object Data {
   val elementsOfUnDi_1 = Seq[InParam[Int,UnDiEdge]](
                          1~2, 2~3, 1~>3, 1~5, 3~5, 3~4, 4~>4, 4~>5)
   // WUnDi-1.jpg
-  val elementsofWUnDi_1 = Seq[InParam[Int,WUnDiEdge]](
+  val elementsOfWUnDi_1 = Seq[InParam[Int,WUnDiEdge]](
         1~2 % 4, 2~3 % 2, 1~>3 % 5, 1~5  % 3,
         3~5 % 2, 3~4 % 1, 4~>4 % 1, 4~>5 % 0)
   // WUnDi-2.jpg without weights
   val elementsOfUnDi_2 = Seq[InParam[Int,UnDiEdge]](
                          1~2, 2~3, 1~>3, 1~3, 1~>2, 2~2)
   // WUnDi-2.jpg
-  val elementsofWUnDi_2 = Seq[InParam[Int,WUnDiEdge]](
+  val elementsOfWUnDi_2 = Seq[InParam[Int,WUnDiEdge]](
          1~2 % 4, 2~3 % -1, 1~>3 % 5, 1~3 % 4, 1~>2 % 3, 2~2 % 1)
       // 0        1         2         3        4         5
 }

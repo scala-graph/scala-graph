@@ -254,8 +254,8 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
     }
   }
   "A graph of [Int,WUnDiEdge]" should work in {
-    import edge.WUnDiEdge, Data.elementsofWUnDi_2
-    new EdgeByteArray(cl).test[Int,WUnDiEdge] (elementsofWUnDi_2)
+    import edge.WUnDiEdge, Data.elementsOfWUnDi_2
+    new EdgeByteArray(cl).test[Int,WUnDiEdge] (elementsOfWUnDi_2)
   }
 }
 /* To be serializable, node and label classes must not be defined as inner classes */

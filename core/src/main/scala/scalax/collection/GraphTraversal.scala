@@ -28,6 +28,9 @@ import mutable.EqHashMap
  *         depends on the underlying implementation so you need to match against it.
  * @define ORD If a `NodeOrdering` or `EdgeOrdering` different from `NoOrdering` is supplied
  *         neighbor nodes will visited during the traversal according to this ordering.
+ * @define MAXWEIGHT An optional maximum weight that limits the scope of the traversal or search.
+ *         If defined and the sum of edge weights between the root of the traversal and a node
+ *         exceeds the given maximum, that node will no more be visited.
  * @define CONSIDERING considering all traversal properties passed to the traverser
  *         factory method like [[scalax.collection.GraphTraversal#innerNodeTraverser]]
   *         or altered by any `with*` method.
@@ -471,6 +474,22 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
   @inline final def anyEdgeSelector(from: NodeT, to: NodeT): Option[EdgeT] =
     from findOutgoingTo to
 
+  /** Stores a value and an edge weight function
+   *  for use in weight-based traversals that may be defined by `withMaxWeight`. */
+  class Weight(val value: Double, val edgeWeight: EdgeT => Double) {
+    val ordering = Edge weightOrdering edgeWeight
+  }
+  object Weight {
+    /** Creates a new `Weight` with the given `value` and weight function. */
+    def apply[W](value: W, edgeWeight: EdgeT => W)(implicit num: Numeric[W]): Weight = {
+      import num._
+      new Weight(toDouble(value), edgeWeight andThen toDouble)
+    }
+    
+    /** Creates a new `Weight` with the given `value` and the default weight function returning `edge.weight`, */
+    def apply(value: Long) = new Weight(value, Edge.defaultWeight _ andThen (_.toDouble))
+  }
+  
   /** Template for extended node visitors.
    *  While the default node visitor of the type `NodeT => U`
    *  passes solely the inner node being visited, extended node visitors
@@ -577,7 +596,8 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
   protected trait Properties extends SubgraphProperties {
     /** $ROOT*/           def root: NodeT
     /** $PARAMETERS */    def parameters: Parameters
-    /** $ORD */           def ordering: ElemOrdering      
+    /** $ORD */           def ordering: ElemOrdering
+    /** $MAXWEIGHT */     def maxWeight: Option[Weight] = None
   }
   
   /** [[Properties]] and methods for creating modified properties in a fluent-interface manner.
@@ -586,26 +606,26 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    */
   protected abstract class FluentProperties[+This <: FluentProperties[This]] {
     this: This with Properties =>
-      
+
     protected def newTraverser:
-        (NodeT, Parameters, NodeFilter, EdgeFilter, ElemOrdering) => This
+        (NodeT, Parameters, NodeFilter, EdgeFilter, ElemOrdering, Option[Weight]) => This
 
     /** $UPDATED `parameters`. */
     final def withParameters(parameters: Parameters): This =
       if (this.parameters == parameters) this
-      else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
+      else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
     
     /** $UPDATED `subgraphNodes` and/or `subgraphEdges`. */
     final def withSubgraph(nodes: NodeFilter = anyNode,
                            edges: EdgeFilter = anyEdge): This =
       if ((this.subgraphNodes eq nodes) &&
           (this.subgraphEdges eq edges)) this
-      else newTraverser(root, parameters, nodes, edges, ordering)
+      else newTraverser(root, parameters, nodes, edges, ordering, maxWeight)
       
     /** $UPDATED `ordering`. */
     final def withOrdering(ordering: ElemOrdering): This =
       if (this.ordering eq ordering) this
-      else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
+      else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
     /** $UPDATED `kind`. */
     final def withKind(kind: Kind): This =
@@ -619,8 +639,21 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     final def withMaxDepth(maxDepth: Int): This =
       withParameters(parameters.withMaxDepth(maxDepth))
 
+    /** $UPDATED `maxWeight`. */
+    def withMaxWeight(maxWeight: Option[Weight]): This =
+      if (this.maxWeight eq maxWeight) this
+      else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
+
+    /** $UPDATED `maxWeight` having the given `max` value and the given weight function. */
+    final def withMaxWeight[W: Numeric](max: W, edgeWeight: EdgeT => W): This =
+      withMaxWeight(Some(Weight(max, edgeWeight)))
+
+    /** $UPDATED `maxWeight` having the given `max` and the default weight function returning `edge.weight`. */
+    final def withMaxWeight(max: Long): This =
+      withMaxWeight(Some(Weight(max)))
+
     final def toInnerElemTraverser(root: NodeT): InnerElemTraverser =
-      innerElemTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
+      innerElemTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
   }
   
   /** Represents a component of `this` graph with an underlying lazy implementation.
@@ -630,7 +663,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     def nodes: Set[NodeT]
     def edges: Set[EdgeT]
     def toGraph: Graph[N,E] =
-      innerEdgeTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering).toGraph
+      innerEdgeTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight).toGraph
   }
   
   /** Controls the properties of graph traversals with no specific root.
@@ -658,12 +691,14 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphNodes $SUBGRAPHNODES      
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
+   * @param maxWeight $MAXWEIGHT      
    */
   def componentTraverser(
-      parameters   : Parameters   = Parameters(),
-      subgraphNodes: NodeFilter   = anyNode,
-      subgraphEdges: EdgeFilter   = anyEdge,
-      ordering     : ElemOrdering = NoOrdering): ComponentTraverser
+      parameters   : Parameters     = Parameters(),
+      subgraphNodes: NodeFilter     = anyNode,
+      subgraphEdges: EdgeFilter     = anyEdge,
+      ordering     : ElemOrdering   = NoOrdering,
+      maxWeight    : Option[Weight] = None): ComponentTraverser
 
   /** The `root`-related methods [[Traverser]] will inherit.
    *  
@@ -688,7 +723,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     /** $UPDATED `root`. */
     final def withRoot(root: NodeT): This =
       if (this.root eq root) this
-      else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
+      else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
     
     protected def apply[U](pred: NodeFilter = noNode,
                            visitor: A => U  = empty): Option[NodeT]
@@ -918,13 +953,15 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphNodes $SUBGRAPHNODES      
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
+   * @param maxWeight $MAXWEIGHT      
    */
   def innerNodeTraverser(
       root         : NodeT,
-      parameters   : Parameters   = Parameters(),
-      subgraphNodes: NodeFilter   = anyNode,
-      subgraphEdges: EdgeFilter   = anyEdge,
-      ordering     : ElemOrdering = NoOrdering): InnerNodeTraverser
+      parameters   : Parameters     = Parameters(),
+      subgraphNodes: NodeFilter     = anyNode,
+      subgraphEdges: EdgeFilter     = anyEdge,
+      ordering     : ElemOrdering   = NoOrdering,
+      maxWeight    : Option[Weight] = None): InnerNodeTraverser
 
   /** Controls the properties of outer-node graph traversals. $TOSTART
    */
@@ -937,13 +974,15 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphNodes $SUBGRAPHNODES      
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
+   * @param maxWeight $MAXWEIGHT      
    */
   def outerNodeTraverser(
       root         : NodeT,
-      parameters   : Parameters   = Parameters(),
-      subgraphNodes: NodeFilter   = anyNode,
-      subgraphEdges: EdgeFilter   = anyEdge,
-      ordering     : ElemOrdering = NoOrdering): OuterNodeTraverser
+      parameters   : Parameters     = Parameters(),
+      subgraphNodes: NodeFilter     = anyNode,
+      subgraphEdges: EdgeFilter     = anyEdge,
+      ordering     : ElemOrdering   = NoOrdering,
+      maxWeight    : Option[Weight] = None): OuterNodeTraverser
     
   /** Controls the properties of inner-edge graph traversals. $TOSTART
    */
@@ -959,10 +998,11 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    */
   def innerEdgeTraverser(
       root         : NodeT,
-      parameters   : Parameters   = Parameters(),
-      subgraphNodes: NodeFilter   = anyNode,
-      subgraphEdges: EdgeFilter   = anyEdge,
-      ordering     : ElemOrdering = NoOrdering): InnerEdgeTraverser
+      parameters   : Parameters     = Parameters(),
+      subgraphNodes: NodeFilter     = anyNode,
+      subgraphEdges: EdgeFilter     = anyEdge,
+      ordering     : ElemOrdering   = NoOrdering,
+      maxWeight    : Option[Weight] = None): InnerEdgeTraverser
       
   /** Controls the properties of outer-edge graph traversals. $TOSTART
    */
@@ -975,13 +1015,15 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphNodes $SUBGRAPHNODES      
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
+   * @param maxWeight $MAXWEIGHT      
    */
   def outerEdgeTraverser(
       root         : NodeT,
-      parameters   : Parameters   = Parameters(),
-      subgraphNodes: NodeFilter   = anyNode,
-      subgraphEdges: EdgeFilter   = anyEdge,
-      ordering     : ElemOrdering = NoOrdering): OuterEdgeTraverser 
+      parameters   : Parameters     = Parameters(),
+      subgraphNodes: NodeFilter     = anyNode,
+      subgraphEdges: EdgeFilter     = anyEdge,
+      ordering     : ElemOrdering   = NoOrdering,
+      maxWeight    : Option[Weight] = None): OuterEdgeTraverser 
  
   /** Controls the properties of inner-element graph traversals. $TOSTART
    */
@@ -994,13 +1036,15 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphNodes $SUBGRAPHNODES      
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
+   * @param maxWeight $MAXWEIGHT      
    */
   def innerElemTraverser(
       root         : NodeT,
-      parameters   : Parameters   = Parameters(),
-      subgraphNodes: NodeFilter   = anyNode,
-      subgraphEdges: EdgeFilter   = anyEdge,
-      ordering     : ElemOrdering = NoOrdering): InnerElemTraverser
+      parameters   : Parameters     = Parameters(),
+      subgraphNodes: NodeFilter     = anyNode,
+      subgraphEdges: EdgeFilter     = anyEdge,
+      ordering     : ElemOrdering   = NoOrdering,
+      maxWeight    : Option[Weight] = None): InnerElemTraverser
       
   /** Controls the properties of outer-element graph traversals. $TOSTART
    */
@@ -1013,13 +1057,15 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphNodes $SUBGRAPHNODES      
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
+   * @param maxWeight $MAXWEIGHT      
    */
   def outerElemTraverser(
       root         : NodeT,
-      parameters   : Parameters   = Parameters(),
-      subgraphNodes: NodeFilter   = anyNode,
-      subgraphEdges: EdgeFilter   = anyEdge,
-      ordering     : ElemOrdering = NoOrdering): OuterElemTraverser
+      parameters   : Parameters     = Parameters(),
+      subgraphNodes: NodeFilter     = anyNode,
+      subgraphEdges: EdgeFilter     = anyEdge,
+      ordering     : ElemOrdering   = NoOrdering,
+      maxWeight    : Option[Weight] = None): OuterElemTraverser
       
   /** Controls the properties of inner-node down-up graph traversals. $TOSTART
    */
@@ -1034,13 +1080,15 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @param subgraphNodes $SUBGRAPHNODES      
    * @param subgraphEdges $SUBGRAPHEDGES
    * @param ordering $ORD      
+   * @param maxWeight $MAXWEIGHT      
    */
   def innerNodeDownUpTraverser(
       root         : NodeT,
-      parameters   : Parameters   = Parameters(),
-      subgraphNodes: NodeFilter   = anyNode,
-      subgraphEdges: EdgeFilter   = anyEdge,
-      ordering     : ElemOrdering = NoOrdering): InnerNodeDownUpTraverser
+      parameters   : Parameters     = Parameters(),
+      subgraphNodes: NodeFilter     = anyNode,
+      subgraphEdges: EdgeFilter     = anyEdge,
+      ordering     : ElemOrdering   = NoOrdering,
+      maxWeight    : Option[Weight] = None): InnerNodeDownUpTraverser
       
   /** Controls the properties of outer-node down-up graph traversals. $TOSTART
    */
@@ -1058,10 +1106,11 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    */
   def outerNodeDownUpTraverser(
       root         : NodeT,
-      parameters   : Parameters   = Parameters(),
-      subgraphNodes: NodeFilter   = anyNode,
-      subgraphEdges: EdgeFilter   = anyEdge,
-      ordering     : ElemOrdering = NoOrdering): OuterNodeDownUpTraverser      
+      parameters   : Parameters     = Parameters(),
+      subgraphNodes: NodeFilter     = anyNode,
+      subgraphEdges: EdgeFilter     = anyEdge,
+      ordering     : ElemOrdering   = NoOrdering,
+      maxWeight    : Option[Weight] = None): OuterNodeDownUpTraverser      
 }
 
 /** Contains traversal parameter definitions such as direction constants.

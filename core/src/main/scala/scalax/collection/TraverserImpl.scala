@@ -6,7 +6,8 @@ import scala.collection.generic.{FilterMonadic, Growable}
 import scala.collection.mutable.{ArrayBuffer, ArrayStack => Stack, Queue, PriorityQueue, Map => MMap}
 import scala.math.abs
 
-import collection.FilteredSet
+import scala.collection.FilterableSet
+import scala.collection.FilteredSet
 import scalax.collection.GraphPredef.{OuterNode, EdgeLikeIn}
 import immutable.SortedArraySet
 import mutable.{ArraySet, EqHashSet}
@@ -29,25 +30,6 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
       extends Traverser[A,This] {
     thisImpl: This =>
 
-    final protected val addMethod = parameters.direction match {
-      case Successors   => Node.addDiSuccessors _
-      case Predecessors => Node.addDiPredecessors _
-      case AnyConnected => Node.addNeighbors _
-    }
-
-    final protected val doNodeFilter = isCustomNodeFilter(subgraphNodes)
-    final protected val doEdgeFilter = isCustomEdgeFilter(subgraphEdges)
-    final protected val (doNodeSort, nodeOrdering, reverseNodeOrdering,
-                         doEdgeSort, edgeOrdering, reverseEdgeOrdering) =
-      ordering match {
-        case nO: NodeOrdering    => (true,  nO,   nO.reverse,
-                                     false, null, null)
-        case eO: EdgeOrdering    => (false, null, null,
-                                     true,  eO,   eO.reverse)
-        case _ : NoOrdering.type => (false, null, null,
-                                     false, null, null)
-      }
-
     final protected def apply[U](pred: NodeFilter = noNode, visitor: A => U = empty): Option[NodeT] =
       new Runner[U](pred, visitor)()
 
@@ -63,8 +45,8 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           withParameters(parameters.withDirection(Successors)).Runner[U](pred, visitor).dfsStack()
       target map { _ =>
         new AnyEdgeLazyPath(
-          new ReverseStackTraversable[(NodeT, Int), NodeT]
-              (path, (elem: (NodeT, Int)) => elem._1),
+          new ReverseStackTraversable[DfsInformer.Element[NodeT], NodeT]
+              (path, (e: DfsInformer.Element[NodeT]) => e.node),
           subgraphEdges)
       }
     }
@@ -96,38 +78,62 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
      *
      *  @param stopAt node predicate marking an end condition for the search
      */
-    protected class Runner[U](stopAt: NodeFilter, visitor: A => U) {
+    protected final class Runner[U](stopAt: NodeFilter, visitor: A => U) {
 
+      private[this] val addMethod = parameters.direction match {
+        case Successors   => Node.addDiSuccessors _
+        case Predecessors => Node.addDiPredecessors _
+        case AnyConnected => Node.addNeighbors _
+      }
+  
+      private[this] val doNodeFilter = isCustomNodeFilter(subgraphNodes)
+      private[this] val doEdgeFilter = isCustomEdgeFilter(subgraphEdges) || maxWeight.isDefined
+      private[this] val (doNodeSort, nodeOrdering, reverseNodeOrdering,
+                           doEdgeSort, edgeOrdering, reverseEdgeOrdering) =
+        ordering match {
+          case nO: NodeOrdering    => (true,  nO,   nO.reverse,
+                                       false, null, null)
+          case eO: EdgeOrdering    => (false, null, null,
+                                       true,  eO,   eO.reverse)
+          case _ : NoOrdering.type => (false, null, null,
+                                       false, null, null)
+        }
+  
       /* doNodeVisitor:  whether any node visitor is to be called
        * nodeVisitor:    the simple node visitor or empty
        * extNodeVisitor: the extended node visitor or null
        * edgeVisitor:    the edge visitor or empty
        */
-      final protected[this]
-      val (doNodeVisitor, nodeVisitor, extNodeVisitor,         edgeVisitor):
-          (Boolean,       NodeT => U,  ExtendedNodeVisitor[U], EdgeT => U) = {
-          val nodeVisitor = thisImpl.nodeVisitor(visitor)
-          val extNodeVisitor = visitor match {
-              case ext: ExtendedNodeVisitor[U] => ext
-              case _ => null
-          }
-          ( isDefined(nodeVisitor),
-            if (extNodeVisitor eq null) nodeVisitor else empty[NodeT,U],
-            extNodeVisitor,
-            thisImpl.edgeVisitor(visitor)
-          )
+      private[this] val (doNodeVisitor, nodeVisitor, extNodeVisitor, edgeVisitor):
+                        (Boolean,       NodeT => U,  ExtendedNodeVisitor[U], EdgeT => U) = {
+        val nodeVisitor = thisImpl.nodeVisitor(visitor)
+        val extNodeVisitor = visitor match {
+            case ext: ExtendedNodeVisitor[U] => ext
+            case _ => null
+        }
+        ( isDefined(nodeVisitor),
+          if (extNodeVisitor eq null) nodeVisitor else empty[NodeT,U],
+          extNodeVisitor,
+          thisImpl.edgeVisitor(visitor)
+        )
       }
       
-      final protected[this] val filteredNodes = parameters.direction match {
+      private[this] val filteredNodes = parameters.direction match {
         case Successors   => filteredSuccessors _
         case Predecessors => filteredPredecessors _
         case AnyConnected => filteredNeighbors _
       }
 
-      @inline final protected[Impl] def apply(): Option[NodeT] =
+      private[this] def directionEdges(n: NodeT): NodeT => Set[EdgeT] with FilterableSet[EdgeT] = parameters.direction match {
+        case Successors   => n outgoingTo _
+        case Predecessors => n incomingFrom _
+        case AnyConnected => n connectionsWith _
+      }
+      
+      @inline protected[Impl] def apply(): Option[NodeT] =
         if (parameters.kind.isBsf) bfs() else dfs()
       
-      @inline final private[this] def estimatedNrOfNodes(node: NodeT) = {
+      @inline private[this] def estimatedNrOfNodes(node: NodeT) = {
         val max = node.edges.size
         if (thisGraph.isHyper) max * 4 else max
       }
@@ -135,7 +141,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
       def maxDepth = if (parameters.maxDepth > 0) parameters.maxDepth
                      else java.lang.Integer.MAX_VALUE
       
-      final private[this] def sorted[A <: InnerElem with B, B <: InnerElem: reflect.ClassTag](
+      private[this] def sorted[A <: InnerElem with B, B <: InnerElem: reflect.ClassTag](
           set:      FilterMonadic[A,AnySet[A]],
           maxOrEst: Int, // maximum size of set or negative for an estimate
           ordering: Ordering[A]): AnySet[A] =
@@ -164,16 +170,15 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
             new SortedArraySet[A](arr)(ordering)
         }
   
-      @inline final private[this] def sortedNodes(nodes: AnySet[NodeT], maxOrEst: Int, reverse: Boolean): AnySet[NodeT] =
+      @inline private[this] def sortedNodes(nodes: AnySet[NodeT], maxOrEst: Int, reverse: Boolean): AnySet[NodeT] =
         sorted[NodeT,InnerElem](
             nodes, maxOrEst, if (reverse) reverseNodeOrdering else nodeOrdering)
       
-      final private[this] def filtered[U](
-          node:        NodeT,
-          isVisited:   NodeFilter,
-          _edges:      FilterMonadic[EdgeT,AnySet[EdgeT]], // already filtered if adequate
-          edgeVisitor: EdgeT => U,
-          reverse:     Boolean): Traversable[NodeT] = {
+      private[this] def filtered(
+          node:      NodeT,
+          isVisited: NodeFilter,
+          _edges:    FilterMonadic[EdgeT,AnySet[EdgeT]], // already filtered if adequate
+          reverse:   Boolean): Traversable[NodeT] = {
         
         val edges = {
           if(doEdgeSort) {
@@ -211,14 +216,14 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
         }
       }
       
-      @inline final private[this] def withEdgeFiltering[U](edgeVisitor: EdgeT => U): Boolean =
-        doEdgeFilter || doEdgeSort || isDefined(edgeVisitor)
+      private[this] val withEdgeFiltering: Boolean =
+        doEdgeFilter || doEdgeSort || isDefined(edgeVisitor) || maxWeight.isDefined
       
-      @inline final private[this] def chooseFilter(isVisited: NodeFilter): NodeFilter =
+      @inline private[this] def chooseFilter(isVisited: NodeFilter): NodeFilter =
         if (doNodeFilter) (n: NodeT) => ! isVisited(n) && subgraphNodes(n)
         else              (n: NodeT) => ! isVisited(n)
         
-      final private[this] def filtered(
+      private[this] def filtered(
           nodes:     AnySet[NodeT],
           maxNodes:  Int,                             
           isVisited: NodeFilter,
@@ -227,51 +232,63 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
         if(doNodeSort) sortedNodes(filtered, maxNodes, reverse)
         else filtered
       }
+
+      private[this] def edgeFilter(cumWeight: Double): EdgeFilter = maxWeight.fold(
+        ifEmpty = subgraphEdges)(
+        w => {
+          def weightFilter: EdgeFilter = e => cumWeight + w.edgeWeight(e) <= w.value
+          if (isCustomEdgeFilter(subgraphEdges)) e => subgraphEdges(e) && weightFilter(e)
+          else weightFilter
+        })
         
-      @inline final private[this] def filteredEdges(edges: AnySet[EdgeT])
-          : FilterMonadic[EdgeT,AnySet[EdgeT]] =
-        if (doEdgeFilter) edges withFilter subgraphEdges
+      private[this] def minWeight(n: NodeT, neighbor: NodeT, cumWeight: Double): Double = maxWeight.fold[Double](
+        ifEmpty = throw new MatchError("maxWeight is expected to be defined."))(
+        w => w.edgeWeight(directionEdges(n)(neighbor) withFilter edgeFilter(cumWeight) min w.ordering)
+      )
+
+      final private[this] def filteredEdges(edges: AnySet[EdgeT], cumWeight: Double): FilterMonadic[EdgeT,AnySet[EdgeT]] =
+        if (doEdgeFilter) edges withFilter edgeFilter(cumWeight)
         else edges
         
-      final private[this] def filteredSuccessors[U](
+      private[this] def filteredSuccessors(
           node:        NodeT,
           isVisited:   NodeFilter,
-          edgeVisitor: EdgeT => U,
+          cumWeight:   Double,
           reverse:     Boolean): Traversable[NodeT] = {
   
-        if (withEdgeFiltering(edgeVisitor))
-          filtered(node, isVisited, filteredEdges(node.outgoing), edgeVisitor, reverse)
+        if (withEdgeFiltering)
+          filtered(node, isVisited, filteredEdges(node.outgoing, cumWeight), reverse)
         else {
           val succ = node.diSuccessors
           filtered(succ, succ.size, isVisited, reverse)
         }
       }
         
-      final private[this] def filteredPredecessors[U](
+      private[this] def filteredPredecessors(
           node:        NodeT,
           isVisited:   NodeFilter,
-          edgeVisitor: EdgeT => U,
+          cumWeight:   Double,
           reverse:     Boolean): Traversable[NodeT] = {
         
-        if (withEdgeFiltering(edgeVisitor))
-          filtered(node, isVisited, filteredEdges(node.incoming), edgeVisitor, reverse)
+        if (withEdgeFiltering)
+          filtered(node, isVisited, filteredEdges(node.incoming, cumWeight), reverse)
         else
           filtered(node.diPredecessors, - estimatedNrOfNodes(node), isVisited, reverse)
       }
         
-      final private[this] def filteredNeighbors[U](
+      private[this] def filteredNeighbors(
           node:        NodeT,
           isVisited:   NodeFilter,
-          edgeVisitor: EdgeT => U,
+          cumWeight:   Double,
           reverse:     Boolean): Traversable[NodeT] = {
             
-        if (withEdgeFiltering(edgeVisitor))
-          filtered(node, isVisited, filteredEdges(node.edges), edgeVisitor, reverse)
+        if (withEdgeFiltering)
+          filtered(node, isVisited, filteredEdges(node.edges, cumWeight), reverse)
         else
           filtered(node.neighbors, - estimatedNrOfNodes(node), isVisited, reverse)
       }
   
-      final protected[collection] def shortestPathTo[T:Numeric](
+      protected[collection] def shortestPathTo[T:Numeric](
           potentialSuccessor: NodeT,
           weight            : EdgeT => T): Option[Path] = {
         withHandle() { implicit visitedHandle => 
@@ -291,7 +308,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           val qNodes = new PriorityQueue[NodeWeight]()(ordNodeWeight) += ((root -> zero))
   
           def sortedAdjacentNodes(node: NodeT): PriorityQueue[NodeWeight] =
-            filteredSuccessors(node, visited, edgeVisitor, false).foldLeft(
+            filteredSuccessors(node, visited, Double.NaN, false).foldLeft(
                 new PriorityQueue[NodeWeight]()(ordNodeWeight))(
                 (q,n) => q += ((n, dest(node) +
                                    weight(node.outgoingTo(n).withFilter(subgraphEdges(_)).
@@ -329,8 +346,8 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                     nodeCnt += 1
                     extNodeVisitor(node, nodeCnt, 0,
                       new DijkstraInformer[NodeT,T] {
-                        def queueIterator = qNodes.toIterator
-                        def costsIterator = dest.toIterator
+                        def queueIterator = qNodes.iterator
+                        def costsIterator = dest.iterator
                       }
                     )
                   }
@@ -353,12 +370,13 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
         }
       }
                         
-      final protected[collection] def bfs(maybeHandle: Option[Handle] = None): Option[NodeT] = {
+      protected[collection] def bfs(maybeHandle: Option[Handle] = None): Option[NodeT] = {
         withHandle(maybeHandle) { implicit visitedHandle =>
           val untilDepth: Int = maxDepth
           var depth = 0
           var nodeCnt = 0
-          val q = Queue[(NodeT, Int)](root -> depth)
+          import BfsInformer.Element
+          val q = Queue[Element[NodeT]](Element(root, depth))
           @inline def visited(n: NodeT) = n.visited  
           def visit(n: NodeT): Unit = {
             n.visited = true
@@ -368,20 +386,24 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                 nodeCnt += 1
                 extNodeVisitor(n, nodeCnt, depth,
                   new BfsInformer[NodeT] {
-                    def queueIterator = q.toIterator 
+                    def queueIterator = q.iterator 
                   }
                 )
               }
           }
           visit(root)
           while (q.nonEmpty) { 
-            val (prevNode, prevDepth) = q.dequeue
+            val Element(prevNode, prevDepth, cumWeight) = q.dequeue
             if (prevDepth < untilDepth) {
               depth = prevDepth + 1
-              for (node <- filteredNodes(prevNode, visited, edgeVisitor, false)) { 
-                visit(node)
-                if (stopAt(node)) return Some(node)
-                q enqueue (node -> depth)  
+              for (n <- filteredNodes(prevNode, visited, cumWeight, false)) { 
+                visit(n)
+                if (stopAt(n)) return Some(n)
+                q enqueue Element(
+                  n,
+                  depth,
+                  maxWeight.fold(ifEmpty = 0d)(w => cumWeight + minWeight(prevNode, n, cumWeight))
+                )  
               }
             }
           }
@@ -389,31 +411,32 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
         }
       }
   
-      @inline final protected[collection]
+      @inline protected[collection]
       def dfs[U](maybeHandle: Option[Handle] = None): Option[NodeT] = dfsStack(empty, maybeHandle)._1
 
       /** @return (node stopped at, stack of ...) */
-      final protected[collection]
+      protected[collection]
       def dfsStack[U](nodeUpVisitor: (NodeT) => U = empty,
-                      maybeHandle: Option[Handle] = None): (Option[NodeT], Stack[(NodeT, Int)]) =
+                      maybeHandle: Option[Handle] = None): (Option[NodeT], Stack[DfsInformer.Element[NodeT]]) =
         withHandle(maybeHandle) { implicit visitedHandle =>
           val untilDepth: Int = maxDepth
           val doNodeUpVisitor = isDefined(nodeUpVisitor)
 
           @inline def isVisited(n: NodeT): Boolean = n.visited
-          val stack: Stack[(NodeT, Int)] = Stack((root, 0))
-          val path:  Stack[(NodeT, Int)] = Stack()
+          import DfsInformer.Element
+          val stack: Stack[Element[NodeT]] = Stack(Element(root, 0))
+          val path:  Stack[Element[NodeT]] = Stack()
           var res: Option[NodeT] = None
           var nodeCnt = 0
           root.visited = true
           @tailrec def loop {
             if(stack.nonEmpty) {
-              val (current, depth) = {
+              val Element(current, depth, cumWeight) = {
                 val popped = stack.pop
-                val depth = popped._2
+                val depth = popped.depth
                 if (depth > 0)
-                  while (path.head._2 >= depth) {
-                    if (doNodeUpVisitor) nodeUpVisitor(path.head._1)
+                  while (path.head.depth >= depth) {
+                    if (doNodeUpVisitor) nodeUpVisitor(path.head.node)
                     path.pop
                   }
                 path.push(popped)
@@ -425,8 +448,8 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                   nodeCnt += 1
                   extNodeVisitor(current, nodeCnt, depth,
                     new DfsInformer[NodeT] {
-                      def stackIterator = stack.toIterator
-                      def pathIterator  = path .toIterator
+                      def stackIterator = stack.iterator
+                      def pathIterator  = path .iterator
                     }
                   )
                 }
@@ -434,9 +457,12 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                 res = Some(current)
               } else {
                 if (depth < untilDepth)
-                  for (n <- filteredNodes(current, isVisited, edgeVisitor, true)
-                            withFilter (! isVisited(_))) {
-                    stack.push((n, depth + 1))
+                  for (n <- filteredNodes(current, isVisited, cumWeight, true)) {
+                    stack push Element(
+                      n,
+                      depth + 1,
+                      maxWeight.fold(ifEmpty = 0d)(w => cumWeight + minWeight(current, n, cumWeight))
+                    )
                     n.visited = true
                   }
                 loop
@@ -444,23 +470,21 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
             }
           }
           loop
-          if (doNodeUpVisitor) path foreach (e => nodeUpVisitor(e._1))
+          if (doNodeUpVisitor) path foreach (e => nodeUpVisitor(e.node))
           (res, path)
         }
   
       /** Tail-recursive white-gray-black DFS implementation for cycle detection.
        */
-      final protected[collection]
+      protected[collection]
       def dfsWGB(globalState: Array[Handle] = Array.empty[Handle]): (Option[NodeT], Stack[CycleStackElem]) = {
         withHandles(2, globalState) { handles =>
           implicit val visitedHandle = handles(0)
           val blackHandle = handles(1)
           
-          // (node, predecessor, exclude, 0 to 2 multi edges) with last two for undirected
-          val stack: Stack[(NodeT, NodeT, Boolean, Iterable[EdgeT])] =
-              Stack((root, root, false, Nil))
-          // (node, connecting with prev)
-          val path = Stack.empty[CycleStackElem]
+          import WgbInformer.Element
+          val stack: Stack[Element[NodeT,EdgeT]] = Stack(Element(root, root, false, Nil))
+          val path = Stack.empty[CycleStackElem] // (node, connecting with prev)
           val isDiGraph = thisGraph.isDirected
           def isWhite (node: NodeT) = nonVisited(node)
           def isGray  (node: NodeT) = isVisited(node) && ! (node bit(blackHandle))
@@ -480,18 +504,18 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
               if (stack.isEmpty)
                 path foreach (t => setBlack(t._1))
               else {
-                val popped = stack.pop
+                val Element(poppedNode, poppedPredecessor, poppedExclude, poppedMultiEdges, cumWeight) = stack.pop
                 if (! pushed)
                   while ( path.nonEmpty &&
                          (path.head._1 ne root) &&
-                         (path.head._1 ne popped._2)) {
+                         (path.head._1 ne poppedPredecessor)) {
                     val p = path.pop._1
                     if (! isBlack(p))
                       onNodeUp(p) 
                   }
-                val exclude: Option[NodeT] = if (popped._3) Some(popped._2) else None
-                val current = popped._1
-                path.push((current, popped._4))
+                val exclude: Option[NodeT] = if (poppedExclude) Some(poppedPredecessor) else None
+                val current = poppedNode
+                path.push((current, poppedMultiEdges))
                 if (nonVisited(current)) onNodeDown(current)
                 if (doNodeVisitor)
                   if (isDefined(nodeVisitor)) nodeVisitor(current)
@@ -499,8 +523,8 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                     nodeCnt += 1
                     extNodeVisitor(current, nodeCnt, 0,
                         new WgbInformer[NodeT, EdgeT] {
-                          def stackIterator = stack.toIterator 
-                          def pathIterator  = path .toIterator 
+                          def stackIterator = stack.iterator 
+                          def pathIterator  = path .iterator 
                       }
                     )
                   }
@@ -508,14 +532,15 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                   res = Some(current)
                 else {
                   var pushed = false
-                  for (n <- filteredNodes(current, isBlack(_), edgeVisitor, true)
+                  for (n <- filteredNodes(current, isBlack(_), cumWeight, true)
                             withFilter (! isBlack(_))) { 
                     if (isGray(n)) {
                       if (exclude.fold(ifEmpty = true)(_ ne n))
                         res = Some(n)
                     } else {
+                      val newCumWeight = maxWeight.fold(ifEmpty = 0d)(w => cumWeight + minWeight(current, n, cumWeight))
                       if (isDiGraph)
-                        stack.push((n, current, false, Nil))
+                        stack.push(Element(n, current, false, Nil, newCumWeight))
                       else {
                         val (excl, multi): (Boolean, Iterable[EdgeT]) = {
                           val conn = current connectionsWith n
@@ -525,7 +550,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                             case _ => (false, conn)
                           }
                         }
-                        stack.push((n, current, excl, multi))
+                        stack.push(Element(n, current, excl, multi, newCumWeight))
                       }
                       pushed = true
                     }
@@ -539,7 +564,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
         }
       }
 
-      final protected[collection] def topologicalSort(
+      protected[collection] def topologicalSort(
           layer_0: Traversable[NodeT],
           inDegrees: MMap[NodeT,Int],
           maybeHandle: Option[Handle] = None): CycleNodeOrTopologicalOrder =
@@ -558,7 +583,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
             val nrEnqueued = (0 /: currentLayerNodes) { (i, node) =>
               if (doNodeVisitor) nodeVisitor(node)
               node.visited = true
-              (0 /: filteredSuccessors(node, _.visited, edgeVisitor, true)) { (nrZeroInDegree, n) =>
+              (0 /: filteredSuccessors(node, _.visited, Double.NaN, true)) { (nrZeroInDegree, n) =>
                 val newInDegree = inDegrees(n) - 1
                 inDegrees.update (n, newInDegree)
                 if (newInDegree == 0) {
