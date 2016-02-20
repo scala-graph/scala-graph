@@ -344,7 +344,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
   }
 
   def `shortestPathTo in the flight example graph` {
-    import custom.flight._, custom.flight.Helper._, custom.flight.FlightImplicits._
+    import custom.flight._, Helper._, Flight.ImplicitEdge
     val (jfc, lhr, dme, svx, fra, prg) = (
         Airport("JFC"), Airport("LHR"), Airport("DME"),
         Airport("SVX"), Airport("FRA"), Airport("PRG"))

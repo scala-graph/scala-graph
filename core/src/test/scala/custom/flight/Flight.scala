@@ -1,6 +1,5 @@
 package custom.flight
 
-import language.implicitConversions
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge._
 
@@ -30,33 +29,25 @@ import scalax.collection.GraphPredef._,
  * @param departure daytime of departure
  * @param duration of flight
  */
-class Flight[N](nodes: Product,
-                val flightNo: String,
-                val departure: DayTime = DayTime(0,0),
-                val duration: Duration = Duration(0,0))
-  extends DiEdge[N](nodes)
+case class Flight[N](fromAirport: N, toAirport: N, flightNo: String,
+                     departure: DayTime = DayTime(0,0), duration: Duration = Duration(0,0))
+  extends DiEdge[N](NodeProduct(fromAirport, toAirport))
   with    ExtendedKey[N]
   with    EdgeCopy[Flight]
   with    OuterEdge[N,Flight] 
 {
+  private def this(nodes: Product, flightNo: String, departure: DayTime, duration: Duration) {
+    this(nodes.productElement(0).asInstanceOf[N],
+         nodes.productElement(1).asInstanceOf[N], flightNo, departure, duration)
+  }
   def keyAttributes = Seq(flightNo)
   override def weight = duration.toInt
   def airline = flightNo substring (0,2)
-  override def copy[NN](newNodes: Product) =
-    new Flight[NN](newNodes, flightNo, departure, duration)
-  override protected def attributesToString =
-    " (" + flightNo + " " + departure + " " + duration + ")" 
-}
-object Flight {
-  def apply(from: Airport,
-            to: Airport,
-            flightNo:String,
-            departure: DayTime = DayTime(0,0),
-            duration: Duration = Duration(0,0)) =
-    new Flight[Airport](NodeProduct(from, to), flightNo, departure, duration)
-  def unapply(e: Flight[Airport]) = Some(e)
+  override def copy[NN](newNodes: Product) = new Flight[NN](newNodes, flightNo, departure, duration)
+  override protected def attributesToString = s" ($flightNo $departure $duration)" 
 }
 
+object Flight {
 /**
  * Declares the `Flight` edge factory shortcut `##` which can be invoked like
  * {{{
@@ -64,15 +55,10 @@ object Flight {
  * hamburg ~> newYork ## ("AL 007", 15 o 05, 10 h 20) // yields Flight[Airport]
  * }}}
  */
-final class FlightAssoc[A <: Airport](val e: DiEdge[A]) {
-  @inline final def ## (flightNo: String) = new Flight[A](e.nodes, flightNo)
-  @inline final def ## (flightNo: String,
-                        departure: DayTime = DayTime(0,0),
-                        duration: Duration = Duration(0,0)) =
-    new Flight[A](e.nodes, flightNo, departure, duration)
-}
-object FlightImplicits {
-  /** Enables implicit usage of `FlightAssoc` methods */
-  @inline final
-  implicit def edge2FlightAssoc[A <: Airport](e: DiEdge[A]) = new FlightAssoc[A](e)
+  implicit final class ImplicitEdge[A <: Airport](val e: DiEdge[A]) extends AnyVal {
+    def ## (flightNo: String) = new Flight[A](e.source, e.target, flightNo)
+    def ## (flightNo: String,
+            departure: DayTime = DayTime(0,0),
+            duration: Duration = Duration(0,0)) = new Flight[A](e.nodes, flightNo, departure, duration)
+  } 
 }

@@ -10,7 +10,7 @@ import GraphPredef._, GraphEdge._, edge._, edge.LBase._, edge.Implicits._
 
 import custom.flight._,
        custom.flight.Helper._,
-       custom.flight.FlightImplicits._
+       custom.flight.Flight.ImplicitEdge
 
 @RunWith(classOf[JUnitRunner])
 class TEdgeTest extends Spec with Matchers

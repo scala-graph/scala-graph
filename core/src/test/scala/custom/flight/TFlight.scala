@@ -15,7 +15,7 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
-import FlightImplicits._, Helper._
+import Flight.ImplicitEdge, Helper._
 
 @RunWith(classOf[JUnitRunner])
 class TFlightRootTest
