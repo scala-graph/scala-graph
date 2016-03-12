@@ -14,7 +14,7 @@ class TMicroBenchmarkTest
   
   import MicroBenchmark._
 
-  object `relativeTimes reflects` {
+  object `relativeTimes() reflects` {
     def `relative execution times` {
       val r = 1 to 20
       val relTimes = relativeTimes(warmUp = 2)(
@@ -35,31 +35,22 @@ class TMicroBenchmarkTest
       case i: Int   => eq(a, i.toFloat)
     } 
   }
-  object `relativeTime roughly reflects` {
+  object `relativeTime() roughly reflects` {
     def `O(N) complexity of List.size` {
       def fill(size: Int): (Int, List[Int]) = (size, List.fill(size)(0)) 
-      val (a, b) = (fill(100), fill(1000))
+      val (small, big) = (fill(100), fill(1000))
       
-      implicit val tolerance = new FloatTolerance(2f)
-      val expected = b._1.toFloat / a._1.toFloat
+      implicit val tolerance = new FloatTolerance(4f)
+      val expected = big._1.toFloat / small._1.toFloat
       val results = measureAll(warmUp = 5, repetitions = 10)(
-          a._2.size == a._1,
-          b._2.size == b._1)
+          small._2.size == small._1,
+          big  ._2.size == big  ._1)
       val actual = results.relativeTimes()(1)
       
       actual should === (expected)
     }
   }
-  def `O(N) complexity of immutable Seq.size` {
-    import scala.collection.mutable.ArrayBuffer
-    val size = 1000
-    val vector = Vector.fill(size)(0)
-    val buffer = ArrayBuffer.fill(size)(0)
-
-    implicit val tolerance = new FloatTolerance(1.8f)
-    relativeTime()(buffer.size, vector.size) should === (size)
-  }
-  def `difference when traversing immutable vs. mutable Set` {
+  def `traversing immutable.Set takes marginally longer than mutable.Set` {
     import scala.collection.mutable
     val size = 10000
     val array = Array.tabulate(size)(identity)
@@ -67,15 +58,15 @@ class TMicroBenchmarkTest
     val imm = Set(array: _*)
     val m = mutable.Set(array: _*)
 
-    relativeTime(repetitions = 6)(m.sum == sum, imm.sum == sum) should be > (1.5f)
+    relativeTime(repetitions = 6)(m.sum == sum, imm.sum == sum) should be > (1.05f)
   }
-  def `difference when traversing immutable Set vs. mutable BitSet` {
+  def `traversing mutable.Set takes longer than mutable.BitSet` {
     import scala.collection.mutable
     val size = 10000
     val array = Array.tabulate(size)(_ % (size / 10))
     val s = Set(array: _*)
     val b = mutable.BitSet(array: _*)
 
-    relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > (2f)
+    relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > (1.3f)
   }
 }

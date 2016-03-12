@@ -5,7 +5,7 @@ import collection.{SortedSet, SortedMap}
 import collection.mutable.{Map => MutableMap}
 
 import GraphPredef.{EdgeLikeIn, NodeParam, OuterNode, InnerNodeParam, InnerEdgeParam}
-import GraphEdge.{EdgeLike, EdgeException}
+import GraphEdge.EdgeLike
 
 /**
  * A trait for graph degree calculations.

@@ -4,7 +4,7 @@ object Version {
   val compilerIsRC = false
 
   private val isSnapshot = false
-  private val snapshot = if (isSnapshot) "-SNAPSHOT" else ""
+  private def snapshot = if (isSnapshot) "-SNAPSHOT" else ""
   private val major = "1.10"
   val all         = s"$major.1$snapshot"
   val core        = s"$major.1$snapshot"

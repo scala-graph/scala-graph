@@ -81,7 +81,7 @@ object GraphBuild extends Build {
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     libraryDependencies ++= Seq(
       "junit" % "junit" % "4.8.2"                       % "test",
-      "org.scalatest"  %% "scalatest"  % "2.2.5"        % "test",
+      "org.scalatest"  %% "scalatest"  % "2.2.6"        % "test",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test"),
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 10)) => Nil
