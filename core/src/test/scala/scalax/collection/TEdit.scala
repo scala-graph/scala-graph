@@ -232,8 +232,8 @@ class TEditRootTest
   }
   def test_pluPlusEq {
     val (gBefore, gAfter) = (mutableFactory(1, 2~3), mutableFactory(0, 1~2, 2~3)) 
-    (gBefore ++= List[Param[Int,UnDiEdge]](1~2, 2~3, 0)) should equal (gAfter)
-    (gBefore ++= mutableFactory(0, 1~2))                      should equal (gAfter)
+    (gBefore ++= List(1~2, 2~3, 0))      should equal (gAfter)
+    (gBefore ++= mutableFactory(0, 1~2)) should equal (gAfter)
     (gBefore ++= mutableFactory[Int,UnDiEdge](0) ++= mutableFactory(1~2))   should equal (gAfter)
   }
   def test_upsert {
@@ -299,6 +299,12 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 		h.edges	should have size (2)
 		h	  		should have size (5)
 	}
+	def test_nodeOfAlgebraicDataType_fixes40 {
+    trait MyNode
+    case class N1() extends MyNode
+    case class N2() extends MyNode
+    factory(N1() ~> N2(), N1() ~> N1())
+	}
 	def test_isDirected {
 	  factory(1~2).isDirected should be (false)
 	  factory(edge.WDiEdge(1, 2)(0)).isDirected should be (true)
@@ -363,9 +369,9 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 		g.contains("C") should be (true) //g should contain ("C")
 
 		val (gBefore, gAfter) = (factory(1, 2~3), factory(0, 1~2, 2~3)) 
-		gBefore ++ List[Param[Int,UnDiEdge]](1~2, 2~3, 0) should equal (gAfter)
-		gBefore ++ factory(0, 1~2)                             should equal (gAfter)
-    gBefore ++ factory[Int,UnDiEdge](0) ++ factory(1~2)    should equal (gAfter)
+		gBefore ++ List[Param[Int,UnDiEdge]](1~2, 2~3, 0)   should equal (gAfter)
+		gBefore ++ factory(0, 1~2)                          should equal (gAfter)
+    gBefore ++ factory[Int,UnDiEdge](0) ++ factory(1~2) should equal (gAfter)
 	}
 	def test_Minus {
 		var g = gString_A - "B"
@@ -384,13 +390,12 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 	}
 	def test_MinusMinus {
     val g = factory(1, 2~3, 3~4)
-	  g --  List[Param[Int,UnDiEdge]](2, 3~3) should be (factory(1, 3~4))
-    g --  List[Param[Int,UnDiEdge]](2, 3~4) should be (factory[Int,UnDiEdge](1, 3, 4))
-	  g --! List[Param[Int,UnDiEdge]](1, 3~4) should be (factory(2~3))
+	  g --  List(2, 3~3) should be (factory(1, 3~4))
+    g --  List(2, 3~4) should be (factory[Int,UnDiEdge](1, 3, 4))
+	  g --! List(1, 3~4) should be (factory(2~3))
 	}
   def test_CanBuildFromUnDi {
     val g = factory(0, 1~2)
-    // TODO CC[Int,UnDiEdge]
   	val m: Graph[Int,UnDiEdge] = g map Helper.icrementNode
     m find 1 should be ('defined)
     m.edges.head should be (UnDiEdge(2,3))
@@ -570,20 +575,18 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 }
 object Helper {
   def icrementNode(p: Param[Int,UnDiEdge]): Param[Int,UnDiEdge] = p match {
-    case in: InParam[_,UnDiEdge] => throw new IllegalArgumentException 
     case out: OutParam[_,_] => out match {
-      case n: InnerNodeParam[Int] => OuterNode(n.value + 1)
-      case o: InnerEdgeParam[Int,UnDiEdge,_,UnDiEdge] =>
-        val e = o.asInstanceOf[Graph[Int,UnDiEdge]#EdgeT]
+      case InnerNodeParam(n) => OuterNode(n + 1)
+      case e: InnerEdgeParam[_,_,_,_] with Graph[Int,UnDiEdge]#EdgeT =>
         UnDiEdge((e.edge._1.value + 1, e.edge._2.value + 1)) 
     } 
+    case _ => throw new IllegalArgumentException 
   }
   def nodeToString(p: Param[Int,DiEdge]): Param[String,UnDiEdge] = p match {
     case in: InParam[_,DiEdge] => throw new IllegalArgumentException 
     case out: OutParam[_,_] => out match {
-      case n: InnerNodeParam[Int] => OuterNode(n.value.toString)
-      case o: InnerEdgeParam[Int,DiEdge,_,DiEdge] =>
-        val e = o.asInstanceOf[Graph[Int,DiEdge]#EdgeT]
+      case InnerNodeParam(n) => OuterNode(n.toString)
+      case e: InnerEdgeParam[_,_,_,_] with Graph[Int,DiEdge]#EdgeT =>
         UnDiEdge(e.edge._1.value.toString, e.edge._2.value.toString) 
     } 
   }

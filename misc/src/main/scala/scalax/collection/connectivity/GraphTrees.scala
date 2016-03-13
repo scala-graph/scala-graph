@@ -1,6 +1,7 @@
 package scalax.collection.connectivity
 
 import scala.collection.{mutable, Map}
+import scala.language.{higherKinds, implicitConversions}
 
 import logging.Logging
 import scalax.collection.GraphPredef.EdgeLikeIn
@@ -64,7 +65,7 @@ final class GraphTrees[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N,E]) extends Logg
       visited(n) = false
       time += 1
       discovery(n) = time
-      for(s <- (n diSuccessors) if (visited.get(s) == None)) {
+      for(s <- n.diSuccessors if visited.get(s) eq None) {
         predecessorOf(s) = n
         dfsVisit(s)
       }

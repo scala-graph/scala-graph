@@ -2,6 +2,7 @@ package scalax.collection.connectivity
 
 import scala.collection.mutable.ListBuffer
 import scala.collection.{mutable, Set}
+import scala.language.{higherKinds, implicitConversions}
 import scala.math.min
 import scala.reflect.ClassTag
 

@@ -29,8 +29,8 @@ import scalax.collection.GraphPredef._,
  * @param departure daytime of departure
  * @param duration of flight
  */
-case class Flight[N](fromAirport: N, toAirport: N, flightNo: String,
-                     departure: DayTime = DayTime(0,0), duration: Duration = Duration(0,0))
+case class Flight[+N](fromAirport: N, toAirport: N, flightNo: String,
+                      departure: DayTime = DayTime(0,0), duration: Duration = Duration(0,0))
   extends DiEdge[N](NodeProduct(fromAirport, toAirport))
   with    ExtendedKey[N]
   with    EdgeCopy[Flight]

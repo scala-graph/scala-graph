@@ -20,14 +20,11 @@ import Flight.ImplicitEdge, Helper._
 @RunWith(classOf[JUnitRunner])
 class TFlightRootTest
 	extends Suites( 
-			new TFlight[scalax.collection.immutable.Graph](
-			                  scalax.collection.immutable.Graph),
-			new TFlight[scalax.collection.  mutable.Graph](
-			                  scalax.collection.  mutable.Graph)
+			new TFlight[scalax.collection.immutable.Graph](scalax.collection.immutable.Graph),
+			new TFlight[scalax.collection.  mutable.Graph](scalax.collection.  mutable.Graph)
 		)
 	with ShouldMatchers
-{
-}
+
 /**	This class tests the custom edge `Flight` to be run for Graph instances created
  *	by the Graph factory and passed to the constructor. For instance,
  *	this allows the same tests to be run for mutable and immutable Graphs.

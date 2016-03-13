@@ -7,7 +7,7 @@ import scalax.collection.Graph
 /** Type-safe directed labeled edge with a mutable label.
  *  @author Peter Empen
  */
-class LDiEdge[N,@specialized L](nodes: Product)(private var _label: L)
+class LDiEdge[+N,@specialized L](nodes: Product)(private var _label: L)
     extends DiEdge[N](nodes)
     with    EdgeCopy [  ({type λ[α] = LDiEdge[α,L]})#λ]
     with    OuterEdge[N,({type λ[α] = LDiEdge[α,L]})#λ] {

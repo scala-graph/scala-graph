@@ -534,7 +534,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
   }
 
   def `traverser withOrdering for edges` {
-    val outerEdges = List[InParam[Int,WDiEdge]](
+    val outerEdges = List(
         1~>4 % 2, 1~>2 % 5, 1~>3 % 4,
         3~>6 % 4, 3~>5 % 5, 3~>7 % 2)
     val g = factory(outerEdges: _*)

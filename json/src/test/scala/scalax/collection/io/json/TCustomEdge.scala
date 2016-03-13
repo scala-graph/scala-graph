@@ -81,11 +81,11 @@ import KeyModifier._
 /** Custom edge with the two custom attributes `key` and `keyMod`.
  *  Note that it is also necessary to extend `Attributes` enabling to be a member
  *  of the JSON `CEdgeDescriptor`. */
-class Transition[N](from: N, to: N, val key: Char, val keyMod: KeyModifier)
+class Transition[+N](from: N, to: N, val key: Char, val keyMod: KeyModifier)
     extends DiEdge  [N](NodeProduct(from, to))
     with ExtendedKey[N]
     with EdgeCopy   [Transition]
-    with OuterEdge     [N, Transition]
+    with OuterEdge  [N,Transition]
     with Attributes [N] {
 
   def keyAttributes = Seq(key, keyMod)

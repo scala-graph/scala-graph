@@ -167,7 +167,7 @@ class TJson[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     val descriptor = new Descriptor[String](
                          StringNodeDescriptor,
                          LDi.descriptor[String,String](aLabel = ""))
-    val graph = factory[String,LDiEdge](("A"~+>"B")("L1"),("B"~+>"A")("L2"))
+    val graph = factory(("A"~+>"B")("L1"),("B"~+>"A")("L2"))
   }
   def test_importLEdge {
     import FixtureLEdge._

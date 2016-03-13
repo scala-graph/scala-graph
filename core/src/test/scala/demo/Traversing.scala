@@ -26,7 +26,7 @@ final class TraversingTest
   def validatePath[N, E[X] <: EdgeLikeIn[X]](p: Graph[N,E]#Path,
                                              sample: Traversable[Param[N,E]]): Unit = {
     def toN(p: Param[N,E]): N = p match {
-      case OuterNode(n) => n.value
+      case OuterNode(n) => n
       case _ => throw new IllegalArgumentException
     }
     p.toList == sample ||

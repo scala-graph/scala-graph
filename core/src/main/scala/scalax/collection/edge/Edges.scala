@@ -8,12 +8,11 @@ import WBase._, LBase._
 // ------------------------------------------------------------------------- W*
 /** weighted undirected edge. */
 @SerialVersionUID(72L)
-class WUnDiEdge[N](nodes: Product,
-                   override val weight: Long)
-  extends UnDiEdge[N](nodes)
-  with    WEdge   [N]
-  with    EdgeCopy[WUnDiEdge]
-  with    OuterEdge  [N,WUnDiEdge]
+class WUnDiEdge[+N](nodes: Product, override val weight: Long)
+  extends UnDiEdge [N](nodes)
+  with    WEdge    [N]
+  with    EdgeCopy [WUnDiEdge]
+  with    OuterEdge[N,WUnDiEdge]
 {
   override protected[collection]
   def copy[NN](newNodes: Product) = new WUnDiEdge[NN](newNodes, weight)
@@ -23,12 +22,11 @@ object WUnDiEdge extends WEdgeCompanion[WUnDiEdge] {
 }
 /** weighted directed edge. */
 @SerialVersionUID(73L)
-class WDiEdge[N](nodes: Product,
-                 weight: Long)
+class WDiEdge[+N](nodes: Product, weight: Long)
   extends WUnDiEdge [N](nodes, weight)
   with    DiEdgeLike[N]
   with    EdgeCopy  [WDiEdge]
-  with    OuterEdge    [N,WDiEdge]
+  with    OuterEdge [N,WDiEdge]
 {
   override protected[collection]
   def copy[NN](newNodes: Product) = new WDiEdge[NN](newNodes, weight)
@@ -39,7 +37,7 @@ object WDiEdge extends WEdgeCompanion[WDiEdge] {
 // ------------------------------------------------------------------------ Wk*
 import WkBase._
 /** key-weighted undirected edge. */
-abstract class WkUnDiEdge[N](nodes: Product, weight: Long)
+abstract class WkUnDiEdge[+N](nodes: Product, weight: Long)
   extends WUnDiEdge[N](nodes, weight)
   with    OuterEdge[N,WkUnDiEdge]
   with    WkEdge   [N]
@@ -54,10 +52,10 @@ object WkUnDiEdge extends WkEdgeCompanion[WkUnDiEdge] {
     }
 }
 /** key-weighted directed edge. */
-abstract class WkDiEdge[N](nodes: Product, weight: Long)
+abstract class WkDiEdge[+N](nodes: Product, weight: Long)
   extends WkUnDiEdge[N](nodes, weight)
   with    DiEdgeLike[N]
-  with    OuterEdge    [N,WkDiEdge]
+  with    OuterEdge [N,WkDiEdge]
   with    EqDi
 object WkDiEdge extends WkEdgeCompanion[WkDiEdge] {
   override protected def newEdge[N](nodes: Product, weight: Long) =
@@ -69,10 +67,10 @@ object WkDiEdge extends WkEdgeCompanion[WkDiEdge] {
 }
 // ------------------------------------------------------------------------- L*
 /** labeled undirected edge. */
-abstract class LUnDiEdge[N](nodes: Product)
-  extends UnDiEdge[N](nodes)
-  with    OuterEdge  [N,LUnDiEdge]
-  with    LEdge   [N]
+abstract class LUnDiEdge[+N](nodes: Product)
+  extends UnDiEdge [N](nodes)
+  with    OuterEdge[N,LUnDiEdge]
+  with    LEdge    [N]
 object LUnDiEdge extends LEdgeCompanion[LUnDiEdge] {
   override protected def newEdge[N,L](nodes: Product, pLabel: L) =
     new  LUnDiEdge[N](nodes)
@@ -84,10 +82,10 @@ object LUnDiEdge extends LEdgeCompanion[LUnDiEdge] {
     }
 }
 /** labeled directed edge. */
-abstract class LDiEdge[N](nodes: Product)
+abstract class LDiEdge[+N](nodes: Product)
   extends LUnDiEdge [N](nodes) 
   with    DiEdgeLike[N]
-  with    OuterEdge    [N,LDiEdge]
+  with    OuterEdge [N,LDiEdge]
 object LDiEdge extends LEdgeCompanion[LDiEdge] {
   override protected def newEdge[N,L](nodes: Product, pLabel: L) =
     new  LDiEdge [N](nodes)
@@ -101,7 +99,7 @@ object LDiEdge extends LEdgeCompanion[LDiEdge] {
 // ------------------------------------------------------------------------ Lk*
 import LkBase._
 /** key-labeled undirected edge. */
-abstract class LkUnDiEdge[N](nodes: Product)
+abstract class LkUnDiEdge[+N](nodes: Product)
   extends LUnDiEdge[N](nodes) 
   with    OuterEdge[N,LkUnDiEdge]
   with    LkEdge   [N]
@@ -117,10 +115,10 @@ object LkUnDiEdge extends LkEdgeCompanion[LkUnDiEdge] {
     }
 }
 /** key-labeled directed edge. */
-abstract class LkDiEdge[N](nodes: Product)
-  extends LDiEdge[N](nodes) 
-  with    OuterEdge [N,LkDiEdge]
-  with    LkEdge [N]
+abstract class LkDiEdge[+N](nodes: Product)
+  extends LDiEdge  [N](nodes) 
+  with    OuterEdge[N,LkDiEdge]
+  with    LkEdge   [N]
   with    EqDi
 object LkDiEdge extends LkEdgeCompanion[LkDiEdge] {
   override protected def newEdge[N,L](nodes: Product, pLabel: L) =
@@ -135,11 +133,11 @@ object LkDiEdge extends LkEdgeCompanion[LkDiEdge] {
 // ------------------------------------------------------------------------ WL*
 import WLBase._
 /** weighted, labeled undirected edge. */
-abstract class WLUnDiEdge[N](nodes: Product, weight: Long)
+abstract class WLUnDiEdge[+N](nodes: Product, weight: Long)
   extends WUnDiEdge[N](nodes, weight)
-  with    OuterEdge  [N,WLUnDiEdge]
-  with    LEdge   [N]
-  with    WLEdge  [N]
+  with    OuterEdge[N,WLUnDiEdge]
+  with    LEdge    [N]
+  with    WLEdge   [N]
 object WLUnDiEdge extends WLEdgeCompanion[WLUnDiEdge] {
   override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L) =
     new  WLUnDiEdge[N](nodes, weight)
@@ -151,7 +149,7 @@ object WLUnDiEdge extends WLEdgeCompanion[WLUnDiEdge] {
     }
 }
 /** weighted, labeled directed edge. */
-abstract class WLDiEdge[N](nodes: Product, weight: Long)
+abstract class WLDiEdge[+N](nodes: Product, weight: Long)
   extends WLUnDiEdge[N](nodes, weight) 
   with    DiEdgeLike[N]
   with    OuterEdge    [N,WLDiEdge]
@@ -168,10 +166,10 @@ object WLDiEdge extends WLEdgeCompanion[WLDiEdge] {
 // ----------------------------------------------------------------------- WkL*
 import WkLBase._
 /** key-weighted, labeled undirected edge. */
-abstract class WkLUnDiEdge[N](nodes: Product, weight: Long)
+abstract class WkLUnDiEdge[+N](nodes: Product, weight: Long)
   extends WLUnDiEdge[N](nodes, weight)
   with    WkEdge    [N]
-  with    OuterEdge    [N,WkLUnDiEdge]
+  with    OuterEdge [N,WkLUnDiEdge]
   with    EqUnDi
 object WkLUnDiEdge extends WkLEdgeCompanion[WkLUnDiEdge] {
   override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L) =
@@ -184,10 +182,10 @@ object WkLUnDiEdge extends WkLEdgeCompanion[WkLUnDiEdge] {
     }
 }
 /** key-weighted, labeled directed edge. */
-abstract class WkLDiEdge[N](nodes: Product, weight: Long)
+abstract class WkLDiEdge[+N](nodes: Product, weight: Long)
   extends WkLUnDiEdge[N](nodes, weight) 
   with    DiEdgeLike [N]
-  with    OuterEdge     [N,WkLDiEdge]
+  with    OuterEdge  [N,WkLDiEdge]
   with    EqDi
 object WkLDiEdge extends WkLEdgeCompanion[WkLDiEdge] {
   override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L) =
@@ -202,11 +200,11 @@ object WkLDiEdge extends WkLEdgeCompanion[WkLDiEdge] {
 // ----------------------------------------------------------------------- WLk*
 import WLkBase._
 /** weighted, key-labeled undirected edge. */
-abstract class WLkUnDiEdge[N](nodes: Product, weight: Long)
+abstract class WLkUnDiEdge[+N](nodes: Product, weight: Long)
   extends WLUnDiEdge[N](nodes, weight) 
-  with    OuterEdge[N,WLkUnDiEdge]
-  with    LkEdge   [N]
-  with    WLkEdge  [N]
+  with    OuterEdge [N,WLkUnDiEdge]
+  with    LkEdge    [N]
+  with    WLkEdge   [N]
   with    EqUnDi
 object WLkUnDiEdge extends WLkEdgeCompanion[WLkUnDiEdge] {
   override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L) =
@@ -219,10 +217,10 @@ object WLkUnDiEdge extends WLkEdgeCompanion[WLkUnDiEdge] {
     }
 }
 /** weighted, key-labeled directed edge. */
-abstract class WLkDiEdge[N](nodes: Product, weight: Long)
+abstract class WLkDiEdge[+N](nodes: Product, weight: Long)
   extends WLkUnDiEdge[N](nodes, weight) 
   with    DiEdgeLike [N]
-  with    OuterEdge     [N,WLkDiEdge]
+  with    OuterEdge  [N,WLkDiEdge]
   with    EqDi
 object WLkDiEdge extends WLkEdgeCompanion[WLkDiEdge] {
   override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L) =
@@ -237,9 +235,9 @@ object WLkDiEdge extends WLkEdgeCompanion[WLkDiEdge] {
 // ---------------------------------------------------------------------- WkLk*
 import WkLkBase._
 /** key-weighted, key-labeled undirected edge. */
-abstract class WkLkUnDiEdge[N](nodes: Product, weight: Long)
+abstract class WkLkUnDiEdge[+N](nodes: Product, weight: Long)
   extends WLUnDiEdge[N](nodes, weight) 
-  with    OuterEdge    [N,WkLkUnDiEdge]
+  with    OuterEdge [N,WkLkUnDiEdge]
   with    WkLkEdge  [N]
   with    EqUnDi
 object WkLkUnDiEdge extends WkLkEdgeCompanion[WkLkUnDiEdge] {
@@ -253,10 +251,10 @@ object WkLkUnDiEdge extends WkLkEdgeCompanion[WkLkUnDiEdge] {
     }
 }
 /** key-weighted, key-labeled directed edge. */
-abstract class WkLkDiEdge[N](nodes: Product, weight: Long)
+abstract class WkLkDiEdge[+N](nodes: Product, weight: Long)
   extends WkLkUnDiEdge[N](nodes, weight) 
   with    DiEdgeLike  [N]
-  with    OuterEdge      [N,WkLkDiEdge]
+  with    OuterEdge   [N,WkLkDiEdge]
   with    EqDi
 object WkLkDiEdge extends WkLkEdgeCompanion[WkLkDiEdge] {
   override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L) =

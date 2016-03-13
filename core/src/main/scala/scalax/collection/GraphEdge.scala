@@ -1,20 +1,20 @@
 package scalax.collection
 
-import language.{higherKinds, postfixOps}
+import language.higherKinds
 import scala.annotation.{tailrec, switch}
 
 import GraphPredef.{InnerNodeParam, OuterEdge}
 import edge.LBase.LEdge
 
 /**
- * This object serves as a container for all edge-types to be used in the context of `Graph`.
+ * Container for basic edge-types to be used in the context of `Graph`.
  * You will usually simply import all its members along with the members of Param:
  * {{{
  * import scalax.collection.GraphPredef._, scalax.collection.GraphEdge,_
  * }}}
  * @define SHORTCUT Allows to replace the edge object with it's shortcut like
  * @define ORDIHYPER or the source/target ends of a directed hyperedge
-   * @define BAG bag that is an unordered collection of nodes with duplicates allowed
+ * @define BAG bag that is an unordered collection of nodes with duplicates allowed
  * @author Peter Empen
  */
 object GraphEdge {
@@ -91,6 +91,7 @@ object GraphEdge {
      */
     protected def isValidCustom = true
     protected def isValidCustomExceptionMessage = "Custom validation failed: " + toString
+    protected class EdgeException(val msg: String) extends Exception
     /**
      * Performs basic, inevitable edge validation. Among others, ensures
      * that `nodes ne null` and no edge end `eq null`.
@@ -114,11 +115,11 @@ object GraphEdge {
       if (! isValidCustom)
           throw new EdgeException(isValidCustomExceptionMessage)
     }
-    /** `true` it this edge is directed. */
+    /** `true` if this edge is directed. */
     def directed = false
     /** Same as `directed`. */
     @inline final def isDirected = directed
-    /** `true` it this edge is undirected. */
+    /** `true` if this edge is undirected. */
     @inline final def undirected = ! directed
     /** Same as `undirected`. */
     @inline final def isUndirected = undirected
@@ -429,7 +430,7 @@ object GraphEdge {
     override protected def baseEquals(other: EdgeLike[_]) =
       other.arity == 2 && unDiBaseEquals(other._1, other._2)
 
-    override protected def baseHashCode = (_1 ##) ^ (_2 ##)
+    override protected def baseHashCode = (_1.##) ^ (_2.##)
   }
   protected[collection] trait EqDi extends Eq {
     this: DiEdgeLike[_] =>
@@ -441,7 +442,7 @@ object GraphEdge {
     final protected override def baseEquals(other: EdgeLike[_]) =
       other.arity == 2 && diBaseEquals(other._1, other._2)
 
-    override protected def baseHashCode = (23 * (_1 ##)) ^ (_2 ##)
+    override protected def baseHashCode = (23 * (_1.##)) ^ (_2.##)
   }
   /**
    * Template trait for directed edges.
@@ -506,8 +507,6 @@ object GraphEdge {
     def unapply[N](e: DiEdgeLike[N]) = Some(e)
   }
 
-  case class EdgeException(val msg: String) extends Exception
-  
   /**
    * This trait supports extending the default key of an edge with additional attributes.
    *  
@@ -522,7 +521,7 @@ object GraphEdge {
    * @tparam N    type of the nodes
    * @author Peter Empen
    */
-  trait ExtendedKey[N] extends EdgeLike[N]
+  trait ExtendedKey[+N] extends EdgeLike[N]
   {
     /**
      * Each element in this sequence references an attribute of the custom  
@@ -537,14 +536,14 @@ object GraphEdge {
         case that: ExtendedKey[_] => this.keyAttributes == that.keyAttributes  
         case _ => false
       })
-    override def hashCode = super.hashCode + (keyAttributes map (_.## * 41) sum)  
+    override def hashCode = super.hashCode + keyAttributes.map(_.## * 41).sum  
   
     override protected def attributesToString: String
   }
   object ExtendedKey {
     def unapply[N](e: ExtendedKey[N]) = Some(e)
   }
-  trait LoopFreeEdge[N] extends EdgeLike[N]
+  trait LoopFreeEdge[+N] extends EdgeLike[N]
   {
     override protected def isValidCustom = {
       super.isValidCustom
@@ -587,9 +586,9 @@ object GraphEdge {
    * @author Peter Empen
    */
   @SerialVersionUID(50L)
-  class HyperEdge[N] (override val nodes: Product)
-    extends EdgeLike[N]
-    with    EdgeCopy[HyperEdge]
+  class HyperEdge[+N] (override val nodes: Product)
+    extends EdgeLike [N]
+    with    EdgeCopy [HyperEdge]
     with    OuterEdge[N,HyperEdge]
     with    EqHyper
   {
@@ -664,11 +663,11 @@ object GraphEdge {
    *  of taget nodes. Target nodes are handled as a $BAG.
    */
   @SerialVersionUID(51L)
-  class DiHyperEdge[N] (nodes: Product)
-    extends HyperEdge[N](nodes)
+  class DiHyperEdge[+N] (nodes: Product)
+    extends HyperEdge      [N](nodes)
     with    DiHyperEdgeLike[N]
-    with    EdgeCopy[DiHyperEdge]
-    with    OuterEdge[N,DiHyperEdge]
+    with    EdgeCopy       [DiHyperEdge]
+    with    OuterEdge      [N,DiHyperEdge]
   {
     override protected[collection] def copy[NN](newNodes: Product): DiHyperEdge[NN] =
       if (this.isInstanceOf[OrderedEndpoints]) new DiHyperEdge[NN](newNodes) with OrderedEndpoints
@@ -702,9 +701,9 @@ object GraphEdge {
    * @author Peter Empen
    */
   @SerialVersionUID(52L)
-  class UnDiEdge[N] (nodes: Product)
+  class UnDiEdge[+N] (nodes: Product)
     extends HyperEdge[N](nodes)
-    with    EdgeCopy[UnDiEdge]
+    with    EdgeCopy [UnDiEdge]
     with    OuterEdge[N,UnDiEdge]
     with    EqUnDi
   {
@@ -761,11 +760,11 @@ object GraphEdge {
    * @author Peter Empen
    */
   @SerialVersionUID(53L)
-  class DiEdge[N] (nodes: Product)
-    extends UnDiEdge[N](nodes)
+  class DiEdge[+N] (nodes: Product)
+    extends UnDiEdge  [N](nodes)
     with    DiEdgeLike[N]
-    with    EdgeCopy[DiEdge]
-    with    OuterEdge[N,DiEdge]
+    with    EdgeCopy  [DiEdge]
+    with    OuterEdge [N,DiEdge]
   {
     override protected[collection] def copy[NN](newNodes: Product) =
       new DiEdge[NN](newNodes)

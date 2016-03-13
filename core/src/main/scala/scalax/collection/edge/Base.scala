@@ -13,7 +13,7 @@ import scalax.collection.{GraphBase, Graph}
  * @author Peter Empen
  */
 object WBase {
-  trait WEdge[N]
+  trait WEdge[+N]
   { this: EdgeLike[N] =>
     override protected def attributesToString = WEdge.wPrefix + weight.toString
   }
@@ -52,7 +52,7 @@ object WBase {
 /** Base traits for key-weighted edges. */
 object WkBase {
   import WBase._
-  trait WkEdge[N]
+  trait WkEdge[+N]
       extends WEdge[N]
       with    Keyed {
     this: EdgeLike[N] with Eq =>
@@ -74,7 +74,7 @@ object WkBase {
 }
 /** Base traits for labeled edges. */
 object LBase {
-  trait LEdge[N]
+  trait LEdge[+N]
   { this: EdgeLike[N] =>
     type L1
     override def label: L1 = throw new IllegalArgumentException
@@ -229,7 +229,7 @@ object LkBase {
   /** Everything common to all predefined labeled edge classes with a label being a key attribute.
    *  Such labeled and keyed edge classes are named `Lk<EdgeType>Edge` by convention.
    */
-  trait LkEdge[N]
+  trait LkEdge[+N]
       extends LEdge[N]
       with    Keyed {
     this: EdgeLike[N] with Eq =>
@@ -255,7 +255,7 @@ object WLBase {
   /** Everything common to predefined weighted and labeled edge classes.
    *  Such edge classes are prefixed with  `WL` by convention.
    */
-  trait WLEdge[N] extends WEdge[N] with LEdge[N]
+  trait WLEdge[+N] extends WEdge[N] with LEdge[N]
   { this: EdgeLike[N] =>
     override protected def attributesToString = WEdge.wPrefix + weight.toString +
                                                 LEdge.lPrefix + label.toString
@@ -306,7 +306,7 @@ object WkLBase {
 /** Base traits for weighted and key-labeled edges. */
 object WLkBase {
   import WBase._, LBase._, LkBase._, WLBase._
-  trait WLkEdge[N] extends WEdge[N] with LkEdge[N]
+  trait WLkEdge[+N] extends WEdge[N] with LkEdge[N]
   { this: EdgeLike[N] with Eq =>
     override protected def attributesToString = WEdge.wPrefix + weight.toString +
                                                 LEdge.lkPrefix + label.toString
@@ -323,7 +323,7 @@ object WLkBase {
 /** Base traits for key-weighted and key-labeled edges. */
 object WkLkBase {
   import WLBase._, WkBase._, LkBase._
-  trait WkLkEdge[N] extends WLEdge[N] 
+  trait WkLkEdge[+N] extends WLEdge[N] 
   { this: EdgeLike[N] with Eq =>
     override protected def equals(other: EdgeLike[_]) = other match {
       case that: WkLkEdge[_] => this.weight == that.weight &&
@@ -348,7 +348,7 @@ object WkLkBase {
  */
 object CBase {
   /** To be mixed in by the custom edge class. */
-  trait Attributes[N]
+  trait Attributes[+N]
   { this: EdgeLike[N] =>
     /** To be set to `<companion object>.P`. */
     type P <: Product

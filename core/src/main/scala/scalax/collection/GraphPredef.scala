@@ -1,9 +1,10 @@
 package scalax.collection
 
 import language.{higherKinds, implicitConversions}
+import scala.annotation.unchecked.{uncheckedVariance => uV}
 
-import scala.collection.{AbstractIterable, AbstractIterator, SeqFacade}
-import GraphEdge.{EdgeLike, EdgeCopy, DiHyperEdgeLike}
+import scala.collection.{AbstractIterable, SeqFacade}
+import GraphEdge.{EdgeLike, EdgeCopy, DiHyperEdgeLike, DiEdgeLike}
 /**
  * This object serves as a container for several `Graph`-related definitions like
  * parameter-types and implicit conversions.
@@ -20,18 +21,24 @@ object GraphPredef {
    * Supplying this type as the actual type parameter allows to include any kind of edges
    * such as hyper-edges, undirected and directed edges.
    */
-  type EdgeLikeIn[N] = EdgeLike[N] with EdgeCopy[EdgeLike] with OuterEdge[N,EdgeLike] 
+  type EdgeLikeIn[+N] = EdgeLike[N] with EdgeCopy[EdgeLike] with OuterEdge[N,EdgeLike] 
   /**
    * Denotes all directed edge types for the `E` type parameter of a `Graph`.
    * Supplying this type as the actual type parameter allows to include any kind of directed edges
    * such as directed hyper-edges and directed edges.
    */
-  type DiHyperEdgeLikeIn[N] = DiHyperEdgeLike[N] with EdgeCopy[DiHyperEdgeLike] with OuterEdge[N,DiHyperEdgeLike]
+  type DiHyperEdgeLikeIn[+N] = DiHyperEdgeLike[N] with EdgeCopy[DiHyperEdgeLike] with OuterEdge[N,DiHyperEdgeLike]
+  /**
+   * Denotes all directed edge types for the `E` type parameter of a `Graph`.
+   * Supplying this type as the actual type parameter allows to include any kind of directed edges
+   * such as directed hyper-edges and directed edges.
+   */
+  type DiEdgeLikeIn[+N] = DiEdgeLike[N] with EdgeCopy[DiEdgeLike] with OuterEdge[N,DiEdgeLike]
   
   /** This algebraic type includes outer and inner nodes and edges. As such it serves as the
    *  type parameter to `SetLike` extending `Graph`. 
    */  
-  sealed trait Param [N, +E[X<:N] <: EdgeLike[X]] {
+  sealed trait Param [+N, +E[X<:N @uV] <: EdgeLike[X]] {
     def isDefined = true
     def isNode: Boolean
     def isEdge: Boolean
@@ -95,18 +102,18 @@ object GraphPredef {
   /** @tparam N  the type of the nodes (vertices) this graph is passed to by the user.
    *  @tparam E  the kind of the edges (links) this graph is passed to by the user.
    */
-  sealed trait InParam[N, +E[X<:N] <: EdgeLike[X]] extends Param[N,E] {
+  sealed trait InParam[+N, +E[X<:N @uV] <: EdgeLike[X]] extends Param[N,E] {
     def isIn  = true
     def isOut = false
   }
   /** Same as `InParam`. */
   type OuterElem[N, +E[X<:N] <: EdgeLike[X]] = InParam[N,E]
 
-  sealed trait OutParam[NO, +EO[X<:NO] <: EdgeLike[X]] extends Param[NO,EO] {
+  sealed trait OutParam[+NO, +EO[X<:NO @uV] <: EdgeLike[X]] extends Param[NO,EO] {
     def isIn  = false
     def isOut = true
   }
-  trait NodeParam[N] {
+  trait NodeParam[+N] {
     def value: N
     def isNode = true 
     def isEdge = false
@@ -123,23 +130,23 @@ object GraphPredef {
 
   /** @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
    */
-  trait InnerNodeParam[NI] extends OutParam[NI,Nothing] with NodeParam[NI] {
+  trait InnerNodeParam[+NI] extends OutParam[NI,Nothing] with NodeParam[NI] {
     def isContaining[N, E[X]<:EdgeLikeIn[X]](g: GraphBase[N,E]): Boolean
 
     protected[collection] final
-    def asNodeT[N <: NI, E[X]<:EdgeLikeIn[X], G <: GraphBase[N,E] with Singleton]
+    def asNodeT[N <: NI @uV, E[X]<:EdgeLikeIn[X], G <: GraphBase[N,E] with Singleton]
         (g: G): g.NodeT = this.asInstanceOf[g.NodeT]
 
     protected[collection] final
-    def asNodeTProjection[N <: NI, E[X]<:EdgeLikeIn[X]]: GraphBase[N,E]#NodeT =
+    def asNodeTProjection[N <: NI @uV, E[X]<:EdgeLikeIn[X]]: GraphBase[N,E]#NodeT =
       this.asInstanceOf[Graph[N,E]#NodeT]
 
-    final def fold[N <: NI, E[X]<:EdgeLikeIn[X], G <: GraphBase[N,E] with Singleton, T]
+    final def fold[N <: NI @uV, E[X]<:EdgeLikeIn[X], G <: GraphBase[N,E] with Singleton, T]
         (g: G)(fa: g.NodeT => T, fb: GraphBase[N,E]#NodeT => T): T =
       if (isContaining[N,E](g)) fa(asNodeT[N,E,G](g))
       else                      fb(asNodeTProjection[N,E])
 
-    final def toNodeT[N <: NI, E[X]<:EdgeLikeIn[X], G <: GraphBase[N,E] with Singleton]
+    final def toNodeT[N <: NI @uV, E[X]<:EdgeLikeIn[X], G <: GraphBase[N,E] with Singleton]
         (g: G)(f: GraphBase[N,E]#NodeT => g.NodeT): g.NodeT =
       fold[N,E,G,g.NodeT](g)(n => n, f)
   }
@@ -159,10 +166,10 @@ object GraphPredef {
    * @tparam NI  the type of the nodes (vertices) this graph is passed to by the user.
    * @tparam EI  the kind of the edges (links) this graph is passed to by the user.
    */
-  trait OuterEdge  [NI, +EI[X<:NI] <: EdgeLike[X]]
+  trait OuterEdge[+NI, +EI[X<:NI @uV] <: EdgeLike[X]]
     extends InParam[NI,EI] with EdgeParam
-  { this: EI[NI] =>
-    def edge: EI[NI] = this
+  { this: EI[NI @uV] =>
+    def edge: EI[NI @uV] = this
   }
   
   /** @tparam NI  the type of the nodes the graph is passed to.
@@ -170,27 +177,27 @@ object GraphPredef {
    *  @tparam NO  the type of the nodes created internally.
    *  @tparam EO  the kind of the edges created internally.
    */
-  trait InnerEdgeParam [NI, +EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], +EO[X<:NO] <: EdgeLike[X]]
+  trait InnerEdgeParam[+NI, +EI[X<:NI @uV] <: EdgeLike[X], +NO <: InnerNodeParam[NI], +EO[X<:NO @uV] <: EdgeLike[X]]
     extends OutParam[NI,EI] with EdgeParam
   { 
-    def edge: EO[NO]
-    final def isContaining[N <: NI, E[X]<:EdgeLikeIn[X]](g: GraphBase[N,E]): Boolean =
+    def edge: EO[NO @uV]
+    final def isContaining[N <: NI @uV, E[X]<:EdgeLikeIn[X]](g: GraphBase[N,E]): Boolean =
       edge._1.isContaining[N,E](g)
 
     protected[collection] final
-    def asEdgeT[N <: NI, E[X]<:EdgeLikeIn[X], G <: GraphBase[N,E] with Singleton]
+    def asEdgeT[N <: NI @uV, E[X]<:EdgeLikeIn[X], G <: GraphBase[N,E] with Singleton]
         (g: G) : g.EdgeT = this.asInstanceOf[g.EdgeT]
 
     protected[collection] final
-    def asEdgeTProjection[N <: NI, E[X]<:EdgeLikeIn[X]]: GraphBase[N,E]#EdgeT =
+    def asEdgeTProjection[N <: NI @uV, E[X]<:EdgeLikeIn[X]]: GraphBase[N,E]#EdgeT =
       this.asInstanceOf[Graph[N,E]#EdgeT]
 
-    final def fold[N <: NI, E[X]<:EdgeLikeIn[X], G <: GraphBase[N,E] with Singleton, T]
+    final def fold[N <: NI @uV, E[X]<:EdgeLikeIn[X], G <: GraphBase[N,E] with Singleton, T]
         (g: G)(fa: g.EdgeT => T, fb: GraphBase[N,E]#EdgeT => T): T =
       if (isContaining[N,E](g)) fa(asEdgeT[N,E,G](g))
       else                      fb(asEdgeTProjection[N,E])
 
-    final def toEdgeT[N <: NI, E[X]<:EdgeLikeIn[X], G <: GraphBase[N,E] with Singleton]
+    final def toEdgeT[N <: NI @uV, E[X]<:EdgeLikeIn[X], G <: GraphBase[N,E] with Singleton]
         (g: G)(f: GraphBase[N,E]#EdgeT => g.EdgeT): g.EdgeT =
       fold[N,E,G,g.EdgeT](g)(e => e, f)
       
@@ -200,26 +207,23 @@ object GraphPredef {
   }
   object InnerEdgeParam {
     @inline implicit def toEdge[NI, EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[X<:NO] <: EdgeLike[X]]
-      (innerEdge: InnerEdgeParam[NI,EI,NO,EO]) = innerEdge.edge
+      (innerEdge: InnerEdgeParam[NI,EI,NO,EO]): EO[NO] = innerEdge.edge
   }
   //-----------------------------------------------------------------------//
   import GraphEdge._
   
-  @inline implicit def anyToNode[N]     (n: N) = OuterNode(n)
-  @inline implicit def seqToGraphParam[N, E[X<:N] <: EdgeLikeIn[X]](s: Seq[N]): Seq[InParam[N,E]] =
-    s map {_ match {case e: EdgeLike[N] with EdgeCopy[EdgeLike] with OuterEdge[N,E] => e
-                    case e: EdgeLike[_] => throw new IllegalArgumentException(
-                        "Before being passed to a graph, edge-types need to mix in EdgeCopy and OuterEdge.")
-// TODO               case e: InnerEdgeParam [N,InnerNodeParam[N,E,EdgeCont[N]],E,EdgeCont[N]] =>
-//                            e.edge match {case e: DiEdge[N] => newDiEdgeIn[N](e.nodes)}
-                    case n => OuterNode(n)
-//                    case InnerNodeParam(n) => OuterNode(n)
-          }}
-  def nodePredicate [NI, EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[X<:NO] <: EdgeLike[X]]
-      (pred: NI => Boolean) =
+  @inline implicit def anyToNode[N](n: N) = OuterNode(n)
+  implicit def seqToGraphParam[N, E[X<:N] <: EdgeLikeIn[X]](s: Seq[N]): Seq[InParam[N,E]] = s map {_ match {
+    case e: EdgeLike[_] with EdgeCopy[_] with OuterEdge[_,_] with InParam[_,_] => e.asInstanceOf[InParam[N,E]]
+    case e: InnerEdgeParam[_,_,_,_] => e.edge.asInstanceOf[OuterEdge[N,E]]
+    case e: EdgeLike[_] => throw new IllegalArgumentException("Invalid edge type: EdgeCopy and OuterEdge need be mixed in.")
+    case InnerNodeParam(n) => OuterNode(n).asInstanceOf[InParam[N,E]]
+    case n => OuterNode(n)
+  }}
+  def nodePredicate [NI, EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[X<:NO] <: EdgeLike[X]](pred: NI => Boolean) =
     (out: Param[NI,EI]) => out match {
       case n: InnerNodeParam[NI] => pred(n.value)
-      case e: InnerEdgeParam[NI,EI,NO,EO] => e.edge forall (n => pred(n.value))
+      case e: InnerEdgeParam[_,_,_,_] => e.asInstanceOf[InnerEdgeParam[NI,EI,NO,EO]].edge forall (n => pred(n.value))
       case _ => false
     }
 
