@@ -231,10 +231,13 @@ class TEditRootTest
     (innerLabels: Iterable[Any]) forall (outerLabels contains _) should be (true) 
   }
   def test_pluPlusEq {
-    val (gBefore, gAfter) = (mutableFactory(1, 2~3), mutableFactory(0, 1~2, 2~3)) 
-    (gBefore ++= List(1~2, 2~3, 0))      should equal (gAfter)
-    (gBefore ++= mutableFactory(0, 1~2)) should equal (gAfter)
-    (gBefore ++= mutableFactory[Int,UnDiEdge](0) ++= mutableFactory(1~2))   should equal (gAfter)
+    val (gBefore, gAfter) = (
+        mutableFactory(1, 2~3),
+        mutableFactory(0, 1~2, 2~3)) 
+    (gBefore ++= List[Param[Int,UnDiEdge]](1~2, 2~3, 0)) should equal (gAfter)
+    (gBefore ++= mutableFactory(0, 1~2))                 should equal (gAfter)
+    (gBefore ++= mutableFactory[Int,UnDiEdge](0)
+             ++= mutableFactory(1~2))                    should equal (gAfter)
   }
   def test_upsert {
     import edge.LDiEdge, edge.LBase._
@@ -300,9 +303,9 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 		h	  		should have size (5)
 	}
 	def test_nodeOfAlgebraicDataType_fixes40 {
-    trait MyNode
-    case class N1() extends MyNode
-    case class N2() extends MyNode
+    trait Node
+    case class N1() extends Node
+    case class N2() extends Node
     factory(N1() ~> N2(), N1() ~> N1())
 	}
 	def test_isDirected {
@@ -390,9 +393,9 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
 	}
 	def test_MinusMinus {
     val g = factory(1, 2~3, 3~4)
-	  g --  List(2, 3~3) should be (factory(1, 3~4))
-    g --  List(2, 3~4) should be (factory[Int,UnDiEdge](1, 3, 4))
-	  g --! List(1, 3~4) should be (factory(2~3))
+	  g --  List[Param[Int,UnDiEdge]](2, 3~3) should be (factory(1, 3~4))
+    g --  List[Param[Int,UnDiEdge]](2, 3~4) should be (factory[Int,UnDiEdge](1, 3, 4))
+	  g --! List[Param[Int,UnDiEdge]](1, 3~4) should be (factory(2~3))
 	}
   def test_CanBuildFromUnDi {
     val g = factory(0, 1~2)

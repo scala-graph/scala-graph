@@ -174,9 +174,9 @@ class TEdgeTest extends Spec with Matchers
 }
 /* Label type for use in key-labeled edges.
  */
-case class Flight(val flightNo: String,
-                  val departure: DayTime = DayTime(0,0),
-                  val duration: Duration = Duration(0,0))
+case class Flight(flightNo: String,
+                  departure: DayTime = DayTime(0,0),
+                  duration: Duration = Duration(0,0))
 {
   /* flightNo should be treated as the label key meaning that the set of edges
    * incident to two given nodes may contain at most one edge with a given flightNo.
