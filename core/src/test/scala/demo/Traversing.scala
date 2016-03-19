@@ -171,7 +171,7 @@ final class TraversingTest
                                  center.get should be (2)
   }
 
-  def `components traverser` {
+  def `component traverser` {
     def someEdges(i: Int) =
       List((i) ~> (i + 1), (i) ~> (i + 2), (i + 1) ~> (i + 2))
 
@@ -179,7 +179,12 @@ final class TraversingTest
     val sums =
       for (c <- disconnected.componentTraverser())
         yield c.nodes.head.outerNodeTraverser.sum
-                                 sums should be (List(6, 18))
+    sums should be (List(6, 18))
+  }
+  
+  def `component traverser #57` {
+    val g = Graph(11~>12, 13~>14)
+    g.componentTraverser() should have size (2)
   }
   
   def `path builder` {

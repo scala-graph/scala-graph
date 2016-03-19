@@ -194,6 +194,8 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       for (n <- nodes) n.edges foreach (edges += _)
       new EqSetFacade(edges)
     }
+    
+    override def toString = s"Component(${nodes mkString ","})"
   }
 
   final protected def expectedMaxNodes(divisor: Int, min: Int = 128): Int = {
@@ -247,7 +249,8 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       InnerElemTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
 
     protected lazy val components: Iterable[ComponentImpl] = {
-      val traverser = InnerNodeTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
+      val traverser = InnerNodeTraverser(
+          root, parameters withDirection AnyConnected, subgraphNodes, subgraphEdges, ordering)
       withHandle() {  implicit visitedHandle =>
         for (node <- nodes if ! node.visited && subgraphNodes(node)) yield {
           val componentNodes = new ArrayBuffer[NodeT](expectedMaxNodes(6))
