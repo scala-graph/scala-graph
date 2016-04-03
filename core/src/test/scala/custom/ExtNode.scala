@@ -64,29 +64,6 @@ package immutable {
     protected type Config = MyExtGraph.Config
     override final def config = _config.asInstanceOf[graphCompanion.Config with Config]
 
-    private def this(that: AdjacencyListBase[N,E,MyExtGraph])
-                    (delNodes: Iterable[AdjacencyListBase[N,E,MyExtGraph]#NodeT],
-                     delEdges: Iterable[AdjacencyListBase[N,E,MyExtGraph]#EdgeT],
-                     ripple:   Boolean,
-                     addNodes: Iterable[N],
-                     addEdges: Iterable[E[N]])
-                    (implicit edgeT: ClassTag[E[N]],
-                     config: MyExtGraph.Config with AdjacencyListArrayConfig) = {
-      this()
-      from(that)(delNodes, delEdges, ripple, addNodes, addEdges)
-    }
-    protected final def alteredClone
-        (delNodes: Iterable[NodeT],
-         delEdges: Iterable[EdgeT],
-         ripple:   Boolean,
-         addNodes: Iterable[N],
-         addEdges: Iterable[E[N]]) = {
-      new MyExtGraph(this)(
-          delNodes.asInstanceOf[Iterable[AdjacencyListBase[N,E,MyExtGraph]#NodeT]],
-          delEdges.asInstanceOf[Iterable[AdjacencyListBase[N,E,MyExtGraph]#EdgeT]],
-          ripple, addNodes, addEdges)
-    }
-
     @inline final def newNodeSet: NodeSetT = new NodeSet
     override final val nodes = newNodeSet 
     override final val edges = new EdgeSet
@@ -141,29 +118,6 @@ package mutable {
     override val graphCompanion = MyExtGraph
     protected type Config = MyExtGraph.Config
     override final def config = _config.asInstanceOf[graphCompanion.Config with Config]
-
-    private def this(that: AdjacencyListBase[N,E,MyExtGraph])
-                    (delNodes: Iterable[AdjacencyListBase[N,E,MyExtGraph]#NodeT],
-                     delEdges: Iterable[AdjacencyListBase[N,E,MyExtGraph]#EdgeT],
-                     ripple:   Boolean,
-                     addNodes: Iterable[N],
-                     addEdges: Iterable[E[N]])
-                    (implicit edgeT: ClassTag[E[N]],
-                     config: MyExtGraph.Config with AdjacencyListArrayConfig) = {
-      this()
-      from(that)(delNodes, delEdges, ripple, addNodes, addEdges)
-    }
-    protected final def alteredClone
-        (delNodes: Iterable[NodeT],
-         delEdges: Iterable[EdgeT],
-         ripple:   Boolean,
-         addNodes: Iterable[N],
-         addEdges: Iterable[E[N]]) = {
-      new MyExtGraph(this)(
-          delNodes.asInstanceOf[Iterable[AdjacencyListBase[N,E,MyExtGraph]#NodeT]],
-          delEdges.asInstanceOf[Iterable[AdjacencyListBase[N,E,MyExtGraph]#EdgeT]],
-          ripple, addNodes, addEdges)
-    }
 
     @inline final def newNodeSet: NodeSetT = new NodeSet
     override final val nodes = newNodeSet 
