@@ -1,9 +1,10 @@
 package scalax.collection
 package immutable
 
-import language.higherKinds
+import scala.language.higherKinds
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.{Set => AnySet}
+import scala.collection.mutable.Buffer
 import scala.util.Random
 
 import scala.collection.EqSetFacade
@@ -26,7 +27,7 @@ trait AdjacencyListBase[N,
                        +This[X, Y[X]<:EdgeLikeIn[X]]
                         <: GraphLike[X,Y,This] with AnySet[Param[X,Y]] with SimpleGraph[X,Y]]
   extends GraphLike[N,E,This]
-{ this: This[N,E] =>
+{ selfGraph: This[N,E] =>
   protected type Config <: GraphConfig with AdjacencyListArrayConfig
   
   @inline final protected
@@ -190,9 +191,9 @@ trait AdjacencyListBase[N,
         edges count edgePred
     }
     
-    @inline final protected[collection] def +=(edge: EdgeT): this.type = {
-      edges add edge; this
-    }
+    @inline protected[collection] def add(edge: EdgeT): Boolean = edges add edge
+
+    @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
   }
   @inline final protected def newNode(n: N) = newNodeWithHints(n, config.adjacencyListHints)
   protected def newNodeWithHints(node: N, hints: ArraySet.Hints): NodeT
@@ -294,13 +295,42 @@ trait AdjacencyListBase[N,
   type EdgeSetT <: EdgeSet
   trait EdgeSet extends super.EdgeSet {
     protected[AdjacencyListBase] def addEdge(edge: EdgeT): Unit
-    final override def contains(node: NodeT): Boolean =
-      nodes find node exists (_.edges.nonEmpty)
-    final override def find(elem: E[N] ): Option[EdgeT] =
-      nodes find elem._1 flatMap (_.edges find (_.edge == elem))
-    final def contains(edge: EdgeT): Boolean =
-      nodes find edge.edge._1 exists (_.edges contains edge)
+    
+    final override def contains(node: NodeT): Boolean = nodes find node exists (_.edges.nonEmpty)
+    
+    final override def find(elem: E[N] ): Option[EdgeT] = nodes find elem._1 flatMap (_.edges find (_.edge == elem))
+    
+    final def contains(edge: EdgeT): Boolean = nodes find edge.edge._1 exists (_.edges contains edge)
+    
     final def iterator: Iterator[EdgeT] = edgeIterator
+    
+    private[this] var nrEdges = 0
+
+    private[this] var nrDi = if (selfGraph.isDirectedT) -1 else 0
+    final def hasOnlyDiEdges = nrDi == -1 || nrDi == nrEdges
+
+    private[this] var nrHyper = if (selfGraph.isHyperT) 0 else -1
+    final def hasAnyHyperEdge = nrHyper > 0
+
+    protected final def statistics(edge: EdgeT, plus: Boolean): Boolean = {
+      val add = if (plus) 1 else -1
+      nrEdges += add
+      if (nrDi    != -1 && edge.isDirected)  nrDi += add
+      if (nrHyper != -1 && edge.isHyperEdge) nrHyper += add
+      true
+    }
+
+    override def size = nrEdges
+
+    def hasAnyMultiEdge = selfGraph.nodes exists { node: NodeT =>
+      val (di: Buffer[EdgeT @unchecked], unDi: Buffer[EdgeT  @unchecked]) = {
+        if (selfGraph.isDirected) (node.edges.toBuffer[EdgeT], Buffer.empty)
+        else node.edges.toBuffer partition (_.isDirected)
+      }
+      val diTargets, unDiTargets = MSet.empty[NodeT]
+      di  .exists((e: EdgeT) => e.hasSource((n: NodeT) => n eq node) && ! e.targets.forall(diTargets add _)) ||
+      unDi.exists((e: EdgeT) => (e.n1 eq node)                       && ! e.iterator.drop(1).forall((n: NodeT) => unDiTargets add n))
+    }
   }
 
   def edgeIterator = new GroupIterator[EdgeT] {

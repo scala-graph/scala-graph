@@ -43,13 +43,16 @@ trait AdjacencyListGraph[N,
       if (coll contains node) this
       else {val c = copy; c.coll += node; c }
     
-    protected[collection] def +=(edge: EdgeT): this.type = {
+    protected[AdjacencyListGraph] def add(edge: EdgeT): Boolean = {
+      var added = false
       edge foreach { n =>
         val inColl = coll findEntry n getOrElse {coll += n; n}
-        inColl += edge
+        added = (inColl add edge) || added
       }
-      this
+      added
     }
+    
+    protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
   }
   override val nodes: NodeSetT
 
@@ -67,15 +70,18 @@ trait AdjacencyListGraph[N,
       if (edges ne null)
         edges foreach (this += Edge(_))
     }
-    final override lazy val size = super.size
+
     @inline final protected[AdjacencyListGraph] def +=(edge: EdgeT): this.type = {
-      nodes += edge
+      if (nodes add edge) statistics(edge, plus = true) else false
       this
     }
+    
     @inline final protected[immutable] def addEdge(edge: EdgeT) { +=(edge) }
     @inline final def +(edge: EdgeT): Set[EdgeT] = toSet + edge
     @inline final def -(edge: EdgeT): Set[EdgeT] = toSet - edge
-    @inline final override lazy val maxArity = super.maxArity
+    
+    @inline final override lazy val maxArity        = super.maxArity
+    @inline final override lazy val hasAnyMultiEdge = super.hasAnyMultiEdge
   }
   override val edges: EdgeSetT
 

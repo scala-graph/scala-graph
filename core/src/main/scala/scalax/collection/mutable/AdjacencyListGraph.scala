@@ -27,8 +27,8 @@ trait AdjacencyListGraph[N,
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
     import Adj._
 
-    protected[AdjacencyListGraph] def add(edge: EdgeT): Boolean =
-      if (edges.add(edge)) {
+    override protected[collection] final def add(edge: EdgeT): Boolean =
+      if (super.add(edge)) {
         if (selfGraph.edges.initialized) addDiSuccOrHook(edge)
         true
       } else false
@@ -130,26 +130,16 @@ trait AdjacencyListGraph[N,
       initialized = true
     }
 
-    override def add(edge: EdgeT) =
-      if (nodes add edge) {
-        nrEdges += 1
-        true
-      } else false
+    override def add(edge: EdgeT): Boolean =
+      if (nodes add edge) statistics(edge, plus = true) else false
 
-    @inline final protected[collection] def addEdge(edge: EdgeT) { add(edge) }
+    @inline final protected[collection] def addEdge(edge: EdgeT): Unit = add(edge)
 
-    def upsert(edge: EdgeT): Boolean = {
-      if (nodes upsert edge) {
-        nrEdges += 1
-        true
-      } else false
-    }
+    def upsert(edge: EdgeT): Boolean =
+      if (nodes upsert edge) statistics(edge, plus = true) else false
 
-    override def remove(edge: EdgeT) = 
-      if (nodes remove edge) {
-        nrEdges -= 1
-        true
-      } else false
+    override def remove(edge: EdgeT): Boolean =
+      if (nodes remove edge) statistics(edge, plus = false) else false
 
     def removeWithNodes(edge: EdgeT) = {
       val privateNodes = edge.privateNodes
@@ -157,10 +147,7 @@ trait AdjacencyListGraph[N,
         nodes --= privateNodes
         true
       } else false
-
     }
-    private var nrEdges = 0
-    override def size = nrEdges
 
     @inline final override def maxArity: Int = super.maxArity
   }

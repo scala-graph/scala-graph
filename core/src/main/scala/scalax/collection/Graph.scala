@@ -39,10 +39,15 @@ trait GraphLike[N,
 { selfGraph: This[N,E] =>
   protected type ThisGraph = this.type
   implicit val edgeT: ClassTag[E[N]]
-  
-  lazy val isDirected =   classOf[DiHyperEdgeLike[_]].isAssignableFrom(edgeT.runtimeClass)
-  lazy val isHyper    = ! classOf[UnDiEdge[_]]       .isAssignableFrom(edgeT.runtimeClass)
-  lazy val isMulti    =   classOf[Keyed]             .isAssignableFrom(edgeT.runtimeClass)
+
+  def isDirected = isDirectedT || edges.hasOnlyDiEdges
+  protected final val isDirectedT = classOf[DiHyperEdgeLike[_]].isAssignableFrom(edgeT.runtimeClass)
+
+  def isHyper = isHyperT && edges.hasAnyHyperEdge
+  protected final val isHyperT = ! classOf[UnDiEdge[_]].isAssignableFrom(edgeT.runtimeClass)
+
+  def isMulti = isMultiT || edges.hasAnyMultiEdge
+  protected final val isMultiT = classOf[Keyed].isAssignableFrom(edgeT.runtimeClass)
 
   /** The companion object of `This`. */
   val graphCompanion: GraphCompanion[This]
@@ -156,7 +161,8 @@ trait GraphLike[N,
       else this.asInstanceOf[NodeSetT]
     /**
      * removes `node` from this node set leaving the edge set unchanged.
-     * @param node the node to be removed from the node set.
+      *
+      * @param node the node to be removed from the node set.
      */
     protected def minus(node: NodeT): Unit
     /**
@@ -186,7 +192,12 @@ trait GraphLike[N,
     protected def handleNotGentlyRemovable = false
   }
   type EdgeSetT <: EdgeSet
-  trait EdgeSet extends super.EdgeSet
+  trait EdgeSet extends super.EdgeSet {
+    def hasOnlyDiEdges: Boolean
+    def hasAnyHyperEdge: Boolean
+    def hasAnyMultiEdge: Boolean
+  }
+
   /** Checks whether a given node or edge is contained in this graph.
    *
    *  @param elem the node or edge the existence of which is to be checked

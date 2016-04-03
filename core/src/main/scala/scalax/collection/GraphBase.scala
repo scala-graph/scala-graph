@@ -66,13 +66,22 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
    * because `Graph` is also `SetLike` with set elements being nodes or edges.  
    */
   def graphSize = edges.size
-  def isDirected: Boolean
-  def isHyper: Boolean
-  def isMulti: Boolean
   
+  /** Whether all edges of this graph are directed. */
+  def isDirected: Boolean
+  /** Whether this graph contains at least one hyperedges. */
+  def isHyper: Boolean
+  /** Whether this graph contains at least one multi-edge. We defnie multi-edges by
+   *    a. two or more directed edges having the same source and target
+   *    a. two or more undirected edges connecting the same nodes
+   *    a. two or more (directed) hyperedges that, after being decomposed into (directed) edges,
+           yield any multy-edge as stipulated above.
+   */
+  def isMulti: Boolean
+
   type NodeFilter = NodeT => Boolean
   type EdgeFilter = EdgeT => Boolean
-  
+
   // Must be val since eq does not work for def.
   /** Default node filter letting traverse all nodes (non-filter). */
   final val anyNode: NodeFilter = _ => true
@@ -105,7 +114,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     def edges: ExtSet[EdgeT]
     /** Synonym for `edges`. */  
     @inline final def ~ = edges
-    
+
     /**
      * All edges connecting this node with `other` including outgoing and incoming edges.
      * This method is useful in case of multigraphs.
@@ -664,7 +673,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     final def draw(random: Random) = (nodes draw random).edges draw random
     final def findEntry[B](other: B, correspond: (EdgeT, B) => Boolean): EdgeT = {
       def find(edge: E[N]): EdgeT = correspond match {
-        case c: ((EdgeT, E[N]) => Boolean) => nodes.lookup(edge._1).edges findEntry (edge, c) 
+        case c: ((EdgeT, E[N]) => Boolean) @unchecked => nodes.lookup(edge._1).edges findEntry (edge, c) 
         case _ => throw new IllegalArgumentException
       } 
       other match {

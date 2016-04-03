@@ -62,33 +62,44 @@ class TEditRootTest
     m.edges.head should be (UnDiEdge(2,3))
   }
 	// ---------------------------------------- mutable tests
-	val mutableFactory = mutable.Graph 
   def test_PlusEq {
-    val g = mutableFactory[Int,Nothing](1, 3)
+    val g = mutable.Graph[Int,Nothing](1, 3)
     g += 2
     g should have size (3)
     for (i <- 1 to 3)
       g.contains(i) should be (true) //g should contain (i)
   }
   def test_MinusEq {
-    val g = mutableFactory(1, 2, 2~3, 4)
+    val g = mutable.Graph(1, 2, 2~3, 4)
     g remove 1 should be (true)
-    g          should be (mutableFactory(2~3, 4))
+    g          should be (mutable.Graph(2~3, 4))
     g remove 5 should be (false)
     g -?  2    should be (g)
     (g -?= 2)  should be (g)
-    (g -= 2)   should be (mutableFactory[Int,UnDiEdge](3, 4))
+    (g -= 2)   should be (mutable.Graph[Int,UnDiEdge](3, 4))
     g.clear
     g          should be ('empty)
 	}
   def test_MinusEq_2 {
-    val g = mutableFactory(1~2, 2~3)
-    (g -=  2)   should be (mutableFactory[Int,UnDiEdge](1, 3))
+    val g = mutable.Graph(1~2, 2~3)
+    (g -=  2)   should be (mutable.Graph[Int,UnDiEdge](1, 3))
     g.graphSize should be (0)
   }
+	def test_MinusIsDirected {
+    val (di, unDi) = (1 ~> 2, 2 ~ 3)
+    val wDi = edge.WDiEdge(1, 2)(0)
+    val g = mutable.Graph(unDi)
+    def directed(expected: Boolean): Unit = g.isDirected should be (expected)
+    
+                directed(false)      
+    g.clear;    directed(true)
+	  g += di;    directed(true)
+	  g += unDi;  directed(false)
+    g.clear;    directed(true)
+	}
   def test_diSucc {
     val (one, two, oneOne, oneTwo) = (1, 2, 1~>1, 1~>2)
-    val g = mutableFactory(oneOne, oneTwo, one~>3, one~>4)
+    val g = mutable.Graph(oneOne, oneTwo, one~>3, one~>4)
     val (n1, n2) = (g get one, g get two)
     val e11 = g get oneOne
     
@@ -111,7 +122,7 @@ class TEditRootTest
   }
   def test_diSuccDiHyper {
     val (one, two, three, oneOneTwo, oneTwoThree) = (1, 2, 3, 1~>1~>2, 1~>2~>3)
-    val g = mutableFactory(oneOneTwo, oneTwoThree)
+    val g = mutable.Graph(oneOneTwo, oneTwoThree)
     val (n1, n2) = (g get one, g get two)
     val e112 = g get oneOneTwo
 
@@ -132,7 +143,7 @@ class TEditRootTest
     (n1 ~>? n1) should be (Some(oneOneTwo))
   }
   def test_PlusEdgeEq {
-    val g = mutableFactory(2~3)
+    val g = mutable.Graph(2~3)
     def n(i: Int) = g get i
     implicit val unDiFactory = UnDiEdge 
     g addEdge (n(3), n(2))  should be (false)
@@ -149,13 +160,13 @@ class TEditRootTest
   }
   def test_PlusHyperEdgeEq {
     implicit val factory = HyperEdge
-    val h = mutableFactory(1~1~2)
+    val h = mutable.Graph(1~1~2)
     h should have ('order (2), 'graphSize (1))
     h +~= (0, 1, 2, 3)
     h should have ('order (4), 'graphSize (2))
   }
   def test_PlusWEdgeEq {
-    val g = mutableFactory(2~3)
+    val g = mutable.Graph(2~3)
     implicit val f = edge.WUnDiEdge
     g.addWEdge (3,4)(2)
     g should have ('order (3), 'graphSize (2), 'totalWeight (3))
@@ -165,7 +176,7 @@ class TEditRootTest
   }
   def test_PlusWHyperEdgeEq {
     implicit val factory = edge.WHyperEdge
-    val h = mutableFactory(1~1~2)
+    val h = mutable.Graph(1~1~2)
     h should have ('order (2), 'graphSize (1))
     h.addWEdge (3,4,5)(2)
     h should have ('order (5), 'graphSize (2), 'totalWeight (3))
@@ -179,7 +190,7 @@ class TEditRootTest
     type StringLabel = Option[String]
     val str = "A"
     val label: StringLabel = Some(str)
-    val g = mutableFactory(2~3, (2 ~+# 3)(label))
+    val g = mutable.Graph(2~3, (2 ~+# 3)(label))
     g should have ('order (2), 'graphSize (2))
 
     import edge.LBase.{LEdgeImplicits}
@@ -209,7 +220,7 @@ class TEditRootTest
 
     type StringLabel = String
     val outerLabels = Seq("A", "BC", "CDE")
-    val g = mutableFactory(1~2~3, (2 ~+# 3)(outerLabels(0)))
+    val g = mutable.Graph(1~2~3, (2 ~+# 3)(outerLabels(0)))
 
     implicit val factory = LHyperEdge
     (g +~+= (3,4,5))(outerLabels(1))
@@ -232,17 +243,17 @@ class TEditRootTest
   }
   def test_pluPlusEq {
     val (gBefore, gAfter) = (
-        mutableFactory(1, 2~3),
-        mutableFactory(0, 1~2, 2~3)) 
+        mutable.Graph(1, 2~3),
+        mutable.Graph(0, 1~2, 2~3)) 
     (gBefore ++= List[Param[Int,UnDiEdge]](1~2, 2~3, 0)) should equal (gAfter)
-    (gBefore ++= mutableFactory(0, 1~2))                 should equal (gAfter)
-    (gBefore ++= mutableFactory[Int,UnDiEdge](0)
-             ++= mutableFactory(1~2))                    should equal (gAfter)
+    (gBefore ++= mutable.Graph(0, 1~2))                 should equal (gAfter)
+    (gBefore ++= mutable.Graph[Int,UnDiEdge](0)
+             ++= mutable.Graph(1~2))                    should equal (gAfter)
   }
   def test_upsert {
     import edge.LDiEdge, edge.LBase._
     val (label, modLabel) = ("A", "B")
-    val g = mutableFactory(LDiEdge(1, 2)(label), LDiEdge(2, 3)(label))
+    val g = mutable.Graph(LDiEdge(1, 2)(label), LDiEdge(2, 3)(label))
 
     g.edges foreach { _.edge match {
       case LDiEdge(s, t, l) => g upsert (LDiEdge(s.value, t.value)(modLabel)) 
@@ -309,12 +320,32 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     factory(N1() ~> N2(), N1() ~> N1())
 	}
 	def test_isDirected {
-	  factory(1~2).isDirected should be (false)
-	  factory(edge.WDiEdge(1, 2)(0)).isDirected should be (true)
+    def directed(g: CC[Int,UnDiEdge], expected: Boolean): Unit = g.isDirected should be (expected)
+    val wDi = edge.WDiEdge(1, 2)(0)
+    
+    factory(wDi).isDirected should be (true)
+    directed(factory(1 ~ 2), false)
+    directed(factory(1 ~> 2), true)
+    directed(factory(wDi), true)
+    directed(factory(0~>1, wDi), true)
 	}
   def test_isHyper {
-    factory(1~2).isHyper should be (false)
-    factory(edge.WDiHyperEdge(1, 2, 3)(0)).isHyper should be (true)
+    def hyper(g: CC[Int,HyperEdge], expected: Boolean): Unit = g.isHyper should be (expected)
+    val wDiHyper = edge.WDiHyperEdge(1, 2, 3)(0)
+    
+    factory(1 ~ 2).isHyper should be (false)
+    factory(wDiHyper).isHyper should be (true)
+    hyper(factory(1 ~> 2, wDiHyper), true)
+    hyper(factory(1 ~> 2), false)
+  }
+  def test_isMulti {
+    import edge.WkDiEdge
+    def multi(g: CC[Int,UnDiEdge], expected: Boolean): Unit = g.isMulti should be (expected)
+    val (wDi_1, wDi_2) = (WkDiEdge(1, 2)(0), WkDiEdge(1, 2)(1))
+    
+    multi(factory(1 ~ 2), false)
+    multi(factory(1 ~ 2, 1 ~> 2), false)
+    multi(factory(wDi_1, wDi_2), true)
   }
 	def test_Constructor {
 	  val (n_start, n_end) = (11, 20)
