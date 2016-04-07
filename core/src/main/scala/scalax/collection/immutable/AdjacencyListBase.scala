@@ -191,8 +191,8 @@ trait AdjacencyListBase[N,
   type NodeSetT <: NodeSet
   trait NodeSet extends super.NodeSet {
     protected val coll = ExtHashSet.empty[NodeT]
-    override protected[collection] def initialize(nodes: collection.Iterable[N],
-                                                  edges: collection.Iterable[E[N]]) = {
+    override protected[collection] def initialize(nodes: Traversable[N],
+                                                  edges: Traversable[E[N]]) = {
       if (nodes ne null) 
         coll ++= nodes map (Node(_))
     }

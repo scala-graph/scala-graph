@@ -66,10 +66,9 @@ trait AdjacencyListGraph[N,
   @SerialVersionUID(7873L)
   class EdgeSet extends super.EdgeSet
   {
-    override protected[collection] def initialize(edges: collection.Iterable[E[N]]) {
+    override protected[collection] def initialize(edges: Traversable[E[N]]): Unit =
       if (edges ne null)
         edges foreach (this += Edge(_))
-    }
 
     @inline final protected[AdjacencyListGraph] def +=(edge: EdgeT): this.type = {
       if (nodes add edge) statistics(edge, plus = true) else false

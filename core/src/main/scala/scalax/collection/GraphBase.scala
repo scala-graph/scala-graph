@@ -44,8 +44,8 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
    * @param nodes $INNODES
    * @param edges $INEDGES
    */
-  protected def initialize( nodes: Iterable[N],
-                            edges: Iterable[E[N]] ) {
+  protected def initialize( nodes: Traversable[N],
+                            edges: Traversable[E[N]] ) {
     this.nodes.initialize(nodes, edges)
     this.edges.initialize(edges)
   }
@@ -395,8 +395,8 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      * @param nodes $INNODES
      * @param edges $INEDGES
      */
-    protected[collection] def initialize(nodes: Iterable[N],
-                                         edges: Iterable[E[N]]): Unit
+    protected[collection] def initialize(nodes: Traversable[N],
+                                         edges: Traversable[E[N]]): Unit
     override def stringPrefix: String = "NodeSet"
     /**
      * Sorts all nodes according to `ord` and concatenates them using `separator`. 
@@ -627,7 +627,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
      *  
      * @param edges $INEDGES
      */
-    protected[collection] def initialize(edges: Iterable[E[N]]): Unit
+    protected[collection] def initialize(edges: Traversable[E[N]]): Unit
     def contains(node: NodeT): Boolean
     override def stringPrefix: String = "EdgeSet"
     /**

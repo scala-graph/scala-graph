@@ -124,7 +124,7 @@ trait AdjacencyListGraph[N,
   {
     protected[AdjacencyListGraph] var initialized = false
     
-    override protected[collection] def initialize(edges: Iterable[E[N]]) {
+    override protected[collection] def initialize(edges: Traversable[E[N]]): Unit = {
       if (edges ne null)
         edges foreach (this add Edge(_))
       initialized = true
