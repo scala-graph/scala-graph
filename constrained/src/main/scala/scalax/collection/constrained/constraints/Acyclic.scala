@@ -16,8 +16,8 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
   extends Constraint[N,E] (self)
   with    ConstraintHandlerMethods[N,E]
 {
-  override def preCreate(nodes: collection.Iterable[N],
-                         edges: collection.Iterable[E[N]]) = PreCheckResult(PostCheck)
+  override def preCreate(nodes: Traversable[N],
+                         edges: Traversable[E[N]]) = PreCheckResult(PostCheck)
   /** Adding a single node cannot produce a cycle. */
   override def preAdd(node: N) = PreCheckResult(Complete)
   /**
@@ -83,8 +83,8 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
     } else PreCheckResult(PostCheck)
 
   override def postAdd (newGraph: Graph[N,E],
-                        passedNodes: Iterable[N],
-                        passedEdges: Iterable[E[N]],
+                        passedNodes: Traversable[N],
+                        passedEdges: Traversable[E[N]],
                         preCheck   : PreCheckResult) = preCheck match {
       case Result(docking) => ! (docking exists (_.findCycle.isDefined)) 
       case _               => newGraph.isAcyclic 

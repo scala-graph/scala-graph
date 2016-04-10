@@ -39,7 +39,7 @@ object Id {
   }
   private val quotes = List(('"', '"'), ('<', '>'))
   private val rNonWhitespaceString: Regex = {
-    val firstChar = "a-zA-Z\200-\377_"
+    val firstChar = "a-zA-Z\u0080-\u00ff_"
     s"[${firstChar}][${firstChar}0-9]*".r 
   }
   private val rNumeral = "[-]?(.[0-9]+|[0-9]+(.[0-9]*)?)".r

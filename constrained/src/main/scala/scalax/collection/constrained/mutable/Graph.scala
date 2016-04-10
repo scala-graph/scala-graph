@@ -2,7 +2,7 @@ package scalax.collection.constrained
 package mutable
 
 import scala.language.{higherKinds, postfixOps}
-import scala.collection.{Set, Iterable}
+import scala.collection.Set
 import scala.collection.generic.{CanBuildFrom, Growable, Shrinkable}
 import scala.collection.mutable.{Builder, Cloneable, ListBuffer, Set => MutableSet}
 import scala.reflect.ClassTag
@@ -72,8 +72,8 @@ trait GraphLike[N,
             ( contained: => Boolean,
               preAdd:    => PreCheckResult,
               copy:      => G,
-              nodes:     => Iterable[N],
-              edges:     => Iterable[E[N]] ): This[N,E] =
+              nodes:     => Traversable[N],
+              edges:     => Traversable[E[N]] ): This[N,E] =
   { if (contained) this
     else if (checkSuspended) copy.asInstanceOf[This[N,E]]
     else {
@@ -102,7 +102,7 @@ trait GraphLike[N,
 
   override def ++=(elems: TraversableOnce[Param[N,E]]): this.type =
   { elems match {
-      case elems: Iterable[Param[N,E]] => 
+      case elems: Traversable[Param[N,E]] => 
         val p = new Param.Partitions[N,E](elems)
         val inFiltered = p.toInParams.toSet.filter(elem => ! (this contains elem)).toSeq 
         var handle = false
@@ -123,7 +123,7 @@ trait GraphLike[N,
         }
         if (handle) onAdditionRefused(p.toOuterNodes, p.toOuterEdges, this)
 
-      case _ => throw new IllegalArgumentException("Iterable expected")
+      case _ => throw new IllegalArgumentException("Traversable expected")
     }
     this
   } 
@@ -175,15 +175,15 @@ object Graph
 
   override protected[collection]
   def fromUnchecked[N, E[X] <: EdgeLikeIn[X]]
-     (nodes: Iterable[N],
-      edges: Iterable[E[N]])
+     (nodes: Traversable[N],
+      edges: Traversable[E[N]])
      (implicit edgeT: ClassTag[E[N]],
       config: Config): DefaultGraphImpl[N,E] =
     DefaultGraphImpl.fromUnchecked[N,E](nodes, edges)(edgeT, config)
 
   override def from [N, E[X] <: EdgeLikeIn[X]]
-     (nodes: Iterable[N],
-      edges: Iterable[E[N]])
+     (nodes: Traversable[N],
+      edges: Traversable[E[N]])
      (implicit edgeT: ClassTag[E[N]],
       config: Config): Graph[N,E] =
     DefaultGraphImpl.from[N,E](nodes, edges)(edgeT, config)
@@ -191,8 +191,8 @@ object Graph
   // TODO: canBuildFrom
 }
 abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
-   (iniNodes: Iterable[N]    = Set[N](),
-    iniEdges: Iterable[E[N]] = Set[E[N]]())
+   (iniNodes: Traversable[N]    = Set[N](),
+    iniEdges: Traversable[E[N]] = Set[E[N]]())
    (implicit override val edgeT: ClassTag[E[N]],
     _config: DefaultGraphImpl.Config with GenConstrainedConfig with AdjacencyListArrayConfig)
   extends Graph[N,E]
@@ -228,15 +228,15 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl]
     from(Set.empty[N], Set.empty[E[N]])(edgeT, config)
 
   override protected[collection]
-  def fromUnchecked[N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N],
-                                              edges: Iterable[E[N]])
+  def fromUnchecked[N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N],
+                                              edges: Traversable[E[N]])
                                              (implicit edgeT: ClassTag[E[N]],
                                               config: Config): DefaultGraphImpl[N,E] =
     new UserConstrainedGraphImpl[N,E](nodes, edges)(edgeT, config)
 
   override def from [N, E[X] <: EdgeLikeIn[X]]
-     (nodes: Iterable[N],
-      edges: Iterable[E[N]])
+     (nodes: Traversable[N],
+      edges: Traversable[E[N]])
      (implicit edgeT: ClassTag[E[N]],
       config: Config) : DefaultGraphImpl[N,E] =
   { val existElems = nodes.nonEmpty || edges.nonEmpty 
@@ -271,8 +271,8 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl]
   // TODO canBuildFrom
 }
 class UserConstrainedGraphImpl[N, E[X] <: EdgeLikeIn[X]]
-   (iniNodes: Iterable[N]    = Set.empty[N],
-    iniEdges: Iterable[E[N]] = Set.empty[E[N]])
+   (iniNodes: Traversable[N]    = Nil,
+    iniEdges: Traversable[E[N]] = Nil)
    (implicit override val edgeT: ClassTag[E[N]],
     _config: DefaultGraphImpl.Config)
   extends DefaultGraphImpl    [N,E](iniNodes, iniEdges)(edgeT, _config)

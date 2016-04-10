@@ -210,8 +210,7 @@ trait GraphLike[N,
     this
   }
   /**
-   * Removes all elements of `coll` from this graph. Edges will be
-   * ripple removed.
+   * Removes all elements of `coll` from this graph. Edges will be ripple removed.
    *
    * @param coll Collection of nodes and/or edges to be removed; if the element type is N,
    *             it is removed from the node set otherwise from the edge set.
@@ -247,8 +246,8 @@ object Graph
 	def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                       config: Config = defaultConfig): Graph[N,E] =
 	  new DefaultGraphImpl[N,E]()(edgeT, config)
-  override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Seq.empty[N],
-                                              edges: Iterable[E[N]])
+  override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil,
+                                              edges: Traversable[E[N]])
                                              (implicit edgeT: ClassTag[E[N]],
                                               config: Config = defaultConfig): Graph[N,E] =
     DefaultGraphImpl.from[N,E](nodes, edges)(
@@ -261,8 +260,8 @@ object Graph
 }
 @SerialVersionUID(73L)
 class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
-    ( iniNodes: Iterable[N]    = Set[N](),
-      iniEdges: Iterable[E[N]] = Set[E[N]]())
+    ( iniNodes: Traversable[N]    = Set[N](),
+      iniEdges: Traversable[E[N]] = Set[E[N]]())
     ( implicit override val edgeT: ClassTag[E[N]],
       override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
   extends Graph[N,E]
@@ -294,8 +293,8 @@ object DefaultGraphImpl
 	def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                       config: Config = defaultConfig) =
 	  new DefaultGraphImpl[N,E]()(edgeT, config)
-  override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Seq.empty[N],
-                                              edges: Iterable[E[N]])
+  override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil,
+                                              edges: Traversable[E[N]])
                                              (implicit edgeT: ClassTag[E[N]],
                                               config: Config = defaultConfig) =
     new DefaultGraphImpl[N,E](nodes, edges)(

@@ -67,8 +67,8 @@ trait GraphCompanion[+CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[
    * @return  A new graph instance containing `nodes` and all edge ends
    *          and `edges`.
    */
-  def from [N, E[X] <: EdgeLikeIn[X]](nodes: collection.Iterable[N] = Seq.empty[N],
-                                      edges: collection.Iterable[E[N]])
+  def from [N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil,
+                                      edges: Traversable[E[N]])
                                      (implicit edgeT: ClassTag[E[N]],
                                       config: Config): CC[N,E]
   /**
@@ -115,8 +115,8 @@ trait GraphCoreCompanion[+CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphL
                                      (implicit edgeT: ClassTag[E[N]],
                                       config: Config = defaultConfig): CC[N,E] =
     super.apply(elems: _*)(edgeT, config)
-  def from [N, E[X] <: EdgeLikeIn[X]](nodes: collection.Iterable[N] = Seq.empty[N],
-                                      edges: collection.Iterable[E[N]])
+  def from [N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil,
+                                      edges: Traversable[E[N]])
                                      (implicit edgeT: ClassTag[E[N]],
                                       config: Config = defaultConfig): CC[N,E]
   override

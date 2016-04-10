@@ -20,8 +20,8 @@ trait AdjacencyListGraph[N,
   with    SimpleAdjacencyListGraph[N,E,This]
 { this: This[N,E] =>
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig 
-  override protected def initialize(nodes: Iterable[N],
-                                    edges: Iterable[E[N]] ) {
+  override protected def initialize(nodes: Traversable[N],
+                                    edges: Traversable[E[N]] ) {
     withoutChecks { super.initialize(nodes, edges) }
   }
   /** generic constrained addition */
@@ -29,8 +29,8 @@ trait AdjacencyListGraph[N,
             ( contained: => Boolean,
               preAdd:    => PreCheckResult,
               copy:      => G,
-              nodes:     => Iterable[N],
-              edges:     => Iterable[E[N]] ): This[N,E] =
+              nodes:     => Traversable[N],
+              edges:     => Traversable[E[N]] ): This[N,E] =
   { if (checkSuspended)
       copy.asInstanceOf[This[N,E]]
     else {

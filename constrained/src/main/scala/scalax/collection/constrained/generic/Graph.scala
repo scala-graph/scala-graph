@@ -3,7 +3,6 @@ package generic
 
 import scala.language.{higherKinds, postfixOps}
 import scala.annotation.unchecked.uncheckedVariance
-import scala.collection.Iterable
 import scala.collection.mutable.{Builder, ListBuffer}
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
@@ -26,8 +25,8 @@ trait GraphConstrainedCompanion[+GC[N,E[X]<:EdgeLikeIn[X]] <:
   def defaultConfig = ConstrainedConfig()
   /** Same as `from` except for constraint being suppressed. */
   protected[collection] def fromUnchecked[N, E[X] <: EdgeLikeIn[X]]
-     (nodes: Iterable[N],
-      edges: Iterable[E[N]])
+     (nodes: Traversable[N],
+      edges: Traversable[E[N]])
      (implicit edgeT: ClassTag[E[N]],
       config: Config) : GC[N,E]
   override def newBuilder[N, E[X] <: EdgeLikeIn[X]]
@@ -50,8 +49,8 @@ abstract class GraphConstrainedCompanionAlias
               (implicit edgeT: ClassTag[E[N]],
                config: GraphConfig): Graph[N,E] = companion(elems: _*)(edgeT, constraintCompanion)
 
-  def from[N](nodes: Iterable[N],
-              edges: Iterable[E[N]])
+  def from[N](nodes: Traversable[N],
+              edges: Traversable[E[N]])
              (implicit edgeT: ClassTag[E[N]],
               config: GraphConfig): Graph[N,E] = companion.from(nodes, edges)(edgeT, constraintCompanion)
 }

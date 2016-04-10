@@ -84,8 +84,8 @@ trait AdjacencyListGraph[N,
   }
   override val edges: EdgeSetT
 
-  def copy(nodes: collection.Iterable[N],
-           edges: collection.Iterable[E[N]]): This[N,E]
+  def copy(nodes: Traversable[N],
+           edges: Traversable[E[N]]): This[N,E]
   def + (n: N)  = if (nodes contains Node(n)) this
                   else copy(nodes.toOuter.toBuffer += n,
                             edges.toOuter)

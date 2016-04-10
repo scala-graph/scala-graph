@@ -49,21 +49,21 @@ object GraphPredef {
     /**
      * Enables to query partitions of a collection of `Param`.
      */
-    final class Partitions[N, E[X]<:EdgeLikeIn[X]](val elems: Iterable[Param[N,E]]) {
+    final class Partitions[N, E[X]<:EdgeLikeIn[X]](val elems: Traversable[Param[N,E]]) {
       lazy val partitioned = elems match {
         case g: Graph[N,E] => (g.nodes, g.edges)
         case x             => x partition (_.isNode)
       }
-      def nodeParams = partitioned._1.asInstanceOf[Iterable[NodeParam[N]]]
-      def edgeParams = partitioned._2.asInstanceOf[Iterable[EdgeParam]]
+      def nodeParams = partitioned._1.asInstanceOf[Traversable[NodeParam[N]]]
+      def edgeParams = partitioned._2.asInstanceOf[Traversable[EdgeParam]]
   
-      def toOuterNodes: Iterable[N]    = nodeParams map (_.value)
-      def toOuterEdges: Iterable[E[N]] = edgeParams map {_ match {
+      def toOuterNodes: Traversable[N]    = nodeParams map (_.value)
+      def toOuterEdges: Traversable[E[N]] = edgeParams map {_ match {
         case e: OuterEdge[N,E] => e.edge
         case e: InnerEdgeParam[N,E,_,E] => e.asEdgeTProjection[N,E].toOuter
       }}
 
-      def toInParams: Iterable[InParam[N,E]] = elems map {_ match {
+      def toInParams: Traversable[InParam[N,E]] = elems map {_ match {
         case in: InParam[N,E] => in
         case n: InnerNodeParam[N]         => OuterNode(n.value)
         case e: InnerEdgeParam[N,E,_,E] => e.asEdgeTProjection[N,E].toOuter.asInstanceOf[OuterEdge[N,E]]
@@ -71,10 +71,9 @@ object GraphPredef {
     }
   }
   implicit def graphParamsToPartition[N, E[X]<:EdgeLikeIn[X]]
-              (elems: Iterable[Param[N,E]]) = new Param.Partitions[N,E](elems)
+              (elems: Traversable[Param[N,E]]) = new Param.Partitions[N,E](elems)
               
-  implicit def nodeSetToOuter[N, E[X]<:EdgeLikeIn[X]](nodes: Graph[N,E]#NodeSetT)
-      : Iterable[N] =
+  implicit def nodeSetToOuter[N, E[X]<:EdgeLikeIn[X]](nodes: Graph[N,E]#NodeSetT): Iterable[N] =
     new AbstractIterable[N] {
       def iterator = new AbstractIterator[N] {
         private[this] val it = nodes.iterator
@@ -86,8 +85,7 @@ object GraphPredef {
   implicit def nodeSetToSeq[N, E[X]<:EdgeLikeIn[X]](nodes: Graph[N,E]#NodeSetT)
       : Seq[OutParam[N,E]] = new SeqFacade(nodes)
   
-  implicit def edgeSetToOuter[N, E[X]<:EdgeLikeIn[X]](edges: Graph[N,E]#EdgeSetT)
-      : Iterable[E[N]] =
+  implicit def edgeSetToOuter[N, E[X]<:EdgeLikeIn[X]](edges: Graph[N,E]#EdgeSetT): Iterable[E[N]] =
     new AbstractIterable[E[N]] {
       def iterator = new AbstractIterator[E[N]] {
         private[this] val it = edges.iterator

@@ -72,8 +72,8 @@ object AcyclicWithException {
   object Acyclic extends ConstraintCompanion[Acyclic] {
     def apply [N, E[X] <: EdgeLikeIn[X]] (self: Graph[N,E]) =
       new Acyclic[N,E] (self) {
-        override def onAdditionRefused( refusedNodes: Iterable[N],
-                                        refusedEdges: Iterable[E[N]],
+        override def onAdditionRefused( refusedNodes: Traversable[N],
+                                        refusedEdges: Traversable[E[N]],
                                         graph:        Graph[N,E]) =
         { throw new CycleException("Addition refused: " +
                     "nodes = " + refusedNodes + ", " +

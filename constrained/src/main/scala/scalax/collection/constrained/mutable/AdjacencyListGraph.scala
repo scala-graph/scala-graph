@@ -29,8 +29,8 @@ trait AdjacencyListGraph[N,
   with    SimpleAdjacencyListGraph[N,E,This]
 { selfGraph: This[N,E] =>
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig 
-  override protected def initialize(nodes: Iterable[N],
-                                    edges: Iterable[E[N]] ) {
+  override protected def initialize(nodes: Traversable[N],
+                                    edges: Traversable[E[N]] ) {
     withoutChecks { super.initialize(nodes, edges) }
   }
   @SerialVersionUID(8083L)

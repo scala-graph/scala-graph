@@ -18,8 +18,8 @@ class Connected[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
  extends Constraint[N, E] (self)
 {
   /** Skips this pre-check to rely on the post-check `postAdd` except for trivial cases. */
-  override def preCreate(nodes: collection.Iterable[N],
-                         edges: collection.Iterable[E[N]]) =
+  override def preCreate(nodes: Traversable[N],
+                         edges: Traversable[E[N]]) =
     PreCheckResult(
       if (edges.isEmpty && nodes.size <= 1 ||
           nodes.isEmpty && edges.size <= 1) Complete
@@ -46,8 +46,8 @@ class Connected[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
   }
   /** Check the whole `newGraph`. */
   override def postAdd (newGraph   : Graph[N,E],
-                        passedNodes: Iterable[N],
-                        passedEdges: Iterable[E[N]],
+                        passedNodes: Traversable[N],
+                        passedEdges: Traversable[E[N]],
                         preCheck   : PreCheckResult) = newGraph.isConnected
 
   /**

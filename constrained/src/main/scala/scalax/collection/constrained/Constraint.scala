@@ -55,8 +55,8 @@ protected trait ConstraintHandlerMethods[N, E[X] <: EdgeLikeIn[X]] {
    * @param refusedEdges the edges passed to `preAdd`.
    * @return $HANDLERRET
    */
-  def onAdditionRefused(refusedNodes: Iterable[N],
-                        refusedEdges: Iterable[E[N]],
+  def onAdditionRefused(refusedNodes: Traversable[N],
+                        refusedEdges: Traversable[E[N]],
                         graph:        Graph[N,E]): Boolean = false
   /** This handler is called whenever a subtraction violates the constraints.
    *  The provided default implementation is empty.
@@ -65,8 +65,8 @@ protected trait ConstraintHandlerMethods[N, E[X] <: EdgeLikeIn[X]] {
    * @param refusedEdges the edges passed to `preSubtract`.
    * @return $HANDLERRET
    */
-  def onSubtractionRefused (refusedNodes: Iterable[Graph[N,E]#NodeT],
-                            refusedEdges: Iterable[Graph[N,E]#EdgeT],
+  def onSubtractionRefused (refusedNodes: Traversable[Graph[N,E]#NodeT],
+                            refusedEdges: Traversable[Graph[N,E]#EdgeT],
                             graph:        Graph[N,E]): Boolean = false
 }
 /** Enumerates the possible return statuses (also: follow-up activity) of a pre-check:
@@ -168,8 +168,8 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X]] {
    *  @param edges the outer edges the graph is to be populated with.
    *  @return $PRECHECKRET
    */
-  def preCreate(nodes: collection.Iterable[N],
-                edges: collection.Iterable[E[N]]): PreCheckResult =
+  def preCreate(nodes: collection.Traversable[N],
+                edges: collection.Traversable[E[N]]): PreCheckResult =
     PreCheckResult.postCheck((nodes forall ((n: N)    => ! preAdd(n).abort)) &&
                              (edges forall ((e: E[N]) => ! preAdd(e).abort))  )
   /**
@@ -228,8 +228,8 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X]] {
    * @param wasEmpty `true` if `self` was empty before the addition.
    */
   def postAdd(newGraph   : Graph[N,E],
-              passedNodes: Iterable[N],
-              passedEdges: Iterable[E[N]],
+              passedNodes: Traversable[N],
+              passedEdges: Traversable[E[N]],
               preCheck   : PreCheckResult): Boolean = true
 
   /**
@@ -290,13 +290,13 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X]] {
    * @param newGraph the after-subtraction would-be graph waiting for commit.
    */
   def postSubtract (newGraph: Graph[N,E],
-                    passedNodes: Iterable[N],
-                    passedEdges: Iterable[E[N]],
+                    passedNodes: Traversable[N],
+                    passedEdges: Traversable[E[N]],
                     preCheck   : PreCheckResult): Boolean = true
   /** Consolidates all outer nodes of the arguments by adding the edge ends
    *  of `passedEdges` to `passedNodes`. */
-  protected def allNodes(passedNodes: Iterable[N],
-                         passedEdges: Iterable[E[N]]): Set[N] =
+  protected def allNodes(passedNodes: Traversable[N],
+                         passedEdges: Traversable[E[N]]): Set[N] =
   {
     val nodes = collection.mutable.Set[N]() ++ passedNodes
     passedEdges foreach (nodes ++= _)

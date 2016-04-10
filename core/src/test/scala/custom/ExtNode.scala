@@ -50,8 +50,8 @@ package immutable {
    *  You just need to replace the occurrences of `MyExtGraphLike`.  
    */
   class MyExtGraph[N, E[X] <: EdgeLikeIn[X]]
-      ( iniNodes: Iterable[N]    = Set[N](),
-        iniEdges: Iterable[E[N]] = Set[E[N]]() )
+      ( iniNodes: Traversable[N]    = Nil,
+        iniEdges: Traversable[E[N]] = Nil)
       ( implicit override val edgeT: ClassTag[E[N]],
         val _config: MyExtGraph.Config with AdjacencyListArrayConfig)
     extends ImmutableGraph[N,E]
@@ -72,8 +72,8 @@ package immutable {
     @inline final override def empty = MyExtGraph.empty[N,E]
     @inline final override def clone = MyExtGraph.from [N,E](nodes.toOuter,
                                                              edges.toOuter)
-    @inline final override def copy(nodes: Iterable[N],
-                                    edges: Iterable[E[N]])=
+    @inline final override def copy(nodes: Traversable[N],
+                                    edges: Traversable[E[N]])=
       MyExtGraph.from[N,E](nodes, edges)
     final protected class NodeBase(value: N, hints: ArraySet.Hints)
       extends InnerNodeImpl(value, hints)
@@ -86,8 +86,8 @@ package immutable {
   {
     def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                         config: Config) = new MyExtGraph[N,E]
-    override def from [N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N],
-                                                 edges: Iterable[E[N]])
+    override def from [N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil,
+                                                 edges: Traversable[E[N]])
                                                 (implicit edgeT: ClassTag[E[N]],
                                                  config: Config) =
       new MyExtGraph[N,E](nodes, edges)
@@ -105,8 +105,8 @@ package mutable {
    *  You just need to replace the occurrences of `MyMutableExtGraph`.  
    */
   class MyExtGraph[N, E[X] <: EdgeLikeIn[X]]
-      ( iniNodes: Iterable[N]    = Set[N](),
-        iniEdges: Iterable[E[N]] = Set[E[N]]() )
+      ( iniNodes: Traversable[N]    = Set[N](),
+        iniEdges: Traversable[E[N]] = Set[E[N]]() )
       ( implicit override val edgeT: ClassTag[E[N]],
         val _config: MyExtGraph.Config with AdjacencyListArrayConfig)
     extends MutableGraph[N,E]
@@ -138,8 +138,8 @@ package mutable {
   {
     def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                         config: Config) = new MyExtGraph[N,E]
-    override def from [N, E[X] <: EdgeLikeIn[X]](nodes: Iterable[N],
-                                                 edges: Iterable[E[N]])
+    override def from [N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N],
+                                                 edges: Traversable[E[N]])
                                                 (implicit edgeT: ClassTag[E[N]],
                                                  config: Config) =
       new MyExtGraph[N,E](nodes, edges)

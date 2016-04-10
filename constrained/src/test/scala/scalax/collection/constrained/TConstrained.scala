@@ -141,8 +141,8 @@ object UserConstraints {
   class EvenNodeByException[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
     extends EvenNode[N,E](self)
   {
-    override def onAdditionRefused (refusedNodes: Iterable[N],
-                                    refusedEdges: Iterable[E[N]],
+    override def onAdditionRefused (refusedNodes: Traversable[N],
+                                    refusedEdges: Traversable[E[N]],
                                     graph:        Graph[N,E]) = {
       throw new IllegalArgumentException("Non-integer or uneven node found.")
     }
@@ -162,8 +162,8 @@ object UserConstraints {
     val min: Int
 
     // difficult to say so postpone it until post-check
-    override def preCreate(nodes: collection.Iterable[N],
-                           edges: collection.Iterable[E[N]]) = postCheck
+    override def preCreate(nodes: collection.Traversable[N],
+                           edges: collection.Traversable[E[N]]) = postCheck
     // this would become an unconnected node with a degree of 0
     def preAdd(node: N) = checkAbort
     // edge ends not yet contained in the graph would have a degree of 1
@@ -174,14 +174,14 @@ object UserConstraints {
     override def preAdd(elems: InParam[N,E]*) = postCheck
     // inspecting the would-be graph is much easier
     override def postAdd (newGraph: Graph[N,E],
-                          passedNodes: Iterable[N],
-                          passedEdges: Iterable[E[N]],
+                          passedNodes: Traversable[N],
+                          passedEdges: Traversable[E[N]],
                           preCheck   : PreCheckResult) = 
     { allNodes(passedNodes, passedEdges) forall (
         n => (newGraph get n).degree >= min)
     }
-    override def onAdditionRefused( refusedNodes: Iterable[N],
-                                    refusedEdges: Iterable[E[N]],
+    override def onAdditionRefused( refusedNodes: Traversable[N],
+                                    refusedEdges: Traversable[E[N]],
                                     graph:        Graph[N,E]) =
     { throw new MinDegreeException("Addition refused: " +
                 "nodes = " + refusedNodes + ", " +
@@ -222,15 +222,15 @@ object UserConstraints {
       }
     )
     override def postSubtract(newGraph: Graph[N,E],
-                              passedNodes: Iterable[N],
-                              passedEdges: Iterable[E[N]],
+                              passedNodes: Traversable[N],
+                              passedEdges: Traversable[E[N]],
                               preCheck   : PreCheckResult) = preCheck match {
       case Result(nodesToCheck) => nodesToCheck forall {
         n => newGraph.get(n).degree >= min
       }
     }
-    override def onSubtractionRefused(refusedNodes: Iterable[Graph[N,E]#NodeT],
-                                      refusedEdges: Iterable[Graph[N,E]#EdgeT],
+    override def onSubtractionRefused(refusedNodes: Traversable[Graph[N,E]#NodeT],
+                                      refusedEdges: Traversable[Graph[N,E]#EdgeT],
                                       graph:        Graph[N,E]) =
     { throw new MinDegreeException("Subtraction refused: " +
                 "nodes = " + refusedNodes + ", " +
