@@ -53,11 +53,11 @@ final class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLi
     protected class Exec(filename: String) extends super.Exec {
       import FileSerialization._
       def save   [N, E[X] <: EdgeLikeIn[X]](g: CC[N,E]): Unit = write(g, filename) recover {
-        case e => fail("Couldn't write: " + g, e)
+        case e => fail(s"Couldn't write $g: $e")
       } 
       
       def restore[N, E[X] <: EdgeLikeIn[X]]: CC[N,E] = read(filename).recover {
-        case e => fail("Couldn't read", e)
+        case e => fail(s"Couldn't read graph: $e")
       }.get
     }
     private val tmpDir = System.getProperty("java.io.tmpdir")
@@ -298,23 +298,57 @@ object FileSerialization {
 case class MyNode (val s: List[String]) extends Serializable
 case class MyLabel(val s: String)       extends Serializable
 
-// checking https://issues.scala-lang.org/browse/SI-5773?jql=text%20~%20%22%40transient%22
-protected object ScalaObjectSerialization extends Serializable with App {
+// examining https://issues.scala-lang.org/browse/SI-5773?jql=text%20~%20%22%40transient%22
+protected object ScalaObjectSerialization extends App {
+
+  private trait Base {
+    trait Inner {
+      def d: String
+      def v: String
+    }
+    def inner: Inner
+  }
   
-  implicit final class RightBiasedEither[A,B](val either: Either[A,B]) extends AnyVal {
-    def map[C](f: B => C): Either[A,C] = either.right map f
-    def flatMap[D](f: B => Either[A,D]): Either[A,D] = either fold (Left[A,D], f)
+  private object MyObject extends Base with Serializable {
+    @transient // ok: no serialization takes place
+    object Inner extends super.Inner {
+      def d = "MyDef"
+      val v = "MyVal"
+    }
+    def inner = Inner
   }
 
-  private object My extends Serializable {
-    @transient object Inner {
-      println("Creating...")
-      def ok = println("Success")
-      var v = 1
+  private trait MyTrait extends Base with Serializable {
+    @transient // !!! ignored so Serializable needs to be mixed in
+    object Inner extends super.Inner with Serializable {
+      def d = "MyDef"
+      val v = "MyVal"
     }
+    val inner = Inner
+  }
+
+  private class MyClass extends Base with Serializable {
+    @transient // !!! same as MyTrait
+    object Inner extends super.Inner with Serializable {
+      def d = "MyDef"
+      val v = "MyVal"
+    }
+    val inner = Inner
   }
 
   import ByteArraySerialization._
-  write(My) flatMap ( saved =>
-    read[My.type](saved)) map (my => println(my.Inner.v))
+  def test[A <: Base](my: A): Unit =
+    write(my) flatMap { saved =>
+      println(s"saved (${saved.length} bytes)=${new String(saved)}")
+      println(s"  contains MyVal=${new String(saved) contains "MyVal"}")
+      read[A](saved)
+    } map (my =>
+      println(s"  okDef=${my.inner.d}, okVal=${my.inner.v}")
+    ) recover { case e =>
+      println(s"serialization of $my failed with $e")  
+    } 
+    
+  test(MyObject)
+  test(new MyTrait {})
+  test(new MyClass)
 }

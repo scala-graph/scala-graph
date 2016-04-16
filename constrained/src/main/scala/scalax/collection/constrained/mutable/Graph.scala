@@ -277,6 +277,7 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl]
   }
   // TODO canBuildFrom
 }
+@SerialVersionUID(7701L)
 class UserConstrainedGraphImpl[N, E[X] <: EdgeLikeIn[X]]
    (iniNodes: Traversable[N]    = Nil,
     iniEdges: Traversable[E[N]] = Nil)

@@ -90,10 +90,5 @@ object GraphBuild extends Build {
         )
       case _ => Nil
     })
-  ) ++ GraphSonatype.settings ++ (
-    if (Version.compilerIsRC) Seq(
-      // https://groups.google.com/forum/?fromgroups=#!topic/scala-internals/h2YhIEg8lMc
-      scalaBinaryVersion := Version.compiler)
-    else Seq()
-  )
+  ) ++ GraphSonatype.settings
 }
