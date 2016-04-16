@@ -21,10 +21,7 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity)
 
   override def empty: EqHashSet[A] = EqHashSet.empty[A](defCapacity)
 
-  @inline final override def contains(elem: A): Boolean = (index(elem): @switch) match {
-    case  i if i < 0 => false
-    case  i          => true
-  }
+  @inline final override def contains(elem: A): Boolean = index(elem) >= 0
   
   def += (elem: A): this.type = { add(elem); this }
   

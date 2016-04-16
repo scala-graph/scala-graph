@@ -1,5 +1,7 @@
 package custom
 
+import java.io.{ObjectInputStream, ObjectOutputStream}
+
 import scala.language.higherKinds
 import scala.collection.generic.CanBuildFrom
 import scala.collection.{Set => AnySet}
@@ -64,23 +66,37 @@ package immutable {
     protected type Config = MyExtGraph.Config
     override final def config = _config.asInstanceOf[graphCompanion.Config with Config]
 
-    @inline final def newNodeSet: NodeSetT = new NodeSet
-    override final val nodes = newNodeSet 
-    override final val edges = new EdgeSet
+    @inline final protected def newNodeSet: NodeSetT = new NodeSet
+    @transient private[this] var _nodes: NodeSetT = newNodeSet
+    @inline override final def nodes = _nodes
+    
+    @transient private[this] var _edges: EdgeSetT = new EdgeSet
+    @inline override final def edges = _edges
+    
     initialize(iniNodes, iniEdges)
   
     @inline final override def empty = MyExtGraph.empty[N,E]
     @inline final override def clone = MyExtGraph.from [N,E](nodes.toOuter,
                                                              edges.toOuter)
     @inline final override def copy(nodes: Traversable[N],
-                                    edges: Traversable[E[N]])=
-      MyExtGraph.from[N,E](nodes, edges)
+                                    edges: Traversable[E[N]])= MyExtGraph.from[N,E](nodes, edges)
+                                    
     final protected class NodeBase(value: N, hints: ArraySet.Hints)
       extends InnerNodeImpl(value, hints)
       with    InnerNode // inner class of  extension trait
       with    InnerNodeTraversalImpl
+      
     type NodeT = NodeBase
+    
     @inline final protected def newNodeWithHints(n: N, h: ArraySet.Hints) = new NodeT(n, h)
+
+    private def writeObject(out: ObjectOutputStream): Unit = serializeTo(out)
+  
+    private def readObject(in: ObjectInputStream): Unit = {
+      _nodes = newNodeSet
+      _edges = new EdgeSet
+      initializeFrom(in, _nodes, _edges)
+    }
   }
   object MyExtGraph extends ImmutableGraphCompanion[MyExtGraph]
   {
@@ -119,9 +135,13 @@ package mutable {
     protected type Config = MyExtGraph.Config
     override final def config = _config.asInstanceOf[graphCompanion.Config with Config]
 
-    @inline final def newNodeSet: NodeSetT = new NodeSet
-    override final val nodes = newNodeSet 
-    override final val edges = new EdgeSet
+    @inline final protected def newNodeSet: NodeSetT = new NodeSet
+    @transient private[this] var _nodes: NodeSetT = newNodeSet
+    @inline override final def nodes = _nodes
+    
+    @transient private[this] var _edges: EdgeSetT = new EdgeSet
+    @inline override final def edges = _edges
+    
     initialize(iniNodes, iniEdges)
   
     @inline final override def empty = MyExtGraph.empty[N,E]
@@ -131,8 +151,18 @@ package mutable {
       extends InnerNodeImpl(value, hints)
       with    InnerNode // inner class of  extension trait
       with    InnerNodeTraversalImpl
+      
     type NodeT = NodeBase
+    
     @inline final protected def newNodeWithHints(n: N, h: ArraySet.Hints) = new NodeT(n, h)
+
+    private def writeObject(out: ObjectOutputStream): Unit = serializeTo(out)
+  
+    private def readObject(in: ObjectInputStream): Unit = {
+      _nodes = newNodeSet
+      _edges = new EdgeSet
+      initializeFrom(in, _nodes, _edges)
+    }
   }
   object MyExtGraph extends MutableGraphCompanion[MyExtGraph]
   {
@@ -141,8 +171,7 @@ package mutable {
     override def from [N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N],
                                                  edges: Traversable[E[N]])
                                                 (implicit edgeT: ClassTag[E[N]],
-                                                 config: Config) =
-      new MyExtGraph[N,E](nodes, edges)
+                                                 config: Config) = new MyExtGraph[N,E](nodes, edges)
     implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](
         implicit edgeT: ClassTag[E[N]],
         config: Config): CanBuildFrom[Coll, InParam[N,E], MyExtGraph[N,E]] =

@@ -7,7 +7,7 @@ import GraphPredef.{InnerNodeParam, OuterEdge}
 import edge.LBase.LEdge
 
 /**
- * Container for basic edge-types to be used in the context of `Graph`.
+ * Container for basic edge types to be used in the context of `Graph`.
  * You will usually simply import all its members along with the members of Param:
  * {{{
  * import scalax.collection.GraphPredef._, scalax.collection.GraphEdge,_

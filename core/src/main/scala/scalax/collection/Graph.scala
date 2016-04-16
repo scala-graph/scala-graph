@@ -209,11 +209,11 @@ trait GraphLike[N,
       case e: OuterEdge[N,E] => edges contains newEdge(e.edge)
     } 
     case out: OutParam[_,_] => out match {
-      case n: InnerNodeParam[N] => nodes contains (
-          n.toNodeT[N,E,ThisGraph](selfGraph)(anyNode => newNode(anyNode.value))
+      case n: InnerNodeParam[N] => nodes contains
+          n.toNodeT[N,E,ThisGraph](selfGraph)(anyNode => newNode(anyNode.value)
         )
-      case e: InnerEdgeParam[N,E,_,E]  => edges contains (
-          e.toEdgeT[N,E,ThisGraph](selfGraph)(anyEdge => newEdge(anyEdge.toOuter))
+      case e: InnerEdgeParam[N,E,_,E]  => edges contains
+          e.toEdgeT[N,E,ThisGraph](selfGraph)(anyEdge => newEdge(anyEdge.toOuter)
         ) 
     } 
   }

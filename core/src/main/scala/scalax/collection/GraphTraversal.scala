@@ -570,7 +570,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     @inline final def outerNodeDownUpTraverser(implicit parameters: Parameters = Parameters()) =
       thisGraph.outerNodeDownUpTraverser(this, parameters)
   }
-  object TraverserInnerNode {
+  @transient object TraverserInnerNode {
     /* The n parameter should be of type NodeT but then Scaladoc doesn't show implicit members
      * as expected. So TraverserInnerNode is given instead with the drawback of a cast:(.
      */

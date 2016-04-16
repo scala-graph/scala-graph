@@ -1,14 +1,12 @@
 package scalax.collection
 
 import scala.language.{higherKinds, implicitConversions}
-import scala.collection.{SortedSet, SortedMap}
 import scala.util.Random
 
 import scala.collection.FilterableSet
-import GraphPredef.{EdgeLikeIn, NodeParam, OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam}
-import GraphEdge.{EdgeLike, EdgeCompanionBase, DiHyperEdgeLike}
+import GraphPredef.{EdgeLikeIn, InnerNodeParam, OuterEdge, InnerEdgeParam}
+import GraphEdge.{EdgeLike, DiHyperEdgeLike}
 import generic.AnyOrdering
-import mutable.ArraySet
 import interfaces.ExtSetMethods
 
 /**
@@ -32,9 +30,7 @@ import interfaces.ExtSetMethods
  * 
  * @author Peter Empen
  */
-trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
-  extends Serializable
-{ selfGraph =>
+trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   /**
    * Populates this graph with `nodes` and `edges`.
    * 
@@ -322,7 +318,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
       if (node isContaining selfGraph) Some(node.asInstanceOf[NodeT])
       else None
   }
-  object Node {
+  @transient object Node {
     def apply  (node: N) = newNode(node)
     def unapply(n: NodeT) = Some(n)
 
@@ -387,7 +383,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     (a: NodeT, b: NodeT) => anyOrdering.compare(a.value, b.value)
   )
   type NodeSetT <: NodeSet
-  trait NodeSet extends AnySet[NodeT] with ExtSetMethods[NodeT] with Serializable {
+  trait NodeSet extends AnySet[NodeT] with ExtSetMethods[NodeT] {
     /**
      * This method is called by the primary constructor. It must be defined by the trait
      * responsible for the implementation of the graph representation.
@@ -462,7 +458,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
   def nodes: NodeSetT
 
   type EdgeT <: InnerEdgeParam[N,E,NodeT,E] with InnerEdge with Serializable
-  object EdgeT {
+  @transient object EdgeT {
     def unapply(e: EdgeT): Option[(NodeT, NodeT)] = Some((e.edge._1, e.edge._2))
   }
   trait Edge extends Serializable
@@ -540,17 +536,17 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
     }
     @deprecated("Use toOuter instead", "1.8.0") def toEdgeIn = toOuter
   }
-  object InnerEdge {
+  @transient object InnerEdge {
     def unapply(edge: InnerEdge): Option[EdgeT] =
       if (edge.edge._1 isContaining selfGraph) Some(edge.asInstanceOf[EdgeT])
       else None
   }
-  object Edge {
+  @transient object Edge {
     def apply(innerEdge: E[NodeT]) = newEdge(innerEdge)
     def unapply(e: EdgeT) = Some(e)
 
-    protected var freshNodes = Map[N,NodeT]()
-    protected def mkNode(n: N): NodeT = {
+    private[this] var freshNodes: Map[N,NodeT] = _
+    private def mkNode(n: N): NodeT = {
       val existing = nodes lookup n
       if (null eq existing)
         freshNodes getOrElse (n, {
@@ -559,26 +555,22 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
           newN })
       else existing
     }
-    def mkNode(n: NodeParam[N]): NodeT = n match {
-      case n: OuterNode[N]  => mkNode(n.value)
-      case n: InnerNodeParam[N] => n.toNodeT[N,E,selfGraph.type](selfGraph)(n => mkNode(n.value))
-    } 
-    /**
-     * Creates a new inner edge from the outer `edge` using its
-     * factory method `copy` without modifying the node or edge set. */
+    /** Creates a new inner edge from the outer `edge` using its
+     *  factory method `copy` without modifying the node or edge set. */
     protected[GraphBase] def edgeToEdgeCont(edge: E[N]): E[NodeT] = {
+      freshNodes = Map.empty[N,NodeT]
       val newNodes = (edge.arity: @scala.annotation.switch) match {
         case 2 => Tuple2(mkNode(edge._1), mkNode(edge._2))
         case 3 => Tuple3(mkNode(edge._1), mkNode(edge._2), mkNode(edge._n(2)))
         case 4 => Tuple4(mkNode(edge._1), mkNode(edge._2), mkNode(edge._n(2)), mkNode(edge._n(3)))
         case 5 => Tuple5(mkNode(edge._1), mkNode(edge._2), mkNode(edge._n(2)), mkNode(edge._n(3)), mkNode(edge._n(4)))
-        case _ => edge.map(n => mkNode(n)).toList 
+        case _ => (edge map mkNode).toList
       }
-      freshNodes = Map.empty[N,NodeT]
       edge.copy[NodeT](newNodes).asInstanceOf[E[NodeT]]
     }
     def mkNodes(node_1: N, node_2: N, nodes:  N *): Product =
     {
+      freshNodes = Map.empty[N,NodeT]
       val (n_1, n_2) = (mkNode(node_1), mkNode(node_2))
       val newNodes =
         if   (nodes.isEmpty) Tuple2(n_1, n_2)
@@ -586,9 +578,8 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]]
           case 1 => Tuple3(n_1, n_2, mkNode(nodes(0)))
           case 2 => Tuple4(n_1, n_2, mkNode(nodes(0)), mkNode(nodes(1)))
           case 3 => Tuple5(n_1, n_2, mkNode(nodes(0)), mkNode(nodes(1)), mkNode(nodes(2)))
-          case _ => (nodes.map(n => mkNode(n)).toList).:::(List(n_1, n_2)) 
+          case _ => (nodes map mkNode).toList ::: List(n_1, n_2)
         }
-      freshNodes = Map.empty[N,NodeT]
       newNodes
     }
     @inline final implicit def innerEdgeToEdgeCont(edge: EdgeT): E[NodeT] = edge.edge

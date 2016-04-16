@@ -1,6 +1,8 @@
 package scalax.collection
 package mutable
 
+import java.io.{ObjectInputStream, ObjectOutputStream}
+
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.generic.{CanBuildFrom, Growable, Shrinkable}
 import scala.collection.mutable.{Builder, Cloneable, ArrayBuffer, Set => MutableSet}
@@ -8,13 +10,10 @@ import scala.reflect.ClassTag
 import scala.math.max
 
 import scalax.collection.{Graph => CommonGraph, GraphLike => CommonGraphLike}
-import GraphPredef.{EdgeLikeIn, Param, InParam,
-                    OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam} 
-import immutable.{AdjacencyListBase}
+import GraphPredef.{EdgeLikeIn, Param, OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam}
 import generic.{GraphCompanion, MutableGraphCompanion}
 import config._
-import GraphEdge.{EdgeCompanionBase, UnDiEdge}
-import io._
+import GraphEdge.UnDiEdge
 
 protected[collection]
 abstract class BuilderImpl[N,
@@ -86,8 +85,7 @@ trait GraphLike[N,
   with    EdgeOps   [N,E,This]
   with    Mutable
 { this: This[N,E] =>
-	override def clone: This[N,E] =
-    graphCompanion.from[N,E](nodes.toOuter, edges.toOuter)
+	override def clone: This[N,E] = graphCompanion.from[N,E](nodes.toOuter, edges.toOuter)
 	type NodeT <: InnerNode 
   trait InnerNode extends super.InnerNode with InnerNodeOps {
     this: NodeT =>
@@ -106,6 +104,7 @@ trait GraphLike[N,
     def removeGently   (node: NodeT) = subtract(node, false, minus, minusEdges)
     /**
      * removes all incident edges of `node` from the edge set leaving the node set unchanged.
+     *
      * @param node the node the incident edges of which are to be removed from the edge set.
      */
     protected def minusEdges(node: NodeT): Unit
@@ -225,7 +224,7 @@ trait GraphLike[N,
  * specific aspects.
  * 
  * @tparam N the type of the nodes (vertices) in this graph.
- * @tparam E the kind of the edges in this graph. 
+ * @tparam E the kind of the edges in this graph.
  *
  * @author Peter Empen
  */
@@ -258,7 +257,7 @@ object Graph
       GraphCanBuildFrom[N,E]
       with CanBuildFrom[Graph[_,UnDiEdge], Param[N,E], Graph[N,E]]]
 }
-@SerialVersionUID(73L)
+@SerialVersionUID(74L)
 class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
     ( iniNodes: Traversable[N]    = Set[N](),
       iniEdges: Traversable[E[N]] = Set[E[N]]())
@@ -271,21 +270,35 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
   override final val graphCompanion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
-  @inline final def newNodeSet: NodeSetT = new NodeSet
-  override final val nodes = newNodeSet 
-  override final val edges = new EdgeSet 
+  @inline final protected def newNodeSet: NodeSetT = new NodeSet
+  @transient private[this] var _nodes: NodeSetT = newNodeSet
+  @inline override final def nodes = _nodes
+  
+  @transient private[this] var _edges: EdgeSetT = new EdgeSet
+  @inline override final def edges = _edges  
+
   initialize(iniNodes, iniEdges)
 
   override protected[this] def newBuilder = new GraphBuilder[N,E,DefaultGraphImpl](DefaultGraphImpl)
   @inline final override def empty: DefaultGraphImpl[N,E] = DefaultGraphImpl.empty[N,E]
-  @inline final override def clone(): this.type = super.clone.asInstanceOf[this.type]
+  @inline final override def clone: this.type = super.clone.asInstanceOf[this.type]
                                                                                                                                 
   @SerialVersionUID(7370L)
   final protected class NodeBase(value: N, hints: ArraySet.Hints)
-    extends InnerNodeImpl(value, hints)
-    with    InnerNodeTraversalImpl
+      extends InnerNodeImpl(value, hints)
+      with    InnerNodeTraversalImpl
+    
   type NodeT = NodeBase
+  
   @inline final protected def newNodeWithHints(n: N, h: ArraySet.Hints) = new NodeT(n, h)
+
+  private def writeObject(out: ObjectOutputStream): Unit = serializeTo(out)
+
+  private def readObject(in: ObjectInputStream): Unit = {
+    _nodes = newNodeSet
+    _edges = new EdgeSet
+    initializeFrom(in, _nodes, _edges)
+  }
 }
 object DefaultGraphImpl
   extends MutableGraphCompanion[DefaultGraphImpl]

@@ -1,19 +1,17 @@
 package scalax.collection
 package immutable
 
-import scala.language.higherKinds
-import scala.annotation.unchecked.uncheckedVariance
-import scala.collection.{Set => AnySet}
-import scala.collection.mutable.Buffer
-import scala.util.Random
+import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.collection.EqSetFacade
+import scala.language.higherKinds
+import scala.collection.{Set => AnySet, AbstractTraversable, EqSetFacade}
+import scala.collection.mutable.{ArrayBuffer, Buffer}
+import scala.util.Random
 import GraphPredef._
 import scalax.collection.{Graph => SimpleGraph}
 import mutable.{ArraySet, ExtHashSet, EqHashSet, EqHashMap}
-import generic.{GroupIterator}
+import generic.GroupIterator
 import config.{GraphConfig, AdjacencyListArrayConfig}
-import io._
 
 /**
  * Implementation of an incident list based graph representation. This trait is common to
@@ -219,7 +217,7 @@ trait AdjacencyListBase[N,
       coll findEntry (toMatch, correspond)
     protected[collection] def +=(edge: EdgeT): this.type
   }
-  def newNodeSet: NodeSetT
+  protected def newNodeSet: NodeSetT
 
   protected def newEdgeTArray(size: Int): Array[EdgeT]
 
@@ -286,5 +284,32 @@ trait AdjacencyListBase[N,
     }
     def hasNext = Inner.hasNext
     def next = Inner.next
+  }
+
+  protected final def serializeTo(out: ObjectOutputStream): Unit =   {
+    out.defaultWriteObject()
+
+    out.writeInt(edges.size)
+    edges foreach (innerEdge => out.writeObject(innerEdge.toOuter))
+
+    val nodesBuf = new ArrayBuffer(1024) ++ nodes.iterator.filter(_.isIsolated)
+    out.writeInt(nodesBuf.size)
+    nodesBuf foreach (innerNode => out.writeObject(innerNode.value))
+  }
+
+  protected def initializeFrom(in: ObjectInputStream, nodes: NodeSetT, edges: EdgeSetT): Unit = {
+    in.defaultReadObject()
+
+    def traversable[A]: Traversable[A] =
+      new AbstractTraversable[A] {
+        var i = in.readInt
+        override def foreach[U](f: A => U): Unit =
+          while(i > 0) {
+            f(in.readObject.asInstanceOf[A])
+            i -= 1
+          }
+      }
+    edges initialize (traversable[E[N]])
+    nodes initialize (traversable[N], null)
   }
 }

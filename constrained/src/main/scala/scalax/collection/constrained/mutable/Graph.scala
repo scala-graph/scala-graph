@@ -1,6 +1,8 @@
 package scalax.collection.constrained
 package mutable
 
+import java.io.{ObjectInputStream, ObjectOutputStream}
+
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.Set
 import scala.collection.generic.{CanBuildFrom, Growable, Shrinkable}
@@ -199,14 +201,19 @@ abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
   with    AdjacencyListGraph[N,E,DefaultGraphImpl]
   with    GraphTraversalImpl[N,E]
 {
-  @transient override final val graphCompanion = DefaultGraphImpl
+  override final val graphCompanion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
   override final def config = _config.asInstanceOf[graphCompanion.Config with Config]
 
   class NodeSet extends super[AdjacencyListGraph].NodeSet with super[Graph].NodeSet
-  @inline final def newNodeSet: NodeSetT = new NodeSet
-  override final val nodes = newNodeSet 
-  override final val edges = new EdgeSet 
+  
+  @inline final protected def newNodeSet: NodeSetT = new NodeSet
+  @transient protected[this] var _nodes: NodeSetT = newNodeSet
+  @inline override final def nodes = _nodes
+
+  @transient protected[this] var _edges: EdgeSetT = new EdgeSet
+  @inline override final def edges = _edges  
+
   initialize(iniNodes, iniEdges)
 
   @inline final override def empty = DefaultGraphImpl.empty(edgeT, config)
@@ -281,4 +288,12 @@ class UserConstrainedGraphImpl[N, E[X] <: EdgeLikeIn[X]]
   final override val self = this
   final override val constraintFactory = config.constraintCompanion
   final override val constraint  = constraintFactory(this)
+  
+  private def writeObject(out: ObjectOutputStream): Unit = serializeTo(out)
+
+  private def readObject(in: ObjectInputStream): Unit = {
+    _nodes = newNodeSet
+    _edges = new EdgeSet
+    initializeFrom(in, _nodes, _edges)
+  }
 }

@@ -3,7 +3,6 @@ package immutable
 
 import language.higherKinds
 
-import scala.collection.EqSetFacade
 import GraphPredef.EdgeLikeIn
 import GraphEdge.OrderedEndpoints
 import mutable.ArraySet
@@ -35,7 +34,6 @@ trait AdjacencyListGraph[N,
   }
 
   type NodeSetT = NodeSet
-  @SerialVersionUID(7870L)
   class NodeSet extends super.NodeSet
   {
     @inline final override protected def minus(node: NodeT) { coll -= node }
@@ -54,7 +52,7 @@ trait AdjacencyListGraph[N,
     
     protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
   }
-  override val nodes: NodeSetT
+  override def nodes: NodeSetT
 
   type EdgeT = EdgeBase
   @inline final protected def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
@@ -63,7 +61,6 @@ trait AdjacencyListGraph[N,
     else                                          new EdgeT(innerEdge)
     
   type EdgeSetT = EdgeSet
-  @SerialVersionUID(7873L)
   class EdgeSet extends super.EdgeSet
   {
     override protected[collection] def initialize(edges: Traversable[E[N]]): Unit =
@@ -71,7 +68,7 @@ trait AdjacencyListGraph[N,
         edges foreach (this += Edge(_))
 
     @inline final protected[AdjacencyListGraph] def +=(edge: EdgeT): this.type = {
-      if (nodes add edge) statistics(edge, plus = true) else false
+      if (nodes add edge) statistics(edge, plus = true)
       this
     }
     
@@ -82,7 +79,7 @@ trait AdjacencyListGraph[N,
     @inline final override lazy val maxArity        = super.maxArity
     @inline final override lazy val hasAnyMultiEdge = super.hasAnyMultiEdge
   }
-  override val edges: EdgeSetT
+  override def edges: EdgeSetT
 
   def copy(nodes: Traversable[N],
            edges: Traversable[E[N]]): This[N,E]

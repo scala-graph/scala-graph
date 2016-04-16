@@ -1,18 +1,19 @@
 package scalax.collection
 package immutable
 
-import language.higherKinds
-import collection.Set
-import collection.generic.CanBuildFrom
+import java.io.{ObjectInputStream, ObjectOutputStream}
+
+import scala.language.higherKinds
+import scala.collection.Set
+import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
 import scalax.collection.{Graph => CommonGraph}
-import GraphEdge.{EdgeLike, EdgeCompanionBase, UnDiEdge}
-import GraphPredef.{EdgeLikeIn, Param, InParam} 
-import generic.{GraphCompanion, ImmutableGraphCompanion, MutableGraphCompanion}
+import GraphEdge.UnDiEdge
+import GraphPredef.{EdgeLikeIn, Param}
+import generic.ImmutableGraphCompanion
 import config.AdjacencyListArrayConfig
 import mutable.{GraphBuilder, ArraySet}
-import io._
 
 trait Graph[N, E[X] <: EdgeLikeIn[X]]
 	extends	CommonGraph[N,E]
@@ -37,7 +38,7 @@ object Graph extends ImmutableGraphCompanion[Graph]
       GraphCanBuildFrom[N,E]
       with CanBuildFrom[Graph[_,UnDiEdge], Param[N,E], Graph[N,E]]]
 }
-@SerialVersionUID(71L)
+@SerialVersionUID(72L)
 class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
     ( iniNodes: Traversable[N]    = Set[N](),
       iniEdges: Traversable[E[N]] = Set[E[N]]() )
@@ -50,9 +51,13 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
   override final val graphCompanion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
-  @inline final def newNodeSet: NodeSetT = new NodeSet
-  override final val nodes = newNodeSet
-  override final val edges = new EdgeSet
+  @inline final protected def newNodeSet: NodeSetT = new NodeSet
+  @transient private[this] var _nodes: NodeSetT = newNodeSet
+  @inline override final def nodes = _nodes
+  
+  @transient private[this] var _edges: EdgeSetT = new EdgeSet
+  @inline override final def edges = _edges  
+
   initialize(iniNodes, iniEdges)
 
   override protected[this] def newBuilder =
@@ -65,10 +70,20 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
 
   @SerialVersionUID(7170L)
   final protected class NodeBase(value: N, hints: ArraySet.Hints)
-    extends InnerNodeImpl(value, hints)
-    with    InnerNodeTraversalImpl
+      extends InnerNodeImpl(value, hints)
+      with    InnerNodeTraversalImpl
+    
   type NodeT = NodeBase
+  
   @inline final protected def newNodeWithHints(n: N, h: ArraySet.Hints) = new NodeT(n, h)
+
+  private def writeObject(out: ObjectOutputStream): Unit = serializeTo(out)
+
+  private def readObject(in: ObjectInputStream): Unit = {
+    _nodes = newNodeSet
+    _edges = new EdgeSet
+    initializeFrom(in, _nodes, _edges)
+  }
 }
 object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl]
 {

@@ -71,7 +71,6 @@ trait AdjacencyListGraph[N,
   }
 
   type NodeSetT = NodeSet
-  @SerialVersionUID(7970L)
   class NodeSet extends super[GraphLike].NodeSet with super.NodeSet
   {
     override def add(node: NodeT) = coll add node
@@ -102,7 +101,7 @@ trait AdjacencyListGraph[N,
       edges --= node.edges.toList
     }
   }
-  override val nodes: NodeSetT
+  override def nodes: NodeSetT
 
   type EdgeT = EdgeImpl
   @inline final def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
@@ -119,7 +118,6 @@ trait AdjacencyListGraph[N,
     else                                          new EdgeT(innerEdge)
   
   type EdgeSetT = EdgeSet
-  @SerialVersionUID(7974L)
   class EdgeSet extends super[GraphLike].EdgeSet with super.EdgeSet
   {
     protected[AdjacencyListGraph] var initialized = false
@@ -151,7 +149,7 @@ trait AdjacencyListGraph[N,
 
     @inline final override def maxArity: Int = super.maxArity
   }
-  override val edges: EdgeSetT
+  override def edges: EdgeSetT
 
   @inline final def clear	{	nodes.clear }
   @inline final def add(node: N): Boolean = nodes add Node(node)

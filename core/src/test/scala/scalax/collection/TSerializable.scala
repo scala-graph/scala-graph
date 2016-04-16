@@ -2,11 +2,10 @@ package scalax.collection
 
 import java.io._
 
-import language.higherKinds
+import scala.language.higherKinds
+import scala.util.{Success, Failure, Try}
 
-import org.scalatest.Suite
 import org.scalatest.{FlatSpec, Suites}
-import org.scalatest.Informer
 import org.scalatest.Matchers
 import org.scalatest.BeforeAndAfterEach
 
@@ -23,116 +22,76 @@ class TSerializableRootTest
 
 /**	Tests for standard java serialization.
  */
-class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
+final class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphCoreCompanion[CC])
 	extends	FlatSpec
 	with	  Matchers
 	with    BeforeAndAfterEach
 {
-  s"Tests based on ${factory.getClass}" should "start" in {
+  private val factoryName = factory.getClass.getName 
+  private val isImmutableTest = factoryName contains "immutable"  
+    
+  s"Tests based on ${factoryName}" should "start" in {
   }
-  // resolves ClassNotFound issue with SBT
-  private class CustomObjectInputStream(in: InputStream, cl: ClassLoader) extends ObjectInputStream(in) {
-    override def resolveClass(cd: ObjectStreamClass): Class[_] =
-      try {
-        cl.loadClass(cd.getName())
-      } catch {
-        case cnf: ClassNotFoundException =>
-          super.resolveClass(cd)
-      }
-    override def resolveProxyClass(interfaces: Array[String]): Class[_] =
-      try {
-        val ifaces = interfaces map { iface => cl.loadClass(iface) }
-        java.lang.reflect.Proxy.getProxyClass(cl, ifaces: _*)
-      } catch {
-        case e: ClassNotFoundException =>
-          super.resolveProxyClass(interfaces)
-      }
-  }
+
   trait GraphStore {
-    def save   [N, E[X] <: EdgeLikeIn[X]](g: CC[N,E])
-    def restore[N, E[X] <: EdgeLikeIn[X]]:   CC[N,E]
-    def test   [N, E[X] <: EdgeLikeIn[X]](g: CC[N,E]): CC[N,E] = {
-      save[N,E](g)
-      val r = restore[N,E]
+    protected trait Exec {
+      def save   [N, E[X] <: EdgeLikeIn[X]](g: CC[N,E]): Unit
+      def restore[N, E[X] <: EdgeLikeIn[X]]: CC[N,E]
+    }
+    protected def newTest: Exec
+    def test[N, E[X] <: EdgeLikeIn[X]](g: CC[N,E]): CC[N,E] = {
+      val exec = newTest
+      exec.save[N,E](g)
+      val r = exec.restore[N,E]
       r should be (g)
       r
     }
   }
   /** to save and restore graphs to/from files */
   object GraphFile extends GraphStore {
-    var cnt = 0
-    /** renames output file to contain the name of the test method */
-    def renameOutFile(fromFilename: String,
-                      toFileExt:    String) {
-      val fromFile = new File(fromFilename)
-      val toFile   = new File(fromFile.getParent + File.separator +
-                              this.getClass.getSimpleName + "." +
-                              testNames.toArray.apply(cnt) + toFileExt)
-      toFile.delete
-      fromFile.renameTo(toFile) should be (true)
+    protected class Exec(filename: String) extends super.Exec {
+      import FileSerialization._
+      def save   [N, E[X] <: EdgeLikeIn[X]](g: CC[N,E]): Unit = write(g, filename) recover {
+        case e => fail("Couldn't write: " + g, e)
+      } 
+      
+      def restore[N, E[X] <: EdgeLikeIn[X]]: CC[N,E] = read(filename).recover {
+        case e => fail("Couldn't read", e)
+      }.get
+    }
+    private val tmpDir = System.getProperty("java.io.tmpdir")
+    private var cnt = 0
+    protected def newTest: Exec = {
       cnt += 1
-    }
-    def rename = renameOutFile(filename + ext, ext)
-    val (filename, ext) = ("c:\\temp\\ser\\graph", ".ser")
-    def save[N, E[X] <: EdgeLikeIn[X]](g: CC[N,E]) {
-      var fos: FileOutputStream = null
-      try {
-        fos = new FileOutputStream(filename + ext)
-        val out = new ObjectOutputStream(fos)
-        out writeObject g
-      } catch {
-        case e: Exception => fail("Couldn't write: " + g, e)
-      } finally
-        fos.close
-    }
-    def restore[N, E[X] <: EdgeLikeIn[X]] = {
-      var fis: FileInputStream = null
-      try {
-        fis = new FileInputStream(filename + ext)
-        val in = new ObjectInputStream(fis)
-        val read = in.readObject
-        read.asInstanceOf[CC[N,E]]
-      } finally {
-        fis.close
-      }
+      new Exec( // include the name of the test method
+        s"$tmpDir${File.separator}${s"${this.getClass.getSimpleName.init}.${
+          if (isImmutableTest) "i" else "m"}-${testNames.toArray.apply(cnt)}"}.ser"
+      )
     }
   }
-  override def afterEach {
-    if (store == GraphFile)
-      GraphFile.rename
-  }
+  
   /** to save and restore graphs to/from byte arrays */
-  class GraphByteArray(cl: ClassLoader) extends GraphStore {
-    private var _saved: Array[Byte] = null
-    def saved = _saved
-    def save[N, E[X] <: EdgeLikeIn[X]](g: CC[N,E]) {
-      val bos = new ByteArrayOutputStream 
-      try {
-        val out = new ObjectOutputStream(bos)
-        out writeObject g
-        _saved = bos.toByteArray 
-      } catch {
-        case e: Exception => println(e); fail("Couldn't write: " + g, e)
-      } finally {
-        bos.close
+  object GraphByteArray extends GraphStore {
+    protected class Exec extends super.Exec {
+      import ByteArraySerialization._
+      private var _saved: Array[Byte] = _
+      
+      def save[N, E[X] <: EdgeLikeIn[X]](g: CC[N,E]): Unit = write(g) match {
+        case Success(s) => _saved = s
+        case Failure(e) => fail("Couldn't write: " + g, e)
       }
+
+      def restore[N, E[X] <: EdgeLikeIn[X]]: CC[N,E] = read[CC[N,E]](_saved) match {
+        case Success(s) => s
+        case Failure(e) => fail("Couldn't read graph", e)
+      } 
     }
-    def restore[N, E[X] <: EdgeLikeIn[X]] = {
-      val bis = new ByteArrayInputStream(_saved) 
-      val in = if (cl != null)
-          new CustomObjectInputStream(bis, cl)
-        else
-          new ObjectInputStream(bis)
-      val read = in.readObject
-      bis.close
-      read.asInstanceOf[CC[N,E]]
-    }
+    protected def newTest: Exec = new Exec
   }
-  lazy val cl = classOf[TSerializableRootTest].getClassLoader
 
   /** normally we test with byte arrays but may be set to GraphFile instead */
-  private lazy val store: GraphStore = new GraphByteArray(cl)
+  private lazy val store: GraphStore = GraphByteArray
   
   private val work = "be serializable"
 
@@ -222,42 +181,140 @@ class TSerializable[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E
   }
 
   trait EdgeStore {
-    def save   [N, E[X] <: EdgeLikeIn[X]](e: Iterable[InParam[N,E]])
+    def save   [N, E[X] <: EdgeLikeIn[X]](e: Iterable[InParam[N,E]]): Unit
     def restore[N, E[X] <: EdgeLikeIn[X]]:   Iterable[InParam[N,E]]
-    def test   [N, E[X] <: EdgeLikeIn[X]](e: Iterable[InParam[N,E]])
-        : Iterable[InParam[N,E]] = {
+    def test   [N, E[X] <: EdgeLikeIn[X]](e: Iterable[InParam[N,E]]): Iterable[InParam[N,E]] = {
       save[N,E](e)
       val r = restore[N,E]
       r should be (e)
       r
     }
   }
-  class EdgeByteArray(cl: ClassLoader) extends EdgeStore {
-    private var _saved: Array[Byte] = null
-    def saved = _saved
-    def save[N, E[X] <: EdgeLikeIn[X]](e: Iterable[InParam[N,E]]) {
-      val bos = new ByteArrayOutputStream 
-      val out = new ObjectOutputStream(bos)
-      out writeObject e
-      _saved = bos.toByteArray 
-      bos.close
-    }
-    def restore[N, E[X] <: EdgeLikeIn[X]] = {
-      val bis = new ByteArrayInputStream(_saved) 
-      val in = if (cl != null)
-          new CustomObjectInputStream(bis, cl)
-        else
-          new ObjectInputStream(bis)
-      val read = in.readObject
-      bis.close
-      read.asInstanceOf[Iterable[InParam[N,E]]]
-    }
+  
+  class EdgeByteArray extends EdgeStore {
+    import ByteArraySerialization._
+    private var _saved: Array[Byte] = _
+      
+    def save[N, E[X] <: EdgeLikeIn[X]](it: Iterable[InParam[N,E]]): Unit = write(it) match {
+      case Success(s) => _saved = s
+      case Failure(e) => fail(s"Couldn't write '$it': $e")
+    } 
+
+    def restore[N, E[X] <: EdgeLikeIn[X]]: Iterable[InParam[N,E]] =
+      readWithCustomClassLoader[Iterable[InParam[N,E]]](_saved) match {
+        case Success(s) => s
+        case Failure(e) => fail(s"Couldn't read iterable: $e")
+      } 
   }
+  
   "A graph of [Int,WUnDiEdge]" should work in {
     import edge.WUnDiEdge, Data.elementsOfWUnDi_2
-    new EdgeByteArray(cl).test[Int,WUnDiEdge] (elementsOfWUnDi_2)
+    val touch = WUnDiEdge(1, 1)(1) 
+    new EdgeByteArray test[Int,WUnDiEdge] (elementsOfWUnDi_2)
   }
 }
-/* To be serializable, node and label classes must not be defined as inner classes */
+
+object ByteArraySerialization {
+  def write(obj: AnyRef, initSize: Int = 8000): Try[Array[Byte]] = {
+    val bos = new ByteArrayOutputStream(initSize)
+    val out = new ObjectOutputStream(bos)
+    Try {
+      out writeObject obj
+      out.close()
+      bos.toByteArray
+    } recoverWith { case e =>
+      out.close()
+      Failure[Array[Byte]](e)
+    }
+  }
+  
+  def readWithCustomClassLoader[A](from: Array[Byte]): Try[A] =
+    read[A](new CustomObjectInputStream(new ByteArrayInputStream(from)))
+    
+  def read[A](from: Array[Byte]): Try[A] =
+    read(new ObjectInputStream(new ByteArrayInputStream(from)))
+  
+  def read[A](in: ObjectInputStream): Try[A] =
+    Try {
+      val read = in.readObject
+      in.close()
+      read.asInstanceOf[A]
+    } recoverWith { case e =>
+      in.close()
+      Failure[A](e)
+    }
+    
+  // resolves ClassNotFound issue with SBT
+  private val cl = classOf[TSerializableRootTest].getClassLoader
+  private class CustomObjectInputStream(in: InputStream) extends ObjectInputStream(in) {
+    override def resolveClass(cd: ObjectStreamClass): Class[_] =
+      try {
+        cl.loadClass(cd.getName())
+      } catch {
+        case cnf: ClassNotFoundException =>
+          super.resolveClass(cd)
+      }
+    override def resolveProxyClass(interfaces: Array[String]): Class[_] =
+      try {
+        val ifaces = interfaces map { iface => cl.loadClass(iface) }
+        java.lang.reflect.Proxy.getProxyClass(cl, ifaces: _*)
+      } catch {
+        case e: ClassNotFoundException =>
+          super.resolveProxyClass(interfaces)
+      }
+  }  
+}
+
+object FileSerialization {
+  def write(obj: AnyRef, filename: String): Try[File] = write(obj, new File(filename))
+  def write(obj: AnyRef, file: File): Try[File] = {
+    var out: ObjectOutputStream = null
+    Try {
+      out = new ObjectOutputStream(new FileOutputStream(file))
+      out writeObject obj
+      out.close()
+      file
+    } recoverWith { case e =>
+      if (out ne null) out.close()
+      Failure[File](e)
+    }
+  }
+  def read[A](filename: String): Try[A] = read(new File(filename))
+  def read[A](file: File): Try[A] = {
+    var in: ObjectInputStream = null
+    Try {
+      in = new ObjectInputStream(new FileInputStream(file))
+      val read = in.readObject
+      in.close()
+      read.asInstanceOf[A]
+    } recoverWith { case e =>
+      if (in ne null) in.close()
+      Failure[A](e)
+    }
+  }
+}
+
+// to be serializable, the following classes must be defined at top level
 case class MyNode (val s: List[String]) extends Serializable
 case class MyLabel(val s: String)       extends Serializable
+
+// checking https://issues.scala-lang.org/browse/SI-5773?jql=text%20~%20%22%40transient%22
+protected object ScalaObjectSerialization extends Serializable with App {
+  
+  implicit final class RightBiasedEither[A,B](val either: Either[A,B]) extends AnyVal {
+    def map[C](f: B => C): Either[A,C] = either.right map f
+    def flatMap[D](f: B => Either[A,D]): Either[A,D] = either fold (Left[A,D], f)
+  }
+
+  private object My extends Serializable {
+    @transient object Inner {
+      println("Creating...")
+      def ok = println("Success")
+      var v = 1
+    }
+  }
+
+  import ByteArraySerialization._
+  write(My) flatMap ( saved =>
+    read[My.type](saved)) map (my => println(my.Inner.v))
+}
