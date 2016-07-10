@@ -10,9 +10,8 @@ trait Sonatype {
   def developerId: String
   def developerName: String
   def developerUrl: String
-  def isSvn = false
-  def scmUrl = projectUrl
-  def scmConnection = "scm:" + (if (isSvn) "svn" else "git") + ":" + scmUrl
+  def scmUrl = "https://github.com/scala-graph/scala-graph"
+  def scmConnection = "scm:git:git@github.com:scala-graph/scala-graph.git"
 
   protected def isSnapshot(s: String) = s.trim endsWith "SNAPSHOT"
   protected val nexus = "https://oss.sonatype.org/"
@@ -20,12 +19,13 @@ trait Sonatype {
   protected val ossStaging   = "Sonatype OSS Staging"   at nexus + "service/local/staging/deploy/maven2/"
   
   protected def generatePomExtra(scalaVersion: String): xml.NodeSeq = {
-    <url>{ projectUrl }</url>
-      <licenses><license>
+    <url>{ projectUrl }
+    </url>
+    <licenses><license>
         <name>{ licenseName }</name>
         <url>{ licenseUrl }</url>
         <distribution>{ licenseDistribution }</distribution>
-      </license></licenses>
+    </license></licenses>
     <scm>
       <url>{ scmUrl }</url>
       <connection>{ scmConnection }</connection>

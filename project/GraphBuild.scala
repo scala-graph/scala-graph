@@ -65,7 +65,7 @@ object GraphBuild extends Build {
   private lazy val defaultSettings = Defaults.defaultSettings ++ Seq(
     scalaVersion := Version.compiler,
   	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2),
-    organization := "com.assembla.scala-incubator",
+    organization := "org.scala-graph",
     parallelExecution in Test := false,
     scalacOptions in (Compile, doc) <++= (name, version) map {
       Opts.doc.title(_) ++ Opts.doc.version(_)
