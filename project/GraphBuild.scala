@@ -13,18 +13,20 @@ object GraphBuild extends Build {
       version   := Version.all,
       publishTo := None
 	  ),
-    aggregate = Seq(core, constrained, dot, json)
+    aggregate = Seq(core, corejs, constrained, dot, json)
   )
 
-  lazy val core = Project(
-    id = "Graph-core",
-    base = file("core"),
-    settings = defaultSettings ++ Seq(
+  lazy val coreCross = crossProject.crossType(CrossType.Pure).in(file("core"))
+    .settings(defaultCrossSettings:_*)
+    .jvmSettings(defaultSettings:_*)
+    .settings(
       name      := "Graph Core",
       version   := Version.core,
-      libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.12.5"
-    ) ++ ScalaJSPlugin.projectSettings
-  ).enablePlugins(ScalaJSPlugin)
+      libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.12.5"
+    )
+
+  lazy val core   = coreCross.jvm
+  lazy val corejs = coreCross.js
 
   lazy val constrained = Project(
     id = "Graph-constrained",
@@ -64,16 +66,20 @@ object GraphBuild extends Build {
     )
   ) dependsOn (core)
 
-  private lazy val defaultSettings = Defaults.defaultSettings ++ Seq(
+  private lazy val defaultCrossSettings = Seq(
     scalaVersion := Version.compiler,
+    organization := "org.scala-graph"
+  ) ++ GraphSonatype.settings
+    
+  private lazy val defaultSettings = defaultCrossSettings ++ Seq(
   	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2),
-    organization := "org.scala-graph",
     parallelExecution in Test := false,
     scalacOptions in (Compile, doc) <++= (name, version) map {
       Opts.doc.title(_) ++ Opts.doc.version(_)
     },
     // prevents sbteclipse from including java source directories
-    unmanagedSourceDirectories in Compile <<= (scalaSource in Compile)(Seq(_)),
+    // TODO: the following setting causes an empty crossProject.jvm build
+    // unmanagedSourceDirectories in Compile <<= (scalaSource in Compile)(Seq(_)),
     unmanagedSourceDirectories in Test    <<= (scalaSource in Test)   (Seq(_)),
     scalacOptions in (Compile, doc) ++= List("-diagrams", "-implicits"),
     scalacOptions in (Compile, doc) <++= baseDirectory map { d =>
@@ -92,5 +98,5 @@ object GraphBuild extends Build {
         )
       case _ => Nil
     })
-  ) ++ GraphSonatype.settings
+  )
 }
