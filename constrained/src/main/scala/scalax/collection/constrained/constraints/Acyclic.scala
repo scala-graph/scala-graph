@@ -14,7 +14,6 @@ import PreCheckFollowUp._
 /** Ensures that the underlying `Graph` is acyclic at any time. */
 class Acyclic[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
   extends Constraint[N,E] (self)
-  with    ConstraintHandlerMethods[N,E]
 {
   override def preCreate(nodes: Traversable[N],
                          edges: Traversable[E[N]]) = PreCheckResult(PostCheck)
