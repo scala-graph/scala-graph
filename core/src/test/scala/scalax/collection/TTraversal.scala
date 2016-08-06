@@ -207,7 +207,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
     (n(0) shortestPathTo n(3)).get.nodes.toList should be (List(0,2,3)) 
   }
 
-  def `shortestPathTo in Di_1` {
+  def `shortestPathTo in WDi_1` {
     val g = factory(elementsOfWDi_1: _*)
     def n(outer: Int) = g get outer
 
@@ -220,7 +220,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
     (n(1) shortestPathTo n(5)).get.nodes.toList should be (List(1,5))
   }
 
-  def `shortestPathTo in Di_1 using Float` {
+  def `shortestPathTo in WDi_1 using Float` {
     val g = factory(elementsOfWDi_1: _*)
     def n(outer: Int) = g get outer
     
@@ -233,15 +233,24 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
     (n(1) shortestPathTo (n(3), reverseWeight)).get.nodes.toList should be (List(1,2,3)) 
   }
 
-  def `shortestPathTo in UnDi_1` {
+  def `shortestPathTo in WUnDi_1` {
     val g = factory(elementsOfWUnDi_1: _*)
-    def n(value: Int) = g get value
-
-    (n(2) shortestPathTo n(5)).get.nodes.toList should be (List(2,3,4,5))
-    (n(4) shortestPathTo n(5)).get.nodes.toList should be (List(4,5))
-    (n(1) shortestPathTo n(3)).get.nodes.toList should(be (List(1,3)) or be (List(1,5,3)))
-    (n(5) shortestPathTo n(4)).get.nodes.toList should be (List(5,3,4))
-    (n(3) shortestPathTo n(1)).get.nodes.toList should be (List(3,4,5,1))
+    def shortestPathNodes(from: Int, to: Int): List[g.NodeT] = {
+      def n(value: Int): g.NodeT = g get value
+      n(from).shortestPathTo(n(to)).get.nodes.toList
+    }
+    shortestPathNodes(2, 5) should be (List(2,3,4,5))
+    shortestPathNodes(4, 5) should be (List(4,5))
+    shortestPathNodes(1, 3) should(be (List(1,3)) or be (List(1,5,3)))
+    shortestPathNodes(5, 4) should be (List(5,3,4))
+    shortestPathNodes(3, 1) should be (List(3,4,5,1))
+  }
+  
+  def `shortestPathTo withMaxDepth` {
+    val g = factory(elementsOfWUnDi_1: _*)
+    def n(value: Int): g.NodeT = g get value
+    
+    n(2).innerNodeTraverser.withMaxDepth(2).shortestPathTo(n(5)).get.nodes.toList should be (List(2,3,5))
   }
 
   // see diagram WUnDi-2.jpg

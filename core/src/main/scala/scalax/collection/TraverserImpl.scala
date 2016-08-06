@@ -294,46 +294,51 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
         withHandle() { implicit visitedHandle => 
           val num = implicitly[Numeric[T]] 
           import num._
+          type PrioQueueElem = DijkstraInformer.Element[NodeT,T]
+          val  PrioQueueElem = DijkstraInformer.Element
+          
           @inline def visited(n: NodeT) = n.visited
-  
-          type NodeWeight = (NodeT,T)
-          val weightOrdering = Edge.weightOrdering(weight)
+          val untilDepth: Int = maxDepth
+          val edgeOrdering = Edge.weightOrdering(weight)
           val dest      = MMap[NodeT,T](root -> zero)
           val mapToPred = MMap[NodeT,NodeT]()
           // not implicit due to issues #4405 and #4407
-          object ordNodeWeight extends Ordering[NodeWeight] {
-            def compare(x: NodeWeight,
-                        y: NodeWeight) = num.compare(y._2, x._2)
+          object nodeOrdering extends Ordering[PrioQueueElem] {
+            def compare(x: PrioQueueElem, y: PrioQueueElem) = num.compare(y.cumWeight, x.cumWeight)
           }
-          val qNodes = new PriorityQueue[NodeWeight]()(ordNodeWeight) += ((root -> zero))
+          val qNodes = new PriorityQueue[PrioQueueElem]()(nodeOrdering) += PrioQueueElem(root, zero, 0)
   
-          def sortedAdjacentNodes(node: NodeT): PriorityQueue[NodeWeight] =
+          def sortedAdjacentNodes(node: NodeT, depth: Depth): PriorityQueue[PrioQueueElem] = {
+            val predecessorWeight = dest(node)
             filteredSuccessors(node, visited, Double.NaN, false).foldLeft(
-                new PriorityQueue[NodeWeight]()(ordNodeWeight))(
-                (q,n) => q += ((n, dest(node) +
-                                   weight(node.outgoingTo(n).withFilter(subgraphEdges(_)).
-                                          min(weightOrdering))
-                               ))
-                )
+              new PriorityQueue[PrioQueueElem]()(nodeOrdering))( 
+              (q,n) => q += PrioQueueElem(
+                  n,
+                  predecessorWeight + weight(node.outgoingTo(n).withFilter(subgraphEdges(_)).min(edgeOrdering)),
+                  depth)
+            )
+          }
           def relax(pred: NodeT, succ: NodeT) {
-            val cost = dest(pred) + weight(pred.outgoingTo(succ).withFilter(subgraphEdges(_)).
-                                           min(weightOrdering))
+            val cost = dest(pred) +
+                       weight(pred.outgoingTo(succ).withFilter(subgraphEdges(_)).min(edgeOrdering))
             if(! dest.isDefinedAt(succ) || cost < dest(succ)) {
-              dest      += (succ->cost)
-              mapToPred += (succ->pred)
+              dest      += succ -> cost
+              mapToPred += succ -> pred
             }
           }
           var nodeCnt = 0
-          @tailrec def rec(pq: PriorityQueue[NodeWeight]) {
-            if(pq.nonEmpty && (pq.head._1 ne potentialSuccessor)) { 
-              val nodeWeight = pq.dequeue
-              val node = nodeWeight._1
+          @tailrec def rec(pq: PriorityQueue[PrioQueueElem]) {
+            if (pq.nonEmpty && (pq.head.node ne potentialSuccessor)) { 
+              val PrioQueueElem(node,_,depth) = pq.dequeue
               if (! node.visited) {
-                val ordNodes = sortedAdjacentNodes(node)
+                val ordNodes =
+                  if (depth == untilDepth) PriorityQueue.empty[PrioQueueElem](nodeOrdering)
+                  else sortedAdjacentNodes(node, depth + 1)
                 pq ++= ordNodes
-                @tailrec def loop(pq2: PriorityQueue[NodeWeight]) {
+                
+                @tailrec def loop(pq2: PriorityQueue[PrioQueueElem]) {
                   if (pq2.nonEmpty) {
-                    relax(node, pq2.dequeue._1)
+                    relax(node, pq2.dequeue.node)
                     loop(pq2)
                   }
                 }

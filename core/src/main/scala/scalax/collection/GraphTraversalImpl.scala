@@ -740,6 +740,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
 }
 object GraphTraversalImpl {
   import GraphTraversal._
+  type Depth = Int
 
   /** Extended node visitor informer for depth first searches. 
    */
@@ -749,8 +750,7 @@ object GraphTraversalImpl {
     def pathIterator:  DfsPath [N]
   }
   object DfsInformer {
-    /** The */
-    case class Element[N] protected[collection](node: N, depth: Int, cumulatedWeight: Double = 0)
+    case class Element[N] protected[collection](node: N, depth: Depth, cumulatedWeight: Double = 0)
     type DfsStack[N] = Iterator[Element[N]]
     type DfsPath [N] = Iterator[Element[N]]
     def unapply[N](inf: DfsInformer[N]): Option[(DfsStack[N], DfsPath[N])] =
@@ -794,7 +794,8 @@ object GraphTraversalImpl {
     def costsIterator: DijkstraCosts[N,T]
   }
   object DijkstraInformer {
-    type DijkstraQueue[N,T] = Iterator[(N,T)]
+    case class Element[N,T: Numeric] protected[collection](node: N, cumWeight: T, depth: Depth)
+    type DijkstraQueue[N,T] = Iterator[Element[N,T]]
     type DijkstraCosts[N,T] = Iterator[(N,T)]
     def unapply[N, T: Numeric](inf: DijkstraInformer[N,T])
         : Option[(DijkstraQueue[N,T], DijkstraCosts[N,T])] =
