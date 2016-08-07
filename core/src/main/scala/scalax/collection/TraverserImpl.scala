@@ -297,30 +297,30 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           type PrioQueueElem = DijkstraInformer.Element[NodeT,T]
           val  PrioQueueElem = DijkstraInformer.Element
           
-          @inline def visited(n: NodeT) = n.visited
-          val untilDepth: Int = maxDepth
-          val edgeOrdering = Edge.weightOrdering(weight)
-          val dest      = MMap[NodeT,T](root -> zero)
-          val mapToPred = MMap[NodeT,NodeT]()
-          // not implicit due to issues #4405 and #4407
-          object nodeOrdering extends Ordering[PrioQueueElem] {
+          implicit def edgeOrdering = Edge.weightOrdering(weight)
+          implicit object nodeOrdering extends Ordering[PrioQueueElem] {
             def compare(x: PrioQueueElem, y: PrioQueueElem) = num.compare(y.cumWeight, x.cumWeight)
           }
-          val qNodes = new PriorityQueue[PrioQueueElem]()(nodeOrdering) += PrioQueueElem(root, zero, 0)
+          @inline def visited(n: NodeT) = n.visited
+          
+          val untilDepth: Int = maxDepth
+          val dest      = MMap[NodeT,T](root -> zero)
+          val mapToPred = MMap[NodeT,NodeT]()
+          val qNodes = PriorityQueue(PrioQueueElem(root, zero, 0))
   
-          def sortedAdjacentNodes(node: NodeT, depth: Depth): PriorityQueue[PrioQueueElem] = {
+          def sortedAdjacentNodes(node: NodeT, cumWeight: T, depth: Depth): PriorityQueue[PrioQueueElem] = {
             val predecessorWeight = dest(node)
-            filteredSuccessors(node, visited, Double.NaN, false).foldLeft(
-              new PriorityQueue[PrioQueueElem]()(nodeOrdering))( 
+            filteredSuccessors(node, visited, cumWeight.toDouble, false).foldLeft(
+              PriorityQueue.empty[PrioQueueElem])( 
               (q,n) => q += PrioQueueElem(
                   n,
-                  predecessorWeight + weight(node.outgoingTo(n).withFilter(subgraphEdges(_)).min(edgeOrdering)),
+                  predecessorWeight + weight(node.outgoingTo(n).withFilter(subgraphEdges(_)).min),
                   depth)
             )
           }
           def relax(pred: NodeT, succ: NodeT) {
             val cost = dest(pred) +
-                       weight(pred.outgoingTo(succ).withFilter(subgraphEdges(_)).min(edgeOrdering))
+                       weight(pred.outgoingTo(succ).withFilter(subgraphEdges(_)).min)
             if(! dest.isDefinedAt(succ) || cost < dest(succ)) {
               dest      += succ -> cost
               mapToPred += succ -> pred
@@ -329,11 +329,11 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           var nodeCnt = 0
           @tailrec def rec(pq: PriorityQueue[PrioQueueElem]) {
             if (pq.nonEmpty && (pq.head.node ne potentialSuccessor)) { 
-              val PrioQueueElem(node,_,depth) = pq.dequeue
+              val PrioQueueElem(node, cumWeight, depth) = pq.dequeue
               if (! node.visited) {
                 val ordNodes =
-                  if (depth == untilDepth) PriorityQueue.empty[PrioQueueElem](nodeOrdering)
-                  else sortedAdjacentNodes(node, depth + 1)
+                  if (depth == untilDepth) PriorityQueue.empty[PrioQueueElem]
+                  else sortedAdjacentNodes(node, cumWeight, depth + 1)
                 pq ++= ordNodes
                 
                 @tailrec def loop(pq2: PriorityQueue[PrioQueueElem]) {
