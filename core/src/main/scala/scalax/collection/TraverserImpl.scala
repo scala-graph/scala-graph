@@ -304,13 +304,14 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           @inline def visited(n: NodeT) = n.visited
           
           val untilDepth: Int = maxDepth
+          val withMaxWeight = maxWeight.isDefined
           val dest      = MMap[NodeT,T](root -> zero)
           val mapToPred = MMap[NodeT,NodeT]()
           val qNodes = PriorityQueue(PrioQueueElem(root, zero, 0))
   
           def sortedAdjacentNodes(node: NodeT, cumWeight: T, depth: Depth): PriorityQueue[PrioQueueElem] = {
             val predecessorWeight = dest(node)
-            filteredSuccessors(node, visited, cumWeight.toDouble, false).foldLeft(
+            filteredSuccessors(node, visited, if (withMaxWeight) cumWeight.toDouble else Double.NaN, false).foldLeft(
               PriorityQueue.empty[PrioQueueElem])( 
               (q,n) => q += PrioQueueElem(
                   n,
