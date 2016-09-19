@@ -58,14 +58,14 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
             innerNodeTraverser(root, Parameters.Dfs(Predecessors)).to[MSet] -= root
           else MSet.empty
       def ignore(n: NodeT): Boolean = if (ignorePredecessors) predecessors contains n else false
-      val (startNodes, inDegrees) =
+      val inDegrees =
         forInDegrees(
           innerNodeTraverser(root, Parameters.Dfs(AnyConnected),
                              n => subgraphNodes(n), subgraphEdges),
           includeInDegree = if (ignorePredecessors) ! ignore(_) else anyNode,
           includeAnyway = if (ignorePredecessors) Some(root) else None
         )
-      Runner(noNode, empty).topologicalSort(startNodes -- predecessors, inDegrees)
+      Runner(noNode, empty).topologicalSort(inDegrees.copy(_1 = inDegrees._1 -- predecessors))
     }
 
     final def shortestPathTo[T:Numeric, U](potentialSuccessor: NodeT,
@@ -571,10 +571,12 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
       }
 
       protected[collection] def topologicalSort(
-          layer_0: Traversable[NodeT],
-          inDegrees: MMap[NodeT,Int],
+          setup: TopoSortSetup,
           maybeHandle: Option[Handle] = None): CycleNodeOrTopologicalOrder =
         withHandle(maybeHandle) { implicit handle =>
+          val (layer_0:            Traversable[NodeT],
+               inDegrees:          MMap[NodeT,Int],
+               maybeInspectedNode: Option[NodeT]) = setup
           val untilDepth: Int = maxDepth
           val estimatedLayers: Int = expectedMaxNodes(4)
           val estimatedNodesPerLayer: Int = order / estimatedLayers
@@ -610,11 +612,15 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
               loop(layer + 1, nextLayerNodes)
           }
           
-          val startBuffer = layer_0 match {
-            case b: ArrayBuffer[NodeT] => b
-            case t                     => emptyBuffer ++ t
+          maybeInspectedNode match {
+            case Some(inspectedNode) if layer_0.isEmpty => Left(inspectedNode)
+            case _ =>
+              val startBuffer = layer_0 match {
+              case b: ArrayBuffer[NodeT] => b
+              case t                     => emptyBuffer ++ t
+              }
+              loop(0, startBuffer)
           }
-          loop(0, startBuffer)
         }
       }
 
