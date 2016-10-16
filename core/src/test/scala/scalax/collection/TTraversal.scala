@@ -531,6 +531,12 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
                                                sum should be (expectedSumLayer1PredecessorsOf_2)
       node(2).outerNodeTraverser(maxDepth_1.withDirection(AnyConnected)).
                                                sum should be (expectedSumLayer1AnyConnectedsOf_2)
+      an [IllegalArgumentException] should be thrownBy {
+        node(2).innerNodeTraverser(anyConnected) pathTo node(2)
+      }
+      an [IllegalArgumentException] should be thrownBy {
+        node(2).innerNodeTraverser(anyConnected) shortestPathTo node(2)
+      }
     }
   }
 

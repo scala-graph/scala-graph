@@ -631,7 +631,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     final def withKind(kind: Kind): This =
       withParameters(parameters.withKind(kind))
 
-    /** $UPDATED `direction`. */
+    /** $UPDATED `direction`. Note that methods returning a Cycle or Path accept only `Successors`.*/
     final def withDirection(direction: Direction): This =
       withParameters(parameters.withDirection(direction))
 
@@ -728,6 +728,12 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     protected def apply[U](pred: NodeFilter = noNode,
                            visitor: A => U  = empty): Option[NodeT]
     
+    protected final def ifSuccessors[A](block: => A): A = {
+      val direction = parameters.direction
+      require(direction eq Successors, s"Found $direction but only $Successors will be accepted.")
+      block
+    }
+      
     /** Finds a successor of `root` for which the predicate `pred` holds $CONSIDERING
      *  `root` itself does not count as a match. This is also true if it has a hook.
      *  If several successors holding `pred` exist any one of them may be returned.
@@ -847,9 +853,10 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
      *         a. there exists no path to such a node
      */
     final def pathTo[U](potentialSuccessor: NodeT)
-                       (implicit visitor: A => U = empty): Option[Path] =
+                       (implicit visitor: A => U = empty): Option[Path] = ifSuccessors {
       if (potentialSuccessor eq root) Some(Path.zero(root))
       else pathUntil(_ eq potentialSuccessor)(visitor)
+    }
 
     /** $SHORTESTPATH 
      *
@@ -1127,14 +1134,16 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
 object GraphTraversal {
   /** Algebraic type to determine which connected nodes the traversal has to follow.
    *  The default value is `Successors`.
+   *  
+   *  Note that methods returning a Cycle or Path accept only `Successors`.
    */
   sealed trait Direction  
   /** Defines the traversal to follow successor nodes. */
-  object Successors   extends Direction 
+  case object Successors   extends Direction 
   /** Defines the traversal to follow predecessor nodes. */
-  object Predecessors extends Direction
+  case object Predecessors extends Direction
   /** Defines the traversal to follow successor and predecessor nodes alike. */
-  object AnyConnected extends Direction
+  case object AnyConnected extends Direction
 
   /** Marker trait for informers aimed at passing algorithmic-specific state
    *  to [[scalax.collection.GraphTraversal.ExtendedNodeVisitor]].

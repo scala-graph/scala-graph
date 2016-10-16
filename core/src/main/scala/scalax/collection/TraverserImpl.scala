@@ -33,16 +33,12 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
     final protected def apply[U](pred: NodeFilter = noNode, visitor: A => U = empty): Option[NodeT] =
       new Runner[U](pred, visitor)()
 
-    final def findCycle[U](implicit visitor: A => U = empty): Option[Cycle] = {
-      cycle(
-        withParameters(Parameters(direction = Successors)).Runner(noNode, visitor).dfsWGB(),
-        subgraphEdges
-      )
+    final def findCycle[U](implicit visitor: A => U = empty): Option[Cycle] = ifSuccessors {
+      cycle(Runner(noNode, visitor).dfsWGB(), subgraphEdges)
     }
     
-    final def pathUntil[U](pred: NodeFilter)(implicit visitor: A => U = empty): Option[Path] = {
-      val (target, path) = 
-          withParameters(parameters.withDirection(Successors)).Runner[U](pred, visitor).dfsStack()
+    final def pathUntil[U](pred: NodeFilter)(implicit visitor: A => U = empty): Option[Path] = ifSuccessors {
+      val (target, path) = Runner[U](pred, visitor).dfsStack()
       target map { _ =>
         new AnyEdgeLazyPath(
           new ReverseStackTraversable[DfsInformer.Element[NodeT], NodeT]
@@ -70,8 +66,9 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
 
     final def shortestPathTo[T:Numeric, U](potentialSuccessor: NodeT,
                                            weight            : EdgeT => T,
-                                           visitor           : A => U): Option[Path] =
+                                           visitor           : A => U): Option[Path] = ifSuccessors {
       new Runner(noNode, visitor).shortestPathTo(potentialSuccessor, weight)
+    }
 
     /** Contains algorithms and local values to be used by the algorithms.
      *  Last target reusability and best possible run-time performance.
