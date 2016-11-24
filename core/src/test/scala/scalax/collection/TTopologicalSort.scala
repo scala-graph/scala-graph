@@ -19,8 +19,6 @@ class TTopologicalSortRootTest
   			new TTopologicalSort[immutable.Graph](immutable.Graph),
   			new TTopologicalSort[  mutable.Graph](  mutable.Graph)
   		)
-  	with Matchers
-  	with PropertyChecks
   
 private class TTopologicalSort[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]] 
 	  (val factory: GraphCoreCompanion[G])

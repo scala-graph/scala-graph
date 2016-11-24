@@ -3,16 +3,13 @@ package constraints
 
 import scala.language.{higherKinds, postfixOps}
 
-import org.scalatest.{Suite, Suites}
-import org.scalatest.Informer
-import org.scalatest.matchers.ShouldMatchers
-
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.{Graph => SimpleGraph}
 import PreCheckFollowUp._
 import generic.GraphConstrainedCompanion
 
+import org.scalatest._
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
@@ -21,8 +18,8 @@ class TConnectedRootTest
   extends Suites(
     new TConnected[immutable.Graph](immutable.Graph),
     new TConnected[  mutable.Graph](  mutable.Graph))
-  with ShouldMatchers
-{
+  with Matchers {
+
   import mutable.Graph
   import scalax.collection.mutable.{Graph => SimpleGraph}
 
@@ -66,9 +63,9 @@ class TConnectedRootTest
 
 class TConnected [CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphConstrainedCompanion[CC])
-  extends Suite
-  with    ShouldMatchers
-{
+    extends Suite
+    with Matchers {
+
   implicit val config: Config = Connected 
   def test_0(info : Informer) {
     info("factory = " + factory.getClass)

@@ -2,11 +2,6 @@ package scalax.collection.io.json
 
 import language.higherKinds
 
-import org.scalatest.Suite
-import org.scalatest.Suites
-import org.scalatest.Informer
-import org.scalatest.matchers.ShouldMatchers
-
 import net.liftweb.json._
 
 import scalax.collection._
@@ -22,6 +17,7 @@ import serializer._, imp._, imp.Parser.{parse => graphParse},
        descriptor._, descriptor.predefined._, descriptor.Defaults._,
        exp.Export
        
+import org.scalatest._
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
@@ -30,17 +26,14 @@ class TCustomEdgeRootTest
   extends Suites(
       new TCustomEdge[immutable.Graph](immutable.Graph),
       new TCustomEdge[  mutable.Graph](  mutable.Graph))
-  with ShouldMatchers
-{
-  // ---------------------------------------- mutable tests
-}
+
 /**	Tests JSON import/export of graphs with custom edges.
  */
 class TCustomEdge[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
-	extends	Suite
-	with	ShouldMatchers
-{
+  	extends	Suite
+  	with Matchers {
+
   val jsonText = """
     { "nodes" : [
         ["Editor"],

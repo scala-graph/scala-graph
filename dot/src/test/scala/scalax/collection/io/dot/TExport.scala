@@ -4,13 +4,10 @@ package io.dot
 import language.{existentials, implicitConversions}
 import scala.collection.SortedMap
 
-import org.scalatest.Spec
-import org.scalatest.Informer
-import org.scalatest.Matchers
-
 import GraphPredef._, GraphEdge._, edge.LDiEdge, edge.Implicits._
 import Indent._
 
+import org.scalatest._
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 

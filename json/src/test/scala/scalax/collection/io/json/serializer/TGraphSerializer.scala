@@ -5,11 +5,6 @@ import language.higherKinds
 
 import net.liftweb.json._
 
-import org.scalatest.{Suite, Suites}
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 import scalax.collection.GraphPredef._
 import scalax.collection._
 import scalax.collection.generic.GraphCoreCompanion
@@ -17,19 +12,22 @@ import scalax.collection.edge._
 import scalax.collection.edge.Implicits._
 import scalax.collection.io.json.descriptor.StringNodeDescriptor
 
+import org.scalatest._
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
+
 @RunWith(classOf[JUnitRunner])
 class TGraphSerializerRootTest
   extends Suites(
       new TGraphSerializer[immutable.Graph](immutable.Graph),
       new TGraphSerializer[  mutable.Graph](  mutable.Graph))
-  with ShouldMatchers
 
 /** Tests the serialization of any class, here `class Container`, containing a graph.
  */
 class TGraphSerializer[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
     extends Suite
-    with ShouldMatchers {
+    with Matchers {
 
   object GraphFixture {
     val graphJsonText = """

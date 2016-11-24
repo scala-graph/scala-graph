@@ -10,12 +10,12 @@ import generic.GraphCoreCompanion
 import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
 import generator.GraphGen
 
-import org.scalatest._
-import org.scalatest.prop.PropertyChecks
-
 import org.scalacheck._
 import Arbitrary.arbitrary
 
+import org.scalatest._
+import org.scalatest.refspec.RefSpec
+import org.scalatest.prop.PropertyChecks
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
@@ -25,19 +25,17 @@ class TTraversalRootTest
 			new TTraversal[immutable.Graph](immutable.Graph),
 			new TTraversal[  mutable.Graph](  mutable.Graph)
 		)
-	with Matchers
-	with PropertyChecks
-{
-}
+
 /**	This class contains tests for graph traversals to be run for Graph instances created
  *	by the Graph factory and passed to the constructor. For instance,
  *	this allows the same tests to be run for mutable and immutable Graphs.
  */
 final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
 			(val factory: GraphCoreCompanion[G])
-	extends	Spec
+	extends	RefSpec
 	with	Matchers
 	with	PropertyChecks {
+  
   implicit val config = PropertyCheckConfig(minSuccessful = 5, maxDiscarded = 5)
   
   def `find successors in a tiny graph` {

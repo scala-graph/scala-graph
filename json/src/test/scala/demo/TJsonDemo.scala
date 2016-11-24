@@ -1,10 +1,5 @@
 package demo
 
-import org.scalatest.Suite
-import org.scalatest.Suites
-import org.scalatest.Informer
-import org.scalatest.matchers.ShouldMatchers
-
 import scalax.collection._
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge._
@@ -14,13 +9,12 @@ import scalax.collection.edge._,
 import scalax.collection.io.json._
 import scalax.collection.io.json.descriptor.predefined.{DiHyper, Di}
 
+import org.scalatest._
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
-class TJsonDemoTest
-	extends	Suite
-	with	ShouldMatchers
+class TJsonDemoTest extends	Suite with Matchers
 {
   val (programming, inDepth) = (
       Book("Programming in Scala", "978-0-9815316-2-5"),
