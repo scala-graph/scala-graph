@@ -20,7 +20,7 @@ object GraphBuild extends Build {
     settings = defaultSettings ++ Seq(
       name      := "Graph Core",
       version   := Version.core,
-      libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.13.3" % "optional;provided"
+      libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.13.4" % "optional;provided"
     )
   )
 
