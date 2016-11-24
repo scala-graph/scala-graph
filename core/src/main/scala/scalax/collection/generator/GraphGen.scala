@@ -5,6 +5,7 @@ import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.rng.Seed
 import org.scalacheck.util.Buildable._
 
 import GraphPredef.EdgeLikeIn, GraphEdge._
@@ -53,7 +54,7 @@ class GraphGen[N,
       var cnt = 0
       var value: Option[N] = None
       while (value.isEmpty && cnt < 100) {
-        value = gen.apply(Gen.Parameters.default)
+        value = gen.apply(Gen.Parameters.default, Seed.random)
         cnt += 1
       }
       value getOrElse (throw new IllegalArgumentException(

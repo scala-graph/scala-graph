@@ -20,7 +20,7 @@ object GraphBuild extends Build {
     settings = defaultSettings ++ Seq(
       name      := "Graph Core",
       version   := Version.core,
-      libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.12.5" % "optional;provided"
+      libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.13.3" % "optional;provided"
     )
   )
 
@@ -63,8 +63,8 @@ object GraphBuild extends Build {
   ) dependsOn (core)
 
   private lazy val defaultSettings = Defaults.defaultSettings ++ Seq(
-    scalaVersion := Version.compiler,
-  	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2),
+    scalaVersion := Version.compiler_2_11,
+  	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2_10, Version.compiler_2_12),
     organization := "org.scala-graph",
     parallelExecution in Test := false,
     scalacOptions in (Compile, doc) <++= (name, version) map {
@@ -80,15 +80,15 @@ object GraphBuild extends Build {
     autoAPIMappings := true,
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     libraryDependencies ++= Seq(
-      "junit" % "junit" % "4.8.2"                       % "test",
-      "org.scalatest"  %% "scalatest"  % "2.2.6"        % "test",
-      "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test"),
+      "junit" % "junit" % "4.12"                        % "test",
+      "org.scalatest"  %% "scalatest"  % "3.0.0"        % "test",
+      "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test")/*,
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 10)) => Nil
       case Some((2, scalaMajor)) if scalaMajor >= 11 =>  Seq(
           "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test" // required by ScalaTest
         )
       case _ => Nil
-    })
+    })*/
   ) ++ GraphSonatype.settings
 }
