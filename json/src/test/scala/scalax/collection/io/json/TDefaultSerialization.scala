@@ -14,6 +14,7 @@ import serializer._, imp._,
        exp.Export
        
 import org.scalatest._
+import org.scalatest.refspec.RefSpec
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
@@ -23,11 +24,9 @@ class TDefaultSerializationRootTest
       new TDefaultSerialization[immutable.Graph](immutable.Graph),
       new TDefaultSerialization[  mutable.Graph](  mutable.Graph))
 
-/**	Tests JSON import/export of node classes not known at compilation time.
- */
 class TDefaultSerialization[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
-  	extends	Suite
+  	extends	RefSpec
   	with Matchers {
 
   object Fixture {
@@ -46,20 +45,24 @@ class TDefaultSerialization[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with Graph
     val extClasses = List(classOf[CExt])
     val graph = factory[Node,DiEdge](Node(1, CExt(2)))
   }
-  def test_export {
-    import Fixture._
-    graph.toJson(descriptor(extClasses)) should be (jsonText)
-  }
-  def test_import {
-    import Fixture._
-    factory.fromJson[Node,DiEdge](jsonText, descriptor(extClasses)) should be (graph)
-  }
-  def test_ImEx {
-    import Fixture._
-    factory.fromJson[Node,DiEdge](
-        graph.toJson(descriptor(extClasses)), descriptor(extClasses)) should be (graph)
+  
+  object `JSON import/export of node classes not known at compilation time works fine` {
+    def `when exporting` {
+      import Fixture._
+      graph.toJson(descriptor(extClasses)) should be (jsonText)
+    }
+    def `when importing` {
+      import Fixture._
+      factory.fromJson[Node,DiEdge](jsonText, descriptor(extClasses)) should be (graph)
+    }
+    def `when reimporting` {
+      import Fixture._
+      factory.fromJson[Node,DiEdge](
+          graph.toJson(descriptor(extClasses)), descriptor(extClasses)) should be (graph)
+    }
   }
 }
+
 trait Ext
 case class Node(val i: Int, val e: Ext)
 // library user extension

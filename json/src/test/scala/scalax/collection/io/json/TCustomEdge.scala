@@ -18,6 +18,7 @@ import serializer._, imp._, imp.Parser.{parse => graphParse},
        exp.Export
        
 import org.scalatest._
+import org.scalatest.refspec.RefSpec
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
@@ -27,11 +28,9 @@ class TCustomEdgeRootTest
       new TCustomEdge[immutable.Graph](immutable.Graph),
       new TCustomEdge[  mutable.Graph](  mutable.Graph))
 
-/**	Tests JSON import/export of graphs with custom edges.
- */
 class TCustomEdge[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
-  	extends	Suite
+  	extends	RefSpec
   	with Matchers {
 
   val jsonText = """
@@ -43,6 +42,7 @@ class TCustomEdge[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,C
         ["Editor", "Menu",     "M", "Alt" ],
         ["Menu",   "Settings", "S", "NoneModifier"]]
     }""".filterNot(_.isWhitespace)
+    
   import KeyModifier._
   val descriptor =
     new Descriptor[String](
@@ -57,20 +57,24 @@ class TCustomEdge[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,C
       Transition("Editor", "Menu",     'M', Alt),
       Transition("Menu",   "Settings", 'S', NoneModifier))
 
-  def test_import {
-    factory.fromJson[String,Transition](jsonText, descriptor) should be (graph)
-  }
-  def test_ImEx {
-    factory.fromJson[String,Transition](
-        graph.toJson(descriptor), descriptor) should be (graph)
+  object `JSON import/export of graphs with custom edges works fine` {
+    def `when importing` {
+      factory.fromJson[String,Transition](jsonText, descriptor) should be (graph)
+    }
+    def `when reimporting` {
+      factory.fromJson[String,Transition](
+          graph.toJson(descriptor), descriptor) should be (graph)
+    }
   }
 }
+
 /** Type of the custom attribute of `CustomEdge`. */
 object KeyModifier extends Enumeration {
    type KeyModifier = Value
    val NoneModifier, Alt, Ctrl, Shift = Value
 }
 import KeyModifier._
+
 /** Custom edge with the two custom attributes `key` and `keyMod`.
  *  Note that it is also necessary to extend `Attributes` enabling to be a member
  *  of the JSON `CEdgeDescriptor`. */
@@ -89,6 +93,7 @@ class Transition[+N](from: N, to: N, val key: Char, val keyMod: KeyModifier)
   override def copy[NN](newNodes: Product): Transition[NN] = 
     Transition.newEdge[NN](newNodes, attributes)
 }
+
 /** Custom edge companion object extending `CEdgeCompanion`. This is necessary
  *  to enable this custom edge to be a member of the JSON `CEdgeDescriptor`. */
 object Transition extends CEdgeCompanion[Transition] {
@@ -110,7 +115,7 @@ object Transition extends CEdgeCompanion[Transition] {
 
   type P = (Char, KeyModifier)
   override protected def newEdge[N](nodes: Product, attributes: P) = nodes match {
-    case (from: N, to: N) =>
+    case (from: N @unchecked, to: N @unchecked) =>
       new Transition[N](from, to, attributes._1, attributes._2)
   }
 }

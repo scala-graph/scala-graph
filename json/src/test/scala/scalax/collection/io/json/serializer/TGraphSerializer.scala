@@ -13,6 +13,7 @@ import scalax.collection.edge.Implicits._
 import scalax.collection.io.json.descriptor.StringNodeDescriptor
 
 import org.scalatest._
+import org.scalatest.refspec.RefSpec
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
@@ -22,14 +23,12 @@ class TGraphSerializerRootTest
       new TGraphSerializer[immutable.Graph](immutable.Graph),
       new TGraphSerializer[  mutable.Graph](  mutable.Graph))
 
-/** Tests the serialization of any class, here `class Container`, containing a graph.
- */
 class TGraphSerializer[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
-    extends Suite
+    extends RefSpec
     with Matchers {
 
-  object GraphFixture {
+  private object GraphFixture {
     val graphJsonText = """
       { "nodes" : [["A"], ["B"]],
         "edges": [
@@ -46,36 +45,36 @@ class TGraphSerializer[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[
   }
   import GraphFixture._
   
-  object ContainerFixture {
-
+  private object ContainerFixture {
     val container = Container(0, graph)
     val containerJsonText =
       """{ "i" : 0, "g" : %s}""" filterNot (_.isWhitespace) format graphJsonText
   }
 
-  def test_importWEdge {
-    val g = factory.fromJson[String,WDiEdge](graphJsonText, descriptor)
-    g should equal (graph)
-  }
-  
-  def test_ImExWEdge {
-    val g = factory.fromJson[String,WDiEdge](graphJsonText, descriptor)
-    factory.fromJson[String,WDiEdge](g.toJson(descriptor), descriptor) should equal (g)
-  }
-
-  def test_Container {
-    import ContainerFixture._
-    
-    implicit val format: Formats = DefaultFormats +
-      new GraphSerializer(descriptor)
-    
-    val decomposed = Extraction.decompose(container)
-    val decomopsedText = compact(render(decomposed))
-    
-    val ast = JsonParser.parse(decomopsedText)
-    val extracted = ast.extract[Container]
-    
-    extracted should equal (container)
+  object `JSON serialization of any class containing a graph works fine` { 
+    def `when exporting` {
+      val g = factory.fromJson[String,WDiEdge](graphJsonText, descriptor)
+      g should equal (graph)
+    }
+    def `when reimporting` {
+      val g = factory.fromJson[String,WDiEdge](graphJsonText, descriptor)
+      factory.fromJson[String,WDiEdge](g.toJson(descriptor), descriptor) should equal (g)
+    }
+    def `when decomposing and parsing` {
+      import ContainerFixture._
+      
+      implicit val format: Formats = DefaultFormats +
+        new GraphSerializer(descriptor)
+      
+      val decomposed = Extraction.decompose(container)
+      val decomopsedText = compact(render(decomposed))
+      
+      val ast = JsonParser.parse(decomopsedText)
+      val extracted = ast.extract[Container]
+      
+      extracted should equal (container)
+    }
   }
 }
+
 protected case class Container(i: Int, g: Graph[String, WDiEdge])
