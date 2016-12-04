@@ -95,20 +95,23 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   type NodeT <: InnerNode with Serializable
   trait Node extends Serializable
   trait InnerNode extends InnerNodeParam[N] with Node with InnerElem {
-    /**
-     * The outer node as supplied by the user at instantiation time or
-     * by adding nodes this graph.
-     *
-     * @return Reference to the user-supplied outer node.
-     */
+    
+    /** The outer node as supplied at instantiation time or while adding nodes this graph.
+      * @return Reference to the user-supplied outer node.
+      */
     def value: N
-    /**
-     * All edges at this node - commonly denoted as E(v).
-     * 
-     * @return all edges with at least one end connecting to this node.
-     */
+    
+    /** Synonym for `value`.
+      */  
+    @inline final def toOuter: N = value
+    
+    /** All edges at this node - commonly denoted as E(v).
+      * @return all edges connecting to this node.
+      */
     def edges: ExtSet[EdgeT]
-    /** Synonym for `edges`. */  
+    
+    /** Synonym for `edges`.
+      */  
     @inline final def ~ = edges
 
     /**

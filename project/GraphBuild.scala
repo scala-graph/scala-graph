@@ -63,7 +63,7 @@ object GraphBuild extends Build {
   ) dependsOn (core)
 
   private lazy val defaultSettings = Defaults.defaultSettings ++ Seq(
-    scalaVersion := Version.compiler_2_11,
+    scalaVersion := Version.compiler_2_12,
   	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2_10, Version.compiler_2_12),
     organization := "org.scala-graph",
     parallelExecution in Test := false,
