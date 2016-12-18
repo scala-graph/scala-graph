@@ -47,6 +47,19 @@ object Parser {
       jsonAST:    JValue,
       descriptor: Descriptor[N]): Iterable[ElemList] =
   {
+      jsonAST match {
+        case JObject(fields) => parse(fields, descriptor)
+        case _ => Seq[ElemList]().toIterable
+      }
+  }
+
+
+
+
+  def parse[N,C <: EdgeCompanionBase[EdgeLike]](
+      jsonAST:    List[JField],
+      descriptor: Descriptor[N]): Iterable[ElemList] =
+  {
     (for (JField(name, values) <- jsonAST
          if descriptor.sectionIds contains name)
      yield {

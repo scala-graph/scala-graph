@@ -60,9 +60,10 @@ object StringNodeDescriptor extends NodeDescriptor[String] {
           case JInt   (_) |
                JDouble(_) => fld.extract[String]
           case JBool  (b) => b.toString
-          case JArray (_) |
-               JObject(_) => "(" + mkString(fld.children) + ")"
-          case JField(n,v)=> "(" + n + "," + mkString(List(v)) + ")"
+          case JArray (_) => "(" + mkString(fld.children) + ")"
+          case JObject(obj) => val buf = new StringBuilder("(")
+                             obj.foldLeft(buf)((buf, o) => buf.append(o.name + "," + mkString(List(o.value))))
+                             buf.append(")").toString
           case JNull      => "Null"
           case JNothing   => "Nothing" 
         }
