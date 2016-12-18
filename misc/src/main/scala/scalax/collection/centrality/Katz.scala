@@ -10,8 +10,8 @@ import scalax.collection.Graph
  */
 object Katz {
   // Minimum 0.5, increasing with higher order
-  private def defaultAttenuation(order: Int): Float =
-    1f - (1f / (ceil(order.toFloat / 10).toFloat + 1))
+  private def defaultAttenuation(order: Int): Float = 1f - 2f / (order + 2)
+//    1f - (1f / (ceil(order.toFloat / 10).toFloat + 1))
       
   implicit class Centrality[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N, E]) {
   
@@ -47,18 +47,25 @@ object Katz {
           if (index < limit) factors(index) else minFactor
       }
 
+println(factor)
       val weightBuilder = Map.newBuilder[G#NodeT, Float]
       nodes.asInstanceOf[g.NodeSetT] foreach { n =>
         import scalax.collection.GraphTraversalImpl._
         import g.ExtendedNodeVisitor
 
+        println(n)
         var weight = 0f
         n.innerNodeTraverser.withMaxDepth(maxDepth) foreach {
           ExtendedNodeVisitor((node, count, depth, informer) => {
-              weight += degrees(node.asInstanceOf[G#NodeT]) * Factor(depth)
+              if (node ne n) {
+                weight += degrees(node.asInstanceOf[G#NodeT]) * Factor(depth)
+                print(s"(${degrees(node.asInstanceOf[G#NodeT])}-$depth-${Factor(depth)})" )
+              }
+              print(s"$node: $weight")
             }
           ) 
         }
+        println()
         
         weightBuilder += ((n.asInstanceOf[G#NodeT], weight))
       }
