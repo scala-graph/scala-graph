@@ -221,7 +221,7 @@ object GraphPredef {
   def nodePredicate [NI, EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[X<:NO] <: EdgeLike[X]](pred: NI => Boolean) =
     (out: Param[NI,EI]) => out match {
       case n: InnerNodeParam[NI] => pred(n.value)
-      case e: InnerEdgeParam[_,_,_,_] => e.asInstanceOf[InnerEdgeParam[NI,EI,NO,EO]].edge forall (n => pred(n.value))
+      case e: InnerEdgeParam[NI,EI,_,_] => e.asInstanceOf[InnerEdgeParam[NI,EI,NO,EO]].edge forall (n => pred(n.value))
       case _ => false
     }
 

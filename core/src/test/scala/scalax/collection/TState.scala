@@ -2,7 +2,7 @@ package scalax.collection
 
 import scala.language.postfixOps
 import scala.collection.mutable.{ListBuffer, Map => MutableMap}
-import scala.concurrent.{future, Future, Await}
+import scala.concurrent.{Future, Await}
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.util.Random
@@ -10,16 +10,15 @@ import scala.util.Random
 import GraphPredef._, GraphEdge._
 import generator.{RandomGraph, NodeDegreeRange}
 
-import org.scalatest.Suite
+import org.scalatest.refspec.RefSpec
 import org.scalatest.Matchers
-
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 /** Ensure that stateful data handling used for traversals is thread-safe. 
  */
 @RunWith(classOf[JUnitRunner])
-class TStateTest extends Suite with Matchers {
+class TStateTest extends RefSpec with Matchers {
   val g = Graph(Data.elementsOfUnDi_2: _*)
 
   // a sample traversal with recursive calls in its node visitor
@@ -40,85 +39,86 @@ class TStateTest extends Suite with Matchers {
   def dump {
     println(State.dump(g))
   }
-  def test_Loop {
-    for (i <- 1 to aLotOfTimes)
-      countNodes() should be (nrNodesExpected)
-  }
-  def test_InnerLoop {
-    g.nodes.head.innerNodeTraverser foreach ( _ =>
-      test_Loop
-    )
-  }
-  def test_Recursion {
-    val depth = 5
-    countNodes(depth) should be (math.pow(3, depth) * nrNodesExpected)
-  }
-  def test_DeepRecursion {
-    val recurseAt = g.nodes.head 
-    def countNodesDeep(recursion: Int): Int = {
-      assert(recursion >= 0)
-      var nrNodes = 0
-      g.nodes.head.innerNodeTraverser foreach ( n =>
-        nrNodes += (
-          // if (n eq recurseAt) println(State.dump(recurseAt).summary)
-          if (recursion == 0) 0
-          else if (n eq recurseAt) countNodesDeep(recursion - 1)
-          else 1
-        )
+  
+  object `Single-threaded shared state proves robust` {
+    def `when looping` {
+      for (i <- 1 to aLotOfTimes)
+        countNodes() should be (nrNodesExpected)
+    }
+    def `when looping at visited nodes` {
+      g.nodes.head.innerNodeTraverser foreach ( _ =>
+        `when looping`
       )
-      nrNodes
     }
-    for(i <- 1 to 2) countNodesDeep(aLotOfTimes)
-  }
-  def test_Futures {
-    val traversals = Future.sequence(
-        for (i <- 1 to aLotOfTimes)
-        yield future { countNodes() }
-    )
-    // statistics map with key = nrOfNodesCounted, value = frequency
-    val stat = MutableMap.empty[Int,Int]
-    val a = Await.result(traversals, 1 seconds) foreach { cnt =>
-      stat += cnt -> (stat.getOrElse(cnt, 0) + 1)
+    def `when called recursively` {
+      val depth = 5
+      countNodes(depth) should be (math.pow(3, depth) * nrNodesExpected)
     }
-    // each traversal must yield the same result
-    stat should be (Map(nrNodesExpected -> aLotOfTimes))
-  }
-  
-  /* Assert that State.clearNodeStates no more causes NPE after lots of unconnected traversals. */
-  def test_clear {
-    val order = 5000
-    val r = new Random(10 * order)
-    def intNodeFactory = r.nextInt
-    val g = new RandomGraph[Int,DiEdge,Graph](
-        Graph,
-        order, 
-        intNodeFactory, 
-        NodeDegreeRange(0,2), 
-        Set(DiEdge),
-        false) {
-      val graphConfig = graphCompanion.defaultConfig
-    }.draw
-    val rootNodes = List.fill(50)(g.nodes.draw(r))
-    for {node <- g.nodes
-         root <- rootNodes}
-      node.hasSuccessor(root)
-  }
-  
-  /* Assert that Github issue #34 'Racing condition' is fixed. */
-  def test_stress {
-    import Data._
-    object g extends TGraph[Int, DiEdge  ](Graph(elementsOfDi_1: _*))
-    def n(outer: Int) = g.node(outer)
-    val (n1, n2) = (n(2), n(5))
-
-    val times = 200000
-    val errors = ListBuffer.empty[Int]
-    def run: Boolean = {
-      (1 to times).par forall { i =>
-        (n1 pathTo n2).nonEmpty
+    def `when called deep-recursively` {
+      val recurseAt = g.nodes.head 
+      def countNodesDeep(recursion: Int): Int = {
+        assert(recursion >= 0)
+        var nrNodes = 0
+        g.nodes.head.innerNodeTraverser foreach ( n =>
+          nrNodes += (
+            // if (n eq recurseAt) println(State.dump(recurseAt).summary)
+            if (recursion == 0) 0
+            else if (n eq recurseAt) countNodesDeep(recursion - 1)
+            else 1
+          )
+        )
+        nrNodes
       }
+      for(i <- 1 to 2) countNodesDeep(aLotOfTimes)
     }
-    for (i <- 1 to 3)
-    	run should be (true)
+    def `when cleared up after lots of unconnected traversals` {
+      val order = 5000
+      val r = new Random(10 * order)
+      def intNodeFactory = r.nextInt
+      val g = new RandomGraph[Int,DiEdge,Graph](
+          Graph,
+          order, 
+          intNodeFactory, 
+          NodeDegreeRange(0,2), 
+          Set(DiEdge),
+          false) {
+        val graphConfig = graphCompanion.defaultConfig
+      }.draw
+      val rootNodes = List.fill(50)(g.nodes.draw(r))
+      for {node <- g.nodes
+           root <- rootNodes}
+        node.hasSuccessor(root)
+    }
+  }
+  object `Multi-threaded shared state proves robust` {
+    def `when traversing by futures` {
+      val traversals = Future.sequence(
+          for (i <- 1 to aLotOfTimes)
+          yield Future { countNodes() }
+      )
+      // statistics map with key = nrOfNodesCounted, value = frequency
+      val stat = MutableMap.empty[Int,Int]
+      val a = Await.result(traversals, 1 seconds) foreach { cnt =>
+        stat += cnt -> (stat.getOrElse(cnt, 0) + 1)
+      }
+      // each traversal must yield the same result
+      stat should be (Map(nrNodesExpected -> aLotOfTimes))
+    }
+    def `when tested under stress fixing #34` {
+      import Data._
+      object g extends TGraph[Int, DiEdge  ](Graph(elementsOfDi_1: _*))
+      def n(outer: Int) = g.node(outer)
+      val (n1, n2) = (n(2), n(5))
+  
+      val times = 200000
+      val errors = ListBuffer.empty[Int]
+      def run: Boolean = {
+        (1 to times).par forall { i =>
+          (n1 pathTo n2).nonEmpty
+        }
+      }
+      for (i <- 1 to 3)
+      	run should be (true)
+    }
   }
 }

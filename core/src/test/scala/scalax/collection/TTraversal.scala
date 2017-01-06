@@ -10,12 +10,12 @@ import generic.GraphCoreCompanion
 import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
 import generator.GraphGen
 
-import org.scalatest._
-import org.scalatest.prop.PropertyChecks
-
 import org.scalacheck._
 import Arbitrary.arbitrary
 
+import org.scalatest._
+import org.scalatest.refspec.RefSpec
+import org.scalatest.prop.PropertyChecks
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
@@ -25,19 +25,17 @@ class TTraversalRootTest
 			new TTraversal[immutable.Graph](immutable.Graph),
 			new TTraversal[  mutable.Graph](  mutable.Graph)
 		)
-	with Matchers
-	with PropertyChecks
-{
-}
+
 /**	This class contains tests for graph traversals to be run for Graph instances created
  *	by the Graph factory and passed to the constructor. For instance,
  *	this allows the same tests to be run for mutable and immutable Graphs.
  */
 final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
 			(val factory: GraphCoreCompanion[G])
-	extends	Spec
+	extends	RefSpec
 	with	Matchers
 	with	PropertyChecks {
+  
   implicit val config = PropertyCheckConfig(minSuccessful = 5, maxDiscarded = 5)
   
   def `find successors in a tiny graph` {
@@ -207,7 +205,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
     (n(0) shortestPathTo n(3)).get.nodes.toList should be (List(0,2,3)) 
   }
 
-  def `shortestPathTo in Di_1` {
+  def `shortestPathTo in WDi_1` {
     val g = factory(elementsOfWDi_1: _*)
     def n(outer: Int) = g get outer
 
@@ -220,28 +218,49 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
     (n(1) shortestPathTo n(5)).get.nodes.toList should be (List(1,5))
   }
 
-  def `shortestPathTo in Di_1 using Float` {
+  def `shortestPathTo in WDi_1 using Float` {
     val g = factory(elementsOfWDi_1: _*)
     def n(outer: Int) = g get outer
     
     def weight(e: g.EdgeT): Float = 0.5f + e.weight
     def reverseWeight(e: g.EdgeT): Long = 41 - e.weight
 
-    n(5) shortestPathTo (n(4), weight) should be (None)
+    n(5) shortestPathTo (n(4), weight) shouldBe empty
     
-    (n(1) shortestPathTo (n(3),        weight)).get.nodes.toList should be (List(1,3)) 
-    (n(1) shortestPathTo (n(3), reverseWeight)).get.nodes.toList should be (List(1,2,3)) 
+    (n(1) shortestPathTo (n(3),        weight)).get.nodes.toStream should contain theSameElementsInOrderAs Array(1,3) 
+    (n(1) shortestPathTo (n(3), reverseWeight)).get.nodes.toStream should contain theSameElementsInOrderAs Array(1,2,3) 
   }
 
-  def `shortestPathTo in UnDi_1` {
+  def `shortestPathTo in WUnDi_1` {
     val g = factory(elementsOfWUnDi_1: _*)
-    def n(value: Int) = g get value
+    def shortestPathNodes(from: Int, to: Int): Stream[g.NodeT] = {
+      def n(value: Int): g.NodeT = g get value
+      val path = n(from) shortestPathTo n(to)
+      path shouldBe defined
+      path.get.nodes.to[Stream]
+    }
+    shortestPathNodes(2, 5) should contain theSameElementsInOrderAs Array(2,3,4,5)
+    shortestPathNodes(4, 5) should contain theSameElementsInOrderAs Array(4,5)
+    shortestPathNodes(1, 3) should(contain theSameElementsInOrderAs(Array(1,3)) or
+                                   contain theSameElementsInOrderAs(Array(1,5,3)))
+    shortestPathNodes(5, 4) should contain theSameElementsInOrderAs Array(5,3,4)
+    shortestPathNodes(3, 1) should contain theSameElementsInOrderAs Array(3,4,5,1)
+  }
+  
+  def `shortestPathTo withMaxDepth` {
+    val g = factory(elementsOfWUnDi_1: _*)
+    def n(value: Int): g.NodeT = g get value
+    
+    n(2).innerNodeTraverser.withMaxDepth(2).shortestPathTo(n(5)).get.nodes.toList should be (List(2,3,5))
+  }
 
-    (n(2) shortestPathTo n(5)).get.nodes.toList should be (List(2,3,4,5))
-    (n(4) shortestPathTo n(5)).get.nodes.toList should be (List(4,5))
-    (n(1) shortestPathTo n(3)).get.nodes.toList should(be (List(1,3)) or be (List(1,5,3)))
-    (n(5) shortestPathTo n(4)).get.nodes.toList should be (List(5,3,4))
-    (n(3) shortestPathTo n(1)).get.nodes.toList should be (List(3,4,5,1))
+  def `shortestPathTo withMaxWeight` {
+    val g = factory(elementsOfWUnDi_1: _*)
+    def n(value: Int): g.NodeT = g get value
+    
+    val t = n(2).innerNodeTraverser
+    t.withMaxWeight(3).shortestPathTo(n(5)) shouldBe defined
+    t.withMaxWeight(2).shortestPathTo(n(5)) shouldBe empty
   }
 
   // see diagram WUnDi-2.jpg
@@ -510,6 +529,12 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
                                                sum should be (expectedSumLayer1PredecessorsOf_2)
       node(2).outerNodeTraverser(maxDepth_1.withDirection(AnyConnected)).
                                                sum should be (expectedSumLayer1AnyConnectedsOf_2)
+      an [IllegalArgumentException] should be thrownBy {
+        node(2).innerNodeTraverser(anyConnected) pathTo node(2)
+      }
+      an [IllegalArgumentException] should be thrownBy {
+        node(2).innerNodeTraverser(anyConnected) shortestPathTo node(2)
+      }
     }
   }
 

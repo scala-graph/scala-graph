@@ -1,6 +1,6 @@
 *.class
 *.log
-*.sjsir
+temp/
 
 # SBT
 dist/*
@@ -9,6 +9,11 @@ lib_managed/
 src_managed/
 project/boot/
 project/plugins/project/
+
+# ScalaJs
+.js
+.jvm
+*.sjsir
 
 # Eclipse, Scala IDE
 .project

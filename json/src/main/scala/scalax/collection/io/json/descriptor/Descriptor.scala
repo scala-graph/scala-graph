@@ -18,17 +18,18 @@ import error.JsonGraphError._
  * An individual instance of this class may be passed to `Descriptor` if
  * non-default section id's are to be used. 
  */
-class SectionId(val nodesId: String,
-                val edgesId: String)
-  extends Tuple2[String,String](nodesId, edgesId)
-{
+class SectionId(val nodesId: String, val edgesId: String) {
+  
   /** Returns whether `id` is one of `nodesId` or `edgesId` of this `SectionId`. */
-  def contains(id: String) =  productIterator contains id
+  def contains(id: String) = isNodes(id) || isEdges(id)
+  
   /** Returns whether `id` equals to `nodesId` of this `SectionId`. */
-  def isNodes (id: String) = (productIterator indexOf id) == 0
+  def isNodes (id: String) = id == nodesId
+  
   /** Returns whether `id` equals to `edgesId` of this `SectionId`. */
-  def isEdges (id: String) = (productIterator indexOf id) == 1
+  def isEdges (id: String) = id == edgesId
 }
+
 /** The default section id's `"nodes"` and `"edges"`. */
 object DefaultSectionId extends SectionId("nodes", "edges")
 

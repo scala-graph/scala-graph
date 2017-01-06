@@ -1,7 +1,7 @@
 package scalax.time
 
 import org.scalactic.Equality
-import org.scalatest.Spec
+import org.scalatest.refspec.RefSpec
 import org.scalatest.Matchers
 
 import org.scalatest.junit.JUnitRunner
@@ -9,7 +9,7 @@ import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
 class TMicroBenchmarkTest
-    extends Spec
+    extends RefSpec
        with Matchers {
   
   import MicroBenchmark._

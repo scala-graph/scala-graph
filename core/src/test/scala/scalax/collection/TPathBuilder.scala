@@ -1,10 +1,8 @@
 package scalax.collection
 
-import org.scalatest.Matchers
-import org.scalatest.FlatSpec
-
 import GraphEdge._, GraphPredef._
 
+import org.scalatest._
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 

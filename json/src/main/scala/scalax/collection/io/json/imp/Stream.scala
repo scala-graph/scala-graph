@@ -63,8 +63,8 @@ object Stream {
         }
 
         edgeDescriptor match {
-          case d: WLEdgeDescriptor[N,WLUnDiEdge,WLEdgeCompanion[WLUnDiEdge],_] with
-                  WLEdgeDescriptor[N,E,WLEdgeCompanion[E],_] =>
+          case d: WLEdgeDescriptor[N,WLUnDiEdge,WLEdgeCompanion[WLUnDiEdge],_] @unchecked with
+                  WLEdgeDescriptor[N,E,WLEdgeCompanion[E],_] @unchecked =>
 
             type L = d.aLabel.type
             for (jsonEdge <- edgeList)
@@ -72,11 +72,11 @@ object Stream {
                 val params: WLEdgeParameters[L] =
                     d.extract(jsonEdge).asInstanceOf[WLEdgeParameters[L]]
                 d.edgeCompanion(lookupNode(params.n1), lookupNode(params.n2))(
-                                params.weight, params.label)
+                                params.weight, params.label).asInstanceOf[E[N]]
               }
             
-          case d: LEdgeDescriptor[N,LUnDiEdge,LEdgeCompanion[LUnDiEdge],_] with
-                  LEdgeDescriptor[N,E,LEdgeCompanion[E],_] =>
+          case d: LEdgeDescriptor[N,LUnDiEdge,LEdgeCompanion[LUnDiEdge],_] @unchecked with
+                  LEdgeDescriptor[N,E,LEdgeCompanion[E],_] @unchecked =>
 
             type L = d.aLabel.type
             for (jsonEdge <- edgeList)
@@ -84,22 +84,22 @@ object Stream {
                 val params: LEdgeParameters[L] =
                     d.extract(jsonEdge).asInstanceOf[LEdgeParameters[L]]
                 d.edgeCompanion(lookupNode(params.n1), lookupNode(params.n2))(
-                                params.label)
+                                params.label).asInstanceOf[E[N]]
               }
 
-          case d: WEdgeDescriptor[N,WUnDiEdge,WEdgeCompanion[WUnDiEdge]] with
-                  WEdgeDescriptor[N,E,WEdgeCompanion[E]] =>
+          case d: WEdgeDescriptor[N,WUnDiEdge,WEdgeCompanion[WUnDiEdge]] @unchecked with
+                  WEdgeDescriptor[N,E,WEdgeCompanion[E]] @unchecked =>
                     
             for (jsonEdge <- edgeList)
               buf += {
                 val params: WEdgeParameters =
                     d.extract(jsonEdge).asInstanceOf[WEdgeParameters]
                 d.edgeCompanion(lookupNode(params.n1), lookupNode(params.n2))(
-                                params.weight)
+                                params.weight).asInstanceOf[E[N]]
               }
 
-          case d: CEdgeDescriptor[N,CEdge,CEdgeCompanion[CEdge],_] with
-                  CEdgeDescriptor[N,E,CEdgeCompanion[E],_] =>
+          case d: CEdgeDescriptor[N,CEdge,CEdgeCompanion[CEdge],_] @unchecked with
+                  CEdgeDescriptor[N,E,CEdgeCompanion[E],_] @unchecked =>
 
             type P = d.sampleAttributes.type
             for (jsonEdge <- edgeList)
@@ -111,8 +111,8 @@ object Stream {
                     params.attributes.asInstanceOf[d.edgeCompanion.P]).asInstanceOf[E[N]]
               }
 
-          case d: EdgeDescriptor[N,UnDiEdge,EdgeCompanion[UnDiEdge]] with
-                  EdgeDescriptor[N,E,EdgeCompanion[E]] =>
+          case d: EdgeDescriptor[N,UnDiEdge,EdgeCompanion[UnDiEdge]] @unchecked with
+                  EdgeDescriptor[N,E,EdgeCompanion[E]] @unchecked =>
                     
             for (jsonEdge <- edgeList)
               buf += {
@@ -121,8 +121,8 @@ object Stream {
                 d.edgeCompanion(lookupNode(params.n1), lookupNode(params.n2))
               }
 
-          case d: WLHyperEdgeDescriptor[N,WLHyperEdge,WLHyperEdgeCompanion[WLHyperEdge],_] with
-                  WLHyperEdgeDescriptor[N,E,WLHyperEdgeCompanion[E],_] =>
+          case d: WLHyperEdgeDescriptor[N,WLHyperEdge,WLHyperEdgeCompanion[WLHyperEdge],_] @unchecked with
+                  WLHyperEdgeDescriptor[N,E,WLHyperEdgeCompanion[E],_] @unchecked =>
                     
             type L = d.aLabel.type
             for (jsonEdge <- edgeList)
@@ -130,32 +130,32 @@ object Stream {
                 val params: WLHyperEdgeParameters[L] =
                     d.extract(jsonEdge).asInstanceOf[WLHyperEdgeParameters[L]]
                 d.edgeCompanion(params.nodeIds map lookupNode)(
-                                params.weight, params.label)(CollectionKind.from(params.endpointsKind))
+                                params.weight, params.label)(CollectionKind.from(params.endpointsKind)).asInstanceOf[E[N]]
               }
 
-          case d: LHyperEdgeDescriptor[N,LHyperEdge,LHyperEdgeCompanion[LHyperEdge],_] with
-                  LHyperEdgeDescriptor[N,E,LHyperEdgeCompanion[E],_] =>
+          case d: LHyperEdgeDescriptor[N,LHyperEdge,LHyperEdgeCompanion[LHyperEdge],_] @unchecked with
+                  LHyperEdgeDescriptor[N,E,LHyperEdgeCompanion[E],_] @unchecked =>
 
             type L = d.aLabel.type
             for (jsonEdge <- edgeList)
               buf += {
                 val params: LHyperEdgeParameters[L] =
                     d.extract(jsonEdge).asInstanceOf[LHyperEdgeParameters[L]]
-                d.edgeCompanion(params.nodeIds map lookupNode)(params.label)(CollectionKind.from(params.endpointsKind))
+                d.edgeCompanion(params.nodeIds map lookupNode)(params.label)(CollectionKind.from(params.endpointsKind)).asInstanceOf[E[N]]
               }
 
-          case d: WHyperEdgeDescriptor[N,WHyperEdge,WHyperEdgeCompanion[WHyperEdge]] with
-                  WHyperEdgeDescriptor[N,E,WHyperEdgeCompanion[E]] =>
+          case d: WHyperEdgeDescriptor[N,WHyperEdge,WHyperEdgeCompanion[WHyperEdge]] @unchecked with
+                  WHyperEdgeDescriptor[N,E,WHyperEdgeCompanion[E]] @unchecked =>
                     
             for (jsonEdge <- edgeList)
               buf += {
                 val params: WHyperEdgeParameters =
                     d.extract(jsonEdge).asInstanceOf[WHyperEdgeParameters]
-                d.edgeCompanion(params.nodeIds map lookupNode)(params.weight)(CollectionKind.from(params.endpointsKind))                                
+                d.edgeCompanion(params.nodeIds map lookupNode)(params.weight)(CollectionKind.from(params.endpointsKind)).asInstanceOf[E[N]]
               }
 
-          case d: CHyperEdgeDescriptor[N,CHyperEdge,CHyperEdgeCompanion[CHyperEdge],_] with
-                  CHyperEdgeDescriptor[N,E,CHyperEdgeCompanion[E],_] =>
+          case d: CHyperEdgeDescriptor[N,CHyperEdge,CHyperEdgeCompanion[CHyperEdge],_] @unchecked with
+                  CHyperEdgeDescriptor[N,E,CHyperEdgeCompanion[E],_] @unchecked =>
                     
             type P = d.sampleAttributes.type
             for (jsonEdge <- edgeList)
@@ -167,8 +167,8 @@ object Stream {
                                 CollectionKind.from(params.endpointsKind)).asInstanceOf[E[N]]
               }
 
-          case d: HyperEdgeDescriptor[N,HyperEdge,HyperEdgeCompanion[HyperEdge]] with
-                  HyperEdgeDescriptor[N,E,HyperEdgeCompanion[E]] =>
+          case d: HyperEdgeDescriptor[N,HyperEdge,HyperEdgeCompanion[HyperEdge]] @unchecked with
+                  HyperEdgeDescriptor[N,E,HyperEdgeCompanion[E]] @unchecked =>
                     
             for (jsonEdge <- edgeList)
               buf += {

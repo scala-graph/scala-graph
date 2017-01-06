@@ -6,8 +6,7 @@ import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.Graph
 
-import org.scalatest.Suite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest._
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -16,9 +15,7 @@ import org.junit.runner.RunWith
  *  Customizing Graphs]]. 
  */
 @RunWith(classOf[JUnitRunner])
-class CustomizingTest
-    extends Suite
-       with ShouldMatchers {
+class CustomizingTest extends Suite {
 
   import scalax.collection.config.CoreConfig
   import scalax.collection.mutable.ArraySet.Hints

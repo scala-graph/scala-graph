@@ -204,33 +204,38 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     else math.min(o, math.max(o / divisor, min))
   }
 
+  protected type TopoSortSetup = (Buffer[NodeT], MMap[NodeT,Int], Option[NodeT])
+  
   /** Calculates in-degrees of nodes spanned by `traversable`.
    *  @param traversable supplies the nodes for which the degree is to be calculated
    *  @param maybeHandle to be used to mark visited nodes
    *  @param includeAnyway include this node in the resulting list of nodes without predecessors
    *         irrespective of its in degree
    *  @param includeInDegree optionally filters predecessor nodes when calculation the in degree
-   *  @return pair of
+   *  @return triple of
    *          a. nodes without predecessors in the component spanned by `traverser`
    *          a. map of visited nodes to their in degrees
+   *          a. size of `traversable`
    */
   protected final def forInDegrees(
       traversable: Traversable[NodeT] with SubgraphProperties,
       maybeHandle: Option[Handle] = None, 
       includeAnyway: Option[NodeT] = None,
       includeInDegree: NodeFilter = anyNode,
-      fillInDegrees: Boolean = true): (Buffer[NodeT], MMap[NodeT,Int]) = {
+      fillInDegrees: Boolean = true): TopoSortSetup = {
     
     val nodesWithoutPredecessor = new ArrayBuffer[NodeT](expectedMaxNodes(1000))
     val nodeInDegrees = new EqHashMap[NodeT,Int](if (fillInDegrees) order else 0)
+    var inspectedNode: Option[NodeT] = None
     def nodeFilter(n: NodeT) : Boolean = traversable.subgraphNodes(n) && includeInDegree(n)
     traversable foreach { n =>
       maybeHandle foreach (implicit h => n.visited = true)
       val inDegree = n.inDegree(nodeFilter)
       if (fillInDegrees) nodeInDegrees put (n, inDegree)
       if (inDegree == 0 || (n eq includeAnyway.orNull)) nodesWithoutPredecessor += n
+      else inspectedNode = inspectedNode orElse Some(n)
     }
-    (nodesWithoutPredecessor, nodeInDegrees)
+    (nodesWithoutPredecessor, nodeInDegrees, inspectedNode)
   }
   
   protected case class ComponentTraverser(
@@ -281,10 +286,9 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         None
       }
 
-    final def topologicalSort[U](implicit visitor: InnerElem => U = empty): CycleNodeOrTopologicalOrder = {
-      val (nodesWithoutPredecessor, inDegrees) = forInDegrees(SubgraphProperties(nodes, subgraphNodes, subgraphEdges))
-      innerElemTraverser.Runner(noNode, visitor).topologicalSort(nodesWithoutPredecessor, inDegrees)
-    }
+    final def topologicalSort[U](implicit visitor: InnerElem => U = empty): CycleNodeOrTopologicalOrder =
+      innerElemTraverser.Runner(noNode, visitor).topologicalSort(
+          forInDegrees(SubgraphProperties(nodes, subgraphNodes, subgraphEdges)))
     
     final def topologicalSortByComponent[U](implicit visitor: InnerElem => U = empty): Traversable[CycleNodeOrTopologicalOrder] =
       if (order == 0) Nil
@@ -294,11 +298,10 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         withHandles(2) { handles: Array[Handle] =>
           val (startNodesHandle, topoHandle) = (Some(handles(0)), Some(handles(1)))
           implicit val handle = startNodesHandle.get
-          for (node <- nodes if ! node.visited && subgraphNodes(node)) yield {
-            val (startNodes, inDegrees) = forInDegrees(
-                forStartNodes.withRoot(node), startNodesHandle, includeInDegree = subgraphNodes)
-            topoRunner.topologicalSort(startNodes, inDegrees, topoHandle)
-          }
+          for (node <- nodes if ! node.visited && subgraphNodes(node)) yield
+            topoRunner.topologicalSort(
+                forInDegrees(forStartNodes.withRoot(node), startNodesHandle, includeInDegree = subgraphNodes),
+                topoHandle)
         }
       }
   }
@@ -740,6 +743,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
 }
 object GraphTraversalImpl {
   import GraphTraversal._
+  type Depth = Int
 
   /** Extended node visitor informer for depth first searches. 
    */
@@ -749,8 +753,7 @@ object GraphTraversalImpl {
     def pathIterator:  DfsPath [N]
   }
   object DfsInformer {
-    /** The */
-    case class Element[N] protected[collection](node: N, depth: Int, cumulatedWeight: Double = 0)
+    case class Element[N] protected[collection](node: N, depth: Depth, cumulatedWeight: Double = 0)
     type DfsStack[N] = Iterator[Element[N]]
     type DfsPath [N] = Iterator[Element[N]]
     def unapply[N](inf: DfsInformer[N]): Option[(DfsStack[N], DfsPath[N])] =
@@ -794,7 +797,8 @@ object GraphTraversalImpl {
     def costsIterator: DijkstraCosts[N,T]
   }
   object DijkstraInformer {
-    type DijkstraQueue[N,T] = Iterator[(N,T)]
+    case class Element[N,T: Numeric] protected[collection](node: N, cumWeight: T, depth: Depth)
+    type DijkstraQueue[N,T] = Iterator[Element[N,T]]
     type DijkstraCosts[N,T] = Iterator[(N,T)]
     def unapply[N, T: Numeric](inf: DijkstraInformer[N,T])
         : Option[(DijkstraQueue[N,T], DijkstraCosts[N,T])] =

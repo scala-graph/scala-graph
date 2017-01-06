@@ -22,7 +22,7 @@ object GraphBuild extends Build {
     .settings(
       name      := "Graph Core",
       version   := Version.core,
-      libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.12.5"
+      libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.13.4" % "optional;provided"
     )
 
   lazy val core   = coreCross.jvm
@@ -52,7 +52,7 @@ object GraphBuild extends Build {
     settings = defaultSettings ++ Seq(
       name      := "Graph JSON",
       version   := Version.json,
-      libraryDependencies += "net.liftweb" %% "lift-json" % "2.6.2"
+      libraryDependencies += "net.liftweb" %% "lift-json" % "3.0.1"
     )
   ) dependsOn (core)
 
@@ -67,12 +67,12 @@ object GraphBuild extends Build {
   ) dependsOn (core)
 
   private lazy val defaultCrossSettings = Seq(
-    scalaVersion := Version.compiler,
+    scalaVersion := Version.compiler_2_12,
     organization := "org.scala-graph"
   ) ++ GraphSonatype.settings
     
   private lazy val defaultSettings = defaultCrossSettings ++ Seq(
-  	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2),
+  	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2_11),
     parallelExecution in Test := false,
     scalacOptions in (Compile, doc) <++= (name, version) map {
       Opts.doc.title(_) ++ Opts.doc.version(_)
@@ -88,15 +88,15 @@ object GraphBuild extends Build {
     autoAPIMappings := true,
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     libraryDependencies ++= Seq(
-      "junit" % "junit" % "4.8.2"                       % "test",
-      "org.scalatest"  %% "scalatest"  % "2.2.6"        % "test",
-      "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test"),
+      "junit" % "junit" % "4.12"                        % "test",
+      "org.scalatest"  %% "scalatest"  % "3.0.1"        % "test",
+      "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test")/*,
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 10)) => Nil
       case Some((2, scalaMajor)) if scalaMajor >= 11 =>  Seq(
           "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test" // required by ScalaTest
         )
       case _ => Nil
-    })
+    })*/
   )
 }

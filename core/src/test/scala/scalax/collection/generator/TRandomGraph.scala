@@ -7,6 +7,7 @@ import scala.reflect.ClassTag
 import scala.util.Random
 
 import org.scalatest.Matchers
+import org.scalatest.refspec.RefSpec
 import org.scalatest.{DoNotDiscover, Spec}
 
 import GraphPredef._, GraphEdge._
@@ -18,7 +19,7 @@ import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
-class TRandomGraphTest extends Spec with Matchers {
+class TRandomGraphTest extends RefSpec with Matchers {
 
   import RandomGraph._
   val normal = new IntFactory {

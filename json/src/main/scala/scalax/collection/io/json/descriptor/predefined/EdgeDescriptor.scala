@@ -18,7 +18,7 @@ trait PredefinedEdgeDescriptorBase {
   /* this check is currently of no value since T/Serializer[T] is unchecked */
   protected def check[P](serializer: Option[Serializer[_<:Parameters]]) =
     serializer match {
-      case ser: Option[Serializer[P]] => ser
+      case ser: Option[Serializer[P] @unchecked] => ser
       case _ => throw new IllegalArgumentException
     }
 }

@@ -19,8 +19,6 @@ class TTopologicalSortRootTest
   			new TTopologicalSort[immutable.Graph](immutable.Graph),
   			new TTopologicalSort[  mutable.Graph](  mutable.Graph)
   		)
-  	with Matchers
-  	with PropertyChecks
   
 private class TTopologicalSort[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]] 
 	  (val factory: GraphCoreCompanion[G])
@@ -69,15 +67,18 @@ private class TTopologicalSort[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with Gra
       }
     }
     
-    def failed[N, E[X] <: EdgeLikeIn[X]](cycleNode: Graph[N,E]#NodeT) = 
+    def unexpectedCycle[N, E[X] <: EdgeLikeIn[X]](cycleNode: Graph[N,E]#NodeT) = 
       fail(s"Unexpected cycle starting at ${cycleNode.value}")
+
+    def unexpectedRight[N, E[X] <: EdgeLikeIn[X]](order: Graph[N,E]#TopologicalOrder[_]) = 
+      fail(s"Cycle expected but topological order ${order.toLayered} found")
   }
  
   def `empty graph` {
     val g = factory.empty[Int,DiEdge]
     val r = g.topologicalSort
     g.topologicalSort.fold(
-        Topo.failed,
+        Topo.unexpectedCycle,
         _ should be ('empty)
     )
   }
@@ -111,7 +112,7 @@ private class TTopologicalSort[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with Gra
       listening_to_music)
       
     typicalDay.topologicalSort.fold(
-      Topo.failed,
+      Topo.unexpectedCycle,
       order => new Topo.Checker(typicalDay) {
         checkOuterNodes(order.toOuter)
       }
@@ -123,14 +124,14 @@ private class TTopologicalSort[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with Gra
     val graph = factory[Int,DiEdge](n0 ~> n1, 2 ~> 4, 2 ~> n5, n0 ~> 3, n1 ~> 4, 4 ~> 3)
     graph should not be 'isMulti
     graph.topologicalSort.fold(
-      Topo.failed,
+      Topo.unexpectedCycle,
       order => new Topo.Checker(graph) {
         checkOuterNodes(order.toOuter)
         for (outer <- someOuter;
              inner = graph get outer;
              ignorePredecessors <- Array(false, true)) {
           inner.topologicalSort(ignorePredecessors).fold(
-              Topo.failed,
+              Topo.unexpectedCycle,
               order => checkInnerNodes(order, Some(inner), ignorePredecessors))
         }
       }
@@ -140,7 +141,7 @@ private class TTopologicalSort[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with Gra
   def `multi graph` {
     val g = factory(1~>2 % 0, 1~>2 % 1)    
     g.topologicalSort.fold(
-        Topo.failed,
+        Topo.unexpectedCycle,
         order => new Topo.Checker(g) {
           checkOuterNodes(order.toOuter)
         }
@@ -152,13 +153,21 @@ private class TTopologicalSort[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with Gra
     val expectedLayer_1 @ (_2 :: _4 :: Nil) = List(2, 4)
     val g = factory(_1~>_2, _3~>_4)    
     g.topologicalSort.fold(
-        Topo.failed,
+        Topo.unexpectedCycle,
         _.toLayered.toOuter.toList match {
           case (layer_0 :: layer_1 :: Nil) => layer_0._2.toList.sorted should be (expectedLayer_0)
                                               layer_1._2.toList.sorted should be (expectedLayer_1)
           case _ => fail
         }
           
+    )
+  }
+  
+  def `cyclic graph` {
+    val g = factory(1~>2, 2~>1)    
+    g.topologicalSort.fold(
+        identity,
+        Topo.unexpectedRight
     )
   }
 }

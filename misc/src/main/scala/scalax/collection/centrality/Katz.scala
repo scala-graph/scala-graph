@@ -9,42 +9,32 @@ import scalax.collection.Graph
 /** Calculation of node centrality based on Katz centrality.
  */
 object Katz {
-  // Minimum 0.5, increasing with higher order
-  private def defaultAttenuation(order: Int): Float =
-    1f - (1f / (ceil(order.toFloat / 10).toFloat + 1))
-      
+     
   implicit class Centrality[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N, E]) {
   
     /** Calculates the centrality of each node contained in `nodes`.
      */
     def centralities[G <: Graph[N, E] with Singleton]
                     (nodes: G#NodeSetT = g.nodes.asInstanceOf[G#NodeSetT],
-                     maxDepth: Int = 0)
-                    (implicit attenuationFactor: Int => Float = defaultAttenuation)
+                     maxDepth: Int = 0,
+                     attenuationFactor: Float = .5f)
         : Map[G#NodeT, Float] = {
       
       assert(nodes.headOption map (_.containingGraph eq g) getOrElse true)
 
-      val factor: Float = attenuationFactor(nodes.size) 
-      val degrees: Map[G#NodeT, Int] = {
-        val b = Map.newBuilder[G#NodeT, Int]
-        nodes foreach ((n: G#NodeT) => b += ((n, n.degree)))
-        b.result
-      }
+      val degrees: Map[G#NodeT, Int] = nodes.map((n: G#NodeT) => (n, n.degree)).toMap
+          
       object Factor {
-        private val limit = min(g.order, 5000)
         private val factors = {
           var i = 0
           var lastFactor = 1f
-          Array.fill(limit) {
+          Array.fill(g.order) {
             val thisFactor = lastFactor 
-            lastFactor *= factor
+            lastFactor *= attenuationFactor
             thisFactor
           }
         }
-        private val minFactor = factors(limit - 1)
-        def apply(index: Int) =
-          if (index < limit) factors(index) else minFactor
+        def apply(index: Int) = factors(index)
       }
 
       val weightBuilder = Map.newBuilder[G#NodeT, Float]
@@ -55,9 +45,8 @@ object Katz {
         var weight = 0f
         n.innerNodeTraverser.withMaxDepth(maxDepth) foreach {
           ExtendedNodeVisitor((node, count, depth, informer) => {
-              weight += degrees(node.asInstanceOf[G#NodeT]) * Factor(depth)
-            }
-          ) 
+            weight += degrees(node.asInstanceOf[G#NodeT]) * Factor(depth)
+          }) 
         }
         
         weightBuilder += ((n.asInstanceOf[G#NodeT], weight))

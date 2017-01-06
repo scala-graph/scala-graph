@@ -10,7 +10,6 @@ import scalax.collection.GraphPredef._
  */
 class NoneConstraint[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
   extends Constraint[N,E] (self)
-  with    ConstraintHandlerMethods[N,E]
 {
   import PreCheckFollowUp.Complete
   override def preAdd     (node:   N ) = PreCheckResult(Complete)

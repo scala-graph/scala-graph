@@ -1,5 +1,7 @@
 package logging
 
+import scala.language.implicitConversions
+
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 
@@ -28,7 +30,5 @@ trait Logging {
 }
 
 object Logging {
-  import scala.languageFeature.implicitConversions
-  
 	implicit def logging2Logger(anything: Logging): Logger = anything.log
 }

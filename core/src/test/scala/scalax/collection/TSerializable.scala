@@ -5,13 +5,10 @@ import java.io._
 import scala.language.higherKinds
 import scala.util.{Success, Failure, Try}
 
-import org.scalatest.{FlatSpec, Suites}
-import org.scalatest.Matchers
-import org.scalatest.BeforeAndAfterEach
-
 import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion
 
+import org.scalatest._
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 

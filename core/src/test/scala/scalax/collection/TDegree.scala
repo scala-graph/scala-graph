@@ -3,14 +3,11 @@ package scalax.collection
 import language.{higherKinds, postfixOps}
 import collection.{SortedSet, SortedMap}
 
-import org.scalatest.Suite
-import org.scalatest.Suites
-import org.scalatest.Informer
-import org.scalatest.matchers.ShouldMatchers
-
 import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion
 
+import org.scalatest._
+import org.scalatest.refspec.RefSpec
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
@@ -20,13 +17,10 @@ class TDegreeRootTest
       new TDegree[immutable.Graph](immutable.Graph),
       new TDegree[  mutable.Graph](  mutable.Graph))
 
-/**	This class contains tests for degree operations.
- */
-class TDegree[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
-    (val factory: GraphCoreCompanion[CC])
-	extends	Suite
-	with	  ShouldMatchers
-{
+class TDegree[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (val factory: GraphCoreCompanion[CC])
+	  extends	RefSpec
+	  with Matchers {
+
   val emptyG = factory.empty[Int,DiEdge]
   abstract class TGraphDegree[N, E[X] <: EdgeLikeIn[X]](override val g: Graph[N,E])
     extends TGraph[N, E](g)
@@ -74,104 +68,110 @@ class TDegree[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
                                         (4, 1),
                                         (3, 1))
   }
-  def test_nodeDegrees {
-    { import UnDi_1._
-      degree(1) should be (3)
-      degree(2) should be (2)
-      degree(3) should be (4)
-      degree(4) should be (4)
-      degree(5) should be (3)
-    }
-    { import UnDi_2._
-      degree(1) should be (4)
-      degree(2) should be (5)
-      degree(3) should be (3)
-    }
-  }
-  def test_totalDegree {
-    emptyG .totalDegree should be (0);
-    { import UnDi_1._
-      g.totalDegree should be (degrees sum)
-    }
-    { import UnDi_2._
-      g.totalDegree should be (degrees sum)
-    }
-  }
-  def test_minDegree {
-    emptyG .minDegree should be (0);
-    { import UnDi_1._
-      g.minDegree should be (degrees min)
-    }
-    { import UnDi_2._
-      g.minDegree should be (degrees min)
-    }
-  }
-  def test_maxDegree {
-    emptyG .maxDegree should be (0);
-    { import UnDi_1._
-      g.maxDegree should be (degrees max)
-    }
-    { import UnDi_2._
-      g.maxDegree should be (degrees max)
-    }
-  }
-  def test_degreeSeq {
-    emptyG.degreeSeq should be (Seq.empty);
-    { import UnDi_1._
-      g.degreeSeq should be (expectedDegreeSeq)
-    }
-    { import UnDi_2._
-      g.degreeSeq should be (expectedDegreeSeq)
-    }
-  }
-  def test_degreeSet {
-    emptyG.degreeSet should be (Set.empty);
-    { import UnDi_1._
-      g.degreeSet should be (expectedDegreeSet)
-    }
-    { import UnDi_2._
-      g.degreeSet should be (expectedDegreeSet)
-    }
-  }
-  def test_degreeNodeSeq {
-    emptyG.degreeNodeSeq should be (Seq.empty);
-    { import UnDi_1._
-      val ord = new Ordering[g.DegreeNodeSeqEntry] {
-        def compare(a: g.DegreeNodeSeqEntry, b: g.DegreeNodeSeqEntry) = {
-          def sortKey(e: g.DegreeNodeSeqEntry) = 100 * e._1 + e._2
-          sortKey(b) compare sortKey(a)
-        }
+  
+  object `Degrees are calculated properly` {
+    def `for nodes` {
+      { import UnDi_1._
+        degree(1) should be (3)
+        degree(2) should be (2)
+        degree(3) should be (4)
+        degree(4) should be (4)
+        degree(5) should be (3)
       }
-
-      val ds = g.degreeNodeSeq
-      val dsSorted = ds.toList sorted ord
-      dsSorted should be (expectedDegreeNodeSeq)
-
-      val ids = g.degreeNodeSeq(g.InDegree)
-      val idsSorted = ids.toList sorted ord
-      idsSorted should be (expectedInDegreeNodeSeq)
+      { import UnDi_2._
+        degree(1) should be (4)
+        degree(2) should be (5)
+        degree(3) should be (3)
+      }
     }
-    { import UnDi_2._
-      g.degreeNodeSeq should be (expectedDegreeNodeSeq)
-    }
-  }
-  def test_degreeNodesMap {
-    emptyG.degreeNodesMap should be (Map.empty);
-    { import UnDi_1._
-      g.degreeNodesMap should be (expectedDegreeNodesMap)
-      g.degreeNodesMap(degreeFilter = _ > 3) should be (expectedDegreeGT3NodesMap)
-    }
-    { import UnDi_2._
-      g.degreeNodesMap should be (expectedDegreeNodesMap)
+    def `for total graph` {
+      emptyG .totalDegree should be (0);
+      { import UnDi_1._
+        g.totalDegree should be (degrees sum)
+      }
+      { import UnDi_2._
+        g.totalDegree should be (degrees sum)
+      }
     }
   }
-  def test_degreeCount {
-    emptyG.degreeCount should be (Map.empty);
-    { import UnDi_1._
-      g.degreeCount should be (expectedDegreeCount)
+    
+  object `Degree statistics are calculated properly for` {
+    def `minimum degree` {
+      emptyG .minDegree should be (0);
+      { import UnDi_1._
+        g.minDegree should be (degrees min)
+      }
+      { import UnDi_2._
+        g.minDegree should be (degrees min)
+      }
     }
-    { import UnDi_2._
-      g.degreeCount should be (expectedDegreeCount)
+    def `maximum degree` {
+      emptyG .maxDegree should be (0);
+      { import UnDi_1._
+        g.maxDegree should be (degrees max)
+      }
+      { import UnDi_2._
+        g.maxDegree should be (degrees max)
+      }
+    }
+    def `sequence of degrees` {
+      emptyG.degreeSeq should be (Seq.empty);
+      { import UnDi_1._
+        g.degreeSeq should be (expectedDegreeSeq)
+      }
+      { import UnDi_2._
+        g.degreeSeq should be (expectedDegreeSeq)
+      }
+    }
+    def `set of degrees` {
+      emptyG.degreeSet should be (Set.empty);
+      { import UnDi_1._
+        g.degreeSet should be (expectedDegreeSet)
+      }
+      { import UnDi_2._
+        g.degreeSet should be (expectedDegreeSet)
+      }
+    }
+    def `sequence of nodes sorted by degree` {
+      emptyG.degreeNodeSeq should be (Seq.empty);
+      { import UnDi_1._
+        val ord = new Ordering[g.DegreeNodeSeqEntry] {
+          def compare(a: g.DegreeNodeSeqEntry, b: g.DegreeNodeSeqEntry) = {
+            def sortKey(e: g.DegreeNodeSeqEntry) = 100 * e._1 + e._2
+            sortKey(b) compare sortKey(a)
+          }
+        }
+  
+        val ds = g.degreeNodeSeq
+        val dsSorted = ds.toList sorted ord
+        dsSorted should be (expectedDegreeNodeSeq)
+  
+        val ids = g.degreeNodeSeq(g.InDegree)
+        val idsSorted = ids.toList sorted ord
+        idsSorted should be (expectedInDegreeNodeSeq)
+      }
+      { import UnDi_2._
+        g.degreeNodeSeq should be (expectedDegreeNodeSeq)
+      }
+    }
+    def `map of nodes by degree` {
+      emptyG.degreeNodesMap should be (Map.empty);
+      { import UnDi_1._
+        g.degreeNodesMap should be (expectedDegreeNodesMap)
+        g.degreeNodesMap(degreeFilter = _ > 3) should be (expectedDegreeGT3NodesMap)
+      }
+      { import UnDi_2._
+        g.degreeNodesMap should be (expectedDegreeNodesMap)
+      }
+    }
+    def `map of degree by node` {
+      emptyG.degreeCount should be (Map.empty);
+      { import UnDi_1._
+        g.degreeCount should be (expectedDegreeCount)
+      }
+      { import UnDi_2._
+        g.degreeCount should be (expectedDegreeCount)
+      }
     }
   }
 }

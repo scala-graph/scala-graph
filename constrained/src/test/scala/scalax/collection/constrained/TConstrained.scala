@@ -3,115 +3,119 @@ package scalax.collection.constrained
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.Set
   
-import org.scalatest.{Suite, Suites}
-import org.scalatest.Informer
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.Ignore
-
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import generic.GraphConstrainedCompanion
 
+import org.scalatest._
+import org.scalatest.refspec.RefSpec
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
 class TConstrainedRootTest
-  extends Suites(
+    extends Suites(
       new TConstrained[immutable.Graph](immutable.Graph),
-      new TConstrained[  mutable.Graph](  mutable.Graph))
-  with ShouldMatchers
-{
+      new TConstrained[  mutable.Graph](  mutable.Graph),
+      new TConstrainedMutable)
+
+class TConstrainedMutable extends RefSpec with Matchers {
+
   import mutable.Graph
 
-  def test_mutableEvenNode {
-    implicit val config: Config = UserConstraints.EvenNode 
-    val g = Graph[Int,Nothing](1)
-    g should be ('isEmpty)
-    (g += 2) should have size (1)
-    (g += 3) should have size (1)
-    (g ++= List(1,4))   should have size (1)
-    (g ++= List(2,4,6)) should have size (3)
-  }
-  def test_mutableMinDegree {
-    import UserConstraints.{MinDegree_2, MinDegreeException}
-    implicit val config: Config = MinDegree_2  
-    val g = Graph.empty[Int,UnDiEdge]
-    evaluating { g ++= List(2,3,4)         } should produce [MinDegreeException]
-    evaluating { g ++= List(1~2, 1~3, 2~4) } should produce [MinDegreeException]
-    (g ++= List(1~2, 1~3, 2~3)) should have size (6)
+  object `constrains take effect using mutable operations` {
+    def `when constraining Int nodes to even numbers` {
+      implicit val config: Config = UserConstraints.EvenNode 
+      val g = Graph[Int,Nothing](1)
+      g should be ('isEmpty)
+      (g += 2) should have size (1)
+      (g += 3) should have size (1)
+      (g ++= List(1,4))   should have size (1)
+      (g ++= List(2,4,6)) should have size (3)
+    }
+    def `when constraining nodes to have a minimum degree` {
+      import UserConstraints.{MinDegree_2, MinDegreeException}
+      implicit val config: Config = MinDegree_2  
+      val g = Graph.empty[Int,UnDiEdge]
+      a [MinDegreeException] should be thrownBy { g ++= List(2,3,4) } 
+      a [MinDegreeException] should be thrownBy { g ++= List(1~2, 1~3, 2~4) }
+      (g ++= List(1~2, 1~3, 2~3)) should have size (6)
+    }
   }
 }
 
 class TConstrained [CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]]
     (val factory: GraphConstrainedCompanion[CC])
-  extends Suite
-  with    ShouldMatchers
-{
-  def test_0(info : Informer) {
-    info("factory = " + factory.getClass)
-  }
-  def test_EvenNode {
-    implicit val config: Config = UserConstraints.EvenNode  
-    val g = factory[Int,Nothing](1,2,3,4)
-    g should be ('isEmpty)
-    g + 5 contains 5 should be (false)
-    g + 6 contains 6 should be (true)
-    (g ++ List[OuterNode[Int]](1,2,3)) should be ('isEmpty)
-    (g ++ List[OuterNode[Int]](2,4,6)) should have size (3)
-  }
-  def test_EvenNodeByException {
-    implicit val config: Config = UserConstraints.EvenNodeByException  
-    intercept[IllegalArgumentException] {
-            factory[Int,Nothing](1,2,3,4)
-    }
-    val g = factory[Int,Nothing](2,4)
-    g should have size (2)
-    intercept[IllegalArgumentException] { g + 5 }
-    g + 6 contains 6 should be (true)
-    intercept[IllegalArgumentException] {
-      g ++ List[OuterNode[Int]](1,2,3)
-    }
-    ( g ++ List[OuterNode[Int]](2,4,6)) should have size (3)
-  }
-  def test_MinDegree {
-    import UserConstraints.{MinDegree_2, MinDegreeException}
-    implicit val config: Config = MinDegree_2  
-    evaluating {
-      factory(1, 2, 3~4) } should produce [MinDegreeException]
-    val g = factory.empty[Int,UnDiEdge]
-    evaluating { g + 1~2 } should produce [MinDegreeException]
+    extends RefSpec
+    with Matchers {
 
-    val g6 = g ++ List(1~2, 1~3, 2~3)
-    g6 should have size (6)
-    val g7 = g6 + 3~>1
-    g7 should have size (7)
-    evaluating { g6 +   4 } should produce [MinDegreeException]
-    evaluating { g6 + 3~4 } should produce [MinDegreeException]
-    g6 + 1~>2 should have ('graphSize (4))
-
-    evaluating { g6 - 3   } should produce [MinDegreeException]
-    evaluating { g6 - 2~3 } should produce [MinDegreeException]
-    g7 - 3~>1 should have ('graphSize (3))
-
-    evaluating { g6 -- List(2~3) } should produce [MinDegreeException]
-    (g6 -- List(1, 2, 3)) should be ('empty)
-    (g7 -- List(3~>1))    should have ('graphSize (3))
-  }
-  def test_Op {
-    import UserConstraints._
-    { implicit val config: Config = EvenNode && EvenNode  
-      val g1 = factory[Int,Nothing](2,4)
-      g1 should have ('order (2), 'graphSize (0))
+  info("factory = " + factory.getClass)
+  
+  object `constrains take effect` {
+    def `when constraining Int nodes to even numbers` {
+      implicit val config: Config = UserConstraints.EvenNode  
+      val g = factory[Int,Nothing](1,2,3,4)
+      g should be ('isEmpty)
+      g + 5 contains 5 should be (false)
+      g + 6 contains 6 should be (true)
+      (g ++ List[OuterNode[Int]](1,2,3)) should be ('isEmpty)
+      (g ++ List[OuterNode[Int]](2,4,6)) should have size (3)
     }
-    { implicit val config: Config = EvenNode && MinDegree_2  
-      val g2 = factory.empty[Int,UnDiEdge]
-      evaluating { g2 + 2 } should produce [MinDegreeException]
-      g2 ++ List(0~2, 0~>2) should have size (4)
+    def `when constraining nodes to have a minimum degree` {
+      import UserConstraints.{MinDegree_2, MinDegreeException}
+      implicit val config: Config = MinDegree_2  
+      a [MinDegreeException] should be thrownBy { factory(1, 2, 3~4) }
+      val g = factory.empty[Int,UnDiEdge]
+      a [MinDegreeException] should be thrownBy { g + 1~2 }
+  
+      val g6 = g ++ List(1~2, 1~3, 2~3)
+      g6 should have size (6)
+      val g7 = g6 + 3~>1
+      g7 should have size (7)
+      a [MinDegreeException] should be thrownBy { g6 +   4 }
+      a [MinDegreeException] should be thrownBy { g6 + 3~4 }
+      g6 + 1~>2 should have ('graphSize (4))
+  
+      a [MinDegreeException] should be thrownBy { g6 - 3   }
+      a [MinDegreeException] should be thrownBy { g6 - 2~3 }
+      g7 - 3~>1 should have ('graphSize (3))
+  
+      a [MinDegreeException] should be thrownBy { g6 -- List(2~3) }
+      (g6 -- List(1, 2, 3)) should be ('empty)
+      (g7 -- List(3~>1))    should have ('graphSize (3))
+    }
+  }
+  
+  object `constraints may` {
+    def `be defined to throw exceptions on constraint violations` {
+      implicit val config: Config = UserConstraints.EvenNodeByException  
+      an [IllegalArgumentException] should be thrownBy { factory[Int,Nothing](1,2,3,4) }
+      
+      val g = factory[Int,Nothing](2,4)
+      g should have size (2)
+      an [IllegalArgumentException] should be thrownBy { g + 5 }
+      
+      g + 6 contains 6 should be (true)
+      an [IllegalArgumentException] should be thrownBy { g ++ List[OuterNode[Int]](1,2,3) }
+      
+      (g ++ List[OuterNode[Int]](2,4,6)) should have size (3)
+    }
+    def `be combined` {
+      import UserConstraints._
+      { implicit val config: Config = EvenNode && EvenNode  
+        val g1 = factory[Int,Nothing](2,4)
+        g1 should have ('order (2), 'graphSize (0))
+      }
+      { implicit val config: Config = EvenNode && MinDegree_2  
+        val g2 = factory.empty[Int,UnDiEdge]
+        a [MinDegreeException] should be thrownBy { g2 + 2 }
+        g2 ++ List(0~2, 0~>2) should have size (4)
+      }
     }
   }
 }
-object UserConstraints {
+
+private object UserConstraints {
   import PreCheckFollowUp._
 
   val checkAbort    = PreCheckResult(Abort)
