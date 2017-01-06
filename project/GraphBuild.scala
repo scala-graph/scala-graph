@@ -3,6 +3,7 @@ import Keys._
 import org.scalajs.sbtplugin.ScalaJSPlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
+// SBT project coreCrossJS, fastOpJS, publishSigned
 object GraphBuild extends Build {
 
   lazy val all = Project(
@@ -68,11 +69,11 @@ object GraphBuild extends Build {
 
   private lazy val defaultCrossSettings = Seq(
     scalaVersion := Version.compiler_2_12,
+  	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2_11),
     organization := "org.scala-graph"
   ) ++ GraphSonatype.settings
     
   private lazy val defaultSettings = defaultCrossSettings ++ Seq(
-  	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2_11),
     parallelExecution in Test := false,
     scalacOptions in (Compile, doc) <++= (name, version) map {
       Opts.doc.title(_) ++ Opts.doc.version(_)
