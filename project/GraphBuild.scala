@@ -64,7 +64,7 @@ object GraphBuild extends Build {
 
   private lazy val defaultSettings = Defaults.defaultSettings ++ Seq(
     scalaVersion := Version.compiler_2_12,
-  	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2_10, Version.compiler_2_12),
+  	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2_10, Version.compiler_2_11),
     organization := "org.scala-graph",
     parallelExecution in Test := false,
     scalacOptions in (Compile, doc) <++= (name, version) map {
