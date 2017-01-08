@@ -82,12 +82,12 @@ trait GraphLike[N,
 	with	  Growable  [Param[N,E]]
 	with	  Shrinkable[Param[N,E]] 
 	with	  Cloneable [Graph[N,E]]
-  with    EdgeOps   [N,E,This]
+// TODO  with    EdgeOps   [N,E,This]
   with    Mutable
 { this: This[N,E] =>
 	override def clone: This[N,E] = graphCompanion.from[N,E](nodes.toOuter, edges.toOuter)
 	type NodeT <: InnerNode 
-  trait InnerNode extends super.InnerNode with InnerNodeOps {
+  trait InnerNode extends super.InnerNode { // TODO with InnerNodeOps {
     this: NodeT =>
   }
   type NodeSetT <: NodeSet
@@ -265,7 +265,7 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
       override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
   extends Graph[N,E]
      with AdjacencyListGraph[N, E, DefaultGraphImpl]
-     with GraphTraversalImpl[N,E]
+// TODO     with GraphTraversalImpl[N,E]
 {
   override final val graphCompanion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
@@ -286,7 +286,7 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
   @SerialVersionUID(7370L)
   final protected class NodeBase(value: N, hints: ArraySet.Hints)
       extends InnerNodeImpl(value, hints)
-      with    InnerNodeTraversalImpl
+// TODO      with    InnerNodeTraversalImpl
     
   type NodeT = NodeBase
   

@@ -7,7 +7,7 @@ import scala.reflect.ClassTag
 
 import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
                     OuterNode, InnerNodeParam, OuterEdge, InnerEdgeParam}
-import GraphEdge.{EdgeLike, EdgeCompanionBase, DiHyperEdgeLike, UnDiEdge, DiEdge, Keyed}
+import GraphEdge.{EdgeLike, EdgeCompanionBase, AbstractDiHyperEdge, UnDiEdge, DiEdge, Keyed}
 import generic.{GraphCompanion, GraphCoreCompanion}
 import config.GraphConfig
 import io._
@@ -33,15 +33,15 @@ trait GraphLike[N,
                 +This[X, Y[X]<:EdgeLikeIn[X]]
                       <: GraphLike[X,Y,This] with AnySet[Param[X,Y]] with Graph[X,Y]]
   extends SetLike       [Param[N,E], This[N,E]]
-  with    GraphTraversal[N,E]
+// TODO  with    GraphTraversal[N,E]
   with    GraphBase     [N,E]
-  with    GraphDegree   [N,E]
+// TODO with    GraphDegree   [N,E]
 { selfGraph: This[N,E] =>
   protected type ThisGraph = this.type
   implicit val edgeT: ClassTag[E[N]]
 
   def isDirected = isDirectedT || edges.hasOnlyDiEdges
-  protected final val isDirectedT = classOf[DiHyperEdgeLike[_]].isAssignableFrom(edgeT.runtimeClass)
+  protected final val isDirectedT = classOf[AbstractDiHyperEdge[_]].isAssignableFrom(edgeT.runtimeClass)
 
   def isHyper = isHyperT && edges.hasAnyHyperEdge
   protected final val isHyperT = ! classOf[UnDiEdge[_]].isAssignableFrom(edgeT.runtimeClass)
@@ -139,7 +139,7 @@ trait GraphLike[N,
       false
   }
   type NodeT <: InnerNode 
-  trait InnerNode extends super.InnerNode with TraverserInnerNode {
+  trait InnerNode extends super.InnerNode { // TODO with TraverserInnerNode {
     this: NodeT =>
     /** The `Graph` instance `this` node is contained in. */
     final def containingGraph: ThisGraph = selfGraph.asInstanceOf[ThisGraph]

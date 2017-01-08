@@ -4,7 +4,7 @@ import language.{higherKinds, implicitConversions}
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 
 import scala.collection.{AbstractIterable, SeqFacade}
-import GraphEdge.{EdgeLike, EdgeCopy, DiHyperEdgeLike, DiEdgeLike}
+import GraphEdge.{EdgeLike, EdgeCopy, AbstractDiHyperEdge, AbstractDiEdge}
 /**
  * This object serves as a container for several `Graph`-related definitions like
  * parameter-types and implicit conversions.
@@ -27,13 +27,13 @@ object GraphPredef {
    * Supplying this type as the actual type parameter allows to include any kind of directed edges
    * such as directed hyper-edges and directed edges.
    */
-  type DiHyperEdgeLikeIn[+N] = DiHyperEdgeLike[N] with EdgeCopy[DiHyperEdgeLike] with OuterEdge[N,DiHyperEdgeLike]
+  type DiHyperEdgeLikeIn[+N] = AbstractDiHyperEdge[N] with EdgeCopy[AbstractDiHyperEdge] with OuterEdge[N,AbstractDiHyperEdge]
   /**
    * Denotes all directed edge types for the `E` type parameter of a `Graph`.
    * Supplying this type as the actual type parameter allows to include any kind of directed edges
    * such as directed hyper-edges and directed edges.
    */
-  type DiEdgeLikeIn[+N] = DiEdgeLike[N] with EdgeCopy[DiEdgeLike] with OuterEdge[N,DiEdgeLike]
+  type DiEdgeLikeIn[+N] = AbstractDiEdge[N] with EdgeCopy[AbstractDiEdge] with OuterEdge[N,AbstractDiEdge]
   
   /** This algebraic type includes outer and inner nodes and edges. As such it serves as the
    *  type parameter to `SetLike` extending `Graph`. 
@@ -180,7 +180,7 @@ object GraphPredef {
   { 
     def edge: EO[NO @uV]
     final def isContaining[N <: NI @uV, E[X]<:EdgeLikeIn[X]](g: GraphBase[N,E]): Boolean =
-      edge._1.isContaining[N,E](g)
+      edge._n(0).isContaining[N,E](g)
 
     protected[collection] final
     def asEdgeT[N <: NI @uV, E[X]<:EdgeLikeIn[X], G <: GraphBase[N,E] with Singleton]
@@ -218,40 +218,29 @@ object GraphPredef {
     case InnerNodeParam(n) => OuterNode(n).asInstanceOf[InParam[N,E]]
     case n => OuterNode(n)
   }}
-  def nodePredicate [NI, EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[X<:NO] <: EdgeLike[X]](pred: NI => Boolean) =
-    (out: Param[NI,EI]) => out match {
-      case n: InnerNodeParam[NI] => pred(n.value)
-      case e: InnerEdgeParam[NI,EI,_,_] => e.asInstanceOf[InnerEdgeParam[NI,EI,NO,EO]].edge forall (n => pred(n.value))
-      case _ => false
-    }
-
-//  def edgePredicate [NI, NO <: InnerNodeParam[NI], EC[X<:NO] <: EdgeLike[X]] (pred: EC[NO] => Boolean) =
-//    (out: Param[N,E]) => out match {
-//      case n: InnerNodeParam[NI] => false
-//      case e: InnerEdgeParam[NI,NO,EC] => pred(e.edge) 
-//      case _ => false
-//    }
+  def nodePredicate [NI, EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[X<:NO] <: EdgeLike[X]]
+      (pred: NI => Boolean): Param[NI,EI] => Boolean = param =>
+    if (param.isOut) ???
+    else if(param.isNode) pred(param.asInstanceOf[InnerNodeParam[NI]].value)
+    else param.asInstanceOf[InnerEdgeParam[NI,EI,NO,EO]].edge forall (n => pred(n.value))
 
   @inline implicit def predicateToNodePredicate
       [NI, EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], EC[X<:NO] <: EdgeLike[X]]
       (p: NI => Boolean) =
     nodePredicate[NI,EI,NO,EC](p)
 
-//  @inline implicit def predicateToEdgePredicate[NI, NO <: InnerNodeParam[NI], EC[X<:NO] <: EdgeLike[X]]
-//                                               (p: EC[NO] => Boolean) = edgePredicate[NI,NO,EC](p)
-
   final implicit class EdgeAssoc[N1](val n1: N1) extends AnyVal {
-    @inline def ~ [N >: N1](n2: N) = new UnDiEdge[N](Tuple2(n1, n2)) 
-    @inline def ~>[N >: N1](n2: N) = new   DiEdge[N](Tuple2(n1, n2))
+    @inline def ~ [N >: N1](n2: N) = new UnDiEdge[N](n1, n2) 
+    @inline def ~>[N >: N1](n2: N) = new   DiEdge[N](n1, n2)
   }
 
   final implicit class HyperEdgeAssoc[NOld](val e: EdgeLikeIn[NOld]) extends AnyVal {
     def ~ [N >: NOld](n: N)(implicit endpointsKind: CollectionKind = Bag): HyperEdge[N] = {
-      require(e.undirected)
+      require(e.isUndirected)
       HyperEdge.from[N](NodeProduct(e.iterator.toBuffer += n))
     }
     def ~>[N >: NOld](n: N)(implicit targetsKind: CollectionKind = Bag): DiHyperEdge[N] = {
-      require(e.directed)
+      require(e.isDirected)
       DiHyperEdge.from[N](NodeProduct(e.iterator.toBuffer += n))
     }
   }

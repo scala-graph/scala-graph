@@ -84,7 +84,7 @@ trait AdjacencyListBase[N,
     final protected[collection] def addDiSuccessors(edge: EdgeT,
                                                     add: (NodeT) => Unit): Unit = {
       val filter =
-        if (edge.isHyperEdge && edge.directed) edge.hasSource((_: NodeT) eq this)
+        if (edge.isHyperEdge && edge.isDirected) edge.hasSource((_: NodeT) eq this)
         else true
       edge withTargets (n => if ((n ne this) && filter) add(n))
     }
@@ -114,11 +114,11 @@ trait AdjacencyListBase[N,
     }
 
     final def outgoing = edges withSetFilter (e =>
-      if (e.directed) e.hasSource((_: NodeT) eq this)
+      if (e.isDirected) e.hasSource((_: NodeT) eq this)
       else true
     )
     @inline private[this] def isOutgoingTo(e: EdgeT, to: NodeT): Boolean =
-      if (e.directed)
+      if (e.isDirected)
         e matches ((_: NodeT) eq this, (_: NodeT) eq to)
       else
         e isAt ((_: NodeT) eq to)
@@ -130,11 +130,11 @@ trait AdjacencyListBase[N,
       else            diSucc get to
 
     final def incoming = edges withSetFilter (e =>
-      if (e.directed) e.hasTarget((_: NodeT) eq this)
+      if (e.isDirected) e.hasTarget((_: NodeT) eq this)
       else true
     )
     @inline final private[this] def isIncomingFrom(e: EdgeT, from: NodeT): Boolean =
-      if (e.directed)
+      if (e.isDirected)
         e matches ((_: NodeT) eq from, (_: NodeT) eq this)
       else
         e isAt ((_: NodeT) eq from)
@@ -227,9 +227,9 @@ trait AdjacencyListBase[N,
     
     final override def contains(node: NodeT): Boolean = nodes find node exists (_.edges.nonEmpty)
     
-    final override def find(elem: E[N] ): Option[EdgeT] = nodes find elem._1 flatMap (_.edges find (_.edge == elem))
+    final override def find(elem: E[N] ): Option[EdgeT] = nodes find elem._n(0) flatMap (_.edges find (_.edge == elem))
     
-    final def contains(edge: EdgeT): Boolean = nodes find edge.edge._1 exists (_.edges contains edge)
+    final def contains(edge: EdgeT): Boolean = nodes find edge.edge._n(0) exists (_.edges contains edge)
     
     final def iterator: Iterator[EdgeT] = edgeIterator
     
@@ -275,7 +275,7 @@ trait AdjacencyListBase[N,
       protected type I = EdgeT
       protected var iterator: Iterator[I] = _
       protected def onOuterChange(newOuter: OuterElm) {
-        iterator = newOuter.edges.filter(_.edge._1 == newOuter).iterator
+        iterator = newOuter.edges.filter(_.edge._n(0) == newOuter).iterator
       }
       protected def elmToCurrent(elm: EdgeT) = elm
 
