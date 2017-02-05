@@ -632,15 +632,15 @@ object GraphEdge {
   /** Represents a directed edge in a hypergraph with a single source and an unlimited number
    *  of taget nodes. Target nodes are handled as a $BAG.
    */
+  // 'extends HyperEdge' should be dropped but is currently needed for inference in mixed graphs
   @SerialVersionUID(52)
   class DiHyperEdge[+N] (override val sources: Traversable[N], override val targets: Traversable[N])
-      extends AbstractDiHyperEdge[N]
+      extends HyperEdge[N](sources ++ targets)
+      with    AbstractDiHyperEdge[N]
       with    EdgeCopy       [DiHyperEdge]
       with    OuterEdge      [N,DiHyperEdge] {
     validate()
     
-    override def ends: Traversable[N] = sources ++ targets
-
     override protected[collection] def copy[NN](newNodes: Product): DiHyperEdge[NN] = {
       if (this.isInstanceOf[OrderedEndpoints]) new DiHyperEdge[NN](fromFirst(newNodes), fromSecond(newNodes)) with OrderedEndpoints
       else                                     new DiHyperEdge[NN](fromFirst(newNodes), fromSecond(newNodes))
@@ -670,23 +670,24 @@ object GraphEdge {
       if (targetsKind.orderSignificant) new DiHyperEdge[N](fromFirst(nodes), fromSecond(nodes)) with OrderedEndpoints
       else                              new DiHyperEdge[N](fromFirst(nodes), fromSecond(nodes))
     def unapplySeq[N](e: DiHyperEdge[N]) =
-      if (e eq null) None else Some(e.sources.head, e.targets)
+      if (e eq null) None else Some(e.sources.head, e.targets.to[Vector])
   }
   /** $SHORTCUT `diHyperedge match {case source ~~> (t1, t2) => f(source, t1, t2)}`.
    */
   val ~~> = DiHyperEdge
 
   trait AbstractEdge[+N] { this: EdgeLike[N] =>
-   
+
     def _1: N   
     def _2: N
     
-    @inline final override def arity: Int = 2
-		@inline final override protected def isValidArity = true
+    // the following five methods should be made final as soon as DiEdge no more extends UnDiEdge
+    @inline override def arity: Int = 2
+		@inline override protected def isValidArity = true
 		
-    @inline final override def isHyperEdge = false
+    @inline override def isHyperEdge = false
     
-    final override protected def noNullEnd: Boolean = {
+    override protected def noNullEnd: Boolean = {
       def notNull(n: N) = n match {
         case r: AnyRef => r ne null
         case _         => true
@@ -694,9 +695,9 @@ object GraphEdge {
       notNull(_1) && notNull(_2)
     }
 
-    @inline final override def size = 2
+    @inline override def size = 2
     
-    final def ends = new AbstractTraversable[N] {
+    def ends = new AbstractTraversable[N] {
       def foreach[U](f: N => U): Unit = { f(_1); f(_2) }
     }
 
@@ -711,11 +712,13 @@ object GraphEdge {
       extends AbstractHyperEdge[N]
       with    AbstractEdge[N]
       with    EqUnDi {
+    
     def node_1: N
     def node_2: N
     
     @inline final override def _1: N = node_1   
-    @inline final override def _2: N = node_2   
+    @inline final override def _2: N = node_2
+    
     override def _n(n: Int): N = (n: @switch) match {
       case 0 => node_1
       case 1 => node_2
@@ -744,10 +747,13 @@ object GraphEdge {
    */
   @SerialVersionUID(53)
   class UnDiEdge[+N] (val node_1: N, val node_2: N)
-      extends AbstractUnDiEdge[N]
+      extends HyperEdge[N](node_1 :: node_2 :: Nil)
+      with    AbstractUnDiEdge[N]
       with    EdgeCopy [UnDiEdge]
       with    OuterEdge[N,UnDiEdge] {
     validate()
+    
+    override final val ends = super[AbstractUnDiEdge].ends
     
     override protected[collection] def copy[NN](newNodes: Product): UnDiEdge[NN] =
         new UnDiEdge[NN](first[NN](newNodes), second[NN](newNodes))
@@ -771,12 +777,7 @@ object GraphEdge {
     
     def source: N
     def target: N
-    @inline final override def _1: N = source   
-    @inline final override def _2: N = target
-    
-    /** Synonym for `source`. */  @inline final def from = source
-    /** Synonym for `target`. */  @inline final def to = target
-        
+
     final override def hasSource[M>:N](node: M) = this._1 == node
     final override def hasSource(pred: N => Boolean) = pred(this._1)
 
@@ -797,9 +798,11 @@ object GraphEdge {
 
   /** Represents a directed edge (arc / arrow) connecting two nodes.
    */
+  // 'extends UnDiEdge' should be dropped but is currently needed for inference in mixed graphs
   @SerialVersionUID(54)
   class DiEdge[+N] (val source: N, val target: N)
-      extends AbstractDiEdge[N]
+      extends UnDiEdge[N](source, target)
+      with    AbstractDiEdge[N]
       with    EdgeCopy  [DiEdge]
       with    OuterEdge [N,DiEdge] {
     validate()

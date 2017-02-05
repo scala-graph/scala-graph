@@ -17,7 +17,7 @@ class TMicroBenchmarkTest
   object `relativeTimes() reflects` {
     def `relative execution times` {
       val r = 1 to 20
-      val relTimes = relativeTimes(warmUp = 2)(
+      val relTimes = relativeTimes(warmUp = 2, repetitions = 3)(
         r.toList.sorted, 
         r.toList.sorted.toArray.toList.sorted, 
         r.toList.sorted.toSet.toArray.toList.sorted 

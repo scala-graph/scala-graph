@@ -40,10 +40,12 @@ object GraphPredef {
    */  
   sealed trait Param [+N, +E[X<:N @uV] <: EdgeLike[X]] {
     def isDefined = true
+    
     def isNode: Boolean
-    def isEdge: Boolean
+    @inline final def isEdge: Boolean = ! isNode
+    
     def isIn:   Boolean
-    def isOut:  Boolean
+    @inline final def isOut: Boolean = ! isIn
   }
   object Param {
     /**
@@ -102,19 +104,16 @@ object GraphPredef {
    */
   sealed trait InParam[+N, +E[X<:N @uV] <: EdgeLike[X]] extends Param[N,E] {
     def isIn  = true
-    def isOut = false
   }
   /** Same as `InParam`. */
   type OuterElem[N, +E[X<:N] <: EdgeLike[X]] = InParam[N,E]
 
   sealed trait OutParam[+NO, +EO[X<:NO @uV] <: EdgeLike[X]] extends Param[NO,EO] {
     def isIn  = false
-    def isOut = true
   }
   trait NodeParam[+N] {
     def value: N
     def isNode = true 
-    def isEdge = false
     def stringPrefix = "" 
     override def toString = if (stringPrefix.length > 0) stringPrefix + "(" + value + ")"
                             else value.toString
@@ -152,10 +151,8 @@ object GraphPredef {
     def unapply[NI] (nodeOut: InnerNodeParam[NI]): Option[NI] = Some(nodeOut.value)
   }
   
-  sealed trait EdgeParam
-  {
+  sealed trait EdgeParam {
     def isNode = false 
-    def isEdge = true
   }
   
   /** Classes implementing `EdgeLike` must be instantiated mixing in this trait.
@@ -220,7 +217,7 @@ object GraphPredef {
   }}
   def nodePredicate [NI, EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[X<:NO] <: EdgeLike[X]]
       (pred: NI => Boolean): Param[NI,EI] => Boolean = param =>
-    if (param.isOut) ???
+    if (param.isIn) false
     else if(param.isNode) pred(param.asInstanceOf[InnerNodeParam[NI]].value)
     else param.asInstanceOf[InnerEdgeParam[NI,EI,NO,EO]].edge forall (n => pred(n.value))
 

@@ -92,7 +92,6 @@ class TEditMutable extends RefSpec with Matchers {
     }
   	def `serve 'directed' properly` {
       val (di, unDi) = (1 ~> 2, 2 ~ 3)
-      val wDi = edge.WDiEdge(1, 2)(0)
       val g = mutable.Graph(unDi)
       def directed(expected: Boolean): Unit = g.isDirected should be (expected)
       
@@ -147,105 +146,6 @@ class TEditMutable extends RefSpec with Matchers {
       (n1 diSuccessors) should be (Set(2))
       (n1 ~>? n1) should be (Some(oneOneTwo))
     }
-    def `serve +~` {
-      val g = mutable.Graph(2~3)
-      def n(i: Int) = g get i
-      implicit val unDiFactory = UnDiEdge 
-      g addEdge (n(3), n(2))  should be (false)
-      (g +~=    (n(2), n(2))) should have size (4)
-  
-      g.addAndGetEdge(2, 3)(DiEdge).directed should be (true)
-      g should have ('order (2), 'graphSize (3))
-  
-      n(3) +~ (4)
-      g should have ('order (3), 'graphSize (4))
-  
-      (n(3) +~ n(2))(DiEdge)
-      g should have ('order (3), 'graphSize (5))
-    }
-    def `serve +~ for hyperedeges` {
-      implicit val factory = HyperEdge
-      val h = mutable.Graph(1~1~2)
-      h should have ('order (2), 'graphSize (1))
-      h +~= (0, 1, 2, 3)
-      h should have ('order (4), 'graphSize (2))
-    }
-    def `serve +~%= for weighted edeges` {
-      val g = mutable.Graph(2~3)
-      implicit val f = edge.WUnDiEdge
-      g.addWEdge (3,4)(2)
-      g should have ('order (3), 'graphSize (2), 'totalWeight (3))
-      (g +~%= (2,4))(3)
-      g should have ('order (3), 'graphSize (3), 'totalWeight (6))
-      // (g +~%= (0,1,2,3))(3)(edge.WHyperEdge) // must not compile
-    }
-    def `serve +~%= weighted hyperedeges` {
-      implicit val factory = edge.WHyperEdge
-      val h = mutable.Graph(1~1~2)
-      h should have ('order (2), 'graphSize (1))
-      h.addWEdge (3,4,5)(2)
-      h should have ('order (5), 'graphSize (2), 'totalWeight (3))
-      (h +~%= (0,1,2,3))(3)
-      h should have ('order (6), 'graphSize (3), 'totalWeight (6))
-    }
-    def `fulfill labeled edege equality` {
-      import edge.Implicits._
-      import edge.{LUnDiEdge, LDiEdge}
-  
-      type StringLabel = Option[String]
-      val str = "A"
-      val label: StringLabel = Some(str)
-      val g = mutable.Graph(2~3, (2 ~+# 3)(label))
-      g should have ('order (2), 'graphSize (2))
-  
-      import edge.LBase.{LEdgeImplicits}
-      object StringLabelImplicit extends LEdgeImplicits[StringLabel]
-      import StringLabelImplicit._
-      for (e <- g.edges if e.isLabeled) {
-        e.isDefined should be (true)
-        e.get       should be (str)
-      }
-  
-      type ListLabel = List[Int]
-      object ListLabelImplicit extends LEdgeImplicits[ListLabel]
-      import ListLabelImplicit._
-      implicit val factory = LDiEdge
-      val listLabel = List(1,0,1)
-      g.addLEdge(3,4)(listLabel) should be (true)
-      g should have ('order (3), 'graphSize (3))
-      val findAdded = g.edges find (3~>4)
-      findAdded should be ('isDefined)
-      val added: g.EdgeT = findAdded.get
-      added.directed should be (true)
-      added.count(_ > 0) should be (List(1,0,1).count(_ > 0))
-    }
-    def `fulfill labeled directed hyperedege equality` {
-      import edge.Implicits._
-      import edge.{LHyperEdge, LDiHyperEdge}
-  
-      type StringLabel = String
-      val outerLabels = Seq("A", "BC", "CDE")
-      val g = mutable.Graph(1~2~3, (2 ~+# 3)(outerLabels(0)))
-  
-      implicit val factory = LHyperEdge
-      (g +~+= (3,4,5))(outerLabels(1))
-      g should have ('order (5), 'graphSize (3))
-      g.addLEdge(4,5,6)(outerLabels(2)) should be (true)
-      g should have ('order (6), 'graphSize (4))
-  
-      import edge.LBase.{LEdgeImplicits}
-      object StringLabelImplicit extends LEdgeImplicits[StringLabel]
-      import StringLabelImplicit._
-      val innerLabels: collection.mutable.Set[_ >: StringLabel] =
-        g.edges filter (_.isLabeled) map (_.label)
-      innerLabels should have size (outerLabels.size)
-      /* 
-      innerLabels forall (outerLabels contains _) should be (true) 
-       * https://groups.google.com/forum/?fromgroups=#!searchin/scala-internals/both$20method/scala-internals/nPZY2EMtDvY/PivCCtyRM_IJ
-       * https://issues.scala-lang.org/browse/SI-5330 
-       */
-      (innerLabels: Iterable[Any]) forall (outerLabels contains _) should be (true) 
-    }
     def `serve ++=` {
       val (gBefore, gAfter) = (
           mutable.Graph(1, 2~3),
@@ -254,18 +154,6 @@ class TEditMutable extends RefSpec with Matchers {
       (gBefore ++= mutable.Graph(0, 1~2))                 should equal (gAfter)
       (gBefore ++= mutable.Graph[Int,UnDiEdge](0)
                ++= mutable.Graph(1~2))                    should equal (gAfter)
-    }
-    def `are upsertable` {
-      import edge.LDiEdge, edge.LBase._
-      val (label, modLabel) = ("A", "B")
-      val g = mutable.Graph(LDiEdge(1, 2)(label), LDiEdge(2, 3)(label))
-  
-      g.edges foreach { _.edge match {
-        case LDiEdge(s, t, l) => g upsert (LDiEdge(s.value, t.value)(modLabel)) 
-      }}
-      g should have ('graphSize (2))
-      g.edges foreach { _.label  should be (modLabel)
-      }
     }
     def `yield another graph when mapped` {
       import mutable.Graph
@@ -323,31 +211,17 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (v
   	}
   	def `isDirected ` {
       def directed(g: CC[Int,UnDiEdge], expected: Boolean): Unit = g.isDirected should be (expected)
-      val wDi = edge.WDiEdge(1, 2)(0)
       
-      factory(wDi).isDirected should be (true)
       directed(factory(1 ~ 2), false)
       directed(factory(1 ~> 2), true)
-      directed(factory(wDi), true)
-      directed(factory(0~>1, wDi), true)
+      directed(factory(0 ~> 1, 1 ~> 2), true)
   	}
     def `isHyper ` {
       def hyper(g: CC[Int,HyperEdge], expected: Boolean): Unit = g.isHyper should be (expected)
-      val wDiHyper = edge.WDiHyperEdge(1, 2, 3)(0)
       
       factory(1 ~ 2).isHyper should be (false)
-      factory(wDiHyper).isHyper should be (true)
-      hyper(factory(1 ~> 2, wDiHyper), true)
+      hyper(factory(1 ~> 2, 1 ~ 2 ~ 3), true)
       hyper(factory(1 ~> 2), false)
-    }
-    def `isMulti ` {
-      import edge.WkDiEdge
-      def multi(g: CC[Int,UnDiEdge], expected: Boolean): Unit = g.isMulti should be (expected)
-      val (wDi_1, wDi_2) = (WkDiEdge(1, 2)(0), WkDiEdge(1, 2)(1))
-      
-      multi(factory(1 ~ 2), false)
-      multi(factory(1 ~ 2, 1 ~> 2), false)
-      multi(factory(wDi_1, wDi_2), true)
     }
   	def `from ` {
   	  val (n_start, n_end) = (11, 20)
