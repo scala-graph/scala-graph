@@ -16,6 +16,7 @@ import Arbitrary.arbitrary
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 import org.scalatest.prop.PropertyChecks
+import org.scalatest.prop.Configuration.PropertyCheckConfiguration
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
@@ -36,7 +37,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
 	with	Matchers
 	with	PropertyChecks {
   
-  implicit val config = PropertyCheckConfig(minSuccessful = 5, maxDiscarded = 5)
+  implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
   
   def `find successors in a tiny graph` {
     val g = factory(1~>2)

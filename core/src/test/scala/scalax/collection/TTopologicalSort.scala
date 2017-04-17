@@ -9,6 +9,7 @@ import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
 
 import org.scalatest._
 import org.scalatest.prop.PropertyChecks
+import org.scalatest.refspec.RefSpec
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -22,7 +23,7 @@ class TTopologicalSortRootTest
   
 private class TTopologicalSort[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]] 
 	  (val factory: GraphCoreCompanion[G])
-  	extends	Spec
+  	extends	RefSpec
   	with	Matchers
   	with	PropertyChecks {
 
