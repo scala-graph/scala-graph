@@ -170,4 +170,13 @@ private class TTopologicalSort[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with Gra
         Topo.unexpectedRight
     )
   }
+
+  
+  def `cyclic graph #68` {
+    val g = factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)    
+    g.topologicalSort.fold(
+        identity,
+        Topo.unexpectedRight
+    )
+  }
 }
