@@ -57,13 +57,18 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
   {
     val root = DotCluster(dotRoot)
     val dotAST: DotAST = DotAST(root)
-    def connectClusters(dotGraph: DotGraph, cluster: dotAST.NodeT) {
-      dotGraph match {
-        case DotSubGraph(ancestor,_,_,_) =>
-          val ancestorNode = dotAST addAndGet DotCluster(ancestor)
-          implicit def edgeType = DiEdge
-          ancestorNode connectWith cluster
-        case _ =>
+    def connectClusters(node: dotAST.NodeT): Unit = {
+      def conn(ancestor: DotGraph): dotAST.NodeT = {      
+        val ancestorNode = dotAST addAndGet DotCluster(ancestor)
+        implicit def edgeType = DiEdge
+        ancestorNode connectWith node
+        ancestorNode
+      }
+      node.value.dotGraph match {
+        case DotSubGraph(ancestor: DotRootGraph,_,_,_) => conn(ancestor)
+        case DotSubGraph(ancestor: DotSubGraph,_,_,_)  => conn(ancestor)
+                                                          connectClusters(dotAST addAndGet DotCluster(ancestor))
+        case _: DotRootGraph =>
       }
     }
     
@@ -73,21 +78,20 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
     val visitedCNodes = MSet.empty[graph.NodeT]
     graph.edges foreach { edge =>
       def dotEdge(edge: graph.EdgeT, dotGraph: DotGraph, edgeStmt: DotEdgeStmt): Unit = {
-        val cluster = dotAST addAndGet DotCluster(dotGraph)
-        connectClusters(dotGraph, cluster)
+        val clusterNode = dotAST addAndGet DotCluster(dotGraph)
+        connectClusters(clusterNode)
   
-        if (cluster.dotStmts add edgeStmt)
+        if (clusterNode.dotStmts add edgeStmt)
           cNodeTransformer map { visitor =>
             edge foreach { node =>
               if (visitedCNodes add node)
-                visitor(node) foreach { _ match {
-                  case (dotGraph, nodeStmt) =>
-                    val cluster = dotAST addAndGet DotCluster(dotGraph)
-                    connectClusters(dotGraph, cluster)
-                    
-                    cluster.dotStmts += nodeStmt 
+                visitor(node) foreach { case (dotGraph, nodeStmt) =>
+                  val clusterNode = dotAST addAndGet DotCluster(dotGraph)
+                  connectClusters(clusterNode)
+                  
+                  clusterNode.dotStmts += nodeStmt 
                 }
-              }}
+            }
           }
       }
       if (edge.edge.isHyperEdge && hEdgeTransformer.isDefined)
@@ -95,8 +99,8 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
           case (dotGraph, edgeStmt) => dotEdge(edge, dotGraph, edgeStmt)
         }
       else
-        edgeTransformer(edge) foreach {
-          case (dotGraph, edgeStmt) => dotEdge(edge, dotGraph, edgeStmt)
+        edgeTransformer(edge) foreach { case (dotGraph, edgeStmt) =>
+          dotEdge(edge, dotGraph, edgeStmt)
         }
     }
     visitedCNodes.clear
@@ -105,14 +109,13 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
     iNodeTransformer map { visitor =>
       graph.nodes foreach { node =>
         if (node.isIsolated)
-          visitor(node) map { _ match {
+          visitor(node) map {
             case (dotGraph, nodeStmt) =>
-              val cluster = dotAST addAndGet DotCluster(dotGraph)
-              connectClusters(dotGraph, cluster)
-
-              cluster.dotStmts += nodeStmt
+              val clusterNode = dotAST addAndGet DotCluster(dotGraph)
+              connectClusters(clusterNode)
+              clusterNode.dotStmts += nodeStmt
             case _ =>
-          }}
+          }
       }
     }
     (dotAST, root)
@@ -138,72 +141,68 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
       res append sep
       if (sep == AttrSeparator.NewLine) indent(ofGraph)
     }
-    (dotAST get root).innerNodeDownUpTraverser foreach ( _ match {
-      case (down, cluster) =>
-        if (down) {
-          def format(kv: DotAttr): String = s"${kv.name} = ${kv.value}"
-          def outStmtList(stmtList: Seq[DotAttrStmt]) {
-            stmtList foreach { _ match { 
-              case DotAttrStmt(t, attrs) =>
-                separate(true)
-                res append t.toString
-                res append s" [${attrs map format mkString ", "}]"
-            }}
-          }
-          def outIdList(kvList: Seq[DotAttr]) {
-            kvList foreach { attr =>
-              separate(true)
-              res append format(attr)
-            }
-          }
-          def outAttrList(attrList: Seq[DotAttr]) {
-            if (attrList.nonEmpty) {
-              res append " ["
-              attrList foreach { attr =>
-                res append attr.name
-                if (attr.value().nonEmpty) {
-                  res append s" = ${attr.value}"
-                }
-                res append ", "
-              }
-              res delete (res.size - 2, res.size)
-              res append ']'
-            }
-          }
-          val head = cluster.dotGraph.headToString
-          val (graphStmtList, graphKvList) = cluster.dotGraph match {
-            case DotRootGraph(_,_,_, attrStmts, kvList) =>
-              indent(true)
-              res append head
-              (attrStmts, kvList)
-            case DotSubGraph(_,_, attrStmts, kvList) =>
-              separate(true)
-              res append head
-              (attrStmts, kvList)
-          }
-          level += 1
-          outStmtList(graphStmtList)
-          outIdList(graphKvList)
-          
-          cluster.dotStmts foreach { dotStmt =>
+    (dotAST get root).innerNodeDownUpTraverser foreach {
+      case (true, cluster) =>
+        def format(kv: DotAttr): String = s"${kv.name} = ${kv.value}"
+        def outStmtList(stmtList: Seq[DotAttrStmt]) {
+          stmtList foreach { case DotAttrStmt(t, attrs) =>
             separate(true)
-            val attrList = dotStmt match {
-              case DotNodeStmt(nodeId, attrList) =>
-                res append s"${nodeId()}"
-                attrList
-              case DotEdgeStmt(node_1Id, node_2Id, attrList) =>
-                res append s"${node_1Id()} $edgeOp ${node_2Id()}"
-                attrList
-            }
-            outAttrList(attrList)
+            res append t.toString
+            res append s" [${attrs map format mkString ", "}]"
           }
-        } else {
-          level -= 1
-          separate(true)
-          res append '}'
         }
-      }
-    )
+        def outIdList(kvList: Seq[DotAttr]) {
+          kvList foreach { attr =>
+            separate(true)
+            res append format(attr)
+          }
+        }
+        def outAttrList(attrList: Seq[DotAttr]) {
+          if (attrList.nonEmpty) {
+            res append " ["
+            attrList foreach { attr =>
+              res append attr.name
+              if (attr.value().nonEmpty) {
+                res append s" = ${attr.value}"
+              }
+              res append ", "
+            }
+            res delete (res.size - 2, res.size)
+            res append ']'
+          }
+        }
+        val head = cluster.dotGraph.headToString
+        val (graphStmtList, graphKvList) = cluster.dotGraph match {
+          case DotRootGraph(_,_,_, attrStmts, kvList) =>
+            indent(true)
+            res append head
+            (attrStmts, kvList)
+          case DotSubGraph(_,_, attrStmts, kvList) =>
+            separate(true)
+            res append head
+            (attrStmts, kvList)
+        }
+        level += 1
+        outStmtList(graphStmtList)
+        outIdList(graphKvList)
+        
+        cluster.dotStmts foreach { dotStmt =>
+          separate(true)
+          val attrList = dotStmt match {
+            case DotNodeStmt(nodeId, attrList) =>
+              res append s"${nodeId()}"
+              attrList
+            case DotEdgeStmt(node_1Id, node_2Id, attrList) =>
+              res append s"${node_1Id()} $edgeOp ${node_2Id()}"
+              attrList
+          }
+          outAttrList(attrList)
+        }
+      case up =>
+        level -= 1
+        separate(true)
+        res append '}'
+    }
     res.toString
   }
 }
