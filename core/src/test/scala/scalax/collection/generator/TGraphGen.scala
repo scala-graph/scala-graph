@@ -7,9 +7,10 @@ import scala.util.Random
 import org.scalacheck.{Arbitrary, Gen}
 import Arbitrary.arbitrary
 import org.scalacheck.Prop.forAll
-import org.scalatest.Spec
 import org.scalatest.Matchers
+import org.scalatest.refspec.RefSpec
 import org.scalatest.prop.PropertyChecks
+import org.scalatest.prop.Configuration.PropertyCheckConfiguration
 import org.scalatest.prop.Checkers._
 
 import GraphPredef._, GraphEdge._
@@ -21,12 +22,12 @@ import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
 class TGraphGenTest
-    extends Spec
+    extends RefSpec
        with Matchers
        with PropertyChecks {
 
-  val minSuccessful = 5
-  implicit val config = PropertyCheckConfig(minSuccessful = minSuccessful, maxDiscarded = 5)
+  final val minSuccessful = 5
+  implicit val config = PropertyCheckConfiguration(minSuccessful = minSuccessful, maxDiscardedFactor = 1.0)
   
   object `nr of minimum successful tests` {
     def `should be met` {

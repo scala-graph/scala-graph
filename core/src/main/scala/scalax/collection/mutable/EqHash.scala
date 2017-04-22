@@ -1,6 +1,6 @@
 package scalax.collection.mutable
 
-import scala.collection.Util.powerOf2
+import scala.collection.Util.nextPositivePowerOfTwo
 import scala.collection.mutable.Builder
 
 trait EqHash[A<:AnyRef, This <: EqHash[A,This]] {
@@ -43,7 +43,7 @@ trait EqHash[A<:AnyRef, This <: EqHash[A,This]] {
     val min = cap((len(1) + 1) * sizeHint)
     if (min < minCapacity) minCapacity
     else if (min > maxCapacity || min < 0) maxCapacity
-    else powerOf2(min)
+    else nextPositivePowerOfTwo(min)
   }
 
   protected def index(maskedKey: AnyRef, keyHash: Int, tabLength: Int): Int = {
