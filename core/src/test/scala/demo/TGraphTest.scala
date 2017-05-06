@@ -157,14 +157,16 @@ object TGraphTest extends App {
     println(arbitraryMixedGraph.arbitrary.sample)
   
     // Integrating with ScalaTest, limiting the minimum # of successful test
-    import org.scalatest.{Matchers, Spec}
+    import org.scalatest.Matchers
     import org.scalatest.prop.PropertyChecks
+    import org.scalatest.prop.Configuration.PropertyCheckConfiguration
+    import org.scalatest.refspec.RefSpec
     
     class TGraphGenTest
-        extends Spec with Matchers with PropertyChecks {
+        extends RefSpec with Matchers with PropertyChecks {
       
       implicit val config =
-        PropertyCheckConfig(minSuccessful = 5, maxDiscarded = 5)
+        PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
       
       object `generated Tiny graph` { 
         implicit val arbitraryTinyGraph =

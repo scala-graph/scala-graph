@@ -578,33 +578,33 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           val estimatedLayers: Int = expectedMaxNodes(4)
           val estimatedNodesPerLayer: Int = order / estimatedLayers
           val layers = new ArrayBuffer[Layer](estimatedLayers)
+          val maybeCycleNodes = MSet.empty[NodeT]
           def emptyBuffer: ArrayBuffer[NodeT] = new ArrayBuffer[NodeT](estimatedNodesPerLayer) 
-          
+
           @tailrec def loop(layer: Int, layerNodes: ArrayBuffer[NodeT]): CycleNodeOrTopologicalOrder = {
             layers += Layer(layer, layerNodes)
             val currentLayerNodes = if (doNodeSort) layerNodes.sorted(nodeOrdering) else layerNodes
             val nextLayerNodes = emptyBuffer
-            var maybeCycleNode: Option[NodeT] = None
-            val nrEnqueued = (0 /: currentLayerNodes) { (i, node) =>
+            val nrEnqueued = (0 /: currentLayerNodes) { (sum, node) =>
               if (doNodeVisitor) nodeVisitor(node)
               node.visited = true
-              (0 /: filteredSuccessors(node, _.visited, Double.NaN, true)) { (nrZeroInDegree, n) =>
+              (0 /: filteredSuccessors(node, _.visited, Double.NaN, true)) { (zeroInDegreeCount, n) =>
                 val newInDegree = inDegrees(n) - 1
                 inDegrees.update (n, newInDegree)
                 if (newInDegree == 0) {
                   nextLayerNodes += n
-                  nrZeroInDegree + 1
+                  maybeCycleNodes -= n
+                  zeroInDegreeCount + 1
                 } else {
-                  maybeCycleNode = maybeCycleNode orElse Some(n)
-                  nrZeroInDegree
+                  maybeCycleNodes += n
+                  zeroInDegreeCount
                 }
-              } + i
+              } + sum        
             }
-            def resultOnSuccess: CycleNodeOrTopologicalOrder = Right(new TopologicalOrder(layers, identity)) 
-            if (nrEnqueued == 0)
-              maybeCycleNode.fold(ifEmpty = resultOnSuccess)(cycleNode => Left(cycleNode))
-            else if (layers.size == untilDepth)
-              resultOnSuccess
+            if (nrEnqueued == 0 || layers.size == untilDepth)
+              maybeCycleNodes.headOption.fold[CycleNodeOrTopologicalOrder](
+                Right(new TopologicalOrder(layers, identity))
+              )(Left(_))
             else
               loop(layer + 1, nextLayerNodes)
           }

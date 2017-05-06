@@ -3,7 +3,7 @@ import Keys._
 import org.scalajs.sbtplugin.ScalaJSPlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
-// SBT project coreCrossJS, fastOpJS, publishSigned
+// SBT: project coreCrossJS, fastOptJS, publishSigned
 object GraphBuild extends Build {
 
   lazy val all = Project(
@@ -67,7 +67,7 @@ object GraphBuild extends Build {
     )
   ) dependsOn (core)
 
-  private lazy val defaultCrossSettings = Seq(
+  private lazy val defaultCrossSettings = Defaults.coreDefaultSettings ++ Seq(
     scalaVersion := Version.compiler_2_12,
   	crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2_11),
     organization := "org.scala-graph"
@@ -75,29 +75,23 @@ object GraphBuild extends Build {
     
   private lazy val defaultSettings = defaultCrossSettings ++ Seq(
     parallelExecution in Test := false,
-    scalacOptions in (Compile, doc) <++= (name, version) map {
-      Opts.doc.title(_) ++ Opts.doc.version(_)
-    },
+    scalacOptions in (Compile, doc) ++=
+      Opts.doc.title(name.value) ++
+      Opts.doc.version(version.value),
     // prevents sbteclipse from including java source directories
+    unmanagedSourceDirectories in Compile := (scalaSource in Compile)(Seq(_)).value,
     // TODO: the following setting causes an empty crossProject.jvm build
     // unmanagedSourceDirectories in Compile <<= (scalaSource in Compile)(Seq(_)),
-    unmanagedSourceDirectories in Test    <<= (scalaSource in Test)   (Seq(_)),
+    unmanagedSourceDirectories in Test := (scalaSource in Test)   (Seq(_)).value,
     scalacOptions in (Compile, doc) ++= List("-diagrams", "-implicits"),
-    scalacOptions in (Compile, doc) <++= baseDirectory map { d =>
+    scalacOptions in (Compile, doc) ++= (baseDirectory map { d =>
       Seq("-doc-root-content", d / "rootdoc.txt" getPath)
-    },
+    }).value,
     autoAPIMappings := true,
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     libraryDependencies ++= Seq(
       "junit" % "junit" % "4.12"                        % "test",
       "org.scalatest"  %% "scalatest"  % "3.0.1"        % "test",
-      "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test")/*,
-    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 10)) => Nil
-      case Some((2, scalaMajor)) if scalaMajor >= 11 =>  Seq(
-          "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test" // required by ScalaTest
-        )
-      case _ => Nil
-    })*/
+      "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test")
   )
 }

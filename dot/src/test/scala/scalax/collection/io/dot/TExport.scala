@@ -7,13 +7,14 @@ import scala.collection.SortedMap
 import GraphPredef._, GraphEdge._, edge.LDiEdge, edge.Implicits._
 import Indent._
 
-import org.scalatest._
+import org.scalatest.Matchers
+import org.scalatest.refspec.RefSpec
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 /** Tests [[Export]]. */
 @RunWith(classOf[JUnitRunner])
-class TExportTest extends Spec with Matchers {
+class TExportTest extends RefSpec with Matchers {
   
   def `Example at http://en.wikipedia.org/wiki/DOT_language will be produced` {
     
@@ -210,6 +211,36 @@ class TExportTest extends Spec with Matchers {
       s"${lines.head}${mid.sorted.mkString}${lines.last}"
     }
     dotSorted should be (expected)
+  }
+  
+  def `doubly-nested subgraphs #69` {
+    import scalax.collection.Graph
+    import scalax.collection.GraphEdge.DiEdge
+    import scalax.collection.io.dot.implicits._
+    
+    val g = Graph[Int, DiEdge](1)
+    val root = DotRootGraph(
+      directed = true,
+      id = Some("structs")
+    )
+    val branchDOT = DotSubGraph(root,
+                                "cluster_branch",
+                                attrList = List(DotAttr("label", "branch")))
+    val cSubGraph = DotSubGraph(branchDOT, "cluster_chained", attrList =
+      List(DotAttr("label", "Chained")))
+    val iSubGraph = DotSubGraph(branchDOT, "cluster_unchained", attrList =
+      List(DotAttr("label", "UnChained")))
+    val iNode = "inode" 
+    val dot = g.toDot(
+      dotRoot = root,
+      edgeTransformer = _.edge match {
+        case _ =>
+          Some((root, DotEdgeStmt("hi", "guys")))
+      },
+      cNodeTransformer = Some({ _ => Some((cSubGraph, DotNodeStmt("cnode"))) }),
+      iNodeTransformer = Some({ _ => Some((iSubGraph, DotNodeStmt(iNode))) })
+    )
+    dot.contains(iNode) should be (true)   
   }
 }
 
