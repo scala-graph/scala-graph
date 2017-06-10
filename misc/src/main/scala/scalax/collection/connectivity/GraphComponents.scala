@@ -10,14 +10,12 @@ import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
 import scalax.collection.Graph
 
-import logging.Logging
-
 /**
  * Provides algorithms for finding graph components.
  * @author Vasco Figueira
  */
 final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](
-    val g: Graph[N, E])(implicit edgeT: ClassTag[N]) extends Logging {
+    val g: Graph[N, E])(implicit edgeT: ClassTag[N]) {
 
   type DeepSearchStackAggregator = (Seq[g.NodeT]) => Unit
 
@@ -66,7 +64,6 @@ final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](
 
     // graph of graphs aggregator
     val toSubgraphDag: DeepSearchStackAggregator = { currentStack =>
-      debug("toSubgraphDag - init")
       // previous graphs being referenced by current
       var referencedGraphs: List[Graph[N, DiEdge]] = Nil
       // edges from and to nodes of the current stack
@@ -76,12 +73,9 @@ final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](
         if (e.nodeSeq.forall(currentStack.contains(_))) { // TODO possibly improve performance
           // edge within the subgraph
           innerEdges = (e._1.value ~> e._2.value) :: innerEdges
-          debug("%s points to %s within the same subgraph".format(n.value.toString, e._2.value.toString))
         } else {
           // edge of the DAG
           // only points to previous subgraphs
-          debug("%s points to %s from another subgraph".format(n.value.toString, e._2.value.toString))
-          debug(lookup.mkString(" "))
           referencedGraphs = lookup(e._2.value) :: referencedGraphs
         }
       }
@@ -91,7 +85,6 @@ final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](
       evidence = (currentGraph ~> currentGraph)
       outerEdges = referencedGraphs.map((currentGraph ~> _)) ++ outerEdges
       // add currentGraph to lookup by its nodes
-      debug("adding " + currentGraph + " to lookup for each node: " + theseNodes)
       lookup ++= theseNodes.map((_ -> currentGraph))
     }
 
@@ -109,7 +102,6 @@ final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](
    */
   private[this] def stronglyConnectedComponents(aggregator: DeepSearchStackAggregator) {
     // discovery and finish times for each node
-    trace("stronglyConnectedComponents: init")
     var time = 0;
     val discovery: mutable.Map[g.NodeT, Int] = mutable.Map()
     val finish: mutable.Map[g.NodeT, Int] = mutable.Map()
@@ -117,7 +109,6 @@ final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](
     var path = ListBuffer.empty[g.NodeT]
 
     def visit(n: g.NodeT) {
-      debug("visiting %c at time %d".format(n.value, time))
       discovery(n) = time
       finish(n) = time
       time += 1
@@ -128,11 +119,9 @@ final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](
           finish(n) = min(finish(v), finish(n))
         } else if (path.contains(v)) {
           // TODO make the contains test O(1)
-          trace("updating finish(%c) to %d".format(n.value, min(discovery(v), finish(n))))
           finish(n) = min(discovery(v), finish(n))
         }
       }
-      trace("finish(%1$c) == %2$d; discovery(%1$c) == %3$d; path == %s".format(n.value, finish(n), discovery(n), path))
       if (finish(n) == discovery(n)) {
         // n is root, call result aggregator
         var found = 0
@@ -140,7 +129,6 @@ final class GraphComponents[N, E[X] <: EdgeLikeIn[X]](
           if (e == n || found > 0) found += 1
           found <= 1
         }
-        debug(n + " is root; its scc is " + scc + "; rest is " + rest)
         aggregator(scc)
         path = rest
       }

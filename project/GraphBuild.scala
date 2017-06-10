@@ -57,8 +57,7 @@ object GraphBuild extends Build {
     base = file("misc"),
     settings = defaultSettings ++ Seq(
       name      := "Graph Miscellaneous",
-      version   := Version.misc,
-	  libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.0.7"
+      version   := Version.misc
     )
   ) dependsOn (core)
 
