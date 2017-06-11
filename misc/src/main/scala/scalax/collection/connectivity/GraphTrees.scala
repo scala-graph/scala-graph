@@ -3,14 +3,13 @@ package scalax.collection.connectivity
 import scala.collection.{mutable, Map}
 import scala.language.{higherKinds, implicitConversions}
 
-import logging.Logging
 import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.Graph
 
 /**
  * @author Vasco Figueira
  */
-final class GraphTrees[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N,E]) extends Logging {
+final class GraphTrees[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N,E]) {
 
   /*
    * Think what return type should be. May return a modified instance of the graph 
@@ -26,29 +25,24 @@ final class GraphTrees[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N,E]) extends Logg
 
     def loop(frontier: mutable.Queue[g.NodeT]): Unit = {
       if (!frontier.isEmpty) {
-	      log.debug("loop: frontier is " + frontier)
 	      val pred = frontier.dequeue()
 	      pred.diSuccessors.foreach { s =>
 	        visited.get(s) match {
 	        case None => {
-	            log.debug("node " + s + "... visited.")
 	            visited += (s -> true)
 	            distances += (s -> (distances(pred) + 1))
 	            predecessorOf += (s -> pred)
 	            frontier.enqueue(s)
 	          }
-	        case _ => {log.debug("node " + s + "... skipped.")}
+	        case _ =>
 	        }
 	      }
-	      log.debug(pred + " is now black")
 	      visited(pred) = true
 	      loop(frontier)
       }
     }
     loop(mutable.Queue(source))
 
-    log.debug(distances.mkString("; "))
-    log.debug(predecessorOf.mkString("; "))
   }
 
   def depthFirstSearchTree(): Unit = {
@@ -61,7 +55,6 @@ final class GraphTrees[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N,E]) extends Logg
     val finish: mutable.Map[g.NodeT,Int] = mutable.Map()
     
     def dfsVisit(n: g.NodeT): Unit = {
-      log.debug("dfsVisit: visiting " + n)
       visited(n) = false
       time += 1
       discovery(n) = time
@@ -72,15 +65,11 @@ final class GraphTrees[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N,E]) extends Logg
       visited(n) = true
       time += 1
       finish(n) = time
-      log.debug("done with " + n)
     }
     
     for (n <- g.nodes if (visited.get(n) == None)) dfsVisit(n)
 
-    log.debug(visited.mkString("; "))
     val times = for((n,d) <- discovery) yield (n, d, finish(n))
-    log.debug(times.mkString("; "))
-    log.debug(predecessorOf.mkString("; "))
   }
   
 }

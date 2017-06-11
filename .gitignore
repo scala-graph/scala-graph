@@ -15,6 +15,9 @@ project/plugins/project/
 .jvm
 *.sjsir
 
+# Intellij IDEA
+.idea
+
 # Eclipse, Scala IDE
 .project
 .classpath
