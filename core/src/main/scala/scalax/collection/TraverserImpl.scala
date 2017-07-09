@@ -10,7 +10,7 @@ import scala.collection.FilterableSet
 import scala.collection.FilteredSet
 import scalax.collection.GraphPredef.{OuterNode, EdgeLikeIn}
 import immutable.SortedArraySet
-import mutable.{ArraySet, EqHashSet}
+import mutable.{ArraySet, EqHashSet, EqHashMap}
 import scalax.collection.GraphEdge.DiEdge
 
 /** Default implementation of the graph algorithms to maintain the functionality
@@ -69,7 +69,11 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                                            visitor           : A => U): Option[Path] = ifSuccessors {
       new Runner(noNode, visitor).shortestPathTo(potentialSuccessor, weight)
     }
-
+  
+    final def strongComponents[U](implicit visitor: A => U = empty): Iterable[Component] = ifSuccessors {
+      new Runner(noNode, visitor).dfsTarjan()
+    }
+    
     /** Contains algorithms and local values to be used by the algorithms.
      *  Last target reusability and best possible run-time performance.
      *
@@ -414,13 +418,13 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
         }
       }
   
-      @inline protected[collection]
-      def dfs[U](maybeHandle: Option[Handle] = None): Option[NodeT] = dfsStack(empty, maybeHandle)._1
+      @inline protected[collection] def dfs[U](maybeHandle: Option[Handle] = None): Option[NodeT] =
+        dfsStack(empty, maybeHandle)._1
 
       /** @return (node stopped at, stack of ...) */
-      protected[collection]
-      def dfsStack[U](nodeUpVisitor: (NodeT) => U = empty,
-                      maybeHandle: Option[Handle] = None): (Option[NodeT], Stack[DfsInformer.Element[NodeT]]) =
+      protected[collection] def dfsStack[U](
+          nodeUpVisitor: (NodeT) => U = empty,
+          maybeHandle: Option[Handle] = None): (Option[NodeT], Stack[DfsInformer.Element[NodeT]]) =
         withHandle(maybeHandle) { implicit visitedHandle =>
           val untilDepth: Int = maxDepth
           val doNodeUpVisitor = isDefined(nodeUpVisitor)
@@ -464,7 +468,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                     stack push Element(
                       n,
                       depth + 1,
-                      maxWeight.fold(ifEmpty = 0d)(w => cumWeight + minWeight(current, n, cumWeight))
+                      maxWeight.fold(ifEmpty = 0d)(_ => cumWeight + minWeight(current, n, cumWeight))
                     )
                     n.visited = true
                   }
@@ -476,7 +480,77 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           if (doNodeUpVisitor) path foreach (e => nodeUpVisitor(e.node))
           (res, path)
         }
-  
+
+      protected[collection] def dfsTarjan(
+          maybeHandle: Option[Handle] = None,
+          nodeUpVisitor: (NodeT) => U = empty): Iterable[Component] =
+        withHandle(maybeHandle) { implicit visitedHandle =>
+          type Element = TarjanInformer.Element[NodeT]
+          val Element = TarjanInformer.Element
+         
+          val untilDepth: Int = maxDepth
+          val doNodeUpVisitor = isDefined(nodeUpVisitor)
+          
+          var maxIndex = 0
+          val stack = Stack.empty[Element]
+          val onStack = new EqHashMap[NodeT, Element](order / expectedMaxNodes(2))
+          var components = List.empty[Component]
+          
+          // @tailrec
+          def loop(elem: Element): Int = {
+            val Element(current, depth, cumWeight, index, _) = elem
+            stack push elem
+            onStack.put(current, elem)
+            current.visited = true
+            if (doNodeVisitor)
+              if (isDefined(nodeVisitor)) nodeVisitor(current)
+              else {
+                extNodeVisitor(current, index, depth,
+                  new TarjanInformer[NodeT](index, elem.lowLink) {
+                    def stackIterator = stack.iterator
+                  }
+                )
+              }
+            val successors =
+              if (depth < untilDepth) filteredSuccessors(current, noNode, cumWeight, false)
+              else Nil
+            for (w <- successors)
+              if (! w.visited) {
+                maxIndex += 1
+                val wLowLink = loop(Element(
+                  w,
+                  depth + 1,
+                  maxWeight.fold(ifEmpty = 0d)(_ => cumWeight + minWeight(current, w, cumWeight)),
+                  maxIndex,
+                  maxIndex
+                ))
+                if (doNodeUpVisitor) nodeUpVisitor(w)
+                elem.lowLink = math.min(elem.lowLink, wLowLink)
+              } else {
+                onStack.get(w) map { wElem =>
+                  elem.lowLink = math.min(elem.lowLink, wElem.index)
+                }
+              }
+
+            if (elem.lowLink == index) {
+              val componentNodes = Set.newBuilder[NodeT]
+              @tailrec def pop(continue: Boolean): Unit = if (continue) {
+                val n = stack.pop.node
+                onStack.remove(n)
+                componentNodes += n
+                pop(n ne current)
+              }
+              pop(true)
+              components = new StrongComponentImpl(
+                  current, parameters, subgraphNodes, subgraphEdges, ordering, componentNodes.result) +: components
+            }
+
+            elem.lowLink
+          }
+          loop(Element(root, 0))
+          components
+        }
+      
       /** Tail-recursive white-gray-black DFS implementation for cycle detection.
        */
       protected[collection]

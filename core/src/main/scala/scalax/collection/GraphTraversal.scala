@@ -1,7 +1,7 @@
 package scalax.collection
 
 import scala.language.{higherKinds, implicitConversions}
-import scala.collection.{AbstractIterable, AbstractTraversable}
+import scala.collection.{AbstractIterable, AbstractTraversable, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, Builder}
 import scala.math.min
 
@@ -657,20 +657,31 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
   }
   
   /** Represents a component of `this` graph with an underlying lazy implementation.
-   *  Instances will be created by traversals based on [[componentTraverser]].  
+   *  Components will be instantiated by [[componentTraverser]] or [[strongComponentTraverser]].  
    */
-  protected abstract class Component extends Properties {
+  abstract class Component protected extends Properties {
     def nodes: Set[NodeT]
-    def edges: Set[EdgeT]
-    def toGraph: Graph[N,E] =
-      innerEdgeTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight).toGraph
+    final lazy val edges: Set[EdgeT] = {
+      val edges = new ArrayBuffer[EdgeT](graphSize / 2)
+      for (n <- nodes) n.edges.withFilter(edgeFilter) foreach (edges += _)
+      new EqSetFacade(edges)
+    }
+    final def toGraph: Graph[N,E] = thisGraph match {
+      case g: Graph[N, E] =>
+        val b = Graph.newBuilder(g.edgeT, Graph.defaultConfig)
+        b ++= edges
+        b.result
+    }    
+    protected def edgeFilter: EdgeT => Boolean = subgraphEdges
+    protected def stringPrefix: String  
+    override def toString = s"$stringPrefix(${nodes mkString ", "})"
   }
   
-  /** Controls the properties of graph traversals with no specific root.
-   *  Provides methods to refine the properties and to invoke multiple traversals
-   *  to span all graph components. 
+  /** Controls the properties of graph traversals with no specific root and allows
+   *  you to produce the (weekly) connected components by a traversal or
+   *  call methods like `findCycle` that work component-wise. 
    */
-  protected abstract class ComponentTraverser
+  abstract class ComponentTraverser protected
       extends FluentProperties[ComponentTraverser]
          with Properties 
          with Traversable[Component] {
@@ -684,8 +695,8 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     def topologicalSortByComponent[U](implicit visitor: InnerElem => U = empty): Traversable[CycleNodeOrTopologicalOrder]
   }
   
-  /** Creates a [[ComponentTraverser]] responsible for invoking graph traversal methods
-   *  that cover all components of this possibly disconnected graph.
+  /** Creates a [[ComponentTraverser]] responsible for invoking graph traversal methods in all
+   *  (weekly) connected components of this possibly disconnected graph.
    *    
    * @param parameters $PARAMETERS
    * @param subgraphNodes $SUBGRAPHNODES      
@@ -699,6 +710,29 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       subgraphEdges: EdgeFilter     = anyEdge,
       ordering     : ElemOrdering   = NoOrdering,
       maxWeight    : Option[Weight] = None): ComponentTraverser
+
+  /** Controls the properties of graph traversals with no specific root and allows
+   *  you to produce the strongly connected components by a traversal. 
+   */
+  abstract class StrongComponentTraverser protected
+      extends FluentProperties[StrongComponentTraverser]
+         with Properties 
+         with Traversable[Component]
+  
+  /** Creates a [[StrongComponentTraverser]].
+   *    
+   * @param parameters $PARAMETERS
+   * @param subgraphNodes $SUBGRAPHNODES      
+   * @param subgraphEdges $SUBGRAPHEDGES
+   * @param ordering $ORD      
+   * @param maxWeight $MAXWEIGHT      
+   */
+  def strongComponentTraverser(
+      parameters   : Parameters     = Parameters(),
+      subgraphNodes: NodeFilter     = anyNode,
+      subgraphEdges: EdgeFilter     = anyEdge,
+      ordering     : ElemOrdering   = NoOrdering,
+      maxWeight    : Option[Weight] = None): StrongComponentTraverser
 
   /** The `root`-related methods [[Traverser]] will inherit.
    *  
@@ -915,6 +949,8 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
      */
     def topologicalSort[U](ignorePredecessors: Boolean = false)
                           (implicit visitor: InnerElem => U = empty): CycleNodeOrTopologicalOrder
+                          
+    def strongComponents[U](implicit visitor: A => U = empty): Iterable[Component]
   }
 
   /** Controls the properties of consecutive graph traversals starting at a root node.
@@ -1147,12 +1183,12 @@ object GraphTraversal {
 
   /** Marker trait for informers aimed at passing algorithmic-specific state
    *  to [[scalax.collection.GraphTraversal.ExtendedNodeVisitor]].
-   *  Before calling an informer please match against one of 
+   *  Following informers are available: 
    *  1. [[scalax.collection.GraphTraversalImpl.BfsInformer]]
    *  1. [[scalax.collection.GraphTraversalImpl.DfsInformer]]   
    *  1. [[scalax.collection.GraphTraversalImpl.WgbInformer]]
    *  1. [[scalax.collection.GraphTraversalImpl.DijkstraInformer]]
-   *  or any other implementation that is currently not known.   
+   *  1. [[scalax.collection.GraphTraversalImpl.TarjanInformer]].
    */
   trait NodeInformer
   object NodeInformer extends Serializable {
