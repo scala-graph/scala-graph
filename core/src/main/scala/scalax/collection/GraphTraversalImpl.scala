@@ -180,7 +180,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     this: NodeT =>
   }
 
-  protected class ComponentImpl(
+  protected class WeakComponentImpl(
       override val root         : NodeT, 
       override val parameters   : Parameters,
       override val subgraphNodes: NodeFilter,
@@ -189,7 +189,8 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       override val nodes        : Set[NodeT])
       extends Component {
 
-    protected def stringPrefix = "Component"
+    final protected def mayHaveFrontierEdges: Boolean = false
+    protected def stringPrefix = "WeekComponent"
   }
 
   protected class StrongComponentImpl(
@@ -201,7 +202,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       override val nodes        : Set[NodeT])
       extends Component {
     
-    override protected def edgeFilter: EdgeT => Boolean = e => super.edgeFilter(e) && (e.nodes forall nodes.contains) 
+    final protected def mayHaveFrontierEdges: Boolean = true
     protected def stringPrefix = "StrongComponent"
   }
 
@@ -260,7 +261,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     final private def innerElemTraverser =
       InnerElemTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
 
-    protected lazy val components: Iterable[ComponentImpl] = {
+    protected lazy val components: Iterable[WeakComponentImpl] = {
       val traverser = InnerNodeTraverser(
           root, parameters withDirection AnyConnected, subgraphNodes, subgraphEdges, ordering)
       withHandle() {  implicit visitedHandle =>
@@ -270,7 +271,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
             n.visited = true
             componentNodes += n
           }
-          new ComponentImpl(node, parameters, subgraphNodes, subgraphEdges, ordering,
+          new WeakComponentImpl(node, parameters, subgraphNodes, subgraphEdges, ordering,
               new EqSetFacade(componentNodes))
         }
       }

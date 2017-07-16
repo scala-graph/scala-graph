@@ -80,6 +80,7 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
           scc should have size (expectedSize)
           scc foreach { sc =>
             sccExpected should contain (sc.toGraph)
+            sc.frontierEdges should have size (1)
           }
         }
         

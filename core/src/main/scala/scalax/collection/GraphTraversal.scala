@@ -3,10 +3,10 @@ package scalax.collection
 import scala.language.{higherKinds, implicitConversions}
 import scala.collection.{AbstractIterable, AbstractTraversable, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, Builder}
-import scala.math.min
+import scala.math.{min, max}
 
 import GraphPredef.{EdgeLikeIn, OuterElem, OuterEdge, OutParam, InnerNodeParam, InnerEdgeParam}
-import mutable.EqHashMap
+import mutable.{EqHashMap, EqHashSet}
 
 /** Graph-related functionality such as traversals, path finding, cycle detection etc.
  *  All algorithms including breadth-first, depth-first, white-gray-black search and
@@ -656,24 +656,47 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       innerElemTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
   }
   
-  /** Represents a component of `this` graph with an underlying lazy implementation.
+  /** Represents a component of `this` graph.
+   *  Edges and bridges are computed lazily.
    *  Components will be instantiated by [[componentTraverser]] or [[strongComponentTraverser]].  
    */
   abstract class Component protected extends Properties {
+    
     def nodes: Set[NodeT]
-    final lazy val edges: Set[EdgeT] = {
-      val edges = new ArrayBuffer[EdgeT](graphSize / 2)
-      for (n <- nodes) n.edges.withFilter(edgeFilter) foreach (edges += _)
-      new EqSetFacade(edges)
+    
+    final lazy val (edges: Set[EdgeT], frontierEdges: Set[EdgeT]) = {
+      val edges   = new ArrayBuffer[EdgeT](graphSize / 2)
+      val bridges = new ArrayBuffer[EdgeT](if (mayHaveFrontierEdges) max(graphSize / 100, 16) else 0)
+      for (n <- nodes) n.edges.withFilter(subgraphEdges) foreach {e =>
+        if (nonBridge(e)) edges += e
+        else bridges += e
+      }
+      (new EqSetFacade(edges), new EqSetFacade(bridges))
     }
+    
+    final def frontierEdges(that: Component): Set[EdgeT] =
+      if (this.mayHaveFrontierEdges && that.mayHaveFrontierEdges) {
+        // optimize calls of 'contains' because EqSetFacade's is O(N)
+        def toEqSet(bridges: Set[EdgeT]) =
+          (new EqHashSet[EdgeT](bridges.size) /: bridges)((eqSet, e) => eqSet += e)
+        val (left, right) =
+          if (this.frontierEdges.size > that.frontierEdges.size) (this.frontierEdges, toEqSet(that.frontierEdges))
+          else                                                   (toEqSet(this.frontierEdges), that.frontierEdges)
+        new EqSetFacade(left filter right.contains)
+      }
+      else Set.empty
+    
     final def toGraph: Graph[N,E] = thisGraph match {
       case g: Graph[N, E] =>
         val b = Graph.newBuilder(g.edgeT, Graph.defaultConfig)
         b ++= edges
         b.result
-    }    
-    protected def edgeFilter: EdgeT => Boolean = subgraphEdges
-    protected def stringPrefix: String  
+    }
+    
+    protected def mayHaveFrontierEdges: Boolean
+    private final def nonBridge(e: EdgeT): Boolean = e.nodes forall nodes.contains
+
+    protected def stringPrefix: String
     override def toString = s"$stringPrefix(${nodes mkString ", "})"
   }
   
