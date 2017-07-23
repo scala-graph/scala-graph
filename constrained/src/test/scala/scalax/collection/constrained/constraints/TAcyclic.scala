@@ -71,7 +71,7 @@ class TAcyclic [CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]
 //    }
     def `self loops #76` {
       a [CycleException] should be thrownBy { factory(1~>1) }
-      a [CycleException] should be thrownBy { factory() + 1~>1 }
+      a [CycleException] should be thrownBy { factory[Int,DiEdge]() + 1~>1 }
     }
   }
 }
