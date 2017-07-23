@@ -1,9 +1,9 @@
 package scalax.collection
 
-import scala.language.higherKinds
 import scala.annotation.{switch, tailrec}
 import scala.collection.generic.{FilterMonadic, Growable}
 import scala.collection.mutable.{ArrayBuffer, ArrayStack => Stack, Queue, PriorityQueue, Map => MMap}
+import scala.language.higherKinds
 import scala.math.abs
 
 import scala.collection.FilterableSet
@@ -606,14 +606,12 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                       }
                     )
                   }
-                if (stopAt(current) && (current ne root))
+                if (current.hook.isDefined || (current ne root) && stopAt(current))
                   res = Some(current)
                 else {
                   var pushed = false
-                  for (n <- filteredSuccessors(current, n => nonBlack(n) || (n eq current), cumWeight, true)) {
-                    if (n eq current)
-                      res = Some(n)
-                    else if (isGray(n)) {
+                  for (n <- filteredSuccessors(current, n => nonBlack(n), cumWeight, true)) {
+                    if (isGray(n)) {
                       if (exclude.fold(ifEmpty = true)(_ ne n))
                         res = Some(n)
                     } else {

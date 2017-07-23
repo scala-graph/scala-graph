@@ -1,8 +1,9 @@
 package scalax.collection
 
-import scala.language.{higherKinds, implicitConversions}
+import scala.annotation.tailrec
 import scala.collection.{AbstractIterable, AbstractTraversable, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, Builder}
+import scala.language.{higherKinds, implicitConversions}
 import scala.math.{min, max}
 
 import GraphPredef.{EdgeLikeIn, OuterElem, OuterEdge, OutParam, InnerNodeParam, InnerEdgeParam}
@@ -258,28 +259,32 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     /** Returns whether the nodes and edges of this walk are valid with respect
      *  to this graph. $SANECHECK */
     def isValid: Boolean = {
-      val isValidNode = nodeValidator.apply _
-      nodes.headOption filter isValidNode exists { startNode =>
-        val edges = this.edges.toIterator
-        (nodes.head /: nodes.tail){ (prev: NodeT, n: NodeT) =>
-          if (isValidNode(n) && edges.hasNext) {
-            val e = edges.next
-            if (! e.matches((x: NodeT) => x eq prev,
-                            (x: NodeT) => x eq n   )) return false
-            n
-          } else return false
-        }
-        true
+      val valid = nodeValidator.apply _
+      nodes.headOption exists { startNode =>
+        val (nodesIt, edgesIt) = (nodes.tail.toIterator, edges.toIterator)
+        val valid = nodeValidator
+        
+        @tailrec def ok(prev: NodeT, count: Int): Boolean =
+          if (nodesIt.hasNext && edgesIt.hasNext) {
+            val node = nodesIt.next
+            if (valid(prev) &&
+                edgesIt.next.matches((n: NodeT) => n eq prev, (n: NodeT) => n eq node))
+              ok(node, count + 1)
+            else false
+          } else if (nodesIt.isEmpty && edgesIt.isEmpty) {
+            count > 0 && (prev eq startNode)
+          } else false
+          
+        ok(startNode, 0)
       }
     }
 
-    protected trait NodeValidator {
-      def apply(node: NodeT): Boolean
-    }
+    protected trait NodeValidator extends (NodeT => Boolean)
+
     protected def nodeValidator: NodeValidator =
       new NodeValidator { 
         def apply(node: NodeT): Boolean = true
-    }
+      }
   }
   object Walk {
     protected[GraphTraversal] trait Zero {

@@ -130,7 +130,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
      */
     def hasOnlyHooks: Boolean
     
-    /** @return A hook out of one or more hooks at this node or `None` if this node has no hooks. */
+    /** @return A looping edge out of one or more at this node or `None` if this node has no looping edge. */
     def hook: Option[EdgeT]
     
     /**
