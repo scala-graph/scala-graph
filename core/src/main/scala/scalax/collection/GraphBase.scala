@@ -125,12 +125,14 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
      */
     def connectionsWith(other: NodeT): Set[EdgeT] with FilterableSet[EdgeT]
 
-    /**
-     * Checks whether this node has only hooks or no edges at all.
-     *  
-     * @return `true` if this node has only hooks or it isolated.  
+    /** Checks whether this node has only hooks or no edges at all.
+     *  @return `true` if this node has only hooks or it isolated.  
      */
     def hasOnlyHooks: Boolean
+    
+    /** @return A hook out of one or more hooks at this node or `None` if this node has no hooks. */
+    def hook: Option[EdgeT]
+    
     /**
      * Whether `that` is an adjacent (direct successor) to this node.
      * 

@@ -72,6 +72,8 @@ trait AdjacencyListBase[N,
     
     final def hasOnlyHooks = diSucc.isEmpty && aHook.isDefined
 
+    final def hook: Option[EdgeT] = aHook map (_._2)
+    
     final def isDirectPredecessorOf(that: NodeT): Boolean =
       diSucc contains that
 
