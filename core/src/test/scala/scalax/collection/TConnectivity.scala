@@ -8,8 +8,9 @@ import GraphPredef._, GraphEdge._
 import GraphTraversal._, GraphTraversal.Parameters._ 
 import generic.GraphCoreCompanion
 import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
-import generator.GraphGen
+import generator._, RandomGraph._
 
+import org.scalacheck._
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 import org.scalatest.prop.PropertyChecks
@@ -91,6 +92,66 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
             start.innerNodeTraverser.strongComponents.toVector,
             if (sccExpected(0) contains start) 2 else 1
         )
+      }
+    }
+  }
+  
+  object `Having a bigger graph` {
+    val g: G[Int,DiEdge] = {
+        val gOrder = 1000
+        val random = RandomGraph.diGraph(
+            factory,
+            new IntFactory {
+              val order = gOrder
+              val nodeDegrees = NodeDegreeRange(gOrder / 10, gOrder / 4)
+            })
+        random.draw 
+    }
+    lazy val strongComponents = g.strongComponentTraverser().toVector
+      
+    def `no stack overflow occurs` {
+      strongComponents  
+    }
+    
+    def `strong components are complete` {
+      (Set.empty[g.NodeT] /: strongComponents)((cum, sc) => cum ++ sc.nodes) should be(g.nodes)
+    }
+    
+    def `strong components are proper` {
+      val maxProbes = 10
+      val arbitraryNodes: Vector[Set[g.NodeT]] = strongComponents map { sc =>
+        val nodes = sc.nodes
+        if (nodes.size <= maxProbes) nodes
+        else {
+          val every = nodes.size / maxProbes
+          (nodes zipWithIndex) withFilter { case (n, i) => i % every == 0 } map (_._1)
+        }
+      }
+      arbitraryNodes foreach { case nodes =>
+        def checkBiConnected(n1: g.NodeT, n2: g.NodeT) =
+          if (n1 ne n2) {
+            n1 pathTo n2 should be ('isDefined)  
+            n2 pathTo n1 should be ('isDefined)
+          }
+        nodes.sliding(2) foreach { pairOrSingle =>
+          pairOrSingle.toList match {
+            case List(n1, n2) => checkBiConnected(n1, n2)
+            case n :: Nil     => checkBiConnected(n, nodes.head)
+          }
+        }
+      }
+      arbitraryNodes.sliding(2) foreach { pairOrSingle =>
+        def checkNonBiConnected(ns1: Set[g.NodeT], ns2: Set[g.NodeT]) =
+          if (ns1 ne ns2) {
+            ns1 zip ns2 foreach { case (n1, n2) =>
+              (n1 pathTo n2).isDefined &&
+              (n2 pathTo n1).isDefined should be (false)
+            }
+          }
+        pairOrSingle.toList match {
+          case List(ns1, ns2) => checkNonBiConnected(ns1, ns2)
+          case ns :: Nil      => checkNonBiConnected(ns, arbitraryNodes.head) 
+        }
       }
     }
   }

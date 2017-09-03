@@ -491,65 +491,86 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           val untilDepth: Int = maxDepth
           val doNodeUpVisitor = isDefined(nodeUpVisitor)
           
-          var maxIndex = 0
-          val stack = Stack.empty[Element]
-          val onStack = new EqHashMap[NodeT, Element](order / expectedMaxNodes(2))
+          var maxIndex   = 0
+          val stack      = Stack.empty[Element]
+          val onStack    = new EqHashMap[NodeT, Element](order / expectedMaxNodes(2))
           var components = List.empty[Component]
           
-          // @tailrec
-          def loop(elem: Element): Int = {
-            val Element(current, depth, cumWeight, index, _) = elem
-            stack push elem
-            onStack.put(current, elem)
-            current.visited = true
-            if (doNodeVisitor)
-              if (isDefined(nodeVisitor)) nodeVisitor(current)
-              else {
-                extNodeVisitor(current, index, depth,
-                  new TarjanInformer[NodeT](index, elem.lowLink) {
-                    def stackIterator = stack.iterator
-                  }
-                )
-              }
-            val successors =
-              if (depth < untilDepth) filteredSuccessors(current, anyNode, cumWeight, false)
-              else Nil
-            for (w <- successors)
-              if (! w.visited) {
-                maxIndex += 1
-                val wLowLink = loop(Element(
-                  w,
-                  depth + 1,
-                  maxWeight.fold(ifEmpty = 0d)(_ => cumWeight + minWeight(current, w, cumWeight)),
-                  maxIndex,
-                  maxIndex
-                ))
-                if (doNodeUpVisitor) nodeUpVisitor(w)
-                elem.lowLink = math.min(elem.lowLink, wLowLink)
-              } else {
-                onStack.get(w) map { wElem =>
-                  elem.lowLink = math.min(elem.lowLink, wElem.index)
-                }
-              }
-
-            if (elem.lowLink == index) {
-              val componentNodes = Set.newBuilder[NodeT]
-              @tailrec def pop(continue: Boolean): Unit = if (continue) {
-                val n = stack.pop.node
-                onStack.remove(n)
-                componentNodes += n
-                pop(n ne current)
-              }
-              pop(true)
-              components = new StrongComponentImpl(
-                  current, parameters, subgraphNodes, subgraphEdges, ordering, componentNodes.result) +: components
-            }
-
-            elem.lowLink
+          // replaces successor loop in tail recursion
+          object Level {
+            private val stack  = Stack.empty[Level]
+            def push(level: Level): Level = { stack push level; level }
+            def pop: Level                = stack.pop
+            def stackHead: Level          = stack.head
+            def nonEmptyStack: Boolean    = stack.nonEmpty
           }
-          loop(Element(root, 0))
+          case class Level(elem: Element, successors: Iterator[NodeT]) {
+            def this(elem: Element) = this( elem,
+                if (elem.depth < untilDepth) filteredSuccessors(elem.node, anyNode, elem.cumWeight, false).toIterator
+                else Iterator.empty)
+          }
+          sealed trait Phase
+          case object Down              extends Phase
+          case object Loop              extends Phase
+          case class  Up(from: Element) extends Phase
+          
+          @tailrec def loop(level: Level, phase: Phase): Unit = {
+            val Level(elem @ Element(current, depth, cumWeight, index, _), successors) = level
+            (phase, successors) match {
+              case (Down, _) =>
+                stack push elem
+                onStack.put(current, elem)
+                current.visited = true
+                if (doNodeVisitor)
+                  if (isDefined(nodeVisitor)) nodeVisitor(current)
+                  else
+                    extNodeVisitor(current, index, depth,
+                      new TarjanInformer[NodeT](index, elem.lowLink) {
+                        def stackIterator = stack.iterator
+                      }
+                    )
+                loop(level, Loop)
+              case (Loop, successors) if successors.hasNext =>
+                val w = successors.next
+                if (w.visited) {
+                  onStack.get(w) map (wElem => elem.lowLink = math.min(elem.lowLink, wElem.index))
+                  loop(level, Loop)
+                } else {
+                  maxIndex += 1
+                  loop(
+                      Level.push(new Level(Element(
+                        w,
+                        depth + 1,
+                        maxWeight.fold(ifEmpty = 0d)(_ => cumWeight + minWeight(current, w, cumWeight)),
+                        maxIndex,
+                        maxIndex))),
+                      Down)
+                }
+              case (Loop, _) =>
+                if (elem.lowLink == index) {
+                  val componentNodes = Set.newBuilder[NodeT]
+                  @tailrec def pop(continue: Boolean): Unit = if (continue) {
+                    val n = stack.pop.node
+                    onStack.remove(n)
+                    componentNodes += n
+                    pop(n ne current)
+                  }
+                  pop(true)
+                  components = new StrongComponentImpl(
+                      current, parameters, subgraphNodes, subgraphEdges, ordering, componentNodes.result) +: components
+                }
+                if (doNodeUpVisitor) nodeUpVisitor(current)
+                val pred = Level.pop.elem
+                if (Level.nonEmptyStack) loop(Level.stackHead, Up(pred))
+              case (Up(wElem), _) =>    
+                elem.lowLink = math.min(elem.lowLink, wElem.lowLink)
+                loop(level, Loop)
+            }
+          }
+          
+          loop(Level.push(new Level(Element(root, 0))), Down)
           components
-        }
+      }
       
       /** Tail-recursive white-gray-black DFS implementation for cycle detection.
        */
