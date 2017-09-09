@@ -259,10 +259,9 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     /** Returns whether the nodes and edges of this walk are valid with respect
      *  to this graph. $SANECHECK */
     def isValid: Boolean = {
-      val valid = nodeValidator.apply _
+      val valid = nodeValidator
       nodes.headOption exists { startNode =>
         val (nodesIt, edgesIt) = (nodes.tail.toIterator, edges.toIterator)
-        val valid = nodeValidator
         
         @tailrec def ok(prev: NodeT, count: Int): Boolean =
           if (nodesIt.hasNext && edgesIt.hasNext) {
@@ -272,7 +271,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
               ok(node, count + 1)
             else false
           } else if (nodesIt.isEmpty && edgesIt.isEmpty) {
-            count > 0 && (prev eq startNode)
+            count > 0
           } else false
           
         ok(startNode, 0)
