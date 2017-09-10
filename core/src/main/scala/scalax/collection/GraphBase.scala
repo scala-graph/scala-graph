@@ -587,7 +587,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
         }
       newNodes
     }
-    @inline final implicit def innerEdgeToEdgeCont(edge: EdgeT): E[NodeT] = edge.edge
+    final implicit def innerEdgeToEdgeCont(edge: EdgeT): E[NodeT] = edge.edge
 
     def defaultWeight(edge: EdgeT) = edge.weight
     def weightOrdering[T: Numeric](weightF: EdgeT => T): Ordering[EdgeT]  = Ordering by weightF
@@ -606,7 +606,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     override def stringPrefix = super.stringPrefix
   }
   protected def newEdge(innerEdge: E[NodeT]): EdgeT
-  @inline final protected implicit def edgeToEdgeCont(e: E[N]): E[NodeT] = Edge.edgeToEdgeCont(e)
+  final protected implicit def edgeToEdgeCont(e: E[N]): E[NodeT] = Edge.edgeToEdgeCont(e)
 
   final lazy val defaultEdgeOrdering = EdgeOrdering (
     (a: EdgeT, b: EdgeT) => {
