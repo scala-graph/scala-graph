@@ -16,20 +16,20 @@ import org.junit.runner.RunWith
  *  Traversing Graphs]]. 
  */
 @RunWith(classOf[JUnitRunner])
-protected final class TraversingTest extends RefSpec with Matchers {
+final class TraversingTest extends RefSpec with Matchers {
 
   import scalax.collection.edge.{WDiEdge, WUnDiEdge}
   import scalax.collection.edge.Implicits._
 
   def validatePath[N, E[X] <: EdgeLikeIn[X]](p: Graph[N,E]#Path,
-                                             sample: Traversable[Param[N,E]]): Unit = {
+                                             sample: List[Param[N,E]]): Unit = {
     def toN(p: Param[N,E]): N = p match {
       case OuterNode(n) => n
       case _ => throw new IllegalArgumentException
     }
-    p.toList == sample ||
-    p.isValid && p.startNode == toN(sample.head) &&
-                 p.endNode   == toN(sample.last) should be (true)
+    p.isValid                       should be (true)
+    p.startNode == toN(sample.head) should be (true)
+    p.endNode   == toN(sample.last) should be (true)
   }
 
   type IntWUnDiParam = Param[Int,WUnDiEdge]
@@ -133,8 +133,8 @@ protected final class TraversingTest extends RefSpec with Matchers {
               else      buf += (if (node eq innerRoot) ")" else "]")
           }
       }
-      ("" /: result)(_+_) should (be ("(A[B1][B2])")
-                                  or be ("(A[B2][B1])"))
+      ("" /: result)(_+_) should (be ("(A[B1][B2])") or
+                                  be ("(A[B2][B1])"))
     }
   
     def `extended traverser` {
@@ -170,22 +170,41 @@ protected final class TraversingTest extends RefSpec with Matchers {
       center.get should be (2)
     }
   
-    def `component traverser` {
-      def someEdges(i: Int) =
-        List((i) ~> (i + 1), (i) ~> (i + 2), (i + 1) ~> (i + 2))
-  
-      val disconnected = Graph.from(edges = someEdges(1) ++ someEdges(5))
+    def `weak component traverser` {
+      val componentEdges = {
+        def edges(i: Int) = List(i ~> (i + 1), i ~> (i + 2), (i + 1) ~> (i + 2))
+        (edges(1), edges(5))
+      }
+      val disconnected = Graph.from(edges = componentEdges._1 ++ componentEdges._2)
       val sums =
-        for (c <- disconnected.componentTraverser())
-          yield c.nodes.head.outerNodeTraverser.sum
+        for (component <- disconnected.componentTraverser())
+          yield (0 /: component.nodes)((cum, n) => cum + n.toOuter)
       sums should be (List(6, 18))
+      
+      val anyNode = disconnected.nodes.draw(new util.Random)
+      anyNode.weakComponent.nodes should have size (componentEdges._1.size)
     }
     
-    def `component traverser fix #57` {
+    def `weak component traverser fix #57` {
       val g = Graph(11~>12, 13~>14)
       g.componentTraverser() should have size (2)
     }
     
+    def `strong component traverser` {
+      type G = Graph[Symbol,DiEdge]
+      val sccExpected: (G, G) = (
+          Graph('a ~> 'b, 'b ~> 'c, 'c ~> 'd, 'd ~> 'a, 'd ~> 'e, 'c ~> 'e, 'e ~> 'c),
+          Graph('f ~> 'g, 'g ~> 'f, 'g ~> 'h, 'h ~> 'j, 'j ~> 'i, 'i ~> 'g, 'i ~> 'f, 'f ~> 'i)
+      )
+      val connected = (sccExpected._1 union sccExpected._2) + 'e ~> 'f
+      val scc       = connected.strongComponentTraverser().map(_.toGraph)
+      scc.toSet should be (Set(sccExpected._1, sccExpected._2))
+      
+      val startAt = sccExpected._2.nodes.head
+      startAt.strongComponents should have size (1)
+      startAt.innerNodeTraverser.strongComponents(_ => ())
+    }
+
     def `path builder` {
       val builder = g.newPathBuilder(n(1))
       builder += n(3) += n(4)

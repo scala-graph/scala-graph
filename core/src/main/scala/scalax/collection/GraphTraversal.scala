@@ -771,6 +771,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @define SHORTESTPATHRET The shortest path to `potentialSuccessor` or `None` if either
    *         a. there exists no path to `potentialSuccessor` or
    *         a. there exists a path to `potentialSuccessor` but $DUETOSUBG
+   * @define VISITORDURING Function to be called for each inner node or inner edge visited during the
    */
   protected abstract class TraverserMethods[A, +This <: TraverserMethods[A,This]]
       extends FluentProperties[This] {
@@ -964,19 +965,31 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
      */
     def findCycle[U](implicit visitor: A => U = empty): Option[Cycle]
 
-    /** Sorts the component designated by the given node topologically.
+    /** Sorts the component designated by this node topologically.
      *  Only nodes connected with this node will be included in the resulting topological order. 
      *  If the graph is known to be connected choose [[GraphTraversal#topologicalSort]] instead. 
      *  $SEEFLUENT
      *  
-      * @param ignorePredecessors If `true`, the topological sort will be partial in that it will only
-      *                           include successors of `root`. `withSubgraph` restricts the successor nodes to
-      *                           be included but not predecessors that will be excluded in total.
-     *  @param visitor            Function to be called for each inner node or inner edge visited during the sort.
+     *  @param ignorePredecessors If `true`, the topological sort will be partial in that it will only
+     *                            include successors of `root`. `withSubgraph` restricts the successor nodes to
+     *                            be included but not predecessors that will be excluded in total.
+     *  @param visitor            $VISITORDURING sort.
      */
     def topologicalSort[U](ignorePredecessors: Boolean = false)
                           (implicit visitor: InnerElem => U = empty): CycleNodeOrTopologicalOrder
                           
+    /** Determines the week component that contains this node.
+     *  $SEEFLUENT
+     *  
+     *  @param visitor $VISITORDURING search.
+     */
+    def weakComponent[U](implicit visitor: A => U = empty): Component
+    
+    /** Finds all strongly connected components reachable from this node.
+     *  $SEEFLUENT
+     *  
+     *  @param visitor $VISITORDURING search.
+     */
     def strongComponents[U](implicit visitor: A => U = empty): Iterable[Component]
   }
 

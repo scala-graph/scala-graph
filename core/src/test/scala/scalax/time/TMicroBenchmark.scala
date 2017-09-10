@@ -67,6 +67,6 @@ class TMicroBenchmarkTest
     val s = Set(array: _*)
     val b = mutable.BitSet(array: _*)
 
-    relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > (1.3f)
+    relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > (1.2f)
   }
 }

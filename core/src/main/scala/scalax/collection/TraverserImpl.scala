@@ -69,7 +69,11 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                                            visitor           : A => U): Option[Path] = ifSuccessors {
       new Runner(noNode, visitor).shortestPathTo(potentialSuccessor, weight)
     }
-  
+
+    final def weakComponent[U](implicit visitor: A => U = empty): Component =
+      new WeakComponentImpl(root, parameters, subgraphNodes, subgraphEdges, ordering,
+          root.innerNodeTraverser.withDirection(AnyConnected).toSet)
+    
     final def strongComponents[U](implicit visitor: A => U = empty): Iterable[Component] = ifSuccessors {
       new Runner(noNode, visitor).dfsTarjan()
     }

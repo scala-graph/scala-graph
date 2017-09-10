@@ -190,7 +190,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       extends Component {
 
     final protected def mayHaveFrontierEdges: Boolean = false
-    protected def stringPrefix = "WeekComponent"
+    protected def stringPrefix = "WeakComponent"
   }
 
   protected class StrongComponentImpl(
