@@ -9,7 +9,7 @@ import WBase._, LBase._
 /** weighted, undirected hyperedge. */
 @SerialVersionUID(70L)
 class WHyperEdge[+N](nodes: Product,
-                     override val weight: Long)
+                     override val weight: Double)
   extends HyperEdge[N](nodes)
   with    WEdge    [N]
   with    EdgeCopy [WHyperEdge]
@@ -19,14 +19,14 @@ class WHyperEdge[+N](nodes: Product,
   def copy[NN](newNodes: Product) = WHyperEdge.newEdge[NN](newNodes, weight)(CollectionKind.from(this))
 }
 object WHyperEdge extends WHyperEdgeCompanion[WHyperEdge] {
-  override protected def newEdge[N](nodes: Product, weight: Long)(implicit endpointsKind: CollectionKind): WHyperEdge[N] =
+  override protected def newEdge[N](nodes: Product, weight: Double)(implicit endpointsKind: CollectionKind): WHyperEdge[N] =
     if (endpointsKind.orderSignificant) new WHyperEdge[N](nodes, weight) with OrderedEndpoints
     else                                new WHyperEdge[N](nodes, weight)
 }
 /** weighted directed hyperedge. */
 @SerialVersionUID(71L)
 class WDiHyperEdge[+N](nodes: Product,
-                       override val weight: Long)
+                       override val weight: Double)
   extends DiHyperEdge[N](nodes)
   with    WEdge      [N]
   with    EdgeCopy   [WDiHyperEdge]
@@ -36,21 +36,21 @@ class WDiHyperEdge[+N](nodes: Product,
     WDiHyperEdge.newEdge[NN](newNodes, weight)(CollectionKind.from(this))
 }
 object WDiHyperEdge extends WHyperEdgeCompanion[WDiHyperEdge] {
-  override protected def newEdge[N](nodes: Product, weight: Long)(implicit endpointsKind: CollectionKind): WDiHyperEdge[N] =
+  override protected def newEdge[N](nodes: Product, weight: Double)(implicit endpointsKind: CollectionKind): WDiHyperEdge[N] =
     if (endpointsKind.orderSignificant) new WDiHyperEdge[N](nodes, weight) with OrderedEndpoints
     else                                new WDiHyperEdge[N](nodes, weight)
 }
 // ------------------------------------------------------------------------ Wk*
 import WkBase._
 /** key-weighted undirected hyperedge. */
-abstract class WkHyperEdge[+N](nodes: Product, weight: Long)
+abstract class WkHyperEdge[+N](nodes: Product, weight: Double)
   extends WHyperEdge[N](nodes, weight)
   with    OuterEdge [N,WkHyperEdge]
   with    WkEdge    [N]
 object WkHyperEdge extends WkHyperEdgeCompanion[WkHyperEdge] {
-  override protected def newEdge[N](nodes: Product, weight: Long)
+  override protected def newEdge[N](nodes: Product, weight: Double)
                                    (implicit endpointsKind: CollectionKind): WkHyperEdge[N]  with EdgeCopy[WkHyperEdge] = {
-    class Wk[N](nodes: Product, weight: Long)(implicit endpointsKind: CollectionKind)
+    class Wk[N](nodes: Product, weight: Double)(implicit endpointsKind: CollectionKind)
         extends WkHyperEdge[N](nodes, weight)
         with    EdgeCopy   [WkHyperEdge] { 
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN](newNodes, weight)
@@ -60,14 +60,14 @@ object WkHyperEdge extends WkHyperEdgeCompanion[WkHyperEdge] {
   }
 }
 /** key-weighted directed hyperedge. */
-abstract class WkDiHyperEdge[+N](nodes: Product, weight: Long)
+abstract class WkDiHyperEdge[+N](nodes: Product, weight: Double)
   extends WkHyperEdge    [N](nodes, weight)
   with    DiHyperEdgeLike[N]
   with    OuterEdge      [N,WkDiHyperEdge]
 object WkDiHyperEdge extends WkHyperEdgeCompanion[WkDiHyperEdge] {
-  override protected def newEdge[N](nodes: Product, weight: Long)
+  override protected def newEdge[N](nodes: Product, weight: Double)
                                    (implicit endpointsKind: CollectionKind): WkDiHyperEdge[N] with EdgeCopy[WkDiHyperEdge] = {
-    class WkDi[N](nodes: Product, weight: Long)(implicit endpointsKind: CollectionKind)
+    class WkDi[N](nodes: Product, weight: Double)(implicit endpointsKind: CollectionKind)
         extends WkDiHyperEdge[N](nodes, weight)
         with    EdgeCopy[WkDiHyperEdge] { 
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN](newNodes, weight)
@@ -158,15 +158,15 @@ object LkDiHyperEdge extends LkHyperEdgeCompanion[LkDiHyperEdge] {
 // ------------------------------------------------------------------------ WL*
 import WLBase._
 /** weighted, labeled undirected hyperedge. */
-abstract class WLHyperEdge[+N](nodes: Product, weight: Long)
+abstract class WLHyperEdge[+N](nodes: Product, weight: Double)
   extends WHyperEdge[N](nodes, weight)
   with    OuterEdge [N,WLHyperEdge]
   with    LEdge     [N]
   with    WLEdge    [N]
 object WLHyperEdge extends WLHyperEdgeCompanion[WLHyperEdge] {
-  override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L)
+  override protected def newEdge[N,L](nodes: Product, weight: Double, pLabel: L)
                                      (implicit endpointsKind: CollectionKind): WLHyperEdge[N] with EdgeCopy[WLHyperEdge] = {
-    class WL[N](nodes: Product, weight: Long)
+    class WL[N](nodes: Product, weight: Double)
         extends WLHyperEdge[N](nodes, weight)
         with    EdgeCopy[WLHyperEdge] { 
       type L1 = L
@@ -178,14 +178,14 @@ object WLHyperEdge extends WLHyperEdgeCompanion[WLHyperEdge] {
   }
 }
 /** weighted, labeled directed hyperedge. */
-abstract class WLDiHyperEdge[+N](nodes: Product, weight: Long)
+abstract class WLDiHyperEdge[+N](nodes: Product, weight: Double)
   extends WLHyperEdge    [N](nodes, weight) 
   with    DiHyperEdgeLike[N]
   with    OuterEdge         [N,WLDiHyperEdge]
 object WLDiHyperEdge extends WLHyperEdgeCompanion[WLDiHyperEdge] {
-  override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L)
+  override protected def newEdge[N,L](nodes: Product, weight: Double, pLabel: L)
                                      (implicit endpointsKind: CollectionKind): WLDiHyperEdge[N] with EdgeCopy[WLDiHyperEdge] = {
-    class WLDi[N](nodes: Product, weight: Long)
+    class WLDi[N](nodes: Product, weight: Double)
         extends WLDiHyperEdge[N](nodes, weight)
         with    EdgeCopy[WLDiHyperEdge] { 
       type L1 = L
@@ -199,14 +199,14 @@ object WLDiHyperEdge extends WLHyperEdgeCompanion[WLDiHyperEdge] {
 // ----------------------------------------------------------------------- WkL*
 import WkLBase._
 /** key-weighted, labeled undirected hyperedge. */
-abstract class WkLHyperEdge[+N](nodes: Product, weight: Long)
+abstract class WkLHyperEdge[+N](nodes: Product, weight: Double)
   extends WLHyperEdge[N](nodes, weight)
   with    WkEdge     [N]
   with    OuterEdge  [N,WkLHyperEdge]
 object WkLHyperEdge extends WkLHyperEdgeCompanion[WkLHyperEdge] {
-  override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L)
+  override protected def newEdge[N,L](nodes: Product, weight: Double, pLabel: L)
                                      (implicit endpointsKind: CollectionKind): WkLHyperEdge[N] with EdgeCopy[WkLHyperEdge] = {
-    class WkL[N](nodes: Product, weight: Long)
+    class WkL[N](nodes: Product, weight: Double)
         extends WkLHyperEdge[N](nodes, weight)
         with    EdgeCopy[WkLHyperEdge] { 
       type L1 = L
@@ -218,14 +218,14 @@ object WkLHyperEdge extends WkLHyperEdgeCompanion[WkLHyperEdge] {
   }
 }
 /** key-weighted, labeled directed hyperedge. */
-abstract class WkLDiHyperEdge[+N](nodes: Product, weight: Long)
+abstract class WkLDiHyperEdge[+N](nodes: Product, weight: Double)
   extends WkLHyperEdge   [N](nodes, weight) 
   with    DiHyperEdgeLike[N]
   with    OuterEdge      [N,WkLDiHyperEdge]
 object WkLDiHyperEdge extends WkLHyperEdgeCompanion[WkLDiHyperEdge] {
-  override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L)
+  override protected def newEdge[N,L](nodes: Product, weight: Double, pLabel: L)
                                      (implicit endpointsKind: CollectionKind): WkLDiHyperEdge[N] with EdgeCopy[WkLDiHyperEdge] = {
-    class WkLDi[N](nodes: Product, weight: Long)
+    class WkLDi[N](nodes: Product, weight: Double)
         extends WkLDiHyperEdge[N](nodes, weight)
         with    EdgeCopy[WkLDiHyperEdge] { 
       type L1 = L
@@ -239,15 +239,15 @@ object WkLDiHyperEdge extends WkLHyperEdgeCompanion[WkLDiHyperEdge] {
 // ----------------------------------------------------------------------- WLk*
 import WLkBase._
 /** weighted, key-labeled undirected hyperedge. */
-abstract class WLkHyperEdge[+N](nodes: Product, weight: Long)
+abstract class WLkHyperEdge[+N](nodes: Product, weight: Double)
   extends WLHyperEdge[N](nodes, weight) 
   with    OuterEdge  [N,WLkHyperEdge]
   with    LkEdge     [N]
   with    WLkEdge    [N]
 object WLkHyperEdge extends WLkHyperEdgeCompanion[WLkHyperEdge] {
-  override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L)
+  override protected def newEdge[N,L](nodes: Product, weight: Double, pLabel: L)
                                      (implicit endpointsKind: CollectionKind): WLkHyperEdge[N] with EdgeCopy[WLkHyperEdge] = {
-    class WLk[N](nodes: Product, weight: Long)
+    class WLk[N](nodes: Product, weight: Double)
         extends WLkHyperEdge[N](nodes, weight)
         with    EdgeCopy  [WLkHyperEdge] { 
       type L1 = L
@@ -259,14 +259,14 @@ object WLkHyperEdge extends WLkHyperEdgeCompanion[WLkHyperEdge] {
   }
 }
 /** weighted, key-labeled directed hyperedge. */
-abstract class WLkDiHyperEdge[+N](nodes: Product, weight: Long)
+abstract class WLkDiHyperEdge[+N](nodes: Product, weight: Double)
   extends WLkHyperEdge   [N](nodes, weight) 
   with    DiHyperEdgeLike[N]
   with    OuterEdge      [N,WLkDiHyperEdge]
 object WLkDiHyperEdge extends WLkHyperEdgeCompanion[WLkDiHyperEdge] {
-  override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L)
+  override protected def newEdge[N,L](nodes: Product, weight: Double, pLabel: L)
                                      (implicit endpointsKind: CollectionKind): WLkDiHyperEdge[N] with EdgeCopy[WLkDiHyperEdge] = {
-    class WLkDi[N](nodes: Product, weight: Long)
+    class WLkDi[N](nodes: Product, weight: Double)
         extends WLkDiHyperEdge[N](nodes, weight)
         with    EdgeCopy[WLkDiHyperEdge] { 
       type L1 = L
@@ -280,14 +280,14 @@ object WLkDiHyperEdge extends WLkHyperEdgeCompanion[WLkDiHyperEdge] {
 // ---------------------------------------------------------------------- WkLk*
 import WkLkBase._
 /** key-weighted, key-labeled undirected hyperedge. */
-abstract class WkLkHyperEdge[+N](nodes: Product, weight: Long)
+abstract class WkLkHyperEdge[+N](nodes: Product, weight: Double)
   extends WLHyperEdge[N](nodes, weight) 
   with    OuterEdge  [N,WkLkHyperEdge]
   with    WkLkEdge   [N]
 object WkLkHyperEdge extends WkLkHyperEdgeCompanion[WkLkHyperEdge] {
-  override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L)
+  override protected def newEdge[N,L](nodes: Product, weight: Double, pLabel: L)
                                      (implicit endpointsKind: CollectionKind): WkLkHyperEdge[N] with EdgeCopy[WkLkHyperEdge] = {
-    class WkLk[N](nodes: Product, weight: Long)
+    class WkLk[N](nodes: Product, weight: Double)
         extends WkLkHyperEdge[N](nodes, weight)
         with    EdgeCopy[WkLkHyperEdge] { 
       type L1 = L
@@ -299,14 +299,14 @@ object WkLkHyperEdge extends WkLkHyperEdgeCompanion[WkLkHyperEdge] {
   }
 }
 /** key-weighted, key-labeled directed hyperedge. */
-abstract class WkLkDiHyperEdge[+N](nodes: Product, weight: Long)
+abstract class WkLkDiHyperEdge[+N](nodes: Product, weight: Double)
   extends WkLkHyperEdge  [N](nodes, weight) 
   with    DiHyperEdgeLike[N]
   with    OuterEdge      [N,WkLkDiHyperEdge]
 object WkLkDiHyperEdge extends WkLkHyperEdgeCompanion[WkLkDiHyperEdge] {
-  override protected def newEdge[N,L](nodes: Product, weight: Long, pLabel: L)
+  override protected def newEdge[N,L](nodes: Product, weight: Double, pLabel: L)
                                      (implicit endpointsKind: CollectionKind): WkLkDiHyperEdge[N] with EdgeCopy[WkLkDiHyperEdge] = {
-    class WkLkDi[N](nodes: Product, weight: Long)
+    class WkLkDi[N](nodes: Product, weight: Double)
         extends WkLkDiHyperEdge[N](nodes, weight)
         with    EdgeCopy[WkLkDiHyperEdge] { 
       type L1 = L

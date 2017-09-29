@@ -155,7 +155,7 @@ object GraphEdge {
      * weight of the appropriate type and overrides `def weight` to provide the
      * required conversion to `Long`.  
      */
-    def weight: Long = 1
+    def weight: Double = 1
     /**
      * The label of this edge. If `Graph`'s edge type parameter has been inferred or set
      * to a labeled edge type all contained edges are labeled. Otherwise you should

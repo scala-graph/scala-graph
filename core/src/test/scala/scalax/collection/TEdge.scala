@@ -88,7 +88,7 @@ class TEdgeTest extends RefSpec with Matchers
     
     def `matching weighted edges` {
       val (n1, n2, w) = (1, 2, 5)
-      def check(_n1: Int, _n2: Int, _w: Long) {
+      def check(_n1: Int, _n2: Int, _w: Double) {
         _n1 should be (n1)
         _n2 should be (n2)
         _w  should be (w)
@@ -129,8 +129,8 @@ class TEdgeTest extends RefSpec with Matchers
      object StringLabel extends LEdgeImplicits[String]
      import StringLabel._
   
-     val (n1, n2, label, weight) = (1, 2, "A", 4L)
-      def check(_n1: Int, _n2: Int, _weight: Long, _label: String) {
+     val (n1, n2, label, weight) = (1, 2, "A", 4d)
+      def check(_n1: Int, _n2: Int, _weight: Double, _label: String) {
         _n1 should be (n1)
         _n2 should be (n2)
         _weight should be (weight)
