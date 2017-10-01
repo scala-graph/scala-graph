@@ -223,7 +223,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
     val g = factory(elementsOfWDi_1: _*)
     def n(outer: Int) = g get outer
     
-    def weight(e: g.EdgeT): Double = 0.5d + e.weight
+    def weight(e: g.EdgeT): Float = 0.5f + e.weight.toFloat
     def reverseWeight(e: g.EdgeT): Double = 41 - e.weight
 
     n(5) shortestPathTo (n(4), weight) shouldBe empty
