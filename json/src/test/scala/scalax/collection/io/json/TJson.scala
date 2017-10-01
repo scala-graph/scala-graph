@@ -108,12 +108,12 @@ class TJsonTest[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]
             val edges = _edges.toList
             edges(0) match {
               case JArray(fields) => fields.toString should be
-                                    ("List(JString(A), JString(B), JDouble(3.0))")
+                                    ("List(JString(A), JString(B), JDouble(3))")
               case _ => fail
             }
             edges(1) match {
               case JArray(fields) => fields.toString should be
-                                    ("List(JString(B), JString(C), JDouble(4.0))")
+                                    ("List(JString(B), JString(C), JDouble(4))")
               case _ => fail
             }
           case _ => fail
