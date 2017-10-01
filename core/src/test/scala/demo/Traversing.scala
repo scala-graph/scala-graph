@@ -57,7 +57,7 @@ final class TraversingTest extends RefSpec with Matchers {
       sp.nodes                     .toList should be (List(3, 4, 5, 1))
       sp.weight                    should be (4)
   
-      def negWeight(e: g.EdgeT): Float = 5.5f - e.weight
+      def negWeight(e: g.EdgeT): Double = 5.5f - e.weight
       val spNO = n(3) shortestPathTo (n(1), negWeight)
       val spN = spNO.get
                                    validatePath[Int,WUnDiEdge](sp,
@@ -208,11 +208,11 @@ final class TraversingTest extends RefSpec with Matchers {
     def `path builder` {
       val builder = g.newPathBuilder(n(1))
       builder += n(3) += n(4)
-      builder.result               .toString should be ("Path(1, 1~>3 %5, 3, 3~4 %1, 4)")
+      builder.result               .toString should be ("Path(1, 1~>3 %5.0, 3, 3~4 %1.0, 4)")
      
       builder.clear
       builder += n(4) += n(3)
-      builder.result               .toString should be ("Path(1, 1~>3 %5, 3)")
+      builder.result               .toString should be ("Path(1, 1~>3 %5.0, 3)")
       
       builder.clear
       builder add n(4)             should be (false)

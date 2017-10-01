@@ -25,28 +25,28 @@ object WBase {
   trait WHyperEdgeCompanion[E[X] <: EdgeLikeIn[X] with WHyperEdgeBound[_,E]]
     extends EdgeCompanionBase[E]
   {
-    @inline final def apply[N](node_1: N, node_2: N, nodes: N*)(weight: Long)(implicit kind: CollectionKind = Bag) =
+    @inline final def apply[N](node_1: N, node_2: N, nodes: N*)(weight: Double)(implicit kind: CollectionKind = Bag) =
       newEdge[N](NodeProduct(node_1, node_2, nodes: _*), weight)
-    @inline final def apply[N](nodes: Iterable[N])(weight: Long)(implicit kind: CollectionKind) =
+    @inline final def apply[N](nodes: Iterable[N])(weight: Double)(implicit kind: CollectionKind) =
       newEdge[N](NodeProduct(nodes), weight)
-    @inline final protected[collection] def from [N](nodes: Product)(weight: Long)(implicit kind: CollectionKind) =
+    @inline final protected[collection] def from [N](nodes: Product)(weight: Double)(implicit kind: CollectionKind) =
       newEdge[N](nodes, weight)
-    protected def newEdge[N](nodes: Product, weight: Long)(implicit kind: CollectionKind): E[N] with EdgeCopy[E]
-    @inline final def unapply[N](e: E[N]): Option[(Traversable[N],Long)] = Some(e.sources, e.weight)
+    protected def newEdge[N](nodes: Product, weight: Double)(implicit kind: CollectionKind): E[N] with EdgeCopy[E]
+    @inline final def unapply[N](e: E[N]): Option[(Traversable[N],Double)] = Some(e.sources, e.weight)
   }
   type  WEdgeBound[N, +E[X<:N] <: EdgeLikeIn[X]] = WHyperEdgeBound[N,E] with UnDiEdge[N] 
   /** Everything common to weighted edge companion objects. */
   trait WEdgeCompanion[E[X] <: EdgeLikeIn[X] with WEdgeBound[_,E]]
     extends EdgeCompanionBase[E] 
   {
-    @inline final def apply[N](node_1: N, node_2: N)(weight: Long) =
+    @inline final def apply[N](node_1: N, node_2: N)(weight: Double) =
       newEdge[N](NodeProduct(node_1, node_2), weight)
-    @inline final def apply[N](nodes: Tuple2[N,N]  )(weight: Long) =
+    @inline final def apply[N](nodes: Tuple2[N,N]  )(weight: Double) =
       newEdge[N](nodes, weight)
-    @inline final protected[collection] def from [N](nodes: Product)(weight: Long) =
+    @inline final protected[collection] def from [N](nodes: Product)(weight: Double) =
       newEdge[N](nodes, weight)
-    protected def newEdge[N](nodes: Product, weight: Long): E[N] with EdgeCopy[E]
-    @inline final def unapply[N](e: E[N]): Option[(N,N,Long)] = Some(e._1, e._2, e.weight)
+    protected def newEdge[N](nodes: Product, weight: Double): E[N] with EdgeCopy[E]
+    @inline final def unapply[N](e: E[N]): Option[(N,N,Double)] = Some(e._1, e._2, e.weight)
   }
 }
 /** Base traits for key-weighted edges. */
@@ -265,14 +265,14 @@ object WLBase {
   trait WLHyperEdgeCompanion[E[X] <: EdgeLikeIn[X] with WLHyperEdgeBound[_,E]]
     extends EdgeCompanionBase[E] 
   {
-    @inline final def apply[N,L](node_1: N, node_2: N, nodes: N*)(weight: Long, label: L)(implicit kind: CollectionKind = Bag) =
+    @inline final def apply[N,L](node_1: N, node_2: N, nodes: N*)(weight: Double, label: L)(implicit kind: CollectionKind = Bag) =
       newEdge[N,L](NodeProduct(node_1, node_2, nodes: _*), weight, label)
-    @inline final def apply[N,L](nodes: Iterable[N])(weight: Long, label: L)(implicit kind: CollectionKind) =
+    @inline final def apply[N,L](nodes: Iterable[N])(weight: Double, label: L)(implicit kind: CollectionKind) =
       newEdge[N,L](NodeProduct(nodes), weight, label)
-    @inline final protected[collection] def from [N,L](nodes: Product)(weight: Long, label: L)(implicit kind: CollectionKind) =
+    @inline final protected[collection] def from [N,L](nodes: Product)(weight: Double, label: L)(implicit kind: CollectionKind) =
       newEdge[N,L](nodes, weight, label)
-    protected def newEdge[N,L](nodes: Product, weight: Long, label_1: L)(implicit kind: CollectionKind): E[N] with EdgeCopy[E]
-    @inline final def unapply[N]  (e: E[N]): Option[(Traversable[N],Long,E[N]#L1)] =
+    protected def newEdge[N,L](nodes: Product, weight: Double, label_1: L)(implicit kind: CollectionKind): E[N] with EdgeCopy[E]
+    @inline final def unapply[N]  (e: E[N]): Option[(Traversable[N],Double,E[N]#L1)] =
       Some((e.sources, e.weight, e.label))
   }
   type  WLEdgeBound[N, +E[X<:N] <: EdgeLikeIn[X]] = WLHyperEdgeBound[N,E] with UnDiEdge[N]  
@@ -280,14 +280,14 @@ object WLBase {
   trait WLEdgeCompanion[E[X] <: EdgeLikeIn[X] with WLEdgeBound[_,E]]
     extends EdgeCompanionBase[E] 
   {
-    @inline final def apply[N,L](node_1: N, node_2: N)(weight: Long, label: L) =
+    @inline final def apply[N,L](node_1: N, node_2: N)(weight: Double, label: L) =
       newEdge[N,L](NodeProduct(node_1, node_2), weight, label)
-    @inline final def apply[N,L](nodes: Tuple2[N,N])(weight: Long, label: L) =
+    @inline final def apply[N,L](nodes: Tuple2[N,N])(weight: Double, label: L) =
       newEdge[N,L](nodes, weight, label)
-    @inline final protected[collection] def from [N,L](nodes: Product)(weight: Long, label: L) =
+    @inline final protected[collection] def from [N,L](nodes: Product)(weight: Double, label: L) =
       newEdge[N,L](nodes, weight, label)
-    protected def newEdge[N,L](nodes: Product, weight: Long, label_1: L): E[N] with EdgeCopy[E]
-    @inline final def unapply[N]  (e: E[N]): Option[(N,N,Long,E[N]#L1)] =
+    protected def newEdge[N,L](nodes: Product, weight: Double, label_1: L): E[N] with EdgeCopy[E]
+    @inline final def unapply[N]  (e: E[N]): Option[(N,N,Double,E[N]#L1)] =
       Some((e._1, e._2, e.weight, e.label))
   }
 }

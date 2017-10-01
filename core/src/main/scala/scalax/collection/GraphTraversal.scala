@@ -229,7 +229,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     def edges: Traversable[EdgeT]
 
     /** $CUMWEIGHT */
-    final def weight: Long = (0L /: edges)((sum, edge) => sum + edge.weight)
+    final def weight: Double = (0d /: edges)((sum, edge) => sum + edge.weight)
     /** $CUMWEIGHT
      *  @param f The weight function overriding edge weights. */
     final def weight[T: Numeric](f: EdgeT => T): T = {
