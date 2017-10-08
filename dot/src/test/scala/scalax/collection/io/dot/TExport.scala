@@ -16,11 +16,6 @@ import org.junit.runner.RunWith
 @RunWith(classOf[JUnitRunner])
 class TExportTest extends RefSpec with Matchers {
   
-  private val multilineCompatibleSpacing = Spacing(
-      indent = TwoSpaces,
-      graphAttrSeparator = new AttrSeparator("""
-        |""".stripMargin){})
-  
   def `Example at http://en.wikipedia.org/wiki/DOT_language will be produced` {
     
     implicit def toLDiEdge[N](diEdge: DiEdge[N]) = LDiEdge(diEdge._1, diEdge._2)("")
@@ -147,12 +142,7 @@ class TExportTest extends RefSpec with Matchers {
       |  1 -> 2
       |  1 -> 3
       |}""".stripMargin
-    val dotSorted = {
-      val lines = dot.linesWithSeparators.toList
-      val mid = lines.tail.init 
-      s"${lines.head}${mid.sorted.mkString}${lines.last}"
-    }
-    dotSorted should be (expected)
+    sortMid(dot) should be (expected)
   }
     
   def `Colons (':') in node_id's are handeled correctly` {
@@ -210,12 +200,7 @@ class TExportTest extends RefSpec with Matchers {
       |  struct2 [label = "<f0> one | <f1> two"]
       |  struct3 [label = "hello&#92;nworld | {b | {c | <here> d | e} | f} | g | h"]
       |}""".stripMargin
-    val dotSorted = {
-      val lines = dot.linesWithSeparators.toList
-      val mid = lines.tail.init 
-      s"${lines.head}${mid.sorted.mkString}${lines.last}"
-    }
-    dotSorted should be (expected)
+    sortMid(dot) should be (expected)
   }
   
   def `doubly-nested subgraphs #69` {
@@ -246,6 +231,17 @@ class TExportTest extends RefSpec with Matchers {
       iNodeTransformer = Some({ _ => Some((iSubGraph, DotNodeStmt(iNode))) })
     )
     dot.contains(iNode) should be (true)   
+  }
+  
+  private val multilineCompatibleSpacing = Spacing(
+      indent = TwoSpaces,
+      graphAttrSeparator = new AttrSeparator("""
+        |""".stripMargin){})
+  
+  private def sortMid(dot: String): String = {
+    val lines = dot.linesWithSeparators.toBuffer
+    val mid = lines.tail.init 
+    s"${lines.head}${mid.sorted.mkString}${lines.last}"
   }
 }
 
