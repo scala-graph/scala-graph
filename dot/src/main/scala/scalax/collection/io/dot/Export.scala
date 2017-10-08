@@ -130,16 +130,15 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
     val res = new StringBuilder(graph.graphSize * 20)
     val edgeOp = if (dotRoot.directed) "->" else "--"
     var level = 0
-    def indent(ofGraph: Boolean) =
-      if ((if (ofGraph) spacing.graphAttrSeparator
-           else         spacing.elemAttrSeparator ) == AttrSeparator.NewLine)
+    def indent(ofGraph: Boolean): Unit =
+      if (ofGraph)
         for (i <- 0 until level)
           res append Indent(spacing.indent)
-    def separate(ofGraph: Boolean) {
+    def separate(ofGraph: Boolean): Unit = {
       val sep = if (ofGraph) spacing.graphAttrSeparator
                 else         spacing.elemAttrSeparator
       res append sep
-      if (sep == AttrSeparator.NewLine) indent(ofGraph)
+      indent(ofGraph)
     }
     (dotAST get root).innerNodeDownUpTraverser foreach {
       case (true, cluster) =>

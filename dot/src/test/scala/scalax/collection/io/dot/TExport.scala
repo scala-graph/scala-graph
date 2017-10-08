@@ -16,6 +16,11 @@ import org.junit.runner.RunWith
 @RunWith(classOf[JUnitRunner])
 class TExportTest extends RefSpec with Matchers {
   
+  private val multilineCompatibleSpacing = Spacing(
+      indent = TwoSpaces,
+      graphAttrSeparator = new AttrSeparator("""
+        |""".stripMargin){})
+  
   def `Example at http://en.wikipedia.org/wiki/DOT_language will be produced` {
     
     implicit def toLDiEdge[N](diEdge: DiEdge[N]) = LDiEdge(diEdge._1, diEdge._2)("")
@@ -46,7 +51,7 @@ class TExportTest extends RefSpec with Matchers {
     val dot = g.toDot(dotRoot          = root,
                       edgeTransformer  = edgeTransformer,
                       cNodeTransformer = Some(nodeTransformer),
-                      spacing          = Spacing(TwoSpaces))
+                      spacing          = multilineCompatibleSpacing)
 
     val (expected_1, expected_2) = {
       val expected_header_sorted =
@@ -116,7 +121,7 @@ class TExportTest extends RefSpec with Matchers {
                                 attrList = List(DotAttr(Id("attr_1"), Id(""""one"""")),
                                                 DotAttr(Id("attr_2"), Id("<two>")))),
         edgeTransformer = _ => None,
-        spacing = Spacing(TwoSpaces))
+        spacing = multilineCompatibleSpacing)
     val expected = """graph {
       |  attr_1 = "one"
       |  attr_2 = <two>
@@ -137,7 +142,7 @@ class TExportTest extends RefSpec with Matchers {
             )
           }
         ), 
-        spacing = Spacing(TwoSpaces))
+        spacing = multilineCompatibleSpacing)
     val expected = """digraph {
       |  1 -> 2
       |  1 -> 3
@@ -195,7 +200,7 @@ class TExportTest extends RefSpec with Matchers {
           case Node(id, label) =>
             Some((root, DotNodeStmt(id, List(DotAttr("label", label.toString)))))
         }),
-        spacing = Spacing(TwoSpaces))
+        spacing = multilineCompatibleSpacing)
         
     val expected = """digraph structs {
       |  node [shape = record]
