@@ -3,6 +3,8 @@ import Keys._
 import org.scalajs.sbtplugin.ScalaJSPlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
+// SBT: project coreCrossJS, fastOptJS, publishSigned
+
 lazy val all = Project(
   id = "Graph-all",
   base = file("."),
