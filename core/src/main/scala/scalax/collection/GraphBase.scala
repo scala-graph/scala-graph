@@ -125,12 +125,14 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
      */
     def connectionsWith(other: NodeT): Set[EdgeT] with FilterableSet[EdgeT]
 
-    /**
-     * Checks whether this node has only hooks or no edges at all.
-     *  
-     * @return `true` if this node has only hooks or it isolated.  
+    /** Checks whether this node has only hooks or no edges at all.
+     *  @return `true` if this node has only hooks or it isolated.  
      */
     def hasOnlyHooks: Boolean
+    
+    /** @return A looping edge out of one or more at this node or `None` if this node has no looping edge. */
+    def hook: Option[EdgeT]
+    
     /**
      * Whether `that` is an adjacent (direct successor) to this node.
      * 
@@ -585,7 +587,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
         }
       newNodes
     }
-    @inline final implicit def innerEdgeToEdgeCont(edge: EdgeT): E[NodeT] = edge.edge
+    final implicit def innerEdgeToEdgeCont(edge: EdgeT): E[NodeT] = edge.edge
 
     def defaultWeight(edge: EdgeT) = edge.weight
     def weightOrdering[T: Numeric](weightF: EdgeT => T): Ordering[EdgeT]  = Ordering by weightF
@@ -604,7 +606,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     override def stringPrefix = super.stringPrefix
   }
   protected def newEdge(innerEdge: E[NodeT]): EdgeT
-  @inline final protected implicit def edgeToEdgeCont(e: E[N]): E[NodeT] = Edge.edgeToEdgeCont(e)
+  final protected implicit def edgeToEdgeCont(e: E[N]): E[NodeT] = Edge.edgeToEdgeCont(e)
 
   final lazy val defaultEdgeOrdering = EdgeOrdering (
     (a: EdgeT, b: EdgeT) => {
@@ -683,7 +685,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
    * @return Set of all contained edges.
    */
   def edges: EdgeSetT
-  def totalWeight = (0L /: edges)(_ + _.weight)
+  def totalWeight = (0d /: edges)(_ + _.weight)
 }
 object GraphBase {
   val defaultSeparator = ", "

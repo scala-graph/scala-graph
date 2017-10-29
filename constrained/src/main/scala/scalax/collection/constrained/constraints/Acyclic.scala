@@ -16,7 +16,7 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
   extends Constraint[N,E] (self)
 {
   override def preCreate(nodes: Traversable[N],
-                         edges: Traversable[E[N]]) = PreCheckResult(PostCheck)
+                         edges: Traversable[E[N]]) = PreCheckResult.postCheck(edges forall (_.nonLooping))
   /** Adding a single node cannot produce a cycle. */
   override def preAdd(node: N) = PreCheckResult(Complete)
   /**

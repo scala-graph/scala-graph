@@ -91,12 +91,22 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
     }
     
     def `'isCyclic' returns the expected result` {
-      acyclic_1.isCyclic  should be (false)
-       cyclic_1.isCyclic  should be (true)
-  
-      acyclic_2 .isCyclic should be (false)
-       cyclic_21.isCyclic should be (true)
-       cyclic_22.isCyclic should be (true)
+      acyclic_1  should be ('isAcyclic)
+       cyclic_1  should be ('isCyclic)
+
+      acyclic_2  should be ('isAcyclic)
+       cyclic_21 should be ('isCyclic)
+       cyclic_22 should be ('isCyclic)
+    }
+    
+    def `they are cyclic if they contain a self loop #76` {
+      val loop = 1~>1
+      acyclic_1 + loop should be ('isCyclic)
+      
+      val maybeCycle = factory(loop).findCycle
+      maybeCycle should be ('isDefined)
+      val cycle = maybeCycle.get
+      cycle should be ('isValid)
     }
   }
 

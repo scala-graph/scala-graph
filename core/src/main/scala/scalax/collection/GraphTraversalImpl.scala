@@ -180,7 +180,20 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     this: NodeT =>
   }
 
-  protected class ComponentImpl(
+  protected class WeakComponentImpl(
+      override val root         : NodeT, 
+      override val parameters   : Parameters,
+      override val subgraphNodes: NodeFilter,
+      override val subgraphEdges: EdgeFilter,
+      override val ordering     : ElemOrdering,
+      override val nodes        : Set[NodeT])
+      extends Component {
+
+    final protected def mayHaveFrontierEdges: Boolean = false
+    protected def stringPrefix = "WeakComponent"
+  }
+
+  protected class StrongComponentImpl(
       override val root         : NodeT, 
       override val parameters   : Parameters,
       override val subgraphNodes: NodeFilter,
@@ -189,13 +202,8 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       override val nodes        : Set[NodeT])
       extends Component {
     
-    lazy val edges: Set[EdgeT] = {
-      val edges = new ArrayBuffer[EdgeT](nodes.size * 2)
-      for (n <- nodes) n.edges foreach (edges += _)
-      new EqSetFacade(edges)
-    }
-    
-    override def toString = s"Component(${nodes mkString ","})"
+    final protected def mayHaveFrontierEdges: Boolean = true
+    protected def stringPrefix = "StrongComponent"
   }
 
   final protected def expectedMaxNodes(divisor: Int, min: Int = 128): Int = {
@@ -253,17 +261,17 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     final private def innerElemTraverser =
       InnerElemTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
 
-    protected lazy val components: Iterable[ComponentImpl] = {
+    protected lazy val components: Iterable[WeakComponentImpl] = {
       val traverser = InnerNodeTraverser(
           root, parameters withDirection AnyConnected, subgraphNodes, subgraphEdges, ordering)
       withHandle() {  implicit visitedHandle =>
         for (node <- nodes if ! node.visited && subgraphNodes(node)) yield {
-          val componentNodes = new ArrayBuffer[NodeT](expectedMaxNodes(6))
+          val componentNodes = new ArrayBuffer[NodeT](expectedMaxNodes(3))
           traverser.withRoot(node) foreach { n =>
             n.visited = true
             componentNodes += n
           }
-          new ComponentImpl(node, parameters, subgraphNodes, subgraphEdges, ordering,
+          new WeakComponentImpl(node, parameters, subgraphNodes, subgraphEdges, ordering,
               new EqSetFacade(componentNodes))
         }
       }
@@ -313,6 +321,39 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       ordering     : ElemOrdering   = NoOrdering,
       maxWeight    : Option[Weight] = None) =
     ComponentTraverser(null.asInstanceOf[NodeT], parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
+  
+  protected case class StrongComponentTraverser(
+      override val root         : NodeT, 
+      override val parameters   : Parameters,
+      override val subgraphNodes: NodeFilter,
+      override val subgraphEdges: EdgeFilter,
+      override val ordering     : ElemOrdering,
+      override val maxWeight    : Option[Weight])
+      extends super.StrongComponentTraverser {
+    
+    final protected def newTraverser:
+        (NodeT, Parameters, NodeFilter, EdgeFilter, ElemOrdering, Option[Weight]) => StrongComponentTraverser = copy
+
+    protected lazy val components: Iterable[Component] = {
+      val traverser = InnerNodeTraverser(
+          root, parameters withDirection Successors, subgraphNodes, subgraphEdges, ordering)
+      withHandle() { implicit handle =>
+        ( for (node <- nodes if ! node.visited && subgraphNodes(node))
+          yield traverser.withRoot(node).Runner(noNode, empty).dfsTarjan(Some(handle))
+        ).flatten
+      }
+    }
+       
+    def foreach[U](f: Component => U): Unit = components foreach f
+  }
+  
+  def strongComponentTraverser(
+      parameters   : Parameters     = Parameters(),
+      subgraphNodes: NodeFilter     = anyNode,
+      subgraphEdges: EdgeFilter     = anyEdge,
+      ordering     : ElemOrdering   = NoOrdering,
+      maxWeight    : Option[Weight] = None) =
+    StrongComponentTraverser(null.asInstanceOf[NodeT], parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
   
   protected case class InnerNodeTraverser(
       override val root         : NodeT,
@@ -753,12 +794,13 @@ object GraphTraversalImpl {
     def pathIterator:  DfsPath [N]
   }
   object DfsInformer {
-    case class Element[N] protected[collection](node: N, depth: Depth, cumulatedWeight: Double = 0)
+    case class Element[N] protected[collection](node: N, depth: Depth, cumWeight: Double = 0)
     type DfsStack[N] = Iterator[Element[N]]
     type DfsPath [N] = Iterator[Element[N]]
     def unapply[N](inf: DfsInformer[N]): Option[(DfsStack[N], DfsPath[N])] =
       Some(inf.stackIterator, inf.pathIterator)
   }
+  
   /** Extended node visitor informer for cycle detecting. 
    *  This informer always returns `0` for `depth`.
    */
@@ -775,7 +817,8 @@ object GraphTraversalImpl {
     def unapply[N,E](inf: WgbInformer[N,E]): Option[(WgbStack[N,E], WgbPath[N,E])] =
       Some(inf.stackIterator, inf.pathIterator)
   }
-  /** Extended node visitor informer for best first searches. 
+  
+  /** Extended node visitor informer for breath first searches. 
    */
   trait BfsInformer[N] extends NodeInformer {
     import BfsInformer._
@@ -788,6 +831,7 @@ object GraphTraversalImpl {
     def unapply[N](inf: BfsInformer[N]): Option[BfsQueue[N]] =
       Some(inf.queueIterator)
   }
+
   /** Extended node visitor informer for calculating shortest paths. 
    *  This informer always returns `0` for `depth`.
    */
@@ -800,8 +844,21 @@ object GraphTraversalImpl {
     case class Element[N,T: Numeric] protected[collection](node: N, cumWeight: T, depth: Depth)
     type DijkstraQueue[N,T] = Iterator[Element[N,T]]
     type DijkstraCosts[N,T] = Iterator[(N,T)]
-    def unapply[N, T: Numeric](inf: DijkstraInformer[N,T])
-        : Option[(DijkstraQueue[N,T], DijkstraCosts[N,T])] =
+    def unapply[N, T: Numeric](inf: DijkstraInformer[N,T]): Option[(DijkstraQueue[N,T], DijkstraCosts[N,T])] =
       Some(inf.queueIterator, inf.costsIterator)
+  }
+
+  /** Extended node visitor informer for Tarjan's algorithm. 
+   */
+  abstract class TarjanInformer[N](val index: Int, val lowLink: Int) extends NodeInformer {
+    import TarjanInformer._
+    def stackIterator: TarjanStack[N]
+  }
+  object TarjanInformer {
+    type TarjanStack[N] = Iterator[Element[N]]
+    case class Element[N] protected[collection](
+        node: N, depth: Depth, cumWeight: Double = 0, index: Int = 0, var lowLink: Int = 0)
+    def unapply[N](inf: TarjanInformer[N]): Option[(Int, Int, TarjanStack[N])] =
+      Some((inf.index, inf.lowLink, inf.stackIterator))
   }
 } 

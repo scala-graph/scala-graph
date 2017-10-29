@@ -280,8 +280,8 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
   initialize(iniNodes, iniEdges)
 
   override protected[this] def newBuilder = new GraphBuilder[N,E,DefaultGraphImpl](DefaultGraphImpl)
-  @inline final override def empty: DefaultGraphImpl[N,E] = DefaultGraphImpl.empty[N,E]
-  @inline final override def clone: this.type = super.clone.asInstanceOf[this.type]
+  final override def empty: DefaultGraphImpl[N,E] = DefaultGraphImpl.empty[N,E]
+  final override def clone: this.type = super.clone.asInstanceOf[this.type]
                                                                                                                                 
   @SerialVersionUID(7370L)
   final protected class NodeBase(value: N, hints: ArraySet.Hints)

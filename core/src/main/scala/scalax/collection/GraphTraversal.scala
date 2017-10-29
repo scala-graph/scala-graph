@@ -1,12 +1,13 @@
 package scalax.collection
 
-import scala.language.{higherKinds, implicitConversions}
-import scala.collection.{AbstractIterable, AbstractTraversable}
+import scala.annotation.tailrec
+import scala.collection.{AbstractIterable, AbstractTraversable, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, Builder}
-import scala.math.min
+import scala.language.{higherKinds, implicitConversions}
+import scala.math.{min, max}
 
 import GraphPredef.{EdgeLikeIn, OuterElem, OuterEdge, OutParam, InnerNodeParam, InnerEdgeParam}
-import mutable.EqHashMap
+import mutable.{EqHashMap, EqHashSet}
 
 /** Graph-related functionality such as traversals, path finding, cycle detection etc.
  *  All algorithms including breadth-first, depth-first, white-gray-black search and
@@ -228,7 +229,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     def edges: Traversable[EdgeT]
 
     /** $CUMWEIGHT */
-    final def weight: Long = (0L /: edges)((sum, edge) => sum + edge.weight)
+    final def weight: Double = (0d /: edges)((sum, edge) => sum + edge.weight)
     /** $CUMWEIGHT
      *  @param f The weight function overriding edge weights. */
     final def weight[T: Numeric](f: EdgeT => T): T = {
@@ -258,28 +259,31 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     /** Returns whether the nodes and edges of this walk are valid with respect
      *  to this graph. $SANECHECK */
     def isValid: Boolean = {
-      val isValidNode = nodeValidator.apply _
-      nodes.headOption filter isValidNode exists { startNode =>
-        val edges = this.edges.toIterator
-        (nodes.head /: nodes.tail){ (prev: NodeT, n: NodeT) =>
-          if (isValidNode(n) && edges.hasNext) {
-            val e = edges.next
-            if (! e.matches((x: NodeT) => x eq prev,
-                            (x: NodeT) => x eq n   )) return false
-            n
-          } else return false
-        }
-        true
+      val valid = nodeValidator
+      nodes.headOption exists { startNode =>
+        val (nodesIt, edgesIt) = (nodes.tail.toIterator, edges.toIterator)
+        
+        @tailrec def ok(prev: NodeT, count: Int): Boolean =
+          if (nodesIt.hasNext && edgesIt.hasNext) {
+            val node = nodesIt.next
+            if (valid(prev) &&
+                edgesIt.next.matches((n: NodeT) => n eq prev, (n: NodeT) => n eq node))
+              ok(node, count + 1)
+            else false
+          } else if (nodesIt.isEmpty && edgesIt.isEmpty) {
+            count > 0
+          } else false
+          
+        ok(startNode, 0)
       }
     }
 
-    protected trait NodeValidator {
-      def apply(node: NodeT): Boolean
-    }
+    protected trait NodeValidator extends (NodeT => Boolean)
+
     protected def nodeValidator: NodeValidator =
       new NodeValidator { 
         def apply(node: NodeT): Boolean = true
-    }
+      }
   }
   object Walk {
     protected[GraphTraversal] trait Zero {
@@ -656,21 +660,55 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       innerElemTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
   }
   
-  /** Represents a component of `this` graph with an underlying lazy implementation.
-   *  Instances will be created by traversals based on [[componentTraverser]].  
+  /** Represents a component of `this` graph.
+   *  Edges and bridges are computed lazily.
+   *  Components will be instantiated by [[componentTraverser]] or [[strongComponentTraverser]].  
    */
-  protected abstract class Component extends Properties {
+  abstract class Component protected extends Properties {
+    
     def nodes: Set[NodeT]
-    def edges: Set[EdgeT]
-    def toGraph: Graph[N,E] =
-      innerEdgeTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight).toGraph
+    
+    final lazy val (edges: Set[EdgeT], frontierEdges: Set[EdgeT]) = {
+      val edges   = new ArrayBuffer[EdgeT](graphSize / 2)
+      val bridges = new ArrayBuffer[EdgeT](if (mayHaveFrontierEdges) max(graphSize / 100, 16) else 0)
+      for (n <- nodes) n.edges.withFilter(subgraphEdges) foreach {e =>
+        if (nonBridge(e)) edges += e
+        else bridges += e
+      }
+      (new EqSetFacade(edges), new EqSetFacade(bridges))
+    }
+    
+    final def frontierEdges(that: Component): Set[EdgeT] =
+      if (this.mayHaveFrontierEdges && that.mayHaveFrontierEdges) {
+        // optimize calls of 'contains' because EqSetFacade's is O(N)
+        def toEqSet(bridges: Set[EdgeT]) =
+          (new EqHashSet[EdgeT](bridges.size) /: bridges)((eqSet, e) => eqSet += e)
+        val (left, right) =
+          if (this.frontierEdges.size > that.frontierEdges.size) (this.frontierEdges, toEqSet(that.frontierEdges))
+          else                                                   (toEqSet(this.frontierEdges), that.frontierEdges)
+        new EqSetFacade(left filter right.contains)
+      }
+      else Set.empty
+    
+    final def toGraph: Graph[N,E] = thisGraph match {
+      case g: Graph[N, E] =>
+        val b = Graph.newBuilder(g.edgeT, Graph.defaultConfig)
+        b ++= edges
+        b.result
+    }
+    
+    protected def mayHaveFrontierEdges: Boolean
+    private final def nonBridge(e: EdgeT): Boolean = e.nodes forall nodes.contains
+
+    protected def stringPrefix: String
+    override def toString = s"$stringPrefix(${nodes mkString ", "})"
   }
   
-  /** Controls the properties of graph traversals with no specific root.
-   *  Provides methods to refine the properties and to invoke multiple traversals
-   *  to span all graph components. 
+  /** Controls the properties of graph traversals with no specific root and allows
+   *  you to produce the (weekly) connected components by a traversal or
+   *  call methods like `findCycle` that work component-wise. 
    */
-  protected abstract class ComponentTraverser
+  abstract class ComponentTraverser protected
       extends FluentProperties[ComponentTraverser]
          with Properties 
          with Traversable[Component] {
@@ -684,8 +722,8 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     def topologicalSortByComponent[U](implicit visitor: InnerElem => U = empty): Traversable[CycleNodeOrTopologicalOrder]
   }
   
-  /** Creates a [[ComponentTraverser]] responsible for invoking graph traversal methods
-   *  that cover all components of this possibly disconnected graph.
+  /** Creates a [[ComponentTraverser]] responsible for invoking graph traversal methods in all
+   *  (weekly) connected components of this possibly disconnected graph.
    *    
    * @param parameters $PARAMETERS
    * @param subgraphNodes $SUBGRAPHNODES      
@@ -700,6 +738,29 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       ordering     : ElemOrdering   = NoOrdering,
       maxWeight    : Option[Weight] = None): ComponentTraverser
 
+  /** Controls the properties of graph traversals with no specific root and allows
+   *  you to produce the strongly connected components by a traversal. 
+   */
+  abstract class StrongComponentTraverser protected
+      extends FluentProperties[StrongComponentTraverser]
+         with Properties 
+         with Traversable[Component]
+  
+  /** Creates a [[StrongComponentTraverser]].
+   *    
+   * @param parameters $PARAMETERS
+   * @param subgraphNodes $SUBGRAPHNODES      
+   * @param subgraphEdges $SUBGRAPHEDGES
+   * @param ordering $ORD      
+   * @param maxWeight $MAXWEIGHT      
+   */
+  def strongComponentTraverser(
+      parameters   : Parameters     = Parameters(),
+      subgraphNodes: NodeFilter     = anyNode,
+      subgraphEdges: EdgeFilter     = anyEdge,
+      ordering     : ElemOrdering   = NoOrdering,
+      maxWeight    : Option[Weight] = None): StrongComponentTraverser
+
   /** The `root`-related methods [[Traverser]] will inherit.
    *  
    * @define SHORTESTPATH Finds the shortest path from `root` to `potentialSuccessor`
@@ -710,6 +771,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @define SHORTESTPATHRET The shortest path to `potentialSuccessor` or `None` if either
    *         a. there exists no path to `potentialSuccessor` or
    *         a. there exists a path to `potentialSuccessor` but $DUETOSUBG
+   * @define VISITORDURING Function to be called for each inner node or inner edge visited during the
    */
   protected abstract class TraverserMethods[A, +This <: TraverserMethods[A,This]]
       extends FluentProperties[This] {
@@ -903,18 +965,32 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
      */
     def findCycle[U](implicit visitor: A => U = empty): Option[Cycle]
 
-    /** Sorts the component designated by the given node topologically.
+    /** Sorts the component designated by this node topologically.
      *  Only nodes connected with this node will be included in the resulting topological order. 
      *  If the graph is known to be connected choose [[GraphTraversal#topologicalSort]] instead. 
      *  $SEEFLUENT
      *  
-      * @param ignorePredecessors If `true`, the topological sort will be partial in that it will only
-      *                           include successors of `root`. `withSubgraph` restricts the successor nodes to
-      *                           be included but not predecessors that will be excluded in total.
-     *  @param visitor            Function to be called for each inner node or inner edge visited during the sort.
+     *  @param ignorePredecessors If `true`, the topological sort will be partial in that it will only
+     *                            include successors of `root`. `withSubgraph` restricts the successor nodes to
+     *                            be included but not predecessors that will be excluded in total.
+     *  @param visitor            $VISITORDURING sort.
      */
     def topologicalSort[U](ignorePredecessors: Boolean = false)
                           (implicit visitor: InnerElem => U = empty): CycleNodeOrTopologicalOrder
+                          
+    /** Determines the week component that contains this node.
+     *  $SEEFLUENT
+     *  
+     *  @param visitor $VISITORDURING search.
+     */
+    def weakComponent[U](implicit visitor: A => U = empty): Component
+    
+    /** Finds all strongly connected components reachable from this node.
+     *  $SEEFLUENT
+     *  
+     *  @param visitor $VISITORDURING search.
+     */
+    def strongComponents[U](implicit visitor: A => U = empty): Iterable[Component]
   }
 
   /** Controls the properties of consecutive graph traversals starting at a root node.
@@ -1147,12 +1223,12 @@ object GraphTraversal {
 
   /** Marker trait for informers aimed at passing algorithmic-specific state
    *  to [[scalax.collection.GraphTraversal.ExtendedNodeVisitor]].
-   *  Before calling an informer please match against one of 
+   *  Following informers are available: 
    *  1. [[scalax.collection.GraphTraversalImpl.BfsInformer]]
    *  1. [[scalax.collection.GraphTraversalImpl.DfsInformer]]   
    *  1. [[scalax.collection.GraphTraversalImpl.WgbInformer]]
    *  1. [[scalax.collection.GraphTraversalImpl.DijkstraInformer]]
-   *  or any other implementation that is currently not known.   
+   *  1. [[scalax.collection.GraphTraversalImpl.TarjanInformer]].
    */
   trait NodeInformer
   object NodeInformer extends Serializable {
