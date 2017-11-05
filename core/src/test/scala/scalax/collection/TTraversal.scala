@@ -441,12 +441,15 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
   def `DownUp traverser` {
     val g = Di_1.g
     def innerNode(outer: Int) = g get outer
-    val stack: Stack[Int] = Stack()
+    var stack = List.empty[Int]
     
     innerNode(4).innerNodeDownUpTraverser foreach (_ match {
       case (down, node) =>
-        if (down) stack.push(node.value)
-        else      stack.pop should be (node.value)
+        if (down) stack = node.value +: stack
+        else {
+          stack.head should be (node.value)
+          stack = stack.tail
+        }
     })
     stack should be ('empty)
   }

@@ -209,14 +209,14 @@ trait AdjacencyListBase[N,
     }
     final override def lookup(elem: N): NodeT = {
       def eq(inner: NodeT, outer: N) = inner.value == outer
-      coll.findEntry[N](elem, eq)
+      coll.findElem[N](elem, eq)
     }
     @inline final def contains(node: NodeT) = coll contains node
     @inline final def iterator: Iterator[NodeT] = coll.iterator
     @inline final override def size: Int = coll.size
     @inline final def draw(random: Random) = coll draw random
-    @inline final def findEntry[B](toMatch: B, correspond: (NodeT, B) => Boolean): NodeT =
-      coll findEntry (toMatch, correspond)
+    @inline final def findElem[B](toMatch: B, correspond: (NodeT, B) => Boolean): NodeT =
+      coll findElem (toMatch, correspond)
     protected[collection] def +=(edge: EdgeT): this.type
   }
   protected def newNodeSet: NodeSetT

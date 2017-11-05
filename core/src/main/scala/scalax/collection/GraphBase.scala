@@ -667,9 +667,9 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     @deprecated("Use toOuter instead", "1.8.0") def toEdgeInSet = toOuter
     
     final def draw(random: Random) = (nodes draw random).edges draw random
-    final def findEntry[B](other: B, correspond: (EdgeT, B) => Boolean): EdgeT = {
+    final def findElem[B](other: B, correspond: (EdgeT, B) => Boolean): EdgeT = {
       def find(edge: E[N]): EdgeT = correspond match {
-        case c: ((EdgeT, E[N]) => Boolean) @unchecked => nodes.lookup(edge._1).edges findEntry (edge, c) 
+        case c: ((EdgeT, E[N]) => Boolean) @unchecked => nodes.lookup(edge._1).edges findElem (edge, c) 
         case _ => throw new IllegalArgumentException
       } 
       other match {

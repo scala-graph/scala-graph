@@ -44,7 +44,7 @@ trait AdjacencyListGraph[N,
     protected[AdjacencyListGraph] def add(edge: EdgeT): Boolean = {
       var added = false
       edge foreach { n =>
-        val inColl = coll findEntry n getOrElse {coll += n; n}
+        val inColl = coll findElem n getOrElse {coll += n; n}
         added = (inColl add edge) || added
       }
       added
