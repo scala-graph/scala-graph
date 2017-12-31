@@ -56,9 +56,8 @@ class TEditImmutable extends RefSpec with Matchers {
   		g.isInstanceOf[immutable.Graph[Nothing,Nothing]] should be (true)
   	}
     def `yield another graph when mapped` {
-      import immutable.Graph
-      val g = Graph(1~2)
-      val m: Graph[Int,UnDiEdge] = g map Helper.icrementNode
+      val g = immutable.Graph(1~2)
+      val m: immutable.Graph[Int,UnDiEdge] = g map Helper.icrementNode
       m.edges.head should be (UnDiEdge(2,3))
     }
   }

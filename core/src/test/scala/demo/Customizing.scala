@@ -19,10 +19,10 @@ class CustomizingTest extends Suite {
 
   import scalax.collection.config.CoreConfig
   import scalax.collection.mutable.ArraySet.Hints
-  implicit val myConfig = CoreConfig(orderHint = 5000, Hints(64, 0, 64, 75))
+  private implicit val myConfig: CoreConfig = CoreConfig(orderHint = 5000, Hints(64, 0, 64, 75))
   
   implicit class ExtGraph[N, E[X] <: EdgeLikeIn[X]](protected val g: Graph[N,E]) {
-    def foo = "bar"
+    def foo: String = "bar"
     def aNode: Option[g.NodeT] = g.nodes.headOption
   }
   val g = Graph(1~2)
@@ -30,15 +30,17 @@ class CustomizingTest extends Suite {
   g.aNode
   
   implicit class ExtGraphNode[N, E[X] <: EdgeLikeIn[X]](node_ : Graph[N,E]#NodeT) {
-    type NodeT = graph.NodeT
-    val graph = node_.containingGraph
-    val node  = node_.asInstanceOf[NodeT]
-    def foo = this.toString + "bar"
+    protected type NodeT        = graph.NodeT
+    protected val graph         = node_.containingGraph
+    protected val node: NodeT   = node_.asInstanceOf[NodeT]
+
+    def foo: String = this.toString + "bar"
   }
-  Graph(1~2).nodes.headOption map (_.foo)
-  
-  case class Airport(val code: String) {
-  override def toString = code // without Airport-prefix
+  val n = Graph(1~2).nodes.headOption
+  n map (_.foo)
+
+  case class Airport(code: String) {
+  override def toString: String = code // without Airport-prefix
   }
   val (ham, ny) = (Airport("HAM"), Airport("JFK"))
   
