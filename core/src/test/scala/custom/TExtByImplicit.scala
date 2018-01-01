@@ -31,7 +31,6 @@ class TExtByImplicitTest extends RefSpec with Matchers
     
     def `at graph level restricted to directed graphs` {
       /* Provide graph enrichment restricted to graphs with edges of type `DiEdgeLike` or edges derived from this type.
-       * Note that a lower bound must also be defined to exclude directed edges.
        */
       implicit final class ExtDiGraph[N, E[X] <: DiEdgeLikeIn[X]](val g: Graph[N,E]) {
         def alwaysTrue = true
