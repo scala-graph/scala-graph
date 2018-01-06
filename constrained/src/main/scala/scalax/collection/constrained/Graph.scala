@@ -34,7 +34,8 @@ trait GraphLike[N,
                       <: GraphLike[X,Y,This] with Set[Param[X,Y]] with Graph[X,Y]]
   extends SimpleGraphLike[N,E,This]
   with    Constrained[N,E]
-{ this: This[N,E] =>
+{ this: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
+        This[N,E] with GraphLike[N,E,This] with Set[Param[N,E]] with Graph[N,E] =>
   override val graphCompanion: GraphConstrainedCompanion[This]
   protected type Config <: GraphConfig with GenConstrainedConfig
 

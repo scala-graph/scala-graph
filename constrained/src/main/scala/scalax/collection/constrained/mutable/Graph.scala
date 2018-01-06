@@ -41,7 +41,8 @@ trait GraphLike[N,
 	with	  Shrinkable[Param[N,E]] 
 	with	  Cloneable [Graph[N,E]] 
   with    Mutable
-{ selfGraph: This[N,E] =>
+{ selfGraph: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
+             This[N,E] with GraphLike[N,E,This] with Graph[N,E]=>
   trait NodeSet extends super.NodeSet {
     /** generic constrained subtraction */
     protected def checkedRemove(node: NodeT, ripple: Boolean): Boolean = {

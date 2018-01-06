@@ -37,7 +37,7 @@ trait GraphLike[N,
   with    GraphBase     [N,E]
   with    GraphDegree   [N,E]
 { selfGraph: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
-             GraphLike[N,E,This] with AnySet[Param[N,E]] with Graph[N,E] =>
+             This[N,E] with GraphLike[N,E,This] with AnySet[Param[N,E]] with Graph[N,E] =>
   protected type ThisGraph = selfGraph.type
   implicit val edgeT: ClassTag[E[N]]
 
