@@ -113,9 +113,10 @@ final class TraversingTest extends RefSpec with Matchers {
         case g.InnerNode(n) => n.degree > 1
         case g.InnerEdge(e) => e.weight > 1
       }                            .map {
-                                     case g.InnerNode(n) => n.toOuter
+                                     case g.InnerNode(n) => n.value
                                      case g.InnerEdge(e) => e.toOuter
-                                   }.toSet should be (Set[Any](1, 2, 3, 1~>3 % 2, 2~>3 % 3))
+                                   }.toSet should be (Set[OuterElem[Int,WDiEdge]](
+                                   1, 2, 3, 1~>3 % 2, 2~>3 % 3))
     }
     
     def `DownUp traverser` {
