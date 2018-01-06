@@ -31,9 +31,9 @@ final class EditingTest extends RefSpec with Matchers {
       g find 1                          // Option[g.NodeT] = Some(1)
       g find 3                          // Option[g.NodeT] = None
       g get 1                           // g.NodeT = 1
-                                       a [NoSuchElementException] should be thrownBy {
-      g get 3
-                                       }
+                                        a [NoSuchElementException] should be thrownBy {
+      g get 3                           // NoSuchElementException
+                                        }
       g find 1~2                        // Option[g.EdgeT] = Some(1~2)
       g addAndGet 5                     // g.NodeT = 5
       g find (g having (node = _ == 1)) // g.NodeT = 1 TODO
@@ -96,7 +96,7 @@ final class EditingTest extends RefSpec with Matchers {
       } // Int = -1
       val hE = 1 ~ 2 ~ 11 ~ 12 // HyperEdge[Int] = 1~2~11~12
       hE._n(hE.arity - 1) // Int = 12
-      hE sum // Int = 26
+      hE.sum // Int = 26 TODO
     }
     def `edge patterns`: Unit = {
       import scalax.collection.edge.Implicits._
