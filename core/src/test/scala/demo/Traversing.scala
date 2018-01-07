@@ -184,11 +184,6 @@ final class TraversingTest extends RefSpec with Matchers {
       anyNode.weakComponent.nodes should have size componentEdges._1.size
     }
     
-    def `weak component traverser fix #57` {
-      val g = Graph(11~>12, 13~>14)
-      g.componentTraverser() should have size 2
-    }
-    
     def `strong component traverser` {
       type G = Graph[Symbol,DiEdge]
       val sccExpected: (G, G) = (

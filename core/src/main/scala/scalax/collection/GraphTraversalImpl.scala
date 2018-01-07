@@ -5,9 +5,7 @@ import scala.annotation.{switch, tailrec}
 import scala.collection.{AbstractTraversable, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, Buffer, ArrayStack => Stack, Map => MMap}
 
-import GraphPredef.{EdgeLikeIn, Param, InParam, OutParam,
-                    OuterNode, InnerNodeParam, OuterEdge, OuterElem, InnerEdgeParam}
-import scalax.collection.GraphEdge.{DiEdgeLike, DiHyperEdgeLike, DiEdge, EdgeLike}
+import GraphPredef.{EdgeLikeIn, OuterEdge, OuterElem}
 import mutable.{EqHashSet, EqHashMap}
 
 /** Default implementation of the functionality defined by [[GraphTraversal]]
@@ -21,7 +19,6 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
      with State[N,E]
 { thisGraph: TraverserImpl[N,E] =>
 
-  import GraphTraversalImpl._
   import GraphTraversal._
   import Visitor._
   import State._
@@ -284,7 +281,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       else {
         val traverser = innerElemTraverser
         withHandles(2) { handles =>
-          implicit val visitedHandle = handles(0)
+          implicit val visitedHandle: State.Handle = handles(0)
           for (node <- nodes if ! node.visited && subgraphNodes(node)) {
             val res = traverser.withRoot(node).Runner(noNode, visitor).dfsWGB(handles)
             if (res._1.isDefined)
@@ -305,7 +302,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         val forStartNodes = innerNodeTraverser(root, Parameters.Dfs(AnyConnected))
         withHandles(2) { handles: Array[Handle] =>
           val (startNodesHandle, topoHandle) = (Some(handles(0)), Some(handles(1)))
-          implicit val handle = startNodesHandle.get
+          implicit val handle: State.Handle = startNodesHandle.get
           for (node <- nodes if ! node.visited && subgraphNodes(node)) yield
             topoRunner.topologicalSort(
                 forInDegrees(forStartNodes.withRoot(node), startNodesHandle, includeInDegree = subgraphNodes),
