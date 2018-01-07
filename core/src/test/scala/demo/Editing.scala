@@ -22,54 +22,51 @@ final class EditingTest extends RefSpec with Matchers {
   object `demonstraiting ` {
     def `iterating `: Unit = {
       val g = Graph(2 ~ 3, 3 ~ 1)
-      g mkString "-"       // 1-2-3-2~3-3~1
-      g.nodes mkString "-" // 1-2-3
-      g.edges mkString "-" // 2~3-3~1
+      g mkString ","                   shouldBe "1,2,3,2~3,3~1"
+      g.nodes mkString "-"             shouldBe "1-2-3"
+      g.edges mkString " "             shouldBe "2~3 3~1"
     }
     def `looking up`: Unit = {
-      val g = mutable.Graph(1~2, 5)
-      g find 1                          // Option[g.NodeT] = Some(1)
-      g find 3                          // Option[g.NodeT] = None
-      g get 1                           // g.NodeT = 1
-      g get 3                           // NoSuchElementException
-      g find 1~2                        // Option[g.EdgeT] = Some(1~2)
-      g addAndGet 5                     // g.NodeT = 5
-      g find (g having (node = _ == 1)) // g.NodeT = 1 TODO
-      ()
+      val g = Graph(1~2, 5)
+      g find 1                         shouldBe Some(1)        // Option[g.NodeT] 
+      g find 3                         shouldBe None           // Option[g.NodeT]
+      g get 1                          shouldBe 1              // g.NodeT = 1
+                                       a [NoSuchElementException] should be thrownBy {
+      g get 3                          }
+      g find 1~2                       shouldBe Some(1~2)      // Option[g.EdgeT] 
+      g find (g.having(node = _ == 1)) shouldBe Some(1)        // Option[Param[Int,UnDiEdge]]
+      val h = mutable.Graph.empty[Int,UnDiEdge] ++ g
+      h addAndGet 5                    shouldBe 5              // g.NodeT
     }
     def `equality `: Unit = {
       val g = Graph(1 ~ 2)
-      (g get 1) == 1 // true
-      (g get 1 ~ 2) == 2 ~ 1 // true
-      (g get 1 ~ 2) eq 2 ~ 1 // false
-      (g get 1 ~ 2) == 2 ~ 2 // false
+      (g get 1) == 1                   shouldBe true
+      (g get 1 ~ 2) == 2 ~ 1           shouldBe true
+      (g get 1 ~ 2) eq 2 ~ 1           shouldBe false
+      (g get 1 ~ 2) == 2 ~ 2           shouldBe false
     }
     def `adding `: Unit = {
-      val g = Graph(1, 2 ~ 3) // immutable or mutable
-      g + 1 // == g
-      g + 0 // Graph(0, 1, 2, 3, 2~3)
-//    g + 1.2 // error: overloaded method...
-      g + 0 ~ 1 // Graph(0, 1, 2, 3, 0~1, 2~3)
-      g ++ List(1 ~ 2, 2 ~ 3) // Graph(1, 2, 3, 1~2, 2~3)
-      g ++ List[Param[Int, UnDiEdge]](1 ~ 2, 2 ~ 3, 0) // TODO
-      // Graph(0, 1, 2, 3, 1~2, 2~3)
-      g - 0 // == g
-      g - 1 // Graph(2, 3, 2~3)
-      g - 2 // Graph(1, 3)
-      g -? 2 // == g
-      g - 2 ~ 3 // Graph(1, 2, 3)
-      g -! 2 ~ 3 // Graph(1)
-      g -- List[Param[Int,UnDiEdge]](2, 3 ~ 3) // Graph(1, 3) // TODO
-      val mg = scalax.collection.mutable.Graph(1, 2 ~ 3) // TODO
-      // Graph[Int,UnDiEdge]
-      // to be assigned before each example
-      mg += 0 // Graph(0, 1, 2, 3, 2~3)
-//    mg
-//    ..= // (mutated graph)
-      mg += (3 ~> 1) // Graph(1, 2, 3, 2~3, 3~>1) // TODO
+      val g = Graph(1, 2 ~ 3)          // immutable or mutable
+      g + 1                            shouldBe g
+      g + 0                            shouldBe Graph(0, 1, 2, 3, 2~3)
+//    g + 1.2                          // error: overloaded method...
+      g + 0 ~ 1                        shouldBe Graph(0, 1, 2, 3, 0~1, 2~3)
+      g ++ List(1 ~ 2, 2 ~ 3)          shouldBe Graph(1, 2, 3, 1~2, 2~3)
+      g ++ List[Param[Int,UnDiEdge]](
+          1 ~ 2, 2 ~ 3, 0)             shouldBe Graph(0, 1, 2, 3, 1~2, 2~3)
+      g - 0                            shouldBe g
+      g - 1                            shouldBe Graph(2, 3, 2~3)
+      g - 2                            shouldBe Graph(1, 3)
+      g -? 2                           shouldBe g
+      g - 2 ~ 3                        shouldBe Graph(1, 2, 3)
+      g -! 2 ~ 3                       shouldBe Graph(1)
+      g -- List[Param[Int,UnDiEdge]](
+          2, 3 ~ 3)                    shouldBe Graph(1, 3)
+      def h = mutable.Graph.empty[Int,UnDiEdge] ++ g
+      (h += 0)                         shouldBe Graph(0, 1, 2, 3, 2~3)
+      (h += (3 ~> 1))                  shouldBe Graph(1, 2, 3, 2~3, 3~>1)
       implicit val factory = scalax.collection.edge.LDiEdge
-      mg.addLEdge(3, 4)("red") // true
-//    mg // Graph(1, 2, 3, 4, 2~3, 3~>4 'red)
+      h.addLEdge(3, 4)('red)           shouldBe true
     }
     def `union `: Unit = {
       val g = mutable.Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5) // TODO
@@ -94,7 +91,7 @@ final class EditingTest extends RefSpec with Matchers {
       } // Int = -1
       val hE = 1 ~ 2 ~ 11 ~ 12 // HyperEdge[Int] = 1~2~11~12
       hE._n(hE.arity - 1) // Int = 12
-      hE sum // Int = 26
+      hE.sum // Int = 26 TODO
     }
     def `edge patterns`: Unit = {
       import scalax.collection.edge.Implicits._

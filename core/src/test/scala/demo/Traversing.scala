@@ -115,7 +115,7 @@ final class TraversingTest extends RefSpec with Matchers {
       }                            .map {
                                      case g.InnerNode(n) => n.value
                                      case g.InnerEdge(e) => e.toOuter
-                                   }.toSet should be (Set[OuterElem[Int,WDiEdge]](
+                                   }.toSet should be (Set[Any](
                                    1, 2, 3, 1~>3 % 2, 2~>3 % 3))
     }
     
