@@ -1,5 +1,6 @@
 package demo
 
+import scala.collection.SortedSet
 import scala.language.higherKinds
 
 import scalax.collection.GraphPredef._
@@ -71,31 +72,33 @@ final class EditingTest extends RefSpec with Matchers {
     def `union `: Unit = {
       val g = mutable.Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5) // TODO
       val h = Graph(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
-      g union h // Graph(1~2, 2~3, 2~4, 3~5, 4~5, 3~4, 4~6, 5~6)
-      g diff h // Graph(1~2)
-      g intersect h // Graph(3~5, 4)
-      g &= h // Graph(3~5, 4), same instance
+      g union h                        shouldBe Graph(1~2, 2~3, 2~4, 3~5, 4~5, 3~4, 4~6, 5~6)
+      g diff h                         shouldBe Graph(1~2)
+      g intersect h                    shouldBe Graph(4, 3~5)
+      (g &= h)                         shouldBe Graph(4, 3~5)
     }
     def `endpoints `: Unit = {
-      val uE = 3 ~ 4 // UnDiEdge[Int] = 3~4
-      uE._1 * uE._2 // Int = 12
-//    uE product // Int = 12 TODO
+      val uE = 3 ~ 4                   // UnDiEdge[Int]
+      uE._1 * uE._2                    shouldBe 12
+      uE.product                       shouldBe 12
+                                       (
       uE match {
         case n ~ m => n * m
-      } // Int = 12
-      val dE = 1 ~> 2 // DiEdge[Int] = 1~>2
-      dE.source - dE.target // Int = -1
-      uE.arity == dE.arity // Boolean = true
+      }                                ) shouldBe 12
+      val dE = 1 ~> 2                  // DiEdge[Int]
+      dE.source - dE.target            shouldBe -1
+      uE.arity == dE.arity             shouldBe true
+                                       (
       dE match {
         case s ~> t => s - t
-      } // Int = -1
-      val hE = 1 ~ 2 ~ 11 ~ 12 // HyperEdge[Int] = 1~2~11~12
-      hE._n(hE.arity - 1) // Int = 12
-      hE.sum // Int = 26 TODO
+      }                                ) shouldBe -1
+      val hE = 1 ~ 2 ~ 11 ~ 12         // HyperEdge[Int]
+      hE._n(hE.arity - 1)              shouldBe 12
+      hE.sum                           shouldBe 26
     }
     def `edge patterns`: Unit = {
       import scalax.collection.edge.Implicits._
-      val g = Graph((1 ~+> 2) ("A"), (1 ~+> 1) ("AB"))
+      val g = Graph((1 ~+> 2)("A"), (1 ~+> 1)("AB"))
 
       import scalax.collection.edge.LBase._
       object StringLabel extends LEdgeImplicits[String]
@@ -104,54 +107,56 @@ final class EditingTest extends RefSpec with Matchers {
       (0 /: g.edges) ((sum, e) => e.edge match {
         case s :~> t + (l: String) if l contains 'A' =>
           sum + s.outDegree + t.outDegree
-      }) // Int = 6
+      })                               shouldBe 6
     }
     def `neighbors `: Unit = {
       val g = Graph(0, 1 ~ 3, 3 ~> 2)
-      val (n0, n2, n3) = (g get 0, g get 2, g get 3)
-      n0.diSuccessors // Set[g.NodeT] = Set() TODO
-      n2.diSuccessors.isEmpty // Boolean = true
-      n3.diSuccessors // Set[g.NodeT] = Set(1, 2) TODO
-      n3.diPredecessors // Set[g.NodeT] = Set(1) TODO
-      n2.incoming // Set[g.EdgeT] = Set(3~>2) TODO
-      n3 ~>? n2 // Option[g.EdgeT] = Some(3~>2)
+      def n(outer: Int): g.NodeT           = g get outer
+      def e(outer: UnDiEdge[Int]): g.EdgeT = g get outer
+      n(0).diSuccessors                shouldBe Set.empty[g.NodeT]
+      n(2).diSuccessors.isEmpty        shouldBe true
+      n(3).diSuccessors                shouldBe Set(n(1), n(2))
+      n(3).diPredecessors              shouldBe Set(n(1))
+      n(2).incoming                    shouldBe Set(e(3 ~> 2))
+                                       (
+      n(3) ~>? n(2)                    ) shouldBe Some(e(3 ~> 2))
     }
     def `querying `: Unit = {
       val g = Graph(2 ~> 3, 3 ~ 1, 5)
-      g.nodes filter (_ > 2) // Set[g.NodeT] = Set(5,3)
-      g.nodes filter (_.degree > 1) // Set[g.NodeT] = Set(3)
-//      g.edges filter (_.diSuccessors.isEmpty) // Set[g.EdgeT] = Set() TODO
-      g filter ((i: Int) => i >= 2) // Graph(2,3,5, 2~>3)
-      g filter g.having(node = _ >= 2) // Graph(2,3,5, 2~>3)
-      g filter g.having(edge = _.directed) // Graph(2,3, 2~>3)
-      g count g.having(node = _ >= 3, edge = _.directed) // Int = 3
+      def n(outer: Int): g.NodeT = g get outer
+      g.nodes filter (_ > 2)                             shouldBe Set(n(5), n(3))
+      g.nodes filter (_.degree > 1)                      shouldBe Set(n(3))
+      g.edges filter (_ contains 4)                      shouldBe 'empty
+      g filter ((i: Int) => i >= 2)                      shouldBe Graph(2,3,5, 2~>3)
+      g filter g.having(node = _ >= 2)                   shouldBe Graph(2,3,5, 2~>3)
+      g filter g.having(edge = _.directed)               shouldBe Graph(2,3, 2~>3)
+      g count g.having(node = _ >= 3, edge = _.directed) shouldBe 3
     }
     def `measuring `: Unit = {
-      import scalax.collection.edge.Implicits._ // TODO
-      val g = Graph(1~2 % 4, 2~3 % 2, 1~>3 % 5, 1~5  % 3,
-        3~5 % 2, 3~4 % 1, 4~>4 % 1, 4~>5 % 0) // TODO
-      g.order // Int = 5
-      g.graphSize // Int = 8
-      g.size // Int = 13
-      g.totalDegree // Int = 16
-      g.degreeSet // TreeSet(4, 3, 2)
-      g.degreeNodeSeq(g.InDegree) // List((4,3), (3,5), (2,1), (2,4), (2,2))
-      g.degreeNodesMap // Map(2->Set(2), 3->Set(5,1), 4->Set(3,4))
-      g.degreeNodesMap(degreeFilter = _ > 3) // Map(4 -> Set(3,4))
+      import scalax.collection.edge.Implicits._
+      val g = Graph(1~2 % 4, 2~3 % 2, 1~>3 % 5, 1~5  % 3, 3~5 % 2, 3~4 % 1, 4~>4 % 1, 4~>5 % 0)
+      g.order                                shouldBe 5
+      g.graphSize                            shouldBe 8
+      g.size                                 shouldBe 13
+      g.totalDegree                          shouldBe 16
+      g.degreeSet                            shouldBe SortedSet(4, 3, 2)
+      g.degreeNodeSeq(g.InDegree)            shouldBe List((4,3), (3,5), (2,1), (2,2), (2,4))
+      g.degreeNodesMap                       shouldBe Map(2->Set(2), 3->Set(5,1), 4->Set(3,4))
+      g.degreeNodesMap(degreeFilter = _ > 3) shouldBe Map(4 -> Set(3,4))
       ()
     }
     def `classifying `: Unit = {
       val g = Graph(1, 2 ~> 3)
-      g.isConnected // false
-      (g + 2 ~> 1).isConnected // true
-      (g get 2).findConnected(_ == 3) // Some(3)
-      g.isCyclic // false
-      (g + 3 ~> 2).isCyclic // true
-      g.isComplete // false
-      (g ++ List(1 ~> 2, 1 ~> 3, 2 ~> 1, 3 ~> 1, 3 ~> 2)).isComplete // true
-      g.isDirected // true
-      g.isHyper // false
-      g.isMulti // false
+      g.isConnected                    shouldBe false
+      (g + 2 ~> 1).isConnected         shouldBe true
+      (g get 2).findConnected(_ == 3)  shouldBe Some(3)
+      g.isCyclic                       shouldBe false
+      (g + 3 ~> 2).isCyclic            shouldBe true
+      g.isComplete                     shouldBe false
+      (g ++ List(1 ~> 2, 1 ~> 3, 2 ~> 1, 3 ~> 1, 3 ~> 2)).isComplete shouldBe true
+      g.isDirected                     shouldBe true
+      g.isHyper                        shouldBe false
+      g.isMulti                        shouldBe false
     }
   }
 }
