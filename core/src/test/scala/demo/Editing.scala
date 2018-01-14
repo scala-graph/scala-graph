@@ -28,7 +28,7 @@ final class EditingTest extends RefSpec with Matchers {
       g.edges mkString " "             shouldBe "2~3 3~1"
     }
     def `looking up`: Unit = {
-      val g = Graph(1~2, 5)
+      val g = Graph(1~2)
       g find 1                         shouldBe Some(1)        // Option[g.NodeT] 
       g find 3                         shouldBe None           // Option[g.NodeT]
       g get 1                          shouldBe 1              // g.NodeT = 1
@@ -70,7 +70,7 @@ final class EditingTest extends RefSpec with Matchers {
       h.addLEdge(3, 4)('red)           shouldBe true
     }
     def `union `: Unit = {
-      val g = mutable.Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5) // TODO
+      val g = mutable.Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
       val h = Graph(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
       g union h                        shouldBe Graph(1~2, 2~3, 2~4, 3~5, 4~5, 3~4, 4~6, 5~6)
       g diff h                         shouldBe Graph(1~2)
