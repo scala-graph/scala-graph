@@ -145,7 +145,7 @@ final class TraversingTest extends RefSpec with Matchers {
   
       type ValDepth = (Int,Int)
       var info = List.empty[ValDepth]
-      (g get 1).innerNodeTraverser.withKind(DepthFirst).foreach {
+      (g get 1).innerNodeTraverser.foreach {
         ExtendedNodeVisitor((node, count, depth, informer) => {
           info :+= (node.value, depth)
         })

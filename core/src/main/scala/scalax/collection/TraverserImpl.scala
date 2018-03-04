@@ -439,44 +439,55 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           val path:  Stack[Element[NodeT]] = Stack()
           var res: Option[NodeT] = None
           var nodeCnt = 0
-          root.visited = true
           @tailrec def loop {
-            if(stack.nonEmpty) {
-              val Element(current, depth, cumWeight) = {
-                val popped = stack.pop
-                val depth = popped.depth
-                if (depth > 0)
-                  while (path.head.depth >= depth) {
-                    if (doNodeUpVisitor) nodeUpVisitor(path.head.node)
-                    path.pop
-                  }
-                path.push(popped)
-                popped
-              }
-              if (doNodeVisitor)
-                if (isDefined(nodeVisitor)) nodeVisitor(current)
-                else {
-                  nodeCnt += 1
-                  extNodeVisitor(current, nodeCnt, depth,
-                    new DfsInformer[NodeT] {
-                      def stackIterator = stack.iterator
-                      def pathIterator  = path .iterator
-                    }
-                  )
+            if (stack.nonEmpty) {
+              val popped @ Element(current, depth, cumWeight) = stack.pop
+              if (depth > 0)
+                while (path.head.depth >= depth) {
+                  if (doNodeUpVisitor) nodeUpVisitor(path.head.node)
+                  path.pop
                 }
-              if (stopAt(current) && (current ne root)) {
-                res = Some(current)
-              } else {
-                if (depth < untilDepth)
+              if (current.visited) {
+                if (depth < untilDepth) {
+                  val nextDepth = depth + 1
                   for (n <- filteredNodes(current, nonVisited, cumWeight, true)) {
                     stack push Element(
                       n,
-                      depth + 1,
+                      nextDepth,
                       maxWeight.fold(ifEmpty = 0d)(_ => cumWeight + minWeight(current, n, cumWeight))
                     )
-                    n.visited = true
                   }
+                }
                 loop
+              } else {
+                current.visited = true
+                path.push(popped)
+                if (doNodeVisitor)
+                  if (isDefined(nodeVisitor)) nodeVisitor(current)
+                  else {
+                    nodeCnt += 1
+                    extNodeVisitor(current, nodeCnt, depth,
+                      new DfsInformer[NodeT] {
+                        def stackIterator = stack.iterator
+                        def pathIterator = path.iterator
+                      }
+                    )
+                  }
+                if (stopAt(current) && (current ne root)) {
+                  res = Some(current)
+                } else {
+                  if (depth < untilDepth) {
+                    val nextDepth = depth + 1
+                    for (n <- filteredNodes(current, nonVisited, cumWeight, true)) {
+                      stack push Element(
+                        n,
+                        nextDepth,
+                        maxWeight.fold(ifEmpty = 0d)(_ => cumWeight + minWeight(current, n, cumWeight))
+                      )
+                    }
+                  }
+                  loop
+                }
               }
             }
           }
