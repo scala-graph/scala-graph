@@ -37,7 +37,6 @@ import mutable.{EqHashMap, EqHashSet}
   *         or altered by any `with*` method.
  * @define OPTVISITOR An optional function that is applied for its side-effect to
  *         every element visited during graph traversal.
- * @define DUETOSUBG due to withSubgraph settings this path was out of scope.
  * @define EXTENDSTYPE which extends `scala.collection.Traversable` with elements of type
  * @define SETROOT and sets its `root` to this node
  * @define TOSTART To start a traversal call one of the graph traversal methods or 
@@ -80,10 +79,10 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
   /** Whether `this` graph is connected if it is undirected or
    *  weakly connected if it is directed.
    */
-  def isConnected = nodes.headOption map { head =>
-    head.innerNodeTraverser(
+  def isConnected: Boolean = nodes.headOption forall {
+    _.innerNodeTraverser(
         Parameters(kind = DepthFirst, direction = AnyConnected)).size == nodes.size
-  } getOrElse true
+  }
   
   /** Whether `this` graph has at least one cycle in any of its components.
    */
@@ -99,6 +98,11 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    */
   final def findCycle[U](implicit visitor: InnerElem => U = empty): Option[Cycle] =
     componentTraverser().findCycle(visitor)
+
+  /** Finds a cycle that contains `node`
+   *  and calls `visitor` for each inner element visited during the search.
+   */
+  def findCycleContaining[U](node: NodeT)(implicit visitor: InnerElem => U = empty): Option[Cycle] = None // TODO
 
   /** Represents a topological sort layer. */
   case class Layer protected[collection](index: Int, nodes: IndexedSeq[NodeT])
@@ -662,7 +666,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
   
   /** Represents a component of `this` graph.
    *  Edges and bridges are computed lazily.
-   *  Components will be instantiated by [[componentTraverser]] or [[strongComponentTraverser]].  
+   *  Components will be instantiated by [[componentTraverser]] or [[strongComponentTraverser]].
    */
   abstract class Component protected extends Properties {
     
@@ -771,6 +775,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
    * @define SHORTESTPATHRET The shortest path to `potentialSuccessor` or `None` if either
    *         a. there exists no path to `potentialSuccessor` or
    *         a. there exists a path to `potentialSuccessor` but $DUETOSUBG
+   * @define DUETOSUBG due to withSubgraph settings this path was out of scope.
    * @define VISITORDURING Function to be called for each inner node or inner edge visited during the
    */
   protected abstract class TraverserMethods[A, +This <: TraverserMethods[A,This]]
@@ -964,6 +969,15 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
      *  a. there exists a cycle in the component but $DUETOSUBG
      */
     def findCycle[U](implicit visitor: A => U = empty): Option[Cycle]
+
+    /** Finds a cycle that contains `root` $INTOACC.
+      *
+      * @param visitor $OPTVISITOR
+      * @return A cycle containing `root` or `None` if either
+      *  a. there exists no cycle containing `root` or
+      *  a. there exists such a cycle but $DUETOSUBG
+      */
+    def partOfCycle[U](implicit visitor: A => U = empty): Option[Cycle] = None // TODO
 
     /** Sorts the component designated by this node topologically.
      *  Only nodes connected with this node will be included in the resulting topological order. 
