@@ -28,20 +28,22 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
 
   object `given some directed graphs` {
     
-    val acyclic_1 = factory(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4)
-    val acyclic_2 = factory(1~>2, 1~>3, 1~>4, 1~>5, 2~>3, 3~>7, 7~>4, 7~>8, 4~>5, 5~>6)
+    val acyclic_1: CC[Int, DiEdge] = factory(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4)
+    val acyclic_2: CC[Int, DiEdge] =
+      factory(1 ~> 2, 1 ~> 3, 1 ~> 4, 1 ~> 5, 2 ~> 3, 3 ~> 7, 7 ~> 4, 7 ~> 8, 4 ~> 5, 5 ~> 6)
     
-    def makeCyclic(acyclic: CC[Int,DiEdge], byEdge: DiEdge[Int]) = {
-      val cyclic = acyclic + byEdge  
-          (cyclic, cyclic get byEdge)
+    def makeCyclic(acyclic: CC[Int, DiEdge], byEdge: DiEdge[Int]) = {
+      val cyclic = acyclic + byEdge
+      (cyclic, cyclic get byEdge)
     }
-    val (cyclic_1,  cyclicEdge_1 ) = makeCyclic(acyclic_1, 4~>2)
-    val (cyclic_21, cyclicEdge_21) = makeCyclic(acyclic_2, 8~>3)
-    val (cyclic_22, cyclicEdge_22) = makeCyclic(acyclic_2, 6~>1)
+
+    val (cyclic_1,  cyclicEdge_1) =  makeCyclic(acyclic_1, 4 ~> 2)
+    val (cyclic_21, cyclicEdge_21) = makeCyclic(acyclic_2, 8 ~> 3)
+    val (cyclic_22, cyclicEdge_22) = makeCyclic(acyclic_2, 6 ~> 1)
   
-    def c_1 (outer: Int) = cyclic_1  get outer
-    def c_21(outer: Int) = cyclic_21 get outer
-    def c_22(outer: Int) = cyclic_22 get outer
+    def c_1 (outer: Int): cyclic_1.NodeT = cyclic_1  get outer
+    def c_21(outer: Int): cyclic_21.NodeT = cyclic_21 get outer
+    def c_22(outer: Int): cyclic_22.NodeT = cyclic_22 get outer
   
     def `the cycle returned by 'findCycle' contains the expected nodes` {
       (acyclic_1 get 1 findCycle) should be (None)
@@ -60,9 +62,9 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
       
       val g = {
         var i, j=0
-        Graph.fill(5) { i+=1; j=i+1; i~>j }
+        Graph.fill(5) { i+=1; j=i+1; i ~> j }
       }
-      val (g1, g2) = (g + 4~>2, g + 5~>2)
+      val (g1, g2) = (g + 4 ~> 2, g + 5 ~> 2)
       val (gCycle_1, gCycle_2) = (g1 get 3 findCycle, g2 get 3 findCycle)
       def outer(out: Int) = g get out
       gCycle_1.get.nodes.toList should be (List(3, 4,    2, 3) map outer)
@@ -111,17 +113,17 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
   }
 
   object `given some undirected graphs` {
-    
-    val unDiAcyclic_1 = factory(1~2, 2~3)
-    val unDiCyclic_1  = unDiAcyclic_1 + 1~3
-    
-    val unDiAcyclic_2 = Graph(1~2, 1~3, 2~4, 2~5)
-    val unDiCyclic_21 = unDiAcyclic_2 + 3~5
-    val unDiCyclic_22 = unDiAcyclic_2 ++ List(3~6, 6~7, 7~4)
+
+    val unDiAcyclic_1: CC[Int, UnDiEdge] = factory(1 ~ 2, 2 ~ 3)
+    val unDiCyclic_1: CC[Int, UnDiEdge] = unDiAcyclic_1 + 1 ~ 3
+
+    val unDiAcyclic_2: Graph[Int, UnDiEdge] = Graph(1 ~ 2, 1 ~ 3, 2 ~ 4, 2 ~ 5)
+    val unDiCyclic_21: Graph[Int, UnDiEdge] = unDiAcyclic_2 + 3 ~ 5
+    val unDiCyclic_22: Graph[Int, UnDiEdge] = unDiAcyclic_2 ++ List(3 ~ 6, 6 ~ 7, 7 ~ 4)
   
-    def uc_1 (outer: Int) = unDiCyclic_1   get outer
-    def uc_21(outer: Int) = unDiCyclic_21  get outer
-    def uc_22(outer: Int) = unDiCyclic_22  get outer
+    def uc_1 (outer: Int): unDiCyclic_1.NodeT  = unDiCyclic_1   get outer
+    def uc_21(outer: Int): unDiCyclic_21.NodeT = unDiCyclic_21  get outer
+    def uc_22(outer: Int): unDiCyclic_22.NodeT = unDiCyclic_22  get outer
   
     def `the cycle returned by 'findCycle' contains the expected nodes` {
       (unDiAcyclic_1 get 1 findCycle) should be (None)
