@@ -221,8 +221,8 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       arraycopy(arr, 0, newArr, 0, nextFree)
       new SortedArraySet(newArr.asInstanceOf[Array[A]])
     }
-  def findEntry[B](other: B, correspond: (A, B) => Boolean): A =
-    if (isHash) hashSet findEntry (other, correspond)
+  def findElem[B](other: B, correspond: (A, B) => Boolean): A =
+    if (isHash) hashSet findElem (other, correspond)
     else {
       val idx = indexOf(other, (a: A, b: B) => a.hashCode == b.hashCode && correspond(a, b))
       (if (idx < 0) null else arr(idx)).asInstanceOf[A]

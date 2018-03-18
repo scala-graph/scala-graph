@@ -3,8 +3,6 @@ package demo
 import scalax.collection._
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge._
-import scalax.collection.edge._,
-       scalax.collection.edge.Implicits._
 
 import scalax.collection.io.json._
 import scalax.collection.io.json.descriptor.predefined.{DiHyper, Di}
@@ -85,7 +83,7 @@ class TJsonDemoTest extends	RefSpec with Matchers
       val exported = library.toJson(Named.descriptor)
   
       import net.liftweb.json._
-      val pretty = Printer.pretty(JsonAST.render(JsonParser.parse(exported)))
+      val pretty = prettyRender(JsonParser.parse(exported))
       /*{
           "nodes":{
             "Books":[{
@@ -169,7 +167,7 @@ class TJsonDemoTest extends	RefSpec with Matchers
       val exported = library.toJson(Positioned.descriptor)
   
       import net.liftweb.json._
-      val pretty = Printer.pretty(JsonAST.render(JsonParser.parse(exported)))
+      val pretty = prettyRender(JsonParser.parse(exported))
       // println(pretty)
       /*{
           "nodes":{
@@ -191,5 +189,5 @@ class TJsonDemoTest extends	RefSpec with Matchers
 }
 // --------------------------------- node types of academic library application
 sealed trait Library 
-case class Book  (val title: String, val isbn: String) extends Library
-case class Author(val surName: String, val firstName: String) extends Library
+case class Book  (title: String, isbn: String)        extends Library
+case class Author(surName: String, firstName: String) extends Library

@@ -95,7 +95,15 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
       }
     }
   }
-  
+
+  object `Having two week components` {
+    val g = Graph(11~>12, 13~>14)
+
+    def `week components are detected, fix #57` {
+      g.componentTraverser() should have size 2
+    }
+  }
+
   object `Having a bigger graph` {
     val g: G[Int,DiEdge] = {
         val gOrder = 1000

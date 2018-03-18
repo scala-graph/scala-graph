@@ -342,14 +342,14 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
     def n(outer: Int) = UnDi_1.node(outer)
 
     var lastCount = 0
-    n(1).innerNodeTraverser.withKind(DepthFirst) foreach {
+    n(1).innerNodeTraverser.withKind(DepthFirst) foreach
       ExtendedNodeVisitor((node, count, depth, informer) => {
           count should be (lastCount + 1)
           lastCount += 1
 
           node.value match {
             case 1 => depth should be (0)
-            case 2 => depth should (be (1) or be (3))
+            case 2 => depth should (be (1) or (be (2) or be (3)))
             case 3 => depth should (be (1) or be (2))
             case 4 => depth should (be (2) or be (3))
             case 5 => depth should (be > (0) and be < (5))
@@ -360,7 +360,6 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
           }
         }
       )
-    }
   }
 
   def `shortestPathTo in the flight example graph` {
@@ -441,12 +440,15 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
   def `DownUp traverser` {
     val g = Di_1.g
     def innerNode(outer: Int) = g get outer
-    val stack: Stack[Int] = Stack()
+    var stack = List.empty[Int]
     
     innerNode(4).innerNodeDownUpTraverser foreach (_ match {
       case (down, node) =>
-        if (down) stack.push(node.value)
-        else      stack.pop should be (node.value)
+        if (down) stack = node.value +: stack
+        else {
+          stack.head should be (node.value)
+          stack = stack.tail
+        }
     })
     stack should be ('empty)
   }

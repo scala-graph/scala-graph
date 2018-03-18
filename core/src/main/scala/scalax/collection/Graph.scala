@@ -36,8 +36,9 @@ trait GraphLike[N,
   with    GraphTraversal[N,E]
   with    GraphBase     [N,E]
   with    GraphDegree   [N,E]
-{ selfGraph: This[N,E] =>
-  protected type ThisGraph = this.type
+{ selfGraph: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
+             This[N,E] with GraphLike[N,E,This] with AnySet[Param[N,E]] with Graph[N,E] =>
+  protected type ThisGraph = selfGraph.type
   implicit val edgeT: ClassTag[E[N]]
 
   def isDirected = isDirectedT || edges.hasOnlyDiEdges
@@ -142,14 +143,14 @@ trait GraphLike[N,
   trait InnerNode extends super.InnerNode with TraverserInnerNode {
     this: NodeT =>
     /** The `Graph` instance `this` node is contained in. */
-    final def containingGraph: ThisGraph = selfGraph.asInstanceOf[ThisGraph]
+    final def containingGraph: ThisGraph = selfGraph
   }
   protected abstract class NodeBase(override val value: N)
       extends super.NodeBase
          with InnerNodeParam[N]
          with InnerNode {
     this: NodeT =>
-    final def isContaining[N, E[X]<:EdgeLikeIn[X]](g: GraphBase[N,E]) =
+    final def isContaining[N, E[X]<:EdgeLikeIn[X]](g: GraphBase[N,E]): Boolean =
       g eq containingGraph
   }
 
@@ -168,7 +169,7 @@ trait GraphLike[N,
     /**
      * removes `node` either rippling or gently. 
      * 
-     * @param node
+     * @param node the node to be subtracted
      * @param rippleDelete if `true`, `node` will be deleted with its incident edges;
      *        otherwise `node` will be only deleted if it has no incident edges or
      *        all its incident edges are hooks.
@@ -221,11 +222,11 @@ trait GraphLike[N,
    *
    *  @return iterator containing all nodes and all edges
    */
-  def iterator = nodes.toIterator ++ edges.toIterator
+  def iterator: Iterator[Param[N,E]] = nodes.toIterator ++ edges.toIterator
   /**
    * Searches for an inner node equaling to `outerNode` in this graph.
    * 
-   * @param node the outer node to search for in this graph.
+   * @param outerNode the outer node to search for in this graph.
    * @return `Some` of the inner node found or `None`.
    */
   @inline final def find(outerNode: N): Option[NodeT] = nodes find outerNode
@@ -421,7 +422,7 @@ trait GraphLike[N,
    * in that edges are deleted along with those incident nodes which would become isolated
    * after deletion.
    *
-   * @param coll collection of nodes and/or edges to be removed; if the element type is N,
+   * @param elems collection of nodes and/or edges to be removed; if the element type is N,
    *             it is removed from the node set otherwise from the edge set.
    *             See `-!(elem: Param[N,E])`.
    * @return the new subgraph containing all nodes and edges of this graph

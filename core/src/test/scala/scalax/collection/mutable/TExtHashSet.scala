@@ -24,7 +24,7 @@ class TExtHashSetTest extends RefSpec with Matchers {
        * outer object types will not be Graph-aware with regard to their equal.
        */
       def eq(outer: DiEdge[Int], inner: graph.EdgeT) = inner.edge == outer
-      set.findEntry(innerEdge, eq) should be (outerEdge)
+      set.findElem(innerEdge, eq) should be (outerEdge)
     }
     def `draw element` {
       val randomElems = collection.mutable.Set.empty[DiEdge[Int]]

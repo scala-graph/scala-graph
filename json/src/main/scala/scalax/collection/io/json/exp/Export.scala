@@ -81,6 +81,6 @@ class Export[N, E[X] <: EdgeLikeIn[X]] (graph:      Graph[N,E],
       }
     )
   }
-  def jsonAST(parts: Iterable[JField]) = JObject(parts.toList)
-  def jsonText(obj: JObject) = compact(render(obj))
+  def jsonAST(parts: Iterable[JField]): JObject = JObject(parts.toList)
+  def jsonText(obj: JObject): String = compactRender(obj)
 }

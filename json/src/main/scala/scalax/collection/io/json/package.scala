@@ -16,8 +16,7 @@ import scalax.collection.config.GraphConfig
  * See also the 
  * [[http://www.scala-graph.org/guides/json Graph for Scala JSON User Guide]].
  *
- * @define DESCR top level JSON import/export descriptor to be filled with all `NodeDescriptor`s
- *         and `EdgeDescriptors`.
+ * @define DESCR top level JSON import/export descriptor to be filled with all `NodeDescriptor`s and `EdgeDescriptors`.
  * @author Peter Empen
  */
 package object json {
@@ -40,8 +39,7 @@ package object json {
   import imp._, imp.Parser.parse, imp.Stream.createOuterElems
   import net.liftweb.json.JValue
   
-  implicit final class JsonGraphCoreCompanion[+G[N, E[X] <: EdgeLikeIn[X]]
-                                              <: Graph[N,E] with GraphLike[N,E,G]]
+  implicit final class JsonGraphCoreCompanion[+G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
       (val companion: GraphCoreCompanion[G]) extends AnyVal
   {
     /**
@@ -49,7 +47,7 @@ package object json {
      * the node/edge sections of a JSON text.
      * 
      * @param jsonAST the JSON tree to be parsed for node/edge sections
-     * @param descriptor $DESCR 
+     * @param descriptor $DESCR
      * @return new `Graph` instance populated from `jsonAST`
      */
     def fromJson[N, E[X]<:EdgeLikeIn[X]]
@@ -79,7 +77,7 @@ package object json {
      * `jsonLists`.
      * 
      * @param jsonLists node/edge lists usually attained by parsing a JSON text
-     * @param descriptor $DESCR 
+     * @param descriptor $DESCR
      * @return new `Graph` instance populated from `jsonText`
      */
     def fromJson[N, E[X]<:EdgeLikeIn[X]]

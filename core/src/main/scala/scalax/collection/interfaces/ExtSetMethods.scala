@@ -24,7 +24,7 @@ trait ExtSetMethods[A] {
    *  @param correspond function returning whether  a given entry corresponds to `other`
    *  @return the entry corresponding to `toMatch` or null if not contained
    */
-  def findEntry[B](toMatch: B, correspond: (A, B) => Boolean): A
+  def findElem[B](toMatch: B, correspond: (A, B) => Boolean): A
 
   /** Returns a lazily filtered immutable Set. */
   def withSetFilter(p: (A) => Boolean): FilteredSet[A] = new FilteredSet(this, p)

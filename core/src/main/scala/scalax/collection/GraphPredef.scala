@@ -69,10 +69,12 @@ object GraphPredef {
         case e: InnerEdgeParam[N,E,_,E] => e.asEdgeTProjection[N,E].toOuter.asInstanceOf[OuterEdge[N,E]]
       }}
     }
+    object Partitions {
+      def apply[N, E[X]<:EdgeLikeIn[X]](elems: Traversable[Param[N,E]]): Param.Partitions[N,E] =
+        new Param.Partitions(elems)
+    }
   }
-  implicit def graphParamsToPartition[N, E[X]<:EdgeLikeIn[X]]
-              (elems: Traversable[Param[N,E]]) = new Param.Partitions[N,E](elems)
-              
+
   implicit def nodeSetToOuter[N, E[X]<:EdgeLikeIn[X]](nodes: Graph[N,E]#NodeSetT): Iterable[N] =
     new AbstractIterable[N] {
       def iterator = new AbstractIterator[N] {
@@ -81,7 +83,7 @@ object GraphPredef {
         def next = it.next.value
       }
     }
-  
+
   implicit def nodeSetToSeq[N, E[X]<:EdgeLikeIn[X]](nodes: Graph[N,E]#NodeSetT)
       : Seq[OutParam[N,E]] = new SeqFacade(nodes)
   

@@ -21,7 +21,7 @@ final class TraversingTest extends RefSpec with Matchers {
   import scalax.collection.edge.{WDiEdge, WUnDiEdge}
   import scalax.collection.edge.Implicits._
 
-  def validatePath[N, E[X] <: EdgeLikeIn[X]](p: Graph[N,E]#Path,
+  private def validatePath[N, E[X] <: EdgeLikeIn[X]](p: Graph[N,E]#Path,
                                              sample: List[Param[N,E]]): Unit = {
     def toN(p: Param[N,E]): N = p match {
       case OuterNode(n) => n
@@ -109,14 +109,13 @@ final class TraversingTest extends RefSpec with Matchers {
       
       n1.innerEdgeTraverser.map(_.weight).sum   should be (7)
       
-      n1.innerElemTraverser.filter(_ match {
+      n1.innerElemTraverser.filter {
         case g.InnerNode(n) => n.degree > 1
         case g.InnerEdge(e) => e.weight > 1
-      })                           .map[OuterElem[Int,WDiEdge],
-                                        Traversable[OuterElem[Int,WDiEdge]]]((_: g.InnerElem) match {
+      }                            .map {
                                      case g.InnerNode(n) => n.value
                                      case g.InnerEdge(e) => e.toOuter
-                                   }).toSet should be (Set[OuterElem[Int,WDiEdge]](
+                                   }.toSet should be (Set[Any](
                                    1, 2, 3, 1~>3 % 2, 2~>3 % 3))
     }
     
@@ -146,7 +145,7 @@ final class TraversingTest extends RefSpec with Matchers {
   
       type ValDepth = (Int,Int)
       var info = List.empty[ValDepth]
-      (g get 1).innerNodeTraverser.withKind(DepthFirst).foreach {
+      (g get 1).innerNodeTraverser.foreach {
         ExtendedNodeVisitor((node, count, depth, informer) => {
           info :+= (node.value, depth)
         })
@@ -182,12 +181,7 @@ final class TraversingTest extends RefSpec with Matchers {
       sums should be (List(6, 18))
       
       val anyNode = disconnected.nodes.draw(new util.Random)
-      anyNode.weakComponent.nodes should have size (componentEdges._1.size)
-    }
-    
-    def `weak component traverser fix #57` {
-      val g = Graph(11~>12, 13~>14)
-      g.componentTraverser() should have size (2)
+      anyNode.weakComponent.nodes should have size componentEdges._1.size
     }
     
     def `strong component traverser` {
@@ -201,7 +195,7 @@ final class TraversingTest extends RefSpec with Matchers {
       scc.toSet should be (Set(sccExpected._1, sccExpected._2))
       
       val startAt = sccExpected._2.nodes.head
-      startAt.strongComponents should have size (1)
+      startAt.strongComponents should have size 1
       startAt.innerNodeTraverser.strongComponents(_ => ())
     }
 

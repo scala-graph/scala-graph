@@ -3,7 +3,7 @@ package mutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.language.{higherKinds, postfixOps}
+import scala.language.higherKinds
 import scala.collection.generic.{CanBuildFrom, Growable, Shrinkable}
 import scala.collection.mutable.{Builder, Cloneable, ArrayBuffer, Set => MutableSet}
 import scala.reflect.ClassTag
@@ -84,7 +84,8 @@ trait GraphLike[N,
 	with	  Cloneable [Graph[N,E]]
   with    EdgeOps   [N,E,This]
   with    Mutable
-{ this: This[N,E] =>
+{ this: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
+        This[N,E] with GraphLike[N,E,This] with Graph[N,E] =>
 	override def clone: This[N,E] = graphCompanion.from[N,E](nodes.toOuter, edges.toOuter)
 	type NodeT <: InnerNode 
   trait InnerNode extends super.InnerNode with InnerNodeOps {
@@ -124,7 +125,7 @@ trait GraphLike[N,
 	
   /** Adds a node to this graph.
    *
-   *  @param n the node to be added
+   *  @param node the node to be added
    *  @return `true` if the node was not yet present in the graph, `false` otherwise.
    */
   def add(node: N): Boolean
@@ -134,7 +135,7 @@ trait GraphLike[N,
    * @param node the node to add.
    * @return inner node containing the added node.
    */
-  @inline final def addAndGet(node: N): NodeT = { add(node); find(node) get }
+  @inline final def addAndGet(node: N): NodeT = { add(node); find(node).get }
 	def +  (node: N) = if (nodes contains Node(node)) this.asInstanceOf[This[N,E]]
 	                   else clone += node
 	@inline final def += (node: N): this.type = { add(node); this }
@@ -145,10 +146,10 @@ trait GraphLike[N,
    * @param edge the edge to add.
    * @return the inner edge containing the added edge.
    */
-  @inline final def addAndGet(edge: E[N]): EdgeT = { add(edge); find(edge) get }
+  @inline final def addAndGet(edge: E[N]): EdgeT = { add(edge); find(edge).get }
 	@inline final protected def +#  (edge: E[N]) = clone +=# edge
 	protected def +=#(edge: E[N]): this.type
-	def += (elem: Param[N,E]) =
+	def += (elem: Param[N,E]): this.type =
     elem match {
       case n: OuterNode [N] => this += n.value	
       case n: InnerNodeParam[N] => this += n.value
@@ -165,12 +166,12 @@ trait GraphLike[N,
    */
   def upsert(edge: E[N]): Boolean
 
-	@inline final def     - (node: N) = clone -= node
-  @inline final def remove(node: N) = nodes find node exists (nodes remove _)
+	@inline final def     - (node: N): This[N,E] = clone -= node
+  @inline final def remove(node: N): Boolean   = nodes find node exists (nodes remove _)
 	@inline final def    -= (node: N): this.type = { remove(node); this }
   @inline final def    -?=(node: N): this.type = { removeGently(node); this }
-  @inline final def    -? (node: N) = clone -?= node
-  final def   removeGently(node: N) = nodes find node exists (nodes removeGently _) 
+  @inline final def    -? (node: N): This[N,E] = clone -?= node
+  final def   removeGently(node: N): Boolean   = nodes find node exists (nodes removeGently _)
 
 	@inline final           def -     (edge: E[N]) = clone -=# edge
   @inline final           def remove(edge: E[N]) = edges remove Edge(edge)
@@ -216,8 +217,7 @@ trait GraphLike[N,
    * @return this graph shrinked by the nodes and edges contained in `coll`.
    */
   @inline final
-  def --!=(coll: Iterable[Param[N,E]]): This[N,E] =
-    (this /: coll)(_ -!= _) 
+  def --!=(coll: Iterable[Param[N,E]]): This[N,E] = (this /: coll)(_ -!= _)
 }
 /**
  * The main trait for mutable graphs bundling the functionality of traits concerned with

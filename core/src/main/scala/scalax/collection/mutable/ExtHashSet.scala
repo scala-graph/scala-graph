@@ -8,6 +8,15 @@ import scala.collection.generic.{GenericSetTemplate, MutableSetFactory}
 
 import interfaces.ExtSetMethods
 
+/* Alternatively we could use `hashTableContents` as suggested by Rüdiger Klaehn like
+
+package scala.collection.mutable
+object HashSetExt {
+  implicit class HashSetDraw[A](val value: HashSet[A]) extends AnyVal {
+    def draw(random:Random) : A = {
+      val table = value.hashTableContents.table
+      ...
+*/
 class ExtHashSet[A]
   extends HashSet[A]
   with SetLike[A, ExtHashSet[A]]
@@ -33,8 +42,10 @@ class ExtHashSet[A]
     search(drawn, 1, (i: Int) => i < len)    getOrElse(
     search(drawn - 1, -1, (i: Int) => i > 0).get)
   }
-  override def findEntry(elem: A): Option[A] = super.findEntry(elem)
-  def findEntry[B](other: B, correspond: (A, B) => Boolean): A = {
+  
+  def findElem(elem: A): Option[A] = findEntry(elem)
+  
+  def findElem[B](other: B, correspond: (A, B) => Boolean): A = {
     var entry: AnyRef = null
     if (null != other) {
       var h = index(other.hashCode)
@@ -46,6 +57,7 @@ class ExtHashSet[A]
     }
     entry.asInstanceOf[A]
   }
+  
   /** Returns an `Iterator` over all entries having the passed `hashCode`.
    */
   def hashCodeIterator(hcode: Int): Iterator[A] = new AbstractIterator[A] {
@@ -60,15 +72,11 @@ class ExtHashSet[A]
       prevEntry.asInstanceOf[A]
     }
   }
+  
   /** Updates or inserts `elem`.
-   *  @return `true` if an update took place. */
+   *  @return `true` if an update took place.
+   */
   protected[collection] def upsert(elem: A with AnyRef): Boolean = {
-    /* 2.11
-    val update = removeElem(elem)
-    addElem(elem)
-    update
-    */
-    /* 2.10 */
     var h = index(elem.##)
     var entry = table(h)
     while (null != entry) {
@@ -82,6 +90,7 @@ class ExtHashSet[A]
     addEntry(elem)
   }
 }
+
 object ExtHashSet extends MutableSetFactory[ExtHashSet] {
   override def empty[A] = new ExtHashSet[A]
   override def newBuilder[A] = new GrowingBuilder[A, ExtHashSet[A]](empty[A])
