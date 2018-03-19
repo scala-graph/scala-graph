@@ -28,22 +28,20 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
 
   object `given some directed graphs` {
     
-    val acyclic_1: CC[Int, DiEdge] = factory(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4)
-    val acyclic_2: CC[Int, DiEdge] =
-      factory(1 ~> 2, 1 ~> 3, 1 ~> 4, 1 ~> 5, 2 ~> 3, 3 ~> 7, 7 ~> 4, 7 ~> 8, 4 ~> 5, 5 ~> 6)
+    val acyclic_1 = factory(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4)
+    val acyclic_2 = factory(1~>2, 1~>3, 1~>4, 1~>5, 2~>3, 3~>7, 7~>4, 7~>8, 4~>5, 5~>6)
     
-    def makeCyclic(acyclic: CC[Int, DiEdge], byEdge: DiEdge[Int]) = {
+    def makeCyclic(acyclic: CC[Int,DiEdge], byEdge: DiEdge[Int]) = {
       val cyclic = acyclic + byEdge
-      (cyclic, cyclic get byEdge)
+          (cyclic, cyclic get byEdge)
     }
-
-    val (cyclic_1,  cyclicEdge_1) =  makeCyclic(acyclic_1, 4 ~> 2)
-    val (cyclic_21, cyclicEdge_21) = makeCyclic(acyclic_2, 8 ~> 3)
-    val (cyclic_22, cyclicEdge_22) = makeCyclic(acyclic_2, 6 ~> 1)
+    val (cyclic_1,  cyclicEdge_1 ) = makeCyclic(acyclic_1, 4~>2)
+    val (cyclic_21, cyclicEdge_21) = makeCyclic(acyclic_2, 8~>3)
+    val (cyclic_22, cyclicEdge_22) = makeCyclic(acyclic_2, 6~>1)
   
-    def c_1 (outer: Int): cyclic_1.NodeT = cyclic_1  get outer
-    def c_21(outer: Int): cyclic_21.NodeT = cyclic_21 get outer
-    def c_22(outer: Int): cyclic_22.NodeT = cyclic_22 get outer
+    def c_1 (outer: Int) = cyclic_1  get outer
+    def c_21(outer: Int) = cyclic_21 get outer
+    def c_22(outer: Int) = cyclic_22 get outer
   
     def `the cycle returned by 'findCycle' contains the expected nodes` {
       (acyclic_1 get 1 findCycle) should be (None)
@@ -62,9 +60,9 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
       
       val g = {
         var i, j=0
-        Graph.fill(5) { i+=1; j=i+1; i ~> j }
+        Graph.fill(5) { i+=1; j=i+1; i~>j }
       }
-      val (g1, g2) = (g + 4 ~> 2, g + 5 ~> 2)
+      val (g1, g2) = (g + 4~>2, g + 5~>2)
       val (gCycle_1, gCycle_2) = (g1 get 3 findCycle, g2 get 3 findCycle)
       def outer(out: Int) = g get out
       gCycle_1.get.nodes.toList should be (List(3, 4,    2, 3) map outer)
@@ -114,30 +112,59 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
 
   object `given some undirected graphs` {
 
-    val unDiAcyclic_1: CC[Int, UnDiEdge] = factory(1 ~ 2, 2 ~ 3)
-    val unDiCyclic_1: CC[Int, UnDiEdge] = unDiAcyclic_1 + 1 ~ 3
+    val unDiAcyclic_1 = factory(1 ~ 2, 2 ~ 3)
+    val unDiCyclic_1 = unDiAcyclic_1 + 1 ~ 3
 
-    val unDiAcyclic_2: Graph[Int, UnDiEdge] = Graph(1 ~ 2, 1 ~ 3, 2 ~ 4, 2 ~ 5)
-    val unDiCyclic_21: Graph[Int, UnDiEdge] = unDiAcyclic_2 + 3 ~ 5
-    val unDiCyclic_22: Graph[Int, UnDiEdge] = unDiAcyclic_2 ++ List(3 ~ 6, 6 ~ 7, 7 ~ 4)
-  
-    def uc_1 (outer: Int): unDiCyclic_1.NodeT  = unDiCyclic_1   get outer
-    def uc_21(outer: Int): unDiCyclic_21.NodeT = unDiCyclic_21  get outer
-    def uc_22(outer: Int): unDiCyclic_22.NodeT = unDiCyclic_22  get outer
-  
+    val unDiAcyclic_2 = Graph(1 ~ 2, 1 ~ 3, 2 ~ 4, 2 ~ 5)
+    val unDiCyclic_21 = unDiAcyclic_2 + 3 ~ 5
+    val unDiCyclic_22 = unDiAcyclic_2 ++ List(3 ~ 6, 6 ~ 7, 7 ~ 4)
+
+    val unDiCyclic_3 = factory() ++ Data.elementsOfUnDi_1
+
+    def ua_1  (outer: Int) = unDiAcyclic_1  get outer
+    def ua_2  (outer: Int) = unDiAcyclic_2  get outer
+    def uc_1  (outer: Int) = unDiCyclic_1   get outer
+    def uc_21 (outer: Int) = unDiCyclic_21  get outer
+    def uc_22 (outer: Int) = unDiCyclic_22  get outer
+    def uc_3  (outer: Int) = unDiCyclic_3   get outer
+
     def `the cycle returned by 'findCycle' contains the expected nodes` {
       (unDiAcyclic_1 get 1 findCycle) should be (None)
       uc_1(2).findCycle.get.nodes.toList should (
-          be (List(2, 3, 1, 2) map uc_1) or
+        be (List(2, 3, 1, 2) map uc_1) or
           be (List(2, 1, 3, 2) map uc_1))
       (unDiAcyclic_2 get 1 findCycle) should be (None)
       uc_21(1).findCycle.get.nodes.toList should (
-          be (List(1, 3, 5, 2, 1) map uc_21) or
+        be (List(1, 3, 5, 2, 1) map uc_21) or
           be (List(1, 2, 5, 3, 1) map uc_21))
       uc_22(3).findCycle.get.nodes.toList should (
-          be (List(3, 1, 2, 4, 7, 6, 3) map uc_22) or
+        be (List(3, 1, 2, 4, 7, 6, 3) map uc_22) or
           be (List(3, 6, 7, 4, 2, 1, 3) map uc_22))
     }
+
+    def `the cycle returned by 'findCycleContaining' contains the expected nodes` {
+      (ua_1(1) findCycleContaining(ua_1(1))) should be (None)
+      (ua_1(1) findCycleContaining(ua_1(2))) should be (None)
+      (ua_1(1) findCycleContaining(ua_1(3))) should be (None)
+      uc_1(2).findCycleContaining(uc_1(3)).get.nodes.toList should (
+        be (List(2, 3, 1, 2) map uc_1) or
+          be (List(2, 1, 3, 2) map uc_1))
+      (ua_2(1) findCycleContaining(ua_2(3))) should be (None)
+      uc_21(1).findCycleContaining(uc_21(3)).get.nodes.toList should (
+        be (List(1, 3, 5, 2, 1) map uc_21) or
+          be (List(1, 2, 5, 3, 1) map uc_21))
+      uc_21(1).findCycleContaining(uc_21(4)).get.nodes.toList should be (None)
+      uc_22(3).findCycleContaining(uc_22(4)).get.nodes.toList should (
+        be (List(3, 1, 2, 4, 7, 6, 3) map uc_22) or
+          be (List(3, 6, 7, 4, 2, 1, 3) map uc_22))
+      uc_22(3).findCycleContaining(uc_22(5)).get.nodes.toList should be (None)
+      uc_3(3).findCycleContaining(uc_3(2)).get.nodes.toList should (
+        be (List(3, 2, 1, 3) map uc_3))
+      uc_3(3).findCycleContaining(uc_3(1)).get.nodes.toList should (
+        be (List(3, 2, 1, 3) map uc_3) or
+          be (List(3, 5, 1, 3) map uc_3))
+    }
+
   }
   
   object `given an undirected multigraph` {
