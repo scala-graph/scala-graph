@@ -118,11 +118,14 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
     val unDiAcyclic_2 = factory(1~2, 1~3, 2~4, 2~5)
     val unDiCyclic_21 = unDiAcyclic_2 + 3~5
     val unDiCyclic_22 = unDiAcyclic_2 ++ List(3~6, 6~7, 7~4)
-  
+
+    val unDiCyclic_3 = factory() ++ Data.elementsOfUnDi_1
+
     def uc_1 (outer: Int) = unDiCyclic_1   get outer
     def uc_21(outer: Int) = unDiCyclic_21  get outer
     def uc_22(outer: Int) = unDiCyclic_22  get outer
-  
+    def uc_3 (outer: Int) = unDiCyclic_3   get outer
+
     def `the cycle returned by 'findCycle' contains the expected nodes` {
       (unDiAcyclic_1 get 1 findCycle) should be (None)
       uc_1(2).findCycle.get.nodes.toList should (
@@ -136,8 +139,32 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
           be (List(3, 1, 2, 4, 7, 6, 3) map uc_22) or
           be (List(3, 6, 7, 4, 2, 1, 3) map uc_22))
     }
+
+    def `the cycle returned by 'findCycleContaining' contains the expected nodes` {
+      unDiAcyclic_1.findCycleContaining(unDiAcyclic_1 get 1) should be (None)
+      unDiCyclic_1.findCycleContaining(uc_1(2)).get.nodes.toList should (
+        be (List(2, 3, 1, 2) map uc_1) or
+        be (List(2, 1, 3, 2) map uc_1))
+      unDiAcyclic_2.findCycleContaining(unDiAcyclic_2 get 1) should be (None)
+      unDiCyclic_21.findCycleContaining(uc_21(1)).get.nodes.toList should (
+        be (List(1, 3, 5, 2, 1) map uc_21) or
+        be (List(1, 2, 5, 3, 1) map uc_21))
+      unDiCyclic_21.findCycleContaining(uc_21(4)).get.nodes.toList should be (None)
+      unDiCyclic_22.findCycleContaining(uc_22(3)).get.nodes.toList should (
+        be (List(3, 1, 2, 4, 7, 6, 3) map uc_22) or
+        be (List(3, 6, 7, 4, 2, 1, 3) map uc_22))
+      unDiCyclic_22.findCycleContaining(uc_22(5)).get.nodes.toList should be (None)
+      unDiCyclic_3.findCycleContaining(uc_3(2)).get.nodes.toList should
+        be (List(2, 1, 3, 2) map uc_3)
+      unDiCyclic_3.findCycleContaining(uc_3(1)).get.nodes.toList should (
+        be (List(1, 3, 2, 1) map uc_3) or
+          be (List(1, 3, 5, 1) map uc_3))
+      unDiCyclic_3.findCycleContaining(uc_3(4)).get.nodes.toList should (
+        be (List(4) map uc_3) or
+        be (List(4, 5, 3, 4) map uc_3))
+    }
+
   }
-  
   object `given an undirected multigraph` {
     
     def `the cycle returned by 'findCycle' contains the expected edges` {
