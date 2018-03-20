@@ -115,7 +115,7 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
     val unDiAcyclic_1 = factory(1~2, 2~3)
     val unDiCyclic_1  = unDiAcyclic_1 + 1~3
     
-    val unDiAcyclic_2 = Graph(1~2, 1~3, 2~4, 2~5)
+    val unDiAcyclic_2 = factory(1~2, 1~3, 2~4, 2~5)
     val unDiCyclic_21 = unDiAcyclic_2 + 3~5
     val unDiCyclic_22 = unDiAcyclic_2 ++ List(3~6, 6~7, 7~4)
   
