@@ -13,6 +13,7 @@ import io._
 
 import org.scalatest.refspec.RefSpec
 import org.scalatest.{Matchers, Suites}
+import org.scalatest.matchers.{MatchResult, Matcher}
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
@@ -22,11 +23,28 @@ class TCycleRootTest
       new TCycle[immutable.Graph](immutable.Graph),
       new TCycle[  mutable.Graph](  mutable.Graph))
 
+trait CycleMatcher[N, E[X] <: EdgeLikeIn[X]] {
+  protected type C = Graph[N, E]#Cycle
+
+  def haveOneNodeSequenceOf(expected: Seq[N]*): Matcher[Option[C]] =
+    Matcher { (ns: Option[C]) =>
+      val found: Seq[N] = ns match {
+        case None => Seq()
+        case Some(path) => path.nodes.toSeq.map(_.value)
+      }
+      MatchResult(
+        expected.contains(found),
+        found + " has none of the sequences " + expected,
+        found + " has one of the sequences " + expected
+      )
+    }
+}
+
 class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (val factory: GraphCoreCompanion[CC])
 	  extends	RefSpec
 	  with Matchers {
 
-  object `given some directed graphs` {
+  object `given some directed graphs` extends CycleMatcher[Int, DiEdge]  {
     
     val acyclic_1 = factory(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4)
     val acyclic_2 = factory(1~>2, 1~>3, 1~>4, 1~>5, 2~>3, 3~>7, 7~>4, 7~>8, 4~>5, 5~>6)
@@ -45,18 +63,22 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
   
     def `the cycle returned by 'findCycle' contains the expected nodes` {
       (acyclic_1 get 1 findCycle) should be (None)
-      c_1(2).findCycle.get.nodes.toList should be (List(2, 3, 4, 2) map c_1)
+      c_1(2).findCycle should haveOneNodeSequenceOf(
+        Seq(2, 3, 4, 2))
   
       (acyclic_2 get 1 findCycle) should be (None)
-      c_21(1).findCycle.get.nodes.toList should be (List(3, 7, 8, 3) map c_21)
-      c_22(1).findCycle.get.nodes.toList should(be (List(1, 5, 6, 1)             map c_22) or
-                                                be (List(1, 4, 5, 6, 1)          map c_22) or
-                                                be (List(1, 3, 7, 4, 5, 6, 1)    map c_22) or
-                                                be (List(1, 2, 3, 7, 4, 5, 6, 1) map c_22))
-      c_22(4).findCycle.get.nodes.toList should(be (List(5, 6, 1, 5)             map c_22) or
-                                                be (List(4, 5, 6, 1, 4)          map c_22) or
-                                                be (List(4, 5, 6, 1, 3, 7, 4)    map c_22) or
-                                                be (List(4, 5, 6, 1, 2, 3, 7, 4) map c_22))
+      c_21(1).findCycle should haveOneNodeSequenceOf(
+        Seq(3, 7, 8, 3))
+      c_22(1).findCycle should haveOneNodeSequenceOf(
+        Seq(1, 5, 6, 1),
+        Seq(1, 4, 5, 6, 1),
+        Seq(1, 3, 7, 4, 5, 6, 1),
+        Seq(1, 2, 3, 7, 4, 5, 6, 1))
+      c_22(4).findCycle should haveOneNodeSequenceOf(
+        Seq(5, 6, 1, 5),
+        Seq(4, 5, 6, 1, 4),
+        Seq(4, 5, 6, 1, 3, 7, 4),
+        Seq(4, 5, 6, 1, 2, 3, 7, 4))
       
       val g = {
         var i, j=0
@@ -64,10 +86,9 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
       }
       val (g1, g2) = (g + 4~>2, g + 5~>2)
       val (gCycle_1, gCycle_2) = (g1 get 3 findCycle, g2 get 3 findCycle)
-      def outer(out: Int) = g get out
-      gCycle_1.get.nodes.toList should be (List(3, 4,    2, 3) map outer)
-      gCycle_2.get.nodes.toList should be (List(3, 4, 5, 2, 3) map outer)
-  
+      gCycle_1 should haveOneNodeSequenceOf(Seq(3, 4,    2, 3))
+      gCycle_2 should haveOneNodeSequenceOf(Seq(3, 4, 5, 2, 3))
+
       def fromEachNode[N,E[X] <: EdgeLikeIn[X]](noCycles: Set[N], cycle: Graph[N,E]#Cycle) {
         val g = cycle.nodes.head.containingGraph
         def outer(out: N) = g get out
@@ -110,7 +131,7 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
     }
   }
 
-  object `given some undirected graphs` {
+  object `given some undirected graphs` extends CycleMatcher[Int, UnDiEdge] {
     
     val unDiAcyclic_1 = factory(1~2, 2~3)
     val unDiCyclic_1  = unDiAcyclic_1 + 1~3
@@ -128,40 +149,40 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
 
     def `the cycle returned by 'findCycle' contains the expected nodes` {
       (unDiAcyclic_1 get 1 findCycle) should be (None)
-      uc_1(2).findCycle.get.nodes.toList should (
-          be (List(2, 3, 1, 2) map uc_1) or
-          be (List(2, 1, 3, 2) map uc_1))
+      uc_1(2).findCycle should haveOneNodeSequenceOf(
+        Seq(2, 3, 1, 2),
+        Seq(2, 1, 3, 2))
       (unDiAcyclic_2 get 1 findCycle) should be (None)
-      uc_21(1).findCycle.get.nodes.toList should (
-          be (List(1, 3, 5, 2, 1) map uc_21) or
-          be (List(1, 2, 5, 3, 1) map uc_21))
-      uc_22(3).findCycle.get.nodes.toList should (
-          be (List(3, 1, 2, 4, 7, 6, 3) map uc_22) or
-          be (List(3, 6, 7, 4, 2, 1, 3) map uc_22))
+      uc_21(1).findCycle should haveOneNodeSequenceOf(
+        Seq(1, 3, 5, 2, 1),
+        Seq(1, 2, 5, 3, 1))
+      uc_22(3).findCycle should haveOneNodeSequenceOf(
+        Seq(3, 1, 2, 4, 7, 6, 3),
+        Seq(3, 6, 7, 4, 2, 1, 3))
     }
 
     def `the cycle returned by 'findCycleContaining' contains the expected nodes` {
       unDiAcyclic_1.findCycleContaining(unDiAcyclic_1 get 1) should be (None)
-      unDiCyclic_1.findCycleContaining(uc_1(2)).get.nodes.toList should (
-        be (List(2, 3, 1, 2) map uc_1) or
-        be (List(2, 1, 3, 2) map uc_1))
+      unDiCyclic_1.findCycleContaining(uc_1(2)) should haveOneNodeSequenceOf(
+        Seq(2, 3, 1, 2),
+        Seq(2, 1, 3, 2))
       unDiAcyclic_2.findCycleContaining(unDiAcyclic_2 get 1) should be (None)
-      unDiCyclic_21.findCycleContaining(uc_21(1)).get.nodes.toList should (
-        be (List(1, 3, 5, 2, 1) map uc_21) or
-        be (List(1, 2, 5, 3, 1) map uc_21))
+      unDiCyclic_21.findCycleContaining(uc_21(1)) should haveOneNodeSequenceOf(
+        Seq(1, 3, 5, 2, 1),
+        Seq(1, 2, 5, 3, 1))
       unDiCyclic_21.findCycleContaining(uc_21(4)).get.nodes.toList should be (None)
-      unDiCyclic_22.findCycleContaining(uc_22(3)).get.nodes.toList should (
-        be (List(3, 1, 2, 4, 7, 6, 3) map uc_22) or
-        be (List(3, 6, 7, 4, 2, 1, 3) map uc_22))
+      unDiCyclic_22.findCycleContaining(uc_22(3)) should haveOneNodeSequenceOf(
+        Seq(3, 1, 2, 4, 7, 6, 3),
+        Seq(3, 6, 7, 4, 2, 1, 3))
       unDiCyclic_22.findCycleContaining(uc_22(5)).get.nodes.toList should be (None)
-      unDiCyclic_3.findCycleContaining(uc_3(2)).get.nodes.toList should
-        be (List(2, 1, 3, 2) map uc_3)
-      unDiCyclic_3.findCycleContaining(uc_3(1)).get.nodes.toList should (
-        be (List(1, 3, 2, 1) map uc_3) or
-          be (List(1, 3, 5, 1) map uc_3))
-      unDiCyclic_3.findCycleContaining(uc_3(4)).get.nodes.toList should (
-        be (List(4) map uc_3) or
-        be (List(4, 5, 3, 4) map uc_3))
+      unDiCyclic_3.findCycleContaining(uc_3(2)) should haveOneNodeSequenceOf(
+        Seq(2, 1, 3, 2))
+      unDiCyclic_3.findCycleContaining(uc_3(1)) should haveOneNodeSequenceOf(
+        Seq(1, 3, 2, 1),
+        Seq(1, 3, 5, 1))
+      unDiCyclic_3.findCycleContaining(uc_3(4)) should haveOneNodeSequenceOf(
+        Seq(4),
+        Seq(4, 5, 3, 4))
     }
 
   }
