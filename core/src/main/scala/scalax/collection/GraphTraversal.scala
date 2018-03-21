@@ -992,7 +992,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     def topologicalSort[U](ignorePredecessors: Boolean = false)
                           (implicit visitor: InnerElem => U = empty): CycleNodeOrTopologicalOrder
                           
-    /** Determines the week component that contains this node.
+    /** Determines the weak component that contains this node.
      *  $SEEFLUENT
      *  
      *  @param visitor $VISITORDURING search.
