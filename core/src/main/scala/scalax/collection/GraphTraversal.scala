@@ -709,7 +709,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
   }
   
   /** Controls the properties of graph traversals with no specific root and allows
-   *  you to produce the (weekly) connected components by a traversal or
+   *  you to produce the (weakly) connected components by a traversal or
    *  call methods like `findCycle` that work component-wise. 
    */
   abstract class ComponentTraverser protected
@@ -727,7 +727,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
   }
   
   /** Creates a [[ComponentTraverser]] responsible for invoking graph traversal methods in all
-   *  (weekly) connected components of this possibly disconnected graph.
+   *  (weakly) connected components of this possibly disconnected graph.
    *    
    * @param parameters $PARAMETERS
    * @param subgraphNodes $SUBGRAPHNODES      
@@ -868,7 +868,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
 
     /** Finds a node connected with `root` by any number of edges with any direction
      *  for which the predicate `pred` holds $CONSIDERING
-     *  For directed or mixed graphs the node to be found is weekly connected with this node.
+     *  For directed or mixed graphs the node to be found is weakly connected with this node.
      * `root` itself does not count as a match. This is also true if it has a hook.
      * If several connected nodes exist with `pred` the algorithm selects any one of these.
      * 
@@ -886,7 +886,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
     /** Checks whether `potentialConnected` is a node (not necessarily directly)
      *  connected with `root` by any number of edges with any direction $CONSIDERING
      *  For directed or mixed graphs it is satisfactory that `potentialConnected` is
-     *  weekly connected with `root`.
+     *  weakly connected with `root`.
      *
      * @param potentialConnected The node which is potentially connected with `root`. 
      * @param visitor $OPTVISITOR
