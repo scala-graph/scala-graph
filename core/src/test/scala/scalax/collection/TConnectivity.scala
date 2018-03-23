@@ -33,7 +33,7 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
   
   implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
   
-  object `In a weekly connected diGraph` {
+  object `In a weakly connected diGraph` {
     import Data.elementsOfDi_1
     val g = factory(elementsOfDi_1: _*)
     
