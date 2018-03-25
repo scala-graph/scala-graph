@@ -32,11 +32,8 @@ trait CycleMatcher[N, E[X] <: EdgeLikeIn[X]] {
         case None => Seq()
         case Some(path) => path.nodes.toSeq.map(_.value)
       }
-      MatchResult(
-        expected.contains(found),
-        found + " has none of the sequences " + expected,
-        found + " has one of the sequences " + expected
-      )
+      def msg(key: String): String = s"$found equals to $key of ${expected mkString ", "}"
+      MatchResult(expected contains found, msg("none"), msg("one"))
     }
 }
 
@@ -139,7 +136,7 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
       cyclic_1.findCycleContaining(c_1(2)).get.edges should contain (cyclicEdge_1)
 
       cyclic_21.findCycleContaining(c_21(3)).get.edges should contain (cyclicEdge_21)
-      cyclic_22.findCycleContaining(c_22(2)).get.edges should contain (cyclicEdge_22)
+      cyclic_22.findCycleContaining(c_22(1)).get.edges should contain (cyclicEdge_22)
     }
 
     def `'isCyclic' returns the expected result` {
@@ -157,14 +154,12 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
       val f = factory(loop)
 
       val maybeCycle = f.findCycle
-      maybeCycle should be ('isDefined)
-      val cycle = maybeCycle.get
-      cycle should be ('isValid)
+      maybeCycle     should be ('isDefined)
+      maybeCycle.get should be ('isValid)
 
       val maybeCycleContaining = f.findCycleContaining(f get 1)
-      maybeCycleContaining should be ('isDefined)
-      val cycleContaining = maybeCycleContaining.get
-      cycle should be ('isValid)
+      maybeCycleContaining     should be ('isDefined)
+      maybeCycleContaining.get should be ('isValid)
     }
   }
 
@@ -204,13 +199,12 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
       unDiCyclic_21.findCycleContaining(uc_21(1)) should haveOneNodeSequenceOf(
         Seq(1, 3, 5, 2, 1),
         Seq(1, 2, 5, 3, 1))
-      unDiCyclic_21.findCycleContaining(uc_21(4)).get.nodes.toList should be (None)
+      unDiCyclic_21.findCycleContaining(uc_21(4)) should be (None)
       unDiCyclic_22.findCycleContaining(uc_22(3)) should haveOneNodeSequenceOf(
         Seq(3, 1, 2, 4, 7, 6, 3),
         Seq(3, 6, 7, 4, 2, 1, 3))
-      unDiCyclic_22.findCycleContaining(uc_22(5)).get.nodes.toList should be (None)
+      unDiCyclic_22.findCycleContaining(uc_22(5)) should be (None)
     }
-
   }
 
   object `given an undirected multigraph` {
@@ -231,7 +225,6 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
       c.get.edges should (be (List(e1, e2)) or
         be (List(e2, e1)))
     }
-
   }
   
   object `given a mixed graph` extends CycleMatcher[Int, UnDiEdge] {
