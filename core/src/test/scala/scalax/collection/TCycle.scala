@@ -235,13 +235,23 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
 
     def `the cycle returned by 'findCycleContaining' contains the expected nodes` {
       mixed.findCycleContaining(m(2)) should haveOneNodeSequenceOf(
-        Seq(2, 1, 3, 2))
+        Seq(2, 1, 3, 2),
+        Seq(2, 3, 4, 5, 1, 2),
+        Seq(2, 1, 5, 3, 2),
+        Seq(2, 3, 5, 1, 2)
+      )
       mixed.findCycleContaining(m(1)) should haveOneNodeSequenceOf(
         Seq(1, 3, 2, 1),
-        Seq(1, 3, 5, 1))
+        Seq(1, 3, 5, 1),
+        Seq(1, 2, 3, 5, 1),
+        Seq(1, 5, 3, 2, 1),
+        Seq(1, 2, 3, 4, 5, 1),
+        Seq(1, 3, 4, 5, 1))
       mixed.findCycleContaining(m(4)) should haveOneNodeSequenceOf(
-        Seq(4),
-        Seq(4, 5, 3, 4))
+        Seq(4, 4),
+        Seq(4, 5, 3, 4),
+        Seq(4, 5, 1, 2, 3, 4),
+        Seq(4, 5, 1, 3, 4))
     }
 
     val g = factory(1 ~ 2, 1 ~> 2, 2 ~ 3)
@@ -258,7 +268,7 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
     }
 
     def `the cycle returned by 'findCycleContaining' contains the expected edges` {
-      g.nodes foreach { n =>
+      g.nodes.filterNot(_.toOuter == 3) foreach { n =>
         val c = g.findCycleContaining(g get n)
         (n, c.isDefined) should be ((n, true))
         c.get.edges should (be (cycleEdges) or
