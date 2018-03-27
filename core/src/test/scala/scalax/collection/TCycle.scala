@@ -123,6 +123,15 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
         Seq(2, 3, 7, 4, 5, 6, 1, 2))
     }
 
+    def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes` {
+      c_22(1).withSubgraph(nodes = _ != 3) partOfCycle() should haveOneNodeSequenceOf(
+        Seq(1, 5, 6, 1),
+        Seq(1, 4, 5, 6, 1))
+      c_22(4).withSubgraph(nodes = _ != 3) partOfCycle() should haveOneNodeSequenceOf(
+        Seq(4, 5, 6, 1, 4))
+      c_22(2).withSubgraph(nodes = _ != 3) partOfCycle() should be (None)
+    }
+
     def `the cycle returned by 'findCycle' contains the expected edges` {
       acyclic_1.findCycle           should be (None)
       cyclic_1.findCycle.get.edges should contain (cyclicEdge_1)
@@ -205,6 +214,12 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
         Seq(3, 6, 7, 4, 2, 1, 3))
       unDiCyclic_22.findCycleContaining(uc_22(5)) should be (None)
     }
+
+    def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes` {
+      uc_21(1).withSubgraph(nodes = _ != 2) partOfCycle() should be (None)
+      uc_22(3).withSubgraph(nodes = _ != 2) partOfCycle() should be (None)
+    }
+
   }
 
   object `given an undirected multigraph` {
@@ -252,6 +267,13 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
         Seq(4, 5, 3, 4),
         Seq(4, 5, 1, 2, 3, 4),
         Seq(4, 5, 1, 3, 4))
+    }
+
+    def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes` {
+      m(2).withSubgraph(edges = _ != DiEdge(1, 3)) partOfCycle() should haveOneNodeSequenceOf(
+        Seq(2, 3, 4, 5, 1, 2),
+        Seq(2, 1, 5, 3, 2),
+        Seq(2, 3, 5, 1, 2))
     }
 
     val g = factory(1 ~ 2, 1 ~> 2, 2 ~ 3)
