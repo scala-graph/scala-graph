@@ -4,9 +4,8 @@ import scala.annotation.tailrec
 import scala.collection.{AbstractIterable, AbstractTraversable, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, Builder}
 import scala.language.{higherKinds, implicitConversions}
-import scala.math.{min, max}
-
-import GraphPredef.{EdgeLikeIn, OuterElem, OuterEdge, OutParam, InnerNodeParam, InnerEdgeParam}
+import scala.math.{max, min}
+import GraphPredef.{EdgeLikeIn, OuterElem}
 import mutable.{EqHashMap, EqHashSet}
 
 /** Graph-related functionality such as traversals, path finding, cycle detection etc.
@@ -433,6 +432,8 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
   trait Cycle extends Path {
     override def stringPrefix = "Cycle"
 
+    override def endNode: NodeT = startNode
+
     /** Same as `sameAs` but also comparing this cycle with any `Traversable`.
      */
     final def sameElements(that: Traversable[_]): Boolean =
@@ -466,6 +467,29 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
         case _ => false
       })
 
+  }
+  object Cycle {
+    def findLoop(node: NodeT): Option[Cycle] =
+      node.hook map { hook =>
+        new Cycle {
+          def nodes: Traversable[NodeT] = List(startNode, endNode)
+          def edges: Traversable[EdgeT] = List(hook)
+          def startNode: NodeT = node
+        }
+      }
+    protected[collection] def of(start: NodeT, mid: NodeT): Cycle =
+      new Cycle {
+        def nodes: Traversable[NodeT] = List(startNode, mid, endNode)
+        def edges: Traversable[EdgeT] = {
+          val out = {
+            val outSet = start outgoingTo mid
+            outSet find (_.directed) getOrElse outSet.head
+          }
+          val in = (mid outgoingTo start filterNot (_ eq out)).head
+          List(out, in)
+        }
+        def startNode: NodeT = start
+      }
   }
 
   /** Whether all nodes are pairwise adjacent.

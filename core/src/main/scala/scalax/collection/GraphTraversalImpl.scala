@@ -675,18 +675,18 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   protected abstract class LazyPath(val nodes : Traversable[NodeT])
       extends Path {
 
-    def startNode = nodes.head
-    def endNode   = nodes.last
+    def startNode: NodeT = nodes.head
+    def endNode: NodeT   = nodes.last
 
     private type AnyGraph = GraphTraversalImpl[N,E]
     
-    override def equals(other: Any) = other match {
+    override def equals(other: Any): Boolean = other match {
       case that: AnyGraph#Path => 
         (this eq that) ||
         that.toArray[AnyGraph#InnerElem].sameElements(toArray[InnerElem])
       case _ => false
     }
-    override def hashCode = nodes.## + 27 * edges.##  
+    override def hashCode: Int = nodes.## + 27 * edges.##
   }
   
   /** `LazyPath` with deferred edges selection.
@@ -775,7 +775,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   
   protected class AnyEdgeLazyCycle(override val nodes : Traversable[NodeT], edgeFilter: EdgeFilter)
       extends AnyEdgeLazyPath(nodes, edgeFilter)
-         with Cycle    
+         with Cycle
 
   protected class MultiEdgeLazyCycle(
       override val nodes : ReverseStackTraversable[CycleStackElem], edgeFilter: EdgeFilter)

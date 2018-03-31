@@ -37,26 +37,29 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
     }
 
     final def partOfCycle[U](implicit visitor: A => U = empty): Option[Cycle] = requireSuccessors {
-      var potentialBackNodes: Set[NodeT] = root.diPredecessors
-      def singleUnDi(backNode: NodeT): Boolean = {
-        val out = backNode outgoingTo root
-        out.size == 1 && out.head.isUndirected
-      }
-      if (potentialBackNodes.size <= 1 && potentialBackNodes.headOption.forall(singleUnDi)) None
-      else
-        Runner(
-          new StopCondition {
-            def apply(n: NodeT, count: Int, depth: Int): Boolean =
-              if (potentialBackNodes contains n) {
-                potentialBackNodes -= n
-                depth > 1
-              } else false
-          },
-          visitor
-        ).dfsStack() match {
-          case (Some(_), stack) => cycle(Some(root), stack, subgraphEdges)
-          case (None, _)        => None
+      Cycle.findLoop(root) orElse {
+        var potentialBackNodes: Set[NodeT] = root.diPredecessors
+        def singleUnDi(backNode: NodeT): Boolean = {
+          val out = backNode connectionsWith root
+          out.size == 1 && out.head.isUndirected
         }
+        if (potentialBackNodes.size <= 1 && potentialBackNodes.headOption.forall(singleUnDi)) None
+        else
+          Runner(
+            new StopCondition {
+              def apply(n: NodeT, count: Int, depth: Int): Boolean =
+                if (potentialBackNodes contains n) {
+                  potentialBackNodes -= n
+                  depth > 1 || (depth == 1 && !singleUnDi(n))
+                } else false
+            },
+            visitor
+          ).dfsStack() match {
+            case (Some(_), stack) if stack.length == 2 => Some(Cycle.of(stack(1).node, stack(0).node))
+            case (Some(_), stack) => cycle(Some(root), stack, subgraphEdges)
+            case (None, _) => None
+          }
+      }
     }
 
     final def pathUntil[U](pred: NodeFilter)(implicit visitor: A => U = empty): Option[Path] = requireSuccessors {

@@ -1,15 +1,11 @@
 package scalax.collection
 
 import language.{higherKinds, postfixOps}
-import collection.Set
-import collection.immutable.{Range, SortedSet}
-import collection.mutable.{Set => MutableSet}
 
 import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion
 
-import edge._, edge.WBase._, edge.LBase._, edge.WLBase._
-import io._
+import edge._
 
 import org.scalatest.refspec.RefSpec
 import org.scalatest.{Matchers, Suites}
@@ -35,6 +31,12 @@ trait CycleMatcher[N, E[X] <: EdgeLikeIn[X]] {
       def msg(key: String): String = s"$found equals to $key of ${expected mkString ", "}"
       MatchResult(expected contains found, msg("none"), msg("one"))
     }
+
+  def beValid: Matcher[Option[C]] =
+    Matcher { (c: Option[C]) =>
+      def msg(key: String): String = s"$c $key valid"
+      MatchResult(c.get.isValid, msg("is not"), msg("is"))
+    }
 }
 
 class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (val factory: GraphCoreCompanion[CC])
@@ -42,27 +44,27 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
 	  with Matchers {
 
   object `given some directed graphs` extends CycleMatcher[Int, DiEdge]  {
-    
+
     val acyclic_1 = factory(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4)
     val acyclic_2 = factory(1~>2, 1~>3, 1~>4, 1~>5, 2~>3, 3~>7, 7~>4, 7~>8, 4~>5, 5~>6)
-    
+
     def makeCyclic(acyclic: CC[Int,DiEdge], byEdge: DiEdge[Int]) = {
-      val cyclic = acyclic + byEdge  
+      val cyclic = acyclic + byEdge
           (cyclic, cyclic get byEdge)
     }
     val (cyclic_1,  cyclicEdge_1 ) = makeCyclic(acyclic_1, 4~>2)
     val (cyclic_21, cyclicEdge_21) = makeCyclic(acyclic_2, 8~>3)
     val (cyclic_22, cyclicEdge_22) = makeCyclic(acyclic_2, 6~>1)
-  
+
     def c_1 (outer: Int) = cyclic_1  get outer
     def c_21(outer: Int) = cyclic_21 get outer
     def c_22(outer: Int) = cyclic_22 get outer
-  
+
     def `the cycle returned by 'findCycle' contains the expected nodes` {
       (acyclic_1 get 1 findCycle) should be (None)
       c_1(2).findCycle should haveOneNodeSequenceOf(
         Seq(2, 3, 4, 2))
-  
+
       (acyclic_2 get 1 findCycle) should be (None)
       c_21(1).findCycle should haveOneNodeSequenceOf(
         Seq(3, 7, 8, 3))
@@ -76,7 +78,7 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
         Seq(4, 5, 6, 1, 4),
         Seq(4, 5, 6, 1, 3, 7, 4),
         Seq(4, 5, 6, 1, 2, 3, 7, 4))
-      
+
       val g = {
         var i, j=0
         Graph.fill(5) { i+=1; j=i+1; i~>j }
@@ -156,19 +158,14 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
        cyclic_21 should be ('isCyclic)
        cyclic_22 should be ('isCyclic)
     }
-    
+
     def `they are cyclic if they contain a self loop #76` {
       val loop = 1~>1
       acyclic_1 + loop should be ('isCyclic)
       val f = factory(loop)
 
-      val maybeCycle = f.findCycle
-      maybeCycle     should be ('isDefined)
-      maybeCycle.get should be ('isValid)
-
-      val maybeCycleContaining = f.findCycleContaining(f get 1)
-      maybeCycleContaining     should be ('isDefined)
-      maybeCycleContaining.get should be ('isValid)
+      f.findCycle                    should (be ('isDefined) and beValid)
+      f.findCycleContaining(f get 1) should (be ('isDefined) and beValid)
     }
   }
 
@@ -238,7 +235,7 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
       val c = g.findCycleContaining(g get 1)
       c should be ('isDefined)
       c.get.edges should (be (List(e1, e2)) or
-        be (List(e2, e1)))
+                          be (List(e2, e1)))
     }
   }
   
