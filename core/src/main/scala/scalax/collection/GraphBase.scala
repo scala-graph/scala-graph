@@ -600,11 +600,6 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       def compare(e1: EdgeT, e2: EdgeT): Int = e1.arity compare e2.arity
     }
   }
-  class EdgeBase(override val edge: E[NodeT]) extends InnerEdgeParam[N,E,NodeT,E] with InnerEdge {
-    this: EdgeT =>
-    override def iterator: Iterator[NodeT] = edge.iterator.asInstanceOf[Iterator[NodeT]]
-    override def stringPrefix = super.stringPrefix
-  }
   protected def newEdge(innerEdge: E[NodeT]): EdgeT
   final protected implicit def edgeToEdgeCont(e: E[N]): E[NodeT] = Edge.edgeToEdgeCont(e)
 

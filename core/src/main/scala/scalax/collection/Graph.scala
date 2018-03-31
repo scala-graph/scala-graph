@@ -26,6 +26,7 @@ import io._
  *
  * @define REIMPLFACTORY Note that this method must be reimplemented in each module
  *         having its own factory methods such as `constrained` does.
+ * @define CONTGRAPH The `Graph` instance that contains `this`
  * @author Peter Empen
  */
 trait GraphLike[N,
@@ -36,9 +37,9 @@ trait GraphLike[N,
   with    GraphTraversal[N,E]
   with    GraphBase     [N,E]
   with    GraphDegree   [N,E]
-{ selfGraph: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
+{ thisGraph: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
              This[N,E] with GraphLike[N,E,This] with AnySet[Param[N,E]] with Graph[N,E] =>
-  protected type ThisGraph = selfGraph.type
+  protected type ThisGraph = thisGraph.type
   implicit val edgeT: ClassTag[E[N]]
 
   def isDirected = isDirectedT || edges.hasOnlyDiEdges
@@ -139,11 +140,12 @@ trait GraphLike[N,
     case _ =>
       false
   }
+
   type NodeT <: InnerNode 
   trait InnerNode extends super.InnerNode with TraverserInnerNode {
     this: NodeT =>
-    /** The `Graph` instance `this` node is contained in. */
-    final def containingGraph: ThisGraph = selfGraph
+    /** $CONTGRAPH inner edge. */
+    final def containingGraph: ThisGraph = thisGraph
   }
   protected abstract class NodeBase(override val value: N)
       extends super.NodeBase
@@ -192,6 +194,19 @@ trait GraphLike[N,
     }
     protected def handleNotGentlyRemovable = false
   }
+
+
+  trait InnerEdge extends super.InnerEdge {
+    this: EdgeT =>
+    /** $CONTGRAPH inner edge. */
+    final def containingGraph: ThisGraph = thisGraph
+  }
+  type EdgeT <: InnerEdgeParam[N,E,NodeT,E] with InnerEdge with Serializable
+  class EdgeBase(override val edge: E[NodeT]) extends InnerEdgeParam[N,E,NodeT,E] with InnerEdge {
+    this: EdgeT =>
+    override def iterator: Iterator[NodeT] = edge.iterator.asInstanceOf[Iterator[NodeT]]
+    override def stringPrefix = super.stringPrefix
+  }
   type EdgeSetT <: EdgeSet
   trait EdgeSet extends super.EdgeSet {
     def hasOnlyDiEdges: Boolean
@@ -211,10 +226,10 @@ trait GraphLike[N,
     } 
     case out: OutParam[_,_] => out match {
       case n: InnerNodeParam[N] => nodes contains
-          n.toNodeT[N,E,ThisGraph](selfGraph)(anyNode => newNode(anyNode.value)
+          n.toNodeT[N,E,ThisGraph](thisGraph)(anyNode => newNode(anyNode.value)
         )
       case e: InnerEdgeParam[N,E,_,E]  => edges contains
-          e.toEdgeT[N,E,ThisGraph](selfGraph)(anyEdge => newEdge(anyEdge.toOuter)
+          e.toEdgeT[N,E,ThisGraph](thisGraph)(anyEdge => newEdge(anyEdge.toOuter)
         ) 
     } 
   }
@@ -308,7 +323,7 @@ trait GraphLike[N,
     case out: OutParam[_,_] => out match {
       case n: InnerNodeParam[N] => this + n.value
       case e: InnerEdgeParam[N,E,_,E]  => this +#
-                                   e.asEdgeT[N,E,ThisGraph](selfGraph).toOuter
+                                   e.asEdgeT[N,E,ThisGraph](thisGraph).toOuter
     } 
   }
   override def ++ (elems: GenTraversableOnce[Param[N,E]]) = bulkOp(elems, true)
@@ -396,7 +411,7 @@ trait GraphLike[N,
     } 
     case out: OutParam[_,_] => out match {
       case n: InnerNodeParam[N] => this - n.value
-      case e: InnerEdgeParam[N,E,_,E]  => this -# e.asEdgeT[N,E,ThisGraph](selfGraph).toOuter
+      case e: InnerEdgeParam[N,E,_,E]  => this -# e.asEdgeT[N,E,ThisGraph](thisGraph).toOuter
     } 
   }
   /** Creates a new subgraph consisting of all nodes and edges of this graph except `elem`.
@@ -414,7 +429,7 @@ trait GraphLike[N,
     } 
     case out: OutParam[_,_] => out match {
       case n: InnerNodeParam[N] => this - n.value
-      case e: InnerEdgeParam[N,E,_,E]  => this -!# e.asEdgeT[N,E,ThisGraph](selfGraph).toOuter
+      case e: InnerEdgeParam[N,E,_,E]  => this -!# e.asEdgeT[N,E,ThisGraph](thisGraph).toOuter
     } 
   }
   /** Creates a new subgraph consisting of all nodes and edges of this graph but the elements
@@ -466,13 +481,13 @@ trait GraphLike[N,
   def having(node: NodeFilter = _ => false,
              edge: EdgeFilter = null): PartialFunction[Param[N,E], Boolean] = {
     val nodePred: PartialFunction[Param[N,E], Boolean] = {
-      case n: InnerNodeParam[N] => node(n.asNodeT[N,E,ThisGraph](selfGraph))
+      case n: InnerNodeParam[N] => node(n.asNodeT[N,E,ThisGraph](thisGraph))
     }
     val edgePred: PartialFunction[Param[N,E], Boolean] =
       if (edge eq null) {
-        case e: InnerEdgeParam[N,E,_,E] => e.asEdgeT[N,E,ThisGraph](selfGraph) forall (node(_))
+        case e: InnerEdgeParam[N,E,_,E] => e.asEdgeT[N,E,ThisGraph](thisGraph) forall (node(_))
       } else {
-        case e: InnerEdgeParam[N,E,_,E] => edge(e.asEdgeT[N,E,ThisGraph](selfGraph))
+        case e: InnerEdgeParam[N,E,_,E] => edge(e.asEdgeT[N,E,ThisGraph](thisGraph))
       }
     nodePred orElse edgePred
   }

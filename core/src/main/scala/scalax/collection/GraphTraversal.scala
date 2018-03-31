@@ -5,6 +5,7 @@ import scala.collection.{AbstractIterable, AbstractTraversable, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, Builder}
 import scala.language.{higherKinds, implicitConversions}
 import scala.math.{max, min}
+
 import GraphPredef.{EdgeLikeIn, OuterElem}
 import mutable.{EqHashMap, EqHashSet}
 
@@ -288,6 +289,9 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       new NodeValidator { 
         def apply(node: NodeT): Boolean = true
       }
+
+    /** The `Graph` instance that contains `this` walk. */
+    final def containingGraph: thisGraph.type = thisGraph
   }
   object Walk {
     protected[GraphTraversal] trait Zero {
