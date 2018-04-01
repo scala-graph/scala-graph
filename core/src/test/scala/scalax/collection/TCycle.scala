@@ -267,10 +267,12 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
     }
 
     def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes` {
-      m(2).withSubgraph(edges = _ != DiEdge(1, 3)) partOfCycle() should haveOneNodeSequenceOf(
+      m(2).withSubgraph(edges = _ != DiEdge(1, 3)).partOfCycle should haveOneNodeSequenceOf(
         Seq(2, 3, 4, 5, 1, 2),
         Seq(2, 1, 5, 3, 2),
         Seq(2, 3, 5, 1, 2))
+      m(2).withSubgraph(nodes = _ != 5).partOfCycle should haveOneNodeSequenceOf(Seq(2, 1, 3, 2))
+      m(1).withSubgraph(nodes = _ != 5).partOfCycle should haveOneNodeSequenceOf(Seq(1, 3, 2, 1))
     }
 
     val g = factory(1 ~ 2, 1 ~> 2, 2 ~ 3)
@@ -281,8 +283,7 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
       g.nodes foreach { n =>
         val c = n.findCycle
         (n, c.isDefined) should be ((n, true))
-        c.get.edges should (be (cycleEdges) or
-          be (cycleEdges.reverse))
+        c.get.edges should (be (cycleEdges) or be (cycleEdges.reverse))
       }
     }
 
