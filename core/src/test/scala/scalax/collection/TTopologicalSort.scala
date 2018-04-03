@@ -5,7 +5,7 @@ import scala.language.higherKinds
 import GraphPredef._, GraphEdge._
 import GraphTraversal._, GraphTraversal.Parameters._ 
 import generic.GraphCoreCompanion
-import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
+import edge.Implicits._
 
 import org.scalatest._
 import org.scalatest.prop.PropertyChecks
@@ -172,12 +172,24 @@ private class TTopologicalSort[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with Gra
     )
   }
 
-  
   def `cyclic graph #68` {
     val g = factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)    
     g.topologicalSort.fold(
         identity,
         Topo.unexpectedRight
+    )
+  }
+
+  def `combining with filtered edges by withSubgraph #104` {
+    val g = factory((1 ~+> 3)("a"), (1 ~+> 2)("b"), (2 ~+> 3)("a"))
+    val n1 = (g get 1)
+    n1.topologicalSort() should be ('isRight)
+
+    n1.withSubgraph(edges = _.label == "a").topologicalSort().fold(
+      Topo.unexpectedCycle,
+      order => new Topo.Checker(g) {
+        checkOuterNodes(order.toOuter)
+      }
     )
   }
 }

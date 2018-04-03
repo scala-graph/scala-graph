@@ -699,7 +699,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
             val nrEnqueued = (0 /: currentLayerNodes) { (sum, node) =>
               if (doNodeVisitor) nodeVisitor(node)
               node.visited = true
-              (0 /: filteredSuccessors(node, nonVisited, Double.NaN, true)) { (zeroInDegreeCount, n) =>
+              (0 /: filteredSuccessors(node, nonVisited, Double.NaN, reverse = true)) { (zeroInDegreeCount, n) =>
                 val newInDegree = inDegrees(n) - 1
                 inDegrees.update (n, newInDegree)
                 if (newInDegree == 0) {
@@ -719,7 +719,6 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
             else
               loop(layer + 1, nextLayerNodes)
           }
-          
           maybeInspectedNode match {
             case Some(inspectedNode) if layer_0.isEmpty => Left(inspectedNode)
             case _ =>

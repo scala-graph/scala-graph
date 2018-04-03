@@ -216,7 +216,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
    *  @param maybeHandle to be used to mark visited nodes
    *  @param includeAnyway include this node in the resulting list of nodes without predecessors
    *         irrespective of its in degree
-   *  @param includeInDegree optionally filters predecessor nodes when calculation the in degree
+   *  @param includeInDegree optionally filters predecessor nodes when calculating the in degree
    *  @return triple of
    *          a. nodes without predecessors in the component spanned by `traverser`
    *          a. map of visited nodes to their in degrees
@@ -235,7 +235,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     def nodeFilter(n: NodeT) : Boolean = traversable.subgraphNodes(n) && includeInDegree(n)
     traversable foreach { n =>
       maybeHandle foreach (implicit h => n.visited = true)
-      val inDegree = n.inDegree(nodeFilter)
+      val inDegree = n.inDegree(nodeFilter, traversable.subgraphEdges)
       if (fillInDegrees) nodeInDegrees put (n, inDegree)
       if (inDegree == 0 || (n eq includeAnyway.orNull)) nodesWithoutPredecessor += n
       else inspectedNode = inspectedNode orElse Some(n)
