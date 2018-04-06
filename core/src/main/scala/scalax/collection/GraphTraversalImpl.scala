@@ -600,20 +600,19 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
    *  not to overwrite `reverseIterator`.
    */
   final protected class ReverseStackTraversable[S <: NodeElement](
-        s: IndexedSeq[S],
-        dropWhile: Option[S => Boolean] = None,
-        enclosed: Array[Option[S]] = Array[Option[S]](None, None)
-      ) extends Traversable[NodeT] {
-    
+      s: IndexedSeq[S],
+      takeWhile: Option[S => Boolean] = None,
+      enclosed: Array[Option[S]] = Array[Option[S]](None, None)) extends Traversable[NodeT] {
+
     @inline def foreach[U](f: NodeT => U): Unit = source foreach (s => f(s.node))
-    
+
     override def stringPrefix = "Nodes"
-      
+
     private[this] var _size: Option[Int] = None
     @inline override val size: Int = _size getOrElse super.size
 
     @inline override def last: NodeT = enclosed(1).fold(ifEmpty = s.head.node)(_.node)
-    
+
     def reverse: Traversable[NodeT] = new AbstractTraversable[NodeT] {
       def foreach[U](f: NodeT => U): Unit = {
         def fT(elem: S): Unit = f(elem.node)
@@ -623,8 +622,8 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
         end(0)
       }
     }
-    
-    private lazy val upper: Int = dropWhile.fold(ifEmpty = s.size){ pred =>
+
+    private lazy val upper: Int = takeWhile.fold(ifEmpty = s.size){ pred =>
       var i = s.size - 1
       while (i >= 0 && pred(s(i)))
         i -= 1

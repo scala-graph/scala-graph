@@ -1275,8 +1275,9 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
       def pathIterator:  WgbPath
     }
     object WgbInformer {
-      case class Element protected[collection]( // exclude and multiEdges only needed for undirected edges
-                                                node: NodeT, predecessor: NodeT, exclude: Boolean, multiEdges: Iterable[EdgeT], cumWeight: Double = 0) extends NodeElement
+      // exclude and multiEdges only needed for undirected edges
+      case class Element protected[collection](
+          node: NodeT, predecessor: NodeT, exclude: Boolean, multiEdges: Iterable[EdgeT], cumWeight: Double = 0) extends NodeElement
       type WgbStack = Iterator[Element]
       type WgbPath  = Iterator[CycleStackElem]
       def unapply(inf: WgbInformer): Option[(WgbStack, WgbPath)] = Some(inf.stackIterator, inf.pathIterator)
