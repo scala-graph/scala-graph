@@ -36,9 +36,9 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       )
     }
 
-  final protected def cycle(results: (Option[NodeT], Stack[CycleStackElem]), edgeFilter: EdgeFilter): Option[Cycle] =
+  final protected def cycle(results: Option[(NodeT, Stack[CycleStackElem])], edgeFilter: EdgeFilter): Option[Cycle] =
     results match {
-      case (Some(start), stack) =>
+      case Some((start, stack)) =>
         val reverse = new ReverseStackTraversable[CycleStackElem](
           stack,
           Some((elem: CycleStackElem) => elem.node ne start),
@@ -287,7 +287,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
           implicit val visitedHandle: State.Handle = handles(0)
           for (node <- nodes if ! node.visited && subgraphNodes(node)) {
             val res = traverser.withRoot(node).Runner(noNode, visitor).dfsWGB(handles)
-            if (res._1.isDefined)
+            if (res.isDefined)
               return cycle(res, subgraphEdges)
           }
         }

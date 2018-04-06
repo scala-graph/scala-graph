@@ -37,39 +37,26 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
     }
 
     final def partOfCycle[U](implicit visitor: A => U = empty): Option[Cycle] = requireSuccessors {
-      Cycle.findLoop(root) orElse {
-        var potentialBackNodes: Set[NodeT] = root.diPredecessors
-        def singleUnDi(backNode: NodeT): Boolean = {
-          val out = backNode connectionsWith root
-          out.size == 1 && out.head.isUndirected
-        }
-        if (potentialBackNodes.size <= 1 && potentialBackNodes.headOption.forall(singleUnDi)) None
-        else
-          Runner(
-            new StopCondition {
-              def apply(n: NodeT, count: Int, depth: Int): Boolean =
-                if (potentialBackNodes contains n) {
-                  potentialBackNodes -= n
-                  depth > 1 || (depth == 1 && !singleUnDi(n))
-                } else false
-            },
-            visitor
-          ).dfsStack() match {
-            case (Some(_), stack) if stack.length == 2 => Some(Cycle.of(stack(1).node, stack(0).node))
-            case (Some(_), stack) => cycle(Some(root), stack, subgraphEdges)
-            case (None, _) => None
-          }
-      }
+      cycle(Runner(StopCondition.None, visitor).dfsWGB(mustContain = Some(root)), subgraphEdges)
     }
 
-    final def pathUntil[U](pred: NodeFilter)(implicit visitor: A => U = empty): Option[Path] = requireSuccessors {
-      val (target, path) = Runner[U](pred, visitor).dfsStack()
-      target map { _ =>
-        new AnyEdgeLazyPath(
-          new ReverseStackTraversable[DfsInformer.Element](path),
-          subgraphEdges)
+    final def pathUntil[U](pred: NodeFilter)(implicit visitor: A => U = empty): Option[Path] =
+      pathUntil_[U](pred, visitor)
+
+    protected[TraverserImpl]
+    final def pathUntil_[U](pred: NodeFilter,
+                            visitor: A => U = empty,
+                            maybeHandle: Option[Handle] = None): Option[Path] =
+      requireSuccessors {
+        Runner[U](pred, visitor).dfsStack() match {
+          case (target, path) =>
+            target map { _ =>
+              new AnyEdgeLazyPath(
+                new ReverseStackTraversable[DfsInformer.Element](path),
+                subgraphEdges)
+            }
+        }
       }
-    }
 
     final def topologicalSort[U](ignorePredecessors: Boolean = false)
                                 (implicit visitor: InnerElem => U = empty): CycleNodeOrTopologicalOrder = {
@@ -107,7 +94,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
      *
      *  @param stopAt node predicate marking an end condition for the search
      */
-    protected final class Runner[U](stopAt: StopCondition, visitor: A => U) {
+    protected final class Runner[U] private (stopAt: StopCondition, visitor: A => U) {
 
       private[this] val addMethod = parameters.direction match {
         case Successors   => Node.addDiSuccessors _
@@ -118,7 +105,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
       private[this] val doNodeFilter = isCustomNodeFilter(subgraphNodes)
       private[this] val doEdgeFilter = isCustomEdgeFilter(subgraphEdges) || maxWeight.isDefined
       private[this] val (doNodeSort, nodeOrdering, reverseNodeOrdering,
-                           doEdgeSort, edgeOrdering, reverseEdgeOrdering) =
+                         doEdgeSort, edgeOrdering, reverseEdgeOrdering) =
         ordering match {
           case nO: NodeOrdering    => (true,  nO,   nO.reverse,
                                        false, null, null)
@@ -220,7 +207,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
         val filter = chooseFilter(nodeFilter)
         val doEdgeVisitor = isDefined(edgeVisitor)
         val estimatedNodes = estimatedNrOfNodes(node)
-        def withEdges(withNode: NodeT => Unit) =
+        def withEdges(withNode: NodeT => Unit): Unit =
           edges foreach { e =>
             addMethod(node, e, withNode)
             if (doEdgeVisitor) edgeVisitor(e)
@@ -614,15 +601,17 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
       /** Tail-recursive white-gray-black DFS implementation for cycle detection.
        */
       protected[collection]
-      def dfsWGB(globalState: Array[Handle] = Array.empty[Handle]): (Option[NodeT], Stack[CycleStackElem]) = {
+      def dfsWGB(globalState: Array[Handle] = Array.empty[Handle],
+                 mustContain: Option[NodeT] = None): Option[(NodeT, Stack[CycleStackElem])] = {
         withHandles(2, globalState) { handles =>
+          import WgbInformer.Element
+
           implicit val visitedHandle: Handle = handles(0)
           val blackHandle = handles(1)
 
-          import WgbInformer.Element
-          val stack: Stack[Element]        = Stack(Element(root, root, exclude = false, Nil))
-          val path:  Stack[CycleStackElem] = Stack.empty[CycleStackElem] // (node, connecting with prev)
-          val isDiGraph = thisGraph.isDirected
+          val isDiGraph    = thisGraph.isDirected
+          val isMixedGraph = thisGraph.isMixed
+
           def isWhite (node: NodeT) = nonVisited(node)
           def isGray  (node: NodeT) = isVisited(node) && ! (node bit blackHandle)
           def isBlack (node: NodeT) = node bit blackHandle
@@ -635,69 +624,134 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
 
           def isVisited (node: NodeT) = node.visited
           def nonVisited(node: NodeT) = ! isVisited(node)
-          var res: Option[NodeT] = None
+
           var nodeCnt = 0
-          @tailrec def loop(pushed: Boolean) {
-            if (res.isEmpty)
-              if (stack.isEmpty)
-                path foreach (t => setBlack(t.node))
-              else {
-                val Element(poppedNode, poppedPredecessor, poppedExclude, poppedMultiEdges, cumWeight) = stack.pop
-                if (! pushed)
-                  while ( path.nonEmpty &&
-                         (path.head.node ne root) &&
-                         (path.head.node ne poppedPredecessor)) {
-                    val p = path.pop.node
-                    if (nonBlack(p))
-                      onNodeUp(p)
-                  }
-                val exclude: Option[NodeT] = if (poppedExclude) Some(poppedPredecessor) else None
-                val current = poppedNode
-                path.push(new CycleStackElem(current, poppedMultiEdges))
-                if (nonVisited(current)) onNodeDown(current)
-                if (doNodeVisitor)
-                  if (isDefined(nodeVisitor)) nodeVisitor(current)
-                  else {
-                    nodeCnt += 1
-                    extNodeVisitor(current, nodeCnt, 0,
-                        new WgbInformer {
-                          def stackIterator: Iterator[Element]        = stack.iterator
-                          def pathIterator : Iterator[CycleStackElem] = path .iterator
-                      }
-                    )
-                  }
-                if (current.hook.isDefined || (current ne root) && stopAt(current, nodeCnt, Integer.MAX_VALUE))
-                  res = Some(current)
+          @tailrec def loop(pushed: Boolean,
+                            stack: Stack[Element],
+                            path: Stack[CycleStackElem]): Option[(NodeT, Stack[CycleStackElem])] =
+            if (stack.isEmpty) {
+              path foreach (t => setBlack(t.node))
+              None
+            } else {
+              val Element(current, poppedPredecessor, poppedExclude, poppedMultiEdges, cumWeight) = stack.pop
+              if (! pushed)
+                while ( path.nonEmpty &&
+                       (path.head.node ne root) &&
+                       (path.head.node ne poppedPredecessor)) {
+                  val p = path.pop().node
+                  if (nonBlack(p))
+                    onNodeUp(p)
+                }
+              val exclude: Option[NodeT] = if (poppedExclude) Some(poppedPredecessor) else None
+              path.push(new CycleStackElem(current, poppedMultiEdges))
+              if (nonVisited(current)) onNodeDown(current)
+              if (doNodeVisitor)
+                if (isDefined(nodeVisitor)) nodeVisitor(current)
                 else {
-                  var pushed = false
-                  for (n <- filteredSuccessors(current, n => nonBlack(n), cumWeight, reverse = true)) {
-                    if (isGray(n)) {
-                      if (exclude.fold(ifEmpty = true)(_ ne n))
-                        res = Some(n)
-                    } else {
-                      val newCumWeight = maxWeight.fold(ifEmpty = 0d)(w => cumWeight + minWeight(current, n, cumWeight))
-                      if (isDiGraph)
-                        stack.push(Element(n, current, exclude = false, Nil, newCumWeight))
-                      else {
-                        val (excl, multi): (Boolean, Iterable[EdgeT]) = {
-                          val conn = current connectionsWith n
-                          (conn.size: @switch) match {
-                            case 0 => throw new NoSuchElementException
-                            case 1 => (true, conn)
-                            case _ => (false, conn)
+                  nodeCnt += 1
+                  extNodeVisitor(current, nodeCnt, 0,
+                      new WgbInformer {
+                        def stackIterator: Iterator[Element]        = stack.iterator
+                        def pathIterator : Iterator[CycleStackElem] = path .iterator
+                    }
+                  )
+                }
+
+              def mixedCycle(blackSuccessors: Traversable[NodeT]): Option[(NodeT, Stack[CycleStackElem])] =
+                withHandle() { handle =>
+                  val visitedBlackHandle = Some(handle)
+                  for (n <- blackSuccessors) {
+                    thisImpl
+                      .withRoot(n)
+                      .withSubgraph(n => subgraphNodes(n) && !isWhite(n) && (n ne current), subgraphEdges)
+                      .pathUntil_(isGray, maybeHandle = visitedBlackHandle)
+                      .foreach { missingPath =>
+                        val start = missingPath.endNode
+                        val shortenedPath = {
+                          var found = false
+                          path takeWhile { case CycleStackElem(n, _) =>
+                            if (n eq start) {
+                              found = true
+                              true
+                            } else ! found
                           }
                         }
-                        stack.push(Element(n, current, excl, multi, newCumWeight))
+                        if (mustContain.forall { n =>
+                            missingPath.nodes.exists(_ eq n) ||
+                            shortenedPath.exists { case CycleStackElem(pn, _) => pn eq n }
+                        }) {
+                          ((missingPath.nodes.head connectionsWith shortenedPath.head.node).head /: missingPath) {
+                            case (edge, InnerNode(n)) =>
+                              if (isBlack(n))
+                                shortenedPath.push(new CycleStackElem(n, Set(edge)))
+                              edge
+                            case (_, InnerEdge(edge)) => edge
+                          }
+                          return Some(start, shortenedPath)
+                        }
                       }
-                      pushed = true
-                    }
                   }
-                  loop(pushed)
+                  None
+                }
+
+              def cycle(graySuccessors: Traversable[NodeT]): Option[(NodeT, Stack[CycleStackElem])] =
+                graySuccessors find { n =>
+                  val relevantPathContainsRequiredNode: Boolean = mustContain forall { req =>
+                    (n eq req) || path.iterator
+                      .takeWhile { case CycleStackElem(sn, _) => sn ne n }
+                      .exists { case CycleStackElem(sn, _) => sn eq req }
+                  }
+                  exclude.fold(ifEmpty = true)(_ ne n) && relevantPathContainsRequiredNode
+                } map ((_, path))
+
+              if (current.hook.isDefined && mustContain.forall(_ eq current))
+                Some(current, path)
+              else {
+                import TraverserImpl._
+                def color(n: NodeT): Wgb =
+                  if (isBlack(n)) black
+                  else if (isGray(n)) gray
+                  else white
+
+                val successorsByColor: Map[Wgb, Traversable[NodeT]] = filteredSuccessors(
+                  current,
+                  if (isMixedGraph) anyNode else nonBlack,
+                  cumWeight,
+                  reverse = true
+                ) groupBy color withDefaultValue Nil
+
+                mixedCycle(successorsByColor(black)) orElse
+                  cycle(successorsByColor(gray)) match {
+
+                  case result @ Some(_) => result
+                  case None =>
+                    successorsByColor(white) match {
+                      case whiteSuccessors if whiteSuccessors.nonEmpty =>
+                        for (n <- whiteSuccessors) {
+                          val newCumWeight = maxWeight.fold(ifEmpty = 0d)(w => cumWeight + minWeight(current, n, cumWeight))
+                          if (isDiGraph)
+                            stack.push(Element(n, current, exclude = false, Nil, newCumWeight))
+                          else
+                            current connectionsWith n match {
+                              case conn =>
+                                ((conn.size: @switch) match {
+                                  case 0 => throw new NoSuchElementException
+                                  case 1 => (true, conn)
+                                  case _ => (false, conn)
+                                }) match {
+                                  case (excl, multi) => stack.push(Element(n, current, excl, multi, newCumWeight))
+                                }
+                            }
+                        }
+                        loop(true, stack, path)
+                      case _ =>
+                        loop(false, stack, path)
+                    }
                 }
               }
-          }
-          loop(true)
-          (res, path)
+            }
+
+          loop(true, Stack(Element(root, root, exclude = false, Nil)), Stack.empty[CycleStackElem])
         }
       }
 
@@ -771,4 +825,11 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
       lazy val None: StopCondition = StopCondition(noNode)
     }
   }
+}
+
+private object TraverserImpl {
+  sealed trait Wgb
+  object white extends Wgb
+  object gray  extends Wgb
+  object black extends Wgb
 }
