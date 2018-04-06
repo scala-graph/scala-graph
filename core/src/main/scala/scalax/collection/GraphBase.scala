@@ -67,6 +67,8 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   def isDirected: Boolean
   /** Whether this graph contains at least one hyperedges. */
   def isHyper: Boolean
+  /** Whether this graph contains at least one directed and one undirected edge. */
+  def isMixed: Boolean
   /** Whether this graph contains at least one multi-edge. We defnie multi-edges by
    *    a. two or more directed edges having the same source and target
    *    a. two or more undirected edges connecting the same nodes

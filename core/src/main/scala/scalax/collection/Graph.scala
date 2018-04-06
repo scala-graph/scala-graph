@@ -42,13 +42,15 @@ trait GraphLike[N,
   protected type ThisGraph = thisGraph.type
   implicit val edgeT: ClassTag[E[N]]
 
-  def isDirected = isDirectedT || edges.hasOnlyDiEdges
+  def isDirected: Boolean = isDirectedT || edges.hasOnlyDiEdges
   protected final val isDirectedT = classOf[DiHyperEdgeLike[_]].isAssignableFrom(edgeT.runtimeClass)
 
-  def isHyper = isHyperT && edges.hasAnyHyperEdge
+  def isHyper: Boolean = isHyperT && edges.hasAnyHyperEdge
   protected final val isHyperT = ! classOf[UnDiEdge[_]].isAssignableFrom(edgeT.runtimeClass)
 
-  def isMulti = isMultiT || edges.hasAnyMultiEdge
+  def isMixed: Boolean = ! isDirectedT && edges.hasMixedEdges
+
+  def isMulti: Boolean = isMultiT || edges.hasAnyMultiEdge
   protected final val isMultiT = classOf[Keyed].isAssignableFrom(edgeT.runtimeClass)
 
   /** The companion object of `This`. */
@@ -210,6 +212,8 @@ trait GraphLike[N,
   type EdgeSetT <: EdgeSet
   trait EdgeSet extends super.EdgeSet {
     def hasOnlyDiEdges: Boolean
+    def hasOnlyUnDiEdges: Boolean
+    def hasMixedEdges: Boolean
     def hasAnyHyperEdge: Boolean
     def hasAnyMultiEdge: Boolean
   }
