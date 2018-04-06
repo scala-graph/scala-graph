@@ -26,9 +26,13 @@ trait CycleMatcher[N, E[X] <: EdgeLikeIn[X]] {
     Matcher { (ns: Option[C]) =>
       val found: Seq[N] = ns match {
         case None => Seq()
-        case Some(path) => path.nodes.toSeq.map(_.value)
+        case Some(path) => path.nodes.toSeq.map(_.value).toList
       }
-      def msg(key: String): String = s"$found equals to $key of ${expected mkString ", "}"
+      def msg(key: String): String =
+        s"""$found equals to $key of
+           |${expected mkString ", "} in
+           |${ns.get.containingGraph}.
+         """.stripMargin
       MatchResult(expected contains found, msg("none"), msg("one"))
     }
 
@@ -238,12 +242,28 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
                           be (List(e2, e1)))
     }
   }
-  
-  object `given a mixed graph` extends CycleMatcher[Int, UnDiEdge] {
 
-    val mixed = factory() ++ Data.elementsOfUnDi_1
+  object `given some mixed graphs` extends CycleMatcher[Int, UnDiEdge] {
+
+    val mixed = factory(Data.elementsOfUnDi_1: _*)
 
     def m(outer: Int) = mixed get outer
+
+    def `'findCycle' finds a cycle following any route` {
+      val g = factory(
+        1~>3, 3~>4, 3~>20, 20~>21,
+        1~>10, 10~11, 11~12, 12~13,
+        12~>3, 20~>10
+      )
+      g.findCycle should (be ('isDefined) and beValid)
+      (g get 13)
+        .innerNodeTraverser
+        .withOrdering(g.NodeOrdering((a, b) => b.value - a.value))
+        .findCycle should (be ('isDefined) and beValid)
+
+      val h = mixed - 5 - 4 ~> 4
+      (h get 1).findCycle should haveOneNodeSequenceOf(Seq(1, 3, 2, 1))
+    }
 
     def `the cycle returned by 'findCycleContaining' contains the expected nodes` {
       mixed.findCycleContaining(m(2)) should haveOneNodeSequenceOf(
@@ -271,7 +291,10 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
         Seq(2, 3, 4, 5, 1, 2),
         Seq(2, 1, 5, 3, 2),
         Seq(2, 3, 5, 1, 2))
-      m(2).withSubgraph(nodes = _ != 5).partOfCycle should haveOneNodeSequenceOf(Seq(2, 1, 3, 2))
+      m(2).withSubgraph(nodes = _ != 5)
+        .withOrdering(mixed.EdgeOrdering(mixed.Edge.WeightOrdering.compare))
+        .partOfCycle should haveOneNodeSequenceOf(Seq(2, 1, 3, 2))
+
       m(1).withSubgraph(nodes = _ != 5).partOfCycle should haveOneNodeSequenceOf(Seq(1, 3, 2, 1))
     }
 
