@@ -4,11 +4,9 @@ package generator
 import scala.language.higherKinds
 import scala.collection.mutable.{Set => MSet}
 import scala.reflect.ClassTag
-import scala.util.Random
 
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
-import org.scalatest.{DoNotDiscover, Spec}
 
 import GraphPredef._, GraphEdge._
 import mutable.{Graph => MGraph}
@@ -67,7 +65,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
   }
 
   object `disconnected random graph` {
-    implicit def metrics = normal
+    implicit def metrics: Metrics[Int] = normal
     val g = generator[Int,DiEdge, Graph](DiEdge,  Graph, false).draw
     
     def `should have expected size` {
@@ -76,7 +74,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
     }
   }
   object `connected random graph` {
-    implicit def metrics = normal
+    implicit def metrics: Metrics[Int] = normal
     val g = generator[Int,DiEdge,MGraph](DiEdge, MGraph, true).draw
 
     def `should have expected size` {
@@ -85,9 +83,9 @@ class TRandomGraphTest extends RefSpec with Matchers {
     }
   }
   object `dense random graph` {
-    implicit val dense = new IntFactory {
+    implicit val dense: Metrics[Int] = new IntFactory {
       val order = 100
-      val nodeDegrees = NodeDegreeRange(70, 100)
+      val nodeDegrees = NodeDegreeRange(50, 85)
     }
     val g = generator[Int,DiEdge,Graph](DiEdge, Graph, true).draw
 
@@ -97,7 +95,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
     }
   }
   object `default weighted random graph edges` {
-    implicit val metrics = RandomGraph.TinyInt
+    implicit val metrics: Metrics[Int] = RandomGraph.TinyInt
     val g = generator[Int,WDiEdge,Graph](WDiEdge, Graph, true).draw
     
     def `should have distinct weights` {
@@ -106,7 +104,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
     }
   }
   object `default labeled random graph edges` {
-    implicit val metrics = RandomGraph.SmallInt
+    implicit val metrics: Metrics[Int] = RandomGraph.SmallInt
     val g = generator[Int,LDiEdge,Graph](LDiEdge, Graph, true).draw
     
     def `should have distinct labels` {
@@ -116,7 +114,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
   }
   object IgnoreThis {
 //  object `huge graph` {
-    implicit val huge = new IntFactory {
+    implicit val huge: Metrics[Int] = new IntFactory {
       val order = 100000
       val nodeDegrees = normal.nodeDegrees
     }
