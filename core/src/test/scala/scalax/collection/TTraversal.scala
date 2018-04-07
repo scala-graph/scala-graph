@@ -338,7 +338,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
 
   def `traverser with an extended visitor` {
     import UnDi_1.g.ExtendedNodeVisitor
-    import GraphTraversalImpl._
+    import UnDi_1.g.Informer.DfsInformer
     def n(outer: Int) = UnDi_1.node(outer)
 
     var lastCount = 0

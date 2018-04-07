@@ -237,8 +237,11 @@ trait AdjacencyListBase[N,
     
     private[this] var nrEdges = 0
 
-    private[this] var nrDi = if (selfGraph.isDirectedT) -1 else 0
-    final def hasOnlyDiEdges = nrDi == -1 || nrDi == nrEdges
+    private[this] var nrDi              = if (selfGraph.isDirectedT) -1 else 0
+    final def hasOnlyDiEdges: Boolean   = nrDi == -1 || nrDi == nrEdges
+    final def hasOnlyUnDiEdges: Boolean = nrDi ==  0
+    final def hasMixedEdges: Boolean    = nrDi > 0 && nrEdges > 1
+
 
     private[this] var nrHyper = if (selfGraph.isHyperT) 0 else -1
     final def hasAnyHyperEdge = nrHyper > 0

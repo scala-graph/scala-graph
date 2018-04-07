@@ -33,7 +33,7 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
   
   implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
   
-  object `In a weekly connected diGraph` {
+  object `In a weakly connected diGraph` {
     import Data.elementsOfDi_1
     val g = factory(elementsOfDi_1: _*)
     
@@ -96,10 +96,10 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     }
   }
 
-  object `Having two week components` {
+  object `Having two weak components` {
     val g = Graph(11~>12, 13~>14)
 
-    def `week components are detected, fix #57` {
+    def `weak components are detected, fix #57` {
       g.componentTraverser() should have size 2
     }
   }

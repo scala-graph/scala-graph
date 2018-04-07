@@ -39,7 +39,6 @@ object Katz {
 
       val weightBuilder = Map.newBuilder[G#NodeT, Float]
       nodes.asInstanceOf[g.NodeSetT] foreach { n =>
-        import scalax.collection.GraphTraversalImpl._
         import g.ExtendedNodeVisitor
 
         var weight = 0f
