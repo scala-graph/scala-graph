@@ -29,7 +29,7 @@ class TExtHashSetTest extends RefSpec with Matchers {
     def `draw element` {
       val randomElems = collection.mutable.Set.empty[DiEdge[Int]]
       val r = new util.Random
-      for (i <- 1 to (set.size * 16))
+      for (i <- 1 to (set.size * 32))
         randomElems += set draw r
       randomElems should have size (set.size)
     }
