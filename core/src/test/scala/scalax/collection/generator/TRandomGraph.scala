@@ -56,6 +56,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
     val deviation = totalDegree - expectedTotalDegree
     if (false)
       println(f"""  total degree=$totalDegree,
+                  | isDense=$isDense,
                   | maxDev=$maxDegreeDeviation,
                   | deviation=$deviation,
                   | (${100f * deviation / totalDegree}%2.2f percent)""".
@@ -85,10 +86,13 @@ class TRandomGraphTest extends RefSpec with Matchers {
   object `dense random graph` {
     implicit val dense: Metrics[Int] = new IntFactory {
       val order = 100
-      val nodeDegrees = NodeDegreeRange(50, 85)
+      val nodeDegrees = NodeDegreeRange(55, 95)
     }
     val g = generator[Int,DiEdge,Graph](DiEdge, Graph, true).draw
 
+    def `should have dense metrics`: Unit = {
+      dense should be ('isDense)
+    }
     def `should have expected size` {
       checkOrder(g)
       checkSize(g)
