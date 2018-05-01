@@ -417,26 +417,26 @@ object RandomGraph {
     def order: Int
     def nodeDegrees: NodeDegreeRange
     def connected = true
-    protected def minMax = 10 * order
+    protected def minMax: Int = 10 * order
 
-    lazy val isDense = nodeDegrees.mean / order match {
+    lazy val isDense: Boolean = nodeDegrees.mean / order match {
       case x if x > 0.7f => true
       case x if x > 0.5f => nodeDegrees.max >= order - 2
       case _             => false
     }
-    lazy val expectedTotalDegree = (order * nodeDegrees.mean).toInt
-    lazy val devisor = {
-      val d = if (isDense) 15 else 25
+    lazy val expectedTotalDegree: Int = (order * nodeDegrees.mean).toInt
+    lazy val divisor: Int = {
+      val d = if (isDense) 12 else 25
       if (order > 50) d else d / 6 
     }
-    lazy val maxDegreeDeviation = (expectedTotalDegree / devisor).toInt
+    lazy val maxDegreeDeviation: Int = expectedTotalDegree / divisor
   }
   trait Metrics[N] extends MetricsBase[N] {
     def nodeGen: N
   }
   trait IntFactory extends Metrics[Int] {
     private val r = new Random
-    def nodeGen = r.nextInt(10 * order)
+    def nodeGen: Int = r.nextInt(10 * order)
   }
 
   /** Predefined metrics of a 'tiny' graph with the node type of `Int`,

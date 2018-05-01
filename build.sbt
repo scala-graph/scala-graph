@@ -10,7 +10,7 @@ lazy val all = Project(
   base = file("."),
   settings = Seq(
     name := "Graph for Scala",
-    version := Version.all,
+    version := Version.highest,
     publishTo := None
   ),
   aggregate = Seq(core, constrained, dot, json)

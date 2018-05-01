@@ -141,8 +141,7 @@ final class TraversingTest extends RefSpec with Matchers {
   
       import g.ExtendedNodeVisitor
       import scalax.collection.GraphTraversal._
-      import scalax.collection.GraphTraversalImpl._
-  
+
       type ValDepth = (Int,Int)
       var info = List.empty[ValDepth]
       (g get 1).innerNodeTraverser.foreach {
