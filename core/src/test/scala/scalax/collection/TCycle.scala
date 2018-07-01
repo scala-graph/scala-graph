@@ -45,7 +45,8 @@ trait CycleMatcher[N, E[X] <: EdgeLikeIn[X]] {
 
 class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (val factory: GraphCoreCompanion[CC])
 	  extends	RefSpec
-	  with Matchers {
+	  with Matchers
+    with Visualizer[CC] {
 
   object `given some directed graphs` extends CycleMatcher[Int, DiEdge]  {
 
@@ -54,7 +55,7 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
 
     def makeCyclic(acyclic: CC[Int,DiEdge], byEdge: DiEdge[Int]) = {
       val cyclic = acyclic + byEdge
-          (cyclic, cyclic get byEdge)
+      (cyclic, cyclic get byEdge)
     }
     val (cyclic_1,  cyclicEdge_1 ) = makeCyclic(acyclic_1, 4~>2)
     val (cyclic_21, cyclicEdge_21) = makeCyclic(acyclic_2, 8~>3)
@@ -65,9 +66,12 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
     def c_22(outer: Int) = cyclic_22 get outer
 
     def `the cycle returned by 'findCycle' contains the expected nodes` {
-      (acyclic_1 get 1 findCycle) should be (None)
-      c_1(2).findCycle should haveOneNodeSequenceOf(
-        Seq(2, 3, 4, 2))
+      given(acyclic_1) { g =>
+        (g get 1 findCycle) should be(None)
+      }
+      given(cyclic_1) { g =>
+        c_1(2).findCycle should haveOneNodeSequenceOf(Seq(2, 3, 4, 2))
+      }
 
       (acyclic_2 get 1 findCycle) should be (None)
       c_21(1).findCycle should haveOneNodeSequenceOf(
