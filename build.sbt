@@ -59,6 +59,11 @@ lazy val misc = Project(
   )
 ) dependsOn core
 
+resolvers ++= Seq(
+  "NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/",
+  "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
+)
+
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion := Version.compiler_2_12,
   crossScalaVersions := Seq(scalaVersion.value, Version.compiler_2_11),
@@ -79,6 +84,8 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   libraryDependencies ++= Seq(
     "junit" % "junit" % "4.12" % "test",
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-    "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test")
+    "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test",
+    "org.gephi" % "gephi-toolkit" % "0.9.2" % "test" classifier "all"
+  )
 ) ++ GraphSonatype.settings
 
