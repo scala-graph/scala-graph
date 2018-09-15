@@ -59,7 +59,7 @@ lazy val misc = Project(
   )
 ) dependsOn core
 
-resolvers ++= Seq(
+resolvers in ThisBuild ++= Seq(
   "NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/",
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
 )
