@@ -1,9 +1,9 @@
 package scalax.collection
 
 import scala.language.higherKinds
+import scala.util.{Failure, Success}
 
 import org.scalatest.exceptions.TestFailedException
-
 import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.generic.GraphCoreCompanion
 
@@ -11,24 +11,31 @@ trait Visualizer[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
 
   def factory: GraphCoreCompanion[G]
 
-  final def given[N, E[X] <: EdgeLikeIn[X]](graph: G[N, E])(test: G[N, E] => Unit): Unit =
+  final def given[N, E[X] <: EdgeLikeIn[X]](graph: G[N, E])(test: G[N, E] => Unit): Unit = {
+
+    def reThrow(tExc: TestFailedException, secondLine: String) =
+      throw tExc.modifyMessage(_.map(testMessage =>
+        s"""$testMessage
+           |$secondLine
+       """.stripMargin))
 
     try test(graph)
     catch {
-      case e: TestFailedException =>
-        // output graph image
-        val path = "log/"
-        val name =
-          (e.failedCodeFileName match {
+      case tExc: TestFailedException =>
+        image(
+          graph.asInstanceOf[Graph[N, E]],
+          path = "log/",
+          name = (tExc.failedCodeFileName match {
             case Some(fileName) => fileName
             case None => "failed_test"
-          }) + (e.failedCodeLineNumber match {
+          }) + (tExc.failedCodeLineNumber match {
             case Some(number) => "_line" + number.toString
             case None => ""
           }) + ".png"
-        toImageFile[N, E](graph.asInstanceOf[Graph[N, E]], path + name)
-        // re-throw modified exception
-        throw e.modifyMessage(_.flatMap(msg => Some(msg + "\nCheck graph image at " + path + name)))
+        ) match {
+          case Success(f) => reThrow(tExc, s"The graph image is available at ${f.getAbsolutePath}")
+          case Failure(e) => reThrow(tExc, s"Graph image generation failed with `${e.getMessage}`.")
+        }
     }
-
+  }
 }

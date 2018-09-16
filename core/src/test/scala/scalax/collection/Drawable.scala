@@ -1,10 +1,10 @@
 package scalax.collection
 
-import scala.language.higherKinds
-
 import java.awt.Color
 import java.io.File
-import java.io.IOException
+
+import scala.language.higherKinds
+import scala.util.Try
 
 import org.gephi.layout.plugin.forceAtlas2.ForceAtlas2
 import org.gephi.preview.types.DependantColor
@@ -22,22 +22,21 @@ import org.gephi.preview.api.PreviewProperty
 import org.gephi.preview.types.EdgeColor
 import org.gephi.project.api.ProjectController
 import org.gephi.project.api.Workspace
-
 import org.openide.util.Lookup
 
 import scalax.collection.GraphPredef.EdgeLikeIn
 
 trait Drawable {
 
-  /**
-    * draw graph and write image to file
+  /** Draw graph image and write it to the given file.
     *
-    * @param g        graph
-    * @param pathname path where the image file will be written, PNG extension included
-    * @tparam N type of node
-    * @tparam E type of edge
+    * @param g    the graph to output
+    * @param path folder the image file is to be written to
+    * @param name file name including an extension
+    * @tparam N   type of node
+    * @tparam E   type of edge
     */
-  def toImageFile[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E], pathname: String): Unit = {
+  def image[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E], path: String, name: String): Try[File] = {
 
     //Init a project - and therefore a workspace
     val pc: ProjectController = Lookup.getDefault.lookup(classOf[ProjectController])
@@ -102,11 +101,12 @@ trait Drawable {
     model.getProperties.putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, false)
 
     //Export
-    val ec: ExportController = Lookup.getDefault.lookup(classOf[ExportController])
-    try
-      ec.exportFile(new File(pathname))
-    catch {
-      case ex: IOException ⇒ ex.printStackTrace()
+    Try {
+      val ec: ExportController = Lookup.getDefault.lookup(classOf[ExportController])
+      assert(ec ne null, "Lookup failed")
+      val file = new File(path + name)
+      ec.exportFile(file)
+      file
     }
   }
 
