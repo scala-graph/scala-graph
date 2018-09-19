@@ -6,6 +6,7 @@ import scala.util.{Failure, Success}
 import org.scalatest.exceptions.TestFailedException
 import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.generic.GraphCoreCompanion
+import java.nio.file.{Path, Paths, Files, FileAlreadyExistsException}
 
 trait Visualizer[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]] extends Drawable {
 
@@ -19,12 +20,21 @@ trait Visualizer[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
            |$secondLine
        """.stripMargin))
 
+    val path = "log/"
+
     try test(graph)
     catch {
       case tExc: TestFailedException =>
+
+        val folderPath: Path = Paths.get(path)
+        try Files.createDirectory(folderPath)
+        catch {
+          case e: FileAlreadyExistsException => ()
+        }
+
         image(
           graph.asInstanceOf[Graph[N, E]],
-          path = "log/",
+          path = path,
           name = (tExc.failedCodeFileName match {
             case Some(fileName) => fileName
             case None => "failed_test"
