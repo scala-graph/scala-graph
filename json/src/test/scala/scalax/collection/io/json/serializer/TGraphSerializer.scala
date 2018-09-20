@@ -67,9 +67,9 @@ class TGraphSerializer[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[
         new GraphSerializer(descriptor)
       
       val decomposed = Extraction.decompose(container)
-      val decomopsedText = compactRender(decomposed)
+      val decomposedText = compactRender(decomposed)
       
-      val ast = JsonParser.parse(decomopsedText)
+      val ast = JsonParser.parse(decomposedText)
       val extracted = ast.extract[Container]
       
       extracted should equal (container)

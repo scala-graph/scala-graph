@@ -55,7 +55,7 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     }
   }
   
-  object `Having two strong comopnents` {
+  object `Having two strong components` {
     // see example on https://de.wikipedia.org/wiki/Algorithmus_von_Tarjan_zur_Bestimmung_starker_Zusammenhangskomponenten
     val sccExpected = Vector[G[Symbol,DiEdge]](
         factory('a ~> 'b, 'b ~> 'c, 'c ~> 'd, 'd ~> 'a, 'd ~> 'e, 'c ~> 'e, 'e ~> 'c),
@@ -68,7 +68,7 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
       sccExpected foreach (_.strongComponentTraverser() should have size (1))
     }
         
-    def `connected by a diEdge yields a graph with the very same two strong comopnents` {
+    def `connected by a diEdge yields a graph with the very same two strong components` {
       val r = new Random
       val union = (factory.empty[Symbol,DiEdge] /: sccExpected)((r, g) => g union r)  
       val connectors = {
