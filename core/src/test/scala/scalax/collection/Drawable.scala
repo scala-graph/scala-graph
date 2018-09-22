@@ -2,7 +2,7 @@ package scalax.collection
 
 import java.awt.Color
 import java.io.File
-import java.nio.file.{Path, Paths, Files, FileAlreadyExistsException}
+import java.nio.file.{Path, Paths, Files}
 
 import scala.language.higherKinds
 import scala.util.Try
@@ -107,10 +107,7 @@ trait Drawable {
       assert(ec ne null, "Lookup failed")
 
       val folderPath: Path = Paths.get(path)
-      try Files.createDirectory(folderPath)
-      catch {
-        case e: FileAlreadyExistsException => ()
-      }
+      if (!Files.exists(folderPath)) Files.createDirectory(folderPath)
 
       val file = new File(path + name)
       ec.exportFile(file)
