@@ -22,7 +22,7 @@ trait Visualizer[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
     try test(graph)
     catch {
       case tExc: TestFailedException =>
-        image(
+        makeImage(
           graph.asInstanceOf[Graph[N, E]],
           path = "log/",
           name = (tExc.failedCodeFileName match {

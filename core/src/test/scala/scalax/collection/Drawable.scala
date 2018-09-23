@@ -2,6 +2,7 @@ package scalax.collection
 
 import java.awt.Color
 import java.io.File
+import java.nio.file.{Path, Paths, Files}
 
 import scala.language.higherKinds
 import scala.util.Try
@@ -28,7 +29,7 @@ import scalax.collection.GraphPredef.EdgeLikeIn
 
 trait Drawable {
 
-  /** Draw graph image and write it to the given file.
+  /** Draw graph image and write it to the given path and file name.
     *
     * @param g    the graph to output
     * @param path folder the image file is to be written to
@@ -36,7 +37,7 @@ trait Drawable {
     * @tparam N   type of node
     * @tparam E   type of edge
     */
-  def image[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E], path: String, name: String): Try[File] = {
+  def makeImage[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E], path: String, name: String): Try[File] = {
 
     //Init a project - and therefore a workspace
     val pc: ProjectController = Lookup.getDefault.lookup(classOf[ProjectController])
@@ -104,6 +105,10 @@ trait Drawable {
     Try {
       val ec: ExportController = Lookup.getDefault.lookup(classOf[ExportController])
       assert(ec ne null, "Lookup failed")
+
+      val folderPath: Path = Paths.get(path)
+      if (!Files.exists(folderPath)) Files.createDirectory(folderPath)
+
       val file = new File(path + name)
       ec.exportFile(file)
       file
