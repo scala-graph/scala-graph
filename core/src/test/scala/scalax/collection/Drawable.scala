@@ -5,6 +5,7 @@ import java.io.File
 import java.nio.file.{Path, Paths, Files}
 
 import scala.language.higherKinds
+import scala.reflect.ClassTag
 import scala.util.Try
 
 import org.gephi.layout.plugin.forceAtlas2.ForceAtlas2
@@ -29,6 +30,12 @@ import scalax.collection.GraphPredef.EdgeLikeIn
 
 trait Drawable {
 
+  private def assertedLookup[T <: AnyRef : ClassTag](clazz: Class[T]): T = {
+    val l: T = Lookup.getDefault.lookup(clazz)
+    assert(l ne null, "Lookup for class " + clazz.getName + " failed")
+    l
+  }
+
   /** Draw graph image and write it to the given path and file name.
     *
     * @param g    the graph to output
@@ -37,18 +44,18 @@ trait Drawable {
     * @tparam N   type of node
     * @tparam E   type of edge
     */
-  def makeImage[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E], path: String, name: String): Try[File] = {
+  def makeImage[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E], path: String, name: String): Try[File] = Try {
 
     //Init a project - and therefore a workspace
-    val pc: ProjectController = Lookup.getDefault.lookup(classOf[ProjectController])
+    val pc: ProjectController = assertedLookup(classOf[ProjectController])
     pc.newProject()
     val workspace: Workspace = pc.getCurrentWorkspace
 
     //Get models and controllers for this new workspace
-    val graphModel: GraphModel = Lookup.getDefault.lookup(classOf[GraphController]).getGraphModel
-    val model: PreviewModel = Lookup.getDefault.lookup(classOf[PreviewController]).getModel
-    val importController: ImportController = Lookup.getDefault.lookup(classOf[ImportController])
-    val filterController: FilterController = Lookup.getDefault.lookup(classOf[FilterController])
+    val graphModel: GraphModel = assertedLookup(classOf[GraphController]).getGraphModel
+    val model: PreviewModel = assertedLookup(classOf[PreviewController]).getModel
+    val importController: ImportController = assertedLookup(classOf[ImportController])
+    val filterController: FilterController = assertedLookup(classOf[FilterController])
 
     val container: Container = toContainer(g)
 
@@ -102,17 +109,12 @@ trait Drawable {
     model.getProperties.putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, false)
 
     //Export
-    Try {
-      val ec: ExportController = Lookup.getDefault.lookup(classOf[ExportController])
-      assert(ec ne null, "Lookup failed")
-
-      val folderPath: Path = Paths.get(path)
-      if (!Files.exists(folderPath)) Files.createDirectory(folderPath)
-
-      val file = new File(path + name)
-      ec.exportFile(file)
-      file
-    }
+    val ec: ExportController = assertedLookup(classOf[ExportController])
+    val folderPath: Path = Paths.get(path)
+    if (!Files.exists(folderPath)) Files.createDirectory(folderPath)
+    val file = new File(path + name)
+    ec.exportFile(file)
+    file
   }
 
   /**
