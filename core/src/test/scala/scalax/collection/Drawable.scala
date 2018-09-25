@@ -5,6 +5,7 @@ import java.io.File
 import java.nio.file.{Path, Paths, Files}
 
 import scala.language.higherKinds
+import scala.reflect.ClassTag
 import scala.util.Try
 
 import org.gephi.layout.plugin.forceAtlas2.ForceAtlas2
@@ -29,6 +30,12 @@ import scalax.collection.GraphPredef.EdgeLikeIn
 
 trait Drawable {
 
+  private def assertedLookup[T <: AnyRef : ClassTag](clazz: Class[T]): T = {
+    val l: T = Lookup.getDefault.lookup(clazz)
+    assert(l ne null, "Lookup for class " + clazz.getName + " failed")
+    l
+  }
+
   /** Draw graph image and write it to the given path and file name.
     *
     * @param g    the graph to output
@@ -40,79 +47,74 @@ trait Drawable {
   def makeImage[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E], path: String, name: String): Try[File] = {
 
     //Init a project - and therefore a workspace
-    val pc: ProjectController = Lookup.getDefault.lookup(classOf[ProjectController])
+    val pc: ProjectController = assertedLookup(classOf[ProjectController])
     pc.newProject()
     val workspace: Workspace = pc.getCurrentWorkspace
 
     //Get models and controllers for this new workspace
-    val graphModel: GraphModel = Lookup.getDefault.lookup(classOf[GraphController]).getGraphModel
-    val model: PreviewModel = Lookup.getDefault.lookup(classOf[PreviewController]).getModel
-    val importController: ImportController = Lookup.getDefault.lookup(classOf[ImportController])
-    val filterController: FilterController = Lookup.getDefault.lookup(classOf[FilterController])
+    val graphModel: GraphModel = assertedLookup(classOf[GraphController]).getGraphModel
+    val model: PreviewModel = assertedLookup(classOf[PreviewController]).getModel
+    val importController: ImportController = assertedLookup(classOf[ImportController])
+    val filterController: FilterController = assertedLookup(classOf[FilterController])
 
-    val container: Container = toContainer(g)
+    toContainer(g).map(container => {
+      //Append imported data to GraphAPI
+      importController.process(container, new DefaultProcessor, workspace)
 
-    //Append imported data to GraphAPI
-    importController.process(container, new DefaultProcessor, workspace)
+      //See if graph is well imported
+      val graph = graphModel.getDirectedGraph
+      //    println("Nodes: " + graph.getNodeCount)
+      //    println("Edges: " + graph.getEdgeCount)
 
-    //See if graph is well imported
-    val graph = graphModel.getDirectedGraph
-    //    println("Nodes: " + graph.getNodeCount)
-    //    println("Edges: " + graph.getEdgeCount)
+      //Filter
+      val degreeFilter = new DegreeRangeFilter
+      degreeFilter.init(graph)
+      degreeFilter.setRange(new Range(1, Integer.MAX_VALUE)) //Remove nodes with degree < 1
 
-    //Filter
-    val degreeFilter = new DegreeRangeFilter
-    degreeFilter.init(graph)
-    degreeFilter.setRange(new Range(1, Integer.MAX_VALUE)) //Remove nodes with degree < 1
+      val query = filterController.createQuery(degreeFilter)
+      val view = filterController.filter(query)
+      graphModel.setVisibleView(view) //Set the filter result as the visible view
 
-    val query = filterController.createQuery(degreeFilter)
-    val view = filterController.filter(query)
-    graphModel.setVisibleView(view) //Set the filter result as the visible view
+      //    //See visible graph stats
+      //    val graphVisible = graphModel.getUndirectedGraphVisible
+      //    println("Nodes: " + graphVisible.getNodeCount)
+      //    println("Edges: " + graphVisible.getEdgeCount)
 
-    //    //See visible graph stats
-    //    val graphVisible = graphModel.getUndirectedGraphVisible
-    //    println("Nodes: " + graphVisible.getNodeCount)
-    //    println("Edges: " + graphVisible.getEdgeCount)
+      val layout = new ForceAtlas2(null)
+      layout.setGraphModel(graphModel)
+      layout.resetPropertiesValues()
+      layout.setAdjustSizes(true)
+      layout.setScalingRatio(100.0)
+      layout.setOutboundAttractionDistribution(true)
+      layout.initAlgo()
+      var i = 0
+      while (i < 1000 && layout.canAlgo) {
+        layout.goAlgo()
+        i += 1
+      }
+      layout.endAlgo()
 
-    val layout = new ForceAtlas2(null)
-    layout.setGraphModel(graphModel)
-    layout.resetPropertiesValues()
-    layout.setAdjustSizes(true)
-    layout.setScalingRatio(100.0)
-    layout.setOutboundAttractionDistribution(true)
-    layout.initAlgo()
-    var i = 0
-    while (i < 1000 && layout.canAlgo) {
-      layout.goAlgo()
-      i += 1
-    }
-    layout.endAlgo()
+      //Preview
+      model.getProperties.putValue(PreviewProperty.SHOW_NODE_LABELS, true)
+      model.getProperties.putValue(PreviewProperty.SHOW_EDGE_LABELS, true)
+      model.getProperties.putValue(PreviewProperty.ARROW_SIZE, 100.0f)
+      model.getProperties.putValue(PreviewProperty.NODE_OPACITY, 10.5f)
+      model.getProperties.putValue(PreviewProperty.NODE_BORDER_COLOR, new DependantColor(Color.BLUE))
+      model.getProperties.putValue(PreviewProperty.NODE_BORDER_WIDTH, 2.0f)
+      model.getProperties.putValue(PreviewProperty.EDGE_CURVED, false)
+      model.getProperties.putValue(PreviewProperty.EDGE_COLOR, new EdgeColor(Color.GRAY))
+      model.getProperties.putValue(PreviewProperty.EDGE_THICKNESS, 0.1f)
+      model.getProperties.putValue(PreviewProperty.NODE_LABEL_FONT, model.getProperties.getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(8))
+      model.getProperties.putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, false)
 
-    //Preview
-    model.getProperties.putValue(PreviewProperty.SHOW_NODE_LABELS, true)
-    model.getProperties.putValue(PreviewProperty.SHOW_EDGE_LABELS, true)
-    model.getProperties.putValue(PreviewProperty.ARROW_SIZE, 100.0f)
-    model.getProperties.putValue(PreviewProperty.NODE_OPACITY, 10.5f)
-    model.getProperties.putValue(PreviewProperty.NODE_BORDER_COLOR, new DependantColor(Color.BLUE))
-    model.getProperties.putValue(PreviewProperty.NODE_BORDER_WIDTH, 2.0f)
-    model.getProperties.putValue(PreviewProperty.EDGE_CURVED, false)
-    model.getProperties.putValue(PreviewProperty.EDGE_COLOR, new EdgeColor(Color.GRAY))
-    model.getProperties.putValue(PreviewProperty.EDGE_THICKNESS, 0.1f)
-    model.getProperties.putValue(PreviewProperty.NODE_LABEL_FONT, model.getProperties.getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(8))
-    model.getProperties.putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, false)
-
-    //Export
-    Try {
-      val ec: ExportController = Lookup.getDefault.lookup(classOf[ExportController])
-      assert(ec ne null, "Lookup failed")
-
+      //Export
+      val ec: ExportController = assertedLookup(classOf[ExportController])
       val folderPath: Path = Paths.get(path)
       if (!Files.exists(folderPath)) Files.createDirectory(folderPath)
-
       val file = new File(path + name)
       ec.exportFile(file)
       file
-    }
+    })
   }
 
   /**
@@ -123,9 +125,9 @@ trait Drawable {
     * @tparam E type of edge
     * @return container
     */
-  def toContainer[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E]): Container = {
+  def toContainer[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E]): Try[Container] = Try {
 
-    val c: Container = Lookup.getDefault.lookup(classOf[Container.Factory]).newContainer
+    val c: Container = assertedLookup(classOf[Container.Factory]).newContainer
     val container: ContainerLoader = c.getLoader
 
     // real nodes
@@ -143,7 +145,7 @@ trait Drawable {
     val (hyp_edges, std_edges) = g_edges.toList.partition(_.size > 2)
 
     // add extra "fake" node for each hyper edge (connecting >2 nodes)
-    val fake_nodes = hyp_edges.indices.map(i => {
+    val fake_nodes = hyp_edges.indices.map(_ => {
       val n: NodeDraft = container.factory.newNodeDraft
       n.setLabel("")
       n.setSize(0.05f)
