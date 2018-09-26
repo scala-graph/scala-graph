@@ -3,6 +3,8 @@ package scalax.collection
 import java.awt.Color
 import java.io.File
 import java.nio.file.{Path, Paths, Files}
+import java.util.logging.Level
+import java.util.logging.LogManager
 
 import scala.language.higherKinds
 import scala.reflect.ClassTag
@@ -58,8 +60,12 @@ trait Drawable {
     val filterController: FilterController = assertedLookup(classOf[FilterController])
 
     toContainer(g).map(container => {
+      val rootLogger = LogManager.getLogManager.getLogger("")
+      val lvl = rootLogger.getLevel
+      rootLogger.setLevel(Level.WARNING)
       //Append imported data to GraphAPI
       importController.process(container, new DefaultProcessor, workspace)
+      rootLogger.setLevel(lvl)
 
       //See if graph is well imported
       val graph = graphModel.getDirectedGraph
