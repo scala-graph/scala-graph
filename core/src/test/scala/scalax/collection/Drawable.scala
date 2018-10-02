@@ -46,6 +46,37 @@ trait Drawable {
     */
   def makeImage[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E], path: String, name: String): Try[File] = {
 
+    def initWorkspace: Workspace = {
+      val pc: ProjectController = assertedLookup(classOf[ProjectController])
+      pc.newProject()
+      pc.getCurrentWorkspace
+    }
+
+    def appendToWorkspace(container: Container): Unit = {
+      val importController: ImportController = assertedLookup(classOf[ImportController])
+      val rootLogger = LogManager.getLogManager.getLogger("")
+      val lvl = rootLogger.getLevel
+      rootLogger.setLevel(Level.WARNING)
+      importController.process(container, new DefaultProcessor, initWorkspace)
+      rootLogger.setLevel(lvl)
+    }
+
+    def adjustLayout(gm: GraphModel, iterations: Int): Unit = {
+      val layout = new ForceAtlas2(null)
+      layout.setGraphModel(gm)
+      layout.resetPropertiesValues()
+      layout.setAdjustSizes(true)
+      layout.setScalingRatio(100.0)
+      layout.setOutboundAttractionDistribution(true)
+      layout.initAlgo()
+      var i = 0
+      while (i < iterations && layout.canAlgo) {
+        layout.goAlgo()
+        i += 1
+      }
+      layout.endAlgo()
+    }
+
     def createFile: File = {
       val folderPath: Path = Paths.get(path)
       if (!Files.exists(folderPath)) Files.createDirectory(folderPath)
@@ -54,19 +85,7 @@ trait Drawable {
 
     toContainer(g).map(container => {
 
-      def initWorkspace: Workspace = {
-        val pc: ProjectController = assertedLookup(classOf[ProjectController])
-        pc.newProject()
-        pc.getCurrentWorkspace
-      }
-
-      val importController: ImportController = assertedLookup(classOf[ImportController])
-
-      val rootLogger = LogManager.getLogManager.getLogger("")
-      val lvl = rootLogger.getLevel
-      rootLogger.setLevel(Level.WARNING)
-      importController.process(container, new DefaultProcessor, initWorkspace)
-      rootLogger.setLevel(lvl)
+      appendToWorkspace(container)
 
       val graphModel: GraphModel = assertedLookup(classOf[GraphController]).getGraphModel
 
@@ -81,24 +100,7 @@ trait Drawable {
 
       graphModel.setVisibleView(getFilteredView)
 
-      val layout = new ForceAtlas2(null)
-      layout.setGraphModel(graphModel)
-      layout.resetPropertiesValues()
-      layout.setAdjustSizes(true)
-      layout.setScalingRatio(100.0)
-      layout.setOutboundAttractionDistribution(true)
-
-      def adjustLayout(iterations: Int): Unit = {
-        layout.initAlgo()
-        var i = 0
-        while (i < iterations && layout.canAlgo) {
-          layout.goAlgo()
-          i += 1
-        }
-        layout.endAlgo()
-      }
-
-      adjustLayout(1000)
+      adjustLayout(graphModel, 1000)
 
       val properties = assertedLookup(classOf[PreviewController]).getModel.getProperties
       properties.putValue(SHOW_NODE_LABELS, true)
@@ -117,6 +119,7 @@ trait Drawable {
       val file = createFile
       ec.exportFile(file)
       file
+
     })
   }
 
