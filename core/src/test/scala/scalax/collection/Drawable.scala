@@ -15,14 +15,12 @@ import org.gephi.preview.types.DependantColor
 import org.gephi.filters.api.FilterController
 import org.gephi.filters.api.Range
 import org.gephi.filters.plugin.graph.DegreeRangeBuilder.DegreeRangeFilter
-import org.gephi.graph.api.GraphController
-import org.gephi.graph.api.GraphModel
+import org.gephi.graph.api.{GraphController, GraphModel, GraphView}
 import org.gephi.io.importer.api._
 import org.gephi.io.exporter.api.ExportController
 import org.gephi.io.processor.plugin.DefaultProcessor
 import org.gephi.preview.api.PreviewController
-import org.gephi.preview.api.PreviewModel
-import org.gephi.preview.api.PreviewProperty
+import org.gephi.preview.api.PreviewProperty._
 import org.gephi.preview.types.EdgeColor
 import org.gephi.project.api.ProjectController
 import org.gephi.project.api.Workspace
@@ -43,48 +41,45 @@ trait Drawable {
     * @param g    the graph to output
     * @param path folder the image file is to be written to
     * @param name file name including an extension
-    * @tparam N   type of node
-    * @tparam E   type of edge
+    * @tparam N type of node
+    * @tparam E type of edge
     */
   def makeImage[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E], path: String, name: String): Try[File] = {
 
-    //Init a project - and therefore a workspace
-    val pc: ProjectController = assertedLookup(classOf[ProjectController])
-    pc.newProject()
-    val workspace: Workspace = pc.getCurrentWorkspace
-
-    //Get models and controllers for this new workspace
-    val graphModel: GraphModel = assertedLookup(classOf[GraphController]).getGraphModel
-    val model: PreviewModel = assertedLookup(classOf[PreviewController]).getModel
-    val importController: ImportController = assertedLookup(classOf[ImportController])
-    val filterController: FilterController = assertedLookup(classOf[FilterController])
+    def createFile: File = {
+      val folderPath: Path = Paths.get(path)
+      if (!Files.exists(folderPath)) Files.createDirectory(folderPath)
+      new File(path + name)
+    }
 
     toContainer(g).map(container => {
+
+      def initWorkspace: Workspace = {
+        val pc: ProjectController = assertedLookup(classOf[ProjectController])
+        pc.newProject()
+        pc.getCurrentWorkspace
+      }
+
+      val importController: ImportController = assertedLookup(classOf[ImportController])
+
       val rootLogger = LogManager.getLogManager.getLogger("")
       val lvl = rootLogger.getLevel
       rootLogger.setLevel(Level.WARNING)
-      //Append imported data to GraphAPI
-      importController.process(container, new DefaultProcessor, workspace)
+      importController.process(container, new DefaultProcessor, initWorkspace)
       rootLogger.setLevel(lvl)
 
-      //See if graph is well imported
-      val graph = graphModel.getDirectedGraph
-      //    println("Nodes: " + graph.getNodeCount)
-      //    println("Edges: " + graph.getEdgeCount)
+      val graphModel: GraphModel = assertedLookup(classOf[GraphController]).getGraphModel
 
-      //Filter
-      val degreeFilter = new DegreeRangeFilter
-      degreeFilter.init(graph)
-      degreeFilter.setRange(new Range(1, Integer.MAX_VALUE)) //Remove nodes with degree < 1
+      def getFilteredView: GraphView = {
+        val filterController: FilterController = assertedLookup(classOf[FilterController])
+        val degreeFilter = new DegreeRangeFilter
+        degreeFilter.init(graphModel.getDirectedGraph)
+        degreeFilter.setRange(new Range(1, Integer.MAX_VALUE)) //Remove nodes with degree < 1
+        val query = filterController.createQuery(degreeFilter)
+        filterController.filter(query)
+      }
 
-      val query = filterController.createQuery(degreeFilter)
-      val view = filterController.filter(query)
-      graphModel.setVisibleView(view) //Set the filter result as the visible view
-
-      //    //See visible graph stats
-      //    val graphVisible = graphModel.getUndirectedGraphVisible
-      //    println("Nodes: " + graphVisible.getNodeCount)
-      //    println("Edges: " + graphVisible.getEdgeCount)
+      graphModel.setVisibleView(getFilteredView)
 
       val layout = new ForceAtlas2(null)
       layout.setGraphModel(graphModel)
@@ -92,32 +87,34 @@ trait Drawable {
       layout.setAdjustSizes(true)
       layout.setScalingRatio(100.0)
       layout.setOutboundAttractionDistribution(true)
-      layout.initAlgo()
-      var i = 0
-      while (i < 1000 && layout.canAlgo) {
-        layout.goAlgo()
-        i += 1
+
+      def adjustLayout(iterations: Int): Unit = {
+        layout.initAlgo()
+        var i = 0
+        while (i < iterations && layout.canAlgo) {
+          layout.goAlgo()
+          i += 1
+        }
+        layout.endAlgo()
       }
-      layout.endAlgo()
 
-      //Preview
-      model.getProperties.putValue(PreviewProperty.SHOW_NODE_LABELS, true)
-      model.getProperties.putValue(PreviewProperty.SHOW_EDGE_LABELS, true)
-      model.getProperties.putValue(PreviewProperty.ARROW_SIZE, 100.0f)
-      model.getProperties.putValue(PreviewProperty.NODE_OPACITY, 10.5f)
-      model.getProperties.putValue(PreviewProperty.NODE_BORDER_COLOR, new DependantColor(Color.BLUE))
-      model.getProperties.putValue(PreviewProperty.NODE_BORDER_WIDTH, 2.0f)
-      model.getProperties.putValue(PreviewProperty.EDGE_CURVED, false)
-      model.getProperties.putValue(PreviewProperty.EDGE_COLOR, new EdgeColor(Color.GRAY))
-      model.getProperties.putValue(PreviewProperty.EDGE_THICKNESS, 0.1f)
-      model.getProperties.putValue(PreviewProperty.NODE_LABEL_FONT, model.getProperties.getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(8))
-      model.getProperties.putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, false)
+      adjustLayout(1000)
 
-      //Export
+      val properties = assertedLookup(classOf[PreviewController]).getModel.getProperties
+      properties.putValue(SHOW_NODE_LABELS, true)
+      properties.putValue(SHOW_EDGE_LABELS, true)
+      properties.putValue(ARROW_SIZE, 100.0f)
+      properties.putValue(NODE_OPACITY, 10.5f)
+      properties.putValue(NODE_BORDER_COLOR, new DependantColor(Color.BLUE))
+      properties.putValue(NODE_BORDER_WIDTH, 2.0f)
+      properties.putValue(EDGE_CURVED, false)
+      properties.putValue(EDGE_COLOR, new EdgeColor(Color.GRAY))
+      properties.putValue(EDGE_THICKNESS, 0.1f)
+      properties.putValue(NODE_LABEL_FONT, properties.getFontValue(NODE_LABEL_FONT).deriveFont(8))
+      properties.putValue(NODE_LABEL_PROPORTIONAL_SIZE, false)
+
       val ec: ExportController = assertedLookup(classOf[ExportController])
-      val folderPath: Path = Paths.get(path)
-      if (!Files.exists(folderPath)) Files.createDirectory(folderPath)
-      val file = new File(path + name)
+      val file = createFile
       ec.exportFile(file)
       file
     })
