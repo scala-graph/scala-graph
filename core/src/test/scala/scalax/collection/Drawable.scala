@@ -123,6 +123,17 @@ trait Drawable {
     })
   }
 
+  implicit final class EdgeD(e: EdgeDraft) {
+
+    def setEdge(source: NodeDraft, target: NodeDraft, direction: EdgeDirection, label: String = ""): Unit = {
+      e.setSource(source)
+      e.setTarget(target)
+      e.setDirection(direction)
+      e.setLabel(label)
+    }
+
+  }
+
   /**
     * convert graph into a drawable Gephi container
     *
@@ -133,17 +144,26 @@ trait Drawable {
     */
   def toContainer[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E]): Try[Container] = Try {
 
-    val c: Container = assertedLookup(classOf[Container.Factory]).newContainer
-    val container: ContainerLoader = c.getLoader
+    val container: Container = assertedLookup(classOf[Container.Factory]).newContainer
+    val loader: ContainerLoader = container.getLoader
+
+    def addEdge(source: NodeDraft, target: NodeDraft, direction: EdgeDirection, label: String = "", invert: Boolean = false): Unit = {
+      val e: EdgeDraft = loader.factory.newEdgeDraft
+      if (!invert)
+        e.setEdge(source, target, direction, label)
+      else
+        e.setEdge(target, source, direction, label)
+      loader.addEdge(e)
+    }
 
     // real nodes
     val g_nodes: List[g.NodeT] = g.nodes.toList
     val nodes: List[NodeDraft] = g_nodes.map(g_node => {
-      val n: NodeDraft = container.factory.newNodeDraft
+      val n: NodeDraft = loader.factory.newNodeDraft
       n.setLabel(g_node.toString)
       n
     })
-    nodes.foreach(container.addNode)
+    nodes.foreach(loader.addNode)
 
     // separate edges into standard and hyper
     val g_edges: g.EdgeSet = g.edges
@@ -152,63 +172,58 @@ trait Drawable {
 
     // add extra "fake" node for each hyper edge (connecting >2 nodes)
     val fake_nodes = hyp_edges.indices.map(_ => {
-      val n: NodeDraft = container.factory.newNodeDraft
+      val n: NodeDraft = loader.factory.newNodeDraft
       n.setLabel("")
       n.setSize(0.05f)
       n
     })
-    fake_nodes.foreach(container.addNode)
+    fake_nodes.foreach(loader.addNode)
 
-    def getLabel(g_edge: g.EdgeT): String = {
-      var label: List[String] = List()
-      if (isWeighted) label = label :+ g_edge.weight.toString
-      if (g_edge.isLabeled) label = label :+ g_edge.label.toString
-      label.mkString(" - ")
+    implicit final class EdgeG(g_edge: g.EdgeT) {
+
+      def getDirection: EdgeDirection =
+        if (g_edge.isDirected) EdgeDirection.DIRECTED
+        else EdgeDirection.UNDIRECTED
+
+      def getLabel: String = {
+        var label: List[String] = List()
+        if (isWeighted) label = label :+ g_edge.weight.toString
+        if (g_edge.isLabeled) label = label :+ g_edge.label.toString
+        label.mkString(" - ")
+      }
+
     }
 
-    def getDirection(g_edge: g.EdgeT): EdgeDirection =
-      if (g_edge.isDirected) EdgeDirection.DIRECTED
-      else EdgeDirection.UNDIRECTED
+    implicit final class NodeG(g_node: g.NodeT) {
 
-    def getNodeDraft(g_node: g.NodeT): NodeDraft = nodes(g_nodes.indexOf(g_node))
+      def toNodeDraft: NodeDraft = nodes(g_nodes.indexOf(g_node))
 
-    std_edges.foreach(g_edge => {
-      val e: EdgeDraft = container.factory.newEdgeDraft
-      e.setDirection(getDirection(g_edge))
-      e.setLabel(getLabel(g_edge))
-      val s: NodeDraft = getNodeDraft(g_edge._1)
-      val t: NodeDraft = getNodeDraft(g_edge._2)
-      if (g_edge.to == g_edge._1) {
-        e.setSource(t)
-        e.setTarget(s)
-      } else {
-        e.setSource(s)
-        e.setTarget(t)
-      }
-      container.addEdge(e)
-    })
+    }
+
+    std_edges.foreach(g_edge => addEdge(
+      source = g_edge._1.toNodeDraft,
+      target = g_edge._2.toNodeDraft,
+      direction = g_edge.getDirection,
+      label = g_edge.getLabel,
+      invert = g_edge.to == g_edge._1
+    ))
 
     hyp_edges.indices.foreach(i => {
       val ns: List[g.NodeT] = hyp_edges(i).map(g_node => g_node).toList
-      // add undirected edge from first node to fake node
-      val u: EdgeDraft = container.factory.newEdgeDraft
-      u.setDirection(EdgeDirection.UNDIRECTED)
-      u.setLabel(getLabel(hyp_edges(i)))
-      val f: NodeDraft = fake_nodes(i)
-      u.setSource(getNodeDraft(ns.head))
-      u.setTarget(f)
-      container.addEdge(u)
-      // add unlabeled edges from fake node to other nodes
-      ns.tail.foreach(g_node => {
-        val e: EdgeDraft = container.factory.newEdgeDraft
-        e.setDirection(getDirection(hyp_edges(i)))
-        e.setSource(f)
-        e.setTarget(getNodeDraft(g_node))
-        container.addEdge(e)
-      })
+      val fake_node: NodeDraft = fake_nodes(i)
+      addEdge(
+        source = ns.head.toNodeDraft,
+        target = fake_node,
+        direction = EdgeDirection.UNDIRECTED
+      )
+      ns.tail.foreach(g_node => addEdge(
+        source = fake_node,
+        target = g_node.toNodeDraft,
+        direction = hyp_edges(i).getDirection
+      ))
     })
 
-    c
+    container
   }
 
 }
