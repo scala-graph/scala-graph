@@ -125,11 +125,20 @@ trait Drawable {
 
   implicit final class EdgeD(e: EdgeDraft) {
 
-    def setEdge(source: NodeDraft, target: NodeDraft, direction: EdgeDirection, label: String = ""): Unit = {
-      e.setSource(source)
-      e.setTarget(target)
-      e.setDirection(direction)
-      e.setLabel(label)
+    def setEdge(src: NodeDraft, trg: NodeDraft, dir: EdgeDirection, lbl: String = ""): Unit = {
+      e.setSource(src)
+      e.setTarget(trg)
+      e.setDirection(dir)
+      e.setLabel(lbl)
+    }
+
+  }
+
+  implicit final class NodeD(n: NodeDraft) {
+
+    def setNode(label: String = "", size: Option[Float] = None): Unit = {
+      n.setLabel(label)
+      if (size.isDefined) n.setSize(size.get)
     }
 
   }
@@ -147,37 +156,32 @@ trait Drawable {
     val container: Container = assertedLookup(classOf[Container.Factory]).newContainer
     val loader: ContainerLoader = container.getLoader
 
-    def addEdge(source: NodeDraft, target: NodeDraft, direction: EdgeDirection, label: String = "", invert: Boolean = false): Unit = {
+    def addNode(lbl: String = "", size: Option[Float] = None): NodeDraft = {
+      val n: NodeDraft = loader.factory.newNodeDraft
+      n.setNode(lbl, size)
+      loader.addNode(n)
+      n
+    }
+
+    def addEdge(src: NodeDraft, trg: NodeDraft, dir: EdgeDirection, lbl: String = "", invert: Boolean = false): Unit = {
       val e: EdgeDraft = loader.factory.newEdgeDraft
       if (!invert)
-        e.setEdge(source, target, direction, label)
+        e.setEdge(src, trg, dir, lbl)
       else
-        e.setEdge(target, source, direction, label)
+        e.setEdge(trg, src, dir, lbl)
       loader.addEdge(e)
     }
 
-    // real nodes
     val g_nodes: List[g.NodeT] = g.nodes.toList
-    val nodes: List[NodeDraft] = g_nodes.map(g_node => {
-      val n: NodeDraft = loader.factory.newNodeDraft
-      n.setLabel(g_node.toString)
-      n
-    })
-    nodes.foreach(loader.addNode)
+    val nodes: List[NodeDraft] = g_nodes.map(g_node =>
+      addNode(lbl = g_node.toString))
 
-    // separate edges into standard and hyper
     val g_edges: g.EdgeSet = g.edges
     val isWeighted = g_edges.exists(_.weight != 1.0)
     val (hyp_edges, std_edges) = g_edges.toList.partition(_.size > 2)
 
-    // add extra "fake" node for each hyper edge (connecting >2 nodes)
-    val fake_nodes = hyp_edges.indices.map(_ => {
-      val n: NodeDraft = loader.factory.newNodeDraft
-      n.setLabel("")
-      n.setSize(0.05f)
-      n
-    })
-    fake_nodes.foreach(loader.addNode)
+    val fake_nodes: IndexedSeq[NodeDraft] = hyp_edges.indices.map(_ =>
+      addNode(size = Option(0.05f)))
 
     implicit final class EdgeG(g_edge: g.EdgeT) {
 
@@ -200,27 +204,29 @@ trait Drawable {
 
     }
 
-    std_edges.foreach(g_edge => addEdge(
-      source = g_edge._1.toNodeDraft,
-      target = g_edge._2.toNodeDraft,
-      direction = g_edge.getDirection,
-      label = g_edge.getLabel,
-      invert = g_edge.to == g_edge._1
-    ))
+    std_edges.foreach(g_edge =>
+      addEdge(
+        src = g_edge._1.toNodeDraft,
+        trg = g_edge._2.toNodeDraft,
+        dir = g_edge.getDirection,
+        lbl = g_edge.getLabel,
+        invert = g_edge.to == g_edge._1
+      ))
 
     hyp_edges.indices.foreach(i => {
       val ns: List[g.NodeT] = hyp_edges(i).map(g_node => g_node).toList
       val fake_node: NodeDraft = fake_nodes(i)
       addEdge(
-        source = ns.head.toNodeDraft,
-        target = fake_node,
-        direction = EdgeDirection.UNDIRECTED
+        src = ns.head.toNodeDraft,
+        trg = fake_node,
+        dir = EdgeDirection.UNDIRECTED
       )
-      ns.tail.foreach(g_node => addEdge(
-        source = fake_node,
-        target = g_node.toNodeDraft,
-        direction = hyp_edges(i).getDirection
-      ))
+      ns.tail.foreach(g_node =>
+        addEdge(
+          src = fake_node,
+          trg = g_node.toNodeDraft,
+          dir = hyp_edges(i).getDirection
+        ))
     })
 
     container
