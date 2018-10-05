@@ -178,10 +178,10 @@ trait Drawable {
 
     val g_edges: g.EdgeSet = g.edges
     val isWeighted = g_edges.exists(_.weight != 1.0)
-    val (hyp_edges, std_edges) = g_edges.toList.partition(_.size > 2)
+    val (hyper_edges, standard_edges) = g_edges.toList.partition(_.size > 2)
 
-    val fake_nodes: IndexedSeq[NodeDraft] = hyp_edges.indices.map(_ =>
-      addNode(size = Option(0.05f)))
+    val fake_nodes: IndexedSeq[NodeDraft] = hyper_edges.indices.map(_ =>
+      addNode(size = Some(0.05f)))
 
     implicit final class EdgeG(g_edge: g.EdgeT) {
 
@@ -204,7 +204,7 @@ trait Drawable {
 
     }
 
-    std_edges.foreach(g_edge =>
+    standard_edges.foreach(g_edge =>
       addEdge(
         src = g_edge._1.toNodeDraft,
         trg = g_edge._2.toNodeDraft,
@@ -213,19 +213,19 @@ trait Drawable {
         invert = g_edge.to == g_edge._1
       ))
 
-    hyp_edges.indices.foreach(i => {
-      val ns: List[g.NodeT] = hyp_edges(i).map(g_node => g_node).toList
+    hyper_edges.indices.foreach(i => {
+      val real_nodes: List[g.NodeT] = hyper_edges(i).map(g_node => g_node).toList
       val fake_node: NodeDraft = fake_nodes(i)
       addEdge(
-        src = ns.head.toNodeDraft,
+        src = real_nodes.head.toNodeDraft,
         trg = fake_node,
         dir = EdgeDirection.UNDIRECTED
       )
-      ns.tail.foreach(g_node =>
+      real_nodes.tail.foreach(real_node =>
         addEdge(
           src = fake_node,
-          trg = g_node.toNodeDraft,
-          dir = hyp_edges(i).getDirection
+          trg = real_node.toNodeDraft,
+          dir = hyper_edges(i).getDirection
         ))
     })
 
