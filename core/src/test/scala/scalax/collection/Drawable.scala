@@ -61,6 +61,14 @@ trait Drawable {
       rootLogger.setLevel(lvl)
     }
 
+    def filteredView(gm: GraphModel): GraphView = {
+      val filterController: FilterController = assertedLookup(classOf[FilterController])
+      val degreeFilter = new DegreeRangeFilter
+      degreeFilter.init(gm.getDirectedGraph)
+      degreeFilter.setRange(new Range(1, Integer.MAX_VALUE)) //Remove nodes with degree < 1
+      filterController.filter(filterController.createQuery(degreeFilter))
+    }
+
     def adjustLayout(gm: GraphModel, iterations: Int): Unit = {
       val layout = new ForceAtlas2(null)
       layout.setGraphModel(gm)
@@ -68,40 +76,16 @@ trait Drawable {
       layout.setAdjustSizes(true)
       layout.setScalingRatio(100.0)
       layout.setOutboundAttractionDistribution(true)
+
       layout.initAlgo()
-      var i = 0
-      while (i < iterations && layout.canAlgo) {
-        layout.goAlgo()
-        i += 1
+      0 to iterations forall { _ =>
+        if (layout.canAlgo) { layout.goAlgo(); true }
+        else false
       }
       layout.endAlgo()
     }
 
-    def createFile: File = {
-      val folderPath: Path = Paths.get(path)
-      if (!Files.exists(folderPath)) Files.createDirectory(folderPath)
-      new File(path + name)
-    }
-
-    toContainer(g).map(container => {
-
-      appendToWorkspace(container)
-
-      val graphModel: GraphModel = assertedLookup(classOf[GraphController]).getGraphModel
-
-      def getFilteredView: GraphView = {
-        val filterController: FilterController = assertedLookup(classOf[FilterController])
-        val degreeFilter = new DegreeRangeFilter
-        degreeFilter.init(graphModel.getDirectedGraph)
-        degreeFilter.setRange(new Range(1, Integer.MAX_VALUE)) //Remove nodes with degree < 1
-        val query = filterController.createQuery(degreeFilter)
-        filterController.filter(query)
-      }
-
-      graphModel.setVisibleView(getFilteredView)
-
-      adjustLayout(graphModel, 1000)
-
+    def setPropertries(): Unit = {
       val properties = assertedLookup(classOf[PreviewController]).getModel.getProperties
       properties.putValue(SHOW_NODE_LABELS, true)
       properties.putValue(SHOW_EDGE_LABELS, true)
@@ -114,13 +98,26 @@ trait Drawable {
       properties.putValue(EDGE_THICKNESS, 0.1f)
       properties.putValue(NODE_LABEL_FONT, properties.getFontValue(NODE_LABEL_FONT).deriveFont(8))
       properties.putValue(NODE_LABEL_PROPORTIONAL_SIZE, false)
+    }
 
-      val ec: ExportController = assertedLookup(classOf[ExportController])
+    def createFile: File = {
+      val folderPath: Path = Paths.get(path)
+      if (!Files.exists(folderPath)) Files.createDirectory(folderPath)
+      new File(path + name)
+    }
+
+    toContainer(g).map { container =>
+      appendToWorkspace(container)
+
+      val graphModel: GraphModel = assertedLookup(classOf[GraphController]).getGraphModel
+      graphModel.setVisibleView(filteredView(graphModel))
+      adjustLayout(graphModel, 1000)
+      setPropertries()
+
       val file = createFile
-      ec.exportFile(file)
+      assertedLookup(classOf[ExportController]).exportFile(file)
       file
-
-    })
+    }
   }
 
   implicit final class EdgeD(e: EdgeDraft) {
@@ -131,7 +128,6 @@ trait Drawable {
       e.setDirection(dir)
       e.setLabel(lbl)
     }
-
   }
 
   implicit final class NodeD(n: NodeDraft) {
@@ -140,7 +136,6 @@ trait Drawable {
       n.setLabel(label)
       if (size.isDefined) n.setSize(size.get)
     }
-
   }
 
   /**
@@ -195,13 +190,11 @@ trait Drawable {
         if (g_edge.isLabeled) label = label :+ g_edge.label.toString
         label.mkString(" - ")
       }
-
     }
 
     implicit final class NodeG(g_node: g.NodeT) {
 
       def toNodeDraft: NodeDraft = nodes(g_nodes.indexOf(g_node))
-
     }
 
     standard_edges.foreach(g_edge =>
@@ -231,5 +224,4 @@ trait Drawable {
 
     container
   }
-
 }
