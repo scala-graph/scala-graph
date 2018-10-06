@@ -6,6 +6,7 @@ import java.nio.file.{Path, Paths, Files}
 import java.util.logging.Level
 import java.util.logging.LogManager
 
+import scala.collection.breakOut
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -29,6 +30,8 @@ import org.openide.util.Lookup
 import scalax.collection.GraphPredef.EdgeLikeIn
 
 trait Drawable {
+
+  import Drawable._
 
   private def assertedLookup[T <: AnyRef : ClassTag](clazz: Class[T]): T = {
     val l: T = Lookup.getDefault.lookup(clazz)
@@ -79,7 +82,10 @@ trait Drawable {
 
       layout.initAlgo()
       0 to iterations forall { _ =>
-        if (layout.canAlgo) { layout.goAlgo(); true }
+        if (layout.canAlgo) {
+          layout.goAlgo();
+          true
+        }
         else false
       }
       layout.endAlgo()
@@ -120,26 +126,7 @@ trait Drawable {
     }
   }
 
-  implicit final class EdgeD(e: EdgeDraft) {
-
-    def setEdge(src: NodeDraft, trg: NodeDraft, dir: EdgeDirection, lbl: String = ""): Unit = {
-      e.setSource(src)
-      e.setTarget(trg)
-      e.setDirection(dir)
-      e.setLabel(lbl)
-    }
-  }
-
-  implicit final class NodeD(n: NodeDraft) {
-
-    def setNode(label: String = "", size: Option[Float] = None): Unit = {
-      n.setLabel(label)
-      if (size.isDefined) n.setSize(size.get)
-    }
-  }
-
-  /**
-    * convert graph into a drawable Gephi container
+  /** convert graph into a drawable Gephi container
     *
     * @param g graph
     * @tparam N type of node
@@ -167,61 +154,76 @@ trait Drawable {
       loader.addEdge(e)
     }
 
-    val g_nodes: List[g.NodeT] = g.nodes.toList
-    val nodes: List[NodeDraft] = g_nodes.map(g_node =>
-      addNode(lbl = g_node.toString))
+    val isWeighted                          = g.edges.exists(_.weight != 1.0)
+    val nodeDrafts: Map[g.NodeT, NodeDraft] = g.nodes.map(n => n -> addNode(lbl = n.toString))(collection.breakOut)
 
-    val g_edges: g.EdgeSet = g.edges
-    val isWeighted = g_edges.exists(_.weight != 1.0)
-    val (hyper_edges, standard_edges) = g_edges.toList.partition(_.size > 2)
-
-    val fake_nodes: IndexedSeq[NodeDraft] = hyper_edges.indices.map(_ =>
-      addNode(size = Some(0.05f)))
-
-    implicit final class EdgeG(g_edge: g.EdgeT) {
+    implicit final class EdgeG(edge: g.EdgeT) {
 
       def getDirection: EdgeDirection =
-        if (g_edge.isDirected) EdgeDirection.DIRECTED
+        if (edge.isDirected) EdgeDirection.DIRECTED
         else EdgeDirection.UNDIRECTED
 
       def getLabel: String = {
         var label: List[String] = List()
-        if (isWeighted) label = label :+ g_edge.weight.toString
-        if (g_edge.isLabeled) label = label :+ g_edge.label.toString
+        if (isWeighted) label = label :+ edge.weight.toString
+        if (edge.isLabeled) label = label :+ edge.label.toString
         label.mkString(" - ")
       }
     }
 
-    implicit final class NodeG(g_node: g.NodeT) {
+    implicit final class NodeG(node: g.NodeT) {
 
-      def toNodeDraft: NodeDraft = nodes(g_nodes.indexOf(g_node))
+      def asNodeDraft: NodeDraft = nodeDrafts(node)
     }
 
-    standard_edges.foreach(g_edge =>
-      addEdge(
-        src = g_edge._1.toNodeDraft,
-        trg = g_edge._2.toNodeDraft,
-        dir = g_edge.getDirection,
-        lbl = g_edge.getLabel,
-        invert = g_edge.to == g_edge._1
-      ))
-
-    hyper_edges.indices.foreach(i => {
-      val real_nodes: List[g.NodeT] = hyper_edges(i).map(g_node => g_node).toList
-      val fake_node: NodeDraft = fake_nodes(i)
-      addEdge(
-        src = real_nodes.head.toNodeDraft,
-        trg = fake_node,
-        dir = EdgeDirection.UNDIRECTED
-      )
-      real_nodes.tail.foreach(real_node =>
+    g.edges.foreach { edge =>
+      if (edge.nonHyperEdge)
         addEdge(
-          src = fake_node,
-          trg = real_node.toNodeDraft,
-          dir = hyper_edges(i).getDirection
-        ))
-    })
+          src = edge._1.asNodeDraft,
+          trg = edge._2.asNodeDraft,
+          dir = edge.getDirection,
+          lbl = edge.getLabel,
+          invert = edge.to == edge._1
+        )
+      else {
+        val realNodes = edge.nodes.toIterator
+        def fakeNode: NodeDraft = addNode(size = Some(0.05f))
+        addEdge(
+          src = realNodes.next.asNodeDraft,
+          trg = fakeNode,
+          dir = EdgeDirection.UNDIRECTED
+        )
+        realNodes.foreach(node =>
+          addEdge(
+            src = fakeNode,
+            trg = node.asNodeDraft,
+            dir = edge.getDirection
+          ))
+      }
+    }
 
     container
   }
+}
+
+private object Drawable {
+
+  implicit final class EdgeD(e: EdgeDraft) {
+
+    def setEdge(src: NodeDraft, trg: NodeDraft, dir: EdgeDirection, lbl: String = ""): Unit = {
+      e.setSource(src)
+      e.setTarget(trg)
+      e.setDirection(dir)
+      e.setLabel(lbl)
+    }
+  }
+
+  implicit final class NodeD(n: NodeDraft) {
+
+    def setNode(label: String = "", size: Option[Float] = None): Unit = {
+      n.setLabel(label)
+      if (size.isDefined) n.setSize(size.get)
+    }
+  }
+
 }
