@@ -33,7 +33,7 @@ trait Visualizer[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
             case None => ""
           }) + ".png"
         ) match {
-          case Success(f) => reThrow(tExc, s"The graph image is available at ${f.getAbsolutePath}")
+          case Success(f) => reThrow(tExc, s"The graph image is available at file://${f.getAbsolutePath}")
           case Failure(e) => reThrow(tExc, s"Graph image generation failed with `${e.getMessage}`.")
         }
     }
