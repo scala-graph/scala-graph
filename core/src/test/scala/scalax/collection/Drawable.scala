@@ -15,14 +15,12 @@ import org.gephi.preview.types.DependantColor
 import org.gephi.filters.api.FilterController
 import org.gephi.filters.api.Range
 import org.gephi.filters.plugin.graph.DegreeRangeBuilder.DegreeRangeFilter
-import org.gephi.graph.api.GraphController
-import org.gephi.graph.api.GraphModel
+import org.gephi.graph.api.{GraphController, GraphModel, GraphView}
 import org.gephi.io.importer.api._
 import org.gephi.io.exporter.api.ExportController
 import org.gephi.io.processor.plugin.DefaultProcessor
 import org.gephi.preview.api.PreviewController
-import org.gephi.preview.api.PreviewModel
-import org.gephi.preview.api.PreviewProperty
+import org.gephi.preview.api.PreviewProperty._
 import org.gephi.preview.types.EdgeColor
 import org.gephi.project.api.ProjectController
 import org.gephi.project.api.Workspace
@@ -43,84 +41,106 @@ trait Drawable {
     * @param g    the graph to output
     * @param path folder the image file is to be written to
     * @param name file name including an extension
-    * @tparam N   type of node
-    * @tparam E   type of edge
+    * @tparam N type of node
+    * @tparam E type of edge
     */
   def makeImage[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E], path: String, name: String): Try[File] = {
 
-    //Init a project - and therefore a workspace
-    val pc: ProjectController = assertedLookup(classOf[ProjectController])
-    pc.newProject()
-    val workspace: Workspace = pc.getCurrentWorkspace
+    def initWorkspace: Workspace = {
+      val pc: ProjectController = assertedLookup(classOf[ProjectController])
+      pc.newProject()
+      pc.getCurrentWorkspace
+    }
 
-    //Get models and controllers for this new workspace
-    val graphModel: GraphModel = assertedLookup(classOf[GraphController]).getGraphModel
-    val model: PreviewModel = assertedLookup(classOf[PreviewController]).getModel
-    val importController: ImportController = assertedLookup(classOf[ImportController])
-    val filterController: FilterController = assertedLookup(classOf[FilterController])
-
-    toContainer(g).map(container => {
+    def appendToWorkspace(container: Container): Unit = {
+      val importController: ImportController = assertedLookup(classOf[ImportController])
       val rootLogger = LogManager.getLogManager.getLogger("")
       val lvl = rootLogger.getLevel
       rootLogger.setLevel(Level.WARNING)
-      //Append imported data to GraphAPI
-      importController.process(container, new DefaultProcessor, workspace)
+      importController.process(container, new DefaultProcessor, initWorkspace)
       rootLogger.setLevel(lvl)
+    }
 
-      //See if graph is well imported
-      val graph = graphModel.getDirectedGraph
-      //    println("Nodes: " + graph.getNodeCount)
-      //    println("Edges: " + graph.getEdgeCount)
-
-      //Filter
-      val degreeFilter = new DegreeRangeFilter
-      degreeFilter.init(graph)
-      degreeFilter.setRange(new Range(1, Integer.MAX_VALUE)) //Remove nodes with degree < 1
-
-      val query = filterController.createQuery(degreeFilter)
-      val view = filterController.filter(query)
-      graphModel.setVisibleView(view) //Set the filter result as the visible view
-
-      //    //See visible graph stats
-      //    val graphVisible = graphModel.getUndirectedGraphVisible
-      //    println("Nodes: " + graphVisible.getNodeCount)
-      //    println("Edges: " + graphVisible.getEdgeCount)
-
+    def adjustLayout(gm: GraphModel, iterations: Int): Unit = {
       val layout = new ForceAtlas2(null)
-      layout.setGraphModel(graphModel)
+      layout.setGraphModel(gm)
       layout.resetPropertiesValues()
       layout.setAdjustSizes(true)
       layout.setScalingRatio(100.0)
       layout.setOutboundAttractionDistribution(true)
       layout.initAlgo()
       var i = 0
-      while (i < 1000 && layout.canAlgo) {
+      while (i < iterations && layout.canAlgo) {
         layout.goAlgo()
         i += 1
       }
       layout.endAlgo()
+    }
 
-      //Preview
-      model.getProperties.putValue(PreviewProperty.SHOW_NODE_LABELS, true)
-      model.getProperties.putValue(PreviewProperty.SHOW_EDGE_LABELS, true)
-      model.getProperties.putValue(PreviewProperty.ARROW_SIZE, 100.0f)
-      model.getProperties.putValue(PreviewProperty.NODE_OPACITY, 10.5f)
-      model.getProperties.putValue(PreviewProperty.NODE_BORDER_COLOR, new DependantColor(Color.BLUE))
-      model.getProperties.putValue(PreviewProperty.NODE_BORDER_WIDTH, 2.0f)
-      model.getProperties.putValue(PreviewProperty.EDGE_CURVED, false)
-      model.getProperties.putValue(PreviewProperty.EDGE_COLOR, new EdgeColor(Color.GRAY))
-      model.getProperties.putValue(PreviewProperty.EDGE_THICKNESS, 0.1f)
-      model.getProperties.putValue(PreviewProperty.NODE_LABEL_FONT, model.getProperties.getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(8))
-      model.getProperties.putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, false)
-
-      //Export
-      val ec: ExportController = assertedLookup(classOf[ExportController])
+    def createFile: File = {
       val folderPath: Path = Paths.get(path)
       if (!Files.exists(folderPath)) Files.createDirectory(folderPath)
-      val file = new File(path + name)
+      new File(path + name)
+    }
+
+    toContainer(g).map(container => {
+
+      appendToWorkspace(container)
+
+      val graphModel: GraphModel = assertedLookup(classOf[GraphController]).getGraphModel
+
+      def getFilteredView: GraphView = {
+        val filterController: FilterController = assertedLookup(classOf[FilterController])
+        val degreeFilter = new DegreeRangeFilter
+        degreeFilter.init(graphModel.getDirectedGraph)
+        degreeFilter.setRange(new Range(1, Integer.MAX_VALUE)) //Remove nodes with degree < 1
+        val query = filterController.createQuery(degreeFilter)
+        filterController.filter(query)
+      }
+
+      graphModel.setVisibleView(getFilteredView)
+
+      adjustLayout(graphModel, 1000)
+
+      val properties = assertedLookup(classOf[PreviewController]).getModel.getProperties
+      properties.putValue(SHOW_NODE_LABELS, true)
+      properties.putValue(SHOW_EDGE_LABELS, true)
+      properties.putValue(ARROW_SIZE, 100.0f)
+      properties.putValue(NODE_OPACITY, 10.5f)
+      properties.putValue(NODE_BORDER_COLOR, new DependantColor(Color.BLUE))
+      properties.putValue(NODE_BORDER_WIDTH, 2.0f)
+      properties.putValue(EDGE_CURVED, false)
+      properties.putValue(EDGE_COLOR, new EdgeColor(Color.GRAY))
+      properties.putValue(EDGE_THICKNESS, 0.1f)
+      properties.putValue(NODE_LABEL_FONT, properties.getFontValue(NODE_LABEL_FONT).deriveFont(8))
+      properties.putValue(NODE_LABEL_PROPORTIONAL_SIZE, false)
+
+      val ec: ExportController = assertedLookup(classOf[ExportController])
+      val file = createFile
       ec.exportFile(file)
       file
+
     })
+  }
+
+  implicit final class EdgeD(e: EdgeDraft) {
+
+    def setEdge(src: NodeDraft, trg: NodeDraft, dir: EdgeDirection, lbl: String = ""): Unit = {
+      e.setSource(src)
+      e.setTarget(trg)
+      e.setDirection(dir)
+      e.setLabel(lbl)
+    }
+
+  }
+
+  implicit final class NodeD(n: NodeDraft) {
+
+    def setNode(label: String = "", size: Option[Float] = None): Unit = {
+      n.setLabel(label)
+      if (size.isDefined) n.setSize(size.get)
+    }
+
   }
 
   /**
@@ -133,82 +153,83 @@ trait Drawable {
     */
   def toContainer[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E]): Try[Container] = Try {
 
-    val c: Container = assertedLookup(classOf[Container.Factory]).newContainer
-    val container: ContainerLoader = c.getLoader
+    val container: Container = assertedLookup(classOf[Container.Factory]).newContainer
+    val loader: ContainerLoader = container.getLoader
 
-    // real nodes
-    val g_nodes: List[g.NodeT] = g.nodes.toList
-    val nodes: List[NodeDraft] = g_nodes.map(g_node => {
-      val n: NodeDraft = container.factory.newNodeDraft
-      n.setLabel(g_node.toString)
+    def addNode(lbl: String = "", size: Option[Float] = None): NodeDraft = {
+      val n: NodeDraft = loader.factory.newNodeDraft
+      n.setNode(lbl, size)
+      loader.addNode(n)
       n
-    })
-    nodes.foreach(container.addNode)
-
-    // separate edges into standard and hyper
-    val g_edges: g.EdgeSet = g.edges
-    val isWeighted = g_edges.exists(_.weight != 1.0)
-    val (hyp_edges, std_edges) = g_edges.toList.partition(_.size > 2)
-
-    // add extra "fake" node for each hyper edge (connecting >2 nodes)
-    val fake_nodes = hyp_edges.indices.map(_ => {
-      val n: NodeDraft = container.factory.newNodeDraft
-      n.setLabel("")
-      n.setSize(0.05f)
-      n
-    })
-    fake_nodes.foreach(container.addNode)
-
-    def getLabel(g_edge: g.EdgeT): String = {
-      var label: List[String] = List()
-      if (isWeighted) label = label :+ g_edge.weight.toString
-      if (g_edge.isLabeled) label = label :+ g_edge.label.toString
-      label.mkString(" - ")
     }
 
-    def getDirection(g_edge: g.EdgeT): EdgeDirection =
-      if (g_edge.isDirected) EdgeDirection.DIRECTED
-      else EdgeDirection.UNDIRECTED
+    def addEdge(src: NodeDraft, trg: NodeDraft, dir: EdgeDirection, lbl: String = "", invert: Boolean = false): Unit = {
+      val e: EdgeDraft = loader.factory.newEdgeDraft
+      if (!invert)
+        e.setEdge(src, trg, dir, lbl)
+      else
+        e.setEdge(trg, src, dir, lbl)
+      loader.addEdge(e)
+    }
 
-    def getNodeDraft(g_node: g.NodeT): NodeDraft = nodes(g_nodes.indexOf(g_node))
+    val g_nodes: List[g.NodeT] = g.nodes.toList
+    val nodes: List[NodeDraft] = g_nodes.map(g_node =>
+      addNode(lbl = g_node.toString))
 
-    std_edges.foreach(g_edge => {
-      val e: EdgeDraft = container.factory.newEdgeDraft
-      e.setDirection(getDirection(g_edge))
-      e.setLabel(getLabel(g_edge))
-      val s: NodeDraft = getNodeDraft(g_edge._1)
-      val t: NodeDraft = getNodeDraft(g_edge._2)
-      if (g_edge.to == g_edge._1) {
-        e.setSource(t)
-        e.setTarget(s)
-      } else {
-        e.setSource(s)
-        e.setTarget(t)
+    val g_edges: g.EdgeSet = g.edges
+    val isWeighted = g_edges.exists(_.weight != 1.0)
+    val (hyper_edges, standard_edges) = g_edges.toList.partition(_.size > 2)
+
+    val fake_nodes: IndexedSeq[NodeDraft] = hyper_edges.indices.map(_ =>
+      addNode(size = Some(0.05f)))
+
+    implicit final class EdgeG(g_edge: g.EdgeT) {
+
+      def getDirection: EdgeDirection =
+        if (g_edge.isDirected) EdgeDirection.DIRECTED
+        else EdgeDirection.UNDIRECTED
+
+      def getLabel: String = {
+        var label: List[String] = List()
+        if (isWeighted) label = label :+ g_edge.weight.toString
+        if (g_edge.isLabeled) label = label :+ g_edge.label.toString
+        label.mkString(" - ")
       }
-      container.addEdge(e)
+
+    }
+
+    implicit final class NodeG(g_node: g.NodeT) {
+
+      def toNodeDraft: NodeDraft = nodes(g_nodes.indexOf(g_node))
+
+    }
+
+    standard_edges.foreach(g_edge =>
+      addEdge(
+        src = g_edge._1.toNodeDraft,
+        trg = g_edge._2.toNodeDraft,
+        dir = g_edge.getDirection,
+        lbl = g_edge.getLabel,
+        invert = g_edge.to == g_edge._1
+      ))
+
+    hyper_edges.indices.foreach(i => {
+      val real_nodes: List[g.NodeT] = hyper_edges(i).map(g_node => g_node).toList
+      val fake_node: NodeDraft = fake_nodes(i)
+      addEdge(
+        src = real_nodes.head.toNodeDraft,
+        trg = fake_node,
+        dir = EdgeDirection.UNDIRECTED
+      )
+      real_nodes.tail.foreach(real_node =>
+        addEdge(
+          src = fake_node,
+          trg = real_node.toNodeDraft,
+          dir = hyper_edges(i).getDirection
+        ))
     })
 
-    hyp_edges.indices.foreach(i => {
-      val ns: List[g.NodeT] = hyp_edges(i).map(g_node => g_node).toList
-      // add undirected edge from first node to fake node
-      val u: EdgeDraft = container.factory.newEdgeDraft
-      u.setDirection(EdgeDirection.UNDIRECTED)
-      u.setLabel(getLabel(hyp_edges(i)))
-      val f: NodeDraft = fake_nodes(i)
-      u.setSource(getNodeDraft(ns.head))
-      u.setTarget(f)
-      container.addEdge(u)
-      // add unlabeled edges from fake node to other nodes
-      ns.tail.foreach(g_node => {
-        val e: EdgeDraft = container.factory.newEdgeDraft
-        e.setDirection(getDirection(hyp_edges(i)))
-        e.setSource(f)
-        e.setTarget(getNodeDraft(g_node))
-        container.addEdge(e)
-      })
-    })
-
-    c
+    container
   }
 
 }
