@@ -83,7 +83,7 @@ trait Drawable {
       layout.initAlgo()
       0 to iterations forall { _ =>
         if (layout.canAlgo) {
-          layout.goAlgo();
+          layout.goAlgo()
           true
         }
         else false
@@ -91,7 +91,7 @@ trait Drawable {
       layout.endAlgo()
     }
 
-    def setPropertries(): Unit = {
+    def setProperties(): Unit = {
       val properties = assertedLookup(classOf[PreviewController]).getModel.getProperties
       properties.putValue(SHOW_NODE_LABELS, true)
       properties.putValue(SHOW_EDGE_LABELS, true)
@@ -118,7 +118,7 @@ trait Drawable {
       val graphModel: GraphModel = assertedLookup(classOf[GraphController]).getGraphModel
       graphModel.setVisibleView(filteredView(graphModel))
       adjustLayout(graphModel, 1000)
-      setPropertries()
+      setProperties()
 
       val file = createFile
       assertedLookup(classOf[ExportController]).exportFile(file)
