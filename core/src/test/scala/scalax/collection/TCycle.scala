@@ -99,16 +99,23 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
       }
       val (g1, g2) = (g + 4~>2, g + 5~>2)
       val (gCycle_1, gCycle_2) = (g1 get 3 findCycle, g2 get 3 findCycle)
-      gCycle_1 should haveOneNodeSequenceOf(Seq(3, 4,    2, 3))
-      gCycle_2 should haveOneNodeSequenceOf(Seq(3, 4, 5, 2, 3))
+      given(g1.asInstanceOf[CC[Int, DiEdge]]) { g =>
+        gCycle_1 should haveOneNodeSequenceOf(Seq(3, 4,    2, 3))
+      }
+      given(g2.asInstanceOf[CC[Int, DiEdge]]) { g =>
+        gCycle_2 should haveOneNodeSequenceOf(Seq(3, 4, 5, 2, 3))
+      }
 
       def fromEachNode[N,E[X] <: EdgeLikeIn[X]](noCycles: Set[N], cycle: Graph[N,E]#Cycle) {
         val g = cycle.nodes.head.containingGraph
-        def outer(out: N) = g get out
-        g.nodes foreach { n =>
-          val found = n.findCycle
-          if (noCycles contains n.value) found                   should be (None)
-          else                          (found.get sameAs cycle) should be (true)
+        given(g.asInstanceOf[CC[N, E]]) { g =>
+          def outer(out: N) = g get out
+
+          g.nodes foreach { n =>
+            val found = n.findCycle
+            if (noCycles contains n.value) found should be(None)
+            else (found.get sameAs cycle) should be(true)
+          }
         }
       }
       fromEachNode(Set(5, 6), gCycle_1 get)
