@@ -61,20 +61,16 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
     val (cyclic_21, cyclicEdge_21) = makeCyclic(acyclic_2, 8~>3)
     val (cyclic_22, cyclicEdge_22) = makeCyclic(acyclic_2, 6~>1)
 
-    def c_1 (outer: Int) = cyclic_1  get outer
-    def c_21(outer: Int) = cyclic_21 get outer
-    def c_22(outer: Int) = cyclic_22 get outer
-
     def `the cycle returned by 'findCycle' contains the expected nodes` {
       given(acyclic_1) { g => (g get 1 findCycle) should be(None) }
-      given(cyclic_1) { _ => c_1(2).findCycle should haveOneNodeSequenceOf(Seq(2, 3, 4, 2)) }
+      given(cyclic_1)  { g => (g get 2 findCycle) should haveOneNodeSequenceOf(Seq(2, 3, 4, 2)) }
 
       given(acyclic_2) { g => (g get 1 findCycle) should be(None) }
-      given(cyclic_21) { _ =>
-        c_21(1).findCycle should haveOneNodeSequenceOf(
-          Seq(3, 7, 8, 3))
-      }
-      given(cyclic_22) { _ =>
+      given(cyclic_21) { g => (g get 1 findCycle) should haveOneNodeSequenceOf(Seq(3, 7, 8, 3)) }
+      given(cyclic_22) { g =>
+
+        def c_22(outer: Int) = g get outer
+
         c_22(1).findCycle should haveOneNodeSequenceOf(
           Seq(1, 5, 6, 1),
           Seq(1, 4, 5, 6, 1),
@@ -89,17 +85,15 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
 
       val g = {
         var i, j=0
-        Graph.fill(5) { i+=1; j=i+1; i~>j }
+        factory.fill(5) { i+=1; j=i+1; i~>j }
       }
       val (g1, g2) = (g + 4~>2, g + 5~>2)
       val (gCycle_1, gCycle_2) = (g1 get 3 findCycle, g2 get 3 findCycle)
-      given(g1.asInstanceOf[CC[Int, DiEdge]]) { g => gCycle_1 should haveOneNodeSequenceOf(Seq(3, 4,    2, 3)) }
-      given(g2.asInstanceOf[CC[Int, DiEdge]]) { g => gCycle_2 should haveOneNodeSequenceOf(Seq(3, 4, 5, 2, 3)) }
+      given(g1) { g => gCycle_1 should haveOneNodeSequenceOf(Seq(3, 4,    2, 3)) }
+      given(g2) { g => gCycle_2 should haveOneNodeSequenceOf(Seq(3, 4, 5, 2, 3)) }
 
       def fromEachNode[N,E[X] <: EdgeLikeIn[X]](noCycles: Set[N], cycle: Graph[N,E]#Cycle) {
-        val g = cycle.nodes.head.containingGraph
-        given(g.asInstanceOf[CC[N, E]]) { g =>
-          def outer(out: N) = g get out
+        given(cycle.nodes.head.containingGraph.asInstanceOf[CC[N, E]]) { g =>
 
           g.nodes foreach { n =>
             val found = n.findCycle
@@ -114,33 +108,41 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
 
     def `the cycle returned by 'findCycleContaining' contains the expected nodes` {
       given(acyclic_1) { g => g.findCycleContaining(g get 1) should be(None) }
-      given(cyclic_1) { _ => cyclic_1.findCycleContaining(c_1(2)) should haveOneNodeSequenceOf(Seq(2, 3, 4, 2)) }
+      given(cyclic_1)  { g => g.findCycleContaining(g get 2) should haveOneNodeSequenceOf(Seq(2, 3, 4, 2)) }
       given(acyclic_2) { g => g.findCycleContaining(g get 1) should be(None) }
-      given(cyclic_21) { _ =>
-        cyclic_21.findCycleContaining(c_21(1)) should be(None)
-        cyclic_21.findCycleContaining(c_21(3)) should haveOneNodeSequenceOf(
-          Seq(3, 7, 8, 3))
+      given(cyclic_21) { g =>
+
+        def c_21(outer: Int) = g get outer
+
+        g.findCycleContaining(c_21(1)) should be(None)
+        g.findCycleContaining(c_21(3)) should haveOneNodeSequenceOf(Seq(3, 7, 8, 3))
       }
-      given(cyclic_22) { _ =>
-        cyclic_22.findCycleContaining(c_22(1)) should haveOneNodeSequenceOf(
+      given(cyclic_22) { g =>
+
+        def c_22(outer: Int) = g get outer
+
+        g.findCycleContaining(c_22(1)) should haveOneNodeSequenceOf(
           Seq(1, 5, 6, 1),
           Seq(1, 4, 5, 6, 1),
           Seq(1, 3, 7, 4, 5, 6, 1),
           Seq(1, 2, 3, 7, 4, 5, 6, 1))
-        cyclic_22.findCycleContaining(c_22(4)) should haveOneNodeSequenceOf(
+        g.findCycleContaining(c_22(4)) should haveOneNodeSequenceOf(
           Seq(4, 5, 6, 1, 4),
           Seq(4, 5, 6, 1, 3, 7, 4),
           Seq(4, 5, 6, 1, 2, 3, 7, 4))
-        cyclic_22.findCycleContaining(c_22(3)) should haveOneNodeSequenceOf(
+        g.findCycleContaining(c_22(3)) should haveOneNodeSequenceOf(
           Seq(3, 7, 4, 5, 6, 1, 3),
           Seq(3, 7, 4, 5, 6, 1, 2, 3))
-        cyclic_22.findCycleContaining(c_22(2)) should haveOneNodeSequenceOf(
+        g.findCycleContaining(c_22(2)) should haveOneNodeSequenceOf(
           Seq(2, 3, 7, 4, 5, 6, 1, 2))
       }
     }
 
     def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes` {
-      given(cyclic_22) { _ =>
+      given(cyclic_22) { g =>
+
+        def c_22(outer: Int) = g get outer
+
         c_22(1).withSubgraph(nodes = _ != 3) partOfCycle() should haveOneNodeSequenceOf(
           Seq(1, 5, 6, 1),
           Seq(1, 4, 5, 6, 1))
@@ -159,9 +161,9 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
     }
 
     def `the cycle returned by 'findCycleContaining' contains the expected edges` {
-      given(cyclic_1)  { _ =>  cyclic_1.findCycleContaining(c_1(2)).get.edges  should contain(cyclicEdge_1) }
-      given(cyclic_21) { _ => cyclic_21.findCycleContaining(c_21(3)).get.edges should contain(cyclicEdge_21) }
-      given(cyclic_22) { _ => cyclic_22.findCycleContaining(c_22(1)).get.edges should contain(cyclicEdge_22) }
+      given(cyclic_1)  { g => g.findCycleContaining(g get 2).get.edges should contain(cyclicEdge_1) }
+      given(cyclic_21) { g => g.findCycleContaining(g get 3).get.edges should contain(cyclicEdge_21) }
+      given(cyclic_22) { g => g.findCycleContaining(g get 1).get.edges should contain(cyclicEdge_22) }
     }
 
     def `'isCyclic' returns the expected result` {
@@ -191,25 +193,21 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
     val unDiCyclic_21 = unDiAcyclic_2 + 3~5
     val unDiCyclic_22 = unDiAcyclic_2 ++ List(3~6, 6~7, 7~4)
 
-    def uc_1 (outer: Int) = unDiCyclic_1   get outer
-    def uc_21(outer: Int) = unDiCyclic_21  get outer
-    def uc_22(outer: Int) = unDiCyclic_22  get outer
-
     def `the cycle returned by 'findCycle' contains the expected nodes` {
       given(unDiAcyclic_1) { g => (g get 1 findCycle) should be(None) }
-      given(unDiCyclic_1) { _ =>
-        uc_1(2).findCycle should haveOneNodeSequenceOf(
+      given(unDiCyclic_1) { g =>
+        (g get 2 findCycle) should haveOneNodeSequenceOf(
           Seq(2, 3, 1, 2),
           Seq(2, 1, 3, 2))
       }
       given(unDiAcyclic_2) { g => (g get 1 findCycle) should be(None) }
-      given(unDiCyclic_21) { _ =>
-        uc_21(1).findCycle should haveOneNodeSequenceOf(
+      given(unDiCyclic_21) { g =>
+        (g get 1 findCycle) should haveOneNodeSequenceOf(
           Seq(1, 3, 5, 2, 1),
           Seq(1, 2, 5, 3, 1))
       }
-      given(unDiCyclic_22) { _ =>
-        uc_22(3).findCycle should haveOneNodeSequenceOf(
+      given(unDiCyclic_22) { g =>
+        (g get 3 findCycle) should haveOneNodeSequenceOf(
           Seq(3, 1, 2, 4, 7, 6, 3),
           Seq(3, 6, 7, 4, 2, 1, 3))
       }
@@ -217,29 +215,35 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
 
     def `the cycle returned by 'findCycleContaining' contains the expected nodes` {
       given(unDiAcyclic_1) { g => g.findCycleContaining(g get 1) should be(None) }
-      given(unDiCyclic_1) { _ =>
-        unDiCyclic_1.findCycleContaining(uc_1(2)) should haveOneNodeSequenceOf(
+      given(unDiCyclic_1) { g =>
+        g.findCycleContaining(g get 2) should haveOneNodeSequenceOf(
           Seq(2, 3, 1, 2),
           Seq(2, 1, 3, 2))
       }
       given(unDiAcyclic_2) { g => g.findCycleContaining(g get 1) should be(None) }
-      given(unDiCyclic_21) { _ =>
-        unDiCyclic_21.findCycleContaining(uc_21(1)) should haveOneNodeSequenceOf(
+      given(unDiCyclic_21) { g =>
+
+        def uc_21(outer: Int) = g get outer
+
+        g.findCycleContaining(uc_21(1)) should haveOneNodeSequenceOf(
           Seq(1, 3, 5, 2, 1),
           Seq(1, 2, 5, 3, 1))
-        unDiCyclic_21.findCycleContaining(uc_21(4)) should be(None)
+        g.findCycleContaining(uc_21(4)) should be(None)
       }
-      given(unDiCyclic_22) { _ =>
-        unDiCyclic_22.findCycleContaining(uc_22(3)) should haveOneNodeSequenceOf(
+      given(unDiCyclic_22) { g =>
+
+        def uc_22(outer: Int) = g get outer
+
+        g.findCycleContaining(uc_22(3)) should haveOneNodeSequenceOf(
           Seq(3, 1, 2, 4, 7, 6, 3),
           Seq(3, 6, 7, 4, 2, 1, 3))
-        unDiCyclic_22.findCycleContaining(uc_22(5)) should be(None)
+        g.findCycleContaining(uc_22(5)) should be(None)
       }
     }
 
     def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes` {
-      given(unDiCyclic_21) { _ => uc_21(1).withSubgraph(nodes = _ != 2) partOfCycle() should be(None) }
-      given(unDiCyclic_22) { _ =>uc_22(3).withSubgraph(nodes = _ != 2) partOfCycle() should be(None) }
+      given(unDiCyclic_21) { g => (g get 1).withSubgraph(nodes = _ != 2) partOfCycle() should be(None) }
+      given(unDiCyclic_22) { g => (g get 3).withSubgraph(nodes = _ != 2) partOfCycle() should be(None) }
     }
 
   }
@@ -268,8 +272,6 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
 
     val mixed = factory(Data.elementsOfUnDi_1: _*)
 
-    def m(outer: Int) = mixed get outer
-
     def `'findCycle' finds a cycle following any route` {
       given(factory(
         1~>3, 3~>4, 3~>20, 20~>21,
@@ -286,21 +288,24 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
     }
 
     def `the cycle returned by 'findCycleContaining' contains the expected nodes` {
-      given(mixed) { _ =>
-        mixed.findCycleContaining(m(2)) should haveOneNodeSequenceOf(
+      given(mixed) { g =>
+
+        def m(outer: Int) = g get outer
+
+        g.findCycleContaining(m(2)) should haveOneNodeSequenceOf(
           Seq(2, 1, 3, 2),
           Seq(2, 3, 4, 5, 1, 2),
           Seq(2, 1, 5, 3, 2),
           Seq(2, 3, 5, 1, 2)
         )
-        mixed.findCycleContaining(m(1)) should haveOneNodeSequenceOf(
+        g.findCycleContaining(m(1)) should haveOneNodeSequenceOf(
           Seq(1, 3, 2, 1),
           Seq(1, 3, 5, 1),
           Seq(1, 2, 3, 5, 1),
           Seq(1, 5, 3, 2, 1),
           Seq(1, 2, 3, 4, 5, 1),
           Seq(1, 3, 4, 5, 1))
-        mixed.findCycleContaining(m(4)) should haveOneNodeSequenceOf(
+        g.findCycleContaining(m(4)) should haveOneNodeSequenceOf(
           Seq(4, 4),
           Seq(4, 5, 3, 4),
           Seq(4, 5, 1, 2, 3, 4),
@@ -309,13 +314,16 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
     }
 
     def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes` {
-      given(mixed) { _ =>
+      given(mixed) { g =>
+
+        def m(outer: Int) = g get outer
+
         m(2).withSubgraph(edges = _ != DiEdge(1, 3)).partOfCycle should haveOneNodeSequenceOf(
           Seq(2, 3, 4, 5, 1, 2),
           Seq(2, 1, 5, 3, 2),
           Seq(2, 3, 5, 1, 2))
         m(2).withSubgraph(nodes = _ != 5)
-          .withOrdering(mixed.EdgeOrdering(mixed.Edge.WeightOrdering.compare))
+          .withOrdering(g.EdgeOrdering(g.Edge.WeightOrdering.compare))
           .partOfCycle should haveOneNodeSequenceOf(Seq(2, 1, 3, 2))
 
         m(1).withSubgraph(nodes = _ != 5).partOfCycle should haveOneNodeSequenceOf(Seq(1, 3, 2, 1))
