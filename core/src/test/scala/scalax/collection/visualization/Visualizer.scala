@@ -1,4 +1,4 @@
-package scalax.collection
+package scalax.collection.visualization
 
 import scala.language.higherKinds
 import scala.util.{Failure, Success}
@@ -6,7 +6,10 @@ import scala.util.{Failure, Success}
 import org.scalatest.exceptions.TestFailedException
 import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.{Graph, GraphLike}
 
+/** Scalatest support for graph visualization in case of failures.
+  */
 trait Visualizer[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]] extends Drawable {
 
   def factory: GraphCoreCompanion[G]

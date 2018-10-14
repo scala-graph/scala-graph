@@ -1,34 +1,32 @@
-package scalax.collection
+package scalax.collection.visualization
 
 import java.awt.Color
 import java.io.File
-import java.nio.file.{Path, Paths, Files}
-import java.util.logging.Level
-import java.util.logging.LogManager
+import java.nio.file.{Files, Path, Paths}
+import java.util.logging.{Level, LogManager}
 
-import scala.collection.breakOut
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 import scala.util.Try
 
-import org.gephi.layout.plugin.forceAtlas2.ForceAtlas2
-import org.gephi.preview.types.DependantColor
-import org.gephi.filters.api.FilterController
-import org.gephi.filters.api.Range
+import org.gephi.filters.api.{FilterController, Range}
 import org.gephi.filters.plugin.graph.DegreeRangeBuilder.DegreeRangeFilter
 import org.gephi.graph.api.{GraphController, GraphModel, GraphView}
-import org.gephi.io.importer.api._
 import org.gephi.io.exporter.api.ExportController
+import org.gephi.io.importer.api._
 import org.gephi.io.processor.plugin.DefaultProcessor
+import org.gephi.layout.plugin.forceAtlas2.ForceAtlas2
 import org.gephi.preview.api.PreviewController
 import org.gephi.preview.api.PreviewProperty._
-import org.gephi.preview.types.EdgeColor
-import org.gephi.project.api.ProjectController
-import org.gephi.project.api.Workspace
+import org.gephi.preview.types.{DependantColor, EdgeColor}
+import org.gephi.project.api.{ProjectController, Workspace}
 import org.openide.util.Lookup
 
+import scalax.collection.Graph
 import scalax.collection.GraphPredef.EdgeLikeIn
 
+/** Facilitates drawing any graph as an image.
+  */
 trait Drawable {
 
   import Drawable._
