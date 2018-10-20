@@ -58,16 +58,16 @@ object GraphPredef {
       def edgeParams = partitioned._2.asInstanceOf[Traversable[EdgeParam]]
   
       def toOuterNodes: Traversable[N]    = nodeParams map (_.value)
-      def toOuterEdges: Traversable[E[N]] = edgeParams map {_ match {
+      def toOuterEdges: Traversable[E[N]] = edgeParams map {
         case e: OuterEdge[N,E] => e.edge
         case e: InnerEdgeParam[N,E,_,E] => e.asEdgeTProjection[N,E].toOuter
-      }}
+      }
 
-      def toInParams: Traversable[InParam[N,E]] = elems map {_ match {
+      def toInParams: Traversable[InParam[N,E]] = elems map {
         case in: InParam[N,E] => in
         case n: InnerNodeParam[N]         => OuterNode(n.value)
         case e: InnerEdgeParam[N,E,_,E] => e.asEdgeTProjection[N,E].toOuter.asInstanceOf[OuterEdge[N,E]]
-      }}
+      }
     }
     object Partitions {
       def apply[N, E[X]<:EdgeLikeIn[X]](elems: Traversable[Param[N,E]]): Param.Partitions[N,E] =
@@ -213,13 +213,25 @@ object GraphPredef {
   import GraphEdge._
   
   @inline implicit def anyToNode[N](n: N) = OuterNode(n)
-  implicit def seqToGraphParam[N, E[X<:N] <: EdgeLikeIn[X]](s: Seq[N]): Seq[InParam[N,E]] = s map {_ match {
+
+  implicit def seqToGraphParam[N, E[X<:N] <: EdgeLike[X]](s: Seq[N]): Seq[Param[N,E]] = s map {
     case e: EdgeLike[_] with EdgeCopy[_] with OuterEdge[_,_] with InParam[_,_] => e.asInstanceOf[InParam[N,E]]
     case e: InnerEdgeParam[_,_,_,_] => e.edge.asInstanceOf[OuterEdge[N,E]]
-    case e: EdgeLike[_] => throw new IllegalArgumentException("Invalid edge type: EdgeCopy and OuterEdge need be mixed in.")
-    case InnerNodeParam(n) => OuterNode(n).asInstanceOf[InParam[N,E]]
-    case n => OuterNode(n)
-  }}
+    case e: EdgeLike[_]             => throw new IllegalArgumentException("Invalid edge type: EdgeCopy and OuterEdge need be mixed in.")
+    case n                          => toOuterNode[N,E](n)
+  }
+
+  implicit class TraversableEnrichments[N, T[X] <: Traversable[X]](val t: T[N]) extends AnyVal {
+    def toOuterNodes[E[X <: N] <: EdgeLike[X]]: Seq[InParam[N, E]] =
+      t.map(toOuterNode[N, E])(collection.breakOut)
+  }
+
+  private def toOuterNode[N, E[X <: N] <: EdgeLike[X]](node: N): InParam[N, E] =
+    node match {
+      case InnerNodeParam(n) => OuterNode(n).asInstanceOf[InParam[N, E]]
+      case n                 => OuterNode(n)
+    }
+
   def nodePredicate [NI, EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[X<:NO] <: EdgeLike[X]](pred: NI => Boolean) =
     (out: Param[NI,EI]) => out match {
       case n: InnerNodeParam[NI] => pred(n.value)

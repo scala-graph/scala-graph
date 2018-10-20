@@ -55,7 +55,7 @@ class TConnectedMutable extends RefSpec with Matchers {
       (g --=  List(e2, e3)) should be (simpleG)
   
       (g -!= e1) should be (simpleG -!= e1)
-      val minusNodes = List(1, 2)
+      val minusNodes = List(1, 2).toOuterNodes[UnDiEdge]
       (g --=  minusNodes)   should be (simpleG --= minusNodes)
       val minusEdges = List(e2, e3)
       (g --!= minusEdges) should be (simpleG --!= minusEdges)
@@ -111,7 +111,7 @@ class TConnected [CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,C
       g -! e1 should be (simpleG -! e1)
   
       g --  List(e2, e3) should be (g)
-      val minusNodes = List(1, 2)
+      val minusNodes = List(1, 2).toOuterNodes[UnDiEdge]
       g --  minusNodes   should be (simpleG -- minusNodes)
       val minusEdges = List(e2, e3)
       g --! minusEdges should be (simpleG --! minusEdges)

@@ -1,7 +1,6 @@
 package scalax.collection
 
 import language.{higherKinds, postfixOps}
-import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
 import GraphPredef._, GraphEdge._
@@ -284,7 +283,7 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (v
   implicit val config = factory.config
 
 	val seq_1_3	 = Seq(1, 3)
-	val gInt_1_3 = factory[Int,DiEdge](seq_1_3: _*)
+	val gInt_1_3 = factory(seq_1_3.toOuterNodes[DiEdge]: _*)
 	val gString_A = factory[String,Nothing]("A")
 
 	object `graph editing includes`{
@@ -459,7 +458,7 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (v
   }
   	def `Eq ` {
   		factory[Int,Nothing]() shouldEqual factory[Int,Nothing]()
-  		gInt_1_3	shouldEqual factory[Int,DiEdge](seq_1_3: _*)
+  		gInt_1_3	shouldEqual factory(seq_1_3.toOuterNodes[DiEdge]: _*)
   		gString_A	shouldEqual factory[String,Nothing]("A")
   
   		factory[Int,Nothing]()	should not be (factory[Int,Nothing](1))
