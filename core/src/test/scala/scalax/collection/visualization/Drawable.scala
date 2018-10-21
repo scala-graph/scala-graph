@@ -185,7 +185,7 @@ trait Drawable {
         )
       else {
         val realNodes = edge.nodes.toIterator
-        def fakeNode: NodeDraft = addNode(size = Some(0.05f))
+        val fakeNode: NodeDraft = addNode(size = Some(0.05f))
         addEdge(
           src = realNodes.next.asNodeDraft,
           trg = fakeNode,
