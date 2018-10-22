@@ -174,26 +174,60 @@ trait Drawable {
       def asNodeDraft: NodeDraft = nodeDrafts(node)
     }
 
+    var alreadyCounted: Set[(g.Node, g.Node)] = Set()
+
     g.edges.foreach { edge =>
-      if (edge.nonHyperEdge)
-        addEdge(
-          src = edge._1.asNodeDraft,
-          trg = edge._2.asNodeDraft,
-          dir = edge.getDirection,
-          lbl = edge.getLabel,
-          invert = edge.to == edge._1
-        )
+
+      def fakeNode: NodeDraft = addNode(size = Some(0.05f))
+
+      if (edge.nonHyperEdge) {
+        val (node1, node2) = (edge._1, edge._2)
+        val isInverted = edge.to == node1
+        val isMultiEdge = !edge.isLooping && node1.connectionsWith(node2).size > 1
+
+        def addSimple(): Unit =
+          addEdge(
+            src = node1.asNodeDraft,
+            trg = node2.asNodeDraft,
+            dir = edge.getDirection,
+            lbl = edge.getLabel,
+            invert = isInverted
+          )
+
+        if (!isMultiEdge)
+          addSimple()
+        else {
+          if (!alreadyCounted.contains((node1, node2)) && !alreadyCounted.contains((node2, node1))) {
+            alreadyCounted = alreadyCounted + ((node1, node2))
+            addSimple()
+          }
+          else {
+            val fake = fakeNode
+            addEdge(
+              src = (if (isInverted) node2 else node1).asNodeDraft,
+              trg = fake,
+              dir = EdgeDirection.UNDIRECTED
+            )
+            addEdge(
+              src = fake,
+              trg = (if (isInverted) node1 else node2).asNodeDraft,
+              dir = edge.getDirection,
+              lbl = edge.getLabel
+            )
+          }
+        }
+      }
       else {
         val realNodes = edge.nodes.toIterator
-        def fakeNode: NodeDraft = addNode(size = Some(0.05f))
+        val fake = fakeNode
         addEdge(
           src = realNodes.next.asNodeDraft,
-          trg = fakeNode,
+          trg = fake,
           dir = EdgeDirection.UNDIRECTED
         )
         realNodes.foreach(node =>
           addEdge(
-            src = fakeNode,
+            src = fake,
             trg = node.asNodeDraft,
             dir = edge.getDirection
           ))
