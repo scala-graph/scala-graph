@@ -260,17 +260,21 @@ class TCycle[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (
     private val g = factory(e1, e2)
 
     def `the cycle returned by 'findCycle' contains the expected edges` {
-      val c = (g get 1).findCycle
-      c should be ('isDefined)
-      c.get.edges should (be (List(e1, e2)) or
-                          be (List(e2, e1)))
+      given(g) { g =>
+        val c = (g get 1).findCycle
+        c should not be ('isDefined)
+        c.get.edges should (be(List(e1, e2)) or
+                            be(List(e2, e1)))
+      }
     }
 
     def `the cycle returned by 'findCycleContaining' contains the expected edges` {
-      val c = g.findCycleContaining(g get 1)
-      c should be ('isDefined)
-      c.get.edges should (be (List(e1, e2)) or
-                          be (List(e2, e1)))
+      given(g) { g =>
+        val c = g.findCycleContaining(g get 1)
+        c should be ('isDefined)
+        c.get.edges should (be(List(e1, e2)) or
+                            be(List(e2, e1)))
+      }
     }
   }
 
