@@ -11,6 +11,8 @@ import org.scalatest.refspec.RefSpec
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
+import scalax.collection.visualization.Visualizer
+
 @RunWith(classOf[JUnitRunner])
 class TDegreeRootTest
   extends Suites(
@@ -22,8 +24,8 @@ class TDegree[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] 
 	  with Matchers {
 
   val emptyG = factory.empty[Int,DiEdge]
-  abstract class TGraphDegree[N, E[X] <: EdgeLikeIn[X]](override val g: Graph[N,E])
-    extends TGraph[N, E](g)
+  abstract class TGraphDegree[N, E[X] <: EdgeLikeIn[X]](override val g: CC[N,E])
+    extends TGraph[N, E, CC](g)
   {
     def degree(outer: N) = node(outer) degree
     val nodeDegrees: List[(g.NodeT, Int)] = g.nodes.toList map (n => (n, n.degree))

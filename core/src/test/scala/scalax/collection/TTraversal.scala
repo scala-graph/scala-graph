@@ -95,8 +95,8 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
   }
 
   import Data._
-  object Di_1   extends TGraph[Int, DiEdge  ](factory(elementsOfDi_1: _*))
-  object UnDi_1 extends TGraph[Int, UnDiEdge](factory(elementsOfUnDi_1: _*))
+  object Di_1   extends TGraph[Int, DiEdge  , G](factory(elementsOfDi_1: _*))
+  object UnDi_1 extends TGraph[Int, UnDiEdge, G](factory(elementsOfUnDi_1: _*))
 
   def `find successors in a mid-size graph` {
     val g = Di_1
@@ -307,7 +307,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
   }
   
   object `traverser withMaxWeight` {
-    object WUnDi_1 extends TGraph[Int, WUnDiEdge](factory(elementsOfWUnDi_1: _*))
+    object WUnDi_1 extends TGraph[Int, WUnDiEdge, G](factory(elementsOfWUnDi_1: _*))
     import WUnDi_1._
 
     private def check(kind: Kind): Unit =
@@ -412,7 +412,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
 
   def `traverser withMaxDepth` {
     import Data._
-    object UnDi_1 extends TGraph[Int, UnDiEdge](factory(elementsOfUnDi_1: _*)) {
+    object UnDi_1 extends TGraph[Int, UnDiEdge, G](factory(elementsOfUnDi_1: _*)) {
       val expectedSumAll    = 15
       val expectedSumLayer1 = 12
       val expectedSumLayer2 = 15
@@ -504,7 +504,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
 
   def `traverser withDirection` {
     // https://groups.google.com/forum/?fromgroups=#!topic/scala-internals/9NMPfU4xdhU
-    object DDi_1 extends TGraph[Int, DiEdge](factory(elementsOfDi_1: _*)) {
+    object DDi_1 extends TGraph[Int, DiEdge, G](factory(elementsOfDi_1: _*)) {
       val expectedSumSuccessorsOf_4   = 12
       val expectedSumPredecessorsOf_4 = 4
       val expectedSumSuccessorsOf_2   = 10

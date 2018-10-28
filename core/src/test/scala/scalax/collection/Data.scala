@@ -1,13 +1,17 @@
 package scalax.collection
 
 import language.higherKinds
-import GraphPredef._, GraphEdge._, edge._, edge.Implicits._
 
-abstract class TGraph[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N,E]) {
-  def node(outer: N   ) = g get outer
-  def n   (outer: N   ) = node(outer)
-  def edge(outer: E[N]) = g get outer
-  def e   (outer: E[N]) = edge(outer)
+import GraphPredef.{EdgeLikeIn, _}
+import GraphEdge._
+import edge._
+import edge.Implicits._
+
+abstract class TGraph[N, E[X] <: EdgeLikeIn[X], G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](val g: G[N,E]) {
+  def node(outer: N   ): g.NodeT = g get outer
+  def n   (outer: N   ): g.NodeT = node(outer)
+  def edge(outer: E[N]): g.EdgeT = g get outer
+  def e   (outer: E[N]): g.EdgeT = edge(outer)
 }
 
 /** The Graph for Scala representation of graph pictures located in `scala/test/doc`.

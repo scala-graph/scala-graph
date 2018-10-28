@@ -106,7 +106,7 @@ class TStateTest extends RefSpec with Matchers {
     }
     def `when tested under stress fixing #34` {
       import Data._
-      object g extends TGraph[Int, DiEdge  ](Graph(elementsOfDi_1: _*))
+      object g extends TGraph[Int, DiEdge, Graph](Graph(elementsOfDi_1: _*))
       def n(outer: Int) = g.node(outer)
       val (n1, n2) = (n(2), n(5))
   
