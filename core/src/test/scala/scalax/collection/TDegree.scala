@@ -21,8 +21,8 @@ class TDegreeRootTest
 
 class TDegree[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (val factory: GraphCoreCompanion[CC])
 	  extends	RefSpec
-    with Matchers
-    with Visualizer[CC] {
+	  with Matchers
+	  with Visualizer[CC] {
 
   val emptyG = factory.empty[Int,DiEdge]
   abstract class TGraphDegree[N, E[X] <: EdgeLikeIn[X]](override val g: CC[N,E])
