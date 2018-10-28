@@ -101,15 +101,15 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
   }
 
   import Data._
-  object Di_1   extends TGraph[Int, DiEdge  , G](factory(elementsOfDi_1: _*))
-  object UnDi_1 extends TGraph[Int, UnDiEdge, G](factory(elementsOfUnDi_1: _*))
+  object Di_1   extends TGraph(factory(elementsOfDi_1: _*))
+  object UnDi_1 extends TGraph(factory(elementsOfUnDi_1: _*))
 
   def `find successors in a mid-size graph` {
     val g = Di_1
     def n(outer: Int) = g.node(outer)
     var successor = null.asInstanceOf[Option[g.g.NodeT]]
 
-    given(g.g.asInstanceOf[G[Int, DiEdge]]) { _ =>
+    given(g.g) { _ =>
 
       successor = n(3) findSuccessor (_ == 0)
       successor should be('isEmpty)
@@ -135,7 +135,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
     def n(outer: Int) = g.node(outer)
     var predecessor = null.asInstanceOf[Option[g.g.NodeT]]
 
-    given(g.g.asInstanceOf[G[Int, DiEdge]]) { _ =>
+    given(g.g) { _ =>
 
       predecessor = n(3) findPredecessor (_ == 0)
       predecessor should be('isEmpty)
@@ -161,7 +161,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
     def n(outer: Int) = g.node(outer)
     var connected = null.asInstanceOf[Option[g.g.NodeT]]
 
-    given(g.g.asInstanceOf[G[Int, DiEdge]]) { _ =>
+    given(g.g) { _ =>
 
       connected = n(3) findConnected (_ == 0)
       connected should be('isEmpty)
@@ -343,8 +343,8 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
       List[Long](Long.MaxValue, 5, 4, 3, 2, 1, 0) map (max =>
         n(1) withKind kind withMaxWeight max size) should be (List(5, 4, 3, 2, 1, 1, 1))
 
-    def `calling DepthFirst`   = given(WUnDi_1.g.asInstanceOf[G[Int, WUnDiEdge]]) { _ => check(DepthFirst) }
-    def `calling BreadthFirst` = given(WUnDi_1.g.asInstanceOf[G[Int, WUnDiEdge]]) { _ => check(BreadthFirst) }
+    def `calling DepthFirst`   = given(WUnDi_1.g) { _ => check(DepthFirst) }
+    def `calling BreadthFirst` = given(WUnDi_1.g) { _ => check(BreadthFirst) }
 
     private def floatWeight(e: g.EdgeT): Float = e.weight.toFloat 
   }
@@ -372,7 +372,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
     import UnDi_1.g.Informer.DfsInformer
     def n(outer: Int) = UnDi_1.node(outer)
 
-    given(UnDi_1.g.asInstanceOf[G[Int, UnDiEdge]]) { _ =>
+    given(UnDi_1.g) { _ =>
       var lastCount = 0
       n(1).innerNodeTraverser.withKind(DepthFirst) foreach
         ExtendedNodeVisitor((node, count, depth, informer) => {
@@ -416,7 +416,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
            prg ~> svx ## ("U6 902" , 21 o 55, 4 h 25))
     def flight(flightNo: String) = flights find (_.flightNo == flightNo) get
     val g = factory.from[Airport, Flight](Set.empty, flights)
-    given(g.asInstanceOf[G[Airport, Flight]]) { g =>
+    given(g) { g =>
 
       val shp1 = (g get jfc).withSubgraph(edges = _.airline != "UN") shortestPathTo (g get dme)
       shp1.get.nodes.toList should be(List(jfc, lhr, dme))
@@ -447,7 +447,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
 
   def `traverser withMaxDepth` {
     import Data._
-    object UnDi_1 extends TGraph[Int, UnDiEdge, G](factory(elementsOfUnDi_1: _*)) {
+    object UnDi_1 extends TGraph(factory(elementsOfUnDi_1: _*)) {
       val expectedSumAll    = 15
       val expectedSumLayer1 = 12
       val expectedSumLayer2 = 15
@@ -456,7 +456,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
     }
     {
       import UnDi_1._
-      given(UnDi_1.g.asInstanceOf[G[Int, UnDiEdge]]) { _ =>
+      given(UnDi_1.g) { _ =>
 
         val bfs_4 = node(4).outerNodeTraverser
         bfs_4.sum should be(expectedSumAll)
@@ -476,7 +476,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
   }
 
   def `DownUp traverser` {
-    given(Di_1.g.asInstanceOf[G[Int, DiEdge]]) { g =>
+    given(Di_1.g) { g =>
       def innerNode(outer: Int) = g get outer
       var stack = List.empty[Int]
 
@@ -549,7 +549,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
 
   def `traverser withDirection` {
     // https://groups.google.com/forum/?fromgroups=#!topic/scala-internals/9NMPfU4xdhU
-    object DDi_1 extends TGraph[Int, DiEdge, G](factory(elementsOfDi_1: _*)) {
+    object DDi_1 extends TGraph(factory(elementsOfDi_1: _*)) {
       val expectedSumSuccessorsOf_4   = 12
       val expectedSumPredecessorsOf_4 = 4
       val expectedSumSuccessorsOf_2   = 10
@@ -562,7 +562,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
     }
     {
       import DDi_1._
-      given(DDi_1.g.asInstanceOf[G[Int, DiEdge]]) { _ =>
+      given(DDi_1.g) { _ =>
         val predecessors = Parameters(direction = Predecessors)
         val anyConnected = Parameters(direction = AnyConnected)
         val maxDepth_1 = Parameters(maxDepth = 1)
@@ -626,7 +626,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
   }
 
   def `map Traverser result` {
-    given(Di_1.g.asInstanceOf[G[Int, DiEdge]]) { _ =>
+    given(Di_1.g) { _ =>
       val t = Di_1.g.nodes.head.outerNodeTraverser
       t map (_ + 1) should be(t.toList map (_ + 1))
     }
@@ -636,7 +636,7 @@ final class TTraversal[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N
     import Di_1._
     import g.{InnerNode, InnerEdge}
 
-    given(Di_1.g.asInstanceOf[G[Int, DiEdge]]) { _ =>
+    given(Di_1.g) { _ =>
       val t = g.nodes.head.innerElemTraverser
       def nodePred(n: g.NodeT) = n.degree > 1
       def edgePred(e: g.EdgeT) = e forall nodePred
