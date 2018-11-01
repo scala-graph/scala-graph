@@ -63,6 +63,8 @@ lazy val misc = project
     )
   )
 
+ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
+
 ThisBuild / resolvers ++= Seq(
   "NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/",
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
