@@ -18,6 +18,8 @@ import org.scalatest.prop.Configuration.PropertyCheckConfiguration
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
+import scalax.collection.visualization.Visualizer
+
 @RunWith(classOf[JUnitRunner])
 class TConnectivityRootTest
 	extends Suites( 
@@ -29,7 +31,8 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
 			(val factory: GraphCoreCompanion[G])
 	extends	RefSpec
 	with	Matchers
-	with	PropertyChecks {
+	with	PropertyChecks
+  with  Visualizer[G] {
   
   implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
   
@@ -38,20 +41,26 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     val g = factory(elementsOfDi_1: _*)
     
     def `there exists no pair of mutually reachable nodes` {
-      g.nodes.toList.combinations(2) foreach {
-        case List(a, b) => List(a pathTo b, b pathTo a) should contain (None)
+      given(g) {
+        _.nodes.toList.combinations(2) foreach {
+          case List(a, b) => List(a pathTo b, b pathTo a) should contain(None)
+        }
       }
     }
     
     def `evaluating strong components from any node yields single-node components` {
-      g.nodes foreach { n =>
-        val components = n.innerNodeTraverser.strongComponents
-        components foreach (_.nodes should have size (1))
+      given(g) {
+        _.nodes foreach { n =>
+          val components = n.innerNodeTraverser.strongComponents
+          components foreach (_.nodes should have size (1))
+        }
       }
     }
       
     def `evaluating all strong components yields a component for every node` {
-      g.strongComponentTraverser().size should be (g.order)
+      given(g) { g =>
+        g.strongComponentTraverser().size should be (g.order)
+      }
     }
   }
   
@@ -64,8 +73,10 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     assert(sccExpected.size == 2)
     assert(sccExpected(0).intersect(sccExpected(1)) == factory.empty)
     
-    def `each is detected as such` { 
-      sccExpected foreach (_.strongComponentTraverser() should have size (1))
+    def `each is detected as such` {
+      sccExpected foreach (g => given(g) {
+        _.strongComponentTraverser() should have size (1)
+      })
     }
         
     def `connected by a diEdge yields a graph with the very same two strong components` {
@@ -80,8 +91,10 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
         def check(scc: Traversable[connected.Component], expectedSize: Int): Unit = {
           scc should have size (expectedSize)
           scc foreach { sc =>
-            sccExpected should contain (sc.toGraph)
-            sc.frontierEdges should have size (1)
+            given(sc.toGraph.asInstanceOf[G[Symbol, DiEdge]]) { g =>
+              sccExpected should contain(g)
+              sc.frontierEdges should have size (1)
+            }
           }
         }
         
@@ -97,10 +110,9 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
   }
 
   object `Having two weak components` {
-    val g = Graph(11~>12, 13~>14)
 
     def `weak components are detected, fix #57` {
-      g.componentTraverser() should have size 2
+      given(factory(11~>12, 13~>14)) { _.componentTraverser() should have size 2 }
     }
   }
 
@@ -118,47 +130,51 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
     lazy val strongComponents = g.strongComponentTraverser().toVector
       
     def `no stack overflow occurs` {
-      strongComponents  
+      given(g) { _ => strongComponents }
     }
     
     def `strong components are complete` {
-      (Set.empty[g.NodeT] /: strongComponents)((cum, sc) => cum ++ sc.nodes) should be(g.nodes)
+      given(g) { _ => (Set.empty[g.NodeT] /: strongComponents)((cum, sc) => cum ++ sc.nodes) should be(g.nodes) }
     }
     
     def `strong components are proper` {
-      val maxProbes = 10
-      val arbitraryNodes: Vector[Set[g.NodeT]] = strongComponents map { sc =>
-        val nodes = sc.nodes
-        if (nodes.size <= maxProbes) nodes
-        else {
-          val every = nodes.size / maxProbes
-          (nodes zipWithIndex) withFilter { case (n, i) => i % every == 0 } map (_._1)
-        }
-      }
-      arbitraryNodes foreach { case nodes =>
-        def checkBiConnected(n1: g.NodeT, n2: g.NodeT) =
-          if (n1 ne n2) {
-            n1 pathTo n2 should be ('isDefined)  
-            n2 pathTo n1 should be ('isDefined)
-          }
-        nodes.sliding(2) foreach { pairOrSingle =>
-          pairOrSingle.toList match {
-            case List(n1, n2) => checkBiConnected(n1, n2)
-            case n :: Nil     => checkBiConnected(n, nodes.head)
+      given(g) { _ =>
+        val maxProbes = 10
+        val arbitraryNodes: Vector[Set[g.NodeT]] = strongComponents map { sc =>
+          val nodes = sc.nodes
+          if (nodes.size <= maxProbes) nodes
+          else {
+            val every = nodes.size / maxProbes
+            (nodes zipWithIndex) withFilter { case (n, i) => i % every == 0 } map (_._1)
           }
         }
-      }
-      arbitraryNodes.sliding(2) foreach { pairOrSingle =>
-        def checkNonBiConnected(ns1: Set[g.NodeT], ns2: Set[g.NodeT]) =
-          if (ns1 ne ns2) {
-            ns1 zip ns2 foreach { case (n1, n2) =>
-              (n1 pathTo n2).isDefined &&
-              (n2 pathTo n1).isDefined should be (false)
+        arbitraryNodes foreach { case nodes =>
+          def checkBiConnected(n1: g.NodeT, n2: g.NodeT) =
+            if (n1 ne n2) {
+              n1 pathTo n2 should be('isDefined)
+              n2 pathTo n1 should be('isDefined)
+            }
+
+          nodes.sliding(2) foreach { pairOrSingle =>
+            pairOrSingle.toList match {
+              case List(n1, n2) => checkBiConnected(n1, n2)
+              case n :: Nil => checkBiConnected(n, nodes.head)
             }
           }
-        pairOrSingle.toList match {
-          case List(ns1, ns2) => checkNonBiConnected(ns1, ns2)
-          case ns :: Nil      => checkNonBiConnected(ns, arbitraryNodes.head) 
+        }
+        arbitraryNodes.sliding(2) foreach { pairOrSingle =>
+          def checkNonBiConnected(ns1: Set[g.NodeT], ns2: Set[g.NodeT]) =
+            if (ns1 ne ns2) {
+              ns1 zip ns2 foreach { case (n1, n2) =>
+                (n1 pathTo n2).isDefined &&
+                  (n2 pathTo n1).isDefined should be(false)
+              }
+            }
+
+          pairOrSingle.toList match {
+            case List(ns1, ns2) => checkNonBiConnected(ns1, ns2)
+            case ns :: Nil => checkNonBiConnected(ns, arbitraryNodes.head)
+          }
         }
       }
     }
