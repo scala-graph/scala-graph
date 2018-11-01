@@ -6,8 +6,9 @@ import scala.collection.mutable.{ArrayBuffer, Builder}
 import scala.language.{higherKinds, implicitConversions}
 import scala.math.{max, min}
 
-import GraphPredef.{EdgeLikeIn, OuterElem}
-import mutable.{EqHashMap, EqHashSet}
+import scalax.collection.GraphPredef.{EdgeLikeIn, OuterElem}
+import scalax.collection.mutable.{EqHashMap, EqHashSet}
+import scalax.collection.generic.GraphCoreCompanion
 
 /** Graph-related functionality such as traversals, path finding, cycle detection etc.
  *  All algorithms including breadth-first, depth-first, white-gray-black search and
@@ -718,15 +719,15 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N,E] {
         val (left, right) =
           if (this.frontierEdges.size > that.frontierEdges.size) (this.frontierEdges, toEqSet(that.frontierEdges))
           else                                                   (toEqSet(this.frontierEdges), that.frontierEdges)
-        new EqSetFacade(left filter right.contains)
+        new EqSetFacade(left intersect right)
       }
       else Set.empty
-    
-    final def toGraph: Graph[N,E] = thisGraph match {
+
+    final def to[
+      G[X, Y[X] <: EdgeLikeIn[X]] <: Graph[X, Y] with GraphLike[X, Y, G]
+    ](factory: GraphCoreCompanion[G]): G[N, E] = thisGraph match {
       case g: Graph[N, E] =>
-        val b = Graph.newBuilder(g.edgeT, Graph.defaultConfig)
-        b ++= edges
-        b.result
+        factory.from(edges = edges.map(_.toOuter))(g.edgeT, factory.defaultConfig)
     }
     
     protected def mayHaveFrontierEdges: Boolean

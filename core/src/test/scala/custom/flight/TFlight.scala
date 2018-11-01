@@ -35,8 +35,7 @@ class TFlight[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]](
   object `Custom edge 'Flight'` {
     def `proper methods` {
       val outer = Flight(ham, gig, flightNo)
-      val g = Graph(outer)
-      given(g.asInstanceOf[CC[Airport, Flight]]) { g =>
+      given(factory(outer)) { g =>
         val e = g.edges.head
         e.edge.nodes.productElement(0).asInstanceOf[AnyRef].getClass should be(
           g.nodes.head.getClass)
@@ -55,7 +54,7 @@ class TFlight[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]](
     }
     def `proper method shortcuts` {
       val outer = Flight(ham, gig, flightNo)
-      given(Graph(outer).asInstanceOf[CC[Airport, Flight]]) { _ =>
+      given(factory(outer)) { _ =>
         ham ~> gig ## flightNo should be(outer)
         ham ~> gig ## (flightNo, 11 o 20) should be(outer)
       }

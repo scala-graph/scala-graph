@@ -91,7 +91,7 @@ final class TConnectivity[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLik
         def check(scc: Traversable[connected.Component], expectedSize: Int): Unit = {
           scc should have size (expectedSize)
           scc foreach { sc =>
-            given(sc.toGraph.asInstanceOf[G[Symbol, DiEdge]]) { g =>
+            given(sc.to(factory)) { g =>
               sccExpected should contain(g)
               sc.frontierEdges should have size (1)
             }

@@ -190,7 +190,7 @@ final class TraversingTest extends RefSpec with Matchers {
           Graph('f ~> 'g, 'g ~> 'f, 'g ~> 'h, 'h ~> 'j, 'j ~> 'i, 'i ~> 'g, 'i ~> 'f, 'f ~> 'i)
       )
       val connected = (sccExpected._1 union sccExpected._2) + 'e ~> 'f
-      val scc       = connected.strongComponentTraverser().map(_.toGraph)
+      val scc       = connected.strongComponentTraverser().map(_.to(Graph))
       scc.toSet should be (Set(sccExpected._1, sccExpected._2))
       
       val startAt = sccExpected._2.nodes.head
