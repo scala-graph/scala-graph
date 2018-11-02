@@ -13,14 +13,15 @@ import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-traversing.html
- *  Traversing Graphs]]. 
- */
+  * Traversing Graphs]].
+  */
 @RunWith(classOf[JUnitRunner])
 final class TraversingTest extends RefSpec with Matchers {
 
-  import scalax.collection.edge.{WDiEdge, WUnDiEdge}
+  import scalax.collection.edge.WUnDiEdge
   import scalax.collection.edge.Implicits._
 
+  // format: off
   private def validatePath[N, E[X] <: EdgeLikeIn[X]](p: Graph[N,E]#Path,
                                              sample: List[Param[N,E]]): Unit = {
     def toN(p: Param[N,E]): N = p match {
@@ -84,8 +85,12 @@ final class TraversingTest extends RefSpec with Matchers {
       val fc2 = (g get 4).findCycle
                                    fc2.get.sameElements(List(
                                    4, 4~>2, 2, 2~>3, 3, 3~>4, 4)) should be (true)
-      for (c1 <- fc1; c2 <- fc2) yield c1 == c2          should be (false)
-      for (c1 <- fc1; c2 <- fc2) yield c1 sameAs c2      should be (true)
+      for {
+c1 <- fc1
+ c2 <- fc2} yield c1 == c2          should be (false)
+      for {
+c1 <- fc1
+ c2 <- fc2} yield c1 sameAs c2      should be (true)
     }
     
     def `ordered traversal` {
@@ -208,7 +213,7 @@ final class TraversingTest extends RefSpec with Matchers {
       builder.result               .toString should be ("Path(1, 1~>3 %5.0, 3)")
       
       builder.clear
-      builder add n(4)             should be (false)
+      builder add n(4)                should be (false)
     }
   }
 }
