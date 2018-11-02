@@ -9,8 +9,7 @@ import mutable.{Graph => MGraph}
 import GraphPredef.EdgeLikeIn
 import GraphEdge.DiEdge
 
-/**
- * Contains methods to transform `graph` to the DOT language.
+/** Contains methods to transform `graph` to the DOT language.
  * 
  * @define RESP1 a user-supplied function responsible for determining which (sub)graph
  * @define RESP2 should be assigned to and for transforming the passed
@@ -18,8 +17,7 @@ import GraphEdge.DiEdge
  *         but it may also be used for test purposes. 
  */
 class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N,E]) {
-  /**
-   * Creates a DOT string by calling the node and edge transformers for the elements
+  /** Creates a DOT string by calling the node and edge transformers for the elements
    * of `graph`.
    *
    * @param dotRoot attributes of the root DOT graph.

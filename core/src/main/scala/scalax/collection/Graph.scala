@@ -12,8 +12,7 @@ import generic.{GraphCompanion, GraphCoreCompanion}
 import config.GraphConfig
 import io._
 
-/**
- * A template trait for graphs.
+/** A template trait for graphs.
  * 
  * This trait provides the common structure and operations of immutable graphs independently
  * of their representation.
@@ -59,14 +58,12 @@ trait GraphLike[N,
   implicit def config: graphCompanion.Config with Config
 
   override def stringPrefix: String = "Graph"
-  /**
-   * Ensures sorted nodes/edges unless this `Graph` has more than 100 elements.
+  /** Ensures sorted nodes/edges unless this `Graph` has more than 100 elements.
    * See also `asSortedString` and `toSortedString`.
    */
   override def toString = if (size <= 100) toSortedString()()
                           else super.toString
-  /**
-   * Sorts all nodes of this graph by `ordNode` followed by all edges sorted by `ordEdge`
+  /** Sorts all nodes of this graph by `ordNode` followed by all edges sorted by `ordEdge`
    * and concatinates their string representation `nodeSeparator` and `edgeSeparator`
    * respectively. 
    * 
@@ -106,8 +103,7 @@ trait GraphLike[N,
                          withNodesEdgesPrefix)(ordNode, ordEdge) +
     ")"
   }
-  /**
-   * `Graph` instances are equal if their nodes and edges turned
+  /** `Graph` instances are equal if their nodes and edges turned
    * to outer nodes and outer edges are equal. Any `TraversableOnce`
    * instance may also be equal to this graph if its set representation
    * contains equalling outer nodes and outer edges. Thus the following
@@ -164,14 +160,12 @@ trait GraphLike[N,
     override final def -(node: NodeT): NodeSetT =
       if (this contains node) { val c = copy; c minus node; c }
       else this.asInstanceOf[NodeSetT]
-    /**
-     * removes `node` from this node set leaving the edge set unchanged.
+    /** removes `node` from this node set leaving the edge set unchanged.
       *
       * @param node the node to be removed from the node set.
      */
     protected def minus(node: NodeT): Unit
-    /**
-     * removes `node` either rippling or gently. 
+    /** removes `node` either rippling or gently.
      * 
      * @param node the node to be subtracted
      * @param rippleDelete if `true`, `node` will be deleted with its incident edges;
@@ -242,38 +236,33 @@ trait GraphLike[N,
    *  @return iterator containing all nodes and all edges
    */
   def iterator: Iterator[Param[N,E]] = nodes.toIterator ++ edges.toIterator
-  /**
-   * Searches for an inner node equaling to `outerNode` in this graph.
+  /** Searches for an inner node equaling to `outerNode` in this graph.
    * 
    * @param outerNode the outer node to search for in this graph.
    * @return `Some` of the inner node found or `None`.
    */
   @inline final def find(outerNode: N): Option[NodeT] = nodes find outerNode
-  /**
-   * Searches for an edge node equaling to `outerEdge` in this graph.
+  /** Searches for an edge node equaling to `outerEdge` in this graph.
    * 
    * @param outerEdge the outer edge to search for in this graph.
    * @return `Some` of the inner edge found or `None`.
    */
   @inline final def find(outerEdge: E[N]): Option[EdgeT] = edges find outerEdge
-  /**
-   * Searches for an inner node equaling to `outerNode` in this graph
+  /** Searches for an inner node equaling to `outerNode` in this graph
    * which must exist in this graph.
    * 
    * @param outerNode the outer node to search for in this graph.
    * @return the inner node if found. Otherwise NoSuchElementException is thrown. 
    */
   @inline final def get (outerNode: N): NodeT = nodes get outerNode
-  /**
-   * Searches for an inner edge equaling to `outerEdge` in this graph
+  /** Searches for an inner edge equaling to `outerEdge` in this graph
    * which must exist in this graph.
    * 
    * @param outerEdge the outer edge to search for in this graph.
    * @return the inner edge if found. Otherwise NoSuchElementException is thrown. 
    */
   @inline final def get (outerEdge: E[N]) = find(outerEdge).get
-  /**
-   * Searches for an inner node equaling to `outerNode` in this graph.
+  /** Searches for an inner node equaling to `outerNode` in this graph.
    * 
    * @param outerNode the outer node to search for in this graph.
    * @param default the inner node to return if `outerNode` is not contained.
@@ -281,8 +270,7 @@ trait GraphLike[N,
    *         equaling to `outerNode` could be found. 
    */
   @inline final def getOrElse(outerNode: N, default: NodeT) = find(outerNode).getOrElse(default)
-  /**
-   * Searches for an inner edge equaling to `outerEdge` in this graph.
+  /** Searches for an inner edge equaling to `outerEdge` in this graph.
    * 
    * @param outerEdge the outer edge to search for in this graph.
    * @param default the inner edge to return if `outerEdge` cannot be found.
@@ -466,8 +454,7 @@ trait GraphLike[N,
                       n.edges forall (delEdgeSet contains _)) getOrElse false)),
                delEdges)
   }
-  /**
-   * Provides a shortcut for predicates involving any graph element.
+  /** Provides a shortcut for predicates involving any graph element.
    * In order to compute a subgraph of this graph, the result of this method
    * may be passed to any graph-level method requiring a predicate such as
    * `count`, `exists`, `filter`, `filterNot`, `forall` etc. For instance
@@ -500,8 +487,7 @@ trait GraphLike[N,
 // ----------------------------------------------------------------------------
 import collection.generic.CanBuildFrom
 
-/**
- * The main trait for immutable graphs bundling the functionality of traits concerned with
+/** The main trait for immutable graphs bundling the functionality of traits concerned with
  * specific aspects.
  * 
  * @tparam N the type of the nodes (vertices) in this graph.
@@ -515,8 +501,7 @@ trait Graph[N, E[X] <: EdgeLikeIn[X]]
 {
   override def empty: Graph[N,E] = Graph.empty[N,E]
 }
-/**
- * The main companion object for immutable graphs.
+/** The main companion object for immutable graphs.
  *
  * @author Peter Empen
  */

@@ -49,8 +49,7 @@ class WEdgeSerializer extends Serializer[WEdgeParameters] {
       JArray(JString(nId_1) :: JString(nId_2) :: JDouble(weight) :: Nil)
   } 
 }
-/**
- * #define LSERIALIZER one or more lift-json custom `Serializer`s for labels.
+/** #define LSERIALIZER one or more lift-json custom `Serializer`s for labels.
  */
 abstract class LSerializer[L: Manifest] (labelSerializers: Serializer[L]*) {
   object LabelSerialization {

@@ -13,8 +13,7 @@ import mutable.{ArraySet, ExtHashSet, EqHashSet, EqHashMap}
 import generic.GroupIterator
 import config.{GraphConfig, AdjacencyListArrayConfig}
 
-/**
- * Implementation of an incident list based graph representation. This trait is common to
+/** Implementation of an incident list based graph representation. This trait is common to
  * both the immutable and mutable variants. An incidence list based representation speeds up
  * traversing the graph along its paths by storing the list of connecting edges at each node.
  *   

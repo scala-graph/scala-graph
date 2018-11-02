@@ -5,8 +5,7 @@ import scala.annotation.unchecked.{uncheckedVariance => uV}
 
 import scala.collection.{AbstractIterable, SeqFacade}
 import GraphEdge.{EdgeLike, EdgeCopy, DiHyperEdgeLike, DiEdgeLike}
-/**
- * This object serves as a container for several `Graph`-related definitions like
+/** This object serves as a container for several `Graph`-related definitions like
  * parameter-types and implicit conversions.
  * 
  * You will usually simply import all its members along with the members of `InnerEdgeParam`:
@@ -16,20 +15,17 @@ import GraphEdge.{EdgeLike, EdgeCopy, DiHyperEdgeLike, DiEdgeLike}
  * @author Peter Empen
  */
 object GraphPredef {
-  /**
-   * The most generic type for the `E` type parameter of a `Graph`.
+  /** The most generic type for the `E` type parameter of a `Graph`.
    * Supplying this type as the actual type parameter allows to include any kind of edges
    * such as hyper-edges, undirected and directed edges.
    */
   type EdgeLikeIn[+N] = EdgeLike[N] with EdgeCopy[EdgeLike] with OuterEdge[N,EdgeLike] 
-  /**
-   * Denotes all directed edge types for the `E` type parameter of a `Graph`.
+  /** Denotes all directed edge types for the `E` type parameter of a `Graph`.
    * Supplying this type as the actual type parameter allows to include any kind of directed edges
    * such as directed hyper-edges and directed edges.
    */
   type DiHyperEdgeLikeIn[+N] = DiHyperEdgeLike[N] with EdgeCopy[DiHyperEdgeLike] with OuterEdge[N,DiHyperEdgeLike]
-  /**
-   * Denotes all directed edge types for the `E` type parameter of a `Graph`.
+  /** Denotes all directed edge types for the `E` type parameter of a `Graph`.
    * Supplying this type as the actual type parameter allows to include any kind of directed edges
    * such as directed hyper-edges and directed edges.
    */
@@ -46,8 +42,7 @@ object GraphPredef {
     def isOut:  Boolean
   }
   object Param {
-    /**
-     * Enables to query partitions of a collection of `Param`.
+    /** Enables to query partitions of a collection of `Param`.
      */
     final class Partitions[N, E[X]<:EdgeLikeIn[X]](val elems: Traversable[Param[N,E]]) {
       lazy val partitioned = elems match {

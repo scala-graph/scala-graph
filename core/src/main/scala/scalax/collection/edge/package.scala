@@ -1,6 +1,5 @@
 package scalax.collection
-/**
- * '''Predefined edges'''.
+/** '''Predefined edges'''.
  * 
  * While basic edge types are defined in the object `GraphEdge`,
  * the predefined edges in this package cover the following categories

@@ -3,8 +3,7 @@ package scalax.collection.generic
 import runtime._
 import collection.immutable.WrappedString
 
-/**
- * Ordering for Any with the following rules: 
+/** Ordering for Any with the following rules:
  * numerical > string > any other reference type.
  * If a reference type is not a subclass of Ordered, it will be ordered according
  * to its toString value.

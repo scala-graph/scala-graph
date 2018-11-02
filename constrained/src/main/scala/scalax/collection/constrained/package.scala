@@ -5,8 +5,7 @@ import language.{higherKinds, implicitConversions}
 import GraphPredef._, GraphEdge._
 import config.GraphConfig
 
-/**
- * Traits enabling to implement constraints and use constrained graphs.
+/** Traits enabling to implement constraints and use constrained graphs.
  * 
  * Graphs may be constrained dynamically or statically.
  *

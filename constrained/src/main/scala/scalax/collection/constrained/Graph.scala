@@ -14,8 +14,7 @@ import scalax.collection.config.GraphConfig
 import generic.GraphConstrainedCompanion
 import config._
 
-/**
- * A template trait for graphs.
+/** A template trait for graphs.
  * 
  * This trait provides the common structure and operations of immutable graphs independently
  * of its representation.
@@ -125,8 +124,7 @@ trait GraphLike[N,
 }
 
 // ----------------------------------------------------------------------------
-/**
- * A trait for dynamically constrained graphs.
+/** A trait for dynamically constrained graphs.
  * 
  * @tparam N    the type of the nodes (vertices) in this graph.
  * @tparam E    the kind of the edges in this graph. 
@@ -140,8 +138,7 @@ trait Graph[N, E[X] <: EdgeLikeIn[X]]
 {
   override def empty: Graph[N,E] = Graph.empty[N,E]
 }
-/**
- * Default factory for constrained graphs.
+/** Default factory for constrained graphs.
  * Graph instances returned from this factory will be immutable.
  * 
  * @author Peter Empen

@@ -6,8 +6,7 @@ import scala.annotation.{tailrec, switch}
 import GraphPredef.{InnerNodeParam, OuterEdge}
 import edge.LBase.LEdge
 
-/**
- * Container for basic edge types to be used in the context of `Graph`.
+/** Container for basic edge types to be used in the context of `Graph`.
  * You will usually simply import all its members along with the members of Param:
  * {{{
  * import scalax.collection.GraphPredef._, scalax.collection.GraphEdge,_
@@ -18,8 +17,7 @@ import edge.LBase.LEdge
  * @author Peter Empen
  */
 object GraphEdge {
-  /**
-   * Template for Edges in a Graph.
+  /** Template for Edges in a Graph.
    * 
    * Implementation note: Irrespective of the containing `Graph` all library-provided Edges
    * are immutable.
@@ -45,19 +43,16 @@ object GraphEdge {
     /** Sequence of the end points of this edge.
      */
     def nodeSeq: Seq[N] = iterator.toSeq
-    /**
-     * The first node. Same as _n(0).
+    /** The first node. Same as _n(0).
      */
     @inline final def _1: N = nodes.productElement(0).asInstanceOf[N] 
-    /**
-     * The second node. Same as _n(1).
+    /** The second node. Same as _n(1).
      */
     def _2: N =  nodes match {
       case i: Iterable[N] => i.drop(1).head
       case p: Product     => nodes.productElement(1).asInstanceOf[N] 
     }  
-    /**
-     * The n'th node with 0 <= n < arity.
+    /** The n'th node with 0 <= n < arity.
      */
     def _n(n: Int): N = (n: @scala.annotation.switch) match {
       case 0 => _1
@@ -70,30 +65,26 @@ object GraphEdge {
         }
       }  
     }
-    /**
-     * Number of nodes linked by this Edge. At least two nodes are linked. In case of
+    /** Number of nodes linked by this Edge. At least two nodes are linked. In case of
      * a hook, the two nodes are identical. Hyperedges may link more than two nodes.
      */
     final def arity = nodes match {
       case i: Iterable[N] => i.size
       case p: Product     => nodes.productArity 
     } 
-    /**
-     * A function to determine whether the `arity` of the passed `Product`
+    /** A function to determine whether the `arity` of the passed `Product`
      * of nodes (that is the number of edge ends) is valid.
      * $CalledByValidate
      */
     protected def isValidArity(size: Int): Boolean
-    /**
-     * This method may be overridden to enforce additional validation at edge
+    /** This method may be overridden to enforce additional validation at edge
      * creation time. Be careful to call `super.isValidCustom` when overriding.
      * $CalledByValidate
      */
     protected def isValidCustom = true
     protected def isValidCustomExceptionMessage = "Custom validation failed: " + toString
     protected class EdgeException(val msg: String) extends Exception
-    /**
-     * Performs basic, inevitable edge validation. Among others, ensures
+    /** Performs basic, inevitable edge validation. Among others, ensures
      * that `nodes ne null` and no edge end `eq null`.
      * 
      * This validation method must be called in the constructor of any edge class
@@ -139,8 +130,7 @@ object GraphEdge {
                     else (MSet() ++= iterator).size < arity
     /** Same as `! looping`. */                
     final def nonLooping = ! isLooping 
-    /**
-     * The weight of this edge with a default of 1.
+    /** The weight of this edge with a default of 1.
      * 
      * Note that `weight` is normally not part of the edge key (hashCode). As a result,
      * edges with different weights connecting the same nodes will be evaluated as equal
@@ -156,8 +146,7 @@ object GraphEdge {
      * required conversion to `Long`.  
      */
     def weight: Double = 1
-    /**
-     * The label of this edge. If `Graph`'s edge type parameter has been inferred or set
+    /** The label of this edge. If `Graph`'s edge type parameter has been inferred or set
      * to a labeled edge type all contained edges are labeled. Otherwise you should
      * assert, for instance by calling `isLabeled`, that the edge instance is labeled
      * before calling this method.
@@ -267,12 +256,10 @@ object GraphEdge {
         woParenthesis
     }
   }
-  /**
-   * This trait is to be mixed in by every class implementing EdgeLike.
+  /** This trait is to be mixed in by every class implementing EdgeLike.
    */
   trait EdgeCopy[+CC[X] <: EdgeLike[_]] {
-    /**
-     * It is a prerequisite for edge-classes to implement this method. Otherwise
+    /** It is a prerequisite for edge-classes to implement this method. Otherwise
      * they cannot be passed to a `Graph`.
      * 
      * `Graph` calls this method internally to obtain a new instance of the 
@@ -287,8 +274,7 @@ object GraphEdge {
     protected val curlyBraces = Brackets('{', '}')
     def unapply[N](e: EdgeLike[N]) = Some(e)
   }
-  /**
-   * Helper object to convert edge-factory parameter-lists to tuple-n or list.
+  /** Helper object to convert edge-factory parameter-lists to tuple-n or list.
    *  
    * @author Peter Empen
    */
@@ -444,8 +430,7 @@ object GraphEdge {
 
     override protected def baseHashCode = (23 * (_1.##)) ^ (_2.##)
   }
-  /**
-   * Template trait for directed edges.
+  /** Template trait for directed edges.
    * 
    * Any class representing directed edges must inherit from this trait.
    * 
@@ -507,8 +492,7 @@ object GraphEdge {
     def unapply[N](e: DiEdgeLike[N]) = Some(e)
   }
 
-  /**
-   * This trait supports extending the default key of an edge with additional attributes.
+  /** This trait supports extending the default key of an edge with additional attributes.
    *  
    * As a default, the key - represented by `hashCode` - of an edge is made up of the
    * participating nodes.
@@ -523,8 +507,7 @@ object GraphEdge {
    */
   trait ExtendedKey[+N] extends EdgeLike[N]
   {
-    /**
-     * Each element in this sequence references an attribute of the custom  
+    /** Each element in this sequence references an attribute of the custom
      * edge which composes the key of this edge. All attributes added to this sequence
      * will be considered when calculating `equals` and `hashCode`.
      * 
@@ -557,8 +540,7 @@ object GraphEdge {
   }
   /** Marker trait for companion objects of any kind of edge. */
   trait EdgeCompanionBase[+E[N] <: EdgeLike[N]] extends Serializable
-  /**
-   * The abstract methods of this trait must be implemented by companion objects
+  /** The abstract methods of this trait must be implemented by companion objects
    * of simple (non-weighted, non-labeled) hyperedges.
    * 
    * @author Peter Empen
@@ -568,8 +550,7 @@ object GraphEdge {
     /** @param nodes must be of arity >= 2 */
     protected[collection] def from[N](nodes: Product)(implicit endpointsKind: CollectionKind): E[N]
   }
-  /**
-   * The abstract methods of this trait must be implemented by companion objects
+  /** The abstract methods of this trait must be implemented by companion objects
    * of simple (non-weighted, non-labeled) edges.
    * 
    * @author Peter Empen
@@ -639,8 +620,7 @@ object GraphEdge {
     override def matches(p1: N => Boolean, p2: N => Boolean): Boolean =
       matches(List(p1, p2))
   }
-  /**
-   * Factory for undirected hyper-edges.
+  /** Factory for undirected hyper-edges.
    * `GraphPredef` also supports implicit conversion from `node_1 ~ node_2 ~ node_3`
    * to `HyperEdge`.
    */
@@ -673,8 +653,7 @@ object GraphEdge {
       if (this.isInstanceOf[OrderedEndpoints]) new DiHyperEdge[NN](newNodes) with OrderedEndpoints
       else                                     new DiHyperEdge[NN](newNodes)
   }
-  /**
-   * Factory for directed hyper-edges.
+  /** Factory for directed hyper-edges.
    * `GraphPredef` also supports implicit conversion from `node_1 ~> node_2 ~> node_3`
    * to `DirectedHyperEdge`.
    * 
@@ -695,8 +674,7 @@ object GraphEdge {
    */
   val ~~> = DiHyperEdge
   
-  /**
-   * Represents an undirected edge.
+  /** Represents an undirected edge.
    * 
    * @author Peter Empen
    */
@@ -738,8 +716,7 @@ object GraphEdge {
         (p1(this._1) && p2(this._2) ||
          p1(this._2) && p2(this._1)  )
   }
-  /**
-   * Factory for undirected edges.
+  /** Factory for undirected edges.
    * `GraphPredef` also supports implicit conversion from `node_1 ~ node_2` to `UnDiEdge`.
    * 
    * @author Peter Empen
@@ -754,8 +731,7 @@ object GraphEdge {
    */
   val ~ = UnDiEdge
   
-  /**
-   * Represents a directed edge (arc / arrow) connecting two nodes.
+  /** Represents a directed edge (arc / arrow) connecting two nodes.
    * 
    * @author Peter Empen
    */
@@ -769,8 +745,7 @@ object GraphEdge {
     override protected[collection] def copy[NN](newNodes: Product) =
       new DiEdge[NN](newNodes)
   }
-  /**
-   * Factory for directed edges.
+  /** Factory for directed edges.
    * `GraphPredef` also supports implicit conversion from `node_1 ~> node_2` to `DiEdge`.
    * 
    * @author Peter Empen

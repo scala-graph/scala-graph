@@ -11,8 +11,7 @@ import edge. LBase.{ LHyperEdgeCompanion,  LHyperEdgeBound,  LEdgeCompanion,  LE
 import edge.WLBase.{WLHyperEdgeCompanion, WLHyperEdgeBound, WLEdgeCompanion, WLEdgeBound}
 import edge. CBase.{ CHyperEdgeCompanion,  CHyperEdgeBound,  CEdgeCompanion,  CEdgeBound}
 
-/**
- * This trait contains mutating edge addition methods that don't require an outer edge.
+/** This trait contains mutating edge addition methods that don't require an outer edge.
  * These methods are kept separately from `mutable.GraphLike` solely for convenience.
  * 
  * @define AUTOADD Node arguments not yet contained in this graph will be added to the node set.
@@ -460,8 +459,7 @@ trait EdgeOps[N,
     else edges find (_ == e) get
   }
   // ----------------------------------------------------------------------------- WLEdge
-  /**
-   * Creates a new weighted and labeled inner edge between `node_1` and `node_2`
+  /** Creates a new weighted and labeled inner edge between `node_1` and `node_2`
    * using `edgeFactory` and adds it to the edge set of this graph.
    * $AUTOADD
    * 

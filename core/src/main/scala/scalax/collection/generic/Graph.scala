@@ -12,8 +12,7 @@ import GraphPredef.{EdgeLikeIn, Param, OuterNode}
 import config.{GraphConfig, CoreConfig}
 import mutable.GraphBuilder
 
-/**
- * Methods common to `Graph` companion objects in the core module.
+/** Methods common to `Graph` companion objects in the core module.
  * 
  * @tparam CC the kind of type of the graph that is to become the companion class/trait
  *         of the object extending this trait. 
@@ -56,8 +55,7 @@ trait GraphCompanion[+CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[
                                      (implicit edgeT: ClassTag[E[N]],
                                       config: Config): CC[N,E] =
     (newBuilder[N,E] ++= elems).result
-  /**
-   * Produces a graph with a node set containing all `nodes` and edge ends in `edges`
+  /** Produces a graph with a node set containing all `nodes` and edge ends in `edges`
    * and with an edge set containing all `edges` but duplicates.
    * $DUPLEXCL
    * 
@@ -71,8 +69,7 @@ trait GraphCompanion[+CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[
                                       edges: Traversable[E[N]])
                                      (implicit edgeT: ClassTag[E[N]],
                                       config: Config): CC[N,E]
-  /**
-   * Produces a graph containing the results of some element computation a number of times.
+  /** Produces a graph containing the results of some element computation a number of times.
    * $DUPLEXCL
    *
    * @param   nr  the number of elements to be contained in the graph.

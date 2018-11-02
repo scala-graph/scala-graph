@@ -3,8 +3,7 @@ package custom.flight
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge._
 
-/**
- * This object defines the edge type `Flight` needed for the flight route
+/** This object defines the edge type `Flight` needed for the flight route
  * map example as a custom edge type.
  * 
  * A `Flight` has several attributes like `departure` and `duration`.
@@ -20,8 +19,7 @@ import scalax.collection.GraphPredef._,
  * which you could just write `Graph` in a real app, instead.
  */
 /* ------------------------------------------ custom edge type */
-/**
- * Represents a flight between two airports.
+/** Represents a flight between two airports.
  *
  * @param nodes The source and target airports of the flight. 
  * @param flightNo The flight Id as a key attribute consisting of the
@@ -48,8 +46,7 @@ case class Flight[+N](fromAirport: N, toAirport: N, flightNo: String,
 }
 
 object Flight {
-/**
- * Declares the `Flight` edge factory shortcut `##` which can be invoked like
+/** Declares the `Flight` edge factory shortcut `##` which can be invoked like
  * {{{
  * val (hamburg, newYork) = (Airport("HAM"), Airport("JFK"))
  * hamburg ~> newYork ## ("AL 007", 15 o 05, 10 h 20) // yields Flight[Airport]

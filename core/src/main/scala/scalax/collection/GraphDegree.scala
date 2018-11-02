@@ -7,8 +7,7 @@ import collection.mutable.{Map => MutableMap}
 import GraphPredef.{EdgeLikeIn, NodeParam, OuterNode, InnerNodeParam, InnerEdgeParam}
 import GraphEdge.EdgeLike
 
-/**
- * A trait for graph degree calculations.
+/** A trait for graph degree calculations.
  * 
  * @tparam N the user type of the nodes (vertices) in this graph.
  * @tparam E the kind of the edges (links) in this graph.
@@ -21,8 +20,7 @@ import GraphEdge.EdgeLike
  */
 trait GraphDegree[N, E[X] <: EdgeLikeIn[X]]
 { this: GraphBase[N,E] =>
-  /**
-   * Decreasing ordering of nodes with respect to their degree. 
+  /** Decreasing ordering of nodes with respect to their degree.
    */
   final class DegreeOrdering(val f: DegreeFunction) extends Ordering[NodeT] {
     def compare(n1: NodeT, n2: NodeT) = n1.degree compare n2.degree
@@ -30,8 +28,7 @@ trait GraphDegree[N, E[X] <: EdgeLikeIn[X]]
   object DegreeOrdering {
     @inline final def apply(f: DegreeFunction) = new DegreeOrdering(f)
   }
-  /**
-   * Decreasing ordering of integers. 
+  /** Decreasing ordering of integers.
    */
   object IntReverseOrdering extends Ordering[Int] {
     def compare(d1: Int, d2: Int) = d2 compare d1
@@ -45,8 +42,7 @@ trait GraphDegree[N, E[X] <: EdgeLikeIn[X]]
   trait Filter[T] extends Function1[T, Boolean]
 //  trait NodeFilter extends Filter[NodeT]
 //  implicit object AnyNode extends NodeFilter { def apply = (n: NodeT) => true }
-  /**
-   * The total degree of this graph equaling to the sum
+  /** The total degree of this graph equaling to the sum
    * of the degrees over all nodes or `0` if this graph is empty.
    * 
    * @param nodeDegree $DEGREEFUNCTION
@@ -60,8 +56,7 @@ trait GraphDegree[N, E[X] <: EdgeLikeIn[X]]
              val nodeD = nodeDegree(n)
              if (degreeFilter(nodeD)) deg += nodeD }
            deg }
-  /**
-   * The degree of the node having the least degree or `0` if
+  /** The degree of the node having the least degree or `0` if
    * this graph is empty.
    *   
    * @param $DEGREEFUNCTION
@@ -74,8 +69,7 @@ trait GraphDegree[N, E[X] <: EdgeLikeIn[X]]
       nodeDegree(nodes min DegreeOrdering(nodeDegree))
     else
       nodes.toList.view map nodeDegree filter degreeFilter min
-  /**
-   * The degree of the node having the highest degree or `0` if
+  /** The degree of the node having the highest degree or `0` if
    * this graph is empty.
    *   
    * @param $DEGREEFUNCTION
@@ -88,8 +82,7 @@ trait GraphDegree[N, E[X] <: EdgeLikeIn[X]]
       nodeDegree(nodes max DegreeOrdering(nodeDegree))
     else
       nodes.toList.view map nodeDegree filter degreeFilter max
-  /**
-   * The degree sequence of this graph, that is the non-increasing
+  /** The degree sequence of this graph, that is the non-increasing
    * sequence of degrees over all nodes.
    * 
    * @param $DEGREEFUNCTION
@@ -102,8 +95,7 @@ trait GraphDegree[N, E[X] <: EdgeLikeIn[X]]
     if(degreeFilter == AnyDegree) v
     else                          v filter degreeFilter
   }
-  /**
-   * The degree set of this graph, that is the decreasing
+  /** The degree set of this graph, that is the decreasing
    * set of unique degrees over all nodes. Same as degreeSeq without duplicates.
    *       
    * @param $DEGREEFUNCTION
@@ -114,12 +106,10 @@ trait GraphDegree[N, E[X] <: EdgeLikeIn[X]]
     SortedSet[Int]()(IntReverseOrdering) ++ (
     if(degreeFilter == AnyDegree) nodes map nodeDegree
     else                          nodes.view map nodeDegree filter degreeFilter)
-  /**
-   * Type alias for entries in degree maps returned by `degreeSeqMap`. 
+  /** Type alias for entries in degree maps returned by `degreeSeqMap`.
    */
   type DegreeNodeSeqEntry = (Int, NodeT)
-  /**
-   * The degree sequence of this graph projected onto a sequence of tuples.
+  /** The degree sequence of this graph projected onto a sequence of tuples.
    * The first elements of the tuples are the degrees in non-increasing order
    * while the second elements are the corresponding inner nodes.
    *    
@@ -136,8 +126,7 @@ trait GraphDegree[N, E[X] <: EdgeLikeIn[X]]
     if(degreeFilter == AnyDegree) r
     else                          r filter (t => degreeFilter(t._1))
   }
-  /**
-   * The degree set of this graph projected onto a map.
+  /** The degree set of this graph projected onto a map.
    * The keys of the map are the degrees in decreasing order
    * while the values are sets of the corresponding inner nodes.
    *    
@@ -152,8 +141,7 @@ trait GraphDegree[N, E[X] <: EdgeLikeIn[X]]
     if(degreeFilter == AnyDegree) r 
     else                          r filter (t => degreeFilter(t._1))
   }
-  /**
-   * The degree set of this graph projected onto a map.
+  /** The degree set of this graph projected onto a map.
    * The keys of the map are the degrees in decreasing order
    * while the values are the number of inner nodes having
    * the degree of the corresponding key.

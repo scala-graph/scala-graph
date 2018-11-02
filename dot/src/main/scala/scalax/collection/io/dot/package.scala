@@ -7,8 +7,7 @@ import mutable.{Graph => MGraph}
 import GraphPredef.EdgeLikeIn
 import GraphEdge.DiEdge
 
-/**
- * Enables to export `Graph` instances to the DOT language by means of user-defined
+/** Enables to export `Graph` instances to the DOT language by means of user-defined
  * edge and node transformers. Transformers may enrich the DOT structure with arbitrary
  * DOT attributes and also establish subgraph relationships.
  *

@@ -4,8 +4,7 @@ package rdf
 import scalax.collection.GraphPredef._,
        scalax.collection.GraphEdge._
 
-/**
- * Custom edge type representing RDF triples as directed hyperedges.
+/** Custom edge type representing RDF triples as directed hyperedges.
  * 
  * This representation stores not only subjects and objects but also
  * predicates as nodes. Predicates are checked for equality.

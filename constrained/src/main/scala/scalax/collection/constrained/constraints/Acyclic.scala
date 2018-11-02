@@ -19,8 +19,7 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
                          edges: Traversable[E[N]]) = PreCheckResult.postCheck(edges forall (_.nonLooping))
   /** Adding a single node cannot produce a cycle. */
   override def preAdd(node: N) = PreCheckResult(Complete)
-  /**
-   * When inserting an edge with a source contained in the graph
+  /** When inserting an edge with a source contained in the graph
    * a cycle is produced if there exists a target node of this edge such that
    * there is a path from the target node to the source node.  
    */

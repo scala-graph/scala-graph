@@ -7,8 +7,7 @@ import scalax.collection.GraphEdge._,
        scalax.collection.GraphPredef._
 import scalax.collection.{GraphBase, Graph}
 
-/**
- * Base traits for weighted edges.
+/** Base traits for weighted edges.
  * 
  * @author Peter Empen
  */
