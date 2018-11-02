@@ -138,12 +138,7 @@ object GraphEdge {
      * In case you need multi-edges based on different weights 
      * you should either make use of a predefined key-weighted edge type such as `WDiEdge` 
      * or define a custom edge class that mixes in `ExtendedKey` and adds `weight` to
-     * `keyAttributes`. 
-     * 
-     * For weight types other than `Long` you may either convert then to `Long`
-     * prior to edge creation or define a custom edge class that includes the
-     * weight of the appropriate type and overrides `def weight` to provide the
-     * required conversion to `Long`.  
+     * `keyAttributes`.
      */
     def weight: Double = 1
     /** The label of this edge. If `Graph`'s edge type parameter has been inferred or set
@@ -163,6 +158,7 @@ object GraphEdge {
      */
     def label: Any =
       throw new UnsupportedOperationException("Call of label for a non-labeled edge.")
+
     /** `true` if this edge is labeled. See also `label`. */
     def isLabeled = this.isInstanceOf[LEdge[N]]
 
@@ -214,7 +210,7 @@ object GraphEdge {
       case that: EdgeLike[_] => 
         (this eq that) ||
         (that canEqual this) && 
-        (this.directed == that.directed) &&
+        (this.isDirected == that.isDirected) &&
         (this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]) &&
         equals(that) 
       case _ => false

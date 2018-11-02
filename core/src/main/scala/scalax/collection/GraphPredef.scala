@@ -37,9 +37,9 @@ object GraphPredef {
   sealed trait Param [+N, +E[X<:N @uV] <: EdgeLike[X]] {
     def isDefined = true
     def isNode: Boolean
-    def isEdge: Boolean
+    final def isEdge: Boolean = ! isNode
     def isIn:   Boolean
-    def isOut:  Boolean
+    final def isOut: Boolean = ! isIn
   }
   object Param {
     /** Enables to query partitions of a collection of `Param`.
@@ -99,19 +99,16 @@ object GraphPredef {
    */
   sealed trait InParam[+N, +E[X<:N @uV] <: EdgeLike[X]] extends Param[N,E] {
     def isIn  = true
-    def isOut = false
   }
   /** Same as `InParam`. */
   type OuterElem[N, +E[X<:N] <: EdgeLike[X]] = InParam[N,E]
 
   sealed trait OutParam[+NO, +EO[X<:NO @uV] <: EdgeLike[X]] extends Param[NO,EO] {
     def isIn  = false
-    def isOut = true
   }
   trait NodeParam[+N] {
     def value: N
-    def isNode = true 
-    def isEdge = false
+    def isNode = true
     def stringPrefix = "" 
     override def toString = if (stringPrefix.length > 0) stringPrefix + "(" + value + ")"
                             else value.toString
@@ -149,10 +146,8 @@ object GraphPredef {
     def unapply[NI] (nodeOut: InnerNodeParam[NI]): Option[NI] = Some(nodeOut.value)
   }
   
-  sealed trait EdgeParam
-  {
-    def isNode = false 
-    def isEdge = true
+  sealed trait EdgeParam {
+    def isNode = false
   }
   
   /** Classes implementing `EdgeLike` must be instantiated mixing in this trait.
@@ -256,11 +251,11 @@ object GraphPredef {
 
   final implicit class HyperEdgeAssoc[NOld](val e: EdgeLikeIn[NOld]) extends AnyVal {
     def ~ [N >: NOld](n: N)(implicit endpointsKind: CollectionKind = Bag): HyperEdge[N] = {
-      require(e.undirected)
+      require(e.isUndirected)
       HyperEdge.from[N](NodeProduct(e.iterator.toBuffer += n))
     }
     def ~>[N >: NOld](n: N)(implicit targetsKind: CollectionKind = Bag): DiHyperEdge[N] = {
-      require(e.directed)
+      require(e.isDirected)
       DiHyperEdge.from[N](NodeProduct(e.iterator.toBuffer += n))
     }
   }

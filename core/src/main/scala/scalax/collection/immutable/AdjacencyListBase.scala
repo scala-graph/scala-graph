@@ -85,7 +85,7 @@ trait AdjacencyListBase[N,
     final protected[collection] def addDiSuccessors(edge: EdgeT,
                                                     add: (NodeT) => Unit): Unit = {
       val filter =
-        if (edge.isHyperEdge && edge.directed) edge.hasSource((_: NodeT) eq this)
+        if (edge.isHyperEdge && edge.isDirected) edge.hasSource((_: NodeT) eq this)
         else true
       edge withTargets (n => if ((n ne this) && filter) add(n))
     }
@@ -115,11 +115,11 @@ trait AdjacencyListBase[N,
     }
 
     final def outgoing = edges withSetFilter (e =>
-      if (e.directed) e.hasSource((_: NodeT) eq this)
+      if (e.isDirected) e.hasSource((_: NodeT) eq this)
       else true
     )
     @inline private[this] def isOutgoingTo(e: EdgeT, to: NodeT): Boolean =
-      if (e.directed)
+      if (e.isDirected)
         e matches ((_: NodeT) eq this, (_: NodeT) eq to)
       else
         e isAt ((_: NodeT) eq to)
@@ -131,11 +131,11 @@ trait AdjacencyListBase[N,
       else            diSucc get to
 
     final def incoming = edges withSetFilter (e =>
-      if (e.directed) e.hasTarget((_: NodeT) eq this)
+      if (e.isDirected) e.hasTarget((_: NodeT) eq this)
       else true
     )
     @inline final private[this] def isIncomingFrom(e: EdgeT, from: NodeT): Boolean =
-      if (e.directed)
+      if (e.isDirected)
         e matches ((_: NodeT) eq from, (_: NodeT) eq this)
       else
         e isAt ((_: NodeT) eq from)

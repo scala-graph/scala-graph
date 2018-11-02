@@ -90,7 +90,6 @@ class TEditMutable extends RefSpec with Matchers {
     }
   	def `serve 'directed' properly` {
       val (di, unDi) = (1 ~> 2, 2 ~ 3)
-      val wDi = edge.WDiEdge(1, 2)(0)
       val g = mutable.Graph(unDi)
       def directed(expected: Boolean): Unit = g.isDirected should be (expected)
       
@@ -331,11 +330,9 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (v
   	}
     def `isHyper ` {
       def hyper(g: CC[Int,HyperEdge], expected: Boolean): Unit = g.isHyper should be (expected)
-      val wDiHyper = edge.WDiHyperEdge(1, 2, 3)(0)
       
       factory(1 ~ 2).isHyper should be (false)
-      factory(wDiHyper).isHyper should be (true)
-      hyper(factory(1 ~> 2, wDiHyper), true)
+      hyper(factory(1 ~> 2, 1 ~ 2 ~ 3), true)
       hyper(factory(1 ~> 2), false)
     }
     def `isMulti ` {
