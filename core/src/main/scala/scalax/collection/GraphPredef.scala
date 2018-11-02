@@ -16,20 +16,17 @@ import GraphEdge.{EdgeLike, EdgeCopy, AbstractDiHyperEdge, AbstractDiEdge}
  * @author Peter Empen
  */
 object GraphPredef {
-  /**
-   * The most generic type for the `E` type parameter of a `Graph`.
+  /** The most generic type for the `E` type parameter of a `Graph`.
    * Supplying this type as the actual type parameter allows to include any kind of edges
    * such as hyper-edges, undirected and directed edges.
    */
   type EdgeLikeIn[+N] = EdgeLike[N] with EdgeCopy[EdgeLike] with OuterEdge[N,EdgeLike] 
-  /**
-   * Denotes all directed edge types for the `E` type parameter of a `Graph`.
+  /** Denotes all directed edge types for the `E` type parameter of a `Graph`.
    * Supplying this type as the actual type parameter allows to include any kind of directed edges
    * such as directed hyper-edges and directed edges.
    */
   type DiHyperEdgeLikeIn[+N] = AbstractDiHyperEdge[N] with EdgeCopy[AbstractDiHyperEdge] with OuterEdge[N,AbstractDiHyperEdge]
-  /**
-   * Denotes all directed edge types for the `E` type parameter of a `Graph`.
+  /** Denotes all directed edge types for the `E` type parameter of a `Graph`.
    * Supplying this type as the actual type parameter allows to include any kind of directed edges
    * such as directed hyper-edges and directed edges.
    */
@@ -40,16 +37,13 @@ object GraphPredef {
    */  
   sealed trait Param [+N, +E[X<:N @uV] <: EdgeLike[X]] {
     def isDefined = true
-    
     def isNode: Boolean
-    @inline final def isEdge: Boolean = ! isNode
-    
+    final def isEdge: Boolean = ! isNode
     def isIn:   Boolean
-    @inline final def isOut: Boolean = ! isIn
+    final def isOut: Boolean = ! isIn
   }
   object Param {
-    /**
-     * Enables to query partitions of a collection of `Param`.
+    /** Enables to query partitions of a collection of `Param`.
      */
     final class Partitions[N, E[X]<:EdgeLikeIn[X]](val elems: Traversable[Param[N,E]]) {
       lazy val partitioned = elems match {
@@ -60,21 +54,23 @@ object GraphPredef {
       def edgeParams = partitioned._2.asInstanceOf[Traversable[EdgeParam]]
   
       def toOuterNodes: Traversable[N]    = nodeParams map (_.value)
-      def toOuterEdges: Traversable[E[N]] = edgeParams map {_ match {
+      def toOuterEdges: Traversable[E[N]] = edgeParams map {
         case e: OuterEdge[N,E] => e.edge
         case e: InnerEdgeParam[N,E,_,E] => e.asEdgeTProjection[N,E].toOuter
-      }}
+      }
 
-      def toInParams: Traversable[InParam[N,E]] = elems map {_ match {
+      def toInParams: Traversable[InParam[N,E]] = elems map {
         case in: InParam[N,E] => in
         case n: InnerNodeParam[N]         => OuterNode(n.value)
         case e: InnerEdgeParam[N,E,_,E] => e.asEdgeTProjection[N,E].toOuter.asInstanceOf[OuterEdge[N,E]]
-      }}
+      }
+    }
+    object Partitions {
+      def apply[N, E[X]<:EdgeLikeIn[X]](elems: Traversable[Param[N,E]]): Param.Partitions[N,E] =
+        new Param.Partitions(elems)
     }
   }
-  implicit def graphParamsToPartition[N, E[X]<:EdgeLikeIn[X]]
-              (elems: Traversable[Param[N,E]]) = new Param.Partitions[N,E](elems)
-              
+
   implicit def nodeSetToOuter[N, E[X]<:EdgeLikeIn[X]](nodes: Graph[N,E]#NodeSetT): Iterable[N] =
     new AbstractIterable[N] {
       def iterator = new AbstractIterator[N] {
@@ -83,7 +79,7 @@ object GraphPredef {
         def next = it.next.value
       }
     }
-  
+
   implicit def nodeSetToSeq[N, E[X]<:EdgeLikeIn[X]](nodes: Graph[N,E]#NodeSetT)
       : Seq[OutParam[N,E]] = new SeqFacade(nodes)
   
@@ -113,7 +109,7 @@ object GraphPredef {
   }
   trait NodeParam[+N] {
     def value: N
-    def isNode = true 
+    def isNode = true
     def stringPrefix = "" 
     override def toString = if (stringPrefix.length > 0) stringPrefix + "(" + value + ")"
                             else value.toString
@@ -152,7 +148,7 @@ object GraphPredef {
   }
   
   sealed trait EdgeParam {
-    def isNode = false 
+    def isNode = false
   }
   
   /** Classes implementing `EdgeLike` must be instantiated mixing in this trait.
@@ -208,18 +204,38 @@ object GraphPredef {
   import GraphEdge._
   
   @inline implicit def anyToNode[N](n: N) = OuterNode(n)
-  implicit def seqToGraphParam[N, E[X<:N] <: EdgeLikeIn[X]](s: Seq[N]): Seq[InParam[N,E]] = s map {_ match {
+
+  implicit def seqToGraphParam[N, E[X<:N] <: EdgeLike[X]](s: Seq[N]): Seq[Param[N,E]] = s map {
     case e: EdgeLike[_] with EdgeCopy[_] with OuterEdge[_,_] with InParam[_,_] => e.asInstanceOf[InParam[N,E]]
     case e: InnerEdgeParam[_,_,_,_] => e.edge.asInstanceOf[OuterEdge[N,E]]
-    case e: EdgeLike[_] => throw new IllegalArgumentException("Invalid edge type: EdgeCopy and OuterEdge need be mixed in.")
-    case InnerNodeParam(n) => OuterNode(n).asInstanceOf[InParam[N,E]]
-    case n => OuterNode(n)
-  }}
-  def nodePredicate [NI, EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[X<:NO] <: EdgeLike[X]]
-      (pred: NI => Boolean): Param[NI,EI] => Boolean = param =>
-    if (param.isIn) false
-    else if(param.isNode) pred(param.asInstanceOf[InnerNodeParam[NI]].value)
-    else param.asInstanceOf[InnerEdgeParam[NI,EI,NO,EO]].edge forall (n => pred(n.value))
+    case e: EdgeLike[_]             => throw new IllegalArgumentException("Invalid edge type: EdgeCopy and OuterEdge need be mixed in.")
+    case n                          => toOuterNode[N,E](n)
+  }
+
+  implicit class TraversableEnrichments[N, T[X] <: Traversable[X]](val t: T[N]) extends AnyVal {
+    def toOuterNodes[E[X <: N] <: EdgeLike[X]]: Seq[InParam[N, E]] =
+      t.map(toOuterNode[N, E])(collection.breakOut)
+  }
+
+  private def toOuterNode[N, E[X <: N] <: EdgeLike[X]](node: N): InParam[N, E] =
+    node match {
+      case InnerNodeParam(n) => OuterNode(n).asInstanceOf[InParam[N, E]]
+      case n                 => OuterNode(n)
+    }
+
+  def nodePredicate [NI, EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[X<:NO] <: EdgeLike[X]](pred: NI => Boolean) =
+    (out: Param[NI,EI]) => out match {
+      case n: InnerNodeParam[NI] => pred(n.value)
+      case e: InnerEdgeParam[NI,EI,_,_] => e.asInstanceOf[InnerEdgeParam[NI,EI,NO,EO]].edge forall (n => pred(n.value))
+      case _ => false
+    }
+
+//  def edgePredicate [NI, NO <: InnerNodeParam[NI], EC[X<:NO] <: EdgeLike[X]] (pred: EC[NO] => Boolean) =
+//    (out: Param[N,E]) => out match {
+//      case n: InnerNodeParam[NI] => false
+//      case e: InnerEdgeParam[NI,NO,EC] => pred(e.edge) 
+//      case _ => false
+//    }
 
   @inline implicit def predicateToNodePredicate
       [NI, EI[X<:NI] <: EdgeLike[X], NO <: InnerNodeParam[NI], EC[X<:NO] <: EdgeLike[X]]

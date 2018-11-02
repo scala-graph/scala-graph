@@ -62,10 +62,9 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
 
   override protected[this] def newBuilder =
     new GraphBuilder[N,E,DefaultGraphImpl](DefaultGraphImpl)
-  @inline final override def empty: DefaultGraphImpl[N,E] =
+  final override def empty: DefaultGraphImpl[N,E] =
     DefaultGraphImpl.empty[N,E]
-  @inline final override def copy(nodes: Traversable[N],
-                                  edges: Traversable[E[N]])=
+  final override def copy(nodes: Traversable[N], edges: Traversable[E[N]])=
     DefaultGraphImpl.from[N,E](nodes, edges)
 
   @SerialVersionUID(7170L)

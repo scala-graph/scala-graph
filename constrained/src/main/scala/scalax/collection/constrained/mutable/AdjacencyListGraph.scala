@@ -13,8 +13,7 @@ import scalax.collection.config.{GraphConfig, AdjacencyListArrayConfig}
 import PreCheckFollowUp._
 import config.GenConstrainedConfig
 
-/**
- * Implements an adjacency list based graph representation.
+/** Implements an adjacency list based graph representation.
  * 
  * An adjacency list based representation speeds up traversing a graph along its paths
  * by storing the list of connecting edges to each node.

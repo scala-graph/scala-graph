@@ -13,8 +13,7 @@ import mutable.{ArraySet, ExtHashSet, EqHashSet, EqHashMap}
 import generic.GroupIterator
 import config.{GraphConfig, AdjacencyListArrayConfig}
 
-/**
- * Implementation of an incident list based graph representation. This trait is common to
+/** Implementation of an incident list based graph representation. This trait is common to
  * both the immutable and mutable variants. An incidence list based representation speeds up
  * traversing the graph along its paths by storing the list of connecting edges at each node.
  *   
@@ -72,6 +71,8 @@ trait AdjacencyListBase[N,
     
     final def hasOnlyHooks = diSucc.isEmpty && aHook.isDefined
 
+    final def hook: Option[EdgeT] = aHook map (_._2)
+    
     final def isDirectPredecessorOf(that: NodeT): Boolean =
       diSucc contains that
 
@@ -207,14 +208,14 @@ trait AdjacencyListBase[N,
     }
     final override def lookup(elem: N): NodeT = {
       def eq(inner: NodeT, outer: N) = inner.value == outer
-      coll.findEntry[N](elem, eq)
+      coll.findElem[N](elem, eq)
     }
     @inline final def contains(node: NodeT) = coll contains node
     @inline final def iterator: Iterator[NodeT] = coll.iterator
     @inline final override def size: Int = coll.size
     @inline final def draw(random: Random) = coll draw random
-    @inline final def findEntry[B](toMatch: B, correspond: (NodeT, B) => Boolean): NodeT =
-      coll findEntry (toMatch, correspond)
+    @inline final def findElem[B](toMatch: B, correspond: (NodeT, B) => Boolean): NodeT =
+      coll findElem (toMatch, correspond)
     protected[collection] def +=(edge: EdgeT): this.type
   }
   protected def newNodeSet: NodeSetT
@@ -235,8 +236,10 @@ trait AdjacencyListBase[N,
     
     private[this] var nrEdges = 0
 
-    private[this] var nrDi = if (selfGraph.isDirectedT) -1 else 0
-    final def hasOnlyDiEdges = nrDi == -1 || nrDi == nrEdges
+    private[this] var nrDi              = if (selfGraph.isDirectedT) -1 else 0
+    final def hasOnlyDiEdges: Boolean   = nrDi == -1 || nrDi == nrEdges
+    final def hasOnlyUnDiEdges: Boolean = nrDi ==  0
+    final def hasMixedEdges: Boolean    = nrDi > 0 && nrEdges > 1
 
     private[this] var nrHyper = if (selfGraph.isHyperT) 0 else -1
     final def hasAnyHyperEdge = nrHyper > 0

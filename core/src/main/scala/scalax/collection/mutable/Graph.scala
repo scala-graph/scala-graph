@@ -3,7 +3,7 @@ package mutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.language.{higherKinds, postfixOps}
+import scala.language.higherKinds
 import scala.collection.generic.{CanBuildFrom, Growable, Shrinkable}
 import scala.collection.mutable.{Builder, Cloneable, ArrayBuffer, Set => MutableSet}
 import scala.reflect.ClassTag
@@ -70,8 +70,7 @@ class GraphBuilder[N,
   def result: This =
     companion.from(nodes, edges)(edgeT, config.asInstanceOf[companion.Config])
 }
-/**
- * Trait with common mutable Graph methods.
+/** Trait with common mutable Graph methods.
  * 
  * @author Peter Empen
  */
@@ -84,7 +83,8 @@ trait GraphLike[N,
 	with	  Cloneable [Graph[N,E]]
 // TODO  with    EdgeOps   [N,E,This]
   with    Mutable
-{ this: This[N,E] =>
+{ this: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
+        This[N,E] with GraphLike[N,E,This] with Graph[N,E] =>
 	override def clone: This[N,E] = graphCompanion.from[N,E](nodes.toOuter, edges.toOuter)
 	type NodeT <: InnerNode 
   trait InnerNode extends super.InnerNode { // TODO with InnerNodeOps {
@@ -102,8 +102,7 @@ trait GraphLike[N,
     }
 		override def remove(node: NodeT) = subtract(node, true,  minus, minusEdges)
     def removeGently   (node: NodeT) = subtract(node, false, minus, minusEdges)
-    /**
-     * removes all incident edges of `node` from the edge set leaving the node set unchanged.
+    /** removes all incident edges of `node` from the edge set leaving the node set unchanged.
      *
      * @param node the node the incident edges of which are to be removed from the edge set.
      */
@@ -112,8 +111,7 @@ trait GraphLike[N,
   type EdgeSetT <: EdgeSet
 	trait EdgeSet extends MutableSet[EdgeT] with super.EdgeSet {
     @inline final def += (edge: EdgeT): this.type = { add(edge); this }
-    /**
-     * Same as `upsert` at graph level.
+    /** Same as `upsert` at graph level.
      */
     def upsert(edge: EdgeT): Boolean
     @inline final def -= (edge: EdgeT): this.type = { remove(edge); this }
@@ -124,39 +122,36 @@ trait GraphLike[N,
 	
   /** Adds a node to this graph.
    *
-   *  @param n the node to be added
+   *  @param node the node to be added
    *  @return `true` if the node was not yet present in the graph, `false` otherwise.
    */
   def add(node: N): Boolean
-  /**
-   * Adds the given node if not yet present and returns it as an inner node.
+  /** Adds the given node if not yet present and returns it as an inner node.
    * 
    * @param node the node to add.
    * @return inner node containing the added node.
    */
-  @inline final def addAndGet(node: N): NodeT = { add(node); find(node) get }
+  @inline final def addAndGet(node: N): NodeT = { add(node); find(node).get }
 	def +  (node: N) = if (nodes contains Node(node)) this.asInstanceOf[This[N,E]]
 	                   else clone += node
 	@inline final def += (node: N): this.type = { add(node); this }
   def add(edge: E[N]): Boolean
-  /**
-   * Adds the given edge if not yet present and returns it as an inner edge.
+  /** Adds the given edge if not yet present and returns it as an inner edge.
    * 
    * @param edge the edge to add.
    * @return the inner edge containing the added edge.
    */
-  @inline final def addAndGet(edge: E[N]): EdgeT = { add(edge); find(edge) get }
+  @inline final def addAndGet(edge: E[N]): EdgeT = { add(edge); find(edge).get }
 	@inline final protected def +#  (edge: E[N]) = clone +=# edge
 	protected def +=#(edge: E[N]): this.type
-	def += (elem: Param[N,E]) =
+	def += (elem: Param[N,E]): this.type =
     elem match {
       case n: OuterNode [N] => this += n.value	
       case n: InnerNodeParam[N] => this += n.value
       case e: OuterEdge[N,E]      => this +=# e.edge
       case e: InnerEdgeParam[N,E,_,E] => this +=# e.asEdgeTProjection[N,E].toOuter
     }
-  /**
-   * If an inner edge equaling to `edge` is present in this graph, it is replaced
+  /** If an inner edge equaling to `edge` is present in this graph, it is replaced
    * by `edge`, otherwise `edge` will be inserted. Such an update may be useful
    * whenever non-key parts of an immutable edge are to be modified.
    * 
@@ -165,12 +160,12 @@ trait GraphLike[N,
    */
   def upsert(edge: E[N]): Boolean
 
-	@inline final def     - (node: N) = clone -= node
-  @inline final def remove(node: N) = nodes find node exists (nodes remove _)
+	@inline final def     - (node: N): This[N,E] = clone -= node
+  @inline final def remove(node: N): Boolean   = nodes find node exists (nodes remove _)
 	@inline final def    -= (node: N): this.type = { remove(node); this }
   @inline final def    -?=(node: N): this.type = { removeGently(node); this }
-  @inline final def    -? (node: N) = clone -?= node
-  final def   removeGently(node: N) = nodes find node exists (nodes removeGently _) 
+  @inline final def    -? (node: N): This[N,E] = clone -?= node
+  final def   removeGently(node: N): Boolean   = nodes find node exists (nodes removeGently _)
 
 	@inline final           def -     (edge: E[N]) = clone -=# edge
   @inline final           def remove(edge: E[N]) = edges remove Edge(edge)
@@ -208,19 +203,16 @@ trait GraphLike[N,
     toRemove foreach -=
     this
   }
-  /**
-   * Removes all elements of `coll` from this graph. Edges will be ripple removed.
+  /** Removes all elements of `coll` from this graph. Edges will be ripple removed.
    *
    * @param coll Collection of nodes and/or edges to be removed; if the element type is N,
    *             it is removed from the node set otherwise from the edge set.
    * @return this graph shrinked by the nodes and edges contained in `coll`.
    */
   @inline final
-  def --!=(coll: Iterable[Param[N,E]]): This[N,E] =
-    (this /: coll)(_ -!= _) 
+  def --!=(coll: Iterable[Param[N,E]]): This[N,E] = (this /: coll)(_ -!= _)
 }
-/**
- * The main trait for mutable graphs bundling the functionality of traits concerned with
+/** The main trait for mutable graphs bundling the functionality of traits concerned with
  * specific aspects.
  * 
  * @tparam N the type of the nodes (vertices) in this graph.
@@ -234,8 +226,7 @@ trait Graph[N, E[X] <: EdgeLikeIn[X]]
 {
 	override def empty: Graph[N,E] = Graph.empty[N,E]
 }
-/**
- * The main companion object for mutable graphs.
+/** The main companion object for mutable graphs.
  *
  * @author Peter Empen
  */
@@ -280,8 +271,8 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]]
   initialize(iniNodes, iniEdges)
 
   override protected[this] def newBuilder = new GraphBuilder[N,E,DefaultGraphImpl](DefaultGraphImpl)
-  @inline final override def empty: DefaultGraphImpl[N,E] = DefaultGraphImpl.empty[N,E]
-  @inline final override def clone: this.type = super.clone.asInstanceOf[this.type]
+  final override def empty: DefaultGraphImpl[N,E] = DefaultGraphImpl.empty[N,E]
+  final override def clone: this.type = super.clone.asInstanceOf[this.type]
                                                                                                                                 
   @SerialVersionUID(7370L)
   final protected class NodeBase(value: N, hints: ArraySet.Hints)

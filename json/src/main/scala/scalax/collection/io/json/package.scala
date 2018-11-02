@@ -9,15 +9,13 @@ import scalax.collection.GraphPredef._,
 import scalax.collection.generic.GraphCoreCompanion
 import scalax.collection.config.GraphConfig
 
-/**
- * Facilitates populating graphs with nodes/edges from JSON text
+/** Facilitates populating graphs with nodes/edges from JSON text
  * and exporting `Graph`instances to JSON text.
  * 
  * See also the 
  * [[http://www.scala-graph.org/guides/json Graph for Scala JSON User Guide]].
  *
- * @define DESCR top level JSON import/export descriptor to be filled with all `NodeDescriptor`s
- *         and `EdgeDescriptors`.
+ * @define DESCR top level JSON import/export descriptor to be filled with all `NodeDescriptor`s and `EdgeDescriptors`.
  * @author Peter Empen
  */
 package object json {
@@ -40,16 +38,14 @@ package object json {
   import imp._, imp.Parser.parse, imp.Stream.createOuterElems
   import net.liftweb.json.JValue
   
-  implicit final class JsonGraphCoreCompanion[+G[N, E[X] <: EdgeLikeIn[X]]
-                                              <: Graph[N,E] with GraphLike[N,E,G]]
+  implicit final class JsonGraphCoreCompanion[+G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,G]]
       (val companion: GraphCoreCompanion[G]) extends AnyVal
   {
-    /**
-     * Creates a new Graph instance and populates it with all nodes/edges found in
+    /** Creates a new Graph instance and populates it with all nodes/edges found in
      * the node/edge sections of a JSON text.
      * 
      * @param jsonAST the JSON tree to be parsed for node/edge sections
-     * @param descriptor $DESCR 
+     * @param descriptor $DESCR
      * @return new `Graph` instance populated from `jsonAST`
      */
     def fromJson[N, E[X]<:EdgeLikeIn[X]]
@@ -59,8 +55,7 @@ package object json {
          config: companion.Config): G[N,E] =
       fromJson[N,E](parse(jsonAST, descriptor), descriptor)
 
-    /**
-     * Creates a new Graph instance and populates it with all nodes/edges found in
+    /** Creates a new Graph instance and populates it with all nodes/edges found in
      * the node/edge sections of a JSON text.
      * 
      * @param jsonText the JSON text to be parsed for node/edge sections
@@ -74,12 +69,11 @@ package object json {
          config: companion.Config = companion.defaultConfig): G[N,E] =
       fromJson[N,E](parse(jsonText, descriptor), descriptor)
 
-    /**
-     * Creates a new Graph instance and populates it with all nodes/edges found in
+    /** Creates a new Graph instance and populates it with all nodes/edges found in
      * `jsonLists`.
      * 
      * @param jsonLists node/edge lists usually attained by parsing a JSON text
-     * @param descriptor $DESCR 
+     * @param descriptor $DESCR
      * @return new `Graph` instance populated from `jsonText`
      */
     def fromJson[N, E[X]<:EdgeLikeIn[X]]
@@ -95,8 +89,7 @@ package object json {
 
   implicit final class JsonGraph[N, E[X] <: EdgeLikeIn[X]]
       (val graph: Graph[N,E]) extends AnyVal {
-    /**
-     * Creates a JSON text including all nodes/edges in this graph.
+    /** Creates a JSON text including all nodes/edges in this graph.
      * 
      * @param descriptor $DESCR 
      * @return the JSON text
@@ -108,8 +101,7 @@ package object json {
     }
   }
     
-  /**
-   * Replaces all occurrences of `paramPlaceholder` in source with the elements
+  /** Replaces all occurrences of `paramPlaceholder` in source with the elements
    * in `params` one by one. The result is guaranteed not to become longer than
    * `maxLength`.   
    */

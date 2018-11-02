@@ -1,7 +1,6 @@
 package scalax.collection.io.json
 
-/**
- * Error/warning constants and message producing. 
+/** Error/warning constants and message producing.
  *
  * @author Peter Empen
  */

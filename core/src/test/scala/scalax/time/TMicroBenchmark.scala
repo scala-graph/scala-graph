@@ -3,12 +3,11 @@ package scalax.time
 import org.scalactic.Equality
 import org.scalatest.refspec.RefSpec
 import org.scalatest.Matchers
-
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
-class TMicroBenchmarkTest
+class TMicroBenchmark
     extends RefSpec
        with Matchers {
   
@@ -17,7 +16,7 @@ class TMicroBenchmarkTest
   object `relativeTimes() reflects` {
     def `relative execution times` {
       val r = 1 to 20
-      val relTimes = relativeTimes(warmUp = 2, repetitions = 3)(
+      val relTimes = relativeTimes(warmUp = 2)(
         r.toList.sorted, 
         r.toList.sorted.toArray.toList.sorted, 
         r.toList.sorted.toSet.toArray.toList.sorted 
@@ -67,6 +66,6 @@ class TMicroBenchmarkTest
     val s = Set(array: _*)
     val b = mutable.BitSet(array: _*)
 
-    relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > (1.3f)
+    relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > (1.1f)
   }
 }

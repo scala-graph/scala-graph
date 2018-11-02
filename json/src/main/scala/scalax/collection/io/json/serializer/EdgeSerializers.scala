@@ -32,25 +32,24 @@ class EdgeSerializer extends Serializer[EdgeParameters] {
 } 
 /** Lift-JSON `Serializer` to serialize `WEdgeParameters` to JSON arrays of the form
  * `["<n1>", "<n2>", <weight>]` and reversely where `<n1>` and `<n2>` represent the node-Ids
- * and `<weight>` a JSON number mapping to `Long`. 
+ * and `<weight>` a JSON number mapping to `Double`.
  */
 class WEdgeSerializer extends Serializer[WEdgeParameters] { 
   private val clazz = classOf[WEdgeParameters] 
   override def deserialize(implicit format: Formats) = { 
     case (TypeInfo(clazz, _), json) => json match { 
-      case JArray(JString(n1) :: JString(n2) :: JInt(weight) :: Nil) =>
-           new WEdgeParameters(n1, n2, weight.toLong) 
+      case JArray(JString(n1) :: JString(n2) :: JDouble(weight) :: Nil) =>
+           new WEdgeParameters(n1, n2, weight)
       case x => throw new MappingException(
                 "Can't convert " + x + " to " + clazz.getSimpleName) 
     } 
   } 
   override def serialize(implicit format: Formats) = { 
     case WEdgeParameters((nId_1,nId_2), weight) =>
-      JArray(JString(nId_1) :: JString(nId_2) :: JInt(weight) :: Nil) 
+      JArray(JString(nId_1) :: JString(nId_2) :: JDouble(weight) :: Nil)
   } 
 }
-/**
- * #define LSERIALIZER one or more lift-json custom `Serializer`s for labels.
+/** #define LSERIALIZER one or more lift-json custom `Serializer`s for labels.
  */
 abstract class LSerializer[L: Manifest] (labelSerializers: Serializer[L]*) {
   object LabelSerialization {
@@ -86,7 +85,7 @@ class LEdgeSerializer[L: Manifest] (labelSerializers: Serializer[L]*)
 }
 /** Lift-JSON `Serializer` to serialize `WLEdgeParameters` to JSON arrays of the form
  * `["<n1>", "<n2>", <weight>, <label>]` and reversely where `<n1>` and `<n2>` represent the
- * node-Ids, `<weight>` a JSON number mapping to `Long` and `<label>` any JSON type
+ * node-Ids, `<weight>` a JSON number mapping to `Double` and `<label>` any JSON type
  * mapping to `L`.
  * 
  * @param labelSerializers $LSERIALIZER
@@ -98,8 +97,8 @@ class WLEdgeSerializer[L: Manifest] (labelSerializers: Serializer[L]*)
   private val clazz = classOf[WLEdgeParameters[_]] 
   override def deserialize(implicit format: Formats) = { 
     case (TypeInfo(clazz, _), json) => json match { 
-      case JArray(JString(n1) :: JString(n2) :: JInt(weight) :: jsonLabel :: Nil) =>
-           new WLEdgeParameters[L](n1, n2, weight.toLong,
+      case JArray(JString(n1) :: JString(n2) :: JDouble(weight) :: jsonLabel :: Nil) =>
+           new WLEdgeParameters[L](n1, n2, weight,
                                    LabelSerialization.extract(jsonLabel))
       case x => throw new MappingException(
                 "Can't convert " + x + " to " + clazz.getSimpleName) 
@@ -107,7 +106,7 @@ class WLEdgeSerializer[L: Manifest] (labelSerializers: Serializer[L]*)
   } 
   override def serialize(implicit format: Formats) = { 
     case WLEdgeParameters((nId_1,nId_2), weight, label) =>
-      JArray(JString(nId_1) :: JString(nId_2) :: JInt(weight) ::
+      JArray(JString(nId_1) :: JString(nId_2) :: JDouble(weight) ::
              LabelSerialization.decompose(label.asInstanceOf[L]) :: Nil) 
   } 
 }
@@ -155,21 +154,21 @@ class HyperEdgeSerializer
 } 
 /** Lift-JSON `Serializer` to serialize `WHyperEdgeParameters` to JSON arrays of the form
  * `[ ["<n1>",...,"<nn>"], <weight> ]` and reversely where `<n1>...<nn>` represent the
- * node-Ids and `<weight>` is a `JInt`.
+ * node-Ids and `<weight>` is a `JDouble`.
  */
 class WHyperEdgeSerializer
   extends Serializer[WHyperEdgeParameters]
   with    HyperEdgeChecker
 { 
   private final val clazz = classOf[WHyperEdgeParameters] 
-  @inline private final def parameters(jsonIds: List[JValue], kind: String, weight: BigInt): WHyperEdgeParameters = {
-    new WHyperEdgeParameters(prepareNodes(jsonIds), kind, weight.toLong)
+  @inline private final def parameters(jsonIds: List[JValue], kind: String, weight: Double): WHyperEdgeParameters = {
+    new WHyperEdgeParameters(prepareNodes(jsonIds), kind, weight)
   } 
   override def deserialize(implicit format: Formats) = { 
     case (TypeInfo(clazz, _), json) => json match { 
-      case JArray(JArray(jsonIds) :: JString(kind) :: JInt(weight) :: Nil) =>
+      case JArray(JArray(jsonIds) :: JString(kind) :: JDouble(weight) :: Nil) =>
         parameters(jsonIds, kind, weight)
-      case JArray(JArray(jsonIds) :: JInt(weight) :: Nil) => // backward compatible with 1.9 
+      case JArray(JArray(jsonIds) :: JDouble(weight) :: Nil) => // backward compatible with 1.9 
         parameters(jsonIds, Bag.toString, weight)
       case x => throw new MappingException(
                 "Can't convert " + x + " to " + clazz.getSimpleName) 
@@ -177,7 +176,7 @@ class WHyperEdgeSerializer
   } 
   override def serialize(implicit format: Formats) = { 
     case WHyperEdgeParameters(nodeIds, kind, weight) =>
-      JArray(Extraction.decompose(nodeIds) :: JString(kind) :: JInt(weight) :: Nil) 
+      JArray(Extraction.decompose(nodeIds) :: JString(kind) :: JDouble(weight) :: Nil)
   } 
 } 
 /** Lift-JSON `Serializer` to serialize `LHyperEdgeParameters` to JSON arrays of the form
@@ -214,7 +213,7 @@ class LHyperEdgeSerializer[L: Manifest] (labelSerializers: Serializer[L]*)
 } 
 /** Lift-JSON `Serializer` to serialize `WLHyperEdgeParameters` to JSON arrays of the form
  * `[ ["<n1>",...,"<nn>"], <weight>, <label> ]` and reversely where `<n1>...<nn>`
- * represent the node-Ids, `<weight>` is a `JInt` and `<label>` is any subtype of `JValue`.
+ * represent the node-Ids, `<weight>` is a `JDouble` and `<label>` is any subtype of `JValue`.
  * 
  * @param labelSerializers $LSERIALIZER
  */
@@ -225,15 +224,15 @@ class WLHyperEdgeSerializer[L: Manifest] (labelSerializers: Serializer[L]*)
 { 
   private final val clazz = classOf[WLHyperEdgeParameters[L]] 
   @inline private final def parameters(jsonIds: List[JValue], kind: String,
-                                       weight: BigInt, jsonLabel: JValue): WLHyperEdgeParameters[L] = {
+                                       weight: Double, jsonLabel: JValue): WLHyperEdgeParameters[L] = {
     new WLHyperEdgeParameters[L](prepareNodes(jsonIds), kind,
-                                 weight.toLong, LabelSerialization.extract(jsonLabel))
+                                 weight, LabelSerialization.extract(jsonLabel))
   } 
   override def deserialize(implicit format: Formats) = {
     case (TypeInfo(clazz, _), json) => json match { 
-      case JArray(JArray(jsonIds) :: JString(kind) :: JInt(weight) :: jsonLabel :: Nil) =>
+      case JArray(JArray(jsonIds) :: JString(kind) :: JDouble(weight) :: jsonLabel :: Nil) =>
         parameters(jsonIds, kind, weight, jsonLabel)
-      case JArray(JArray(jsonIds) :: JInt(weight) :: jsonLabel :: Nil) => // backward compatible with 1.9 
+      case JArray(JArray(jsonIds) :: JDouble(weight) :: jsonLabel :: Nil) => // backward compatible with 1.9 
         parameters(jsonIds, Bag.toString, weight, jsonLabel)
       case x => throw new MappingException(
                 "Can't convert " + x + " to " + clazz.getSimpleName) 
@@ -241,7 +240,7 @@ class WLHyperEdgeSerializer[L: Manifest] (labelSerializers: Serializer[L]*)
   } 
   override def serialize(implicit format: Formats) = { 
     case WLHyperEdgeParameters(nodeIds, kind, weight, label) =>
-      JArray(Extraction.decompose(nodeIds) :: JString(kind) :: JInt(weight) ::
+      JArray(Extraction.decompose(nodeIds) :: JString(kind) :: JDouble(weight) ::
              LabelSerialization.decompose(label.asInstanceOf[L]) :: Nil) 
   } 
 } 

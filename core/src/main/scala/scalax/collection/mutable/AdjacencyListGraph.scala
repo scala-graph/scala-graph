@@ -78,7 +78,7 @@ trait AdjacencyListGraph[N,
     protected[collection] def add(edge: EdgeT): Boolean = {
       var someNew = false
       edge foreach { n =>
-        val inColl = coll findEntry n getOrElse {coll += n; n}
+        val inColl = coll findElem n getOrElse {coll += n; n}
         someNew = (inColl add edge) || someNew
       }
       someNew
@@ -87,13 +87,13 @@ trait AdjacencyListGraph[N,
     protected[collection] def upsert(edge: EdgeT): Boolean = {
       var someNew = false
       edge foreach { n =>
-        val inColl = coll findEntry n getOrElse {coll += n; n}
+        val inColl = coll findElem n getOrElse {coll += n; n}
         someNew = (inColl upsert edge) || someNew
       }
       someNew
     }
     protected[collection] def remove (edge: EdgeT): Boolean =
-      edge.nodes.toSet forall (n => (coll findEntry n) exists (_ remove edge))
+      edge.nodes.toSet forall (n => (coll findElem n) exists (_ remove edge))
     protected[collection] def -= (edge: EdgeT): this.type = { remove(edge); this }
     override protected def minus     (node: NodeT) { coll -= node }
     override protected def minusEdges(node: NodeT) { 

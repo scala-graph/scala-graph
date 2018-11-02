@@ -56,9 +56,8 @@ class TEditImmutable extends RefSpec with Matchers {
   		g.isInstanceOf[immutable.Graph[Nothing,Nothing]] should be (true)
   	}
     def `yield another graph when mapped` {
-      import immutable.Graph
-      val g = Graph(1~2)
-      val m: Graph[Int,UnDiEdge] = g map Helper.icrementNode
+      val g = immutable.Graph(1~2)
+      val m: immutable.Graph[Int,UnDiEdge] = g map Helper.icrementNode
       m.edges.head should be (UnDiEdge(2,3))
     }
   }
@@ -146,6 +145,9 @@ class TEditMutable extends RefSpec with Matchers {
       (n1 diSuccessors) should be (Set(2))
       (n1 ~>? n1) should be (Some(oneOneTwo))
     }
+
+    /* TODO missing examples... */
+
     def `serve ++=` {
       val (gBefore, gAfter) = (
           mutable.Graph(1, 2~3),
@@ -173,7 +175,7 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (v
   implicit val config = factory.config
 
 	val seq_1_3	 = Seq(1, 3)
-	val gInt_1_3 = factory[Int,DiEdge](seq_1_3: _*)
+	val gInt_1_3 = factory(seq_1_3.toOuterNodes[DiEdge]: _*)
 	val gString_A = factory[String,Nothing]("A")
 
 	object `graph editing includes`{
@@ -211,10 +213,13 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (v
   	}
   	def `isDirected ` {
       def directed(g: CC[Int,UnDiEdge], expected: Boolean): Unit = g.isDirected should be (expected)
+      val wDi = edge.WDiEdge(1, 2)(0)
       
+      factory(wDi).isDirected should be (true)
       directed(factory(1 ~ 2), false)
       directed(factory(1 ~> 2), true)
-      directed(factory(0 ~> 1, 1 ~> 2), true)
+      directed(factory(wDi), true)
+      directed(factory(0~>1, wDi), true)
   	}
     def `isHyper ` {
       def hyper(g: CC[Int,HyperEdge], expected: Boolean): Unit = g.isHyper should be (expected)
@@ -223,6 +228,9 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (v
       hyper(factory(1 ~> 2, 1 ~ 2 ~ 3), true)
       hyper(factory(1 ~> 2), false)
     }
+
+    /* TODO missing examples... */
+
   	def `from ` {
   	  val (n_start, n_end) = (11, 20)
   	  val nodes = List.range(n_start, n_end)
@@ -334,7 +342,7 @@ class TEdit[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]] (v
   }
   	def `Eq ` {
   		factory[Int,Nothing]() shouldEqual factory[Int,Nothing]()
-  		gInt_1_3	shouldEqual factory[Int,DiEdge](seq_1_3: _*)
+  		gInt_1_3	shouldEqual factory(seq_1_3.toOuterNodes[DiEdge]: _*)
   		gString_A	shouldEqual factory[String,Nothing]("A")
   
   		factory[Int,Nothing]()	should not be (factory[Int,Nothing](1))

@@ -10,8 +10,7 @@ import scalax.collection.GraphTraversal.AnyConnected
 
 import PreCheckFollowUp._
 
-/**
- * Ensures that the underlying `Graph` is connected if it is undirected
+/** Ensures that the underlying `Graph` is connected if it is undirected
  * or weakly connected if it is directed. 
  */
 class Connected[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
@@ -38,7 +37,7 @@ class Connected[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
   /** `Complete` if `elems` build a connected graph and at least one node of `elems`
    *  is already contained; otherwise `Abort`. */
   override def preAdd(elems: InParam[N,E]*) = PreCheckResult.complete{
-    val p: Param.Partitions[N,E] = elems
+    val p = Param.Partitions(elems)
     val graphAdd = SimpleGraph.from(p.toOuterNodes, p.toOuterEdges)(self.edgeT)
     graphAdd.isConnected &&
     ( self.isEmpty ||
@@ -50,8 +49,7 @@ class Connected[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
                         passedEdges: Traversable[E[N]],
                         preCheck   : PreCheckResult) = newGraph.isConnected
 
-  /**
-   * Checks within any `preSubtract` whether the neighborhood of the elements
+  /** Checks within any `preSubtract` whether the neighborhood of the elements
    * to be subtracted remains connected after the subtraction thus preventing
    * a full traversal of the graph.
    * 

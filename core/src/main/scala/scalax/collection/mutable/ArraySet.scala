@@ -66,8 +66,7 @@ object ArraySet extends MutableSetFactory[ArraySet] {
     emptyWithHints[A](hints) += elem1 += elem2 ++= elems
   implicit def canBuildFrom[A]: CanBuildFrom[Coll, A, ArraySet[A]] = setCanBuildFrom[A]
 
-  /**
-   * Enables tuning of the internal representation of adjacency lists. Basically, an `Array`
+  /** Enables tuning of the internal representation of adjacency lists. Basically, an `Array`
    * representation is preferable over a hash table up to a node degree of about 200.
    * 
    * @param initialCapacity The initial length of the internal `Array` representation. It

@@ -89,6 +89,7 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
         None
       case i =>
         val oldValue = tab(i + 1)
+        tab(i) = maskedKey
         tab(i + 1) = value.asInstanceOf[AnyRef]
         Some(oldValue)
     }

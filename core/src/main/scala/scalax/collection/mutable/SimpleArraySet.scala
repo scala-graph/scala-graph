@@ -221,8 +221,8 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       arraycopy(arr, 0, newArr, 0, nextFree)
       new SortedArraySet(newArr.asInstanceOf[Array[A]])
     }
-  def findEntry[B](other: B, correspond: (A, B) => Boolean): A =
-    if (isHash) hashSet findEntry (other, correspond)
+  def findElem[B](other: B, correspond: (A, B) => Boolean): A =
+    if (isHash) hashSet findElem (other, correspond)
     else {
       val idx = indexOf(other, (a: A, b: B) => a.hashCode == b.hashCode && correspond(a, b))
       (if (idx < 0) null else arr(idx)).asInstanceOf[A]
@@ -231,8 +231,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     if (isHash) hashSet draw random
     else arr(random.nextInt(size))
 }
-/**
- * @define FROM The [[ArraySet]] instance an operation of which this builder is invoked on.
+/** @define FROM The [[ArraySet]] instance an operation of which this builder is invoked on.
  */
 object SimpleArraySet extends MutableSetFactory[SimpleArraySet] {
   implicit def canBuildFrom[A]: CanBuildFrom[Coll, A, SimpleArraySet[A]] = setCanBuildFrom[A]
@@ -244,16 +243,14 @@ object SimpleArraySet extends MutableSetFactory[SimpleArraySet] {
   /** Returns an empty set with hints propagated from `arraySet`. */
   def emptyWithPropagatedHints[A,B](arraySet: ArraySet[A]): SimpleArraySet[B] =
     emptyWithHints(arraySet.hints.propagate(arraySet.size))
-  /**
-   * Default `ArraySet` builder preventing duplicates. The hints passed are propagated
+  /** Default `ArraySet` builder preventing duplicates. The hints passed are propagated
    * such that `initial size == from.size`.
    * 
    * @param from $FROM 
    */
   protected class CheckingBuilder[A] (from: ArraySet[A])
     extends GrowingBuilder[A, SimpleArraySet[A]](emptyWithPropagatedHints(from))
-  /**
-   * An `ArraySet` builder without duplicate checking.
+  /** An `ArraySet` builder without duplicate checking.
    * 
    * @param from $FROM
    */

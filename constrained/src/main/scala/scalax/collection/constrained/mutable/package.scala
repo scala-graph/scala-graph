@@ -2,8 +2,7 @@ package scalax.collection.constrained
 
 import scala.language.{higherKinds, postfixOps}
 
-/**
- * Mutable constrained graph templates.
+/** Mutable constrained graph templates.
  * 
  * @author Peter Empen
  */

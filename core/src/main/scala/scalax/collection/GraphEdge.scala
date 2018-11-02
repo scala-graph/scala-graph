@@ -6,10 +6,9 @@ import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.AbstractTraversable
 
 import GraphPredef.{InnerNodeParam, OuterEdge}
-//import edge.LBase.LEdge
+// TODO import edge.LBase.LEdge
 
-/**
- * Container for basic edge types to be used in the context of `Graph`.
+/** Container for basic edge types to be used in the context of `Graph`.
  * You will usually simply import all its members along with the members of Param:
  * {{{
  * import scalax.collection.GraphPredef._, scalax.collection.GraphEdge,_
@@ -20,8 +19,7 @@ import GraphPredef.{InnerNodeParam, OuterEdge}
  * @author Peter Empen
  */
 object GraphEdge {
-  /**
-   * Template for Edges in a Graph.
+  /** Template for Edges in a Graph.
    * 
    * Implementation note: Irrespective of the containing `Graph` all library-provided Edges
    * are immutable.
@@ -123,15 +121,9 @@ object GraphEdge {
      *  In case you need multi-edges based on different weights 
      *  you should either make use of a predefined key-weighted edge type such as `WDiEdge` 
      *  or define a custom edge class that mixes in `ExtendedKey` and adds `weight` to
-     *  `keyAttributes`. 
-     * 
-     *  For weight types other than `Long` you may either convert then to `Long`
-     *  prior to edge creation or define a custom edge class that includes the
-     *  weight of the appropriate type and overrides `def weight` to provide the
-     *  required conversion to `Long`.  
+     *  `keyAttributes`.
      */
-    def weight: Long = 1
-    
+    def weight: Double = 1
     /** The label of this edge. If `Graph`'s edge type parameter has been inferred or set
      *  to a labeled edge type all contained edges are labeled. Otherwise you should
      *  assert, for instance by calling `isLabeled`, that the edge instance is labeled
@@ -198,8 +190,7 @@ object GraphEdge {
     /** `true` if<br />
      *  a) two distinct ends of this undirected edge exist
      *     for which `p1` and `p2` hold or<br />
-     *  b) `p1` holds for a source and `p2` for a target of this directed edge.
-     */
+     *  b) `p1` holds for a source and `p2` for a target of this directed edge. */
     def matches(p1: N => Boolean, p2: N => Boolean): Boolean
 
     override def canEqual(that: Any): Boolean = that.isInstanceOf[EdgeLike[_]]
@@ -270,6 +261,8 @@ object GraphEdge {
   }
   
   /** Helper object to convert edge-factory parameter-lists to tuple-n or list.
+   *  
+   * @author Peter Empen
    */
   object NodeProduct {
     @inline final def apply[N](node_1: N, node_2: N): Tuple2[N,N] = Tuple2(node_1, node_2)
@@ -296,8 +289,7 @@ object GraphEdge {
   protected[collection] trait Keyed
   
   /** Defines how to handle the ends of hyperedges, or the source/target ends of directed hyperedges,
-   *  with respect to equality.
-   */
+   *  with respect to equality. */
   sealed abstract class CollectionKind(val duplicatesAllowed: Boolean, val orderSignificant: Boolean)
   object CollectionKind {
     protected[collection] def from(duplicatesAllowed: Boolean, orderSignificant: Boolean): CollectionKind =
@@ -435,8 +427,7 @@ object GraphEdge {
     override protected def baseHashCode = (23 * (_1.##)) ^ (_2.##)
   }
   
-  /**
-   * This trait supports extending the default key of an edge with additional attributes.
+  /** This trait supports extending the default key of an edge with additional attributes.
    *  
    * As a default, the key - represented by `hashCode` - of an edge is made up of the
    * participating nodes.
@@ -451,8 +442,7 @@ object GraphEdge {
    */
   trait ExtendedKey[+N] extends EdgeLike[N]
   {
-    /**
-     * Each element in this sequence references an attribute of the custom  
+    /** Each element in this sequence references an attribute of the custom
      * edge which composes the key of this edge. All attributes added to this sequence
      * will be considered when calculating `equals` and `hashCode`.
      * 
@@ -495,9 +485,7 @@ object GraphEdge {
     /** @param nodes must be of arity >= 2 */
     protected[collection] def from[N](nodes: Product)(implicit endpointsKind: CollectionKind): E[N]
   }
-  
-  /**
-   * The abstract methods of this trait must be implemented by companion objects
+  /** The abstract methods of this trait must be implemented by companion objects
    * of simple (non-weighted, non-labeled) edges.
    */
   trait EdgeCompanion[+E[N] <: EdgeLike[N] with AbstractEdge[N]] extends EdgeCompanionBase[E] {
@@ -582,8 +570,8 @@ object GraphEdge {
   }
     
   /** Factory for undirected hyper-edges.
-   *  `GraphPredef` also supports implicit conversion from `node_1 ~ node_2 ~ node_3`
-   *  to `HyperEdge`.
+   * `GraphPredef` also supports implicit conversion from `node_1 ~ node_2 ~ node_3`
+   * to `HyperEdge`.
    */
   object HyperEdge extends HyperEdgeCompanion[HyperEdge] {
     def apply[N](node_1: N, node_2: N, nodes: N*)(implicit endpointsKind: CollectionKind = Bag): HyperEdge[N] =
@@ -810,9 +798,10 @@ object GraphEdge {
     override protected[collection] def copy[NN](newNodes: Product): DiEdge[NN] =
       new DiEdge[NN](first[NN](newNodes), second[NN](newNodes))
   }
-  /**
-   * Factory for directed edges.
+  /** Factory for directed edges.
    * `GraphPredef` also supports implicit conversion from `node_1 ~> node_2` to `DiEdge`.
+   * 
+   * @author Peter Empen
    */
   object DiEdge extends EdgeCompanion[DiEdge] {
     def apply[N](from: N, to: N)     = new DiEdge[N](from, to)

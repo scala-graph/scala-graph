@@ -5,7 +5,7 @@ import scala.language.higherKinds
 import GraphPredef._, GraphEdge._
 import GraphTraversal._, GraphTraversal.Parameters._ 
 import generic.GraphCoreCompanion
-import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
+import edge.Implicits._
 
 import org.scalatest._
 import org.scalatest.prop.PropertyChecks
@@ -13,6 +13,9 @@ import org.scalatest.refspec.RefSpec
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+
+import scalax.collection.edge.WkDiEdge
+import scalax.collection.visualization.Visualizer
 
 @RunWith(classOf[JUnitRunner])
 class TTopologicalSortRootTest
@@ -25,7 +28,8 @@ private class TTopologicalSort[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with Gra
 	  (val factory: GraphCoreCompanion[G])
   	extends	RefSpec
   	with	Matchers
-  	with	PropertyChecks {
+  	with	PropertyChecks
+    with  Visualizer[G] {
 
   private object Topo {
     
@@ -76,12 +80,12 @@ private class TTopologicalSort[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with Gra
   }
  
   def `empty graph` {
-    val g = factory.empty[Int,DiEdge]
-    val r = g.topologicalSort
-    g.topologicalSort.fold(
+    given(factory.empty[Int,DiEdge]) {
+      _.topologicalSort.fold(
         Topo.unexpectedCycle,
         _ should be ('empty)
-    )
+      )
+    }
   }
   
   def `daily activities` {
@@ -111,73 +115,93 @@ private class TTopologicalSort[G[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with Gra
       driving_to_work ~> driving_home,
       driving_home ~> gaming,
       listening_to_music)
-      
-    typicalDay.topologicalSort.fold(
-      Topo.unexpectedCycle,
-      order => new Topo.Checker(typicalDay) {
-        checkOuterNodes(order.toOuter)
-      }
-    )
+
+    given(typicalDay) {
+      _.topologicalSort.fold(
+        Topo.unexpectedCycle,
+        order => new Topo.Checker(typicalDay) {
+          checkOuterNodes(order.toOuter)
+        }
+      )
+    }
   }
  
   def `connected graph` {
     val someOuter @ (n0 :: n1 :: n5 :: Nil) = 0 :: 1 :: 5 :: Nil
-    val graph = factory[Int,DiEdge](n0 ~> n1, 2 ~> 4, 2 ~> n5, n0 ~> 3, n1 ~> 4, 4 ~> 3)
-    graph should not be 'isMulti
-    graph.topologicalSort.fold(
-      Topo.unexpectedCycle,
-      order => new Topo.Checker(graph) {
-        checkOuterNodes(order.toOuter)
-        for (outer <- someOuter;
-             inner = graph get outer;
-             ignorePredecessors <- Array(false, true)) {
-          inner.topologicalSort(ignorePredecessors).fold(
+    given(factory[Int,DiEdge](n0 ~> n1, 2 ~> 4, 2 ~> n5, n0 ~> 3, n1 ~> 4, 4 ~> 3)) { g =>
+      g should not be 'isMulti
+      g.topologicalSort.fold(
+        Topo.unexpectedCycle,
+        order => new Topo.Checker(g) {
+          checkOuterNodes(order.toOuter)
+          for (outer <- someOuter;
+               inner = graph get outer;
+               ignorePredecessors <- Array(false, true)) {
+            inner.topologicalSort(ignorePredecessors).fold(
               Topo.unexpectedCycle,
               order => checkInnerNodes(order, Some(inner), ignorePredecessors))
+          }
         }
-      }
-    )
+      )
+    }
   }
 
   def `multi graph` {
-    val g = factory(1~>2 % 0, 1~>2 % 1)    
-    g.topologicalSort.fold(
+    given(factory(WkDiEdge(1,2) (0), WkDiEdge(1,2) (1))) { g =>
+      g.topologicalSort.fold(
         Topo.unexpectedCycle,
         order => new Topo.Checker(g) {
           checkOuterNodes(order.toOuter)
         }
-    )
+      )
+    }
   }
 
   def `unconnected graph` {
     val expectedLayer_0 @ (_1 :: _3 :: Nil) = List(1, 3)
     val expectedLayer_1 @ (_2 :: _4 :: Nil) = List(2, 4)
-    val g = factory(_1~>_2, _3~>_4)    
-    g.topologicalSort.fold(
+    given(factory(_1~>_2, _3~>_4)) {
+      _.topologicalSort.fold(
         Topo.unexpectedCycle,
         _.toLayered.toOuter.toList match {
           case (layer_0 :: layer_1 :: Nil) => layer_0._2.toList.sorted should be (expectedLayer_0)
-                                              layer_1._2.toList.sorted should be (expectedLayer_1)
+            layer_1._2.toList.sorted should be (expectedLayer_1)
           case _ => fail
         }
-          
-    )
+
+      )
+    }
   }
   
   def `cyclic graph` {
-    val g = factory(1~>2, 2~>1)    
-    g.topologicalSort.fold(
+    given(factory(1~>2, 2~>1)) {
+      _.topologicalSort.fold(
         identity,
         Topo.unexpectedRight
-    )
+      )
+    }
   }
 
-  
   def `cyclic graph #68` {
-    val g = factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)    
-    g.topologicalSort.fold(
+    given(factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)) {
+      _.topologicalSort.fold(
         identity,
         Topo.unexpectedRight
-    )
+      )
+    }
+  }
+
+  def `combining with filtered edges by withSubgraph #104` {
+    given(factory((1 ~+> 3)("a"), (1 ~+> 2)("b"), (2 ~+> 3)("a"))) { g =>
+      val n1 = (g get 1)
+      n1.topologicalSort() should be('isRight)
+
+      n1.withSubgraph(edges = _.label == "a").topologicalSort().fold(
+        Topo.unexpectedCycle,
+        order => new Topo.Checker(g) {
+          checkOuterNodes(order.toOuter)
+        }
+      )
+    }
   }
 }

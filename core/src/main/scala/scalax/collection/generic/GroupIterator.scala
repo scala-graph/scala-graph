@@ -1,7 +1,6 @@
 package scalax.collection.generic
 
-/**
- * Iterator facilitating group-wise iteration over two ore more levels.
+/** Iterator facilitating group-wise iteration over two ore more levels.
  * Each level is represented by an inner iterator. Interactions between these
  * levels are handled internally thus the implementor just needs to define
  * the individual level iterators. Level iterator implementations will typically be

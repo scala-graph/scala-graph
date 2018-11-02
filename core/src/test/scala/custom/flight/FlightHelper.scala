@@ -2,8 +2,7 @@ package custom.flight
 
 import language.implicitConversions
 
-/**
- * This object encapsulates the node and other helper types needed for
+/** This object encapsulates the node and other helper types needed for
  * the flight route example. The nodes of such a graph will be `Airport`s,
  * the edges `Flight`s using `Datetime` and `Duration`.
  */

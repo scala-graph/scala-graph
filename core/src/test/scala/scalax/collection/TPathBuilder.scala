@@ -9,7 +9,7 @@ import org.junit.runner.RunWith
 // The single graph used for this test
 object AGraph {
   import Data._
-  object UnDi_1 extends TGraph[Int, UnDiEdge](Graph(elementsOfUnDi_1: _*))
+  object UnDi_1 extends TGraph[Int, UnDiEdge, Graph](Graph(elementsOfUnDi_1: _*))
 }
 
 // Common to WalkBuilder and PathBuilder

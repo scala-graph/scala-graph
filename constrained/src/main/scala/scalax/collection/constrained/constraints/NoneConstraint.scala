@@ -5,8 +5,7 @@ import scala.language.{higherKinds, postfixOps}
 
 import scalax.collection.GraphPredef._
 
-/**
- * The empty constraint treating any addition or subtraction as valid.
+/** The empty constraint treating any addition or subtraction as valid.
  */
 class NoneConstraint[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
   extends Constraint[N,E] (self)

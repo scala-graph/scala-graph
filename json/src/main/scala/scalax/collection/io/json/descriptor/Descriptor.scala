@@ -12,8 +12,7 @@ import scalax.collection.edge._,
 
 import error.JsonGraphError._
 
-/**
- * Contains string constants to denote node/edge sections in a JSON text.
+/** Contains string constants to denote node/edge sections in a JSON text.
  * 
  * An individual instance of this class may be passed to `Descriptor` if
  * non-default section id's are to be used. 
@@ -39,8 +38,7 @@ object Defaults {
 import Defaults._
 
 abstract class TypeId(val typeId: String)
-/**
- * Top level descriptor to be passed to Graph/JSON conversion methods, in particular to
+/** Top level descriptor to be passed to Graph/JSON conversion methods, in particular to
  * `fromJson` and `toJson`.
  * 
  * @param defaultNodeDescriptor the only or default node descriptor accepting/producing a

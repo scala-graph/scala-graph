@@ -41,8 +41,8 @@ class TJsonTest[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]
               ["B", "C"]
             ],
             "edges": { "WkDiEdge": [
-              ["A", "B", 3],
-              ["B", "C", 4]]
+              ["A", "B", 3.0],
+              ["B", "C", 4.0]]
             },
             "X": 1,
             "edges": { "UnDiEdge": [
@@ -108,12 +108,12 @@ class TJsonTest[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]
             val edges = _edges.toList
             edges(0) match {
               case JArray(fields) => fields.toString should be
-                                    ("List(JString(A), JString(B), JInt(3))")
+                                    ("List(JString(A), JString(B), JDouble(3))")
               case _ => fail
             }
             edges(1) match {
               case JArray(fields) => fields.toString should be
-                                    ("List(JString(B), JString(C), JInt(4))")
+                                    ("List(JString(B), JString(C), JDouble(4))")
               case _ => fail
             }
           case _ => fail
@@ -208,8 +208,8 @@ class TJsonTest[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]
         val jsonText = """
           { "nodes" : [["A"], ["B"]],
             "edges": [
-              ["A", "B", 100, "CLabel-1"],
-              ["B", "A", 200, "CLabel-2"],
+              ["A", "B", 100.0, "CLabel-1"],
+              ["B", "A", 200.0, "CLabel-2"],
             ]
           }""".filterNot(_.isWhitespace)
         val descriptor = new Descriptor[String](
@@ -240,8 +240,8 @@ class TJsonTest[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]
           val jsonText = s"""
             { "nodes" : [["A"], ["B"], ["C"]],
               "edges": [
-                [["A", "B"],      $quotedBag, 100, "Label-1"],
-                [["B", "A", "C"], $quotedBag, 200, "Label-2"],
+                [["A", "B"],      $quotedBag, 100.0, "Label-1"],
+                [["B", "A", "C"], $quotedBag, 200.0, "Label-2"],
               ]
             }""".filterNot(_.isWhitespace)
           val g: CC[String,WLHyperEdge] = factory.
@@ -254,7 +254,7 @@ class TJsonTest[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]
                      )
           )
           g.nodes.toSortedString() should be ("NodeSet(A, B, C)")
-          g.edges.toSortedString() should be ("EdgeSet(A~B %100 'Label-1, B~A~C %200 'Label-2)")
+          g.edges.toSortedString() should be ("EdgeSet(A~B %100.0 'Label-1, B~A~C %200.0 'Label-2)")
         }
       }
     }

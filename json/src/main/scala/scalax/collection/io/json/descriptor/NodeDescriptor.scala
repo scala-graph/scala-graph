@@ -35,8 +35,7 @@ abstract class NodeDescriptor[+N]
       else  new ShortTypeHints(extraClasses)) ++ customSerializers 
   def extract  (jsonNode: JValue): N = jsonNode.extract[N]
   def decompose(node: Any) : JValue  = Extraction.decompose(node)
-  /**
-   * Enables Graph for Scala JSON export/import to handle node references in JSON edge entries.
+  /** Enables Graph for Scala JSON export/import to handle node references in JSON edge entries.
    * Without establishing such references, JSON edge entries would have to contain all node
    * data what would make JSON texts representing graphs explode in length.
    * 
@@ -47,8 +46,7 @@ abstract class NodeDescriptor[+N]
    */
   def id(node: Any): String 
 }
-/**
- * Node descriptor extracting a String from any JValue and decomposing nodes
+/** Node descriptor extracting a String from any JValue and decomposing nodes
  * of any type to a JString. This object serves mainly test purposes. 
  */
 object StringNodeDescriptor extends NodeDescriptor[String] {

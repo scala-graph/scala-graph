@@ -16,11 +16,10 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
   extends Constraint[N,E] (self)
 {
   override def preCreate(nodes: Traversable[N],
-                         edges: Traversable[E[N]]) = PreCheckResult(PostCheck)
+                         edges: Traversable[E[N]]) = PreCheckResult.postCheck(edges forall (_.nonLooping))
   /** Adding a single node cannot produce a cycle. */
   override def preAdd(node: N) = PreCheckResult(Complete)
-  /**
-   * When inserting an edge with a source contained in the graph
+  /** When inserting an edge with a source contained in the graph
    * a cycle is produced if there exists a target node of this edge such that
    * there is a path from the target node to the source node.  
    */
@@ -68,7 +67,7 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X]] (override val self: Graph[N,E])
    */
   override def preAdd(elems: InParam[N,E]*) = 
     if (elems.size * 10 < self.size) {
-      val p: Param.Partitions[N,E] = elems
+      val p = Param.Partitions(elems)
       val graphAdd = SimpleGraph.from(
           p.toOuterNodes, p.toOuterEdges)(
           self.edgeT, self.config.asInstanceOf[SimpleGraph.Config])

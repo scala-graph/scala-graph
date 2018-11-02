@@ -20,8 +20,7 @@ object AttrSeparator {
   /** The separator `"; "`.  */ object SemicolonSpace extends AttrSeparator("; ")
 }
 import Indent._, AttrSeparator._
-/**
- * @param indent unit of indentation to be used at the beginning of DOT graph lines.
+/** @param indent unit of indentation to be used at the beginning of DOT graph lines.
  *        This unit is taken n times with n being the depths of the content represented
  *        on a given line. The depth increases with DOT subgraphs.
  * @param graphAttrSeparator the separator to be used for graph/subgraph level DOT graph
@@ -32,8 +31,7 @@ import Indent._, AttrSeparator._
 case class Spacing (indent:             Indent        = Tab,
                     graphAttrSeparator: AttrSeparator = NewLine,
                     elemAttrSeparator:  AttrSeparator = SemicolonSpace)
-/**
- * [[scalax.collection.io.dot.Spacing]] with `indent` set to `Tab`,
+/** [[scalax.collection.io.dot.Spacing]] with `indent` set to `Tab`,
  *  `graphAttrSeparator` set to `NewLine` and
  *  `elemAttrSeparator` set to `SemicolonSpace`.
  */

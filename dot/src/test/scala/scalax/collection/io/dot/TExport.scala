@@ -46,7 +46,7 @@ class TExportTest extends RefSpec with Matchers {
     val dot = g.toDot(dotRoot          = root,
                       edgeTransformer  = edgeTransformer,
                       cNodeTransformer = Some(nodeTransformer),
-                      spacing          = Spacing(TwoSpaces))
+                      spacing          = multilineCompatibleSpacing)
 
     val (expected_1, expected_2) = {
       val expected_header_sorted =
@@ -116,7 +116,7 @@ class TExportTest extends RefSpec with Matchers {
                                 attrList = List(DotAttr(Id("attr_1"), Id(""""one"""")),
                                                 DotAttr(Id("attr_2"), Id("<two>")))),
         edgeTransformer = _ => None,
-        spacing = Spacing(TwoSpaces))
+        spacing = multilineCompatibleSpacing)
     val expected = """graph {
       |  attr_1 = "one"
       |  attr_2 = <two>
@@ -137,17 +137,12 @@ class TExportTest extends RefSpec with Matchers {
             )
           }
         ), 
-        spacing = Spacing(TwoSpaces))
+        spacing = multilineCompatibleSpacing)
     val expected = """digraph {
       |  1 -> 2
       |  1 -> 3
       |}""".stripMargin
-    val dotSorted = {
-      val lines = dot.linesWithSeparators.toList
-      val mid = lines.tail.init 
-      s"${lines.head}${mid.sorted.mkString}${lines.last}"
-    }
-    dotSorted should be (expected)
+    sortMid(dot) should be (expected)
   }
     
   def `Colons (':') in node_id's are handeled correctly` {
@@ -195,7 +190,7 @@ class TExportTest extends RefSpec with Matchers {
           case Node(id, label) =>
             Some((root, DotNodeStmt(id, List(DotAttr("label", label.toString)))))
         }),
-        spacing = Spacing(TwoSpaces))
+        spacing = multilineCompatibleSpacing)
         
     val expected = """digraph structs {
       |  node [shape = record]
@@ -205,12 +200,7 @@ class TExportTest extends RefSpec with Matchers {
       |  struct2 [label = "<f0> one | <f1> two"]
       |  struct3 [label = "hello&#92;nworld | {b | {c | <here> d | e} | f} | g | h"]
       |}""".stripMargin
-    val dotSorted = {
-      val lines = dot.linesWithSeparators.toList
-      val mid = lines.tail.init 
-      s"${lines.head}${mid.sorted.mkString}${lines.last}"
-    }
-    dotSorted should be (expected)
+    sortMid(dot) should be (expected)
   }
   
   def `doubly-nested subgraphs #69` {
@@ -241,6 +231,17 @@ class TExportTest extends RefSpec with Matchers {
       iNodeTransformer = Some({ _ => Some((iSubGraph, DotNodeStmt(iNode))) })
     )
     dot.contains(iNode) should be (true)   
+  }
+  
+  private val multilineCompatibleSpacing = Spacing(
+      indent = TwoSpaces,
+      graphAttrSeparator = new AttrSeparator("""
+        |""".stripMargin){})
+  
+  private def sortMid(dot: String): String = {
+    val lines = dot.linesWithSeparators.toBuffer
+    val mid = lines.tail.init 
+    s"${lines.head}${mid.sorted.mkString}${lines.last}"
   }
 }
 

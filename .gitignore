@@ -1,5 +1,6 @@
 *.class
 *.log
+log/
 temp/
 
 # SBT
@@ -13,6 +14,9 @@ project/plugins/project/
 # ScalaJs
 .js
 .jvm
+
+# Intellij IDEA
+.idea
 
 # Eclipse, Scala IDE
 .project
