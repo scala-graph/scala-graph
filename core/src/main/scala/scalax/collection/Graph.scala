@@ -206,7 +206,7 @@ trait GraphLike[N,
   type EdgeT <: InnerEdgeParam[N, E, NodeT, E] with InnerEdge with Serializable
   class EdgeBase(override val edge: E[NodeT]) extends InnerEdgeParam[N, E, NodeT, E] with InnerEdge {
     this: EdgeT =>
-    override def iterator: Iterator[NodeT] = edge.iterator.asInstanceOf[Iterator[NodeT]]
+    override def iterator: Iterator[NodeT] = edge.ends.asInstanceOf[Iterator[NodeT]]
     override def stringPrefix              = super.stringPrefix
   }
   type EdgeSetT <: EdgeSet
@@ -374,7 +374,7 @@ trait GraphLike[N,
     (nodes.toOuter -- delNodes, {
       val delNodeSet = delNodes.toSet
       val restEdges =
-        for (e <- edges.toOuter if e forall (n => !(delNodeSet contains n))) yield e
+        for (e <- edges.toOuter if e.ends forall (n => !(delNodeSet contains n))) yield e
       restEdges -- delEdges
     })
 
@@ -472,7 +472,7 @@ trait GraphLike[N,
     val (delNodes, delEdges) = (p.toOuterNodes, p.toOuterEdges)
     val unconnectedNodeCandidates = {
       val edgeNodes = MSet.empty[N]
-      delEdges foreach (_ foreach (n => edgeNodes += n))
+      delEdges foreach (_.ends foreach (n => edgeNodes += n))
       edgeNodes -- delNodes
     }
     val delEdgeSet = {

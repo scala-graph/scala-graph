@@ -467,7 +467,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
 
   type EdgeT <: InnerEdgeParam[N, E, NodeT, E] with InnerEdge with Serializable
   @transient object EdgeT {
-    def unapply(e: EdgeT): Option[(NodeT, NodeT)] = Some((e.edge._1, e.edge._2))
+    def unapply(e: EdgeT): Option[(NodeT, NodeT)] = Some((e.edge._n(0), e.edge._n(1)))
   }
 
   trait Edge extends Serializable
@@ -507,15 +507,6 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     /** Synonym for `adjacents`. */
     @inline final def ~~ = adjacents
 
-    /** The head (target node) of a directed edge or `_2` otherwise.
-      */
-    /* With 2.10, 'edge.to' can no more be called implicitly because of the addition of
-     * 'to' to GenTraversableOnce in the standard library. So we must delegate the call. */
-    def to: NodeT = edge match {
-      case di: DiHyperEdgeLike[NodeT] => di.to
-      case unDi @ _                   => unDi.edge._2
-    }
-
     override def canEqual(that: Any) = that.isInstanceOf[GraphBase[N, E]#InnerEdge] ||
       that.isInstanceOf[EdgeLike[_]]
     override def equals(other: Any) = other match {
@@ -533,13 +524,9 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
 
     /** Reconstructs the outer edge by means of the `copy` method. */
     def toOuter: E[N] = {
-      val newNs = (edge.arity: @scala.annotation.switch) match {
-        case 2 => Tuple2(edge._1.value, edge._2.value)
-        case 3 => Tuple3(edge._1.value, edge._2.value, edge._n(2).value)
-        case 4 => Tuple4(edge._1.value, edge._2.value, edge._n(2).value, edge._n(3).value)
-        case 5 => Tuple5(edge._1.value, edge._2.value, edge._n(2).value, edge._n(3).value, edge._n(4).value)
-        case _ => edge.map(n => n.value).toList
-      }
+      val newNs =
+        if (edge.arity == 2) Tuple2(edge._n(0).value, edge._n(1).value)
+        else edge.ends.map(n => n.value).toList
       edge.copy[N](newNs).asInstanceOf[E[N]]
     }
     @deprecated("Use toOuter instead", "1.8.0") def toEdgeIn = toOuter
@@ -547,7 +534,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
 
   @transient object InnerEdge {
     def unapply(edge: InnerEdge): Option[EdgeT] =
-      if (edge.edge._1 isContaining selfGraph) Some(edge.asInstanceOf[EdgeT])
+      if (edge.edge._n(0) isContaining selfGraph) Some(edge.asInstanceOf[EdgeT])
       else None
   }
   @transient object Edge {
@@ -572,7 +559,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       freshNodes = Map.empty[N, NodeT]
       val newNodes = edge match {
         case e: AbstractEdge[N] => Tuple2(mkNode(e._1), mkNode(e._2))
-        case hyper              => edge.map(mkNode).toList
+        case hyper              => edge.ends.map(mkNode).toList
       }
       edge.copy[NodeT](newNodes).asInstanceOf[E[NodeT]]
     }
@@ -603,7 +590,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
 
   final lazy val defaultEdgeOrdering = EdgeOrdering(
     (a: EdgeT, b: EdgeT) => {
-      val unequal = (a.edge zip b.edge) find (z => z._1 != z._2)
+      val unequal = (a.edge.ends zip b.edge.ends) find (z => z._1 != z._2)
       unequal map (t => anyOrdering.compare(t._1.value, t._2.value)) getOrElse
         Ordering.Int.compare(a.arity, b.arity)
     }
@@ -663,7 +650,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     final def draw(random: Random) = (nodes draw random).edges draw random
     final def findElem[B](other: B, correspond: (EdgeT, B) => Boolean): EdgeT = {
       def find(edge: E[N]): EdgeT = correspond match {
-        case c: ((EdgeT, E[N]) => Boolean) @unchecked => nodes.lookup(edge._1).edges findElem (edge, c)
+        case c: ((EdgeT, E[N]) => Boolean) @unchecked => nodes.lookup(edge._n(0)).edges findElem (edge, c)
         case _                                        => throw new IllegalArgumentException
       }
       other match {

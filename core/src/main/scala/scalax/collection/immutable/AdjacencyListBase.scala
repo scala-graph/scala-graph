@@ -230,9 +230,9 @@ trait AdjacencyListBase[
 
     final override def contains(node: NodeT): Boolean = nodes find node exists (_.edges.nonEmpty)
 
-    final override def find(elem: E[N]): Option[EdgeT] = nodes find elem._1 flatMap (_.edges find (_.edge == elem))
+    final override def find(elem: E[N]): Option[EdgeT] = nodes find elem._n(0) flatMap (_.edges find (_.edge == elem))
 
-    final def contains(edge: EdgeT): Boolean = nodes find edge.edge._1 exists (_.edges contains edge)
+    final def contains(edge: EdgeT): Boolean = nodes find edge.edge._n(0) exists (_.edges contains edge)
 
     final def iterator: Iterator[EdgeT] = edgeIterator
 
@@ -282,7 +282,7 @@ trait AdjacencyListBase[
       protected type I = EdgeT
       protected var iterator: Iterator[I] = _
       protected def onOuterChange(newOuter: OuterElm) {
-        iterator = newOuter.edges.filter(_.edge._1 == newOuter).iterator
+        iterator = newOuter.edges.filter(_.edge._n(0) == newOuter).iterator
       }
       protected def elmToCurrent(elm: EdgeT) = elm
 

@@ -1,9 +1,11 @@
 package scalax.collection
 
-import language.higherKinds
+import java.util.NoSuchElementException
+
 import scala.annotation.{switch, tailrec}
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.collection.AbstractTraversable
+import scala.collection.{AbstractIterable, AbstractTraversable}
+import scala.language.higherKinds
 
 import GraphPredef.{InnerNodeParam, OuterEdge}
 // TODO import edge.LBase.LEdge
@@ -13,6 +15,7 @@ import GraphPredef.{InnerNodeParam, OuterEdge}
   * {{{
   * import scalax.collection.GraphPredef._, scalax.collection.GraphEdge,_
   * }}}
+  *
   * @define SHORTCUT Allows to replace the edge object with it's shortcut like
   * @define ORDIHYPER or the source/target ends of a directed hyperedge
   * @define BAG bag that is an unordered collection of nodes with duplicates allowed
@@ -31,29 +34,22 @@ object GraphEdge {
     * @define ISAT In case this edge is undirected this method maps to `isAt`
     * @author Peter Empen
     */
-  sealed trait EdgeLike[+N] extends Iterable[N] with Eq with Serializable {
+  sealed trait EdgeLike[+N] extends Eq with Serializable {
 
-    /** The endpoints of this edge, in other words the nodes this edge joins.
-      */
-    def ends: Traversable[N]
-
-    /** Iterator for the end-points of this edge, in other words the nodes sitting at this edge. */
-    @deprecated("Use 'ends' instead.", "1.12.0")
-    def iterator: Iterator[N] = ends.toIterator
-
-    /** Sequence of the end points of this edge. */
-    def nodeSeq: Seq[N] = ends.toSeq
+    /** The endpoints of this edge, in other words the nodes this edge joins. */
+    def ends: Iterable[N]
 
     /** The n'th node with 0 <= n < arity. */
     def _n(n: Int): N
 
-    /** Number of the endpoints of this edge. At least two nodes are joined. In case of
-      *  a hook, the two nodes are identical. Hyperedges may link more than two nodes.
+    /** Number of the endpoints of this edge. At least two nodes are joined.
+      * In case of a hook, the two nodes are identical.
+      * Hyperedges may link more than two nodes.
       */
     def arity: Int
 
     /** Determines whether the `arity` is valid.
-      *  $CalledByValidate
+      * $CalledByValidate
       */
     protected def isValidArity: Boolean
 
@@ -76,11 +72,11 @@ object GraphEdge {
       throw new EdgeValidationException(s"$msgPrefix at $toString.")
 
     /** Performs basic edge validation by calling `isValidArity` and `noNullEnd`.
-      *  `isValidCustom` is also called but you need to override this member to perform additional validation.
-      *  This validation method needs to be called in the constructor of any edge class
-      *  that directly extends or mixes in `EdgeLike`.
+      * `isValidCustom` is also called but you need to override this member to perform additional validation.
+      * This validation method needs to be called in the constructor of any edge class
+      * that directly extends or mixes in `EdgeLike`.
       *
-      *  @throws EdgeException if any of the basic validations or the additional custom validation fails.
+      * @throws EdgeValidationException if any of the basic validations or the additional custom validation fails.
       */
     final protected def validate(): Unit =
       if (!isValidArity) handleFailure("Invalid arity detected")
@@ -91,13 +87,13 @@ object GraphEdge {
     def isDirected: Boolean
 
     /** Whether this edge is undirected. */
-    @inline final def isUndirected = !isDirected
+    @inline final def isUndirected: Boolean = !isDirected
 
     /** Whether this edge's type is hyperedge meaning that it may have more than two ends. */
     def isHyperEdge: Boolean
 
     /** Whether this edge has exactly two ends. */
-    @inline final def nonHyperEdge = !isHyperEdge
+    @inline final def nonHyperEdge: Boolean = !isHyperEdge
 
     /** Whether this edge produces a self-loop.
       *  In case of a non-hyperedge, a loop is given if the incident nodes are equal.
@@ -106,12 +102,13 @@ object GraphEdge {
       *  In case of an undirected hyperedge, a loop is given if any pair of incident
       *  nodes has equal nodes.
       */
-    def isLooping = if (arity == 2) ends.head == ends.drop(1).head
-    else if (isDirected) ends.drop(1) exists (_ == ends.head)
-    else (MSet() ++= ends).size < arity
+    def isLooping: Boolean =
+      if (arity == 2) ends.head == ends.drop(1).head
+      else if (isDirected) ends.drop(1) exists (_ == ends.head)
+      else (MSet() ++= ends).size < arity
 
     /** Same as `! looping`. */
-    final def nonLooping = !isLooping
+    final def nonLooping: Boolean = !isLooping
 
     /** The weight of this edge with a default of 1.
       *
@@ -140,8 +137,7 @@ object GraphEdge {
       *
       * @throws UnsupportedOperationException if the edge is non-labeled.
       */
-    def label: Any =
-      throw new UnsupportedOperationException("Call of label for a non-labeled edge.")
+    def label: Any = throw new UnsupportedOperationException("Call of label for a non-labeled edge.")
 
     /** `true` if this edge is labeled. See also `label`. */
     def isLabeled: Boolean = ???
@@ -214,12 +210,13 @@ object GraphEdge {
 
     override def hashCode: Int = baseHashCode
 
+    // TODO simplify toString
     final protected def thisSimpleClassName = try {
       this.getClass.getSimpleName
     } catch { // Malformed class name
       case e: java.lang.InternalError => this.getClass.getName
     }
-    override def stringPrefix                  = "Nodes"
+    def stringPrefix                           = "Nodes"
     protected def nodesToStringWithParenthesis = false
     protected def nodesToStringSeparator       = EdgeLike.nodeSeparator
     protected def nodesToString =
@@ -268,7 +265,7 @@ object GraphEdge {
   object NodeProduct {
     @inline final def apply[N](node_1: N, node_2: N): Tuple2[N, N] = Tuple2(node_1, node_2)
     @inline def apply[N](node_1: N, node_2: N, nodes: N*): Product =
-      (nodes.size: @scala.annotation.switch) match {
+      (nodes.size: @switch) match {
         case 1 => Tuple3(node_1, node_2, nodes(0))
         case 2 => Tuple4(node_1, node_2, nodes(0), nodes(1))
         case 3 => Tuple5(node_1, node_2, nodes(0), nodes(1), nodes(2))
@@ -321,7 +318,7 @@ object GraphEdge {
   /** Marks (directed) hyperedge endpoints to have a significant order. */
   protected[collection] trait OrderedEndpoints
 
-  sealed protected[collection] trait Eq {
+  sealed protected[collection] trait Eq extends Equals {
     protected def baseEquals(other: EdgeLike[_]): Boolean
     protected def baseHashCode: Int
   }
@@ -517,7 +514,7 @@ object GraphEdge {
 
     protected def noNullEnd = noNullEnd(ends)
 
-    override def isAt[M >: N](node: M)    = iterator contains node
+    override def isAt[M >: N](node: M)    = ends.iterator contains node
     override def isAt(pred: N => Boolean) = ends exists pred
 
     override def hasSource[M >: N](node: M)    = isAt(node)
@@ -530,7 +527,7 @@ object GraphEdge {
     override def withTargets[U](f: N => U) = withSources(f)
 
     final protected def matches(fList: List[N => Boolean]): Boolean = {
-      val it = iterator
+      val it = ends.iterator
       @tailrec def loop(checks: List[N => Boolean]): Boolean =
         if (checks.isEmpty) true
         else if (!it.hasNext) false
@@ -557,7 +554,7 @@ object GraphEdge {
     *  with unlimited number of nodes.
     */
   @SerialVersionUID(51)
-  class HyperEdge[+N](override val ends: Traversable[N])
+  class HyperEdge[+N](override val ends: Iterable[N])
       extends AbstractHyperEdge[N]
       with EdgeCopy[HyperEdge]
       with OuterEdge[N, HyperEdge] {
@@ -573,15 +570,17 @@ object GraphEdge {
     * to `HyperEdge`.
     */
   object HyperEdge extends HyperEdgeCompanion[HyperEdge] {
+
     def apply[N](node_1: N, node_2: N, nodes: N*)(implicit endpointsKind: CollectionKind = Bag): HyperEdge[N] =
       from(NodeProduct(node_1, node_2, nodes: _*))
-    def apply[N](nodes: Traversable[N])(implicit endpointsKind: CollectionKind): HyperEdge[N] =
-      from(nodes.toList)
+
+    def apply[N](nodes: Traversable[N])(implicit endpointsKind: CollectionKind): HyperEdge[N] = from(nodes.toList)
+
     protected[collection] def from[N](nodes: Product)(implicit endpointsKind: CollectionKind): HyperEdge[N] =
       if (endpointsKind.orderSignificant) new HyperEdge[N](productToList(nodes)) with OrderedEndpoints
       else new HyperEdge[N](productToList(nodes))
-    def unapplySeq[N](e: HyperEdge[N]) =
-      if (e eq null) None else Some(e._1, e.nodeSeq drop 1)
+
+    def unapplySeq[N](e: HyperEdge[N]) = if (e eq null) None else Some(e._1, e.ends drop 1)
   }
 
   /** $SHORTCUT `hyperedge match {case n1 ~~ (n2, n3) => f(n1, n2, n3)}`.
@@ -620,7 +619,7 @@ object GraphEdge {
     */
   // 'extends HyperEdge' should be dropped but is currently needed for inference in mixed graphs
   @SerialVersionUID(52)
-  class DiHyperEdge[+N](override val sources: Traversable[N], override val targets: Traversable[N])
+  class DiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])
       extends HyperEdge[N](sources ++ targets)
       with AbstractDiHyperEdge[N]
       with EdgeCopy[DiHyperEdge]
@@ -633,13 +632,14 @@ object GraphEdge {
       else new DiHyperEdge[NN](fromFirst(newNodes), fromSecond(newNodes))
   }
 
-  private def fromFirst[N](nodes: Product): Traversable[N] = (nodes match {
-    case list: List[_] => list.head.asInstanceOf[N]
-    case p: Product    => p.productElement(0).asInstanceOf[N]
+  private def fromFirst[N](nodes: Product): Iterable[N] = (nodes match {
+    case list: List[N @unchecked] => list.head
+    case p: Product               => p.productElement(0).asInstanceOf[N]
   }) :: Nil
-  private def fromSecond[N](nodes: Product): Traversable[N] = nodes match {
-    case list: List[_] => list.tail.asInstanceOf[List[N]]
-    case p: Product    => p.productIterator.drop(1).asInstanceOf[Iterator[N]].toList
+
+  private def fromSecond[N](nodes: Product): Iterable[N] = nodes match {
+    case list: List[N @unchecked] => list.tail
+    case p: Product               => p.productIterator.drop(1).asInstanceOf[Iterator[N]].toList
   }
 
   /**
@@ -682,10 +682,24 @@ object GraphEdge {
       notNull(_1) && notNull(_2)
     }
 
-    @inline override def size = 2
+    def ends = _ends
 
-    def ends = new AbstractTraversable[N] {
-      def foreach[U](f: N => U): Unit = { f(_1); f(_2) }
+    private[this] val _ends: Iterable[N] = new AbstractIterable[N] { it =>
+      override def size = 2
+
+      def iterator: Iterator[N] = new AbstractIterator[N] {
+        private var i        = 0
+        def hasNext: Boolean = i < 2
+        def next: N = {
+          i += 1
+          (i: @switch) match {
+            case 1 => _1
+            case 2 => _2
+            case _ => throw new NoSuchElementException
+          }
+        }
+        override def size: Int = it.size
+      }
     }
 
     override def isAt[M >: N](node: M)    = this._1 == node || this._2 == node
@@ -706,7 +720,7 @@ object GraphEdge {
     override def _n(n: Int): N = (n: @switch) match {
       case 0 => node_1
       case 1 => node_2
-      case _ => throw new IndexOutOfBoundsException
+      case _ => throw new NoSuchElementException
     }
 
     override def isDirected = false

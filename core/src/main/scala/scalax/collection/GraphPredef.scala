@@ -232,7 +232,7 @@ object GraphPredef {
       out match {
         case n: InnerNodeParam[NI] => pred(n.value)
         case e: InnerEdgeParam[NI, EI, _, _] =>
-          e.asInstanceOf[InnerEdgeParam[NI, EI, NO, EO]].edge forall (n => pred(n.value))
+          e.asInstanceOf[InnerEdgeParam[NI, EI, NO, EO]].edge.ends forall (n => pred(n.value))
         case _ => false
     }
 
@@ -257,11 +257,11 @@ object GraphPredef {
   implicit final class HyperEdgeAssoc[NOld](val e: EdgeLikeIn[NOld]) extends AnyVal {
     def ~[N >: NOld](n: N)(implicit endpointsKind: CollectionKind = Bag): HyperEdge[N] = {
       require(e.isUndirected)
-      HyperEdge.from[N](NodeProduct(e.iterator.toBuffer += n))
+      HyperEdge.from[N](NodeProduct(e.ends.toBuffer += n))
     }
     def ~>[N >: NOld](n: N)(implicit targetsKind: CollectionKind = Bag): DiHyperEdge[N] = {
       require(e.isDirected)
-      DiHyperEdge.from[N](NodeProduct(e.iterator.toBuffer += n))
+      DiHyperEdge.from[N](NodeProduct(e.ends.toBuffer += n))
     }
   }
 }
