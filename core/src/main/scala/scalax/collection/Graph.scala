@@ -31,10 +31,11 @@ trait GraphLike[N,
                 E[X] <: EdgeLikeIn[X],
                 +This[X, Y[X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with AnySet[Param[X, Y]] with Graph[X, Y]]
     extends SetLike[Param[N, E], This[N, E]]
-// TODO  with    GraphTraversal[N,E]
     with GraphBase[N, E]
-// TODO  with    GraphDegree   [N,E]
-    {
+    /* TODO
+      with GraphTraversal[N, E]
+      with GraphDegree[N, E]
+     */ {
   thisGraph: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
   This[N, E] with GraphLike[N, E, This] with AnySet[Param[N, E]] with Graph[N, E] =>
   protected type ThisGraph = thisGraph.type

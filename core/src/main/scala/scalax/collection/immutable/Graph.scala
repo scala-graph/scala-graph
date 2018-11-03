@@ -60,7 +60,9 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[
 
   @SerialVersionUID(7170L)
   final protected class NodeBase(value: N, hints: ArraySet.Hints) extends InnerNodeImpl(value, hints)
-// TODO      with    InnerNodeTraversalImpl
+  /* TODO
+      with InnerNodeTraversalImpl
+   */
 
   type NodeT = NodeBase
 

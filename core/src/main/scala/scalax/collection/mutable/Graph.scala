@@ -74,7 +74,9 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
     with Growable[Param[N, E]]
     with Shrinkable[Param[N, E]]
     with Cloneable[Graph[N, E]]
-// TODO  with    EdgeOps   [N,E,This]
+    /* TODO
+    with EdgeOps[N, E, This]
+     */
     with Mutable {
   this: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
   This[N, E] with GraphLike[N, E, This] with Graph[N, E] =>
@@ -247,8 +249,9 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[
     override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
     extends Graph[N, E]
     with AdjacencyListGraph[N, E, DefaultGraphImpl]
-// TODO     with GraphTraversalImpl[N,E]
-    {
+    /* TODO
+    with GraphTraversalImpl[N, E]
+     */ {
   final override val graphCompanion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
