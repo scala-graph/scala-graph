@@ -24,9 +24,12 @@ trait Graph[N, E[X] <: EdgeLikeIn[X]]
     extends scalax.collection.immutable.Graph[N, E]
     with scalax.collection.constrained.Graph[N, E]
     with GraphLike[N, E, Graph] {
+
   override def empty: Graph[N, E] = Graph.empty[N, E](edgeT, config)
 }
+
 object Graph extends ImmutableGraphCompanion[Graph] {
+
   override def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config): Graph[N, E] =
     DefaultGraphImpl.empty[N, E](edgeT, config)
 
@@ -42,6 +45,7 @@ object Graph extends ImmutableGraphCompanion[Graph] {
 
   // TODO: canBuildFrom
 }
+
 abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Nil,
                                                           iniEdges: Traversable[E[N]] = Nil)(
     implicit override val edgeT: ClassTag[E[N]],
@@ -49,6 +53,7 @@ abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[
     extends Graph[N, E]
     with AdjacencyListGraph[N, E, DefaultGraphImpl]
     with GraphTraversalImpl[N, E] {
+
   final override val graphCompanion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
@@ -61,18 +66,21 @@ abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[
 
   initialize(iniNodes, iniEdges)
 
-  @inline final override def empty: DefaultGraphImpl[N, E] =
-    DefaultGraphImpl.empty(edgeT, config)
+  @inline final override def empty: DefaultGraphImpl[N, E] = DefaultGraphImpl.empty(edgeT, config)
   @inline final override def clone: DefaultGraphImpl[N, E] =
     DefaultGraphImpl.fromUnchecked(nodes.toOuter, edges.toOuter)(edgeT, config)
+
   @SerialVersionUID(8081L)
   final protected class NodeBase(value: N, hints: ArraySet.Hints)
       extends InnerNodeImpl(value, hints)
       with InnerNodeTraversalImpl
+
   type NodeT = NodeBase
   @inline final protected def newNodeWithHints(n: N, h: ArraySet.Hints) = new NodeT(n, h)
 }
+
 object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl] {
+
   override def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config) =
     from(Set.empty[N], Set.empty[E[N]])(edgeT, config)
 
@@ -115,6 +123,7 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl] {
   }
   // TODO: canBuildFrom
 }
+
 @SerialVersionUID(7700L)
 class UserConstrainedGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Nil,
                                                          iniEdges: Traversable[E[N]] = Nil)(

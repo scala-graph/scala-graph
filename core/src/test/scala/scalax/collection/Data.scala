@@ -29,17 +29,20 @@ object Data {
   val elementsOfUnDi_1 = List(1~2, 2~3, 1~>3, 1~5, 3~5, 3~4, 4~>4, 4~>5)
 
   // WUnDi-1.jpg
-  val elementsOfWUnDi_1 = List(
-        1~2 % 4, 2~3 % 2, 1~>3 % 5, 1~5  % 3,
-        3~5 % 2, 3~4 % 1, 4~>4 % 1, 4~>5 % 0)
-   */
+  val elementsOfWUnDi_1 =
+    List(1 ~ 2 % 4, 2 ~ 3 % 2, 1 ~> 3 % 5, 1 ~ 5 % 3, 3 ~ 5 % 2, 3 ~ 4 % 1, 4 ~> 4 % 1, 4 ~> 5 % 0)
+
   // WUnDi-2.jpg without weights
   val elementsOfUnDi_2 = List(1 ~ 2, 2 ~ 3, 1 ~> 3, 1 ~ 3, 1 ~> 2, 2 ~ 2)
 
-  /* TODO
   // WUnDi-2.jpg
   val elementsOfWUnDi_2 = List(
-         1~2 % 4, 2~3 % -1, 1~>3 % 5, 1~3 % 4, 1~>2 % 3, 2~2 % 1
+    1 ~ 2  % 4,
+    2 ~ 3  % -1,
+    1 ~> 3 % 5,
+    1 ~ 3  % 4,
+    1 ~> 2 % 3,
+    2 ~ 2  % 1
   )
  */
 }

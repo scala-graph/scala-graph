@@ -25,6 +25,7 @@ final class GraphSerializer[N, E[X] <: EdgeLikeIn[X]](descriptor: Descriptor[N])
         case x => throw new MappingException("Can't convert " + x + " to " + clazz.getSimpleName)
       }
   }
+
   override def serialize(implicit format: Formats) = {
     case graph: Graph[N, E] =>
       val export = new exp.Export(graph, descriptor)

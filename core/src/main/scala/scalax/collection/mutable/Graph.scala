@@ -78,11 +78,13 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
     with Mutable {
   this: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
   This[N, E] with GraphLike[N, E, This] with Graph[N, E] =>
+
   override def clone: This[N, E] = graphCompanion.from[N, E](nodes.toOuter, edges.toOuter)
   type NodeT <: InnerNode
   trait InnerNode extends super.InnerNode { // TODO with InnerNodeOps {
     this: NodeT =>
   }
+
   type NodeSetT <: NodeSet
   trait NodeSet extends MutableSet[NodeT] with super.NodeSet {
     @inline final override def -=(node: NodeT): this.type = { remove(node); this }
@@ -101,6 +103,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
       */
     protected def minusEdges(node: NodeT): Unit
   }
+
   type EdgeSetT <: EdgeSet
   trait EdgeSet extends MutableSet[EdgeT] with super.EdgeSet {
     @inline final def +=(edge: EdgeT): this.type = { add(edge); this }
@@ -278,9 +281,12 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[
     initializeFrom(in, _nodes, _edges)
   }
 }
+
 object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
+
   def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
     new DefaultGraphImpl[N, E]()(edgeT, config)
+
   override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil, edges: Traversable[E[N]])(
       implicit edgeT: ClassTag[E[N]],
       config: Config = defaultConfig) =

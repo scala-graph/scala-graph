@@ -78,10 +78,13 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E
 
   final override def preCreate(nodes: collection.Traversable[N], edges: collection.Traversable[E[N]]) =
     eval(left, left preCreate (nodes, edges), right, right preCreate (nodes, edges))
+
   final override def preAdd(node: N)    = eval(left, left preAdd node, right, right preAdd node)
   final override def preAdd(edge: E[N]) = eval(left, left preAdd edge, right, right preAdd edge)
+
   final override def preAdd(elems: InParam[N, E]*) =
     eval(left, left preAdd (elems: _*), right, right preAdd (elems: _*))
+
   final override def postAdd(newGraph: scalax.collection.constrained.Graph[N, E],
                              passedNodes: Traversable[N],
                              passedEdges: Traversable[E[N]],
@@ -89,18 +92,21 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E
     eval(
       left postAdd (newGraph, passedNodes, passedEdges, preCheck),
       right postAdd (newGraph, passedNodes, passedEdges, preCheck))
+
   final override def preSubtract(node: self.NodeT, forced: Boolean) =
     eval(
       left,
       left preSubtract (node.asInstanceOf[LNodeT], forced),
       right,
       right preSubtract (node.asInstanceOf[RNodeT], forced))
+
   final override def preSubtract(edge: self.EdgeT, simple: Boolean) =
     eval(
       left,
       left preSubtract (edge.asInstanceOf[LEdgeT], simple),
       right,
       right preSubtract (edge.asInstanceOf[REdgeT], simple))
+
   final override def preSubtract(nodes: => Set[self.NodeT], edges: => Set[self.EdgeT], simple: Boolean) =
     eval(
       left,
@@ -108,6 +114,7 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E
       right,
       right preSubtract (nodes.asInstanceOf[Set[RNodeT]], edges.asInstanceOf[Set[REdgeT]], simple)
     )
+
   final override def postSubtract(newGraph: Graph[N, E],
                                   passedNodes: Traversable[N],
                                   passedEdges: Traversable[E[N]],
@@ -127,14 +134,17 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E
       right.onSubtractionRefused(refusedNodes, refusedEdges, graph)
 }
 
-/** Base class for any operation on `ConstraintCompanion`s. */
+/** Base class for any operation on `ConstraintCompanion`s.
+  */
 abstract class ConstraintCompanionOp(val operator: Op) extends ConstraintCompanion[Constraint]
 
-/** Facilitates binary operations on `ConstraintCompanion`s. */
+/** Facilitates binary operations on `ConstraintCompanion`s.
+  */
 class ConstraintCompanionBinaryOp(operator: BinaryOp,
                                   left: ConstraintCompanion[Constraint],
                                   right: ConstraintCompanion[Constraint])
     extends ConstraintCompanionOp(operator) {
+
   def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) =
     new ConstraintBinaryOp[N, E](self, operator, left(self), right(self))
 }

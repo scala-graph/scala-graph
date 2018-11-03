@@ -346,6 +346,7 @@ trait GraphLike[N,
     if (isPlusPlus) plusPlus(p.toOuterNodes, p.toOuterEdges)
     else minusMinus(p.toOuterNodes, p.toOuterEdges)
   }
+
   final protected def partition(elems: GenTraversableOnce[Param[N, E]]) =
     new Param.Partitions[N, E](elems match {
       case t: Traversable[Param[N, E]]        => t

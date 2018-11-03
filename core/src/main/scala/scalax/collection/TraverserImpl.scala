@@ -150,8 +150,9 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
         if (thisGraph.isHyper) max * 4 else max
       }
 
-      def maxDepth = if (parameters.maxDepth > 0) parameters.maxDepth
-      else java.lang.Integer.MAX_VALUE
+      def maxDepth =
+        if (parameters.maxDepth > 0) parameters.maxDepth
+        else java.lang.Integer.MAX_VALUE
 
       private[this] def sorted[A <: InnerElem with B, B <: InnerElem: reflect.ClassTag](
           set: FilterMonadic[A, AnySet[A]],
@@ -205,11 +206,13 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
         val filter         = chooseFilter(nodeFilter)
         val doEdgeVisitor  = isDefined(edgeVisitor)
         val estimatedNodes = estimatedNrOfNodes(node)
+
         def withEdges(withNode: NodeT => Unit): Unit =
           edges foreach { e =>
             addMethod(node, e, withNode)
             if (doEdgeVisitor) edgeVisitor(e)
           }
+
         if (doEdgeSort) {
           /* The node set to be returned must reflect edge ordering.
            * doEdgeSort and doNodeSort are mutually exclusive.
@@ -318,6 +321,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                     depth)
               )
           }
+
           def relax(pred: NodeT, succ: NodeT) {
             val cost = dest(pred) +
               weight(pred.outgoingTo(succ).withFilter(subgraphEdges(_)).min)
@@ -326,6 +330,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
               mapToPred += succ -> pred
             }
           }
+
           var nodeCnt = 0
           @tailrec def rec(pq: PriorityQueue[PrioQueueElem]) {
             if (pq.nonEmpty && (pq.head.node ne potentialSuccessor)) {
@@ -381,6 +386,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           import BfsInformer.Element
           val q                            = Queue[Element](Element(root, depth))
           @inline def nonVisited(n: NodeT) = !n.visited
+
           def visit(n: NodeT): Unit = {
             n.visited = true
             if (doNodeVisitor)
@@ -392,6 +398,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                 })
               }
           }
+
           visit(root)
           while (q.nonEmpty) {
             val Element(prevNode, prevDepth, cumWeight) = q.dequeue
@@ -749,8 +756,10 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
 
           @tailrec def loop(layer: Int, layerNodes: ArrayBuffer[NodeT]): CycleNodeOrTopologicalOrder = {
             layers += Layer(layer, layerNodes)
+
             val currentLayerNodes = if (doNodeSort) layerNodes.sorted(nodeOrdering) else layerNodes
             val nextLayerNodes    = emptyBuffer
+
             val nrEnqueued = (0 /: currentLayerNodes) { (sum, node) =>
               if (doNodeVisitor) nodeVisitor(node)
               node.visited = true
@@ -767,6 +776,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                 }
               } + sum
             }
+
             if (nrEnqueued == 0 || layers.size == untilDepth)
               maybeCycleNodes.headOption.fold[CycleNodeOrTopologicalOrder](
                 Right(new TopologicalOrder(layers, identity))

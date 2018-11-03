@@ -28,6 +28,7 @@ object AttrSeparator {
   /** The separator `"; "`.  */
   object SemicolonSpace extends AttrSeparator("; ")
 }
+
 import Indent._, AttrSeparator._
 
 /** @param indent unit of indentation to be used at the beginning of DOT graph lines.

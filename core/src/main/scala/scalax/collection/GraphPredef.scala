@@ -48,6 +48,7 @@ object GraphPredef {
     def isIn: Boolean
     final def isOut: Boolean = !isIn
   }
+
   object Param {
 
     /** Enables to query partitions of a collection of `Param`.
@@ -115,6 +116,7 @@ object GraphPredef {
   sealed trait OutParam[+NO, +EO[X <: NO @uV] <: EdgeLike[X]] extends Param[NO, EO] {
     def isIn = false
   }
+
   trait NodeParam[+N] {
     def value: N
     def isNode       = true

@@ -74,14 +74,20 @@ trait AdjacencyListGraph[
   override def edges: EdgeSetT
 
   def copy(nodes: Traversable[N], edges: Traversable[E[N]]): This[N, E]
-  def +(n: N) = if (nodes contains Node(n)) this
-  else copy(nodes.toOuter.toBuffer += n, edges.toOuter)
-  protected def +#(e: E[N]) = if (edges contains Edge(e)) this
-  else copy(nodes.toOuter, edges.toOuter.toBuffer += e)
+
+  def +(n: N) =
+    if (nodes contains Node(n)) this
+    else copy(nodes.toOuter.toBuffer += n, edges.toOuter)
+
+  protected def +#(e: E[N]) =
+    if (edges contains Edge(e)) this
+    else copy(nodes.toOuter, edges.toOuter.toBuffer += e)
+
   def -(n: N) = nodes find (nf => nf.value == n) match {
     case Some(nf) => copy(nodes.toOuter.toBuffer -= n, edges.toOuter.toBuffer --= (nf.edges map (_.toOuter)))
     case None     => this
   }
+
   def -?(n: N) = nodes find n match {
     case Some(nf) =>
       val newNodes = nodes.toOuter.toBuffer
@@ -90,9 +96,11 @@ trait AdjacencyListGraph[
       copy(newNodes, newEdges)
     case None => this
   }
-  protected def -#(e: E[N]) = if (edges contains Edge(e))
-    copy(nodes.toOuter, edges.toOuter.toBuffer -= e)
-  else this
+
+  protected def -#(e: E[N]) =
+    if (edges contains Edge(e)) copy(nodes.toOuter, edges.toOuter.toBuffer -= e)
+    else this
+
   protected def -!#(e: E[N]) = edges find (ef => ef == e) match {
     case Some(ef) => copy(nodes.toOuter.toBuffer --= ef.privateNodes map (n => n.value), edges.toOuter.toBuffer -= e)
     case None     => this

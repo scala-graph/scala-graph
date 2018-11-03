@@ -1,7 +1,6 @@
 package scalax.collection
 
 import language.{higherKinds, postfixOps}
-import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
 import GraphPredef._, GraphEdge._
@@ -156,6 +155,9 @@ class TEditMutable extends RefSpec with Matchers {
       (gBefore ++= mutable.Graph[Int, UnDiEdge](0)
         ++= mutable.Graph(1 ~ 2)) should equal(gAfter)
     }
+
+    /* TODO missing examples... */
+
     def `yield another graph when mapped` {
       import mutable.Graph
       val g                       = Graph(1 ~ 2)

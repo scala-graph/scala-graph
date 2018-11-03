@@ -23,6 +23,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     with GenericSetTemplate[A, SimpleArraySet]
     with MutableSetLike[A, SimpleArraySet[A]]
     with Serializable {
+
   override def companion: GenericCompanion[SimpleArraySet] = SimpleArraySet
   override def newBuilder                                  = new SimpleArraySet.CheckingBuilder[A](this)
   protected[collection] def newNonCheckingBuilder[B]       = new SimpleArraySet.NonCheckingBuilder[A, B](this)
@@ -37,6 +38,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     else arr = new Array[AnyRef](capacity).asInstanceOf[Array[A]]
   }
   initialize
+
   final def capacity: Int             = if (isHash) 0 else arr.length
   @inline private def isHash: Boolean = arr eq null
   @inline final def isArray: Boolean  = !isHash
@@ -44,11 +46,13 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   protected[collection] def set       = hashSet
 
   def +=(elem: A) = { add(elem); this }
+
   def -=(elem: A) = {
     if (isHash) hashSet -= elem
     else removeIndex(indexOf(elem))
     this
   }
+
   protected def removeIndex(i: Int) {
     if (i != -1) {
       if (i + 1 < nextFree)
@@ -56,6 +60,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       nextFree -= 1
     }
   }
+
   protected[collection] def +=!(elem: A): this.type = {
     if (isHash) hashSet add elem
     else {
@@ -69,7 +74,9 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     }
     this
   }
+
   protected[collection] def map(xs: TraversableOnce[A]): this.type = this
+
   override def iterator: Iterator[A] =
     if (isHash) hashSet.iterator
     else
@@ -84,6 +91,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
           prevElm
         }
       }
+
   override def foreach[U](f: (A) => U) {
     if (isHash) hashSet foreach f
     else {
@@ -91,11 +99,13 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       while (i < nextFree) { f(arr(i)); i += 1 }
     }
   }
+
   final protected def resizeArray(fromCapacity: Int, toCapacity: Int) {
     val newArr: Array[AnyRef] = new Array(toCapacity)
     arraycopy(arr, 0, newArr, 0, math.min(fromCapacity, toCapacity))
     arr = newArr.asInstanceOf[Array[A]]
   }
+
   final protected def setToArray(set: Iterable[A], size: Int) {
     arr = new Array[AnyRef](size).asInstanceOf[Array[A]]
     nextFree = 0
@@ -105,6 +115,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     }
     hashSet = null
   }
+
   def compact {
     if (isHash) {
       val _size = size
@@ -117,12 +128,14 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
                })
       resizeArray(capacity, nextFree)
   }
+
   final protected def indexOf[B](elem: B, pred: (A, B) => Boolean): Int = {
     var i = 0
     while (i < nextFree) if (pred(arr(i), elem)) return i
     else i += 1
     -1
   }
+
   /* Optimized 'arr contains c'. */
   final protected def indexOf(elem: A): Int = {
     var i = 0
@@ -130,6 +143,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     else i += 1
     -1
   }
+
   override def contains(elem: A): Boolean =
     if (isHash) hashSet contains elem
     else indexOf(elem) >= 0
@@ -140,6 +154,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       val i = indexOf(elem)
       if (i >= 0) Some(arr(i)) else None
     }
+
   override def add(elem: A): Boolean =
     if (isHash) hashSet add elem
     else {
@@ -153,6 +168,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       nextFree += 1
       true
     }
+
   protected def resizedToHash: Boolean = {
     val newCapacity = hints.nextCapacity(capacity)
     if (newCapacity == 0) {
@@ -166,8 +182,8 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       false
     }
   }
-  override def size = if (isHash) hashSet.size
-  else nextFree
+
+  override def size = if (isHash) hashSet.size else nextFree
 
   protected[collection] def upsert(elem: A with AnyRef): Boolean =
     if (isHash) hashSet upsert elem
@@ -206,6 +222,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       for (x <- this) (if (p(x)) l else r) += x
       (l.result, r.result)
     }
+
   def sorted(implicit ord: Ordering[A]): SortedSet[A] =
     if (isHash)
       hashSet match {
@@ -216,12 +233,14 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       arraycopy(arr, 0, newArr, 0, nextFree)
       new SortedArraySet(newArr.asInstanceOf[Array[A]])
     }
+
   def findElem[B](other: B, correspond: (A, B) => Boolean): A =
     if (isHash) hashSet findElem (other, correspond)
     else {
       val idx = indexOf(other, (a: A, b: B) => a.hashCode == b.hashCode && correspond(a, b))
       (if (idx < 0) null else arr(idx)).asInstanceOf[A]
     }
+
   def draw(random: Random): A =
     if (isHash) hashSet draw random
     else arr(random.nextInt(size))

@@ -103,6 +103,7 @@ protected trait State[N, E[X] <: EdgeLikeIn[X]] {
     if (newHandlers) theseHandles foreach releaseHandle
     res
   }
+
   trait InnerNodeState {
     protected[State] var flags: FlagWord     = 0
     protected[State] var flagsExt: FlagWords = null
@@ -154,6 +155,7 @@ protected trait State[N, E[X] <: EdgeLikeIn[X]] {
     }
   }
 }
+
 object State {
 
   /** Word of flags, that is unit of bitwise boolean state information.

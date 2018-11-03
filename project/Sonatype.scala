@@ -35,6 +35,7 @@ trait Sonatype {
       <name>{ developerName }</name>
       <url>{ developerUrl }</url>
     </developer></developers>
+
   def settings: Seq[Setting[_]] = Seq(
     publishMavenStyle := true,
     publishTo := version((v: String) => Some(if (isSnapshot(v)) ossSnapshots else ossStaging)).value,

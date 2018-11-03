@@ -37,6 +37,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
     with Mutable {
   selfGraph: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
   This[N, E] with GraphLike[N, E, This] with Graph[N, E] =>
+
   trait NodeSet extends super.NodeSet {
 
     /** generic constrained subtraction */
@@ -126,6 +127,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
     }
     this
   }
+
   override def --=(elems: TraversableOnce[Param[N, E]]): this.type = {
     lazy val p                        = partition(elems)
     lazy val (outerNodes, outerEdges) = (p.toOuterNodes.toSet, p.toOuterEdges.toSet)
@@ -162,6 +164,7 @@ trait Graph[N, E[X] <: EdgeLikeIn[X]]
     with GraphLike[N, E, Graph] {
   override def empty: Graph[N, E] = Graph.empty[N, E](edgeT, config)
 }
+
 object Graph extends MutableGraphCompanion[Graph] {
   override def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config): Graph[N, E] =
     DefaultGraphImpl.empty[N, E](edgeT, config)
@@ -178,6 +181,7 @@ object Graph extends MutableGraphCompanion[Graph] {
 
   // TODO: canBuildFrom
 }
+
 abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[N](),
                                                           iniEdges: Traversable[E[N]] = Set[E[N]]())(
     implicit override val edgeT: ClassTag[E[N]],
@@ -210,6 +214,7 @@ abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[
   type NodeT = NodeBase
   @inline final protected def newNodeWithHints(n: N, h: ArraySet.Hints) = new NodeT(n, h)
 }
+
 object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
   override def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config) =
     from(Set.empty[N], Set.empty[E[N]])(edgeT, config)
@@ -253,6 +258,7 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
   }
   // TODO canBuildFrom
 }
+
 @SerialVersionUID(7701L)
 class UserConstrainedGraphImpl[N, E[X] <: EdgeLikeIn[X]](
     iniNodes: Traversable[N] = Nil,

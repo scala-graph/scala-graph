@@ -49,6 +49,7 @@ class TArraySetTest extends RefSpec with Matchers {
       add(1, 0)
       arr.isArray should be(false)
     }
+
     def `may be compacted` {
       val edges = new LkDiEdgeGenerator
       val toAdd = hints.initialCapacity + 1
@@ -73,12 +74,14 @@ class TArraySetTest extends RefSpec with Matchers {
       arr.compact
       check
     }
+
     def `supports hints` {
       val edges = new LkDiEdgeGenerator
       val arr   = ArraySet.emptyWithHints[LkDiEdge[Int]](ArraySet.Hints(0, 4, 8, 0))
       arr += edges.draw
       arr.capacity should be(4)
     }
+
     def `supports hints properly when filtered` {
       val edges = new LkDiEdgeGenerator
       type E = LkDiEdge[Int]
@@ -102,6 +105,7 @@ class TArraySetTest extends RefSpec with Matchers {
       val filteredEven = arr filter (_ % 2 == 0)
       filteredEven.hints.initialCapacity should equal(arr.size)
     }
+
     def `is sortable` {
       val as  = ArraySet(3, 6, 0, -3)
       val sas = as.sorted
@@ -115,6 +119,7 @@ class TArraySetTest extends RefSpec with Matchers {
       sas.range(-10, -3) should be(SortedArraySet.empty[Int])
       sas.range(-10, -4) should be(SortedArraySet.empty[Int])
     }
+
     def `supports ++` {
       val a = ArraySet.empty[Int]
       val b = ArraySet(1)
@@ -124,6 +129,7 @@ class TArraySetTest extends RefSpec with Matchers {
       a ++ b should be(b)
       b ++ c should be(b.toSet ++ c.toSet)
     }
+
     object `supports upsert` {
       def upsert(toAdd: Int) {
         val edges = new WUnDiEdgeGenerator

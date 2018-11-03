@@ -33,6 +33,7 @@ object JsonGraphError extends Enumeration with JsonGraphIssue {
     val replMsg = replacePlaceholders(msg, args)
     JsonGraphException(errType, replMsg)
   }
+
   case class JsonGraphException(val err: JsonGraphError, val msg: String) extends Exception("JSON-Graph error: " + msg)
 }
 object JsonGraphWarning extends Enumeration with JsonGraphIssue {

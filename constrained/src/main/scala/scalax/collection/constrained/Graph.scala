@@ -35,6 +35,7 @@ trait GraphLike[N,
     with Constrained[N, E] {
   this: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
   This[N, E] with GraphLike[N, E, This] with Set[Param[N, E]] with Graph[N, E] =>
+
   override val graphCompanion: GraphConstrainedCompanion[This]
   protected type Config <: GraphConfig with GenConstrainedConfig
 
@@ -45,6 +46,7 @@ trait GraphLike[N,
     graphCompanion
       .fromUnchecked[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)(edgeT, config)
       .asInstanceOf[This[N, E]]
+
   override protected def minusMinus(delNodes: Traversable[N], delEdges: Traversable[E[N]]): This[N, E] = {
     val delNodesEdges = minusMinusNodesEdges(delNodes, delEdges)
     graphCompanion.fromUnchecked[N, E](delNodesEdges._1, delNodesEdges._2)(edgeT, config).asInstanceOf[This[N, E]]
@@ -63,6 +65,7 @@ trait GraphLike[N,
   }
 
   import PreCheckFollowUp._
+
   override def ++(elems: GenTraversableOnce[Param[N, E]]): this.type = {
     var graph = this
     val it = elems match {
@@ -89,6 +92,7 @@ trait GraphLike[N,
 
     graph.asInstanceOf[this.type]
   }
+
   override def --(elems: GenTraversableOnce[Param[N, E]]) = {
     var graph = this
 
@@ -151,6 +155,7 @@ object Graph extends GraphConstrainedCompanion[Graph] {
       edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.fromUnchecked[N, E](nodes, edges)(edgeT, config)
 }
+
 trait UserConstrainedGraph[N, E[X] <: EdgeLikeIn[X]] extends Graph[N, E] {
   val constraint: Constraint[N, E]
   /*
@@ -175,10 +180,12 @@ trait UserConstrainedGraph[N, E[X] <: EdgeLikeIn[X]] extends Graph[N, E] {
     constraint preSubtract (node.asInstanceOf[C_NodeT], forced)
   override def preSubtract(edge: self.EdgeT, simple: Boolean) =
     constraint preSubtract (edge.asInstanceOf[C_EdgeT], simple)
+
   override def preSubtract(nodes: => Set[self.NodeT], edges: => Set[self.EdgeT], simple: Boolean) =
     constraint preSubtract (nodes.asInstanceOf[Set[C_NodeT]],
     edges.asInstanceOf[Set[C_EdgeT]],
     simple)
+
   override def postSubtract(newGraph: Graph[N, E],
                             passedNodes: Traversable[N],
                             passedEdges: Traversable[E[N]],
@@ -187,6 +194,7 @@ trait UserConstrainedGraph[N, E[X] <: EdgeLikeIn[X]] extends Graph[N, E] {
 
   override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: Graph[N, E]) =
     constraint onAdditionRefused (refusedNodes, refusedEdges, graph)
+
   override def onSubtractionRefused(refusedNodes: Traversable[Graph[N, E]#NodeT],
                                     refusedEdges: Traversable[Graph[N, E]#EdgeT],
                                     graph: Graph[N, E]) =

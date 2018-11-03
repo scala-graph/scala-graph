@@ -35,6 +35,7 @@ case class Flight[+N](fromAirport: N,
     with ExtendedKey[N]
     with EdgeCopy[Flight]
     with OuterEdge[N, Flight] {
+
   private def this(nodes: Product, flightNo: String, departure: DayTime, duration: Duration) {
     this(
       nodes.productElement(0).asInstanceOf[N],
@@ -43,6 +44,7 @@ case class Flight[+N](fromAirport: N,
       departure,
       duration)
   }
+
   def keyAttributes                         = Seq(flightNo)
   override def weight                       = duration.toInt
   def airline                               = flightNo substring (0, 2)

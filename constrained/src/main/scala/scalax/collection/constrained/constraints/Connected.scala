@@ -83,10 +83,10 @@ class Connected[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extend
     PreCheckResult.complete({
       def neighbors(nodes: Set[self.NodeT]) =
         (for (n <- nodes) yield n.neighbors).flatten
-      val nodesToInspect = nodes ++ ((for {
-                                        e <- edges
-                                        n <- e
-                                      } yield n) )
+      val nodesToInspect = nodes ++ (for {
+        e <- edges
+        n <- e
+      } yield n)
       if (simple)
         isConnected(neighbors(nodesToInspect) -- nodes, nodes, edges ++ (for (n <- nodes) yield n.edges).flatten)
       else
@@ -96,6 +96,7 @@ class Connected[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extend
           edges ++ (for (n <- nodes) yield n.edges).flatten)
     })
 }
+
 object Connected extends ConstraintCompanion[Connected] {
   def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new Connected[N, E](self)
 }

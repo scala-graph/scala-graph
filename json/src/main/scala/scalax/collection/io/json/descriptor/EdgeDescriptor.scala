@@ -266,7 +266,9 @@ class WLHyperEdgeDescriptor[N, E[X] <: WLHyperEdge[X], +C <: WLHyperEdgeCompanio
     extraClasses: List[Class[_]] = Nil,
     typeId: String = Defaults.defaultId)(implicit edgeManifest: ClassTag[E[N]], implicit val labelManifest: Manifest[L])
     extends EdgeDescriptorBase[N, E, C](edgeCompanion, customSerializer, extraClasses, typeId)(edgeManifest) {
+
   override def extract(jsonEdge: JValue) = jsonEdge.extract[WLHyperEdgeParameters[L]]
+
   override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]): WLHyperEdgeParameters[L] =
     new WLHyperEdgeParameters(nodeIds(edge, descriptor), CollectionKind.from(edge).toString, edge.weight, edge.label)
       .asInstanceOf[WLHyperEdgeParameters[L]]
@@ -290,7 +292,9 @@ class CHyperEdgeDescriptor[N, E[X] <: CHyperEdge[X], +C <: CHyperEdgeCompanion[E
     typeId: String = Defaults.defaultId)(implicit edgeManifest: ClassTag[E[N]],
                                          implicit val attributeManifest: Manifest[P])
     extends EdgeDescriptorBase[N, E, C](edgeCompanion, customSerializer, extraClasses, typeId)(edgeManifest) {
+
   override def extract(jsonEdge: JValue) = jsonEdge.extract[CEdgeParameters[P]]
+
   override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]) =
     new CHyperEdgeParameters[edge.P](nodeIds(edge, descriptor), CollectionKind.from(edge).toString, edge.attributes)
       .asInstanceOf[CHyperEdgeParameters[P]]

@@ -19,16 +19,20 @@ trait Graph[N, E[X] <: EdgeLikeIn[X]] extends CommonGraph[N, E] with GraphLike[N
   override def empty: Graph[N, E] = Graph.empty[N, E]
 }
 object Graph extends ImmutableGraphCompanion[Graph] {
+
   def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
     DefaultGraphImpl.empty[N, E](edgeT, config)
+
   override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil, edges: Traversable[E[N]])(
       implicit edgeT: ClassTag[E[N]],
       config: Config = defaultConfig): Graph[N, E] =
     DefaultGraphImpl.from[N, E](nodes, edges)(edgeT, config)
+
   implicit def cbfUnDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
     new GraphCanBuildFrom[N, E]()(edgeT, config)
       .asInstanceOf[GraphCanBuildFrom[N, E] with CanBuildFrom[Graph[_, UnDiEdge], Param[N, E], Graph[N, E]]]
 }
+
 @SerialVersionUID(72L)
 class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[N](),
                                                  iniEdges: Traversable[E[N]] = Set[E[N]]())(
@@ -50,12 +54,9 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[
 
   initialize(iniNodes, iniEdges)
 
-  override protected[this] def newBuilder =
-    new GraphBuilder[N, E, DefaultGraphImpl](DefaultGraphImpl)
-  final override def empty: DefaultGraphImpl[N, E] =
-    DefaultGraphImpl.empty[N, E]
-  final override def copy(nodes: Traversable[N], edges: Traversable[E[N]]) =
-    DefaultGraphImpl.from[N, E](nodes, edges)
+  override protected[this] def newBuilder                                  = new GraphBuilder[N, E, DefaultGraphImpl](DefaultGraphImpl)
+  final override def empty: DefaultGraphImpl[N, E]                         = DefaultGraphImpl.empty[N, E]
+  final override def copy(nodes: Traversable[N], edges: Traversable[E[N]]) = DefaultGraphImpl.from[N, E](nodes, edges)
 
   @SerialVersionUID(7170L)
   final protected class NodeBase(value: N, hints: ArraySet.Hints) extends InnerNodeImpl(value, hints)
@@ -73,13 +74,17 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[
     initializeFrom(in, _nodes, _edges)
   }
 }
+
 object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl] {
+
   override def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
     new DefaultGraphImpl[N, E]()(edgeT, config)
+
   override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil, edges: Traversable[E[N]])(
       implicit edgeT: ClassTag[E[N]],
       config: Config = defaultConfig) =
     new DefaultGraphImpl[N, E](nodes, edges)(edgeT, config)
+
   implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                                       config: Config = defaultConfig): GraphCanBuildFrom[N, E] =
     new GraphCanBuildFrom[N, E]()(edgeT, config)

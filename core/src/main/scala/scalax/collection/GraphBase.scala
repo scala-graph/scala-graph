@@ -1,6 +1,5 @@
 package scalax.collection
 
-import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.language.{higherKinds, implicitConversions}
 import scala.util.Random
 
@@ -470,6 +469,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   @transient object EdgeT {
     def unapply(e: EdgeT): Option[(NodeT, NodeT)] = Some((e.edge._1, e.edge._2))
   }
+
   trait Edge extends Serializable
   trait InnerEdge extends Iterable[NodeT] with InnerEdgeParam[N, E, NodeT, E] with Edge with InnerElem {
     this: EdgeT =>
@@ -544,9 +544,10 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     }
     @deprecated("Use toOuter instead", "1.8.0") def toEdgeIn = toOuter
   }
+
   @transient object InnerEdge {
     def unapply(edge: InnerEdge): Option[EdgeT] =
-      if (edge.edge._n(0) isContaining selfGraph) Some(edge.asInstanceOf[EdgeT])
+      if (edge.edge._1 isContaining selfGraph) Some(edge.asInstanceOf[EdgeT])
       else None
   }
   @transient object Edge {
@@ -596,11 +597,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       def compare(e1: EdgeT, e2: EdgeT): Int = e1.arity compare e2.arity
     }
   }
-  class EdgeBase(override val edge: E[NodeT]) extends InnerEdgeParam[N, E, NodeT, E] with InnerEdge {
-    this: EdgeT =>
-    override def iterator: Iterator[NodeT] = edge.iterator.asInstanceOf[Iterator[NodeT]]
-    override def stringPrefix              = super.stringPrefix
-  }
+
   protected def newEdge(innerEdge: E[NodeT]): EdgeT
   implicit final protected def edgeToEdgeCont(e: E[N]): E[NodeT] = Edge.edgeToEdgeCont(e)
 
@@ -611,6 +608,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
         Ordering.Int.compare(a.arity, b.arity)
     }
   )
+
   type EdgeSetT <: EdgeSet
   trait EdgeSet extends AnySet[EdgeT] with ExtSetMethods[EdgeT] with Serializable {
 
@@ -683,6 +681,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   def edges: EdgeSetT
   def totalWeight = (0d /: edges)(_ + _.weight)
 }
+
 object GraphBase {
   val defaultSeparator = ", "
 }

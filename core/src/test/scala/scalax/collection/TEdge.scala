@@ -13,9 +13,12 @@ import custom.flight._, custom.flight.Helper._, custom.flight.Flight.ImplicitEdg
 
 @RunWith(classOf[JUnitRunner])
 class TEdgeTest extends RefSpec with Matchers {
+
   trait OrderedEndpointsTest[E[X] <: EdgeLike[X]] {
+
     def ordered(edges: Traversable[_]): Boolean =
       edges forall (_.isInstanceOf[OrderedEndpoints])
+
     def outerEdges(implicit kind: CollectionKind = Bag): List[E[_]]
 
     def `are treated as a bag by default` {
@@ -25,6 +28,7 @@ class TEdgeTest extends RefSpec with Matchers {
       g.graphSize should be(2)
       ordered(g.edges) should be(false)
     }
+
     def `may be defined to be sorted.` {
       val edges = outerEdges(Sequence)
       edges(1) should not equal (edges(2))
@@ -34,12 +38,14 @@ class TEdgeTest extends RefSpec with Matchers {
       ordered((g - g.edges.head).edges) should be(true)
     }
   }
+
   object `DiHyperEdge target nodes` extends OrderedEndpointsTest[DiHyperEdge] {
     def outerEdges(implicit kind: CollectionKind = Bag): List[DiHyperEdge[Int]] =
       DiHyperEdge(1, 2, 2) ::
         DiHyperEdge(1, 2, 2, 3) ::
         DiHyperEdge(1, 2, 3, 2) :: Nil
   }
+
   object `LHyperEdge target nodes` extends OrderedEndpointsTest[LHyperEdge] {
     import edge.LHyperEdge, edge.Implicits._
     def outerEdges(implicit kind: CollectionKind = Bag): List[LHyperEdge[Int]] =
@@ -170,6 +176,7 @@ class TEdgeTest extends RefSpec with Matchers {
     }
   }
 }
+
 /* Label type for use in key-labeled edges.
  */
 case class Flight(flightNo: String, departure: DayTime = DayTime(0, 0), duration: Duration = Duration(0, 0)) {
@@ -186,6 +193,7 @@ case class Flight(flightNo: String, departure: DayTime = DayTime(0, 0), duration
   }
   override def hashCode = flightNo.##
 }
+
 // Compiler tests for predefined edges.
 object Test {
   import scalax.collection.GraphPredef._
@@ -223,6 +231,7 @@ object Test {
   val g_lu_lu    = Graph(lu1, lu2)
   val g_lu_lh    = Graph[Int, HyperEdge](lu1, lh2) // not inferred
 }
+
 // Compiler tests for calling label methods by means of implicits.
 object TestImplicits {
   import scalax.collection.Graph
@@ -244,6 +253,7 @@ object TestImplicits {
     val four = eInner.i
   }
 }
+
 // Compiler tests for predefined edge shortcuts.
 object TestOperators {
   val ld  = (1 ~+> 2)(3)

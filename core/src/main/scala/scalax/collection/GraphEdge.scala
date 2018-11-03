@@ -115,28 +115,28 @@ object GraphEdge {
 
     /** The weight of this edge with a default of 1.
       *
-      *  Note that `weight` is normally not part of the edge key (hashCode). As a result,
-      *  edges with different weights connecting the same nodes will be evaluated as equal
-      *  and thus added once and only once to the graph.
-      *  In case you need multi-edges based on different weights
-      *  you should either make use of a predefined key-weighted edge type such as `WDiEdge`
-      *  or define a custom edge class that mixes in `ExtendedKey` and adds `weight` to
-      *  `keyAttributes`.
+      * Note that `weight` is normally not part of the edge key (hashCode). As a result,
+      * edges with different weights connecting the same nodes will be evaluated as equal
+      * and thus added once and only once to the graph.
+      * In case you need multi-edges based on different weights
+      * you should either make use of a predefined key-weighted edge type such as `WDiEdge`
+      * or define a custom edge class that mixes in `ExtendedKey` and adds `weight` to
+      * `keyAttributes`.
       */
     def weight: Double = 1
 
     /** The label of this edge. If `Graph`'s edge type parameter has been inferred or set
-      *  to a labeled edge type all contained edges are labeled. Otherwise you should
-      *  assert, for instance by calling `isLabeled`, that the edge instance is labeled
-      *  before calling this method.
+      * to a labeled edge type all contained edges are labeled. Otherwise you should
+      * assert, for instance by calling `isLabeled`, that the edge instance is labeled
+      * before calling this method.
       *
-      *  Note that `label` is normally not part of the edge key (hashCode). As a result,
-      *  edges with different labels connecting the same nodes will be evaluated as equal
-      *  and thus added once and only once to the graph.
-      *  In case you need multi-edges based on different labels
-      *  you should either make use of a predefined key-labeled edge type such as `LDiEdge`
-      *  or define a custom edge class that mixes in `ExtendedKey` and adds `label` to
-      *  `keyAttributes`.
+      * Note that `label` is normally not part of the edge key (hashCode). As a result,
+      * edges with different labels connecting the same nodes will be evaluated as equal
+      * and thus added once and only once to the graph.
+      * In case you need multi-edges based on different labels
+      * you should either make use of a predefined key-labeled edge type such as `LDiEdge`
+      * or define a custom edge class that mixes in `ExtendedKey` and adds `label` to
+      * `keyAttributes`.
       *
       * @throws UnsupportedOperationException if the edge is non-labeled.
       */
@@ -219,7 +219,6 @@ object GraphEdge {
     } catch { // Malformed class name
       case e: java.lang.InternalError => this.getClass.getName
     }
-
     override def stringPrefix                  = "Nodes"
     protected def nodesToStringWithParenthesis = false
     protected def nodesToStringSeparator       = EdgeLike.nodeSeparator
@@ -247,11 +246,11 @@ object GraphEdge {
   trait EdgeCopy[+CC[X] <: EdgeLike[_]] {
 
     /** It is a prerequisite for edge-classes to implement this method. Otherwise
-      *  they cannot be passed to a `Graph`.
+      * they cannot be passed to a `Graph`.
       *
-      *  `Graph` calls this method internally to obtain a new instance of the
-      *  edge passed to `Graph` with nodes of the type of the inner class `NodeT`
-      *  which itself contains the outer node.
+      * `Graph` calls this method internally to obtain a new instance of the
+      * edge passed to `Graph` with nodes of the type of the inner class `NodeT`
+      * which itself contains the outer node.
       */
     protected[collection] def copy[NN](newNodes: Product): CC[NN]
   }
@@ -478,8 +477,7 @@ object GraphEdge {
   /** Marker trait for companion objects of any kind of edge. */
   sealed trait EdgeCompanionBase[+E[N] <: EdgeLike[N]] extends Serializable
 
-  /**
-    * The abstract methods of this trait must be implemented by companion objects
+  /** The abstract methods of this trait must be implemented by companion objects
     * of simple (non-weighted, non-labeled) hyperedges.
     */
   trait HyperEdgeCompanion[+E[N] <: EdgeLike[N]] extends EdgeCompanionBase[E] {

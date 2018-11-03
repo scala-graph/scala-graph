@@ -8,3 +8,4 @@ jdk:
 
 script:
   - sbt clean test
+  - sbt scalafmtSbtCheck scalafmtCheck test:scalafmtCheck

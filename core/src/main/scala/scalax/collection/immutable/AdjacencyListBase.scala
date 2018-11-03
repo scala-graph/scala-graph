@@ -7,11 +7,12 @@ import scala.language.higherKinds
 import scala.collection.{Set => AnySet, AbstractTraversable, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, Buffer}
 import scala.util.Random
-import GraphPredef._
+
+import scalax.collection.GraphPredef._
 import scalax.collection.{Graph => SimpleGraph}
-import mutable.{ArraySet, EqHashMap, EqHashSet, ExtHashSet}
-import generic.GroupIterator
-import config.{AdjacencyListArrayConfig, GraphConfig}
+import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet, ExtHashSet}
+import scalax.collection.generic.GroupIterator
+import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 
 /** Implementation of an incident list based graph representation. This trait is common to
   * both the immutable and mutable variants. An incidence list based representation speeds up
@@ -23,7 +24,9 @@ trait AdjacencyListBase[
     N,
     E[X] <: EdgeLikeIn[X],
     +This[X, Y[X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with AnySet[Param[X, Y]] with SimpleGraph[X, Y]]
-    extends GraphLike[N, E, This] { selfGraph: This[N, E] =>
+    extends GraphLike[N, E, This] {
+  selfGraph: This[N, E] =>
+
   protected type Config <: GraphConfig with AdjacencyListArrayConfig
 
   type NodeT <: InnerNode
@@ -227,9 +230,9 @@ trait AdjacencyListBase[
 
     final override def contains(node: NodeT): Boolean = nodes find node exists (_.edges.nonEmpty)
 
-    final override def find(elem: E[N]): Option[EdgeT] = nodes find elem._n(0) flatMap (_.edges find (_.edge == elem))
+    final override def find(elem: E[N]): Option[EdgeT] = nodes find elem._1 flatMap (_.edges find (_.edge == elem))
 
-    final def contains(edge: EdgeT): Boolean = nodes find edge.edge._n(0) exists (_.edges contains edge)
+    final def contains(edge: EdgeT): Boolean = nodes find edge.edge._1 exists (_.edges contains edge)
 
     final def iterator: Iterator[EdgeT] = edgeIterator
 
@@ -259,8 +262,10 @@ trait AdjacencyListBase[
         else node.edges.toBuffer partition (_.isDirected)
       }
       val diTargets, unDiTargets = MSet.empty[NodeT]
-      di.exists((e: EdgeT) => e.hasSource((n: NodeT) => n eq node) && !e.targets.forall(diTargets add _)) ||
-      unDi.exists((e: EdgeT) => (e.n1 eq node) && !e.iterator.drop(1).forall((n: NodeT) => unDiTargets add n))
+      // format: off
+      di  .exists((e: EdgeT) => e.hasSource((n: NodeT) => n eq node) && ! e.targets.forall(diTargets add _)) ||
+      unDi.exists((e: EdgeT) => (e.n1 eq node)                       && ! e.iterator.drop(1).forall((n: NodeT) => unDiTargets add n))
+      // format: on
     }
   }
 
@@ -277,7 +282,7 @@ trait AdjacencyListBase[
       protected type I = EdgeT
       protected var iterator: Iterator[I] = _
       protected def onOuterChange(newOuter: OuterElm) {
-        iterator = newOuter.edges.filter(_.edge._n(0) == newOuter).iterator
+        iterator = newOuter.edges.filter(_.edge._1 == newOuter).iterator
       }
       protected def elmToCurrent(elm: EdgeT) = elm
 

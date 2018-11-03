@@ -92,12 +92,15 @@ class Descriptor[N](val defaultNodeDescriptor: NodeDescriptor[N],
     } ret += (m -> descr)
     ret.toMap
   }
+
   final protected def classManifest(any: Any): ClassTag[_] =
     ClassTag(any match {
       case r: AnyRef => r.getClass
       case v         => v.asInstanceOf[AnyRef].getClass
     })
+
   protected var lastNodeDescriptor: (Class[_], NodeDescriptor[N]) = (classOf[Null], null)
+
   def nodeDescriptor(node: N): NodeDescriptor[N] = {
     val clazz = node match {
       case r: AnyRef => Some(r.getClass)
@@ -119,6 +122,7 @@ class Descriptor[N](val defaultNodeDescriptor: NodeDescriptor[N],
       descr
     }
   }
+
   def edgeDescriptor(clazz: Class[_]): GenEdgeDescriptor[N] = {
     val className       = clazz.getName
     val classNameLength = className.length

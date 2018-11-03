@@ -62,9 +62,9 @@ class CustomizingTest extends RefSpec with Matchers {
         def unapply(e: Flight[Airport]): Option[(Airport, Airport, String)] =
           if (e eq null) None else Some(e.from, e.to, e.flightNo)
       }
+
       implicit class FlightAssoc[A <: Airport](val e: DiEdge[A]) {
-        @inline def ##(flightNo: String) =
-          new Flight[A](e.nodes, flightNo) with OuterEdge[A, Flight]
+        @inline def ##(flightNo: String) = new Flight[A](e.nodes, flightNo) with OuterEdge[A, Flight]
       }
 
       val flight = ham ~> ny ## "007"

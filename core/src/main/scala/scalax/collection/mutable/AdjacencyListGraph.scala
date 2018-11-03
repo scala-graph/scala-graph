@@ -14,12 +14,15 @@ import immutable.AdjacencyListBase
 trait AdjacencyListGraph[
     N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
-    with AdjacencyListBase[N, E, This] { selfGraph: This[N, E] =>
+    with AdjacencyListBase[N, E, This] {
+  selfGraph: This[N, E] =>
+
   type NodeT <: InnerNodeImpl
   abstract class InnerNodeImpl(value: N, hints: ArraySet.Hints)
       extends NodeBase(value)
       with super[GraphLike].InnerNode
       with InnerNode { this: NodeT =>
+
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
     import Adj._
 
@@ -71,6 +74,7 @@ trait AdjacencyListGraph[
   class NodeSet extends super[GraphLike].NodeSet with super.NodeSet {
     override def add(node: NodeT)                = coll add node
     @inline final def +=(node: NodeT): this.type = { add(node); this }
+
     protected[collection] def add(edge: EdgeT): Boolean = {
       var someNew = false
       edge foreach { n =>
@@ -79,7 +83,9 @@ trait AdjacencyListGraph[
       }
       someNew
     }
+
     protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
+
     protected[collection] def upsert(edge: EdgeT): Boolean = {
       var someNew = false
       edge foreach { n =>
@@ -88,26 +94,32 @@ trait AdjacencyListGraph[
       }
       someNew
     }
+
     protected[collection] def remove(edge: EdgeT): Boolean =
       edge.nodes.toSet forall (n => (coll findElem n) exists (_ remove edge))
+
     protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }
-    override protected def minus(node: NodeT) { coll -= node }
-    override protected def minusEdges(node: NodeT) {
+    override protected def minus(node: NodeT): Unit      = coll -= node
+    override protected def minusEdges(node: NodeT): Unit =
       // toList is necessary to avoid failure of -=(node) like in TEdit.test_MinusEq_2
       edges --= node.edges.toList
-    }
   }
   override def nodes: NodeSetT
 
   type EdgeT = EdgeImpl
+
   @inline final def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
+
   @SerialVersionUID(7972L)
   class EdgeImpl(override val edge: E[NodeT]) extends EdgeBase(edge) {
     def remove: Boolean = edges remove this
-    def removeWithNodes(edge: E[N]) = if (edges remove this) {
-      selfGraph.nodes --= privateNodes; true
-    } else false
+
+    def removeWithNodes(edge: E[N]) =
+      if (edges remove this) {
+        selfGraph.nodes --= privateNodes; true
+      } else false
   }
+
   @inline final override protected def newEdge(innerEdge: E[NodeT]): EdgeT =
     if (innerEdge.isInstanceOf[OrderedEndpoints]) new EdgeT(innerEdge) with OrderedEndpoints
     else new EdgeT(innerEdge)
@@ -145,7 +157,7 @@ trait AdjacencyListGraph[
   }
   override def edges: EdgeSetT
 
-  @inline final def clear { nodes.clear }
+  @inline final def clear: Unit                          = nodes.clear
   @inline final def add(node: N): Boolean                = nodes add Node(node)
   @inline final def add(edge: E[N]): Boolean             = edges add Edge(edge)
   @inline final protected def +=#(edge: E[N]): this.type = { add(edge); this }

@@ -34,6 +34,7 @@ trait ArraySet[A]
 
   /** Whether the internal representation is currently based on `Array`. */
   def isArray: Boolean
+
   protected[collection] def array: Array[A]
   protected[collection] def set: MSet[A]
 
@@ -57,6 +58,7 @@ trait ArraySet[A]
     *  @see scala.collection.SeqLike */
   def sorted(implicit ord: Ordering[A]): SortedSet[A]
 }
+
 object ArraySet extends MutableSetFactory[ArraySet] {
 
   /** Returns an empty set with default hints that can grow as expected. */
@@ -70,7 +72,9 @@ object ArraySet extends MutableSetFactory[ArraySet] {
     val newSize = math.min(size, 200)
     Hints(initialCapacity = newSize, hashTableThreshold = newSize)
   }
+
   def apply[A](elem: A)(implicit hints: Hints): ArraySet[A] = emptyWithHints[A](hints) += elem
+
   def apply[A](elem1: A, elem2: A, elems: A*)(implicit hints: Hints): ArraySet[A] =
     emptyWithHints[A](hints) += elem1 += elem2 ++= elems
   implicit def canBuildFrom[A]: CanBuildFrom[Coll, A, ArraySet[A]] = setCanBuildFrom[A]
@@ -126,12 +130,14 @@ object ArraySet extends MutableSetFactory[ArraySet] {
           case h                     => h
         }
   }
+
   @SerialVersionUID(1L)
   case class CheckedHints private[ArraySet] (override val initialCapacity: Int,
                                              override val capacityIncrement: Int,
                                              override val hashTableThreshold: Int,
                                              override val compactUpToUsed: Int)
       extends Hints
+
   object Hints {
 
     /** Returns an instance of Hints with possibly corrected argument values.

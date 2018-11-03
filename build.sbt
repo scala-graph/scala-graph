@@ -75,7 +75,7 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   crossScalaVersions := Seq(scalaVersion.value, Version.compiler_2_11),
   organization := "org.scala-graph",
   Test / parallelExecution := false,
-  scalacOptions in (Compile, doc) ++=
+  Compile / doc / scalacOptions ++=
     Opts.doc.title(name.value) ++
       Opts.doc.version(version.value),
   // prevents sbteclipse from including java source directories

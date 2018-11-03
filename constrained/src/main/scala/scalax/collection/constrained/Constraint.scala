@@ -314,7 +314,10 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X]] {
 
   /** Consolidates all inner nodes of the arguments by adding the edge ends
     *  of `passedEdges` to `passedNodes`. */
-  protected def allNodes(innerNodes: Set[self.NodeT], innerEdges: Set[self.EdgeT]): Set[self.NodeT] = {
+  protected def allNodes(
+      innerNodes: Set[self.NodeT],
+      innerEdges: Set[self.EdgeT]
+  ): Set[self.NodeT] = {
     val nodes = collection.mutable.Set[self.NodeT]() ++ innerNodes
     innerEdges foreach (nodes ++= _)
     nodes
