@@ -6,9 +6,7 @@ import scala.collection.mutable.BitSet
 import State.Handle
 import ExtBitSet._
 
-protected[collection] final class ExtBitSet(words: Array[Long])
-  extends BitSet(words)
-{
+final protected[collection] class ExtBitSet(words: Array[Long]) extends BitSet(words) {
   def this(initWords: Int = incrWords) = this(new Array[Long](initWords))
   def nrWords: Int = nwords
 
@@ -21,43 +19,42 @@ protected[collection] final class ExtBitSet(words: Array[Long])
   override def clone(): ExtBitSet = new ExtBitSet(cloneWords)
 
   override def stringPrefix = this.getClass.getSimpleName
+
   /** All bits of all words. */
   override def toString =
-    (elems map (w => "%64s".format(java.lang.Long.toBinaryString(w)).
-                     replace(' ', '0'))).mkString(" ")
+    (elems map (w => "%64s".format(java.lang.Long.toBinaryString(w)).replace(' ', '0'))).mkString(" ")
+
   /** Summary of the words each of which formatted as <index>:<bitCount>. */
-  def summary: String = elems.zipWithIndex.map(zWord =>
-    "%2d:%2d" format (zWord._2, java.lang.Long.bitCount(zWord._1))) mkString (" ")
-  
+  def summary: String =
+    elems.zipWithIndex.map(zWord => "%2d:%2d" format (zWord._2, java.lang.Long.bitCount(zWord._1))) mkString (" ")
+
   @inline def apply(idx: Int, mask: Long): Boolean =
     (word(idx) & mask) != 0
 
   @inline def apply(h: Handle): Boolean = apply(h.index, h.mask)
 
   def update(idx: Int, mask: Long, isSet: Boolean) {
-    if (isSet) {             
+    if (isSet) {
       val word =
-        if (idx >= nwords) { expand(idx); 0L }
-        else elems(idx)
+        if (idx >= nwords) { expand(idx); 0L } else elems(idx)
       elems(idx) = word | mask
-    }
-    else if (idx < nwords)
+    } else if (idx < nwords)
       elems(idx) = elems(idx) & ~mask
   }
 
   @inline def update(h: Handle, isSet: Boolean) { update(h.index, h.mask, isSet) }
-  
+
   def unary_~ : ExtBitSet = {
     val newBits = new ExtBitSet(nwords)
-    var idx = 0
+    var idx     = 0
     while (idx < nwords) {
-      newBits.elems(idx) = ~ this.elems(idx)
+      newBits.elems(idx) = ~this.elems(idx)
       idx += 1
-    }      
+    }
     newBits
   }
 
-  def &= (other: ExtBitSet): this.type = {
+  def &=(other: ExtBitSet): this.type = {
     var idx = 0
     while (idx < nwords) {
       elems(idx) &= other.word(idx)
@@ -65,7 +62,7 @@ protected[collection] final class ExtBitSet(words: Array[Long])
     }
     this
   }
-  
+
   def onOrFindUnset(other: ExtBitSet): Option[Handle] = {
     var idx = 0
     while (idx < nwords) {

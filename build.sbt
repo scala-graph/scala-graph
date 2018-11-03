@@ -19,8 +19,8 @@ lazy val core = project
       name := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck" % "1.13.4" % "optional;provided",
-        "org.gephi" % "gephi-toolkit" % "0.9.2" % "test" classifier "all"
+        "org.scalacheck" %% "scalacheck"   % "1.13.4" % "optional;provided",
+        "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all"
       )
     )
   )
@@ -75,12 +75,12 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   crossScalaVersions := Seq(scalaVersion.value, Version.compiler_2_11),
   organization := "org.scala-graph",
   Test / parallelExecution := false,
-  scalacOptions in(Compile, doc) ++=
+  scalacOptions in (Compile, doc) ++=
     Opts.doc.title(name.value) ++
       Opts.doc.version(version.value),
   // prevents sbteclipse from including java source directories
-  Compile / unmanagedSourceDirectories := (Compile / scalaSource) (Seq(_)).value,
-  Test    / unmanagedSourceDirectories := (Test / scalaSource) (Seq(_)).value,
+  Compile / unmanagedSourceDirectories := (Compile / scalaSource)(Seq(_)).value,
+  Test / unmanagedSourceDirectories := (Test / scalaSource)(Seq(_)).value,
   Compile / doc / scalacOptions ++= List("-diagrams", "-implicits"),
   Compile / doc / scalacOptions ++= (baseDirectory map { d =>
     Seq("-doc-root-content", (d / "rootdoc.txt").getPath)
@@ -88,9 +88,8 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   autoAPIMappings := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Test"))),
   libraryDependencies ++= Seq(
-    "junit" % "junit" % "4.12" % "test",
-    "org.scalatest" %% "scalatest" % "3.0.1" % "test",
+    "junit"                  % "junit"      % "4.12"  % "test",
+    "org.scalatest"          %% "scalatest" % "3.0.1" % "test",
     "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test"
   )
 ) ++ GraphSonatype.settings
-

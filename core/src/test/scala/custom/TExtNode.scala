@@ -2,8 +2,7 @@ package custom
 
 import language.postfixOps
 
-import scalax.collection.GraphPredef._,
-       scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import immutable.{MyExtGraph => Graph}
 import mutable.{MyExtGraph => MutableGraph}
 
@@ -14,20 +13,20 @@ import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
 class TExtNodeTest extends RefSpec with Matchers {
-  
+
   object `inner node enriched by 'helloSuccessors' works for` {
-    
+
     def `immutable graphs` {
-      val g = Graph(1~2, 1~3)
-      (g get 1 helloSuccessors) should be ("Hello 2,3!")
+      val g = Graph(1 ~ 2, 1 ~ 3)
+      (g get 1 helloSuccessors) should be("Hello 2,3!")
     }
-    
+
     def `mutable graphs` {
-      val g = MutableGraph(1~2, 1~3)
-      val n1 = g get 1 
-      (n1 helloSuccessors) should be ("Hello 2,3!")
-      g += 1~4
-      (n1 helloSuccessors) should be ("Hello 2,3,4!")
+      val g  = MutableGraph(1 ~ 2, 1 ~ 3)
+      val n1 = g get 1
+      (n1 helloSuccessors) should be("Hello 2,3!")
+      g += 1 ~ 4
+      (n1 helloSuccessors) should be("Hello 2,3,4!")
     }
   }
 }

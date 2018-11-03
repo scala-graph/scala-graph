@@ -31,7 +31,7 @@ trait Drawable {
 
   import Drawable._
 
-  private def assertedLookup[T <: AnyRef : ClassTag](clazz: Class[T]): T = {
+  private def assertedLookup[T <: AnyRef: ClassTag](clazz: Class[T]): T = {
     val l: T = Lookup.getDefault.lookup(clazz)
     assert(l ne null, "Lookup for class " + clazz.getName + " failed")
     l
@@ -55,8 +55,8 @@ trait Drawable {
 
     def appendToWorkspace(container: Container): Unit = {
       val importController: ImportController = assertedLookup(classOf[ImportController])
-      val rootLogger = LogManager.getLogManager.getLogger("")
-      val lvl = rootLogger.getLevel
+      val rootLogger                         = LogManager.getLogManager.getLogger("")
+      val lvl                                = rootLogger.getLevel
       rootLogger.setLevel(Level.WARNING)
       importController.process(container, new DefaultProcessor, initWorkspace)
       rootLogger.setLevel(lvl)
@@ -64,7 +64,7 @@ trait Drawable {
 
     def filteredView(gm: GraphModel): GraphView = {
       val filterController: FilterController = assertedLookup(classOf[FilterController])
-      val degreeFilter = new DegreeRangeFilter
+      val degreeFilter                       = new DegreeRangeFilter
       degreeFilter.init(gm.getDirectedGraph)
       degreeFilter.setRange(new Range(1, Integer.MAX_VALUE)) //Remove nodes with degree < 1
       filterController.filter(filterController.createQuery(degreeFilter))
@@ -83,8 +83,7 @@ trait Drawable {
         if (layout.canAlgo) {
           layout.goAlgo()
           true
-        }
-        else false
+        } else false
       }
       layout.endAlgo()
     }
@@ -133,7 +132,7 @@ trait Drawable {
     */
   def toContainer[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E]): Try[Container] = Try {
 
-    val container: Container = assertedLookup(classOf[Container.Factory]).newContainer
+    val container: Container    = assertedLookup(classOf[Container.Factory]).newContainer
     val loader: ContainerLoader = container.getLoader
 
     def addNode(lbl: String = "", size: Option[Float] = None): NodeDraft = {
@@ -177,13 +176,12 @@ trait Drawable {
     var alreadyCounted: Set[(g.Node, g.Node)] = Set()
 
     g.edges.foreach { edge =>
-
       def fakeNode: NodeDraft = addNode(size = Some(0.05f))
 
       if (edge.nonHyperEdge) {
         val (node1, node2) = (edge._1, edge._2)
-        val isInverted = edge.to == node1
-        val isMultiEdge = !edge.isLooping && node1.connectionsWith(node2).size > 1
+        val isInverted     = edge.to == node1
+        val isMultiEdge    = !edge.isLooping && node1.connectionsWith(node2).size > 1
 
         def addSimple(): Unit =
           addEdge(
@@ -200,8 +198,7 @@ trait Drawable {
           if (!alreadyCounted.contains((node1, node2)) && !alreadyCounted.contains((node2, node1))) {
             alreadyCounted = alreadyCounted + ((node1, node2))
             addSimple()
-          }
-          else {
+          } else {
             val fake = fakeNode
             addEdge(
               src = (if (isInverted) node2 else node1).asNodeDraft,
@@ -216,20 +213,20 @@ trait Drawable {
             )
           }
         }
-      }
-      else {
+      } else {
         val realNodes = edge.nodes.toIterator
-        val fake = fakeNode
+        val fake      = fakeNode
         addEdge(
           src = realNodes.next.asNodeDraft,
           trg = fake,
           dir = EdgeDirection.UNDIRECTED
         )
-        realNodes.foreach(node =>
-          addEdge(
-            src = fake,
-            trg = node.asNodeDraft,
-            dir = edge.getDirection
+        realNodes.foreach(
+          node =>
+            addEdge(
+              src = fake,
+              trg = node.asNodeDraft,
+              dir = edge.getDirection
           ))
       }
     }

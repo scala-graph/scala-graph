@@ -17,9 +17,8 @@ trait Visualizer[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
   final def given[N, E[X] <: EdgeLikeIn[X]](graph: G[N, E])(test: G[N, E] => Unit): Unit = {
 
     def reThrow(tExc: TestFailedException, secondLine: String) =
-      throw tExc.modifyMessage(_.map(testMessage =>
-        s"""$testMessage
-           |$secondLine
+      throw tExc.modifyMessage(_.map(testMessage => s"""$testMessage
+                                                       |$secondLine
        """.stripMargin))
 
     try test(graph)
@@ -30,10 +29,10 @@ trait Visualizer[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
           path = "log/",
           name = (tExc.failedCodeFileName match {
             case Some(fileName) => fileName
-            case None => "failed_test"
+            case None           => "failed_test"
           }) + (tExc.failedCodeLineNumber match {
             case Some(number) => "_line" + number.toString
-            case None => ""
+            case None         => ""
           }) + ".png"
         ) match {
           case Success(f) => reThrow(tExc, s"The graph image is available at file://${f.getAbsolutePath}")

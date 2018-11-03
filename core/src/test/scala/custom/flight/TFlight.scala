@@ -3,8 +3,7 @@ package custom.flight
 import language.{higherKinds, postfixOps}
 
 import scalax.collection.{Graph, GraphLike}
-import scalax.collection.GraphPredef._,
-       scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scalax.collection.generic.GraphCoreCompanion
 
 import org.scalatest._
@@ -20,25 +19,25 @@ import scalax.collection.visualization.Visualizer
 
 @RunWith(classOf[JUnitRunner])
 class TFlightRootTest
-  	extends Suites( 
-			new TFlight[scalax.collection.immutable.Graph](scalax.collection.immutable.Graph),
-			new TFlight[scalax.collection.  mutable.Graph](scalax.collection.  mutable.Graph))
+    extends Suites(
+      new TFlight[scalax.collection.immutable.Graph](scalax.collection.immutable.Graph),
+      new TFlight[scalax.collection.mutable.Graph](scalax.collection.mutable.Graph)
+    )
 
-class TFlight[CC[N,E[X] <: EdgeLikeIn[X]] <: Graph[N,E] with GraphLike[N,E,CC]](val factory: GraphCoreCompanion[CC])
-	  extends	RefSpec
-	  with Matchers
+class TFlight[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
+    extends RefSpec
+    with Matchers
     with Visualizer[CC] {
 
   val (ham, gig) = (Airport("HAM"), Airport("GIG"))
-  val flightNo = "LH007"
-  
+  val flightNo   = "LH007"
+
   object `Custom edge 'Flight'` {
     def `proper methods` {
       val outer = Flight(ham, gig, flightNo)
       given(factory(outer)) { g =>
         val e = g.edges.head
-        e.edge.nodes.productElement(0).asInstanceOf[AnyRef].getClass should be(
-          g.nodes.head.getClass)
+        e.edge.nodes.productElement(0).asInstanceOf[AnyRef].getClass should be(g.nodes.head.getClass)
         e.from should be(ham)
         e.to should be(gig)
         e.flightNo should be(flightNo)
