@@ -65,8 +65,10 @@ final class EditingTest extends RefSpec with Matchers {
       def h = mutable.Graph.empty[Int, UnDiEdge] ++ g
       (h += 0) shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
       (h += (3 ~> 1)) shouldBe Graph(1, 2, 3, 2 ~ 3, 3 ~> 1)
-      implicit val factory = scalax.collection.edge.LDiEdge
+      /* TODO
+      implicit val factory: LDiEdge.type = scalax.collection.edge.LDiEdge
       h.addLEdge(3, 4)('red) shouldBe true
+      */
     }
     def `union ` : Unit = {
       val g = mutable.Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
@@ -79,7 +81,7 @@ final class EditingTest extends RefSpec with Matchers {
     def `endpoints ` : Unit = {
       val uE = 3 ~ 4 // UnDiEdge[Int]
       uE._1 * uE._2 shouldBe 12
-      uE.product shouldBe 12
+      uE.ends.product shouldBe 12
       (uE match {
         case n ~ m => n * m
       }) shouldBe 12
@@ -91,8 +93,9 @@ final class EditingTest extends RefSpec with Matchers {
       }) shouldBe -1
       val hE = 1 ~ 2 ~ 11 ~ 12 // HyperEdge[Int]
       hE._n(hE.arity - 1) shouldBe 12
-      hE.sum shouldBe 26
+      hE.ends.sum shouldBe 26
     }
+    /* TODO
     def `edge patterns`: Unit = {
       import scalax.collection.edge.Implicits._
       val g = Graph((1 ~+> 2)("A"), (1 ~+> 1)("AB"))
@@ -107,8 +110,9 @@ final class EditingTest extends RefSpec with Matchers {
             sum + s.outDegree + t.outDegree
       }) shouldBe 6
     }
+     */
     def `neighbors ` : Unit = {
-      val g                                = Graph(0, 1 ~ 3, 3 ~> 2)
+      val g                                = Graph[Int, AbstractUnDiEdge](0, 1 ~ 3, 3 ~> 2)
       def n(outer: Int): g.NodeT           = g get outer
       def e(outer: UnDiEdge[Int]): g.EdgeT = g get outer
       n(0).diSuccessors shouldBe Set.empty[g.NodeT]
@@ -127,8 +131,9 @@ final class EditingTest extends RefSpec with Matchers {
       g filter ((i: Int) => i >= 2) shouldBe Graph(2, 3, 5, 2 ~> 3)
       g filter g.having(node = _ >= 2) shouldBe Graph(2, 3, 5, 2 ~> 3)
       g filter g.having(edge = _.directed) shouldBe Graph(2, 3, 2 ~> 3)
-      g count g.having(node = _ >= 3, edge = _.directed) shouldBe 3
+      g count g.having(node = _ >= 3, edge = _.isDirected) shouldBe 3
     }
+    /* TODO
     def `measuring ` : Unit = {
       import scalax.collection.edge.Implicits._
       val g = Graph(1 ~ 2 % 4, 2 ~ 3 % 2, 1 ~> 3 % 5, 1 ~ 5 % 3, 3 ~ 5 % 2, 3 ~ 4 % 1, 4 ~> 4 % 1, 4 ~> 5 % 0)
@@ -140,7 +145,6 @@ final class EditingTest extends RefSpec with Matchers {
       g.degreeNodeSeq(g.InDegree) shouldBe List((4, 3), (3, 5), (2, 1), (2, 2), (2, 4))
       g.degreeNodesMap shouldBe Map(2                       -> Set(2), 3 -> Set(5, 1), 4 -> Set(3, 4))
       g.degreeNodesMap(degreeFilter = _ > 3) shouldBe Map(4 -> Set(3, 4))
-      ()
     }
     def `classifying ` : Unit = {
       val g = Graph(1, 2 ~> 3)
@@ -155,5 +159,6 @@ final class EditingTest extends RefSpec with Matchers {
       g.isHyper shouldBe false
       g.isMulti shouldBe false
     }
+    */
   }
 }

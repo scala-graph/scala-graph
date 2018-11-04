@@ -482,6 +482,7 @@ object GraphEdge {
 
     /** @param nodes must be of arity == 2 */
     protected[collection] def from[N](nodes: Product): E[N]
+
     def unapply[N](e: E[N] @uV) = if (e eq null) None else Some(e._1, e._2)
   }
 
@@ -789,17 +790,4 @@ object GraphEdge {
   /** $SHORTCUT `edge match {case source ~> target => f(source, target)}`.
     */
   val ~> = DiEdge
-}
-
-private object Test extends App {
-  import GraphEdge._, GraphPredef._
-  val hyper   = 1 ~ 2 ~ 3
-  val diHyper = 10 ~> 20 ~> 30
-  val unDi    = 1 ~ 2
-  val di      = 10 ~> 20
-
-  println(hyper)
-  println(diHyper)
-  println(unDi)
-  println(di)
 }
