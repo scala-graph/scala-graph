@@ -50,21 +50,21 @@ trait AdjacencyListGraph[
       if (edges.remove(edge)) {
         if (selfGraph.edges.initialized) {
 
-          def onLooping: Unit =
+          def onLooping(): Unit =
             edges.find((e: EdgeT) => e.isLooping).fold(ifEmpty = _aHook = None)((e: EdgeT) => _aHook = Some(this -> e))
 
-          def onNonLooping: Unit = edge withTargets (t =>
+          def onNonLooping(): Unit = edge.targets foreach (t =>
             edges
               .find((e: EdgeT) => e.hasTarget((n: NodeT) => n eq t))
               .fold[Unit](ifEmpty = diSucc remove t)((e: EdgeT) => if (e hasSource this) diSucc put (t, e)))
 
           if (edge.isHyperEdge)
             if (edge.isLooping) {
-              onLooping
-              onNonLooping
-            } else onNonLooping
-          else if (edge.isLooping) onLooping
-          else onNonLooping
+              onLooping()
+              onNonLooping()
+            } else onNonLooping()
+          else if (edge.isLooping) onLooping()
+          else onNonLooping()
         }
         true
       } else false

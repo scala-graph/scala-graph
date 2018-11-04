@@ -89,7 +89,7 @@ trait AdjacencyListBase[
       val filter =
         if (edge.isHyperEdge && edge.isDirected) edge.hasSource((_: NodeT) eq this)
         else true
-      edge withTargets (n => if ((n ne this) && filter) add(n))
+      edge.targets foreach (n => if ((n ne this) && filter) add(n))
     }
 
     final def diPredecessors: Set[NodeT] = {
@@ -103,7 +103,7 @@ trait AdjacencyListBase[
     final def hasPredecessors: Boolean = edges exists (_.hasSource((n: NodeT) => n ne this))
 
     final protected[collection] def addDiPredecessors(edge: EdgeT, add: (NodeT) => Unit) {
-      edge withSources (n => if (n ne this) add(n))
+      edge.sources foreach (n => if (n ne this) add(n))
     }
 
     final def neighbors: Set[NodeT] = {
