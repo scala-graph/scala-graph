@@ -680,7 +680,7 @@ object GraphEdge {
     override def isAt(pred: N => Boolean) = pred(this._1) || pred(this._2)
   }
   object AbstractEdge {
-    def unapply[N](e: AbstractEdge[N] @uV) = if (e eq null) None else Some(e._1, e._2)
+    def unapply[N](e: AbstractEdge[N] @uV): Option[(N, N)] = if (e eq null) None else Some(e._1, e._2)
   }
 
   trait AbstractUnDiEdge[+N] extends AbstractHyperEdge[N] with AbstractEdge[N] with EqUnDi {

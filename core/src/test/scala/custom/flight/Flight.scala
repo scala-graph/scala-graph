@@ -31,10 +31,13 @@ case class Flight[+N](fromAirport: N,
                       flightNo: String,
                       departure: DayTime = DayTime(0, 0),
                       duration: Duration = Duration(0, 0))
-    extends DiEdge[N](NodeProduct(fromAirport, toAirport))
+    extends AbstractDiEdge[N]
     with ExtendedKey[N]
     with EdgeCopy[Flight]
     with OuterEdge[N, Flight] {
+
+  def source: N = fromAirport
+  def target: N = toAirport
 
   private def this(nodes: Product, flightNo: String, departure: DayTime, duration: Duration) {
     this(
@@ -63,6 +66,6 @@ object Flight {
   implicit final class ImplicitEdge[A <: Airport](val e: DiEdge[A]) extends AnyVal {
     def ##(flightNo: String) = new Flight[A](e.source, e.target, flightNo)
     def ##(flightNo: String, departure: DayTime = DayTime(0, 0), duration: Duration = Duration(0, 0)) =
-      new Flight[A](e.nodes, flightNo, departure, duration)
+      new Flight[A](e.ends, flightNo, departure, duration)
   }
 }

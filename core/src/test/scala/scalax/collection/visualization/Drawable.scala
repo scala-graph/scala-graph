@@ -21,8 +21,8 @@ import org.gephi.preview.api.PreviewProperty._
 import org.gephi.preview.types.{DependantColor, EdgeColor}
 import org.gephi.project.api.{ProjectController, Workspace}
 import org.openide.util.Lookup
-
 import scalax.collection.Graph
+import scalax.collection.GraphEdge.AbstractEdge
 import scalax.collection.GraphPredef.EdgeLikeIn
 
 /** Facilitates drawing any graph as an image.
@@ -179,7 +179,9 @@ trait Drawable {
       def fakeNode: NodeDraft = addNode(size = Some(0.05f))
 
       if (edge.nonHyperEdge) {
-        val (node1, node2) = (edge._1, edge._2)
+        val (node1, node2) = edge match {
+          case AbstractEdge(_1: g.NodeT @unchecked, _2: g.NodeT @unchecked) => (_1, _2)
+        }
         val isInverted     = edge.to == node1
         val isMultiEdge    = !edge.isLooping && node1.connectionsWith(node2).size > 1
 

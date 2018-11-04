@@ -46,25 +46,26 @@ class CustomizingTest extends RefSpec with Matchers {
       }
       val (ham, ny) = (Airport("HAM"), Airport("JFK"))
 
-      class Flight[N](nodes: Product, val flightNo: String)
-          extends DiEdge[N](nodes)
+      case class Flight[+N](fromAirport: N, toAirport: N, flightNo: String)
+          extends AbstractDiEdge[N]
           with ExtendedKey[N]
           with EdgeCopy[Flight]
           with OuterEdge[N, Flight] {
 
+        def source: N = fromAirport
+        def target: N = toAirport
+
         def keyAttributes = Seq(flightNo)
+
         override def copy[NN](newNodes: Product) =
-          new Flight[NN](newNodes, flightNo)
-      }
-      object Flight {
-        def apply(from: Airport, to: Airport, no: String) =
-          new Flight[Airport](NodeProduct(from, to), no)
-        def unapply(e: Flight[Airport]): Option[(Airport, Airport, String)] =
-          if (e eq null) None else Some(e.from, e.to, e.flightNo)
+          new Flight[NN](
+            newNodes.productElement(0).asInstanceOf[NN],
+            newNodes.productElement(0).asInstanceOf[NN],
+            flightNo)
       }
 
       implicit class FlightAssoc[A <: Airport](val e: DiEdge[A]) {
-        @inline def ##(flightNo: String) = new Flight[A](e.nodes, flightNo) with OuterEdge[A, Flight]
+        @inline def ##(flightNo: String) = new Flight[A](e.source, e.target, flightNo) with OuterEdge[A, Flight]
       }
 
       val flight = ham ~> ny ## "007"
