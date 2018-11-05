@@ -31,8 +31,8 @@ class TOp[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
   }
   def `difference ` {
     val expected = factory(1 ~ 2)
-    g diff h should be(expected)
-    g -- h should be(expected)
+    given(g) { _ diff h should be(expected) }
+    given(h) { g -- _ should be(expected) }
   }
   def `intersection ` {
     val expected = factory(3 ~ 5, 4)
@@ -71,3 +71,4 @@ class TMutableOp extends RefSpec with Matchers {
     (mG &= iH) should be(expected)
   }
 }
+
