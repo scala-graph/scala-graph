@@ -10,21 +10,24 @@ import org.scalatest.refspec.RefSpec
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
+import scalax.collection.visualization.Visualizer
+
 @RunWith(classOf[JUnitRunner])
 class TOpRootTest
     extends Suites(new TOp[immutable.Graph](immutable.Graph), new TOp[mutable.Graph](mutable.Graph), new TMutableOp)
 
 class TOp[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
-    with Matchers {
+    with Matchers
+    with Visualizer[CC] {
 
   val g = factory(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
   val h = factory(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
 
   def `union ` {
     val expected = factory(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5, 3 ~ 4, 4 ~ 6, 5 ~ 6)
-    g union h should be(expected)
-    g ++ h should be(expected)
+    given(g) { _ union h should be(expected) }
+    given(h) { g ++ _ should be(expected) }
   }
   def `difference ` {
     val expected = factory(1 ~ 2)
@@ -33,8 +36,8 @@ class TOp[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
   }
   def `intersection ` {
     val expected = factory(3 ~ 5, 4)
-    g intersect h should be(expected)
-    g & h should be(expected)
+    given(g) { _ intersect h should be(expected) }
+    given(h) { g & _ should be(expected) }
   }
 }
 
