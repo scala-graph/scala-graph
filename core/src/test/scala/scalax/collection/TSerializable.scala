@@ -41,7 +41,7 @@ final class TSerializable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
       val exec = newTest
       exec.save[N, E](g)
       val r = exec.restore[N, E]
-      given(g) { r should be(_) }
+      given(r) { _ should be(g) }
       r
     }
   }

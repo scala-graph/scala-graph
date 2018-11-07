@@ -26,18 +26,18 @@ class TOp[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
 
   def `union ` {
     val expected = factory(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5, 3 ~ 4, 4 ~ 6, 5 ~ 6)
-    given(g) { _ union h should be(expected) }
-    given(h) { g ++ _ should be(expected) }
+    given(g union h) { _ should be(expected) }
+    given(g ++ h) { _ should be(expected) }
   }
   def `difference ` {
     val expected = factory(1 ~ 2)
-    given(g) { _ diff h should be(expected) }
-    given(h) { g -- _ should be(expected) }
+    given(g diff h) { _ should be(expected) }
+    given(g -- h) { _ should be(expected) }
   }
   def `intersection ` {
     val expected = factory(3 ~ 5, 4)
-    given(g) { _ intersect h should be(expected) }
-    given(h) { g & _ should be(expected) }
+    given(g intersect h) { _ should be(expected) }
+    given(g & h) { _ should be(expected) }
   }
 }
 
@@ -71,4 +71,3 @@ class TMutableOp extends RefSpec with Matchers {
     (mG &= iH) should be(expected)
   }
 }
-
