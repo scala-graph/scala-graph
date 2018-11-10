@@ -12,6 +12,8 @@ import org.scalatest._
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
+import scalax.collection.visualization.Visualizer
+
 @RunWith(classOf[JUnitRunner])
 class TSerializableRootTest
     extends Suites(new TSerializable[immutable.Graph](immutable.Graph), new TSerializable[mutable.Graph](mutable.Graph))
@@ -22,7 +24,8 @@ final class TSerializable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
     val factory: GraphCoreCompanion[CC])
     extends FlatSpec
     with Matchers
-    with BeforeAndAfterEach {
+    with BeforeAndAfterEach
+    with Visualizer[CC] {
   private val factoryName     = factory.getClass.getName
   private val isImmutableTest = factoryName contains "immutable"
 
@@ -38,7 +41,7 @@ final class TSerializable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
       val exec = newTest
       exec.save[N, E](g)
       val r = exec.restore[N, E]
-      r should be(g)
+      given(r) { _ should be(g) }
       r
     }
   }
@@ -128,51 +131,56 @@ final class TSerializable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
       bos.close
     }
 
-    val g    = factory(e)
-    val back = store.test[MyNode, WLDiEdge](g)
+    given(factory(e)) { g =>
+      val back = store.test[MyNode, WLDiEdge](g)
 
-    back.graphSize should be(1)
+      back.graphSize should be(1)
 
-    val inner_1 = (back get n1)
-    inner_1.diSuccessors should have size (1)
-    inner_1.diSuccessors.head should be(n2)
+      val inner_1 = (back get n1)
+      inner_1.diSuccessors should have size (1)
+      inner_1.diSuccessors.head should be(n2)
 
-    val backEdge = back.edges.head
-    backEdge.source.s should be(List(a1, b1))
-    backEdge.target.s should be(List(a2, b2))
-    backEdge.label should be(label)
+      val backEdge = back.edges.head
+      backEdge.source.s should be(List(a1, b1))
+      backEdge.target.s should be(List(a2, b2))
+      backEdge.label should be(label)
+    }
   }
   "After calling diSuccessors the graph" should work in {
     import Data.elementsOfDi_1
-    val g = factory(elementsOfDi_1: _*)
-    g.nodes.head.diSuccessors
-    val back = store.test[Int, DiEdge](g)
-    back should be(g)
+    given(factory(elementsOfDi_1: _*)) { g =>
+      g.nodes.head.diSuccessors
+      val back = store.test[Int, DiEdge](g)
+      back should be(g)
+    }
   }
   "After calling pathTo the graph" should work in {
     import Data.elementsOfDi_1
-    val g = factory(elementsOfDi_1: _*)
-    g.nodes.head.diSuccessors
-    val n = g.nodes.head
-    n.pathTo(n)
-    val back = store.test[Int, DiEdge](g)
-    back should be(g)
+    given(factory(elementsOfDi_1: _*)) { g =>
+      g.nodes.head.diSuccessors
+      val n = g.nodes.head
+      n.pathTo(n)
+      val back = store.test[Int, DiEdge](g)
+      back should be(g)
+    }
   }
   "A deserialized graph" should "be traversable" in {
     import Data.elementsOfDi_1
-    val g                           = factory(elementsOfDi_1: _*)
-    val back                        = store.test[Int, DiEdge](g)
-    def op(g: CC[Int, DiEdge]): Int = g.nodes.head.outerNodeTraverser.size
-    op(back) should be(op(g))
+    given(factory(elementsOfDi_1: _*)) { g =>
+      val back                        = store.test[Int, DiEdge](g)
+      def op(g: CC[Int, DiEdge]): Int = g.nodes.head.outerNodeTraverser.size
+      op(back) should be(op(g))
+    }
   }
   "A deserialized graph" should "have the same successors" in {
     import Data.elementsOfDi_1
-    val g = factory(elementsOfDi_1: _*)
-    def outerSuccessors(g: CC[Int, DiEdge]) =
-      g.nodes map (innerNode => innerNode.value -> innerNode.diSuccessors.map(_.value))
-    val diSuccBefore = outerSuccessors(g)
-    val back         = store.test[Int, DiEdge](g)
-    outerSuccessors(back) should be(diSuccBefore)
+    given(factory(elementsOfDi_1: _*)) { g =>
+      def outerSuccessors(g: CC[Int, DiEdge]) =
+        g.nodes map (innerNode => innerNode.value -> innerNode.diSuccessors.map(_.value))
+      val diSuccBefore = outerSuccessors(g)
+      val back         = store.test[Int, DiEdge](g)
+      outerSuccessors(back) should be(diSuccBefore)
+    }
   }
 
   trait EdgeStore {
@@ -204,8 +212,9 @@ final class TSerializable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
 
   "A graph of [Int,WUnDiEdge]" should work in {
     import edge.WUnDiEdge, Data.elementsOfWUnDi_2
-    val touch = WUnDiEdge(1, 1)(1)
-    new EdgeByteArray test [Int, WUnDiEdge] (elementsOfWUnDi_2)
+    given(factory(elementsOfWUnDi_2: _*)) { _ =>
+      new EdgeByteArray test[Int, WUnDiEdge] (elementsOfWUnDi_2)
+    }
   }
 }
 
