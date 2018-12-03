@@ -14,17 +14,17 @@ import org.junit.runner.RunWith
 
 /** This wrapper trait enables to transparently pass `GraphCompanion` objects with
   *  non-default configuration parameters to tests in a type-safe way. */
-trait ConfigWrapper[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] {
+trait ConfigWrapper[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]] {
   val companion: GraphCompanion[CC]
   implicit val config: companion.Config
-  def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: companion.Config): CC[N, E] =
+  def empty[N, E[X] <: EdgeLike[X]](implicit edgeT: ClassTag[E[N]], config: companion.Config): CC[N, E] =
     companion.empty
-  def apply[N, E[X] <: EdgeLikeIn[X]](elems: Param[N, E]*)(implicit edgeT: ClassTag[E[N]], config: companion.Config) =
+  def apply[N, E[X] <: EdgeLike[X]](elems: Param[N, E]*)(implicit edgeT: ClassTag[E[N]], config: companion.Config) =
     companion(elems: _*)
-  def from[N, E[X] <: EdgeLikeIn[X]](edges: collection.Iterable[E[N]])(implicit edgeT: ClassTag[E[N]],
+  def from[N, E[X] <: EdgeLike[X]](edges: collection.Iterable[E[N]])(implicit edgeT: ClassTag[E[N]],
                                                                        config: companion.Config) =
     companion.from(edges = edges)
-  def from[N, E[X] <: EdgeLikeIn[X]](nodes: collection.Iterable[N], edges: collection.Iterable[E[N]])(
+  def from[N, E[X] <: EdgeLike[X]](nodes: collection.Iterable[N], edges: collection.Iterable[E[N]])(
       implicit edgeT: ClassTag[E[N]],
       config: companion.Config) = companion.from(nodes, edges)
 }
@@ -167,7 +167,7 @@ class TEditMutable extends RefSpec with Matchers {
   }
 }
 
-class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: ConfigWrapper[CC])
+class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: ConfigWrapper[CC])
     extends RefSpec
     with Matchers {
 

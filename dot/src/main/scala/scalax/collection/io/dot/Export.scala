@@ -6,7 +6,7 @@ import scala.collection.mutable.{Map => MMap, Set => MSet, StringBuilder}
 import scala.util.matching.Regex
 
 import mutable.{Graph => MGraph}
-import GraphPredef.EdgeLikeIn
+import GraphPredef.EdgeLike
 import GraphEdge.DiEdge
 
 /** Contains methods to transform `graph` to the DOT language.
@@ -16,7 +16,7 @@ import GraphEdge.DiEdge
   * @define NORMALLY Normally, this method will be called internally by `toDot`
   *         but it may also be used for test purposes.
   */
-class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N, E]) {
+class Export[N, E[X] <: EdgeLike[X]](graph: Graph[N, E]) {
 
   /** Creates a DOT string by calling the node and edge transformers for the elements
     * of `graph`.

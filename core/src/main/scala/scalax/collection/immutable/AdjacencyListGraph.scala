@@ -3,16 +3,15 @@ package immutable
 
 import language.higherKinds
 
-import GraphPredef.EdgeLikeIn
-import GraphEdge.OrderedEndpoints
-import mutable.ArraySet
+import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.mutable.ArraySet
 
 /** Implements an incident list based immutable graph representation.
   *
   * @author Peter Empen
   */
 trait AdjacencyListGraph[
-    N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with AdjacencyListBase[N, E, This] { selfGraph: This[N, E] =>
 
@@ -36,7 +35,7 @@ trait AdjacencyListGraph[
 
     protected[AdjacencyListGraph] def add(edge: EdgeT): Boolean = {
       var added = false
-      edge foreach { n =>
+      edge.ends foreach { n =>
         val inColl = coll findElem n getOrElse { coll += n; n }
         added = (inColl add edge) || added
       }
@@ -47,11 +46,7 @@ trait AdjacencyListGraph[
   }
   override def nodes: NodeSetT
 
-  type EdgeT = EdgeBase
   @inline final protected def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
-  final override protected def newEdge(innerEdge: E[NodeT]): EdgeT =
-    if (innerEdge.isInstanceOf[OrderedEndpoints]) new EdgeT(innerEdge) with OrderedEndpoints
-    else new EdgeT(innerEdge)
 
   type EdgeSetT = EdgeSet
   class EdgeSet extends super.EdgeSet {
@@ -79,30 +74,16 @@ trait AdjacencyListGraph[
     if (nodes contains Node(n)) this
     else copy(nodes.toOuter.toBuffer += n, edges.toOuter)
 
-  protected def +#(e: E[N]) =
-    if (edges contains Edge(e)) this
-    else copy(nodes.toOuter, edges.toOuter.toBuffer += e)
+  def +(e: E[N]) =
+    if (edges contains Edge(e)) copy(nodes.toOuter, edges.toOuter.toBuffer -= e)
+    else this
 
   def -(n: N) = nodes find (nf => nf.value == n) match {
     case Some(nf) => copy(nodes.toOuter.toBuffer -= n, edges.toOuter.toBuffer --= (nf.edges map (_.toOuter)))
     case None     => this
   }
 
-  def -?(n: N) = nodes find n match {
-    case Some(nf) =>
-      val newNodes = nodes.toOuter.toBuffer
-      val newEdges = edges.toOuter.toBuffer
-      nodes.subtract(nf, false, nf => newNodes -= n, nf => newEdges --= (nf.edges map (_.toOuter)))
-      copy(newNodes, newEdges)
-    case None => this
-  }
-
-  protected def -#(e: E[N]) =
+  protected def -(e: E[N]) =
     if (edges contains Edge(e)) copy(nodes.toOuter, edges.toOuter.toBuffer -= e)
     else this
-
-  protected def -!#(e: E[N]) = edges find (ef => ef == e) match {
-    case Some(ef) => copy(nodes.toOuter.toBuffer --= ef.privateNodes map (n => n.value), edges.toOuter.toBuffer -= e)
-    case None     => this
-  }
 }

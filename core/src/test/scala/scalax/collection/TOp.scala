@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
 class TOpRootTest
     extends Suites(new TOp[immutable.Graph](immutable.Graph), new TOp[mutable.Graph](mutable.Graph), new TMutableOp)
 
-class TOp[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
+class TOp[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers {
 

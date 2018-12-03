@@ -13,10 +13,8 @@ import scalax.collection.GraphPredef._,
  */
 class TripleDiEdge[N] private (nodes: Product, val predicate: Predicate)
   extends DiEdge[N](nodes)
-  with    ExtendedKey[N]
-  with    EdgeCopy[TripleDiEdge]
-  with    OuterEdge[N,TripleDiEdge] 
-{
+  with    ExtendedKey[N] {
+
   private def node(i: Int): N = iterator.drop(i).next match {
     case inner: Graph[N,_]#NodeT @unchecked => inner.value
     case outer => outer
@@ -25,9 +23,6 @@ class TripleDiEdge[N] private (nodes: Product, val predicate: Predicate)
   def `object` = node(1).asInstanceOf[Object]
 
   def keyAttributes = predicate :: Nil
-
-  override def copy[NN](newNodes: Product) =
-    new TripleDiEdge[NN](newNodes, predicate)
 
   override def toString = s"($subject, $predicate, ${`object`})"
 }

@@ -12,10 +12,10 @@ sealed trait BinaryOp extends Op
 case object And       extends BinaryOp
 case object Or        extends BinaryOp
 
-abstract class ConstraintOp[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E], val operator: Op)
+abstract class ConstraintOp[N, E[X] <: EdgeLike[X]](self: Graph[N, E], val operator: Op)
     extends Constraint[N, E](self)
 
-class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E],
+class ConstraintBinaryOp[N, E[X] <: EdgeLike[X]](override val self: Graph[N, E],
                                                    operator: BinaryOp,
                                                    left: Constraint[N, E],
                                                    right: Constraint[N, E])
@@ -37,7 +37,7 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E
       }
       this
     }
-    override def get[N, E[X] <: EdgeLikeIn[X]](op: Constraint[N, E]) =
+    override def get[N, E[X] <: EdgeLike[X]](op: Constraint[N, E]) =
       results.asInstanceOf[MMap[Constraint[N, E], PreCheckResult]] get op
   }
   protected def eval(left: Constraint[N, E],
@@ -145,6 +145,6 @@ class ConstraintCompanionBinaryOp(operator: BinaryOp,
                                   right: ConstraintCompanion[Constraint])
     extends ConstraintCompanionOp(operator) {
 
-  def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) =
+  def apply[N, E[X] <: EdgeLike[X]](self: Graph[N, E]) =
     new ConstraintBinaryOp[N, E](self, operator, left(self), right(self))
 }

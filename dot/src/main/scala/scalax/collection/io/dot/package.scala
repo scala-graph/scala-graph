@@ -4,7 +4,7 @@ package io
 import language.{higherKinds, implicitConversions}
 import mutable.{Graph => MGraph}
 
-import GraphPredef.EdgeLikeIn
+import GraphPredef.EdgeLike
 import GraphEdge.DiEdge
 
 /** Enables to export `Graph` instances to the DOT language by means of user-defined
@@ -24,16 +24,16 @@ package object dot {
   protected[dot] def DotAST = MGraph
 
   /** Enables to call `<g>.toDot` with `<g>` being a `Graph` instance. */
-  implicit def graph2DotExport[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N, E]): Export[N, E] =
+  implicit def graph2DotExport[N, E[X] <: EdgeLike[X]](graph: Graph[N, E]): Export[N, E] =
     new Export[N, E](graph)
 
-  type NodeTransformer[N, E[X] <: EdgeLikeIn[X]] =
+  type NodeTransformer[N, E[X] <: EdgeLike[X]] =
     Graph[N, E]#NodeT => Option[(DotGraph, DotNodeStmt)]
 
-  type EdgeTransformer[N, E[X] <: EdgeLikeIn[X]] =
+  type EdgeTransformer[N, E[X] <: EdgeLike[X]] =
     Graph[N, E]#EdgeT => Option[(DotGraph, DotEdgeStmt)]
 
-  type HyperEdgeTransformer[N, E[X] <: EdgeLikeIn[X]] =
+  type HyperEdgeTransformer[N, E[X] <: EdgeLike[X]] =
     Graph[N, E]#EdgeT => Traversable[(DotGraph, DotEdgeStmt)]
 
   object implicits {

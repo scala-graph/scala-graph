@@ -32,9 +32,7 @@ case class Flight[+N](fromAirport: N,
                       departure: DayTime = DayTime(0, 0),
                       duration: Duration = Duration(0, 0))
     extends AbstractDiEdge[N]
-    with ExtendedKey[N]
-    with EdgeCopy[Flight]
-    with OuterEdge[N, Flight] {
+    with ExtendedKey[N] {
 
   def source: N = fromAirport
   def target: N = toAirport
@@ -51,7 +49,6 @@ case class Flight[+N](fromAirport: N,
   def keyAttributes                         = Seq(flightNo)
   override def weight                       = duration.toInt
   def airline                               = flightNo substring (0, 2)
-  override def copy[NN](newNodes: Product)  = new Flight[NN](newNodes, flightNo, departure, duration)
   override protected def attributesToString = s" ($flightNo $departure $duration)"
 }
 

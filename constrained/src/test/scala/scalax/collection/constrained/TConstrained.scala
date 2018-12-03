@@ -44,7 +44,7 @@ class TConstrainedMutable extends RefSpec with Matchers {
   }
 }
 
-class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class TConstrained[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphConstrainedCompanion[CC])
     extends RefSpec
     with Matchers {
@@ -124,7 +124,7 @@ private object UserConstraints {
   val postCheck     = PreCheckResult(PostCheck)
   val checkComplete = PreCheckResult(Complete)
   /* Constrains nodes to even numbers of type Int relying solely on pre-checks. */
-  class EvenNode[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
+  class EvenNode[N, E[X] <: EdgeLike[X]](override val self: Graph[N, E])
       extends Constraint[N, E](self)
       with ConstraintHandlerMethods[N, E] {
     def preAdd(node: N) = PreCheckResult.complete(node match {
@@ -138,23 +138,23 @@ private object UserConstraints {
     def preSubtract(edge: self.EdgeT, simple: Boolean) = checkComplete
   }
   object EvenNode extends ConstraintCompanion[EvenNode] {
-    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) =
+    def apply[N, E[X] <: EdgeLike[X]](self: Graph[N, E]) =
       new EvenNode[N, E](self)
   }
 
   /* Same as EvenNode but throws an exception on constraint violation. */
-  class EvenNodeByException[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extends EvenNode[N, E](self) {
+  class EvenNodeByException[N, E[X] <: EdgeLike[X]](override val self: Graph[N, E]) extends EvenNode[N, E](self) {
     override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: Graph[N, E]) =
       throw new IllegalArgumentException("Non-integer or uneven node found.")
   }
   object EvenNodeByException extends ConstraintCompanion[EvenNode] {
-    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) =
+    def apply[N, E[X] <: EdgeLike[X]](self: Graph[N, E]) =
       new EvenNodeByException[N, E](self)
   }
 
   /* Constrains the graph to nodes having a minimal degree of `min`
    * utilizing pre- and post-checks. */
-  abstract class MinDegree[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
+  abstract class MinDegree[N, E[X] <: EdgeLike[X]](override val self: Graph[N, E])
       extends Constraint[N, E](self)
       with ConstraintHandlerMethods[N, E] {
     // the required minimal degree
@@ -187,7 +187,7 @@ private object UserConstraints {
     )
     def preSubtract(edge: self.EdgeT, simple: Boolean) = PreCheckResult.complete(
       if (simple)
-        edge.nodes forall (_.degree > min)
+        edge.ends forall (_.degree > min)
       else
         ((for (n <- edge) yield n.neighbors).flatten filterNot (edge contains _)) forall (_.degree > min)
     )
@@ -208,7 +208,7 @@ private object UserConstraints {
             if (simple) nodes
             else nodes ++ (edges.map(_.privateNodes).flatten)
           nodes.map(_.neighbors).flatten ++
-            edges.map(_.nodes).flatten -- nodesToSubtract
+            edges.map(_.ends).flatten -- nodesToSubtract
         }
       )
     override def postSubtract(newGraph: Graph[N, E],
@@ -229,7 +229,7 @@ private object UserConstraints {
           "edges = " + refusedEdges)
   }
   object MinDegree_2 extends ConstraintCompanion[MinDegree] {
-    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) =
+    def apply[N, E[X] <: EdgeLike[X]](self: Graph[N, E]) =
       new MinDegree[N, E](self) {
         val min = 2
       }

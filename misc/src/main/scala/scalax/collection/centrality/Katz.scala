@@ -10,7 +10,7 @@ import scalax.collection.Graph
  */
 object Katz {
      
-  implicit class Centrality[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N, E]) {
+  implicit class Centrality[N, E[X] <: EdgeLike[X]](val g: Graph[N, E]) {
   
     /** Calculates the centrality of each node contained in `nodes`.
      */
@@ -54,15 +54,15 @@ object Katz {
     }
   }
 
-  def centralityMapOrdering[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E] with Singleton]
+  def centralityMapOrdering[N, E[X] <: EdgeLike[X], G <: Graph[N, E] with Singleton]
      (centralities: Map[G#NodeT, Float]): Ordering[(G#NodeT, Float)] =
     new Ordering[(G#NodeT, Float)] {
       def compare(x: (G#NodeT, Float), y: (G#NodeT, Float)) = x._2 compare y._2
     }
 
-  type ProjectionNodeCentrality[N, E[X] <: EdgeLikeIn[X]] = (Graph[N,E]#NodeT, Float)
+  type ProjectionNodeCentrality[N, E[X] <: EdgeLike[X]] = (Graph[N,E]#NodeT, Float)
 
-  def centralityProjectionMapOrdering[N, E[X] <: EdgeLikeIn[X]]
+  def centralityProjectionMapOrdering[N, E[X] <: EdgeLike[X]]
      (centralities: Map[_ <: Graph[N,E]#NodeT, Float]): Ordering[ProjectionNodeCentrality[N,E]] =
     new Ordering[ProjectionNodeCentrality[N,E]] {
       def compare(x: ProjectionNodeCentrality[N,E], y: ProjectionNodeCentrality[N,E]) =

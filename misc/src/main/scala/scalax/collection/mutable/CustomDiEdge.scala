@@ -10,13 +10,10 @@ import LabelType.L
 
 /** Labeled directed edge with mutable label of a given type L. */
 class CustomDiEdge[+N](nodes: Product)(private var _label: L)
-    extends DiEdge   [N](nodes)
-    with    EdgeCopy [CustomDiEdge]
-    with    OuterEdge[N,CustomDiEdge] {
+    extends DiEdge   [N](nodes) {
 
   override def label: L = _label
   def label_=(newLabel: L) = _label = newLabel
-  override def copy[NN](newNodes: Product) = new CustomDiEdge[NN](newNodes)(_label)
 }
 
 object CustomDiEdge {

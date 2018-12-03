@@ -3,7 +3,7 @@ package mutable
 
 import scala.util.Random
 import scala.collection.AbstractIterator
-import scala.collection.mutable.{Builder, GrowingBuilder, HashSet, Set, SetLike}
+import scala.collection.mutable.{GrowingBuilder, HashSet, Set, SetLike}
 import scala.collection.generic.{GenericSetTemplate, MutableSetFactory}
 
 import interfaces.ExtSetMethods

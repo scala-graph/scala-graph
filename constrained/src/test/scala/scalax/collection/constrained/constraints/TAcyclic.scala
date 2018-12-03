@@ -36,7 +36,7 @@ class TAcyclicMutable extends RefSpec with Matchers {
   }
 }
 
-class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class TAcyclic[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphConstrainedCompanion[CC])
     extends RefSpec
     with Matchers {
@@ -77,7 +77,7 @@ class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
 }
 object AcyclicWithException {
   object Acyclic extends ConstraintCompanion[Acyclic] {
-    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) =
+    def apply[N, E[X] <: EdgeLike[X]](self: Graph[N, E]) =
       new Acyclic[N, E](self) {
         override def onAdditionRefused(refusedNodes: Traversable[N],
                                        refusedEdges: Traversable[E[N]],

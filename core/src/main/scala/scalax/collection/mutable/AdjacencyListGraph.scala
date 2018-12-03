@@ -3,23 +3,22 @@ package mutable
 
 import language.higherKinds
 
-import GraphPredef.EdgeLikeIn
-import GraphEdge.OrderedEndpoints
-import immutable.AdjacencyListBase
+import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.immutable.AdjacencyListBase
 
 /** Implements an incident list based mutable graph representation.
   *
   * @author Peter Empen
   */
 trait AdjacencyListGraph[
-    N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with AdjacencyListBase[N, E, This] {
   selfGraph: This[N, E] =>
 
   type NodeT <: InnerNodeImpl
-  abstract class InnerNodeImpl(value: N, hints: ArraySet.Hints)
-      extends NodeBase(value)
+  abstract class InnerNodeImpl(outer: N, hints: ArraySet.Hints)
+      extends NodeBase(outer)
       with super[GraphLike].InnerNode
       with InnerNode { this: NodeT =>
 
@@ -72,12 +71,12 @@ trait AdjacencyListGraph[
 
   type NodeSetT = NodeSet
   class NodeSet extends super[GraphLike].NodeSet with super.NodeSet {
-    override def add(node: NodeT)                = coll add node
+    override def add(node: NodeT): Boolean       = coll add node
     @inline final def +=(node: NodeT): this.type = { add(node); this }
 
     protected[collection] def add(edge: EdgeT): Boolean = {
       var someNew = false
-      edge foreach { n =>
+      edge.ends foreach { n =>
         val inColl = coll findElem n getOrElse { coll += n; n }
         someNew = (inColl add edge) || someNew
       }
@@ -88,7 +87,7 @@ trait AdjacencyListGraph[
 
     protected[collection] def upsert(edge: EdgeT): Boolean = {
       var someNew = false
-      edge foreach { n =>
+      edge.ends foreach { n =>
         val inColl = coll findElem n getOrElse { coll += n; n }
         someNew = (inColl upsert edge) || someNew
       }
@@ -96,7 +95,7 @@ trait AdjacencyListGraph[
     }
 
     protected[collection] def remove(edge: EdgeT): Boolean =
-      edge.nodes.toSet forall (n => (coll findElem n) exists (_ remove edge))
+      edge.ends.toSet forall (n => (coll findElem n) exists (_ remove edge))
 
     protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }
     override protected def minus(node: NodeT): Unit      = coll -= node
@@ -106,23 +105,7 @@ trait AdjacencyListGraph[
   }
   override def nodes: NodeSetT
 
-  type EdgeT = EdgeImpl
-
   @inline final def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
-
-  @SerialVersionUID(7972L)
-  class EdgeImpl(override val edge: E[NodeT]) extends EdgeBase(edge) {
-    def remove: Boolean = edges remove this
-
-    def removeWithNodes(edge: E[N]) =
-      if (edges remove this) {
-        selfGraph.nodes --= privateNodes; true
-      } else false
-  }
-
-  @inline final override protected def newEdge(innerEdge: E[NodeT]): EdgeT =
-    if (innerEdge.isInstanceOf[OrderedEndpoints]) new EdgeT(innerEdge) with OrderedEndpoints
-    else new EdgeT(innerEdge)
 
   type EdgeSetT = EdgeSet
   class EdgeSet extends super[GraphLike].EdgeSet with super.EdgeSet {

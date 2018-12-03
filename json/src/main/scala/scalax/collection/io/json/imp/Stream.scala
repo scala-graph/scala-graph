@@ -13,7 +13,7 @@ import descriptor._
 import error.JsonGraphError._, error.JsonGraphWarning._
 
 object Stream {
-  def createOuterElems[N, E[N] <: EdgeLikeIn[N]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N] /*,
+  def createOuterElems[N, E[N] <: EdgeLike[N]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N] /*,
       failures:   Failures*/ ): (Iterable[N], Iterable[E[N]]) = {
 
     /* Nodes must be processed first to be able to retrieve their id's which are

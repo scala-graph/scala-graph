@@ -6,7 +6,7 @@ import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
 import scalax.collection.GraphPredef.{
-  seqToGraphParam, EdgeLikeIn, InParam, InnerEdgeParam, InnerNodeParam, OutParam, OuterEdge, OuterNode, Param
+  seqToGraphParam, EdgeLike, InParam, InnerEdgeParam, InnerNodeParam, OutParam, OuterEdge, OuterNode, Param
 }
 import scalax.collection.GraphEdge.{EdgeCompanionBase, EdgeLike}
 import scalax.collection.{GraphLike => SimpleGraphLike, Graph => SimpleGraph}
@@ -29,8 +29,8 @@ import config._
   * @author Peter Empen
   */
 trait GraphLike[N,
-                E[X] <: EdgeLikeIn[X],
-                +This[X, Y[X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[Param[X, Y]] with Graph[X, Y]]
+                E[X] <: EdgeLike[X],
+                +This[X, Y[X] <: EdgeLike[X]] <: GraphLike[X, Y, This] with Set[Param[X, Y]] with Graph[X, Y]]
     extends SimpleGraphLike[N, E, This]
     with Constrained[N, E] {
   this: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
@@ -131,7 +131,7 @@ trait GraphLike[N,
   *
   * @author Peter Empen
   */
-trait Graph[N, E[X] <: EdgeLikeIn[X]] extends Set[Param[N, E]] with SimpleGraph[N, E] with GraphLike[N, E, Graph] {
+trait Graph[N, E[X] <: EdgeLike[X]] extends Set[Param[N, E]] with SimpleGraph[N, E] with GraphLike[N, E, Graph] {
   override def empty: Graph[N, E] = Graph.empty[N, E]
 }
 
@@ -141,22 +141,22 @@ trait Graph[N, E[X] <: EdgeLikeIn[X]] extends Set[Param[N, E]] with SimpleGraph[
   * @author Peter Empen
   */
 object Graph extends GraphConstrainedCompanion[Graph] {
-  override def newBuilder[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config) =
+  override def newBuilder[N, E[X] <: EdgeLike[X]](implicit edgeT: ClassTag[E[N]], config: Config) =
     immutable.Graph.newBuilder[N, E](edgeT, config)
 
-  def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
+  def empty[N, E[X] <: EdgeLike[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.empty[N, E](edgeT, config)
-  def from[N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N], edges: Traversable[E[N]])(
+  def from[N, E[X] <: EdgeLike[X]](nodes: Traversable[N], edges: Traversable[E[N]])(
       implicit edgeT: ClassTag[E[N]],
       config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(edgeT, config)
-  override protected[collection] def fromUnchecked[N, E[X] <: EdgeLikeIn[X]](
+  override protected[collection] def fromUnchecked[N, E[X] <: EdgeLike[X]](
       nodes: Traversable[N],
       edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.fromUnchecked[N, E](nodes, edges)(edgeT, config)
 }
 
-trait UserConstrainedGraph[N, E[X] <: EdgeLikeIn[X]] extends Graph[N, E] {
+trait UserConstrainedGraph[N, E[X] <: EdgeLike[X]] extends Graph[N, E] {
   val constraint: Constraint[N, E]
   /*
    * delegating from Constrained to Constraint;

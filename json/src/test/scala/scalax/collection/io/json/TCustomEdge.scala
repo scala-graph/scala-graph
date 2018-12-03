@@ -24,7 +24,7 @@ import org.junit.runner.RunWith
 class TCustomEdgeRootTest
     extends Suites(new TCustomEdge[immutable.Graph](immutable.Graph), new TCustomEdge[mutable.Graph](mutable.Graph))
 
-class TCustomEdge[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class TCustomEdge[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers {
@@ -76,8 +76,6 @@ import KeyModifier._
 class Transition[+N](from: N, to: N, val key: Char, val keyMod: KeyModifier)
     extends DiEdge[N](NodeProduct(from, to))
     with ExtendedKey[N]
-    with EdgeCopy[Transition]
-    with OuterEdge[N, Transition]
     with Attributes[N] {
 
   def keyAttributes                         = Seq(key, keyMod)
@@ -85,8 +83,6 @@ class Transition[+N](from: N, to: N, val key: Char, val keyMod: KeyModifier)
 
   type P = Transition.P
   override def attributes: P = new Tuple2(key, keyMod)
-  override def copy[NN](newNodes: Product): Transition[NN] =
-    Transition.newEdge[NN](newNodes, attributes)
 }
 
 /** Custom edge companion object extending `CEdgeCompanion`. This is necessary

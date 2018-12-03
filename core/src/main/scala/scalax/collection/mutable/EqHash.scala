@@ -1,11 +1,11 @@
 package scalax.collection.mutable
 
 import scala.collection.Util.nextPositivePowerOfTwo
-import scala.collection.mutable.Builder
+import scala.collection.mutable.{Builder => ScalaBuilder}
 
 trait EqHash[A <: AnyRef, This <: EqHash[A, This]] {
 
-  this: TraversableOnce[A] with Builder[A, This] with Equals =>
+  this: TraversableOnce[A] with ScalaBuilder[A, This] with Equals =>
 
   protected def sizeHint: Int
   protected def step: Int

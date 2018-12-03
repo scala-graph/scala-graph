@@ -21,7 +21,7 @@ package object json {
   scalax.collection.edge.WLBase._
   type Descriptor[N]                                                            = descriptor.Descriptor[N]
   type NodeDescriptor[N]                                                        = descriptor.NodeDescriptor[N]
-  type EdgeDescriptorBase[N, E[X] <: EdgeLikeIn[X], +C <: EdgeCompanionBase[E]] = descriptor.EdgeDescriptorBase[N, E, C]
+  type EdgeDescriptorBase[N, E[X] <: EdgeLike[X], +C <: EdgeCompanionBase[E]] = descriptor.EdgeDescriptorBase[N, E, C]
   type EdgeDescriptor[N, E[X] <: UnDiEdge[X], +C <: EdgeCompanion[E]]           = descriptor.EdgeDescriptor[N, E, C]
   type WEdgeDescriptor[N, E[X] <: UnDiEdge[X] with WEdge[X], +C <: WEdgeCompanion[E]] =
     descriptor.WEdgeDescriptor[N, E, C]
@@ -41,7 +41,7 @@ package object json {
   import imp._, imp.Parser.parse, imp.Stream.createOuterElems
   import net.liftweb.json.JValue
 
-  implicit final class JsonGraphCoreCompanion[+G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+  implicit final class JsonGraphCoreCompanion[+G[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, G]](
       val companion: GraphCoreCompanion[G])
       extends AnyVal {
 
@@ -52,7 +52,7 @@ package object json {
       * @param descriptor $DESCR
       * @return new `Graph` instance populated from `jsonAST`
       */
-    def fromJson[N, E[X] <: EdgeLikeIn[X]](jsonAST: JValue, descriptor: Descriptor[N])(
+    def fromJson[N, E[X] <: EdgeLike[X]](jsonAST: JValue, descriptor: Descriptor[N])(
         implicit edgeT: ClassTag[E[N]],
         config: companion.Config): G[N, E] =
       fromJson[N, E](parse(jsonAST, descriptor), descriptor)
@@ -64,7 +64,7 @@ package object json {
       * @param descriptor $DESCR
       * @return new `Graph` instance populated from `jsonText`
       */
-    def fromJson[N, E[X] <: EdgeLikeIn[X]](jsonText: String, descriptor: Descriptor[N])(
+    def fromJson[N, E[X] <: EdgeLike[X]](jsonText: String, descriptor: Descriptor[N])(
         implicit edgeT: ClassTag[E[N]],
         config: companion.Config = companion.defaultConfig): G[N, E] =
       fromJson[N, E](parse(jsonText, descriptor), descriptor)
@@ -76,7 +76,7 @@ package object json {
       * @param descriptor $DESCR
       * @return new `Graph` instance populated from `jsonText`
       */
-    def fromJson[N, E[X] <: EdgeLikeIn[X]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N])(
+    def fromJson[N, E[X] <: EdgeLike[X]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N])(
         implicit edgeT: ClassTag[E[N]],
         config: companion.Config): G[N, E] = {
       val target = createOuterElems[N, E](jsonLists, descriptor)
@@ -84,7 +84,7 @@ package object json {
     }
   }
 
-  implicit final class JsonGraph[N, E[X] <: EdgeLikeIn[X]](val graph: Graph[N, E]) extends AnyVal {
+  implicit final class JsonGraph[N, E[X] <: EdgeLike[X]](val graph: Graph[N, E]) extends AnyVal {
 
     /** Creates a JSON text including all nodes/edges in this graph.
       *

@@ -13,7 +13,7 @@ import PreCheckFollowUp._
 /** Ensures that the underlying `Graph` is connected if it is undirected
   * or weakly connected if it is directed.
   */
-class Connected[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extends Constraint[N, E](self) {
+class Connected[N, E[X] <: EdgeLike[X]](override val self: Graph[N, E]) extends Constraint[N, E](self) {
 
   /** Skips this pre-check to rely on the post-check `postAdd` except for trivial cases. */
   override def preCreate(nodes: Traversable[N], edges: Traversable[E[N]]) =
@@ -76,8 +76,8 @@ class Connected[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extend
 
   override def preSubtract(edge: self.EdgeT, simple: Boolean) =
     PreCheckResult.complete(
-      if (simple) isConnected(edge.nodes.toSet, Set.empty, Set(edge))
-      else isConnected(edge.nodes.toSet -- edge.privateNodes, edge.privateNodes, Set(edge))
+      if (simple) isConnected(edge.ends.toSet, Set.empty, Set(edge))
+      else isConnected(edge.ends.toSet -- edge.privateNodes, edge.privateNodes, Set(edge))
     )
   override def preSubtract(nodes: => Set[self.NodeT], edges: => Set[self.EdgeT], simple: Boolean) =
     PreCheckResult.complete({
@@ -98,5 +98,5 @@ class Connected[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extend
 }
 
 object Connected extends ConstraintCompanion[Connected] {
-  def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new Connected[N, E](self)
+  def apply[N, E[X] <: EdgeLike[X]](self: Graph[N, E]) = new Connected[N, E](self)
 }

@@ -12,10 +12,8 @@ import scalax.collection.GraphPredef._,
  * by the edges connecting to the predicate node. 
  */
 class TripleDiHyperEdge[N] private (nodes: Product)
-  extends DiHyperEdge[N](nodes)
-  with    EdgeCopy[TripleDiHyperEdge]
-  with    OuterEdge[N,TripleDiHyperEdge] 
-{
+  extends DiHyperEdge[N](nodes) {
+
   private def node(i: Int): N = iterator.drop(i).next match {
     case inner: Graph[N,_]#NodeT @unchecked => inner.value
     case outer => outer
@@ -24,10 +22,9 @@ class TripleDiHyperEdge[N] private (nodes: Product)
   def predicate = node(1).asInstanceOf[Predicate]
   def `object`  = node(2).asInstanceOf[Object]
 
-  override def copy[NN](newNodes: Product) = new TripleDiHyperEdge[NN](newNodes)
-
   override def toString = s"($subject, $predicate, ${`object`})"
 }
+
 object TripleDiHyperEdge {
   def apply(subject: Subject, predicate: Predicate, `object`: Object) =
     new TripleDiHyperEdge[RdfNode]((subject, predicate, `object`))

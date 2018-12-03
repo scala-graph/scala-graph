@@ -8,7 +8,7 @@ import scala.collection.{Set => AnySet, AbstractTraversable, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, Buffer}
 import scala.util.Random
 
-import scalax.collection.GraphPredef._
+import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.{Graph => SimpleGraph}
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet, ExtHashSet}
 import scalax.collection.generic.GroupIterator
@@ -21,9 +21,7 @@ import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
   * @author Peter Empen
   */
 trait AdjacencyListBase[
-    N,
-    E[X] <: EdgeLikeIn[X],
-    +This[X, Y[X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with AnySet[Param[X, Y]] with SimpleGraph[X, Y]]
+    N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLike[X, Y, This] with SimpleGraph[X, Y]]
     extends GraphLike[N, E, This] {
   selfGraph: This[N, E] =>
 
@@ -86,10 +84,12 @@ trait AdjacencyListBase[
     final def hasSuccessors: Boolean = diSuccessors exists (_ ne this)
 
     final protected[collection] def addDiSuccessors(edge: EdgeT, add: (NodeT) => Unit): Unit = {
-      val filter =
-        if (edge.isHyperEdge && edge.isDirected) edge.hasSource((_: NodeT) eq this)
+      val filter = {
+        val outer = edge
+        if (outer.isHyperEdge && outer.isDirected) outer.hasSource((_: NodeT) eq this)
         else true
-      edge.targets foreach (n => if ((n ne this) && filter) add(n))
+      }
+      edge.ends foreach (n => if ((n ne this) && filter) add(n))
     }
 
     final def diPredecessors: Set[NodeT] = {
@@ -113,7 +113,7 @@ trait AdjacencyListBase[
     }
 
     final protected[collection] def addNeighbors(edge: EdgeT, add: (NodeT) => Unit) {
-      edge foreach (n => if (n ne this) add(n))
+      edge.ends foreach (n => if (n ne this) add(n))
     }
 
     final def outgoing = edges withSetFilter (e =>
@@ -146,7 +146,7 @@ trait AdjacencyListBase[
     final def findIncomingFrom(from: NodeT): Option[EdgeT] =
       edges find (isIncomingFrom(_, from))
 
-    final def degree: Int = (0 /: edges)((cum, e) => cum + e.count(_ eq this))
+    final def degree: Int = (0 /: edges)((cum, e) => cum + e.ends.count(_ eq this))
 
     final def outDegree: Int = edges count (_.hasSource((n: NodeT) => n eq this))
 
@@ -194,24 +194,30 @@ trait AdjacencyListBase[
   type NodeSetT <: NodeSet
   trait NodeSet extends super.NodeSet {
     protected val coll = ExtHashSet.empty[NodeT]
-    override protected[collection] def initialize(nodes: Traversable[N], edges: Traversable[E[N]]) =
+
+    override protected[collection] def initialize(nodes: Traversable[N], edges: Traversable[E[N]]): Unit =
       if (nodes ne null)
         coll ++= nodes map (Node(_))
-    override protected def copy = {
+
+    override protected def copy: NodeSetT = {
       val nodeSet = newNodeSet
       nodeSet.coll ++= this.coll
       nodeSet
     }
+
     @inline final override def find(elem: N): Option[NodeT] = Option(lookup(elem))
+
     final override def get(outer: N): NodeT = {
       val inner = lookup(outer)
       if (null == inner) throw new NoSuchElementException
       else inner
     }
+
     final override def lookup(elem: N): NodeT = {
       def eq(inner: NodeT, outer: N) = inner.value == outer
       coll.findElem[N](elem, eq)
     }
+
     @inline final def contains(node: NodeT)     = coll contains node
     @inline final def iterator: Iterator[NodeT] = coll.iterator
     @inline final override def size: Int        = coll.size
@@ -230,9 +236,9 @@ trait AdjacencyListBase[
 
     final override def contains(node: NodeT): Boolean = nodes find node exists (_.edges.nonEmpty)
 
-    final override def find(elem: E[N]): Option[EdgeT] = nodes find elem._n(0) flatMap (_.edges find (_.edge == elem))
+    final override def find(elem: E[N]): Option[EdgeT] = nodes find elem._n(0) flatMap (_.edges find (_ == elem))
 
-    final def contains(edge: EdgeT): Boolean = nodes find edge.edge._n(0) exists (_.edges contains edge)
+    final def contains(edge: EdgeT): Boolean = nodes find edge._n(0) exists (_.edges contains edge)
 
     final def iterator: Iterator[EdgeT] = edgeIterator
 
@@ -264,7 +270,7 @@ trait AdjacencyListBase[
       val diTargets, unDiTargets = MSet.empty[NodeT]
       // format: off
       di  .exists((e: EdgeT) => e.hasSource((n: NodeT) => n eq node) && ! e.targets.forall(diTargets add _)) ||
-      unDi.exists((e: EdgeT) => (e.n1 eq node)                       && ! e.iterator.drop(1).forall((n: NodeT) => unDiTargets add n))
+      unDi.exists((e: EdgeT) => (e._n(0) eq node)                    && ! e.ends.drop(1).forall((n: NodeT) => unDiTargets add n))
       // format: on
     }
   }
@@ -282,7 +288,7 @@ trait AdjacencyListBase[
       protected type I = EdgeT
       protected var iterator: Iterator[I] = _
       protected def onOuterChange(newOuter: OuterElm) {
-        iterator = newOuter.edges.filter(_.edge._n(0) == newOuter).iterator
+        iterator = newOuter.edges.filter(_._n(0) == newOuter).iterator
       }
       protected def elmToCurrent(elm: EdgeT) = elm
 

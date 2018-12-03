@@ -4,7 +4,7 @@ package immutable
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.generic.CanBuildFrom
 
-import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, OuterEdge, OuterNode}
+import scalax.collection.GraphPredef.{EdgeLike, InParam, OuterEdge, OuterNode}
 import scalax.collection.immutable.{AdjacencyListGraph => SimpleAdjacencyListGraph}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 
@@ -13,7 +13,7 @@ import config.GenConstrainedConfig
 import PreCheckFollowUp._
 
 trait AdjacencyListGraph[
-    N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with SimpleAdjacencyListGraph[N, E, This] { this: This[N, E] =>
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
@@ -48,6 +48,7 @@ trait AdjacencyListGraph[
       }
       graph
     }
+
   override def +(node: N) =
     checkedAdd(
       contained = nodes contains Node(node),
@@ -88,11 +89,13 @@ trait AdjacencyListGraph[
         graph
       }
     } getOrElse this
+
   override def -(n: N) = checkedSubtractNode(
     n,
     true,
     (outeNode: N, innerNode: NodeT) =>
       copy(nodes.toOuter.toBuffer -= outeNode, edges.toOuter.toBuffer --= (innerNode.edges map (_.toOuter))))
+
   override def -?(n: N) = checkedSubtractNode(
     n,
     false,
@@ -133,11 +136,8 @@ trait AdjacencyListGraph[
         graph
       }
     } getOrElse this
-  override protected def -#(e: E[N]) = checkedSubtractEdge(
-    e,
-    true,
-    (outerEdge: E[N], innerEdge: EdgeT) => copy(nodes.toOuter, edges.toOuter.toBuffer -= outerEdge))
-  override protected def -!#(e: E[N]) = checkedSubtractEdge(
+
+  override protected def -!(e: E[N]) = checkedSubtractEdge(
     e,
     false,
     (outerEdge: E[N], innerEdge: EdgeT) =>

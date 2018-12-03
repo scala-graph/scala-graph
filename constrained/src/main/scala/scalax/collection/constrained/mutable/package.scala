@@ -20,7 +20,7 @@ package object mutable {
     *  object DAG extends CompanionAlias[DiEdge](Acyclic withStringPrefix "DAG")
     *  }}
     */
-  abstract class CompanionAlias[E[X] <: EdgeLikeIn[X]](constraintCompanion: ConstraintCompanion[Constraint])(
+  abstract class CompanionAlias[E[X] <: EdgeLike[X]](constraintCompanion: ConstraintCompanion[Constraint])(
       implicit adjacencyListHints: ArraySet.Hints = ArraySet.Hints())
       extends GraphConstrainedCompanionAlias[Graph, E](Graph, constraintCompanion)(adjacencyListHints)
 

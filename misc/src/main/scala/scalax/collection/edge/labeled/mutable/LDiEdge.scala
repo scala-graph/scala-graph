@@ -1,20 +1,17 @@
 package scalax.collection.edge.labeled.mutable
 
 import scalax.collection.GraphPredef._,
-       scalax.collection.GraphEdge.{DiEdge, EdgeCopy, NodeProduct}
+       scalax.collection.GraphEdge.{DiEdge, NodeProduct}
 import scalax.collection.Graph
 
 /** Type-safe directed labeled edge with a mutable label.
  *  @author Peter Empen
  */
 class LDiEdge[+N,@specialized L](nodes: Product)(private var _label: L)
-    extends DiEdge[N](nodes)
-    with    EdgeCopy [  ({type λ[α] = LDiEdge[α,L]})#λ]
-    with    OuterEdge[N,({type λ[α] = LDiEdge[α,L]})#λ] {
+    extends DiEdge[N](nodes) {
 
   override def label: L = _label
   def label_=(newLabel: L) = _label = newLabel
-  override def copy[NN](newNodes: Product) = new LDiEdge[NN,L](newNodes)(_label)
 
   override protected def attributesToString = s" '$label" 
 }

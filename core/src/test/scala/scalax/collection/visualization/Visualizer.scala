@@ -4,17 +4,17 @@ import scala.language.higherKinds
 import scala.util.{Failure, Success}
 
 import org.scalatest.exceptions.TestFailedException
-import scalax.collection.GraphPredef.EdgeLikeIn
+import scalax.collection.GraphPredef.EdgeLike
 import scalax.collection.generic.GraphCoreCompanion
 import scalax.collection.{Graph, GraphLike}
 
 /** Scalatest support for graph visualization in case of failures.
   */
-trait Visualizer[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]] extends Drawable {
+trait Visualizer[G[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, G]] extends Drawable {
 
   def factory: GraphCoreCompanion[G]
 
-  final def given[N, E[X] <: EdgeLikeIn[X]](graph: G[N, E])(test: G[N, E] => Unit): Unit = {
+  final def given[N, E[X] <: EdgeLike[X]](graph: G[N, E])(test: G[N, E] => Unit): Unit = {
 
     def reThrow(tExc: TestFailedException, secondLine: String) =
       throw tExc.modifyMessage(_.map(testMessage => s"""$testMessage
