@@ -34,11 +34,11 @@ trait AdjacencyListBase[
     def edges: ArraySet[EdgeT]
 
     final private def sizeHint(edgesSize: Int): Int =
-      if (isHyper) size * 2
+      if (isHyper) elementCount * 2
       else if (isDirected)
-        if (size < 8) size
-        else (size / 4) * 3
-      else size
+        if (elementCount < 8) elementCount
+        else (elementCount / 4) * 3
+      else elementCount
 
     @inline final protected def nodeEqThis = (n: NodeT) => n eq this
     protected[collection] object Adj extends Serializable { // lazy adjacents
@@ -214,7 +214,7 @@ trait AdjacencyListBase[
     }
 
     final override def lookup(elem: N): NodeT = {
-      def eq(inner: NodeT, outer: N) = inner.value == outer
+      def eq(inner: NodeT, outer: N) = inner.outer == outer
       coll.findElem[N](elem, eq)
     }
 
@@ -307,7 +307,7 @@ trait AdjacencyListBase[
 
     val nodesBuf = new ArrayBuffer(1024) ++ nodes.iterator.filter(_.isIsolated)
     out.writeInt(nodesBuf.size)
-    nodesBuf foreach (innerNode => out.writeObject(innerNode.value))
+    nodesBuf foreach (innerNode => out.writeObject(innerNode.outer))
   }
 
   protected def initializeFrom(in: ObjectInputStream, nodes: NodeSetT, edges: EdgeSetT): Unit = {

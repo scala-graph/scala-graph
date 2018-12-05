@@ -29,7 +29,7 @@ import scalax.collection.GraphPredef.OuterEdge
   *         Nodes being the end of any of these edges will be added to the node set.
   * @author Peter Empen
   */
-trait GraphBase[N, E[X] <: EdgeLike[X]] extends Serializable { selfGraph =>
+trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBase[X, Y, This]] extends Serializable with GraphOps[N, E] { selfGraph =>
 
   /** Populates this graph with `nodes` and `edges`.
     *
@@ -44,41 +44,8 @@ trait GraphBase[N, E[X] <: EdgeLike[X]] extends Serializable { selfGraph =>
     this.edges.initialize(edges)
   }
 
-  /** The order - commonly referred to as |G| - of this graph
-    * equaling to the number of nodes.
-    */
-  def order = nodes.size
-
-  /** `true` if this graph has at most 1 node. */
-  @inline final def isTrivial = order <= 1
-
-  /** `true` if this graph has at least 2 nodes. */
-  @inline final def nonTrivial = !isTrivial
-
-  /** The size - commonly referred to as ||G|| - of this graph
-    * equaling to the number of edges.
-    *
-    * Method `size` is reserved for the number of nodes and edges
-    * because `Graph` is also `SetLike` with set elements being nodes or edges.
-    */
-  def graphSize = edges.size
-
-  /** Whether all edges of this graph are directed. */
-  def isDirected: Boolean
-
-  /** Whether this graph contains at least one hyperedges. */
-  def isHyper: Boolean
-
-  /** Whether this graph contains at least one directed and one undirected edge. */
-  def isMixed: Boolean
-
-  /** Whether this graph contains at least one multi-edge. We defnie multi-edges by
-    *    a. two or more directed edges having the same source and target
-    *    a. two or more undirected edges connecting the same nodes
-    *    a. two or more (directed) hyperedges that, after being decomposed into (directed) edges,
-    *yield any multy-edge as stipulated above.
-    */
-  def isMulti: Boolean
+  final def order: Int = nodes.size
+  final def size: Int = edges.size
 
   type NodeFilter = NodeT => Boolean
   type EdgeFilter = EdgeT => Boolean
@@ -99,10 +66,9 @@ trait GraphBase[N, E[X] <: EdgeLike[X]] extends Serializable { selfGraph =>
   /** `true` if `f` is not equivalent to `anyEdge`. */
   @inline final def isCustomEdgeFilter(f: EdgeFilter) = f ne anyEdge
 
-  sealed trait InnerElem
   type NodeT <: InnerNode with Serializable
   trait Node extends Serializable
-  trait InnerNode extends Node with InnerElem {
+  trait InnerNode extends Node with super.InnerNode {
 
     /** The outer node as supplied at instantiation or addition to this graph. */
     def outer: N
@@ -112,7 +78,8 @@ trait GraphBase[N, E[X] <: EdgeLike[X]] extends Serializable { selfGraph =>
     def value: N = outer
 
     /** Synonym for `outer`. */
-    @inline final def toOuter: N = value
+    @deprecated("Use 'outer' instead", "2.0.0")
+    @inline final def toOuter: N = outer
 
     /** All edges at this node - commonly denoted as E(v).
       *
@@ -318,18 +285,18 @@ trait GraphBase[N, E[X] <: EdgeLike[X]] extends Serializable { selfGraph =>
     def canEqual(that: Any) = true
 
     override def equals(other: Any) = other match {
-      case that: GraphBase[N, E]#InnerNode =>
-        (this eq that) || (that canEqual this) && (this.value == that.value)
+      case that: GraphBase[N, E, This]#InnerNode =>
+        (this eq that) || (that canEqual this) && (this.outer == that.outer)
       case thatR: AnyRef =>
-        val thisN = this.value.asInstanceOf[AnyRef]
+        val thisN = this.outer.asInstanceOf[AnyRef]
         (thisN eq thatR) || (thisN == thatR)
-      case thatV => this.value == thatV
+      case thatV => this.outer == thatV
     }
 
-    override def hashCode = value.##
+    override def hashCode = outer.##
   }
   object InnerNode {
-    def unapply(node: InnerNode): Option[N] = Some(node.value)
+    def unapply(node: InnerNode): Option[N] = Some(node.outer)
   }
 
   @transient object Node {
@@ -351,7 +318,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X]] extends Serializable { selfGraph =>
       * @param node
       * @return the contained user Object
       */
-    @inline implicit final def toValue[N](node: NodeT) = node.value
+    @inline implicit final def toValue[N](node: NodeT) = node.outer
   }
   abstract protected class NodeBase extends InnerNode
   protected def newNode(n: N): NodeT
@@ -395,9 +362,11 @@ trait GraphBase[N, E[X] <: EdgeLike[X]] extends Serializable { selfGraph =>
 
   final protected lazy val anyOrdering = new AnyOrdering[N]
   final lazy val defaultNodeOrdering = NodeOrdering(
-    (a: NodeT, b: NodeT) => anyOrdering.compare(a.value, b.value)
+    (a: NodeT, b: NodeT) => anyOrdering.compare(a.outer, b.outer)
   )
+
   type NodeSetT <: NodeSet
+
   trait NodeSet extends AnySet[NodeT] with ExtSetMethods[NodeT] {
 
     /** This method is called by the primary constructor. It must be defined by the trait
@@ -471,7 +440,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X]] extends Serializable { selfGraph =>
 
   type EdgeT <: InnerEdgeLike[NodeT] with InnerEdge
 
-  trait InnerEdge extends InnerEdgeLike[NodeT] with InnerElem with Equals {
+  trait InnerEdge extends InnerEdgeLike[NodeT] with super.InnerEdge with Equals {
     this: EdgeT =>
 
     /** The edge as supplied as parameter to any `Graph` method that is used to add one or more edges. */
@@ -494,11 +463,11 @@ trait GraphBase[N, E[X] <: EdgeLike[X]] extends Serializable { selfGraph =>
     }
 
     override def canEqual(that: Any): Boolean =
-      that.isInstanceOf[GraphBase[N, E]#InnerEdge] ||
+      that.isInstanceOf[GraphBase[N, E, This]#InnerEdge] ||
         that.isInstanceOf[EdgeLike[_]]
 
     override def equals(other: Any): Boolean = other match {
-      case that: GraphBase[N, E]#InnerEdge =>
+      case that: GraphBase[N, E, This]#InnerEdge =>
         (this eq that) ||
           (this.outer eq that.outer) ||
           (this.outer == that.outer)
@@ -646,8 +615,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X]] extends Serializable { selfGraph =>
     * @return Set of all contained edges.
     */
   def edges: EdgeSetT
-  implicit def numeric(edge: EdgeT): Numeric[EdgeT] = ???
-  def totalWeight: Double                           = (0d /: edges)(_ + _.weight)
+  def totalWeight: Double = (0d /: edges)(_ + _.weight)
 }
 
 object GraphBase {

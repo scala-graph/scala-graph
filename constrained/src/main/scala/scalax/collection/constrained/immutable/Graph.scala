@@ -54,7 +54,7 @@ abstract class DefaultGraphImpl[N, E[X] <: EdgeLike[X]](iniNodes: Traversable[N]
     with AdjacencyListGraph[N, E, DefaultGraphImpl]
     with GraphTraversalImpl[N, E] {
 
-  final override val graphCompanion = DefaultGraphImpl
+  final override val companion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
   @inline final protected def newNodeSet: NodeSetT = new NodeSet

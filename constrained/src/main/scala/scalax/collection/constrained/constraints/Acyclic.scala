@@ -67,7 +67,7 @@ class Acyclic[N, E[X] <: EdgeLike[X]](override val self: Graph[N, E]) extends Co
     *  within the new elements.
     */
   override def preAdd(elems: InParam[N, E]*) =
-    if (elems.size * 10 < self.size) {
+    if (elems.size * 10 < self.elementCount) {
       val p = Param.Partitions(elems)
       val graphAdd =
         SimpleGraph.from(p.toOuterNodes, p.toOuterEdges)(self.edgeT, self.config.asInstanceOf[SimpleGraph.Config])

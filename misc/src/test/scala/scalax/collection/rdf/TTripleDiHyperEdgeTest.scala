@@ -36,7 +36,7 @@ class TTripleDiHyperEdgeTest extends RefSpec with Matchers {
       val g: Graph[RdfNode,Triple] = Graph.from(edges = initialTriples)
   
       g.order should be (5)
-      g.graphSize should be (initialTriples.size)
+      g.size should be (initialTriples.size)
     }
     def `has inner edges with the expected properties` {
       val g = Graph.from(edges = initialTriples)

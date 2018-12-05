@@ -18,8 +18,8 @@ trait ConfigWrapper[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, 
   val companion: GraphCompanion[CC]
   implicit val config: companion.Config
   def empty[N, E[X] <: EdgeLike[X]](implicit edgeT: ClassTag[E[N]], config: companion.Config): CC[N, E] =
-    companion.empty
-  def apply[N, E[X] <: EdgeLike[X]](elems: Param[N, E]*)(implicit edgeT: ClassTag[E[N]], config: companion.Config) =
+    companion.empty[N, E]
+  def apply[N, E[X] <: EdgeLike[X]](elems: OuterElem[N, E]*)(implicit edgeT: ClassTag[E[N]], config: companion.Config) =
     companion(elems: _*)
   def from[N, E[X] <: EdgeLike[X]](edges: collection.Iterable[E[N]])(implicit edgeT: ClassTag[E[N]],
                                                                        config: companion.Config) =
@@ -78,8 +78,6 @@ class TEditMutable extends RefSpec with Matchers {
       g remove 1 should be(true)
       g should be(mutable.Graph(2 ~ 3, 4))
       g remove 5 should be(false)
-      g -? 2 should be(g)
-      (g -?= 2) should be(g)
       (g -= 2) should be(mutable.Graph[Int, UnDiEdge](3, 4))
       g.clear
       g should be('empty)
@@ -87,7 +85,7 @@ class TEditMutable extends RefSpec with Matchers {
     def `serve -= properly (2)` {
       val g = mutable.Graph(1 ~ 2, 2 ~ 3)
       (g -= 2) should be(mutable.Graph[Int, UnDiEdge](1, 3))
-      g.graphSize should be(0)
+      g.size should be(0)
     }
     def `serve 'directed' properly` {
       val (di, unDi)                        = (1 ~> 2, 2 ~ 3)

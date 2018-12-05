@@ -60,7 +60,7 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
   this: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
   This[N, E] with GraphLike[N, E, This] with Graph[N, E] =>
 
-  override def clone: This[N, E] = graphCompanion.from[N, E](nodes.toOuter, edges.toOuter)
+  override def clone: This[N, E] = companion.from[N, E](nodes.toOuter, edges.toOuter)
 
   type NodeT <: InnerNode
   trait InnerNode extends super.InnerNode { // TODO with InnerNodeOps {
@@ -205,7 +205,7 @@ class DefaultGraphImpl[N, E[X] <: EdgeLike[X]](iniNodes: Traversable[N] = Set[N]
     /* TODO
     with GraphTraversalImpl[N, E]
      */ {
-  final override val graphCompanion = DefaultGraphImpl
+  final override val companion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
   @inline final protected def newNodeSet: NodeSetT = new NodeSet

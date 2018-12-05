@@ -26,7 +26,7 @@ import scalax.collection.config.GraphConfig
   * @author Peter Empen
   */
 trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
-    extends GraphBase[N, E]
+    extends GraphBase[N, E, This]
     /* TODO
       with GraphTraversal[N, E]
       with GraphDegree[N, E]
@@ -40,7 +40,7 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
   def empty: This[N, E]
   protected[this] def newBuilder: mutable.Builder[N, E, This]
 
-  def isDirected                  = isDirectedT || edges.hasOnlyDiEdges
+  def isDirected: Boolean = isDirectedT || edges.hasOnlyDiEdges
   final protected val isDirectedT = classOf[AbstractDiHyperEdge[_]].isAssignableFrom(edgeT.runtimeClass)
 
   def isHyper: Boolean         = isHyperT && edges.hasAnyHyperEdge
@@ -52,18 +52,14 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
   final protected val isMultiT = classOf[Keyed].isAssignableFrom(edgeT.runtimeClass)
 
   /** The companion object of `This`. */
-  val graphCompanion: GraphCompanion[This]
+  val companion: GraphCompanion[This]
   protected type Config <: GraphConfig
-  implicit def config: graphCompanion.Config with Config
-
-  def stringPrefix: String = "Graph"
-  def size: Int            = nodes.size + edges.size
+  implicit def config: companion.Config with Config
 
   /** Ensures sorted nodes/edges unless this `Graph` has more than 100 elements.
     * See also `asSortedString` and `toSortedString`.
     */
-  override def toString = if (size <= 100) toSortedString()()
-  else super.toString
+  override def toString: String = if (elementCount <= 100) toSortedString()() else super.toString
 
   /** Sorts all nodes of this graph by `ordNode` followed by all edges sorted by `ordEdge`
     * and concatinates their string representation `nodeSeparator` and `edgeSeparator`
@@ -119,9 +115,9 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
     case that: Graph[N, E] =>
       (this eq that) ||
         (this.order == that.order) &&
-          (this.graphSize == that.graphSize) && {
+          (this.size == that.size) && {
           val thatNodes = that.nodes.toOuter
-          try this.nodes forall (thisN => thatNodes(thisN.value))
+          try this.nodes forall (thisN => thatNodes(thisN.outer))
           catch { case _: ClassCastException => false }
         } && {
           val thatEdges = that.edges.toOuter
@@ -130,9 +126,9 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
         }
     case that: TraversableOnce[_] =>
       val thatSet = that.toSet
-      (this.size == thatSet.size) && {
+      (this.elementCount == thatSet.size) && {
         val thatNodes = thatSet.asInstanceOf[Set[N]]
-        try this.nodes forall (thisN => thatNodes(thisN.value))
+        try this.nodes forall (thisN => thatNodes(thisN.outer))
         catch { case _: ClassCastException => false }
       } && {
         val thatEdges = thatSet.asInstanceOf[Set[E[N]]]
@@ -153,7 +149,7 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
 
   abstract protected class NodeBase(override val value: N) extends super.NodeBase with InnerNode {
     this: NodeT =>
-    final def isContaining[N, E[X] <: EdgeLike[X]](g: GraphBase[N, E]): Boolean =
+    final def isContaining[N, E[X] <: EdgeLike[X]](g: GraphBase[N, E, This] @uV): Boolean =
       g eq containingGraph
   }
 
@@ -251,36 +247,18 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
   final def contains(edge: E[N]): Boolean = edges contains newHyperEdge(edge, Nil)
 
   /** Iterator over all nodes and edges. */
-  def toIterator: Iterator[InnerElem] = nodes.toIterator ++ edges.toIterator
+  def iterator: Iterator[InnerElem] = nodes.toIterator ++ edges.toIterator
 
   /** Iterable over all nodes and edges. */
   def toIterable: Iterable[InnerElem] = new AbstractIterable[InnerElem] {
-    def iterator = toIterator
+    def iterator: Iterator[InnerElem] = thisGraph.iterator
   }
 
-  /** Searches this graph for an inner node that wraps an outer node equalling to the given outer node. */
   @inline final def find(node: N): Option[NodeT] = nodes find node
-
-  /** Searches this graph for an inner edge that wraps an outer edge equalling to the given outer edge. */
   @inline final def find(edge: E[N]): Option[EdgeT] = edges find edge
 
-  /** Short for `find(node).get`.
-    *
-    * @throws NoSuchElementException if the node is not found.
-    */
   @inline final def get(node: N): NodeT = nodes get node
-
-  /** Short for `find(edge).get`.
-    *
-    * @throws NoSuchElementException if the edge is not found.
-    */
   @inline final def get(edge: E[N]): EdgeT = edges.find(edge).get
-
-  /** Short for `find(node).getOrElse(default)`. */
-  final def getOrElse(node: N, default: NodeT): NodeT = find(node).getOrElse(default)
-
-  /** Short for `find(node).getOrElse(default)`. */
-  final def getOrElse(outerEdge: E[N], default: EdgeT): EdgeT = find(outerEdge).getOrElse(default)
 
   /** Creates a new supergraph with an additional node unless this graph contains `node`. */
   def +(node: N): This[N, E]
@@ -331,13 +309,13 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
   /** Implements the heart of `++` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */
   final protected def plusPlus(newNodes: Iterator[N], newEdges: Iterator[E[N]]): This[N, E] =
-    graphCompanion.from[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
+    companion.from[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
 
   /** Implements the heart of `--` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */
   final protected def minusMinus(delNodes: Iterator[N], delEdges: Iterator[E[N]]): This[N, E] = {
     val delNodesEdges = minusMinusNodesEdges(delNodes, delEdges)
-    graphCompanion.from[N, E](delNodesEdges._1, delNodesEdges._2)
+    companion.from[N, E](delNodesEdges._1, delNodesEdges._2)
   }
 
   /** Calculates the `nodes` and `edges` arguments to be passed to a factory method
