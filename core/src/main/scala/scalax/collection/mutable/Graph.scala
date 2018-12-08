@@ -10,6 +10,7 @@ import scala.math.max
 
 import scalax.collection.{Graph => CommonGraph, GraphLike => CommonGraphLike}
 import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.GraphPredef.OuterElem
 import scalax.collection.generic.{GraphCompanion, MutableGraphCompanion}
 import scalax.collection.config._
 
@@ -27,6 +28,15 @@ abstract protected[collection] class BuilderImpl[
       case _                          => config.orderHint * 32
     }
   )
+
+  def add(node: N): Boolean    = (nodes contains node) tap (_ => this += node)
+  def add(edge: E[N]): Boolean = (edges contains edge) tap (_ => this += edge)
+
+  def upsert(edge: E[N]): Boolean = (edges contains edge) pipe { found =>
+    if (found) edges -= edge
+    edges += edge
+    !found
+  }
 
   def +=(node: N): this.type    = { nodes += node; this }
   def +=(edge: E[N]): this.type = { edges += edge; this }
@@ -90,13 +100,6 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
     def removeWithNodes(edge: EdgeT): Boolean
   }
 
-  /** Adds a node to this graph.
-    *
-    *  @param node the node to be added
-    *  @return `true` if the node was not yet present in the graph, `false` otherwise.
-    */
-  def add(node: N): Boolean
-
   /** Adds the given node if not yet present and returns it as an inner node.
     *
     * @param node the node to add.
@@ -104,18 +107,8 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
     */
   @inline final def addAndGet(node: N): NodeT = { add(node); find(node).get }
 
-  def +(node: N) =
-    if (nodes contains Node(node)) this.asInstanceOf[This[N, E]]
-    else clone += node
-
-  def +(edge: E[N]) =
-    if (edges contains Edge(edge)) this.asInstanceOf[This[N, E]]
-    else clone += edge
-
   @inline final def +=(node: N): this.type    = { add(node); this }
-  @inline final def +=(edge: E[N]): this.type = { this +=# edge; this }
-
-  def add(edge: E[N]): Boolean
+  @inline final def +=(edge: E[N]): this.type = { this add edge; this }
 
   /** Adds the given edge if not yet present and returns it as an inner edge.
     *
@@ -123,50 +116,19 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
     * @return the inner edge containing the added edge.
     */
   @inline final def addAndGet(edge: E[N]): EdgeT = { add(edge); find(edge).get }
-  @inline final protected def +#(edge: E[N])     = clone +=# edge
-  protected def +=#(edge: E[N]): this.type
 
-  /** If an inner edge equaling to `edge` is present in this graph, it is replaced
-    * by `edge`, otherwise `edge` will be inserted. Such an update may be useful
-    * whenever non-key parts of an immutable edge are to be modified.
-    *
-    * @param edge The edge to add to this graph.
-    * @return `true` if `edge` has been inserted.
-    */
-  def upsert(edge: E[N]): Boolean
-
-  @inline final def -(node: N): This[N, E]   = clone -= node
   @inline final def remove(node: N): Boolean = nodes find node exists (nodes remove _)
   @inline final def -=(node: N): this.type   = { remove(node); this }
 
-  @inline final def -(edge: E[N])             = clone -= edge
-  @inline final def remove(edge: E[N])        = edges remove Edge(edge)
-  @inline final def -=(edge: E[N]): this.type = { remove(edge); this }
+  @inline final def remove(edge: E[N]): Boolean = edges remove Edge(edge)
+  @inline final def -=(edge: E[N]): this.type   = { remove(edge); this }
 
-  /** Shrinks this graph to its intersection with `coll`.
-    *
-    * @param coll Collection of nodes and/or edges to intersect with;
-    * @return this graph shrinked by the nodes and edges not contained in `coll`.
-    *TODO
-    *def &=(coll: Iterable[OuterElem[N, E]]): this.type = {
-    *val toKeep                      = MSet.empty[OuterElem[N, E]] ++= coll
-    *val toRemove                    = new EqHashSet[OuterElem[N, E]](order)
-    *def check(p: OuterElem[N, E]): Unit = if (!toKeep.contains(p)) toRemove += p
- **
-    *this foreach check
-    *toRemove foreach -=
-    *this
-    *}
-    **/
-
-  /** Removes all elements of `coll` from this graph. Edges will be ripple removed.
-  *
-  * @param coll Collection of nodes and/or edges to be removed; if the element type is N,
-  *             it is removed from the node set otherwise from the edge set.
-  * @return this graph shrinked by the nodes and edges contained in `coll`.
-  *TODO
-  *@inline final def --!=(coll: Iterable[Param[N, E]]): This[N, E] = (this /: coll)(_ -!= _)
-    **/
+  def &=(outer: Iterable[OuterElem[N, E]]): this.type = {
+    val (nodes, edges) = partitionOuter(outer)
+    nodes foreach -=
+    edges foreach -=
+    this
+  }
 }
 
 /** The main trait for mutable graphs bundling the functionality of traits concerned with

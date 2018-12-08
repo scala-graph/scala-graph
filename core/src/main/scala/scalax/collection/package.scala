@@ -26,4 +26,11 @@ package object collection {
 
   protected[scalax] type MSet[A] = scala.collection.mutable.Set[A]
   @inline final protected[scalax] def MSet = scala.collection.mutable.Set
+
+  /** Adds chaining methods `tap` and `pipe` to every type.
+    */
+  implicit final class ChainingOps[A](val self: A) extends AnyVal {
+    def tap[U](f: A => U): A  = { f(self); self }
+    def pipe[B](f: A => B): B = f(self)
+  }
 }

@@ -29,7 +29,9 @@ import scalax.collection.GraphPredef.OuterEdge
   *         Nodes being the end of any of these edges will be added to the node set.
   * @author Peter Empen
   */
-trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBase[X, Y, This]] extends Serializable with GraphOps[N, E] { selfGraph =>
+trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBase[X, Y, This]]
+    extends Serializable
+    with GraphOps[N, E] { selfGraph =>
 
   /** Populates this graph with `nodes` and `edges`.
     *
@@ -45,7 +47,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
   }
 
   final def order: Int = nodes.size
-  final def size: Int = edges.size
+  final def size: Int  = edges.size
 
   type NodeFilter = NodeT => Boolean
   type EdgeFilter = EdgeT => Boolean
@@ -615,6 +617,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     * @return Set of all contained edges.
     */
   def edges: EdgeSetT
+
   def totalWeight: Double = (0d /: edges)(_ + _.weight)
 }
 

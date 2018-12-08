@@ -1,7 +1,9 @@
 package scalax.collection
 package immutable
 
-import language.higherKinds
+import scala.annotation.unchecked.{uncheckedVariance => uV}
+import scala.collection.mutable.ArrayBuffer
+import scala.language.higherKinds
 
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.mutable.ArraySet
@@ -13,6 +15,7 @@ import scalax.collection.mutable.ArraySet
 trait AdjacencyListGraph[
     N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
+    with GraphOps[N, E, This]
     with AdjacencyListBase[N, E, This] { selfGraph: This[N, E] =>
 
   type NodeT <: InnerNodeImpl
@@ -70,20 +73,64 @@ trait AdjacencyListGraph[
 
   def copy(nodes: Traversable[N], edges: Traversable[E[N]]): This[N, E]
 
-  def +(n: N) =
-    if (nodes contains Node(n)) this
-    else copy(nodes.toOuter.toBuffer += n, edges.toOuter)
+  /** Creates a new supergraph with an additional node unless this graph contains `node`. */
+  def +(node: N): This[N, E] =
+    if (this contains node) this
+    else copy(nodes.toOuter.toBuffer += node, edges.toOuter)
 
-  def +(e: E[N]) =
-    if (edges contains Edge(e)) copy(nodes.toOuter, edges.toOuter.toBuffer -= e)
+  /** Creates a new supergraph with an additional edge unless this graph contains `edge`. */
+  def +(edge: E[N]): This[N, E] =
+    if (this contains edge) copy(nodes.toOuter, edges.toOuter.toBuffer -= edge)
     else this
 
-  def -(n: N) = nodes find (nf => nf.value == n) match {
-    case Some(nf) => copy(nodes.toOuter.toBuffer -= n, edges.toOuter.toBuffer --= (nf.edges map (_.toOuter)))
+  /** Creates a new graph with the elements of this graph plus the passed elements. */
+  final def ++(nodes: Traversable[N], edges: Traversable[E[N]], elems: Traversable[Graph[N, E]#InnerElem]): This[N, E] =
+    bulkOp(nodes, edges, elems, plusPlus)
+
+  /** Creates a new graph with the elements of this graph minus `node` and its incident edges. */
+  def -(node: N): This[N, E] = nodes find (nf => nf.value == node) match {
+    case Some(nf) => copy(nodes.toOuter.toBuffer -= node, edges.toOuter.toBuffer --= (nf.edges map (_.toOuter)))
     case None     => this
   }
 
-  protected def -(e: E[N]) =
-    if (edges contains Edge(e)) copy(nodes.toOuter, edges.toOuter.toBuffer -= e)
+  /** Creates a new graph with the elements of this graph minus `edge`. */
+  def -(edge: E[N]): This[N, E] =
+    if (this contains edge) copy(nodes.toOuter, edges.toOuter.toBuffer -= edge)
     else this
+
+  /** Creates a new graph with the elements of this graph minus the passed elements. */
+  final def --(nodes: Traversable[N], edges: Traversable[E[N]], elems: Traversable[Graph[N, E]#InnerElem]): This[N, E] =
+    bulkOp(nodes, edges, elems, minusMinus)
+
+  /** Prepares and calls `plusPlus` or `minusMinus`. */
+  final protected def bulkOp(nodes: Traversable[N],
+                             edges: Traversable[E[N]],
+                             elems: Traversable[Graph[N, E]#InnerElem],
+                             op: (Iterator[N @uV], Iterator[E[N]]) => This[N, E] @uV): This[N, E] = {
+    val (nodeElems, edgeElems) = partition(elems)
+    op(nodes.toIterator ++ nodeElems.toIterator, edges.toIterator ++ edgeElems.toIterator)
+  }
+
+  /** Implements the heart of `++` calling the `from` factory method of the companion object.
+    *  $REIMPLFACTORY */
+  final protected def plusPlus(newNodes: Iterator[N], newEdges: Iterator[E[N]]): This[N, E] =
+    companion.from[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
+
+  /** Implements the heart of `--` calling the `from` factory method of the companion object.
+    *  $REIMPLFACTORY */
+  final protected def minusMinus(delNodes: Iterator[N], delEdges: Iterator[E[N]]): This[N, E] = {
+    val delNodesEdges = minusMinusNodesEdges(delNodes, delEdges)
+    companion.from[N, E](delNodesEdges._1, delNodesEdges._2)
+  }
+
+  /** Calculates the `nodes` and `edges` arguments to be passed to a factory method
+    *  when delNodes and delEdges are to be deleted by `--`.
+    */
+  final protected def minusMinusNodesEdges(delNodes: Iterator[N], delEdges: Iterator[E[N]]) =
+    (nodes.toOuter -- delNodes, {
+      val delNodeSet = delNodes.toSet
+      val restEdges =
+        for (e <- edges.toOuter if e.ends forall (n => !(delNodeSet contains n))) yield e
+      restEdges -- delEdges
+    })
 }

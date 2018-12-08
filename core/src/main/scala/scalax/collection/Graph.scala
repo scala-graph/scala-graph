@@ -7,6 +7,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 import scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef.{OuterEdge, OuterElem, OuterNode}
 import scalax.collection.generic.{GraphCompanion, GraphCoreCompanion}
 import scalax.collection.config.GraphConfig
 
@@ -40,7 +41,7 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
   def empty: This[N, E]
   protected[this] def newBuilder: mutable.Builder[N, E, This]
 
-  def isDirected: Boolean = isDirectedT || edges.hasOnlyDiEdges
+  def isDirected: Boolean         = isDirectedT || edges.hasOnlyDiEdges
   final protected val isDirectedT = classOf[AbstractDiHyperEdge[_]].isAssignableFrom(edgeT.runtimeClass)
 
   def isHyper: Boolean         = isHyperT && edges.hasAnyHyperEdge
@@ -254,80 +255,33 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
     def iterator: Iterator[InnerElem] = thisGraph.iterator
   }
 
-  @inline final def find(node: N): Option[NodeT] = nodes find node
+  @inline final def find(node: N): Option[NodeT]    = nodes find node
   @inline final def find(edge: E[N]): Option[EdgeT] = edges find edge
 
-  @inline final def get(node: N): NodeT = nodes get node
+  @inline final def get(node: N): NodeT    = nodes get node
   @inline final def get(edge: E[N]): EdgeT = edges.find(edge).get
 
-  /** Creates a new supergraph with an additional node unless this graph contains `node`. */
-  def +(node: N): This[N, E]
-
-  /** Creates a new supergraph with an additional edge unless this graph contains `edge`. */
-  def +(edge: E[N]): This[N, E]
-
-  /** Creates a new graph with the elements of this graph plus the passed elements. */
-  final def ++(nodes: Traversable[N], edges: Traversable[E[N]], elems: Traversable[Graph[N, E]#InnerElem]): This[N, E] =
-    bulkOp(nodes, edges, elems, plusPlus)
-
-  /** Creates a new graph with the elements of this graph plus the elements of the passed graph. */
-  @inline final def ++(that: Graph[N, E]): This[N, E] = this.++(Nil, Nil, that.toIterable)
-
-  /** Creates a new graph with the elements of this graph minus `node` and its incident edges. */
-  def -(node: N): This[N, E]
-
-  /** Creates a new graph with the elements of this graph minus `edge`. */
-  protected def -(edge: E[N]): This[N, E]
-
-  /** Creates a new graph with the elements of this graph minus the passed elements. */
-  final def --(nodes: Traversable[N], edges: Traversable[E[N]], elems: Traversable[Graph[N, E]#InnerElem]): This[N, E] =
-    bulkOp(nodes, edges, elems, minusMinus)
-
-  /** Creates a new graph with the elements of this graph plus the elements of the passed graph. */
-  @inline final def --(that: Graph[N, E]): This[N, E] = this.--(Nil, Nil, that.toIterable)
-
-  /** Prepares and calls `plusPlus` or `minusMinus`. */
-  final protected def bulkOp(nodes: Traversable[N],
-                             edges: Traversable[E[N]],
-                             elems: Traversable[Graph[N, E]#InnerElem],
-                             op: (Iterator[N @uV], Iterator[E[N]]) => This[N, E] @uV): This[N, E] = {
-    val (nodeElems, edgeElems) = partition(elems)
-    op(nodes.toIterator ++ nodeElems.toIterator, edges.toIterator ++ edgeElems.toIterator)
-  }
-
   final protected def partition(elems: Traversable[Graph[N, E]#InnerElem]): (Traversable[N], Traversable[E[N]]) = {
-    val size  = elems.size
-    val nodes = new ArrayBuffer[N](size)
-    val edges = new ArrayBuffer[E[N]](size)
-    elems.foreach {
-      case InnerNode(outer) => nodes += outer
-      case InnerEdge(outer) => edges += outer
+    val size = elems.size
+    elems.foldLeft(new ArrayBuffer[N](size), new ArrayBuffer[E[N]](size)) {
+      case ((nodes, edges), InnerNode(n)) => (nodes += n, edges)
+      case ((nodes, edges), InnerEdge(e)) => (nodes, edges += e)
     }
-    (nodes, edges)
   }
 
-  /** Implements the heart of `++` calling the `from` factory method of the companion object.
-    *  $REIMPLFACTORY */
-  final protected def plusPlus(newNodes: Iterator[N], newEdges: Iterator[E[N]]): This[N, E] =
-    companion.from[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
-
-  /** Implements the heart of `--` calling the `from` factory method of the companion object.
-    *  $REIMPLFACTORY */
-  final protected def minusMinus(delNodes: Iterator[N], delEdges: Iterator[E[N]]): This[N, E] = {
-    val delNodesEdges = minusMinusNodesEdges(delNodes, delEdges)
-    companion.from[N, E](delNodesEdges._1, delNodesEdges._2)
+  final protected def partitionOuter(elems: Iterable[OuterElem[N, E]]): (MSet[N], MSet[E[N]]) = {
+    val size = elems.size
+    def builder[A] = {
+      val b = MSet.newBuilder[A]
+      b.sizeHint(size)
+      b
+    }
+    val (nB, eB) = elems.foldLeft(builder[N], builder[E[N]]) {
+      case ((nodes, edges), OuterNode(n))       => (nodes += n, edges)
+      case ((nodes, edges), e: OuterEdge[N, E]) => (nodes, edges += e.asInstanceOf[E[N]])
+    }
+    (nB.result, eB.result)
   }
-
-  /** Calculates the `nodes` and `edges` arguments to be passed to a factory method
-    *  when delNodes and delEdges are to be deleted by `--`.
-    */
-  final protected def minusMinusNodesEdges(delNodes: Iterator[N], delEdges: Iterator[E[N]]) =
-    (nodes.toOuter -- delNodes, {
-      val delNodeSet = delNodes.toSet
-      val restEdges =
-        for (e <- edges.toOuter if e.ends forall (n => !(delNodeSet contains n))) yield e
-      restEdges -- delEdges
-    })
 }
 
 /** The main trait for immutable graphs bundling the functionality of traits concerned with

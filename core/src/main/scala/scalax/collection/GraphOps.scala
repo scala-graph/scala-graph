@@ -36,6 +36,7 @@ trait GraphOps[N, E[X] <: EdgeLike[X]] {
 
   /** The number of nodes and edges. */
   @inline final def elementCount: Int = order + size
+
   /** The Sum of the weight of all edges. */
   def totalWeight: Double
 
@@ -75,10 +76,4 @@ trait GraphOps[N, E[X] <: EdgeLike[X]] {
     * @throws NoSuchElementException if the edge is not found.
     */
   def get(edge: E[N]): EdgeT
-
-  /** Short for `find(node).getOrElse(default)`. */
-  final def getOrElse(node: N, default: NodeT): NodeT = find(node).getOrElse(default)
-
-  /** Short for `find(node).getOrElse(default)`. */
-  final def getOrElse(outerEdge: E[N], default: EdgeT): EdgeT = find(outerEdge).getOrElse(default)
 }
