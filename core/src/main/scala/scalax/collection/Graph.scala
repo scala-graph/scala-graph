@@ -261,6 +261,8 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
   @inline final def get(node: N): NodeT    = nodes get node
   @inline final def get(edge: E[N]): EdgeT = edges.find(edge).get
 
+  def map[B](f: N => B): This[B, E] = ???
+
   final protected def partition(elems: Traversable[Graph[N, E]#InnerElem]): (Traversable[N], Traversable[E[N]]) = {
     val size = elems.size
     elems.foldLeft(new ArrayBuffer[N](size), new ArrayBuffer[E[N]](size)) {

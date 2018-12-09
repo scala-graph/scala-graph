@@ -103,7 +103,7 @@ object GraphPredef {
     implicit class EdgeToEdge[N](override val sources: Iterable[N]) extends AnyVal with super.IterableToEdge[N]
   }
 
-  trait AbstractEdgeImplicits[N, E[N] <: EdgeLike[N] with AbstractEdge[N], C <: EdgeCompanion[E]] {
+  trait AbstractEdgeImplicits[N, E[N] <: EdgeLike[N] with AbstractEdge[N], C <: EdgeCompanion[E]] extends Any {
     protected def companion: C
     def n1: N
     def ~[NN >: N](n2: NN): E[NN] = companion(n1, n2)
@@ -115,7 +115,7 @@ object GraphPredef {
     protected def companion = UnDiEdge
   }
 
-  trait AbstractDiEdgeImplicits[N, E[N] <: AbstractDiEdge[N], C <: EdgeCompanion[E]] {
+  trait AbstractDiEdgeImplicits[N, E[N] <: AbstractDiEdge[N], C <: EdgeCompanion[E]] extends Any {
     protected def companion: C
     def source: N
     def ~>[NN >: N](target: NN): E[NN] = companion(source, target)

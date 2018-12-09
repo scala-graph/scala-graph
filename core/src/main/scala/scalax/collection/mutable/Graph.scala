@@ -127,7 +127,7 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
   @inline final def remove(node: N): Boolean = nodes find node exists (nodes remove _)
   @inline final def -=(node: N): this.type   = { remove(node); this }
 
-  @inline final def remove(edge: E[N]): Boolean = edges remove Edge(edge)
+  @inline final def remove(edge: E[N]): Boolean = edges remove InnerEdge(edge)
   @inline final def -=(edge: E[N]): this.type   = { remove(edge); this }
 
   def &=(outer: Iterable[OuterElem[N, E]]): this.type = {

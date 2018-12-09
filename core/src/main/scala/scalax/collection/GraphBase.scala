@@ -31,7 +31,7 @@ import scalax.collection.GraphPredef.OuterEdge
   */
 trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBase[X, Y, This]]
     extends Serializable
-    with GraphOps[N, E] { selfGraph =>
+    with GraphOps[N, E, This] { selfGraph =>
 
   /** Populates this graph with `nodes` and `edges`.
     *
@@ -91,7 +91,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
 
     /** Synonym for `edges`.
       */
-    @inline final def ~ = edges
+    @inline final def ~ : ExtSet[EdgeT] = edges
 
     /** All edges connecting this node with `other` including outgoing and incoming edges.
       * This method is useful in case of multigraphs.
@@ -138,13 +138,13 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     /** Whether this node has any successors. */
     def hasSuccessors: Boolean
 
-    protected[collection] def addDiSuccessors(edge: EdgeT, add: (NodeT) => Unit): Unit
+    protected[collection] def addDiSuccessors(edge: EdgeT, add: NodeT => Unit): Unit
 
     /** Synonym for `diSuccessors`. */
-    @inline final def outNeighbors = diSuccessors
+    @inline final def outNeighbors: Set[NodeT] = diSuccessors
 
     /** Synonym for `diSuccessors`. */
-    @inline final def ~>| = diSuccessors
+    @inline final def ~>| : Set[NodeT] = diSuccessors
 
     /** All direct predecessors of this node, also called ''predecessor set'' or
       * ''open in-neighborhood'': source nodes of directed incident edges and / or
@@ -157,7 +157,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     /** Whether this node has any predecessors. */
     def hasPredecessors: Boolean
 
-    protected[collection] def addDiPredecessors(edge: EdgeT, add: (NodeT) => Unit)
+    protected[collection] def addDiPredecessors(edge: EdgeT, add: NodeT => Unit)
 
     /** Synonym for `diPredecessors`. */
     @inline final def inNeighbors = diPredecessors
@@ -171,10 +171,10 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
       * @return set of all neighbors.
       */
     def neighbors: Set[NodeT]
-    protected[collection] def addNeighbors(edge: EdgeT, add: (NodeT) => Unit)
+    protected[collection] def addNeighbors(edge: EdgeT, add: NodeT => Unit)
 
     /** Synonym for `neighbors`. */
-    @inline final def ~| = neighbors
+    @inline final def ~| : Set[NodeT] = neighbors
 
     /** All edges outgoing from this node.
       *
@@ -184,7 +184,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     def outgoing: Set[EdgeT] with FilterableSet[EdgeT]
 
     /** Synonym for `outgoing`. */
-    @inline final def ~> = outgoing
+    @inline final def ~> : Set[EdgeT] with FilterableSet[EdgeT] = outgoing
 
     /** All outgoing edges connecting this node with `to`.
       *
@@ -315,12 +315,8 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
       node.addNeighbors(edge, add)
     }
 
-    /** Allows to call methods of N directly on Node instances.
-      *
-      * @param node
-      * @return the contained user Object
-      */
-    @inline implicit final def toValue[N](node: NodeT) = node.outer
+    /** Allows to call methods of N directly on Node instances. */
+    @inline implicit final def toOuter(node: NodeT): N = node.outer
   }
   abstract protected class NodeBase extends InnerNode
   protected def newNode(n: N): NodeT
@@ -484,9 +480,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
   }
   @transient object InnerEdge {
     def unapply(edge: InnerEdge): Option[E[N]] = Some(edge.outer)
-  }
 
-  @transient object Edge {
     def apply(outer: E[N]): EdgeT = {
       @inline def lookup(n: N) = nodes lookup n
 
@@ -510,7 +504,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
                 freshNodes += (n -> newN)
                 newN
               })
-            )
+              )
           ends map mkNode
         }
         outer match {
@@ -530,6 +524,9 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     object ArityOrdering extends Ordering[EdgeT] {
       def compare(e1: EdgeT, e2: EdgeT): Int = e1.arity compare e2.arity
     }
+    
+    /** Allows to call methods of E[N] directly on EdgeT instances. */
+    implicit final def toOuterEdge(edge: EdgeT): E[N] = edge.outer
   }
 
   protected def newHyperEdge(outer: E[N], nodes: Iterable[NodeT]): EdgeT
@@ -587,7 +584,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     def find(outerEdge: E[N]): Option[EdgeT]
 
     /** The maximum arity of all edges in this edge set. */
-    def maxArity: Int = if (size == 0) 0 else max(Edge.ArityOrdering).arity
+    def maxArity: Int = if (size == 0) 0 else max(InnerEdge.ArityOrdering).arity
 
     /** Converts this edge set to a set of outer edges.
       */

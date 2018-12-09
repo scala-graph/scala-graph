@@ -59,7 +59,7 @@ trait AdjacencyListGraph[
 
   override protected def +#(edge: E[N]) =
     checkedAdd(
-      contained = edges contains Edge(edge),
+      contained = edges contains InnerEdge(edge),
       preAdd = preAdd(edge),
       copy = copy(nodes.toOuter, edges.toOuter.toBuffer += edge),
       nodes = Set.empty[N],

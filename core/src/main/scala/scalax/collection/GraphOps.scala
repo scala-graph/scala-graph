@@ -4,7 +4,7 @@ import scala.language.higherKinds
 
 import scalax.collection.GraphEdge.EdgeLike
 
-trait GraphOps[N, E[X] <: EdgeLike[X]] {
+trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] {
 
   /** Whether all edges of this graph are directed. */
   def isDirected: Boolean
@@ -76,4 +76,7 @@ trait GraphOps[N, E[X] <: EdgeLike[X]] {
     * @throws NoSuchElementException if the edge is not found.
     */
   def get(edge: E[N]): EdgeT
+
+  /** Builds a new graph by applying `f` to all nodes of this graph. Edges are preserved */
+  def map[B](f: N => B): This[B, E]
 }

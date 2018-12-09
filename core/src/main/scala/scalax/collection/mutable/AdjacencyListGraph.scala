@@ -113,7 +113,7 @@ trait AdjacencyListGraph[
 
     override protected[collection] def initialize(edges: Traversable[E[N]]): Unit = {
       if (edges ne null)
-        edges foreach (this add Edge(_))
+        edges foreach (this add InnerEdge(_))
       initialized = true
     }
 
@@ -142,6 +142,6 @@ trait AdjacencyListGraph[
 
   @inline final def clear(): Unit               = nodes.clear()
   @inline final def add(node: N): Boolean       = nodes add Node(node)
-  @inline final def add(edge: E[N]): Boolean    = edges add Edge(edge)
-  @inline final def upsert(edge: E[N]): Boolean = edges upsert Edge(edge)
+  @inline final def add(edge: E[N]): Boolean    = edges add InnerEdge(edge)
+  @inline final def upsert(edge: E[N]): Boolean = edges upsert InnerEdge(edge)
 }
