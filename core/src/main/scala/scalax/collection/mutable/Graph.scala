@@ -3,7 +3,7 @@ package mutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.collection.mutable.{ArrayBuffer, Cloneable, Set => MutableSet}
+import scala.collection.mutable.{ArrayBuffer, Set => MutableSet}
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 import scala.math.max
@@ -14,12 +14,21 @@ import scalax.collection.GraphPredef.OuterElem
 import scalax.collection.generic.{GraphCompanion, MutableGraphCompanion}
 import scalax.collection.config._
 
-abstract protected[collection] class BuilderImpl[
-    N,
-    E[X] <: EdgeLike[X],
-    +CC[N, E[X] <: EdgeLike[X]] <: CommonGraph[N, E] with CommonGraphLike[N, E, CC]](implicit edgeT: ClassTag[E[N]],
-                                                                                     config: GraphConfig)
-    extends Growable[N, E] {
+trait AbstractBuilder[N, E[X] <: EdgeLike[X]] extends Growable[N, E] {
+
+  /** If an inner edge equaling to `edge` is present in this graph, it is replaced
+    * by `edge`, otherwise `edge` will be inserted.
+    * This is useful if non-key parts of an immutable edge are to be modified.
+    * @return `true` if `edge` has been inserted, `false` if it has been replaced.
+    */
+  def upsert(edge: E[N]): Boolean
+
+  def clear(): Unit
+}
+
+abstract protected[collection] class BuilderImpl[N, E[X] <: EdgeLike[X]](implicit edgeT: ClassTag[E[N]],
+                                                                         config: GraphConfig)
+    extends AbstractBuilder[N, E] {
 
   protected val nodes = new ArrayBuffer[N](config.orderHint)
   protected val edges = new ArrayBuffer[E[N]](
@@ -41,7 +50,7 @@ abstract protected[collection] class BuilderImpl[
   def +=(node: N): this.type    = { nodes += node; this }
   def +=(edge: E[N]): this.type = { edges += edge; this }
 
-  def clear() {
+  def clear(): Unit = {
     nodes.clear
     edges.clear
   }
@@ -49,7 +58,7 @@ abstract protected[collection] class BuilderImpl[
 
 class Builder[N, E[X] <: EdgeLike[X], +CC[N, E[X] <: EdgeLike[X]] <: CommonGraphLike[N, E, CC] with CommonGraph[N, E]](
     companion: GraphCompanion[CC])(implicit edgeT: ClassTag[E[N]], config: GraphConfig)
-    extends BuilderImpl[N, E, CC] {
+    extends BuilderImpl[N, E] {
 
   def result: CC[N, E] = companion.from(nodes, edges)(edgeT, config.asInstanceOf[companion.Config])
 }
@@ -60,9 +69,7 @@ class Builder[N, E[X] <: EdgeLike[X], +CC[N, E[X] <: EdgeLike[X]] <: CommonGraph
   */
 trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
     extends CommonGraphLike[N, E, This]
-    with Growable[N, E]
-    with Shrinkable[N, E]
-    with Cloneable[Graph[N, E]]
+    with GraphOps[N, E, This]
     /* TODO
     with EdgeOps[N, E, This]
      */
@@ -80,7 +87,7 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
   type NodeSetT <: NodeSet
   trait NodeSet extends MutableSet[NodeT] with super.NodeSet {
     @inline final override def -=(node: NodeT): this.type = { remove(node); this }
-    override def remove(node: NodeT)                      = subtract(node, true, minus, minusEdges)
+    override def remove(node: NodeT): Boolean             = subtract(node, true, minus, minusEdges)
 
     /** removes all incident edges of `node` from the edge set leaving the node set unchanged.
       *

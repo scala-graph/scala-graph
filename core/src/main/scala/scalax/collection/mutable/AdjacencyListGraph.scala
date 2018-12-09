@@ -105,7 +105,7 @@ trait AdjacencyListGraph[
   }
   override def nodes: NodeSetT
 
-  @inline final def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
+  @inline final protected def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
 
   type EdgeSetT = EdgeSet
   class EdgeSet extends super[GraphLike].EdgeSet with super.EdgeSet {
@@ -140,7 +140,7 @@ trait AdjacencyListGraph[
   }
   override def edges: EdgeSetT
 
-  @inline final def clear: Unit                 = nodes.clear
+  @inline final def clear(): Unit               = nodes.clear()
   @inline final def add(node: N): Boolean       = nodes add Node(node)
   @inline final def add(edge: E[N]): Boolean    = edges add Edge(edge)
   @inline final def upsert(edge: E[N]): Boolean = edges upsert Edge(edge)
