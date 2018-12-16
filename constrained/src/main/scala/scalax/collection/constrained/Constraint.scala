@@ -251,10 +251,9 @@ trait ConstraintMethods[N, E[X] <: EdgeLike[X]] {
     * $SELFGRAPH
     *
     * @param node the inner to be subtracted.
-    * @param forced `true` for standard (ripple by `-`), `false` for gentle (by `-?`) removal.
     * @return $PRECHECKRET
     */
-  def preSubtract(node: self.NodeT, forced: Boolean): PreCheckResult
+  def preSubtract(node: self.NodeT): PreCheckResult
 
   /** This pre-check must return `Abort` if the subtraction of `edge` is to be canceled,
     * `PostCheck` if `postSubtract` is to be called to decide or
@@ -263,11 +262,9 @@ trait ConstraintMethods[N, E[X] <: EdgeLike[X]] {
     * $SELFGRAPH
     *
     * @param edge the inner edge to be subtracted.
-    * @param simple `true` for standard (edge-only by `-`),
-    *               `false` for ripple (by `-!`) removal.
     * @return $PRECHECKRET
     */
-  def preSubtract(edge: self.EdgeT, simple: Boolean): PreCheckResult
+  def preSubtract(edge: self.EdgeT): PreCheckResult
 
   /** This pre-check must return `Abort` if the subtraction of `nodes` and/or `edges`
     * is to be canceled, `PostCheck` if `postSubtract` is to be called to decide or
@@ -283,14 +280,12 @@ trait ConstraintMethods[N, E[X] <: EdgeLike[X]] {
     *              the ends of edges to be subtracted. Call allNodes to get the
     *              complete set of nodes to be subtracted.
     * @param edges the inner edges to be subtracted.
-    * @param simple `true` for standard (edge-only by `-`),
-    *               `false` for ripple (by `-!`) removal.
     * @return $PRECHECKRET
     */
-  def preSubtract(nodes: => Set[self.NodeT], edges: => Set[self.EdgeT], simple: Boolean): PreCheckResult =
+  def preSubtract(nodes: => Set[self.NodeT], edges: => Set[self.EdgeT]): PreCheckResult =
     PreCheckResult.postCheck(
-      (nodes forall (n => !preSubtract(n, simple).abort)) &&
-        (edges forall (e => !preSubtract(e, simple).abort)))
+      (nodes forall (n => !preSubtract(n).abort)) &&
+        (edges forall (e => !preSubtract(e).abort)))
 
   /** This post-check must return whether `newGraph` should be committed or the subtraction
     * is to be rolled back.

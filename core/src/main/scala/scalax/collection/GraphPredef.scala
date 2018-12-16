@@ -12,32 +12,7 @@ import GraphEdge._
   */
 object GraphPredef {
 
-  implicit def nodeSetToOuter[N, E[X] <: EdgeLike[X]](nodes: Graph[N, E]#NodeSetT): Iterable[N] =
-    new AbstractIterable[N] {
-      def iterator = new AbstractIterator[N] {
-        private[this] val it = nodes.iterator
-        def hasNext          = it.hasNext
-        def next             = it.next.outer
-      }
-    }
-
-  implicit def nodeSetToSeq[N, E[X] <: EdgeLike[X]](nodes: Graph[N, E]#NodeSetT): Seq[Graph[N, E]#NodeT] =
-    new SeqFacade(nodes)
-
-  implicit def edgeSetToOuter[N, E[X] <: EdgeLike[X]](edges: Graph[N, E]#EdgeSetT): Iterable[E[N]] =
-    new AbstractIterable[E[N]] {
-      def iterator = new AbstractIterator[E[N]] {
-        private[this] val it = edges.iterator
-        def hasNext          = it.hasNext
-        def next             = it.next.outer
-      }
-    }
-
-  implicit def edgeSetToSeq[N, E[X] <: EdgeLike[X]](edges: Graph[N, E]#EdgeSetT): Seq[Graph[N, E]#EdgeT] =
-    new SeqFacade(edges)
-
   /** Represents parameters that are accepted when calling `Graph(...)`.
-    *
     * @tparam N  the type of the nodes (vertices)
     * @tparam E  the kind of the edges (links)
     */
@@ -47,10 +22,34 @@ object GraphPredef {
   sealed case class OuterNode[+N](node: N) extends OuterElem[N, Nothing]
 
   /** To be mixed in by edge classes to allow passing them to `Graph(...)`. */
-  trait OuterEdge[+N, +E[X <: N @uV] <: EdgeLike[X]] extends OuterElem[N, E] { this: E[N @uV] =>
-  }
+  sealed case class OuterEdge[N, E[X <: N @uV] <: EdgeLike[X]](edge: E[N]) extends OuterElem[N, E]
+
+  implicit def nodeSetToOuter[N, E[X] <: EdgeLike[X]](nodes: Graph[N, E]#NodeSetT): Iterable[OuterNode[N]] =
+    new AbstractIterable[OuterNode[N]] {
+      def iterator = new AbstractIterator[OuterNode[N]] {
+        private[this] val it = nodes.iterator
+        def hasNext          = it.hasNext
+        def next             = it.next.outer
+      }
+    }
+
+  implicit def nodeSetToSeq[N, E[X] <: EdgeLike[X]](nodes: Graph[N, E]#NodeSetT): Seq[Graph[N, E]#NodeT] =
+    new SeqFacade(nodes)
+
+  implicit def edgeSetToOuter[N, E[X] <: EdgeLike[X]](edges: Graph[N, E]#EdgeSetT): Iterable[OuterEdge[N, E]] =
+    new AbstractIterable[OuterEdge[N, E]] {
+      def iterator = new AbstractIterator[OuterEdge[N, E]] {
+        private[this] val it = edges.iterator
+        def hasNext          = it.hasNext
+        def next             = it.next.outer
+      }
+    }
+
+  implicit def edgeSetToSeq[N, E[X] <: EdgeLike[X]](edges: Graph[N, E]#EdgeSetT): Seq[Graph[N, E]#EdgeT] =
+    new SeqFacade(edges)
 
   @inline implicit def anyToNode[N](n: N): OuterNode[N] = OuterNode(n)
+  @inline implicit def edgeLikeToOuterEdge[N, E[X] <: EdgeLike[X]](e: E[N]): OuterEdge[N, E] = OuterEdge(e)
 
   abstract class AbstractHyperEdgeImplicits[E[N] <: AbstractHyperEdge[N], C <: HyperEdgeCompanion[E]](companion: C) {
 
@@ -109,7 +108,7 @@ object GraphPredef {
     def ~[NN >: N](n2: NN): E[NN] = companion(n1, n2)
   }
 
-  implicit class ToUnDiEdge[N](override val n1: N)
+  implicit class UnDiEdgeImplicits[N](override val n1: N)
       extends AnyVal
       with AbstractEdgeImplicits[N, UnDiEdge, UnDiEdge.type] {
     protected def companion = UnDiEdge
@@ -121,7 +120,9 @@ object GraphPredef {
     def ~>[NN >: N](target: NN): E[NN] = companion(source, target)
   }
 
-  implicit final class ToDiEdge[N](val source: N) extends AnyVal with AbstractDiEdgeImplicits[N, DiEdge, DiEdge.type] {
+  implicit final class DiEdgeImplicits[N](val source: N)
+      extends AnyVal
+      with AbstractDiEdgeImplicits[N, DiEdge, DiEdge.type] {
     protected def companion = DiEdge
   }
 }

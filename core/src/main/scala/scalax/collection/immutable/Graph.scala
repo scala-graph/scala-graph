@@ -7,15 +7,16 @@ import scala.collection.Set
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 
-import scalax.collection.{Graph => CommonGraph}
+import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.generic.ImmutableGraphCompanion
 import scalax.collection.config.AdjacencyListArrayConfig
 import scalax.collection.mutable.{ArraySet, Builder}
 
-trait Graph[N, E[X] <: EdgeLike[X]] extends CommonGraph[N, E] with GraphLike[N, E, Graph] {
+trait Graph[N, E[X] <: EdgeLike[X]] extends AnyGraph[N, E] with GraphLike[N, E, Graph] with GraphOps[N, E, Graph] {
   override def empty: Graph[N, E] = Graph.empty[N, E]
 }
+
 object Graph extends ImmutableGraphCompanion[Graph] {
 
   def empty[N, E[X] <: EdgeLike[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =

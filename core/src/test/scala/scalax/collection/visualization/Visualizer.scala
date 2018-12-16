@@ -4,7 +4,7 @@ import scala.language.higherKinds
 import scala.util.{Failure, Success}
 
 import org.scalatest.exceptions.TestFailedException
-import scalax.collection.GraphPredef.EdgeLike
+import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.generic.GraphCoreCompanion
 import scalax.collection.{Graph, GraphLike}
 

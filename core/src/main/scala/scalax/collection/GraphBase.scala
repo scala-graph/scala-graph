@@ -8,7 +8,6 @@ import scala.collection.FilterableSet
 import GraphEdge._
 import generic.AnyOrdering
 import interfaces.ExtSetMethods
-import scalax.collection.GraphPredef.OuterEdge
 
 /** Base template trait for graphs.
   *
@@ -30,8 +29,9 @@ import scalax.collection.GraphPredef.OuterEdge
   * @author Peter Empen
   */
 trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBase[X, Y, This]]
-    extends Serializable
-    with GraphOps[N, E, This] { selfGraph =>
+    extends GraphOps[N, E, This]
+    with OuterElems[N, E]
+    with Serializable { selfGraph =>
 
   /** Populates this graph with `nodes` and `edges`.
     *
@@ -49,24 +49,17 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
   final def order: Int = nodes.size
   final def size: Int  = edges.size
 
-  type NodeFilter = NodeT => Boolean
-  type EdgeFilter = EdgeT => Boolean
-
-  // Must be val since eq does not work for def.
-  /** Default node filter letting traverse all nodes (non-filter). */
-  final val anyNode: NodeFilter = _ => true
-
-  /** Node predicate always returning `false`. */
-  final val noNode: NodeFilter = _ => false
-
-  /** Default edge filter letting path all edges (non-filter). */
-  final val anyEdge: EdgeFilter = _ => true
+  // Need be `val` to work with `eq`
+  final val anyNode: NodePredicate = _ => true
+  final val noNode: NodePredicate  = _ => false
+  final val anyEdge: EdgePredicate = _ => true
+  final val noEdge: EdgePredicate  = _ => false
 
   /** `true` if `f` is not equivalent to `anyNode`. */
-  @inline final def isCustomNodeFilter(f: NodeFilter) = f ne anyNode
+  @inline final def isCustomNodeFilter(f: NodePredicate) = f ne anyNode
 
   /** `true` if `f` is not equivalent to `anyEdge`. */
-  @inline final def isCustomEdgeFilter(f: EdgeFilter) = f ne anyEdge
+  @inline final def isCustomEdgeFilter(f: EdgePredicate) = f ne anyEdge
 
   type NodeT <: InnerNode with Serializable
   trait Node extends Serializable
@@ -266,8 +259,8 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
 
     /** The outgoing degree of this node after applying some filters to the outgoing edges and successors.
       */
-    def outDegree(nodeFilter: NodeFilter,
-                  edgeFilter: EdgeFilter = anyEdge,
+    def outDegree(nodeFilter: NodePredicate,
+                  edgeFilter: EdgePredicate = anyEdge,
                   includeHooks: Boolean = false,
                   ignoreMultiEdges: Boolean = true): Int
 
@@ -279,8 +272,8 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
 
     /** The incoming degree of this node after applying some filters to the incoming edges and predecessors.
       */
-    def inDegree(nodeFilter: NodeFilter,
-                 edgeFilter: EdgeFilter = anyEdge,
+    def inDegree(nodeFilter: NodePredicate,
+                 edgeFilter: EdgePredicate = anyEdge,
                  includeHooks: Boolean = false,
                  ignoreMultiEdges: Boolean = true): Int
 
@@ -504,7 +497,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
                 freshNodes += (n -> newN)
                 newN
               })
-              )
+            )
           ends map mkNode
         }
         outer match {
@@ -524,7 +517,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     object ArityOrdering extends Ordering[EdgeT] {
       def compare(e1: EdgeT, e2: EdgeT): Int = e1.arity compare e2.arity
     }
-    
+
     /** Allows to call methods of E[N] directly on EdgeT instances. */
     implicit final def toOuterEdge(edge: EdgeT): E[N] = edge.outer
   }
@@ -602,9 +595,9 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
         case _                                        => throw new IllegalArgumentException
       }
       other match {
-        case e: OuterEdge[N, E] => find(e.asInstanceOf[E[N]])
-        case e: InnerEdge       => find(e.asInstanceOf[EdgeT].outer)
-        case _                  => null.asInstanceOf[EdgeT]
+        case OuterEdge(e) => find(e)
+        case e: InnerEdge => find(e.asInstanceOf[EdgeT].outer)
+        case _            => null.asInstanceOf[EdgeT]
       }
     }
   }

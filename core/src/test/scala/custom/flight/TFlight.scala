@@ -7,7 +7,6 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scalax.collection.generic.GraphCoreCompanion
 
 import org.scalatest._
-import org.scalatest.Informer
 
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.refspec.RefSpec

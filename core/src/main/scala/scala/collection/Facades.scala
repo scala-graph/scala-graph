@@ -19,10 +19,8 @@ final class SeqFacade[A](t: Traversable[A]) extends Seq[A] {
   def length: Int = t.size
 }
 
-/** Wraps the [[scala.collection.Traversable Traversable]] `t` to a
-  *  [[scala.collection.immutable.Set Set]].
-  *  It aims at efficiently creating a set in case the caller ensures that
-  *  all elements in `t` are unique.
+/** Wraps the [[scala.collection.Traversable Traversable]] `t` to a [[scala.collection.immutable.Set Set]].
+  *  It aims at efficiently creating a set in case the caller ensures that all elements in `t` are unique.
   *  `+` and `-` are O(N) returning [[scala.collection.immutable.Set]].
   *
   * @param t the underlying `Traversable` with unique elements.
@@ -38,10 +36,8 @@ class SetFacade[A](t: Traversable[A]) extends immutable.Set[A] {
   final override def foreach[U](f: (A) => U): Unit = t foreach f
 }
 
-/** Wraps the [[scala.collection.Traversable Traversable]] `t` to a
-  *  [[scala.collection.immutable.Set Set]] utilizing reference equality.
-  *  It aims at efficiently creating a set in case the caller ensures that
-  *  all elements in `t` are unique.
+/** Wraps the [[scala.collection.Traversable Traversable]] `t` to a [[scala.collection.immutable.Set Set]] utilizing reference equality.
+  *  It aims at efficiently creating a set in case the caller ensures that all elements in `t` are unique.
   *  `+` and `-` are O(N) returning [[scala.collection.immutable.Set]].
   *
   * @param t the underlying `Traversable` with unique elements.
@@ -51,8 +47,7 @@ final class EqSetFacade[A <: AnyRef](t: Traversable[A]) extends SetFacade[A](t) 
 }
 
 /** Template for sets having a `withFilter` that keeps `Set` semantics.
-  *  This class becomes obsolete as soon as `scala.collection.Set.withFilter`
-  *  returns a `Set` instead of just `FilterMonadic`.
+  *  This class becomes obsolete as soon as `scala.collection.Set.withFilter` returns a `Set` instead of just `FilterMonadic`.
   */
 trait FilterableSet[A] {
   this: FilteredSet[A] =>

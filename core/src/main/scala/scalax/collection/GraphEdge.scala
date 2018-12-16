@@ -7,9 +7,7 @@ import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.{AbstractIterable, Iterator_2}
 import scala.language.higherKinds
 
-import scalax.collection.GraphPredef.OuterEdge
-
-// TODO import edge.LBase.LEdge
+import scalax.collection.GraphEdge.EdgeLike.ValidationException
 
 /** Container for basic edge types to be used in the context of `Graph`.
   * You will usually simply import all its members along with the members of Param:
@@ -35,7 +33,7 @@ object GraphEdge {
     * @define ISAT In case this edge is undirected this method maps to `isAt`
     * @author Peter Empen
     */
-  sealed trait EdgeLike[+N] extends Eq with Serializable {
+  sealed trait EdgeLike[+N] extends Eq {
 
     /** The endpoints of this edge, in other words the nodes this edge joins. */
     def ends: Iterable[N]
@@ -67,17 +65,15 @@ object GraphEdge {
 
     protected def customMsgPrefix: String = "Custom validation failed"
 
-    protected class EdgeValidationException(val msg: String) extends Exception
-
     final protected def handleFailure(msgPrefix: String): Unit =
-      throw new EdgeValidationException(s"$msgPrefix at $toString.")
+      throw new EdgeLike.ValidationException(s"$msgPrefix at $toString.")
 
     /** Performs basic edge validation by calling `isValidArity` and `noNullEnd`.
       * `isValidCustom` is also called but you need to override this member to perform additional validation.
       * This validation method needs to be called in the constructor of any edge class
       * that directly extends or mixes in `EdgeLike`.
       *
-      * @throws EdgeValidationException if any of the basic validations or the additional custom validation fails.
+      * @throws ValidationException if any of the basic validations or the additional custom validation fails.
       */
     final protected def validate(): Unit =
       if (!isValidArity) handleFailure("Invalid arity detected")
@@ -109,7 +105,7 @@ object GraphEdge {
       else (MSet() ++= ends).size < arity
 
     /** Same as `! looping`. */
-    final def nonLooping: Boolean = !isLooping
+    @inline final def nonLooping: Boolean = !isLooping
 
     /** The weight of this edge with a default of 1.
       *
@@ -119,6 +115,8 @@ object GraphEdge {
       * that mixes in `ExtendedKey` and adds `weight` to `keyAttributes`.
       */
     def weight: Double = 1
+
+    def isLabeled: Boolean = false
 
     /** Same as `isAt`. */
     @inline final def contains[M >: N](node: M): Boolean = isAt(node)
@@ -207,10 +205,14 @@ object GraphEdge {
   }
 
   object EdgeLike {
-    val nodeSeparator = " ~ "
-    protected case class Brackets(left: Char, right: Char)
-    protected val curlyBraces      = Brackets('{', '}')
     def unapply[N](e: EdgeLike[N]) = Some(e)
+
+    val nodeSeparator         = " ~ "
+    protected val curlyBraces = Brackets('{', '}')
+
+    case class Brackets(left: Char, right: Char)
+
+    class ValidationException(val msg: String) extends Exception
   }
 
   private[collection] trait InnerEdgeLike[N] extends EdgeLike[N]
@@ -240,11 +242,13 @@ object GraphEdge {
         else apply(n1, n2)
     }
   }
+
   protected[collection] trait Keyed
 
   /** Defines how to handle the ends of hyperedges, or the source/target ends of directed hyperedges,
     *  with respect to equality. */
   sealed abstract class CollectionKind(val duplicatesAllowed: Boolean, val orderSignificant: Boolean)
+
   object CollectionKind {
     protected[collection] def from(duplicatesAllowed: Boolean, orderSignificant: Boolean): CollectionKind =
       if (duplicatesAllowed)
@@ -279,6 +283,7 @@ object GraphEdge {
     protected def baseEquals(other: EdgeLike[_]): Boolean
     protected def baseHashCode: Int
   }
+
   protected[collection] object Eq {
     def nrEqualingNodes(itA: Iterator[_], itB: Iterable[_]): Int = {
       var nr   = 0
@@ -351,6 +356,7 @@ object GraphEdge {
       (0 /: ends)((s: Int, n: Any) => s ^ mul(n.hashCode))
     }
   }
+
   protected[collection] trait EqUnDi extends Eq {
     this: AbstractUnDiEdge[_] =>
 
@@ -367,6 +373,7 @@ object GraphEdge {
 
     override protected def baseHashCode: Int = (_1.##) ^ (_2.##)
   }
+
   protected[collection] trait EqDi extends Eq {
     this: AbstractDiEdge[_] =>
 
@@ -405,11 +412,13 @@ object GraphEdge {
       * Neither an empty sequence, nor null elements are permitted.
       */
     def keyAttributes: Seq[Any]
+
     override def equals(other: Any): Boolean =
       super.equals(other) && (other match {
         case that: ExtendedKey[_] => this.keyAttributes == that.keyAttributes
         case _                    => false
       })
+
     override def hashCode: Int = super.hashCode + keyAttributes.map(_.## * 41).sum
 
     override protected def attributesToString: String
@@ -428,6 +437,15 @@ object GraphEdge {
     def unapply[N](e: LoopFreeEdge[N]) = Some(e)
   }
 
+  trait Label[L] { this: EdgeLike[_] =>
+    def isLabeled: Boolean = true
+    def label: L
+  }
+
+  object LEdge {
+    def unapply[L](lEdge: Label[L]): Option[L] = Some(lEdge.label)
+  }
+
   /** Marker trait for companion objects of any kind of edge.
     */
   sealed trait EdgeCompanionBase[+E[N] <: EdgeLike[N]] extends Serializable
@@ -439,7 +457,6 @@ object GraphEdge {
     def apply[N](node_1: N, node_2: N): E[N]
   }
 
-  // ------------------------------------------------------------------------ *
   trait AbstractHyperEdge[+N] extends EdgeLike[N] with EqHyper {
 
     def _1: N         = ends.head
@@ -500,10 +517,9 @@ object GraphEdge {
     protected def from[N](ends: Iterable[N]): E[N]
   }
 
-  /** Represents an undirected hyperedge (hyperlink) with ends of bag semantic.
-    */
+  /** Represents an undirected hyperedge (hyperlink) with ends of bag semantic. */
   @SerialVersionUID(52)
-  case class HyperEdge[+N](override val ends: Iterable[N]) extends AbstractHyperEdge[N] with OuterEdge[N, HyperEdge] {
+  case class HyperEdge[+N](override val ends: Iterable[N]) extends AbstractHyperEdge[N] {
     validate()
   }
   object HyperEdge extends HyperEdgeCompanion[HyperEdge] {
@@ -514,10 +530,7 @@ object GraphEdge {
   val ~~ = HyperEdge
 
   @SerialVersionUID(-52)
-  case class OrderedHyperEdge[+N](override val ends: Iterable[N])
-      extends AbstractHyperEdge[N]
-      with OuterEdge[N, OrderedHyperEdge]
-      with OrderedEndpoints {
+  case class OrderedHyperEdge[+N](override val ends: Iterable[N]) extends AbstractHyperEdge[N] with OrderedEndpoints {
     validate()
   }
   object OrderedHyperEdge extends HyperEdgeCompanion[OrderedHyperEdge] {
@@ -557,23 +570,19 @@ object GraphEdge {
   }
 
   /** Represents a directed edge in a hypergraph with an unlimited number of source and of target nodes.
-    * Target nodes are handled as a $BAG.
-    */
+    * Target nodes are handled as a $BAG. */
   @SerialVersionUID(53)
   case class DiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])
-      extends AbstractDiHyperEdge[N]
-      with OuterEdge[N, DiHyperEdge] {
+      extends AbstractDiHyperEdge[N] {
     validate()
   }
   object DiHyperEdge extends DiHyperEdgeCompanion[DiHyperEdge]
 
   /** Represents a directed edge in a hypergraph with an unlimited number of source and of target nodes
-    * where sources and targets are handled as an ordered sequence.
-    */
+    * where sources and targets are handled as an ordered sequence. */
   @SerialVersionUID(-53)
   case class OrderedDiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])
       extends AbstractDiHyperEdge[N]
-      with OuterEdge[N, OrderedDiHyperEdge]
       with OrderedEndpoints {
     validate()
   }
@@ -582,7 +591,7 @@ object GraphEdge {
   /** $SHORTCUT `diHyperedge match { case sources ~~> targets => f(sources, targets) }`. */
   val ~~> = DiHyperEdge
 
-  trait AbstractEdge[+N] { this: EdgeLike[N] =>
+  trait AbstractEdge[+N] extends EdgeLike[N] {
 
     def _1: N
     def _2: N
@@ -644,10 +653,9 @@ object GraphEdge {
   private def first[N](nodes: Product): N  = nodes.productElement(0).asInstanceOf[N]
   private def second[N](nodes: Product): N = nodes.productElement(1).asInstanceOf[N]
 
-  /** Represents an undirected edge.
-    */
+  /** Represents an undirected edge. */
   @SerialVersionUID(54)
-  case class UnDiEdge[+N](node_1: N, node_2: N) extends AbstractUnDiEdge[N] with OuterEdge[N, UnDiEdge] {
+  case class UnDiEdge[+N](node_1: N, node_2: N) extends AbstractUnDiEdge[N] {
     validate()
   }
 
@@ -658,8 +666,7 @@ object GraphEdge {
     protected[collection] def from[N](nodes: Product) = new UnDiEdge[N](first[N](nodes), second[N](nodes))
   }
 
-  /** $SHORTCUT `edge match { case n1 ~ n2 => f(n1, n2) }`.
-    */
+  /** $SHORTCUT `edge match { case n1 ~ n2 => f(n1, n2) }`. */
   val ~ = UnDiEdge
 
   trait AbstractDiEdge[+N] extends AbstractDiHyperEdge[N] with AbstractEdge[N] with EqDi {
@@ -686,26 +693,20 @@ object GraphEdge {
     def unapply[N](e: AbstractDiEdge[N]) = Some(e)
   }
 
-  /** Represents a directed edge (aka arc, arrow).
-    */
+  /** Represents a directed edge (aka arc, arrow). */
   @SerialVersionUID(55)
-  case class DiEdge[+N](source: N, target: N) extends AbstractDiEdge[N] with OuterEdge[N, DiEdge] {
+  case class DiEdge[+N](source: N, target: N) extends AbstractDiEdge[N] {
     validate()
   }
 
-  /** Factory for directed edges.
-    * `GraphPredef` also supports implicit conversion from `node_1 ~> node_2` to `DiEdge`.
-    *
-    * @author Peter Empen
-    */
+  /** Factory for directed edges. */
   object DiEdge extends EdgeCompanion[DiEdge] {
     def apply[N](from: N, to: N)                      = new DiEdge[N](from, to)
     def apply[N](nodes: Tuple2[N, N])                 = new DiEdge[N](nodes._1, nodes._2)
     protected[collection] def from[N](nodes: Product) = new DiEdge[N](first[N](nodes), second[N](nodes))
   }
 
-  /** $SHORTCUT `edge match { case source ~> target => f(source, target) }`.
-    */
+  /** $SHORTCUT `edge match { case source ~> target => f(source, target) }`. */
   val ~> = DiEdge
 
   private[collection] object Abstract {

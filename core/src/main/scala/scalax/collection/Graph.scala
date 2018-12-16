@@ -7,7 +7,6 @@ import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 import scalax.collection.GraphEdge._
-import scalax.collection.GraphPredef.{OuterEdge, OuterElem, OuterNode}
 import scalax.collection.generic.{GraphCompanion, GraphCoreCompanion}
 import scalax.collection.config.GraphConfig
 
@@ -241,19 +240,19 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
     def hasAnyMultiEdge: Boolean
   }
 
-  /** Checks whether the given outer node is contained in this graph. */
   final def contains(node: N): Boolean = nodes contains newNode(node)
-
-  /** Checks whether the given outer edge is contained in this graph. */
   final def contains(edge: E[N]): Boolean = edges contains newHyperEdge(edge, Nil)
 
-  /** Iterator over all nodes and edges. */
   def iterator: Iterator[InnerElem] = nodes.toIterator ++ edges.toIterator
 
-  /** Iterable over all nodes and edges. */
   def toIterable: Iterable[InnerElem] = new AbstractIterable[InnerElem] {
     def iterator: Iterator[InnerElem] = thisGraph.iterator
   }
+
+  def outerIterator: Iterator[OuterElem] = ???
+//    nodes.iterator.map (n => OuterNode(n.outer)) ++ edges.iterator.map(_.outer)
+
+  def toOuterIterable: Iterable[OuterElem] = ???
 
   @inline final def find(node: N): Option[NodeT]    = nodes find node
   @inline final def find(edge: E[N]): Option[EdgeT] = edges find edge
@@ -271,7 +270,7 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
     }
   }
 
-  final protected def partitionOuter(elems: Iterable[OuterElem[N, E]]): (MSet[N], MSet[E[N]]) = {
+  final protected def partitionOuter(elems: Iterable[OuterElem]): (MSet[N], MSet[E[N]]) = {
     val size = elems.size
     def builder[A] = {
       val b = MSet.newBuilder[A]
@@ -279,8 +278,8 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
       b
     }
     val (nB, eB) = elems.foldLeft(builder[N], builder[E[N]]) {
-      case ((nodes, edges), OuterNode(n))       => (nodes += n, edges)
-      case ((nodes, edges), e: OuterEdge[N, E]) => (nodes, edges += e.asInstanceOf[E[N]])
+      case ((nodes, edges), OuterNode(n)) => (nodes += n, edges)
+      case ((nodes, edges), OuterEdge(e)) => (nodes, edges += e)
     }
     (nB.result, eB.result)
   }

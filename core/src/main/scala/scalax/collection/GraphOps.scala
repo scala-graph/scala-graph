@@ -4,7 +4,7 @@ import scala.language.higherKinds
 
 import scalax.collection.GraphEdge.EdgeLike
 
-trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] {
+trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends OuterElems[N, E] {
 
   /** Whether all edges of this graph are directed. */
   def isDirected: Boolean
@@ -55,11 +55,35 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] {
   /** Iterable over all nodes and edges. */
   def toIterable: Iterable[InnerElem]
 
+  /** Iterator over all inner nodes and edges. */
+  def outerIterator: Iterator[OuterElem]
+
+  /** Iterable over all nodes and edges. */
+  def toOuterIterable: Iterable[OuterElem]
+
   /** Whether the given outer node is contained in this graph. */
   def contains(node: N): Boolean
 
   /** Whether the given outer edge is contained in this graph. */
   def contains(edge: E[N]): Boolean
+
+  type NodePredicate = NodeT => Boolean
+  type EdgePredicate = EdgeT => Boolean
+
+  /** Node predicate with constant `true`. */
+  def anyNode: NodePredicate
+
+  /** Node predicate with constant `false`. */
+  def noNode: NodePredicate
+
+  /** Edge predicate with constant `true`. */
+  def anyEdge: EdgePredicate
+
+  /** Edge predicate with constant `false`. */
+  def noEdge: EdgePredicate
+
+  /** Computes a new graph with nodes satisfying `fNode` and edges staisfying `fEdge`. */
+  def filter(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): This[N, E] = ???
 
   /** Searches this graph for an inner node that wraps an outer node equalling to the given outer node. */
   def find(node: N): Option[NodeT]
@@ -77,6 +101,30 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] {
     */
   def get(edge: E[N]): EdgeT
 
-  /** Builds a new graph by applying `f` to all nodes of this graph. Edges are preserved */
-  def map[B](f: N => B): This[B, E]
+  /** Computes a new graph that is the difference of this graph and `that` graph. */
+  def diff(that: Graph[N, E]): This[N, E] = ???
+
+  /** Alias for `diff`. */
+  @inline final def &~(that: Graph[N, E]): This[N, E] = this diff that
+
+  /** Computes the intersection between this graph and `that` graph. */
+  def intersect(that: Graph[N, E]): This[N, E] = ???
+
+  /** Alias for `intersect`. */
+  @inline final def &(that: Graph[N, E]): This[N, E] = this intersect that
+
+  /** Computes the union between this graph and `that` graph. */
+  def union(that: Graph[N, E]): This[N, E] = ???
+
+  /** Alias for `union`. */
+  @inline final def |(that: Graph[N, E]): This[N, E] = this union that
+
+  /** Computes a new graph by applying `fNode` to all nodes of this graph with edges preserved. */
+  def mapNodes[NN](fNode: N => NN): This[NN, E] = ???
+
+  /** Computes a new graph by applying `fEdge` to all edges of this graph with nodes preserved. */
+  def mapEdges[NE[X] <: EdgeLike[X]](fEdge: E[N] => NE[N]): This[N, NE] = ???
+
+  /** Computes a new graph by applying `fNode` to all nodes and `fEdge` to all edges of this graph. */
+  def mapElements[NN, NE[X] <: EdgeLike[X]](fNode: N => NN, fEdge: E[N] => NE[NN]): This[NN, NE] = ???
 }

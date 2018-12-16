@@ -2,7 +2,7 @@ package scalax.collection
 
 import language.higherKinds
 
-import GraphPredef.{EdgeLike, _}
+import GraphPredef._
 import GraphEdge._
 /* TODO
 import edge._

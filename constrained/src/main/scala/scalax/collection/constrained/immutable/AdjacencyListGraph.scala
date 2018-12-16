@@ -96,21 +96,6 @@ trait AdjacencyListGraph[
     (outeNode: N, innerNode: NodeT) =>
       copy(nodes.toOuter.toBuffer -= outeNode, edges.toOuter.toBuffer --= (innerNode.edges map (_.toOuter))))
 
-  override def -?(n: N) = checkedSubtractNode(
-    n,
-    false,
-    (outerNode: N, innerNode: NodeT) => {
-      var newNodes = nodes.toOuter.toBuffer
-      var newEdges = edges.toOuter.toBuffer
-      nodes.subtract(
-        innerNode,
-        false,
-        innerNode => newNodes -= outerNode,
-        innerNode => newEdges --= (innerNode.edges map (_.toOuter)))
-      copy(newNodes, newEdges)
-    }
-  )
-
   /** generic constrained subtraction of edges */
   protected def checkedSubtractEdge[G >: This[N, E]](edge: E[N],
                                                      simple: Boolean,
