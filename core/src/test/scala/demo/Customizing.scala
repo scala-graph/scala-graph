@@ -57,7 +57,7 @@ class CustomizingTest extends RefSpec with Matchers {
       }
 
       implicit class FlightAssoc[A <: Airport](val e: DiEdge[A]) {
-        @inline def ##(flightNo: String) = new Flight[A](e.source, e.target, flightNo) with OuterEdge[A, Flight]
+        @inline def ##(flightNo: String) = new Flight[A](e.source, e.target, flightNo)
       }
 
       val flight = ham ~> ny ## "007"

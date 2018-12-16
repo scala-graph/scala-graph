@@ -10,7 +10,6 @@ import scala.math.max
 
 import scalax.collection.{Graph => CommonGraph, GraphLike => CommonGraphLike}
 import scalax.collection.GraphEdge.EdgeLike
-import scalax.collection.GraphPredef.OuterElem
 import scalax.collection.generic.{GraphCompanion, MutableGraphCompanion}
 import scalax.collection.config._
 
@@ -130,7 +129,7 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
   @inline final def remove(edge: E[N]): Boolean = edges remove InnerEdge(edge)
   @inline final def -=(edge: E[N]): this.type   = { remove(edge); this }
 
-  def &=(outer: Iterable[OuterElem[N, E]]): this.type = {
+  def &=(outer: Iterable[OuterElem]): this.type = {
     val (nodes, edges) = partitionOuter(outer)
     nodes foreach -=
     edges foreach -=

@@ -2,9 +2,9 @@ package scalax.collection
 package immutable
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.collection.mutable.ArrayBuffer
 import scala.language.higherKinds
 
+import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.mutable.ArraySet
 
@@ -84,7 +84,9 @@ trait AdjacencyListGraph[
     else this
 
   /** Creates a new graph with the elements of this graph plus the passed elements. */
-  final def ++(nodes: Traversable[N], edges: Traversable[E[N]], elems: Traversable[Graph[N, E]#InnerElem]): This[N, E] =
+  final def ++(nodes: Traversable[N],
+               edges: Traversable[E[N]],
+               elems: Traversable[AnyGraph[N, E]#InnerElem]): This[N, E] =
     bulkOp(nodes, edges, elems, plusPlus)
 
   /** Creates a new graph with the elements of this graph minus `node` and its incident edges. */
@@ -99,13 +101,15 @@ trait AdjacencyListGraph[
     else this
 
   /** Creates a new graph with the elements of this graph minus the passed elements. */
-  final def --(nodes: Traversable[N], edges: Traversable[E[N]], elems: Traversable[Graph[N, E]#InnerElem]): This[N, E] =
+  final def --(nodes: Traversable[N],
+               edges: Traversable[E[N]],
+               elems: Traversable[AnyGraph[N, E]#InnerElem]): This[N, E] =
     bulkOp(nodes, edges, elems, minusMinus)
 
   /** Prepares and calls `plusPlus` or `minusMinus`. */
   final protected def bulkOp(nodes: Traversable[N],
                              edges: Traversable[E[N]],
-                             elems: Traversable[Graph[N, E]#InnerElem],
+                             elems: Traversable[AnyGraph[N, E]#InnerElem],
                              op: (Iterator[N @uV], Iterator[E[N]]) => This[N, E] @uV): This[N, E] = {
     val (nodeElems, edgeElems) = partition(elems)
     op(nodes.toIterator ++ nodeElems.toIterator, edges.toIterator ++ edgeElems.toIterator)

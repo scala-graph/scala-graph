@@ -12,24 +12,37 @@ import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
 class TOpRootTest
-    extends Suites(new TOp[immutable.Graph](immutable.Graph), new TOp[mutable.Graph](mutable.Graph), new TMutableOp)
+    extends Suites(
+      new TOp[immutable.Graph](immutable.Graph),
+      new TOp[mutable.Graph](mutable.Graph),
+      new TImmutableOp,
+      new TMutableOp
+    )
+
+protected trait Examples[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]] {
+
+  protected def factory: GraphCoreCompanion[CC]
+
+  protected val g = factory(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
+  protected val h = factory(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
+
+  protected object Expected {
+    val g_union_h = factory(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5, 3 ~ 4, 4 ~ 6, 5 ~ 6)
+    val g_diff_h = factory(1 ~ 2)
+  }
+}
 
 class TOp[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
-    with Matchers {
-
-  val g = factory(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
-  val h = factory(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
+    with Matchers
+    with Examples[CC] {
 
   def `union ` {
-    val expected = factory(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5, 3 ~ 4, 4 ~ 6, 5 ~ 6)
-    g union h should be(expected)
-    g ++ h should be(expected)
+    val expected =
+    g union h should be(Expected.g_union_h)
   }
   def `difference ` {
-    val expected = factory(1 ~ 2)
-    g diff h should be(expected)
-    g -- h should be(expected)
+    g diff h should be(Expected.g_diff_h)
   }
   def `intersection ` {
     val expected = factory(3 ~ 5, 4)
@@ -38,14 +51,26 @@ class TOp[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](va
   }
 }
 
+class TImmutableOp extends RefSpec with Matchers with Examples[immutable.Graph] {
+  val factory = immutable.Graph
+
+  def `++ ` {
+    g ++ h should be(Expected.g_union_h)
+  }
+  def `-- ` {
+    g -- h should be(Expected.g_diff_h)
+  }
+}
+
 class TMutableOp extends RefSpec with Matchers {
 
   val oEdgesG              = List[UnDiEdge[Int]](1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
   val oEdgesH              = List[UnDiEdge[Int]](3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
+
   val (iFactory, mFactory) = (immutable.Graph, mutable.Graph)
-  val none                 = Set.empty
-  def initG                = (iFactory.from(none, oEdgesG), mFactory.from(none, oEdgesG))
-  def initH                = (iFactory.from(none, oEdgesH), mFactory.from(none, oEdgesH))
+  def initG                = (iFactory.from(edges = oEdgesG), mFactory.from(edges = oEdgesG))
+  def initH                = (iFactory.from(edges = oEdgesH), mFactory.from(edges = oEdgesH))
+
   def ` union` {
     val (iG, mG) = initG
     val (iH, mH) = initH
@@ -53,6 +78,7 @@ class TMutableOp extends RefSpec with Matchers {
     (mG ++= mH) should be(expected)
     (mG ++= iH) should be(expected)
   }
+
   def `difference ` {
     val (iG, mG) = initG
     val (iH, mH) = initH
@@ -60,6 +86,8 @@ class TMutableOp extends RefSpec with Matchers {
     (mG --= mH) should be(expected)
     (mG --= iH) should be(expected)
   }
+
+  /* TODO
   def `intersection ` {
     val (iG, mG) = initG
     val (iH, mH) = initH
@@ -67,4 +95,5 @@ class TMutableOp extends RefSpec with Matchers {
     (mG &= mH) should be(expected)
     (mG &= iH) should be(expected)
   }
+  */
 }

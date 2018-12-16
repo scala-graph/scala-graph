@@ -150,8 +150,8 @@ trait AdjacencyListBase[
 
     final def outDegree: Int = edges count (_.hasSource((n: NodeT) => n eq this))
 
-    final def outDegree(nodeFilter: NodeFilter,
-                        edgeFilter: EdgeFilter = anyEdge,
+    final def outDegree(nodeFilter: NodePredicate,
+                        edgeFilter: EdgePredicate = anyEdge,
                         includeHooks: Boolean = false,
                         ignoreMultiEdges: Boolean = true): Int = {
       val doEdgeFilter = isCustomEdgeFilter(edgeFilter)
@@ -168,8 +168,8 @@ trait AdjacencyListBase[
 
     final def inDegree: Int = edges count (_.hasTarget((n: NodeT) => n eq this))
 
-    final def inDegree(nodeFilter: NodeFilter,
-                       edgeFilter: EdgeFilter = anyEdge,
+    final def inDegree(nodeFilter: NodePredicate,
+                       edgeFilter: EdgePredicate = anyEdge,
                        includeHooks: Boolean = false,
                        ignoreMultiEdges: Boolean = true): Int = {
       val doEdgeFilter = isCustomEdgeFilter(edgeFilter)

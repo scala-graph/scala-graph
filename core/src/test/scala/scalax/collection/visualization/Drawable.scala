@@ -21,10 +21,8 @@ import org.gephi.preview.api.PreviewProperty._
 import org.gephi.preview.types.{DependantColor, EdgeColor}
 import org.gephi.project.api.{ProjectController, Workspace}
 import org.openide.util.Lookup
-
 import scalax.collection.Graph
-import scalax.collection.GraphEdge.{AbstractEdge, EdgeLike}
-import scalax.collection.GraphPredef.EdgeLike
+import scalax.collection.GraphEdge.{AbstractEdge, EdgeLike, LEdge, Label}
 
 /** Facilitates drawing any graph as an image.
   */
@@ -162,9 +160,11 @@ trait Drawable {
         else EdgeDirection.UNDIRECTED
 
       def getLabel: String = {
-        var label: List[String] = List()
-        if (isWeighted) label = label :+ edge.weight.toString
-        if (edge.isLabeled) label = label :+ edge.label.toString
+        val label: List[String] = edge match {
+          case LEdge(eLabel) if isWeighted => edge.weight.toString :: eLabel.toString :: Nil
+          case LEdge(eLabel)               => eLabel.toString :: Nil
+          case _                           => Nil
+        }
         label.mkString(" - ")
       }
     }
@@ -183,8 +183,8 @@ trait Drawable {
         val (node1, node2) = edge match {
           case AbstractEdge(_1: g.NodeT @unchecked, _2: g.NodeT @unchecked) => (_1, _2)
         }
-        val isInverted     = edge.to == node1
-        val isMultiEdge    = !edge.isLooping && node1.connectionsWith(node2).size > 1
+        val isInverted  = node1 == node2
+        val isMultiEdge = !edge.isLooping && node1.connectionsWith(node2).size > 1
 
         def addSimple(): Unit =
           addEdge(
