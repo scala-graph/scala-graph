@@ -513,6 +513,7 @@ object GraphEdge {
 
     def apply[N](node_1: N, node_2: N, moreNodes: N*): E[N] = from(Iterable(node_1, node_2) ++ moreNodes)
     def apply[N](ends: Iterable[N]): E[N]                   = from(ends)
+    def unapply[N](edge: E[N] @uV): Option[Seq[N]]          = Some(edge.ends.toSeq)
 
     protected def from[N](ends: Iterable[N]): E[N]
   }
@@ -567,6 +568,7 @@ object GraphEdge {
     */
   trait DiHyperEdgeCompanion[+E[N] <: AbstractDiHyperEdge[N]] extends EdgeCompanionBase[E] {
     def apply[N](sources: Iterable[N], targets: Iterable[N]): E[N]
+    def unapply[N](edge: E[N] @uV): Option[(Seq[N], Seq[N])] = Some(edge.sources.toSeq, edge.targets.toSeq)
   }
 
   /** Represents a directed edge in a hypergraph with an unlimited number of source and of target nodes.
