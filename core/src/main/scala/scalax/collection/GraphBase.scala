@@ -65,9 +65,6 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
   trait Node extends Serializable
   trait InnerNode extends Node with super.InnerNode {
 
-    /** The outer node as supplied at instantiation or addition to this graph. */
-    def outer: N
-
     /** Synonym for `outer`. */
     @deprecated("Use 'outer' instead", "2.0.0")
     def value: N = outer
@@ -433,9 +430,6 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
 
   trait InnerEdge extends InnerEdgeLike[NodeT] with super.InnerEdge with Equals {
     this: EdgeT =>
-
-    /** The edge as supplied as parameter to any `Graph` method that is used to add one or more edges. */
-    def outer: E[N]
 
     /** Synonym for `outer`. */
     @inline final def toOuter: E[N] = outer

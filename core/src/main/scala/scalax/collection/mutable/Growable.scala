@@ -37,4 +37,11 @@ trait Growable[-N, -E[X] <: EdgeLike[X]] {
 
   /** Adds all elements produced by `outer` to this graph. */
   def ++=(outer: Iterable[OuterElem[N, E]]): this.type = { outer foreach addOuter; this }
+
+  /** Adds all passed nodes and edges to this graph. */
+  def ++=(nodes: Iterable[N] = Nil, edges: Iterable[E[N] @uV] = Nil): this.type = {
+    nodes foreach +=
+    edges foreach +=
+    this
+  }
 }

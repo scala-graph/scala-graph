@@ -128,13 +128,6 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
 
   @inline final def remove(edge: E[N]): Boolean = edges remove InnerEdge(edge)
   @inline final def -=(edge: E[N]): this.type   = { remove(edge); this }
-
-  def &=(outer: Iterable[OuterElem]): this.type = {
-    val (nodes, edges) = partitionOuter(outer)
-    nodes foreach -=
-    edges foreach -=
-    this
-  }
 }
 
 /** The main trait for mutable graphs bundling the functionality of traits concerned with

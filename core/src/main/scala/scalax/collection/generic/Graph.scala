@@ -5,9 +5,9 @@ import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.GraphPredef.OuterElem
 import scalax.collection.config.{CoreConfig, GraphConfig}
 import scalax.collection.mutable.Builder
-import scalax.collection.GraphPredef.OuterElem
 
 /** Methods common to `Graph` companion objects in the core module.
   *

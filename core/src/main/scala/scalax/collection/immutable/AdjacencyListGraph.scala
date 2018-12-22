@@ -73,47 +73,39 @@ trait AdjacencyListGraph[
 
   def copy(nodes: Traversable[N], edges: Traversable[E[N]]): This[N, E]
 
-  /** Creates a new supergraph with an additional node unless this graph contains `node`. */
   def +(node: N): This[N, E] =
     if (this contains node) this
     else copy(nodes.toOuter.toBuffer += node, edges.toOuter)
 
-  /** Creates a new supergraph with an additional edge unless this graph contains `edge`. */
   def +(edge: E[N]): This[N, E] =
     if (this contains edge) copy(nodes.toOuter, edges.toOuter.toBuffer -= edge)
     else this
 
-  /** Creates a new graph with the elements of this graph plus the passed elements. */
-  final def ++(nodes: Traversable[N],
-               edges: Traversable[E[N]],
-               elems: Traversable[AnyGraph[N, E]#InnerElem]): This[N, E] =
-    bulkOp(nodes, edges, elems, plusPlus)
+  final def ++(nodes: Iterable[N], edges: Iterable[E[N]]): This[N, E] = bulkOp(nodes, edges, plusPlus)
 
-  /** Creates a new graph with the elements of this graph minus `node` and its incident edges. */
+  final def ++(that: AnyGraph[N, E]): This[N, E] = partition(that.toIterable) pipe {
+    case (nodes, edges) => this ++ (nodes, edges)
+  }
+
   def -(node: N): This[N, E] = nodes find (nf => nf.value == node) match {
     case Some(nf) => copy(nodes.toOuter.toBuffer -= node, edges.toOuter.toBuffer --= (nf.edges map (_.toOuter)))
     case None     => this
   }
 
-  /** Creates a new graph with the elements of this graph minus `edge`. */
   def -(edge: E[N]): This[N, E] =
     if (this contains edge) copy(nodes.toOuter, edges.toOuter.toBuffer -= edge)
     else this
 
-  /** Creates a new graph with the elements of this graph minus the passed elements. */
-  final def --(nodes: Traversable[N],
-               edges: Traversable[E[N]],
-               elems: Traversable[AnyGraph[N, E]#InnerElem]): This[N, E] =
-    bulkOp(nodes, edges, elems, minusMinus)
+  final def --(nodes: Iterable[N], edges: Iterable[E[N]]): This[N, E] = bulkOp(nodes, edges, minusMinus)
 
-  /** Prepares and calls `plusPlus` or `minusMinus`. */
-  final protected def bulkOp(nodes: Traversable[N],
-                             edges: Traversable[E[N]],
-                             elems: Traversable[AnyGraph[N, E]#InnerElem],
-                             op: (Iterator[N @uV], Iterator[E[N]]) => This[N, E] @uV): This[N, E] = {
-    val (nodeElems, edgeElems) = partition(elems)
-    op(nodes.toIterator ++ nodeElems.toIterator, edges.toIterator ++ edgeElems.toIterator)
+  final def --(that: AnyGraph[N, E]): This[N, E] = partition(that.toIterable) pipe {
+    case (nodes, edges) => this -- (nodes, edges)
   }
+
+  final protected def bulkOp(nodes: Iterable[N],
+                             edges: Iterable[E[N]],
+                             op: (Iterator[N @uV], Iterator[E[N]]) => This[N, E] @uV): This[N, E] =
+    op(nodes.toIterator, edges.toIterator)
 
   /** Implements the heart of `++` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */

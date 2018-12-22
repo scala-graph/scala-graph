@@ -262,7 +262,7 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
 
   def map[B](f: N => B): This[B, E] = ???
 
-  final protected def partition(elems: Traversable[Graph[N, E]#InnerElem]): (Traversable[N], Traversable[E[N]]) = {
+  final protected def partition(elems: Iterable[Graph[N, E]#InnerElem]): (Iterable[N], Iterable[E[N]]) = {
     val size = elems.size
     elems.foldLeft(new ArrayBuffer[N](size), new ArrayBuffer[E[N]](size)) {
       case ((nodes, edges), InnerNode(n)) => (nodes += n, edges)
@@ -277,9 +277,10 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
       b.sizeHint(size)
       b
     }
-    val (nB, eB) = elems.foldLeft(builder[N], builder[E[N]]) {
-      case ((nodes, edges), OuterNode(n)) => (nodes += n, edges)
-      case ((nodes, edges), OuterEdge(e)) => (nodes, edges += e)
+    val (nB, eB) = (builder[N], builder[E[N]])
+    elems foreach {
+      case OuterNode(n) => nB += n
+      case OuterEdge(e) => eB += e
     }
     (nB.result, eB.result)
   }

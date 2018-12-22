@@ -28,15 +28,16 @@ trait Shrinkable[-N, -E[X] <: EdgeLike[X]] extends OuterElems[N @uV, E @uV] {
   def -=(edge: E[N @uV]): this.type
 
   /** Removes all elements produced by `outer` from this graph. */
-  def --=(outer: Iterable[OuterElem]): this.type = {
-    val it = outer.iterator
-    while (it.hasNext) it.next() match {
-      case OuterNode(n) => -=(n)
-      case OuterEdge(e) => -=(e)
-    }
+  final def --=(nodes: Iterable[N] = Nil, edges: Iterable[E[N] @uV] = Nil): this.type = {
+    nodes foreach -=
+    edges foreach -=
     this
   }
 
   /** Removes all nodes and edges contained in `other` from this graph. */
-  def --=(other: AnyGraph[N @uV, E @uV]): this.type = ???
+  final def --=(that: AnyGraph[N @uV, E @uV]): this.type = {
+    that.nodes.toOuter foreach -=
+    that.edges.toOuter foreach -=
+    this
+  }
 }

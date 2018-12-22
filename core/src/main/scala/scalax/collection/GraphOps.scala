@@ -6,6 +6,9 @@ import scalax.collection.GraphEdge.EdgeLike
 
 trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends OuterElems[N, E] {
 
+  /** Whether this graph contains any node or any edge. */
+  @inline final def isEmpty: Boolean = iterator.isEmpty
+
   /** Whether all edges of this graph are directed. */
   def isDirected: Boolean
 
@@ -43,8 +46,15 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
   def stringPrefix: String = "Graph"
 
   sealed trait InnerElem
-  trait InnerNode extends InnerElem
-  trait InnerEdge extends InnerElem
+  trait InnerNode extends InnerElem {
+    /** The outer node as supplied at instantiation or addition to this graph. */
+    def outer: N
+  }
+
+  trait InnerEdge extends InnerElem {
+    /** The outer edge as supplied at instantiation or addition to this graph. */
+    def outer: E[N]
+  }
 
   type NodeT <: InnerNode
   type EdgeT <: InnerEdge
@@ -81,6 +91,12 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
 
   /** Edge predicate with constant `false`. */
   def noEdge: EdgePredicate
+
+  /** Whether the given node is contained in this graph. */
+  @inline final def apply(node: N): Boolean = find(node).isDefined
+
+  /** Whether the given edge is contained in this graph. */
+  @inline final def apply(edge: E[N]): Boolean = find(edge).isDefined
 
   /** Computes a new graph with nodes satisfying `fNode` and edges staisfying `fEdge`. */
   def filter(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): This[N, E] = ???
