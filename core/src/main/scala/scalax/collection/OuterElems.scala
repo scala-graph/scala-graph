@@ -5,6 +5,7 @@ import scala.language.higherKinds
 import scalax.collection.GraphEdge.EdgeLike
 
 trait OuterElems[N, E[X] <: EdgeLike[X]] {
+
   /** Represents parameters that are accepted when calling `Graph(...)`.
     * @tparam N  the type of the nodes (vertices)
     * @tparam E  the kind of the edges (links)

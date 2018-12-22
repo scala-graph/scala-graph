@@ -28,7 +28,7 @@ protected trait Examples[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLik
 
   protected object Expected {
     val g_union_h = factory(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5, 3 ~ 4, 4 ~ 6, 5 ~ 6)
-    val g_diff_h = factory(1 ~ 2)
+    val g_diff_h  = factory(1 ~ 2)
   }
 }
 
@@ -39,7 +39,7 @@ class TOp[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](va
 
   def `union ` {
     val expected =
-    g union h should be(Expected.g_union_h)
+      g union h should be(Expected.g_union_h)
   }
   def `difference ` {
     g diff h should be(Expected.g_diff_h)
@@ -64,8 +64,8 @@ class TImmutableOp extends RefSpec with Matchers with Examples[immutable.Graph] 
 
 class TMutableOp extends RefSpec with Matchers {
 
-  val oEdgesG              = List[UnDiEdge[Int]](1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
-  val oEdgesH              = List[UnDiEdge[Int]](3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
+  val oEdgesG = List[UnDiEdge[Int]](1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
+  val oEdgesH = List[UnDiEdge[Int]](3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
 
   val (iFactory, mFactory) = (immutable.Graph, mutable.Graph)
   def initG                = (iFactory.from(edges = oEdgesG), mFactory.from(edges = oEdgesG))
@@ -95,5 +95,5 @@ class TMutableOp extends RefSpec with Matchers {
     (mG &= mH) should be(expected)
     (mG &= iH) should be(expected)
   }
-  */
+ */
 }

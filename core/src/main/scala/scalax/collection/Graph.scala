@@ -240,7 +240,7 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
     def hasAnyMultiEdge: Boolean
   }
 
-  final def contains(node: N): Boolean = nodes contains newNode(node)
+  final def contains(node: N): Boolean    = nodes contains newNode(node)
   final def contains(edge: E[N]): Boolean = edges contains newHyperEdge(edge, Nil)
 
   def iterator: Iterator[InnerElem] = nodes.toIterator ++ edges.toIterator

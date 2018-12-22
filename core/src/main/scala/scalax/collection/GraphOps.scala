@@ -47,11 +47,13 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
 
   sealed trait InnerElem
   trait InnerNode extends InnerElem {
+
     /** The outer node as supplied at instantiation or addition to this graph. */
     def outer: N
   }
 
   trait InnerEdge extends InnerElem {
+
     /** The outer edge as supplied at instantiation or addition to this graph. */
     def outer: E[N]
   }
