@@ -14,7 +14,7 @@ class TExtHashSetTest extends RefSpec with Matchers {
   import Data._
   val set                    = ExtHashSet(outerElemsOfDi_1: _*)
   val outerEdge: DiEdge[Int] = outerElemsOfDi_1.head
-  val graph                  = Graph(outerElemsOfDi_1: _*)
+  val graph                  = Graph.from(edges = outerElemsOfDi_1)
   val innerEdge              = graph get outerEdge
 
   object `Hash set extensions work properly` {

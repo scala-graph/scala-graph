@@ -49,6 +49,11 @@ object GraphPredef {
     new SeqFacade(edges)
 
   @inline implicit def anyToNode[N](n: N): OuterNode[N] = OuterNode(n)
+
+  implicit class SeqEnrichments[N, S[X] <: Seq[X]](private val seq: S[N]) extends AnyVal {
+    def toOuterElems[E[X <: N] <: EdgeLike[X]]: Seq[OuterElem[N, E]] = seq map anyToNode[N]
+  }
+
   @inline implicit def edgeLikeToOuterEdge[N, E[X] <: EdgeLike[X]](e: E[N]): OuterEdge[N, E] = OuterEdge(e)
 
   abstract class AbstractHyperEdgeImplicits[E[N] <: AbstractHyperEdge[N], C <: HyperEdgeCompanion[E]](companion: C) {
