@@ -38,7 +38,7 @@ class ExtHashSet[A]
       None
     }
     // must always find an element either upwards or downwards
-    search(drawn, 1, (i: Int) => i < len) getOrElse (search(drawn - 1, -1, (i: Int) => i > 0).get)
+    search(drawn, 1, (i: Int) => i < len) getOrElse search(drawn - 1, -1, (i: Int) => i > 0).get
   }
 
   def findElem(elem: A): Option[A] = findEntry(elem)

@@ -286,6 +286,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     }
 
     override def hashCode = outer.##
+    override def toString: String = outer.toString
   }
   object InnerNode {
     def unapply(node: InnerNode): Option[N] = Some(node.outer)
@@ -471,17 +472,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     def apply(outer: E[N]): EdgeT = {
       @inline def lookup(n: N) = nodes lookup n
 
-      if (outer.arity == 2) {
-        val (n_1, n_2) = (outer._n(0), outer._n(1))
-        @inline def inner(n: N): NodeT = {
-          val found = lookup(n)
-          if (null eq found) newNode(n) else found
-        }
-        val inner_1 = inner(n_1)
-        val inner_2 = if (n_1 == n_2) inner_1 else inner(n_2)
-
-        newEdge(outer, inner_1, inner_2)
-      } else {
+      if (outer.isHyperEdge) {
         val freshNodes = MMap.empty[N, NodeT]
         def inner(ends: Iterable[N]): Iterable[NodeT] = {
           def mkNode(n: N): NodeT =
@@ -498,6 +489,16 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
           case diHyper: AbstractDiHyperEdge[N] => newDiHyperEdge(outer, inner(diHyper.sources), inner(diHyper.targets))
           case hyper: AbstractHyperEdge[N]     => newHyperEdge(outer, inner(hyper.ends))
         }
+      } else{
+        val (n_1, n_2) = (outer._n(0), outer._n(1))
+        @inline def inner(n: N): NodeT = {
+          val found = lookup(n)
+          if (null eq found) newNode(n) else found
+        }
+        val inner_1 = inner(n_1)
+        val inner_2 = if (n_1 == n_2) inner_1 else inner(n_2)
+
+        newEdge(outer, inner_1, inner_2)
       }
     }
 

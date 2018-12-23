@@ -598,9 +598,6 @@ object GraphEdge {
     def _1: N
     def _2: N
 
-    override def sources: Set[N @uV] = Set(_1, _2)
-    override def targets: Set[N @uV] = sources
-
     // the following five methods should be made final as soon as DiEdge no more extends UnDiEdge
     @inline override def arity: Int             = 2
     @inline override protected def isValidArity = true
@@ -630,6 +627,9 @@ object GraphEdge {
 
     def node_1: N
     def node_2: N
+
+    @inline final override def sources: Set[N @uV] = Set(node_1, node_2)
+    @inline final override def targets: Set[N @uV] = sources
 
     @inline final override def _1: N = node_1
     @inline final override def _2: N = node_2
@@ -678,17 +678,20 @@ object GraphEdge {
     def source: N
     def target: N
 
+    @inline final override def _1: N = source
+    @inline final override def _2: N = target
+
     final override def sources: Set[N @uV] = Set(source)
     final override def targets: Set[N @uV] = Set(target)
 
-    final override def hasSource[M >: N](node: M): Boolean = this._1 == node
-    final override def hasSource(pred: N => Boolean)       = pred(this._1)
+    final override def hasSource[M >: N](node: M): Boolean = source == node
+    final override def hasSource(pred: N => Boolean)       = pred(source)
 
-    final override def hasTarget[M >: N](node: M): Boolean = this._2 == node
-    final override def hasTarget(pred: N => Boolean)       = pred(this._2)
+    final override def hasTarget[M >: N](node: M): Boolean = target == node
+    final override def hasTarget(pred: N => Boolean)       = pred(target)
 
     final override def matches[M >: N](n1: M, n2: M): Boolean               = diBaseEquals(n1, n2)
-    final override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = p1(this._1) && p2(this._2)
+    final override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = p1(source) && p2(target)
   }
   object AbstractDiEdge {
     val nodeSeparator                    = " ~> "

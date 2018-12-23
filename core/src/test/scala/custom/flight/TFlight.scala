@@ -36,9 +36,9 @@ class TFlight[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       val outer = Flight(ham, gig, flightNo)
       given(factory(outer)) { g =>
         val e = g.edges.head
-        e.ends.productElement(0).asInstanceOf[AnyRef].getClass should be(g.nodes.head.getClass)
-        e.toAirport should be(ham)
-        e.target should be(gig)
+        e.ends.head.getClass should be(g.nodes.head.getClass)
+        e.fromAirport should be(ham)
+        e.toAirport should be(gig)
         e.flightNo should be(flightNo)
         e should be(outer)
         e.## should be(outer.##)

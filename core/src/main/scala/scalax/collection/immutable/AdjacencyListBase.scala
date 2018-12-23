@@ -83,13 +83,12 @@ trait AdjacencyListBase[
 
     final def hasSuccessors: Boolean = diSuccessors exists (_ ne this)
 
-    final protected[collection] def addDiSuccessors(edge: EdgeT, add: (NodeT) => Unit): Unit = {
+    final protected[collection] def addDiSuccessors(edge: EdgeT, add: NodeT => Unit): Unit = {
       val filter = {
-        val outer = edge
-        if (outer.isHyperEdge && outer.isDirected) outer.hasSource((_: NodeT) eq this)
+        if (edge.isHyperEdge && edge.isDirected) edge.hasSource((_: NodeT) eq this)
         else true
       }
-      edge.ends foreach (n => if ((n ne this) && filter) add(n))
+      edge.targets foreach (n => if ((n ne this) && filter) add(n))
     }
 
     final def diPredecessors: Set[NodeT] = {
@@ -102,7 +101,7 @@ trait AdjacencyListBase[
 
     final def hasPredecessors: Boolean = edges exists (_.hasSource((n: NodeT) => n ne this))
 
-    final protected[collection] def addDiPredecessors(edge: EdgeT, add: (NodeT) => Unit) {
+    final protected[collection] def addDiPredecessors(edge: EdgeT, add: NodeT => Unit) {
       edge.sources foreach (n => if (n ne this) add(n))
     }
 
@@ -112,7 +111,7 @@ trait AdjacencyListBase[
       new EqSetFacade(m)
     }
 
-    final protected[collection] def addNeighbors(edge: EdgeT, add: (NodeT) => Unit) {
+    final protected[collection] def addNeighbors(edge: EdgeT, add: NodeT => Unit) {
       edge.ends foreach (n => if (n ne this) add(n))
     }
 
@@ -209,7 +208,7 @@ trait AdjacencyListBase[
 
     final override def get(outer: N): NodeT = {
       val inner = lookup(outer)
-      if (null == inner) throw new NoSuchElementException
+      if (null eq inner) throw new NoSuchElementException
       else inner
     }
 
