@@ -296,13 +296,13 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     def apply(node: N)    = newNode(node)
     def unapply(n: NodeT) = Some(n)
 
-    @inline final protected[collection] def addDiSuccessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit) {
+    @inline final protected[collection] def addDiSuccessors(node: NodeT, edge: EdgeT, add: NodeT => Unit) {
       node.addDiSuccessors(edge, add)
     }
-    @inline final protected[collection] def addDiPredecessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit) {
+    @inline final protected[collection] def addDiPredecessors(node: NodeT, edge: EdgeT, add: NodeT => Unit) {
       node.addDiPredecessors(edge, add)
     }
-    @inline final protected[collection] def addNeighbors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit) {
+    @inline final protected[collection] def addNeighbors(node: NodeT, edge: EdgeT, add: NodeT => Unit) {
       node.addNeighbors(edge, add)
     }
 

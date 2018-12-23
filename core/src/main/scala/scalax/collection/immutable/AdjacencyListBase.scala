@@ -237,7 +237,7 @@ trait AdjacencyListBase[
 
     final override def find(elem: E[N]): Option[EdgeT] = nodes find elem._n(0) flatMap (_.edges find (_ == elem))
 
-    final def contains(edge: EdgeT): Boolean = nodes find edge._n(0) exists (_.edges contains edge)
+    final def contains(edge: EdgeT): Boolean = nodes find edge.outer._n(0) exists (_.edges contains edge)
 
     final def iterator: Iterator[EdgeT] = edgeIterator
 

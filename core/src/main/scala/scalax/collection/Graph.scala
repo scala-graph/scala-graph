@@ -260,17 +260,9 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
   @inline final def get(node: N): NodeT    = nodes get node
   @inline final def get(edge: E[N]): EdgeT = edges.find(edge).get
 
-  def map[B](f: N => B): This[B, E] = ???
+  def map[NN, NE[X] <: EdgeLike[X]](fNode: N => NN, fEdge: E[N] => (NN, NN) => NE[NN]): This[NN, NE] = ???
 
-  final protected def partition(elems: Iterable[Graph[N, E]#InnerElem]): (Iterable[N], Iterable[E[N]]) = {
-    val size = elems.size
-    elems.foldLeft(new ArrayBuffer[N](size), new ArrayBuffer[E[N]](size)) {
-      case ((nodes, edges), InnerNode(n)) => (nodes += n, edges)
-      case ((nodes, edges), InnerEdge(e)) => (nodes, edges += e)
-    }
-  }
-
-  final protected def partitionOuter(elems: Iterable[OuterElem]): (MSet[N], MSet[E[N]]) = {
+  final protected def partition(elems: Iterable[OuterElem]): (MSet[N], MSet[E[N]]) = {
     val size = elems.size
     def builder[A] = {
       val b = MSet.newBuilder[A]

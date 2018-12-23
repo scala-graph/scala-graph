@@ -78,14 +78,12 @@ trait AdjacencyListGraph[
     else copy(nodes.toOuter.toBuffer += node, edges.toOuter)
 
   def +(edge: E[N]): This[N, E] =
-    if (this contains edge) copy(nodes.toOuter, edges.toOuter.toBuffer -= edge)
-    else this
+    if (this contains edge) this
+    else copy(nodes.toOuter, edges.toOuter.toBuffer += edge)
 
   final def ++(nodes: Iterable[N], edges: Iterable[E[N]]): This[N, E] = bulkOp(nodes, edges, plusPlus)
 
-  final def ++(that: AnyGraph[N, E]): This[N, E] = partition(that.toIterable) pipe {
-    case (nodes, edges) => this ++ (nodes, edges)
-  }
+  final def ++(that: AnyGraph[N, E]): This[N, E] = this ++ (that.nodes.toOuter, that.edges.toOuter)
 
   def -(node: N): This[N, E] = nodes find (nf => nf.value == node) match {
     case Some(nf) => copy(nodes.toOuter.toBuffer -= node, edges.toOuter.toBuffer --= (nf.edges map (_.toOuter)))
@@ -98,14 +96,12 @@ trait AdjacencyListGraph[
 
   final def --(nodes: Iterable[N], edges: Iterable[E[N]]): This[N, E] = bulkOp(nodes, edges, minusMinus)
 
-  final def --(that: AnyGraph[N, E]): This[N, E] = partition(that.toIterable) pipe {
-    case (nodes, edges) => this -- (nodes, edges)
-  }
+  final def --(that: AnyGraph[N, E]): This[N, E] = this -- (that.nodes.toOuter, that.edges.toOuter)
 
   final protected def bulkOp(nodes: Iterable[N],
                              edges: Iterable[E[N]],
                              op: (Iterator[N @uV], Iterator[E[N]]) => This[N, E] @uV): This[N, E] =
-    op(nodes.toIterator, edges.toIterator)
+    op(nodes.iterator, edges.iterator)
 
   /** Implements the heart of `++` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */
@@ -122,11 +118,12 @@ trait AdjacencyListGraph[
   /** Calculates the `nodes` and `edges` arguments to be passed to a factory method
     *  when delNodes and delEdges are to be deleted by `--`.
     */
-  final protected def minusMinusNodesEdges(delNodes: Iterator[N], delEdges: Iterator[E[N]]) =
-    (nodes.toOuter -- delNodes, {
-      val delNodeSet = delNodes.toSet
-      val restEdges =
-        for (e <- edges.toOuter if e.ends forall (n => !(delNodeSet contains n))) yield e
-      restEdges -- delEdges
-    })
+  final protected def minusMinusNodesEdges(delNodes: Iterator[N], delEdges: Iterator[E[N]]): (Set[N], Set[E[N]]) =
+    delNodes.toSet pipe { delNodeSet =>
+      (nodes.toOuter -- delNodeSet, {
+        val restEdges =
+          for (e <- edges.toOuter if e.ends forall (n => !(delNodeSet contains n))) yield e
+        restEdges -- delEdges
+      })
+    }
 }

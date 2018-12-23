@@ -78,11 +78,8 @@ class TEditImmutable extends RefSpec with Matchers {
 
     def `++ ` {
       val g = gString_A + "B" + "C"
-      g should have size (3)
-      g.contains("A") should be(true) //g should contain ("A")
-      g.contains("B") should be(true) //g should contain ("B")
-      g.contains("C") should be(true) //g should contain ("C")
-
+      g.elementCount should be(3)
+      ('A' to 'C') map (_.toString) foreach (g.contains(_) should be(true))
       val (gBefore, gAfter) = (Graph(1, 2 ~ 3), Graph(0, 1 ~ 2, 2 ~ 3))
       gBefore ++ (nodes = List(0), edges = List(1 ~ 2, 2 ~ 3)) should equal(gAfter)
       gBefore ++ Graph(0, 1 ~ 2) should equal(gAfter)
@@ -90,11 +87,11 @@ class TEditImmutable extends RefSpec with Matchers {
     }
     def `- ` {
       var g = gString_A - "B"
-      g should have size (1)
+      g.order should be(1)
 
       g = gString_A - "A"
       g.contains("A") should be(false) //gMinus shouldNot contain ("A")
-      g should have size (0)
+      g should have size 0
       g should be('isEmpty)
 
       val h = Graph(1, 2, 2 ~ 3)
@@ -111,15 +108,15 @@ class TEditImmutable extends RefSpec with Matchers {
 
     def `+ String ` {
       val g = gString_A + "B"
-      g should have size (2)
+      g.elementCount should be(2)
       g.contains("A") should be(true)
       g.contains("B") should be(true) //g should contain ("B")
 
       val hString_A = Graph[String, UnDiEdge]("A")
       val h         = hString_A + ("A" ~ "C")
-      h.nodes should have size (2)
-      h.edges should have size (1)
-      h should have size (3)
+      h.nodes should have size 2
+      h.edges should have size 1
+      h.elementCount should be(3)
     }
   }
 }
@@ -132,7 +129,7 @@ class TEditMutable extends RefSpec with Matchers {
     def `serve += properly` {
       val g = Graph[Int, Nothing](1, 3)
       g += 2
-      g should have size (3)
+      g.order should be(3)
       for (i <- 1 to 3)
         g.contains(i) should be(true) //g should contain (i)
     }
@@ -143,21 +140,21 @@ class TEditMutable extends RefSpec with Matchers {
       g should be(Graph(2 ~ 3, 4))
       g remove 5 should be(false)
       (g -= 2) should be(Graph[Int, UnDiEdge](3, 4))
-      g.clear
+      g.clear()
       g should be('empty)
     }
 
     def `+ String ` {
-      val g = Graph[String, Nothing]("A") + "B"
-      g should have size (2)
+      val g = Graph[String, Nothing]("A") += "B"
+      g.elementCount should be(2)
       g.contains("A") should be(true)
       g.contains("B") should be(true) //g should contain ("B")
 
       val hString_A = Graph[String, UnDiEdge]("A")
       val h         = hString_A += ("A" ~ "C")
-      h.nodes should have size (2)
-      h.edges should have size (1)
-      h should have size (3)
+      h.nodes should have size 2
+      h.edges should have size 1
+      h.elementCount should be(3)
     }
 
     def `serve -= properly (2)` {
@@ -203,7 +200,8 @@ class TEditMutable extends RefSpec with Matchers {
     }
 
     def `'diSuccessors' when directed hypergraph` {
-      val (one, two, three, oneOneTwo, oneTwoThree) = (1, 2, 3, 1 ~> 1 ~> 2, 1 ~> 2 ~> 3)
+      import DiHyperEdgeImplicits._
+      val (one, two, three, oneOneTwo, oneTwoThree) = (1, 2, 3, 1 ~~> List(1, 2), 1 ~~> List(2, 3))
       val g                                         = Graph(oneOneTwo, oneTwoThree)
       val (n1, n2)                                  = (g get one, g get two)
       val e112                                      = g get oneOneTwo
@@ -251,11 +249,11 @@ class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
 
   info("factory = " + factory.companion.getClass)
 
-  implicit val config = factory.config
+  implicit private val config: factory.companion.Config = factory.config
 
-  val seq_1_3   = Seq(1, 3)
-  val gInt_1_3  = factory(seq_1_3.toOuterElems[DiEdge]: _*)
-  val gString_A = factory[String, Nothing]("A")
+  private val seq_1_3   = Seq(1, 3)
+  private val gInt_1_3  = factory(seq_1_3.toOuterElems[DiEdge]: _*)
+  private val gString_A = factory[String, Nothing]("A")
 
   object `graph editing includes` {
     def `empty ` {
@@ -282,7 +280,7 @@ class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
       val h = factory(UnDiEdge(1, 2), UnDiEdge(2, 3))
       h.nodes should have size 3
       h.edges should have size 2
-      h should have size 5
+      h.elementCount should be(5)
     }
 
     def `nodes of ADT fixes #40` {
@@ -330,9 +328,8 @@ class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     }
 
     def `toString ` {
-      val nodePrefix = OuterNode.toString // TODO
-      gInt_1_3.toString should fullyMatch regex ("""Graph\(""" + nodePrefix + """[13], """ + nodePrefix + """[13]\)""")
-      gString_A.toString should fullyMatch regex ("""Graph\(""" + nodePrefix + """["A"]\)""")
+      gInt_1_3.toString should fullyMatch regex """Graph\([13], [13]\)"""
+      gString_A.toString should fullyMatch regex """Graph\(["A"]\)"""
     }
 
     def `from inner ` {
@@ -401,9 +398,8 @@ class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
       factory[Int, AbstractEdge](1, d, 1 ~ 4).nodes should have size (3)
 
       {
-        import HyperEdgeImplicits._
         val heNodes = List("A", "B", "C")
-        val he      = heNodes(0) ~~ heNodes(1) ~~ heNodes(2)
+        val he      = HyperEdge(heNodes)
 
         he shouldBe a[HyperEdge[_]]
         he.arity should be(heNodes.size)
@@ -415,8 +411,8 @@ class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
       {
         import DiHyperEdgeImplicits._
         val sources = List('A', 'B', 'C')
-        val target = 'D'
-        val dhe = sources ~~> target
+        val target  = 'D'
+        val dhe     = sources ~~> target
 
         dhe shouldBe a[DiHyperEdge[_]]
         dhe.ends should contain theSameElementsAs (target +: sources)
@@ -427,71 +423,67 @@ class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
       }
     }
 
+    private val gUnDi  = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
+    private val gDi    = factory(1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
+    private val gMixed = factory[Int, AbstractEdge](1 ~> 2, 2 ~> 3, 4 ~ 3)
+    private val hDi = {
+      import DiHyperEdgeImplicits._
+      factory(1 ~~> List(1, 5), 1 ~~> List(2, 5), 1 ~~> List(3, 5), 1 ~~> List(4, 9))
+    }
+
     object `diSuccessors ` {
       def `for UnDi` {
-        val g = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
-        (g get 1 diSuccessors) should be(Set(2, 3, 4))
-        (g get 2 diSuccessors) should be(Set(1))
+        (gUnDi get 1 diSuccessors) should be(Set(2, 3, 4))
+        (gUnDi get 2 diSuccessors) should be(Set(1))
       }
       def `for Di` {
-        val g = factory(1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
-        (g get 1 diSuccessors) should be(Set(2, 3, 4))
-        (g get 2 diSuccessors) should be(Set.empty)
+        (gDi get 1 diSuccessors) should be(Set(2, 3, 4))
+        (gDi get 2 diSuccessors) should be(Set.empty)
       }
       def `for mixed` {
-        val g = factory[Int, AbstractEdge](1 ~> 1, 2 ~> 3, 4 ~ 3)
-        (g get 2 diSuccessors) should be(Set(3))
-        (g get 3 diSuccessors) should be(Set(4))
+        (gMixed get 2 diSuccessors) should be(Set(3))
+        (gMixed get 3 diSuccessors) should be(Set(4))
       }
       def `for DiHyper` {
-        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9)
-        (h get 1 diSuccessors) should be(Set(2, 3, 4, 5, 9))
-        (h get 2 diSuccessors) should be(Set.empty)
-        (h get 5 diSuccessors) should be(Set.empty)
+        (hDi get 1 diSuccessors) should be(Set(2, 3, 4, 5, 9))
+        (hDi get 2 diSuccessors) should be(Set.empty)
+        (hDi get 5 diSuccessors) should be(Set.empty)
       }
     }
 
     object `diPredecessors ` {
       def `for UnDi` {
-        val g = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
-        (g get 1 diPredecessors) should be(Set(2, 3, 4))
-        (g get 2 diPredecessors) should be(Set(1))
+        (gUnDi get 1 diPredecessors) should be(Set(2, 3, 4))
+        (gUnDi get 2 diPredecessors) should be(Set(1))
       }
       def `for Di` {
-        val g = factory(1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
-        (g get 1 diPredecessors) should be(Set.empty)
-        (g get 2 diPredecessors) should be(Set(1))
+        (gDi get 1 diPredecessors) should be(Set.empty)
+        (gDi get 2 diPredecessors) should be(Set(1))
       }
       def `for mixed` {
-        val g = factory[Int, AbstractEdge](1 ~> 2, 2 ~> 3, 4 ~ 3)
-        (g get 2 diPredecessors) should be(Set(1))
-        (g get 3 diSuccessors) should be(Set(4))
+        (gMixed get 2 diPredecessors) should be(Set(1))
+        (gMixed get 3 diSuccessors) should be(Set(4))
       }
       def `for DiHyper` {
-        import DiHyperEdgeImplicits._
-        val h = factory(1 ~~> List(1, 5), 1 ~~> List(2, 5), 1 ~~> List(3, 5), 1 ~~> List(4, 9))
-        (h get 1 diPredecessors) should be(Set.empty)
-        (h get 2 diPredecessors) should be(Set(1))
-        (h get 5 diPredecessors) should be(Set(1))
+        (hDi get 1 diPredecessors) should be(Set.empty)
+        (hDi get 2 diPredecessors) should be(Set(1))
+        (hDi get 5 diPredecessors) should be(Set(1))
       }
     }
 
     object `neighbors ` {
       def `for UnDi` {
-        val g = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
-        (g get 1 neighbors) should be(Set(2, 3, 4))
-        (g get 2 neighbors) should be(Set(1))
+        (gUnDi get 1 neighbors) should be(Set(2, 3, 4))
+        (gUnDi get 2 neighbors) should be(Set(1))
       }
       def `for Di` {
-        val g = factory(1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
-        (g get 1 neighbors) should be(Set(2, 3, 4))
-        (g get 2 neighbors) should be(Set(1))
+        (gDi get 1 neighbors) should be(Set(2, 3, 4))
+        (gDi get 2 neighbors) should be(Set(1))
       }
       def `for DiHyper` {
-        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9)
-        (h get 1 neighbors) should be(Set(2, 3, 4, 5, 9))
-        (h get 2 neighbors) should be(Set(1, 5))
-        (h get 5 neighbors) should be(Set(1, 2, 3))
+        (hDi get 1 neighbors) should be(Set(2, 3, 4, 5, 9))
+        (hDi get 2 neighbors) should be(Set(1, 5))
+        (hDi get 5 neighbors) should be(Set(1, 2, 3))
       }
     }
 
@@ -549,14 +541,16 @@ class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
         import HyperEdgeImplicits._
         val hyper = 1 ~~ 2 ~~ 3
         (hyper match { case HyperEdge(Seq(n1, n2, n3, _ @_*)) => n1 + n2 + n3 }) should be(6)
-//        (hyper match { case HyperEdge(n1 ~~ (n2, n3)            => n1 + n2 + n3 }) should be(6)
+// TODO (hyper match { case HyperEdge(n1 ~~ (n2, n3)            => n1 + n2 + n3 }) should be(6)
       }
 
       {
         import DiHyperEdgeImplicits._
-        val target  = 3
-        val diHyper = 1 ~~> 2 ~~> target
-        (diHyper match { case DiHyperEdge(Seq(s1, s2), _) => s1 }) should be(1)
+        val count   = 3
+        val sources = List.tabulate(count - 1)(_ + 1)
+        val target  = count
+        val diHyper = sources ~~> target
+        (diHyper match { case DiHyperEdge(Seq(s1, _*), _) => s1 }) should be(sources.head)
         (diHyper match { case _ ~~> targets               => targets.head }) should be(target)
       }
     }
