@@ -357,37 +357,37 @@ object GraphEdge {
     }
   }
 
-  protected[collection] trait EqUnDi extends Eq {
-    this: AbstractUnDiEdge[_] =>
+  protected[collection] trait EqUnDi[+N] extends Eq {
+    this: AbstractUnDiEdge[N] =>
 
     @inline final protected def unDiBaseEquals(n1: Any, n2: Any): Boolean =
       this._1 == n1 && this._2 == n2 ||
         this._1 == n2 && this._2 == n1
 
     override protected def baseEquals(other: EdgeLike[_]): Boolean = other match {
-      case AbstractEdge(n1, n2) => unDiBaseEquals(n1, n2)
+      case edge: AbstractEdge[_] => unDiBaseEquals(edge._1, edge._2)
       case hyper: AbstractHyperEdge[_] if hyper.isUndirected && hyper.arity == 2 =>
         unDiBaseEquals(hyper._n(0), hyper._n(1))
       case _ => false
     }
 
-    override protected def baseHashCode: Int = (_1.##) ^ (_2.##)
+    override protected def baseHashCode: Int = _1.## ^ _2.##
   }
 
-  protected[collection] trait EqDi extends Eq {
-    this: AbstractDiEdge[_] =>
+  protected[collection] trait EqDi[+N] extends Eq {
+    this: AbstractDiEdge[N] =>
 
     @inline final protected def diBaseEquals(n1: Any, n2: Any): Boolean =
       this._1 == n1 &&
         this._2 == n2
 
     final override protected def baseEquals(other: EdgeLike[_]): Boolean = other match {
-      case AbstractDiEdge(source, target)                    => diBaseEquals(source, target)
+      case edge: AbstractDiEdge[_]                                => diBaseEquals(edge._1, edge._2)
       case hyper: AbstractDiHyperEdge[_] if hyper.arity == 2 => diBaseEquals(hyper.sources.head, hyper.targets.head)
       case _                                                 => false
     }
 
-    override protected def baseHashCode: Int = (23 * (_1.##)) ^ (_2.##)
+    override protected def baseHashCode: Int = (23 * _1.## ) ^ _2.##
   }
 
   /** This trait supports extending the default key of an edge with additional attributes.
@@ -453,7 +453,7 @@ object GraphEdge {
   /** The abstract methods of this trait must be implemented by companion objects
     * of simple (non-weighted, non-labeled) edges.
     */
-  trait EdgeCompanion[+E[N] <: EdgeLike[N] with AbstractEdge[N]] extends EdgeCompanionBase[E] {
+  trait EdgeCompanion[+E[N] <: EdgeLike[N]] extends EdgeCompanionBase[E] {
     def apply[N](node_1: N, node_2: N): E[N]
   }
 
@@ -619,11 +619,21 @@ object GraphEdge {
     override def isAt[M >: N](node: M): Boolean    = this._1 == node || this._2 == node
     override def isAt(pred: N => Boolean): Boolean = pred(this._1) || pred(this._2)
   }
+
   object AbstractEdge {
-    def unapply[N](e: AbstractEdge[N] @uV): Option[(N, N)] = if (e eq null) None else Some(e._1, e._2)
+    def unapply[N](e: AbstractEdge[N]): Option[(N, N)] = if (e eq null) None else Some(e._1, e._2)
   }
 
-  trait AbstractUnDiEdge[+N] extends AbstractHyperEdge[N] with AbstractEdge[N] with EqUnDi {
+  trait GenericNodeMapper[+N, +This[X] <: AbstractEdge[X]] extends AbstractEdge[N] {
+    def map[NN](node_1: NN, node_2: NN): This[NN]
+  }
+
+  trait NodeMapper[+N] extends AbstractEdge[N] {
+    def map[NN, EE[X] <: AbstractEdge[X]](node_1: NN, node_2: NN): EE[NN]
+  }
+  case object NodeMapper
+
+  trait AbstractUnDiEdge[+N] extends AbstractHyperEdge[N] with AbstractEdge[N] with EqUnDi[N] {
 
     def node_1: N
     def node_2: N
@@ -647,31 +657,34 @@ object GraphEdge {
       p1(this._1) && p2(this._2) ||
         p1(this._2) && p2(this._1)
   }
+
   object AbstractUnDiEdge {
-    val nodeSeparator                    = " ~ "
-    def unapply[N](e: AbstractDiEdge[N]) = Some(e)
+    val nodeSeparator                 = " ~ "
+    def unapply[N](e: AbstractUnDiEdge[N]) = Some(e)
   }
 
-  private def first[N](nodes: Product): N  = nodes.productElement(0).asInstanceOf[N]
-  private def second[N](nodes: Product): N = nodes.productElement(1).asInstanceOf[N]
+  trait AbstractGenericUnDiEdge[+N, +This[X] <: AbstractGenericUnDiEdge[X, This]]
+      extends AbstractHyperEdge[N]
+      with AbstractUnDiEdge[N]
+      with EqUnDi[N]
+      with GenericNodeMapper[N, This]
 
-  /** Represents an undirected edge. */
+  /** Represents a generic unlabeled undirected edge. */
   @SerialVersionUID(54)
-  case class UnDiEdge[+N](node_1: N, node_2: N) extends AbstractUnDiEdge[N] {
+  case class UnDiEdge[+N](node_1: N, node_2: N) extends AbstractGenericUnDiEdge[N, UnDiEdge] {
     validate()
+    def map[NN](node_1: NN, node_2: NN): UnDiEdge[NN] = copy[NN](node_1, node_2)
   }
 
   /** Factory for undirected edges.
     *  `GraphPredef` also supports implicit conversion from `node_1 ~ node_2` to `UnDiEdge`.
     */
-  object UnDiEdge extends EdgeCompanion[UnDiEdge] {
-    protected[collection] def from[N](nodes: Product) = new UnDiEdge[N](first[N](nodes), second[N](nodes))
-  }
+  object UnDiEdge extends EdgeCompanion[UnDiEdge]
 
   /** $SHORTCUT `edge match { case n1 ~ n2 => f(n1, n2) }`. */
   val ~ = UnDiEdge
 
-  trait AbstractDiEdge[+N] extends AbstractDiHyperEdge[N] with AbstractEdge[N] with EqDi {
+  trait AbstractDiEdge[+N] extends AbstractDiHyperEdge[N] with AbstractEdge[N] with EqDi[N] {
 
     final override def ends: Iterable[N] = super[AbstractEdge].ends
 
@@ -693,23 +706,27 @@ object GraphEdge {
     final override def matches[M >: N](n1: M, n2: M): Boolean               = diBaseEquals(n1, n2)
     final override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = p1(source) && p2(target)
   }
+
   object AbstractDiEdge {
-    val nodeSeparator                    = " ~> "
+    val nodeSeparator               = " ~> "
     def unapply[N](e: AbstractDiEdge[N]) = Some(e)
   }
 
-  /** Represents a directed edge (aka arc, arrow). */
+  trait AbstractGenericDiEdge[+N, +This[X] <: AbstractGenericDiEdge[X, This]]
+      extends AbstractDiHyperEdge[N]
+      with AbstractDiEdge[N]
+      with EqDi[N]
+      with GenericNodeMapper[N, This]
+
+  /** Represents a generic unlabeled directed edge (aka arc, arrow). */
   @SerialVersionUID(55)
-  case class DiEdge[+N](source: N, target: N) extends AbstractDiEdge[N] {
+  case class DiEdge[+N](source: N, target: N) extends AbstractGenericDiEdge[N, DiEdge] {
     validate()
+    def map[NN](node_1: NN, node_2: NN): DiEdge[NN] = copy[NN](node_1, node_2)
   }
 
   /** Factory for directed edges. */
-  object DiEdge extends EdgeCompanion[DiEdge] {
-    def apply[N](from: N, to: N)                      = new DiEdge[N](from, to)
-    def apply[N](nodes: Tuple2[N, N])                 = new DiEdge[N](nodes._1, nodes._2)
-    protected[collection] def from[N](nodes: Product) = new DiEdge[N](first[N](nodes), second[N](nodes))
-  }
+  object DiEdge extends EdgeCompanion[DiEdge]
 
   /** $SHORTCUT `edge match { case source ~> target => f(source, target) }`. */
   val ~> = DiEdge
@@ -726,8 +743,9 @@ object GraphEdge {
         extends AbstractDiHyperEdge[N]
         with OrderedEndpoints
 
-    abstract class UnDiEdge[+N](node_1: N, node_2: N) extends AbstractUnDiEdge[N]
-
-    abstract class DiEdge[+N](source: N, target: N) extends AbstractDiEdge[N]
+    // format: off
+    abstract class UnDiEdge[+N](node_1: N, node_2: N) extends AbstractUnDiEdge[N] //with NotImplementedMap[N]
+    abstract class DiEdge  [+N](source: N, target: N) extends AbstractDiEdge  [N] //with NotImplementedMap[N]
+    // format: on
   }
 }

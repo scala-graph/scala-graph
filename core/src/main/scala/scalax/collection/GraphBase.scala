@@ -285,7 +285,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
       case thatV => this.outer == thatV
     }
 
-    override def hashCode = outer.##
+    override def hashCode         = outer.##
     override def toString: String = outer.toString
   }
   object InnerNode {
@@ -489,7 +489,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
           case diHyper: AbstractDiHyperEdge[N] => newDiHyperEdge(outer, inner(diHyper.sources), inner(diHyper.targets))
           case hyper: AbstractHyperEdge[N]     => newHyperEdge(outer, inner(hyper.ends))
         }
-      } else{
+      } else {
         val (n_1, n_2) = (outer._n(0), outer._n(1))
         @inline def inner(n: N): NodeT = {
           val found = lookup(n)

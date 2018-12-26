@@ -47,13 +47,14 @@ class CustomizingTest extends RefSpec with Matchers {
       val (ham, ny) = (Airport("HAM"), Airport("JFK"))
 
       case class Flight[+N](fromAirport: N, toAirport: N, flightNo: String)
-          extends AbstractDiEdge[N]
+          extends AbstractGenericDiEdge[N, Flight]
           with ExtendedKey[N] {
 
         def source: N = fromAirport
         def target: N = toAirport
 
-        def keyAttributes = Seq(flightNo)
+        def keyAttributes                         = Seq(flightNo)
+        def map[NN](n_1: NN, n_2: NN): Flight[NN] = copy(n_1, n_2)
       }
 
       implicit class FlightAssoc[A <: Airport](val e: DiEdge[A]) {

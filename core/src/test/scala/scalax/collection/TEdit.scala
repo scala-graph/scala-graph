@@ -60,12 +60,6 @@ class TEditImmutable extends RefSpec with Matchers {
       g shouldBe a[immutable.Graph[_, Nothing]]
     }
 
-    def `yield another graph when mapped` {
-      val g                       = Graph(1 ~ 2)
-      val m: Graph[Int, UnDiEdge] = g map (_ + 1)
-      m.edges.head should be(UnDiEdge(2, 3))
-    }
-
     def `+ Int` {
       val g = Graph(1, 2 ~ 3)
       g + 1 should be(g)
@@ -234,12 +228,6 @@ class TEditMutable extends RefSpec with Matchers {
     }
 
     /* TODO missing examples... */
-
-    def `yield another graph when mapped` {
-      val g                       = Graph(1 ~ 2)
-      val m: Graph[Int, UnDiEdge] = g map (_ + 1)
-      m.edges.head should be(UnDiEdge(2, 3))
-    }
   }
 }
 
@@ -255,7 +243,7 @@ class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
   private val gInt_1_3  = factory(seq_1_3.toOuterElems[DiEdge]: _*)
   private val gString_A = factory[String, Nothing]("A")
 
-  object `graph editing includes` {
+  object `graph editing` {
     def `empty ` {
       val eg = factory.empty[Nothing, Nothing]
       eg should be('isEmpty)
@@ -339,19 +327,6 @@ class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
       val g = factory(2 ~ 3)
       factory(g.edges.head) should equal(g)
       factory.from(edges = g.edges.toOuter) should equal(g)
-    }
-
-    def `CanBuildFrom UnDi` {
-      val g                       = factory(0, 1 ~ 2)
-      val m: Graph[Int, UnDiEdge] = g map (_ + 1)
-      m find 1 should be('defined)
-      m.edges.head should be(UnDiEdge(2, 3))
-    }
-
-    def `CanBuildFrom Di` {
-      val g = factory(1 ~> 2)
-      val m = g map (_.toString)
-      m.edges.head should be("1" ~ "2")
     }
 
     def `NodeSet ` {
@@ -514,8 +489,8 @@ class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
 
     def `edgeAdjacents UnDi` {
       val g = factory[Int, AbstractEdge](1 ~ 2, 2 ~ 3, 1 ~> 3, 1 ~ 5, 3 ~ 5, 3 ~ 4, 4 ~> 4, 4 ~> 5)
-      ((g get 4 ~> 4) adjacents) should be(Set(3 ~ 4, 4 ~> 5))
-      ((g get 1 ~ 2) adjacents) should be(Set(1 ~> 3, 1 ~ 5, 2 ~ 3))
+      ((g get 4 ~> 4) adjacents) should be(Set[AbstractEdge[Int]](3 ~ 4, 4 ~> 5))
+      ((g get 1 ~ 2) adjacents) should be(Set[AbstractEdge[Int]](1 ~> 3, 1 ~ 5, 2 ~ 3))
     }
 
     def `filter ` {
@@ -524,8 +499,8 @@ class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
       g filter (_ < 2) should be(factory[Int, DiEdge](1))
       g filter (_ < 2) should be(factory[Int, DiEdge](1))
       g filter (_ >= 2) should be(factory(2 ~> 3, 5))
-      g filter (fEdge = _._1 == 2) should be(factory(2 ~> 3))
-      g filter (fEdge = _ contains 2) should be(factory(2 ~> 3))
+      g filter (fEdge = _._1 == 2) should be(factory(1, 5, 2 ~> 3))
+      g filter (fNode = _ <= 3, fEdge = _ contains 2) should be(factory(1, 2 ~> 3))
     }
 
     def `match ` {
@@ -553,6 +528,37 @@ class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
         (diHyper match { case DiHyperEdge(Seq(s1, _*), _) => s1 }) should be(sources.head)
         (diHyper match { case _ ~~> targets               => targets.head }) should be(target)
       }
+    }
+  }
+
+  object `the map of a graph` {
+    private val edge      = 1 ~ 2
+    private val originalG = factory(edge)
+
+    private def fNode(n: originalG.NodeT) = n.outer + 1
+
+    def `yields another graph` {
+      val g = originalG map fNode
+      g shouldBe a[CC[Int, UnDiEdge] @unchecked]
+      g.nodes.head.outer shouldBe an[Integer]
+      g.edges.head shouldBe an[g.Inner.UnDiEdge]
+      (g.edges.head.outer: UnDiEdge[Int]) shouldBe an[UnDiEdge[_]]
+    }
+    def `has correctly mapped nodes` {
+      val g = originalG map fNode
+      originalG.nodes zip g.nodes.toOuter foreach {
+        case (original, mapped) => fNode(original) == mapped
+      }
+    }
+    def `has correctly mapped edges` {
+      val g = originalG map fNode
+      g.edges.head should be(UnDiEdge(2, 3))
+    }
+    def `may have a new node type` {
+      val g = originalG map (_.toString)
+      g.nodes.head.outer shouldBe a[String]
+      (g.edges.head.outer: UnDiEdge[String]) shouldBe an[UnDiEdge[_]]
+      g.edges.head should be(edge._1.toString ~ edge._2.toString)
     }
   }
 }

@@ -111,19 +111,18 @@ trait AdjacencyListGraph[
   /** Implements the heart of `--` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */
   final protected def minusMinus(delNodes: Iterator[N], delEdges: Iterator[E[N]]): This[N, E] = {
-    val delNodesEdges = minusMinusNodesEdges(delNodes, delEdges)
+    val delNodesEdges = remaining(delNodes.to[Set], delEdges)
     companion.from[N, E](delNodesEdges._1, delNodesEdges._2)
   }
 
-  /** Calculates the `nodes` and `edges` arguments to be passed to a factory method
-    *  when delNodes and delEdges are to be deleted by `--`.
+  /** Calculates the remaining nodes and edges of this graph after subtracting `delNodes` and `delEdges`.
     */
-  final protected def minusMinusNodesEdges(delNodes: Iterator[N], delEdges: Iterator[E[N]]): (Set[N], Set[E[N]]) =
-    delNodes.toSet pipe { delNodeSet =>
+  final protected def remaining(nodesToDelete: Set[N], edgesToDelete: Iterator[E[N]]): (Set[N], Set[E[N]]) =
+    nodesToDelete pipe { delNodeSet =>
       (nodes.toOuter -- delNodeSet, {
         val restEdges =
           for (e <- edges.toOuter if e.ends forall (n => !(delNodeSet contains n))) yield e
-        restEdges -- delEdges
+        restEdges -- edgesToDelete
       })
     }
 }

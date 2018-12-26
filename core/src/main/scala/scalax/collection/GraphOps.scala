@@ -1,8 +1,9 @@
 package scalax.collection
 
 import scala.language.higherKinds
+import scala.reflect.ClassTag
 
-import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.GraphEdge.{AbstractEdge, EdgeLike}
 
 trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends OuterElems[N, E] {
 
@@ -100,8 +101,9 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
   /** Whether the given edge is contained in this graph. */
   @inline final def apply(edge: E[N]): Boolean = find(edge).isDefined
 
-  /** Computes a new graph with nodes satisfying `fNode` and edges staisfying `fEdge`. */
-  def filter(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): This[N, E] = ???
+  /** Computes a new graph with nodes satisfying `fNode` and edges staisfying `fEdge`.
+    * If both `fNode` and `fEdge` have default values the original graph is retained. */
+  def filter(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): This[N, E]
 
   /** Searches this graph for an inner node that wraps an outer node equalling to the given outer node. */
   def find(node: N): Option[NodeT]
@@ -110,11 +112,13 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
   def find(edge: E[N]): Option[EdgeT]
 
   /** Short for `find(node).get`.
+    *
     * @throws NoSuchElementException if the node is not found.
     */
   def get(node: N): NodeT
 
   /** Short for `find(edge).get`.
+    *
     * @throws NoSuchElementException if the edge is not found.
     */
   def get(edge: E[N]): EdgeT
@@ -137,12 +141,12 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
   /** Alias for `union`. */
   @inline final def |(that: Graph[N, E]): This[N, E] = this union that
 
-  /** Computes a new graph by applying `fNode` to all nodes of this graph with edges preserved. */
-  def mapNodes[NN](fNode: N => NN): This[NN, E] = ???
+  /** */
+//  def map[NN, NE[X] <: EdgeLike[X]](fNode: N => NN, fEdge: E[N] => (NN, NN) => NE[NN]): This[NN, NE] = ???
+  // edgeT: ClassTag[E[N]], config: config.CoreConfig
 
-  /** Computes a new graph by applying `fEdge` to all edges of this graph with nodes preserved. */
-  def mapEdges[NE[X] <: EdgeLike[X]](fEdge: E[N] => NE[N]): This[N, NE] = ???
-
-  /** Computes a new graph by applying `fNode` to all nodes and `fEdge` to all edges of this graph. */
-  def mapElements[NN, NE[X] <: EdgeLike[X]](fNode: N => NN, fEdge: E[N] => NE[NN]): This[NN, NE] = ???
+  /** Computes a new graph by applying `fNode` to all nodes of this graph.
+    */
+//  def map[NN](fNode: NodeT => NN): This[NN, E]
+  def map[NN, EE[X] >: E[X] <: AbstractEdge[X]](fNode: NodeT => NN)(implicit edgeT: ClassTag[EE[NN]]): This[NN, EE]
 }

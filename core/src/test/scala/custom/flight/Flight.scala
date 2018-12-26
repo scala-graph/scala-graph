@@ -1,6 +1,27 @@
 package custom.flight
 
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphEdge._
+
+/*
+  class A
+  abstract class F extends AbstractEdge[A]
+  type GenericF[+N] = EdgeLike[N] with F // mimic non-existent type parameter
+  Graph.empty[A, GenericF]
+
+  type FlightGraph = Graph[A, GenericF]
+  val g: FlightGraph
+  g.edges.head.outer
+*/
+/* TODO
+  case class F[+N <: Int](source: Int, target: Int) extends AnyDiEdge[Int] with NodeMapper[Int] {
+    validate()
+    def map[NN, EE[X] <: AbstractEdge[X]](node_1: NN, node_2: NN): EE[NN] = (node_1, node_2) match {
+      case (s: Int, t: Int) => copy(s, t)
+      case (s, t)           => DiEdge[NN](s, t)
+    }
+  }
+  Graph.empty[Int, F]
+*/
 
 /** Represents a flight between two airports.
   *
@@ -25,15 +46,16 @@ case class Flight[+N](fromAirport: N,
                       flightNo: String,
                       departure: DayTime = DayTime(0, 0),
                       duration: Duration = Duration(0, 0))
-    extends AbstractDiEdge[N]
+    extends AbstractGenericDiEdge[N, Flight]
     with ExtendedKey[N] {
 
   def source: N = fromAirport
   def target: N = toAirport
 
-  def keyAttributes: Seq[String] = Seq(flightNo)
-  override def weight: Double    = duration.toInt
-  def airline: String            = flightNo substring (0, 2)
+  def keyAttributes: Seq[String]            = Seq(flightNo)
+  override def weight: Double               = duration.toInt
+  def airline: String                       = flightNo substring (0, 2)
+  def map[NN](n_1: NN, n_2: NN): Flight[NN] = copy(n_1, n_2)
 
   override protected def attributesToString: String = s" ($flightNo $departure $duration)"
 }

@@ -48,7 +48,7 @@ trait GraphLike[N,
       .asInstanceOf[This[N, E]]
 
   override protected def minusMinus(delNodes: Traversable[N], delEdges: Traversable[E[N]]): This[N, E] = {
-    val delNodesEdges = minusMinusNodesEdges(delNodes, delEdges)
+    val delNodesEdges = remaining(delNodes, delEdges)
     graphCompanion.fromUnchecked[N, E](delNodesEdges._1, delNodesEdges._2)(edgeT, config).asInstanceOf[This[N, E]]
   }
 
