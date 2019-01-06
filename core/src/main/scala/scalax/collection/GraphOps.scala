@@ -3,8 +3,14 @@ package scalax.collection
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 
-import scalax.collection.GraphEdge.{AbstractEdge, EdgeLike}
+import scalax.collection.GraphEdge._
 
+/*
+  $define mapNodes Computes a new graph by applying `fNode` to all nodes of this graph.
+                   Edge types will be preserved and edge ends will reflect the mapped nodes.
+  $define mapEdges Computes a new graph by applying `fNode` to all nodes and `fEdge` to all edges of this graph.
+                   Edge types will be preserved and edge ends will reflect the mapped nodes.
+ */
 trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends OuterElems[N, E] {
 
   /** Whether this graph contains any node or any edge. */
@@ -141,12 +147,20 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
   /** Alias for `union`. */
   @inline final def |(that: Graph[N, E]): This[N, E] = this union that
 
-  /** */
-//  def map[NN, NE[X] <: EdgeLike[X]](fNode: N => NN, fEdge: E[N] => (NN, NN) => NE[NN]): This[NN, NE] = ???
-  // edgeT: ClassTag[E[N]], config: config.CoreConfig
-
-  /** Computes a new graph by applying `fNode` to all nodes of this graph.
+  /** $mapNodes
+    * The edge type `E` of this graph is required to be generic meaning that it accepts ends of `Any` type.
     */
-//  def map[NN](fNode: NodeT => NN): This[NN, E]
-  def map[NN, EE[X] >: E[X] <: AbstractEdge[X]](fNode: NodeT => NN)(implicit edgeT: ClassTag[EE[NN]]): This[NN, EE]
+  def map[NN](fNode: NodeT => NN)(implicit w: E[N] <:< GenericMapper, edgeMapper: EdgeCompanion[E]): This[NN, E]
+
+  /** $mapNodes
+    * The target node type needs be of the type `N` or a subtype of `N` because, in case of constrained edges,
+    * a supertype potentially requires to replace not just edge ends but also edge types.
+    * To map to a super type of `N` use `map` with a second parameter for the edge transformation.
+    */
+  def mapBounded[NN <: N](fNode: NodeT => NN): This[NN, E]
+
+  /**
+    */
+  def map[NN, EE[X] <: AbstractEdge[X]](fNode: NodeT => NN, fEdge: (NodeT, NodeT) => EE[NN])(
+      implicit edgeT: ClassTag[EE[NN]]): This[NN, EE]
 }

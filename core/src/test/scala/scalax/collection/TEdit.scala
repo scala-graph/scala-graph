@@ -530,35 +530,4 @@ class TEdit[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
       }
     }
   }
-
-  object `the map of a graph` {
-    private val edge      = 1 ~ 2
-    private val originalG = factory(edge)
-
-    private def fNode(n: originalG.NodeT) = n.outer + 1
-
-    def `yields another graph` {
-      val g = originalG map fNode
-      g shouldBe a[CC[Int, UnDiEdge] @unchecked]
-      g.nodes.head.outer shouldBe an[Integer]
-      g.edges.head shouldBe an[g.Inner.UnDiEdge]
-      (g.edges.head.outer: UnDiEdge[Int]) shouldBe an[UnDiEdge[_]]
-    }
-    def `has correctly mapped nodes` {
-      val g = originalG map fNode
-      originalG.nodes zip g.nodes.toOuter foreach {
-        case (original, mapped) => fNode(original) == mapped
-      }
-    }
-    def `has correctly mapped edges` {
-      val g = originalG map fNode
-      g.edges.head should be(UnDiEdge(2, 3))
-    }
-    def `may have a new node type` {
-      val g = originalG map (_.toString)
-      g.nodes.head.outer shouldBe a[String]
-      (g.edges.head.outer: UnDiEdge[String]) shouldBe an[UnDiEdge[_]]
-      g.edges.head should be(edge._1.toString ~ edge._2.toString)
-    }
-  }
 }

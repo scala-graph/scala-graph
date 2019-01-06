@@ -1,6 +1,5 @@
 package scalax.collection
 
-import scala.collection.mutable.{Map => MMap}
 import scala.language.{higherKinds, implicitConversions}
 import scala.util.Random
 import scala.collection.FilterableSet
@@ -430,7 +429,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
   type EdgeT <: InnerEdgeLike[NodeT] with InnerEdge
 
   trait InnerEdge extends InnerEdgeLike[NodeT] with super.InnerEdge with Equals {
-    this: EdgeT =>
+    this: EdgeT with Mapper =>
 
     /** Synonym for `outer`. */
     @inline final def toOuter: E[N] = outer

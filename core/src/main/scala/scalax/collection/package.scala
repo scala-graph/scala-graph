@@ -27,6 +27,9 @@ package object collection {
   protected[scalax] type MSet[A] = scala.collection.mutable.Set[A]
   @inline final protected[scalax] def MSet = scala.collection.mutable.Set
 
+  protected[scalax] type MMap[K, V] = scala.collection.mutable.Map[K, V]
+  @inline final protected[scalax] def MMap = scala.collection.mutable.Map
+
   /** Adds chaining methods `tap` and `pipe` to every type.
     */
   implicit final class ChainingOps[A](val self: A) extends AnyVal {

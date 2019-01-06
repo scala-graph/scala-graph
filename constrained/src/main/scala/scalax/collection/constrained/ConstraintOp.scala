@@ -6,6 +6,7 @@ import scala.collection.mutable.{Map => MMap}
 
 import scalax.collection.GraphPredef._
 import PreCheckFollowUp._
+import scalax.collection.GraphEdge.EdgeLike
 
 sealed trait Op
 sealed trait BinaryOp extends Op
