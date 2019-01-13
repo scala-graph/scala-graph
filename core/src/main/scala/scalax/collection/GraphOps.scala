@@ -6,10 +6,12 @@ import scala.reflect.ClassTag
 import scalax.collection.GraphEdge._
 
 /*
+  $define mapComments Edge types will be preserved and edge ends will reflect the mapped nodes.
+                      Note that in case your mapping function produces duplicates, the resulting graph's size decreases.
   $define mapNodes Computes a new graph by applying `fNode` to all nodes of this graph.
-                   Edge types will be preserved and edge ends will reflect the mapped nodes.
+                   $mapComments
   $define mapEdges Computes a new graph by applying `fNode` to all nodes and `fEdge` to all edges of this graph.
-                   Edge types will be preserved and edge ends will reflect the mapped nodes.
+                   $mapComments
  */
 trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends OuterElems[N, E] {
 
@@ -159,8 +161,8 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
     */
   def mapBounded[NN <: N](fNode: NodeT => NN): This[NN, E]
 
-  /**
+  /** $mapEdges
     */
-  def map[NN, EE[X] <: AbstractEdge[X]](fNode: NodeT => NN, fEdge: (NodeT, NodeT) => EE[NN])(
+  def map[NN, EE[X] <: AbstractEdge[X]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EE[NN])(
       implicit edgeT: ClassTag[EE[NN]]): This[NN, EE]
 }

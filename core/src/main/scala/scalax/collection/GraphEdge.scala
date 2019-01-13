@@ -214,7 +214,8 @@ object GraphEdge {
     class ValidationException(val msg: String) extends Exception
   }
 
-  private[collection] trait InnerEdgeLike[N] extends EdgeLike[N] { this: Mapper => }
+  private[collection] trait InnerEdgeLike[N] extends EdgeLike[N] { this: Mapper =>
+  }
 
   protected[collection] trait Keyed
 
@@ -400,7 +401,7 @@ object GraphEdge {
     def unapply[N](e: ExtendedKey[N]) = Some(e)
   }
 
-  trait LoopFreeEdge[+N] { this: EdgeLike[N]=>
+  trait LoopFreeEdge[+N] { this: EdgeLike[N] =>
     override protected def isValidCustom: Boolean =
       if (arity == 2) ends.head != ends.drop(1).head
       else nonLooping
@@ -431,13 +432,13 @@ object GraphEdge {
     implicit def edgeCompanion[N]: EdgeCompanion[E] = this
   }
 
-  protected[collection] sealed trait Mapper
-  protected[collection] sealed trait GenericMapper extends Mapper
-  protected[collection] sealed trait PartialMapper extends Mapper
+  sealed protected[collection] trait Mapper
+  sealed protected[collection] trait GenericMapper extends Mapper
+  sealed protected[collection] trait PartialMapper extends Mapper
 
-  protected[collection] sealed trait HyperEdgeMapper extends Mapper
-  protected[collection] sealed trait DiHyperEdgeMapper extends Mapper
-  protected[collection] sealed trait EdgeMapper extends Mapper
+  sealed protected[collection] trait HyperEdgeMapper   extends Mapper
+  sealed protected[collection] trait DiHyperEdgeMapper extends Mapper
+  sealed protected[collection] trait EdgeMapper        extends Mapper
 
   sealed trait GenericHyperEdgeMapper   extends GenericMapper with HyperEdgeMapper
   sealed trait GenericDiHyperEdgeMapper extends GenericMapper with DiHyperEdgeMapper
@@ -446,7 +447,7 @@ object GraphEdge {
     def map[NN](node_1: NN, node_2: NN): This[NN]
   }
 
-  trait PartialHyperEdgeMapper[+N, +This <: AbstractHyperEdge[N]]   extends PartialMapper with HyperEdgeMapper
+  trait PartialHyperEdgeMapper[+N, +This <: AbstractHyperEdge[N]]     extends PartialMapper with HyperEdgeMapper
   trait PartialDiHyperEdgeMapper[+N, +This <: AbstractDiHyperEdge[N]] extends PartialMapper with DiHyperEdgeMapper
 
   trait PartialEdgeMapper[+N, +This <: AbstractEdge[N]] extends PartialMapper with EdgeMapper {
@@ -531,7 +532,9 @@ object GraphEdge {
   val ~~ = HyperEdge
 
   @SerialVersionUID(-52)
-  final case class OrderedHyperEdge[+N](override val ends: Iterable[N]) extends AbstractHyperEdge[N] with OrderedEndpoints {
+  final case class OrderedHyperEdge[+N](override val ends: Iterable[N])
+      extends AbstractHyperEdge[N]
+      with OrderedEndpoints {
     validate()
   }
   object OrderedHyperEdge extends HyperEdgeCompanion[OrderedHyperEdge] {

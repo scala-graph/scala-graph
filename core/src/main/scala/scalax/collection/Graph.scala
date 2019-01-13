@@ -8,6 +8,7 @@ import scala.reflect.ClassTag
 import scalax.collection.GraphEdge._
 import scalax.collection.generic.{GraphCompanion, GraphCoreCompanion}
 import scalax.collection.config.GraphConfig
+import scalax.collection.mutable.Builder
 
 /** A template trait for graphs.
   *
@@ -298,35 +299,53 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
     (m: PartialHyperEdgeMapper[N, _], ns: Iterable[NN]) => null.asInstanceOf[E[NN]]
   )
 
-  final private def mapNodes[NN](fNode: NodeT => NN)(
+  private def mapNodes[NN](fNode: NodeT => NN)(
       mapTypedEdge: (PartialEdgeMapper[N, _], (NN, NN)) => E[NN],
       mapTypedDiHyper: (PartialDiHyperEdgeMapper[N, _], Iterable[NN], Iterable[NN]) => E[NN],
       mapTypedHyper: (PartialHyperEdgeMapper[N, _], Iterable[NN]) => E[NN],
-  ): This[NN, E] = {
-    val nMap = MMap.empty[N, NN]
-    val b    = companion.newBuilder[NN, E](edgeT.asInstanceOf[ClassTag[E[NN]]], config)
+  ): This[NN, E] =
+    mapNodesInBuilder(fNode)(edgeT.asInstanceOf[ClassTag[E[NN]]]) pipe {
+      case (nMap, builder) =>
+        edges foreach {
+          case InnerEdge(outer @ AbstractEdge(n1: N @unchecked, n2: N @unchecked)) =>
+            (nMap(n1), nMap(n2)) pipe {
+              case nns @ (nn1, nn2) =>
+                outer match {
+                  case m: GenericEdgeMapper[N, E] => builder += m.map(nn1, nn2)
+                  case m: PartialEdgeMapper[N, E[N]] =>
+                    builder += mapTypedEdge(m, nns)
+                }
+            }
+          case _ => ???
+        }
+        builder.result
+    }
 
+  private def mapNodesInBuilder[NN, EE[X] <: EdgeLike[X]](fNode: NodeT => NN)(
+      implicit edgeT: ClassTag[EE[NN]]): (MMap[N, NN], Builder[NN, EE, This]) = {
+    val nMap = MMap.empty[N, NN]
+    val b    = companion.newBuilder[NN, EE](edgeT, config)
     nodes foreach { n =>
       val nn = fNode(n)
       nMap put (n.outer, nn)
       b += nn
     }
-    edges foreach {
-      case InnerEdge(outer @ AbstractEdge(n1: N @unchecked, n2: N @unchecked)) =>
-        (nMap(n1), nMap(n2)) pipe {
-          case nns @ (nn1, nn2) =>
-            outer match {
-              case m: GenericEdgeMapper[N, E]    => b += m.map(nn1, nn2)
-              case m: PartialEdgeMapper[N, E[N]] => b += mapTypedEdge(m, nns)
-            }
-        }
-      case _ => ???
-    }
-    b.result
+    (nMap, b)
   }
 
-  final def map[NN, EE[X] <: AbstractEdge[X]](fNode: NodeT => NN, fEdge: (NodeT, NodeT) => EE[NN])(
-      implicit edgeT: ClassTag[EE[NN]]): This[NN, EE] = ???
+  final def map[NN, EE[X] <: AbstractEdge[X]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EE[NN])(
+      implicit edgeT: ClassTag[EE[NN]]): This[NN, EE] =
+    mapNodesInBuilder(fNode)(edgeT) pipe {
+      case (nMap, builder) =>
+        edges foreach {
+          case InnerEdge(outer @ AbstractEdge(n1: N @unchecked, n2: N @unchecked)) =>
+            (nMap(n1), nMap(n2)) pipe {
+              case nns @ (nn1, nn2) => builder += edgeMapper(nn1, nn2)
+            }
+          case _ => ???
+        }
+        builder.result
+    }
 
   final protected def partition(elems: Iterable[OuterElem]): (MSet[N], MSet[E[N]]) = {
     val size = elems.size
