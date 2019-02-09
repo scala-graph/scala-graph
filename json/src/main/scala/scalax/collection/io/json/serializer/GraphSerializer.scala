@@ -14,14 +14,14 @@ import scalax.collection.config.CoreConfig
   *  contains on or more `Graph` instances.
   *  For usage see `scalax.collection.io.json.serializer.TGraphSerializer`.
   */
-final class GraphSerializer[N, E[X] <: EdgeLike[X]](descriptor: Descriptor[N])(implicit edgeManifest: Manifest[E[N]])
+final class GraphSerializer[N, E <: EdgeLike[N]](descriptor: Descriptor[N])(implicit edgeManifest: Manifest[E])
     extends Serializer[Graph[N, E]] {
 
   override def deserialize(implicit format: Formats) = {
     case (TypeInfo(clazz, _), json) if clazz == classOf[Graph[N, E]] =>
       json match {
         case JObject(_) =>
-          Graph.fromJson[N, E](json, descriptor)(classTag[E[N]], CoreConfig())
+          Graph.fromJson[N, E](json, descriptor)(classTag[E], CoreConfig())
         case x => throw new MappingException("Can't convert " + x + " to " + clazz.getSimpleName)
       }
   }

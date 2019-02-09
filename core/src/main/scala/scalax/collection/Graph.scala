@@ -25,7 +25,7 @@ import scalax.collection.mutable.Builder
   * @define CONTGRAPH The `Graph` instance that contains `this`
   * @author Peter Empen
   */
-trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
+trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
     extends GraphBase[N, E, This]
     /* TODO
       with GraphTraversal[N, E]
@@ -35,13 +35,13 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
   This[N, E] with GraphLike[N, E, This] with Graph[N, E] =>
 
   protected type ThisGraph = thisGraph.type
-  implicit val edgeT: ClassTag[E[N]]
+  implicit val edgeT: ClassTag[E]
 
   def empty: This[N, E]
   protected[this] def newBuilder: mutable.Builder[N, E, This]
 
   def isDirected: Boolean         = isDirectedT || edges.hasOnlyDiEdges
-  final protected val isDirectedT = classOf[AbstractDiHyperEdge[_]].isAssignableFrom(edgeT.runtimeClass)
+  final protected val isDirectedT = classOf[AnyDiHyperEdge[_]].isAssignableFrom(edgeT.runtimeClass)
 
   def isHyper: Boolean         = isHyperT && edges.hasAnyHyperEdge
   final protected val isHyperT = !classOf[UnDiEdge[_]].isAssignableFrom(edgeT.runtimeClass)
@@ -131,7 +131,7 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
         try this.nodes forall (thisN => thatNodes(thisN.outer))
         catch { case _: ClassCastException => false }
       } && {
-        val thatEdges = thatSet.asInstanceOf[Set[E[N]]]
+        val thatEdges = thatSet.asInstanceOf[Set[E]]
         try this.edges forall (thisE => thatEdges(thisE.toOuter))
         catch { case _: ClassCastException => false }
       }
@@ -149,7 +149,7 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
 
   abstract protected class NodeBase(override val value: N) extends super.NodeBase with InnerNode {
     this: NodeT =>
-    final def isContaining[N, E[X] <: EdgeLike[X]](g: GraphBase[N, E, This] @uV): Boolean =
+    final def isContaining[N, E <: EdgeLike[N]](g: GraphBase[N, E, This] @uV): Boolean =
       g eq containingGraph
   }
 
@@ -204,30 +204,30 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
     import scala.{SerialVersionUID => S}
 
     // format: off
-    @S(-901) case class HyperEdge       (ends: Iterable[NodeT], outer: E[N]) extends Abstract.HyperEdge       (ends) with EdgeT
-    @S(-902) case class OrderedHyperEdge(ends: Iterable[NodeT], outer: E[N]) extends Abstract.OrderedHyperEdge(ends) with EdgeT
+    @S(-901) case class HyperEdge       (ends: Iterable[NodeT], outer: E) extends Abstract.HyperEdge       (ends) with EdgeT
+    @S(-902) case class OrderedHyperEdge(ends: Iterable[NodeT], outer: E) extends Abstract.OrderedHyperEdge(ends) with EdgeT
 
-    @S(-903) case class DiHyperEdge       (override val sources: Iterable[NodeT], override val targets: Iterable[NodeT], outer: E[N]) extends Abstract.DiHyperEdge       (sources, targets) with EdgeT
-    @S(-904) case class OrderedDiHyperEdge(override val sources: Iterable[NodeT], override val targets: Iterable[NodeT], outer: E[N]) extends Abstract.OrderedDiHyperEdge(sources, targets) with EdgeT
+    @S(-903) case class DiHyperEdge       (override val sources: Iterable[NodeT], override val targets: Iterable[NodeT], outer: E) extends Abstract.DiHyperEdge       (sources, targets) with EdgeT
+    @S(-904) case class OrderedDiHyperEdge(override val sources: Iterable[NodeT], override val targets: Iterable[NodeT], outer: E) extends Abstract.OrderedDiHyperEdge(sources, targets) with EdgeT
 
-    @S(-905) case class UnDiEdge(node_1: NodeT, node_2: NodeT, outer: E[N]) extends Abstract.UnDiEdge(node_1, node_2) with EdgeT
-    @S(-906) case class DiEdge  (source: NodeT, target: NodeT, outer: E[N]) extends Abstract.DiEdge  (source, target) with EdgeT
+    @S(-905) case class UnDiEdge(node_1: NodeT, node_2: NodeT, outer: E) extends Abstract.UnDiEdge(node_1, node_2) with EdgeT
+    @S(-906) case class DiEdge  (source: NodeT, target: NodeT, outer: E) extends Abstract.DiEdge  (source, target) with EdgeT
     // format: on
   }
 
-  final override protected def newHyperEdge(outer: E[N], nodes: Iterable[NodeT]): EdgeT = outer match {
-    case _: AbstractHyperEdge[N] with OrderedEndpoints => Inner.OrderedHyperEdge(nodes, outer)
-    case _: AbstractHyperEdge[N]                       => Inner.HyperEdge(nodes, outer)
+  final override protected def newHyperEdge(outer: E, nodes: Iterable[NodeT]): EdgeT = outer match {
+    case _: AnyHyperEdge[N] with OrderedEndpoints => Inner.OrderedHyperEdge(nodes, outer)
+    case _: AnyHyperEdge[N]                       => Inner.HyperEdge(nodes, outer)
     case e                                             => throw new MatchError(s"Unexpected HyperEdge $e")
   }
-  protected def newDiHyperEdge(outer: E[N], sources: Iterable[NodeT], targets: Iterable[NodeT]): EdgeT = outer match {
-    case _: AbstractDiHyperEdge[N] with OrderedEndpoints => Inner.OrderedDiHyperEdge(sources, targets, outer)
-    case _: AbstractDiHyperEdge[N]                       => Inner.DiHyperEdge(sources, targets, outer)
+  protected def newDiHyperEdge(outer: E, sources: Iterable[NodeT], targets: Iterable[NodeT]): EdgeT = outer match {
+    case _: AnyDiHyperEdge[N] with OrderedEndpoints => Inner.OrderedDiHyperEdge(sources, targets, outer)
+    case _: AnyDiHyperEdge[N]                       => Inner.DiHyperEdge(sources, targets, outer)
     case e                                               => throw new MatchError(s"Unexpected DiHyperEdge $e")
   }
-  protected def newEdge(outer: E[N], node_1: NodeT, node_2: NodeT): EdgeT = outer match {
-    case _: AbstractDiEdge[N]   => Inner.DiEdge(node_1, node_2, outer)
-    case _: AbstractUnDiEdge[N] => Inner.UnDiEdge(node_1, node_2, outer)
+  protected def newEdge(outer: E, node_1: NodeT, node_2: NodeT): EdgeT = outer match {
+    case _: AnyDiEdge[N]   => Inner.DiEdge(node_1, node_2, outer)
+    case _: AnyUnDiEdge[N] => Inner.UnDiEdge(node_1, node_2, outer)
     case e                      => throw new MatchError(s"Unexpected Edge $e")
   }
 
@@ -240,8 +240,8 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
     def hasAnyMultiEdge: Boolean
   }
 
-  final def contains(node: N): Boolean    = nodes contains newNode(node)
-  final def contains(edge: E[N]): Boolean = edges contains newHyperEdge(edge, Nil)
+  final def contains(node: N): Boolean = nodes contains newNode(node)
+  final def contains(edge: E): Boolean = edges contains newHyperEdge(edge, Nil)
 
   def iterator: Iterator[InnerElem] = nodes.toIterator ++ edges.toIterator
 
@@ -254,11 +254,11 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
 
   def toOuterIterable: Iterable[OuterElem] = ???
 
-  @inline final def find(node: N): Option[NodeT]    = nodes find node
-  @inline final def find(edge: E[N]): Option[EdgeT] = edges find edge
+  @inline final def find(node: N): Option[NodeT] = nodes find node
+  @inline final def find(edge: E): Option[EdgeT] = edges find edge
 
-  @inline final def get(node: N): NodeT    = nodes get node
-  @inline final def get(edge: E[N]): EdgeT = edges.find(edge).get
+  @inline final def get(node: N): NodeT = nodes get node
+  @inline final def get(edge: E): EdgeT = edges.find(edge).get
 
   def filter(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): This[N, E] = {
     import scala.collection.Set
@@ -282,38 +282,39 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
     }
   }
 
-  final def map[NN](fNode: NodeT => NN)(implicit w: E[N] <:< GenericMapper, mapper: EdgeCompanion[E]): This[NN, E] =
+  final def map[NN, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E,
+                                                              fallbackMapper: EdgeCompanion[EC]): This[NN, EC[NN]] =
     mapNodes(fNode)(
       (m: PartialEdgeMapper[N, _], ns: (NN, NN)) => {
-        def toExistingType                                  = m.map.andThen(_.asInstanceOf[E[NN]])
-        def toWidenedType: PartialFunction[(NN, NN), E[NN]] = { case (n1, n2) => mapper(n1, n2) }
+        def toExistingType                                   = m.map.andThen(_.asInstanceOf[EC[NN]])
+        def toWidenedType: PartialFunction[(NN, NN), EC[NN]] = { case (n1, n2) => fallbackMapper(n1, n2) }
         toExistingType applyOrElse (ns, toWidenedType)
       },
-      (m: PartialDiHyperEdgeMapper[N, _], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[E[NN]], // TODO
-      (m: PartialHyperEdgeMapper[N, _], ns: Iterable[NN]) => null.asInstanceOf[E[NN]] // TODO
+      (m: PartialDiHyperEdgeMapper[N, _], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[EC[NN]], // TODO
+      (m: PartialHyperEdgeMapper[N, _], ns: Iterable[NN]) => null.asInstanceOf[EC[NN]] // TODO
     )
 
-  final def mapBounded[NN <: N](fNode: NodeT => NN): This[NN, E] = mapNodes(fNode)(
-    (m: PartialEdgeMapper[N, _], ns: (NN, NN)) => m.map(ns).asInstanceOf[E[NN]],
-    (m: PartialDiHyperEdgeMapper[N, _], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[E[NN]],
-    (m: PartialHyperEdgeMapper[N, _], ns: Iterable[NN]) => null.asInstanceOf[E[NN]]
-  )
+  def mapBounded[NN <: N, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(implicit w: E <:< PartialMapper, w2: EC[N] =:= E): This[NN, EC[NN]] =
+    mapNodes(fNode)(
+      (m: PartialEdgeMapper[N, _], ns: (NN, NN)) => m.map(ns).asInstanceOf[EC[NN]],
+      (m: PartialDiHyperEdgeMapper[N, _], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[EC[NN]],
+      (m: PartialHyperEdgeMapper[N, _], ns: Iterable[NN]) => null.asInstanceOf[EC[NN]]
+    )
 
-  private def mapNodes[NN](fNode: NodeT => NN)(
-      mapTypedEdge: (PartialEdgeMapper[N, _], (NN, NN)) => E[NN],
-      mapTypedDiHyper: (PartialDiHyperEdgeMapper[N, _], Iterable[NN], Iterable[NN]) => E[NN],
-      mapTypedHyper: (PartialHyperEdgeMapper[N, _], Iterable[NN]) => E[NN],
-  ): This[NN, E] =
-    mapNodesInBuilder(fNode)(edgeT.asInstanceOf[ClassTag[E[NN]]]) pipe {
+  private def mapNodes[NN, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(
+      mapTypedEdge: (PartialEdgeMapper[N, _], (NN, NN)) => EC[NN],
+      mapTypedDiHyper: (PartialDiHyperEdgeMapper[N, _], Iterable[NN], Iterable[NN]) => EC[NN],
+      mapTypedHyper: (PartialHyperEdgeMapper[N, _], Iterable[NN]) => EC[NN],
+  ): This[NN, EC[NN]] =
+    mapNodesInBuilder(fNode)(edgeT.asInstanceOf[ClassTag[EC[NN]]]) pipe {
       case (nMap, builder) =>
         edges foreach {
-          case InnerEdge(outer @ AbstractEdge(n1: N @unchecked, n2: N @unchecked)) =>
+          case InnerEdge(outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
             (nMap(n1), nMap(n2)) pipe {
               case nns @ (nn1, nn2) =>
                 outer match {
-                  case m: GenericEdgeMapper[N, E] => builder += m.map(nn1, nn2)
-                  case m: PartialEdgeMapper[N, E[N]] =>
-                    builder += mapTypedEdge(m, nns)
+                  case m: GenericEdgeMapper[N, EC @unchecked]     => builder += m.map(nn1, nn2)
+                  case m: PartialEdgeMapper[N, EC[NN] @unchecked] => builder += mapTypedEdge(m, nns)
                 }
             }
           case _ => ???
@@ -321,8 +322,8 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
         builder.result
     }
 
-  private def mapNodesInBuilder[NN, EE[X] <: EdgeLike[X]](fNode: NodeT => NN)(
-      implicit edgeT: ClassTag[EE[NN]]): (MMap[N, NN], Builder[NN, EE, This]) = {
+  private def mapNodesInBuilder[NN, EE <: EdgeLike[NN]](fNode: NodeT => NN)(
+      implicit edgeT: ClassTag[EE]): (MMap[N, NN], Builder[NN, EE, This]) = {
     val nMap = MMap.empty[N, NN]
     val b    = companion.newBuilder[NN, EE](edgeT, config)
     nodes foreach { n =>
@@ -333,12 +334,16 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
     (nMap, b)
   }
 
-  final def map[NN, EE[X] <: AbstractEdge[X]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EE[NN])(
-      implicit edgeT: ClassTag[EE[NN]]): This[NN, EE] =
+  final def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC[NN])(
+      implicit edgeT: ClassTag[EC[NN]]): This[NN, EC[NN]] =
+    mapBounded(fNode, edgeMapper)(edgeT)
+
+  final def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC)(
+    implicit edgeT: ClassTag[EC]): This[NN, EC] =
     mapNodesInBuilder(fNode)(edgeT) pipe {
       case (nMap, builder) =>
         edges foreach {
-          case InnerEdge(outer @ AbstractEdge(n1: N @unchecked, n2: N @unchecked)) =>
+          case InnerEdge(outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
             (nMap(n1), nMap(n2)) pipe {
               case nns @ (nn1, nn2) => builder += edgeMapper(nn1, nn2)
             }
@@ -347,14 +352,14 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
         builder.result
     }
 
-  final protected def partition(elems: Iterable[OuterElem]): (MSet[N], MSet[E[N]]) = {
+  final protected def partition(elems: Iterable[OuterElem]): (MSet[N], MSet[E]) = {
     val size = elems.size
     def builder[A] = {
       val b = MSet.newBuilder[A]
       b.sizeHint(size)
       b
     }
-    val (nB, eB) = (builder[N], builder[E[N]])
+    val (nB, eB) = (builder[N], builder[E])
     elems foreach {
       case OuterNode(n) => nB += n
       case OuterEdge(e) => eB += e
@@ -370,7 +375,7 @@ trait GraphLike[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLi
   * @tparam E the kind of the edges in this graph.
   * @author Peter Empen
   */
-trait Graph[N, E[X] <: EdgeLike[X]] extends GraphLike[N, E, Graph] {
+trait Graph[N, E <: EdgeLike[N]] extends GraphLike[N, E, Graph] {
   override def empty: Graph[N, E] = Graph.empty[N, E]
 }
 
@@ -380,14 +385,14 @@ trait Graph[N, E[X] <: EdgeLike[X]] extends GraphLike[N, E, Graph] {
   */
 object Graph extends GraphCoreCompanion[Graph] {
 
-  override def newBuilder[N, E[X] <: EdgeLike[X]](implicit edgeT: ClassTag[E[N]], config: Config) =
+  override def newBuilder[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config) =
     immutable.Graph.newBuilder[N, E](edgeT, config)
 
-  def empty[N, E[X] <: EdgeLike[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
+  def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.empty[N, E](edgeT, config)
 
-  def from[N, E[X] <: EdgeLike[X]](nodes: Traversable[N] = Nil, edges: Traversable[E[N]])(
-      implicit edgeT: ClassTag[E[N]],
+  def from[N, E <: EdgeLike[N]](nodes: Traversable[N] = Nil, edges: Traversable[E])(
+      implicit edgeT: ClassTag[E],
       config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(edgeT, config)
 }

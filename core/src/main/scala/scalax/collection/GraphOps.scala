@@ -6,14 +6,12 @@ import scala.reflect.ClassTag
 import scalax.collection.GraphEdge._
 
 /*
-  $define mapComments Edge types will be preserved and edge ends will reflect the mapped nodes.
-                      Note that in case your mapping function produces duplicates, the resulting graph's size decreases.
-  $define mapNodes Computes a new graph by applying `fNode` to all nodes of this graph.
-                   $mapComments
-  $define mapEdges Computes a new graph by applying `fNode` to all nodes and `fEdge` to all edges of this graph.
-                   $mapComments
+  $define mapNodes       Computes a new graph by applying `fNode` to all nodes of this graph.
+  $define mapEdges       Computes a new graph by applying `fNode` to all nodes and `fEdge` to all edges of this graph.
+  $define fEdge         `fEdge` is expected to set the passed nodes.
+                         In case it produces duplicates, the resulting graph's size will decrease.
  */
-trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends OuterElems[N, E] {
+trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterElems[N, E] {
 
   /** Whether this graph contains any node or any edge. */
   @inline final def isEmpty: Boolean = iterator.isEmpty
@@ -64,7 +62,7 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
   trait InnerEdge extends InnerElem {
 
     /** The outer edge as supplied at instantiation or addition to this graph. */
-    def outer: E[N]
+    def outer: E
   }
 
   type NodeT <: InnerNode
@@ -86,7 +84,7 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
   def contains(node: N): Boolean
 
   /** Whether the given outer edge is contained in this graph. */
-  def contains(edge: E[N]): Boolean
+  def contains(edge: E): Boolean
 
   type NodePredicate = NodeT => Boolean
   type EdgePredicate = EdgeT => Boolean
@@ -107,7 +105,7 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
   @inline final def apply(node: N): Boolean = find(node).isDefined
 
   /** Whether the given edge is contained in this graph. */
-  @inline final def apply(edge: E[N]): Boolean = find(edge).isDefined
+  @inline final def apply(edge: E): Boolean = find(edge).isDefined
 
   /** Computes a new graph with nodes satisfying `fNode` and edges staisfying `fEdge`.
     * If both `fNode` and `fEdge` have default values the original graph is retained. */
@@ -117,7 +115,7 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
   def find(node: N): Option[NodeT]
 
   /** Searches this graph for an inner edge that wraps an outer edge equalling to the given outer edge. */
-  def find(edge: E[N]): Option[EdgeT]
+  def find(edge: E): Option[EdgeT]
 
   /** Short for `find(node).get`.
     *
@@ -129,7 +127,7 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
     *
     * @throws NoSuchElementException if the edge is not found.
     */
-  def get(edge: E[N]): EdgeT
+  def get(edge: E): EdgeT
 
   /** Computes a new graph that is the difference of this graph and `that` graph. */
   def diff(that: Graph[N, E]): This[N, E] = ???
@@ -150,19 +148,34 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]]] extends Ou
   @inline final def |(that: Graph[N, E]): This[N, E] = this union that
 
   /** $mapNodes
+    *
     * The edge type `E` of this graph is required to be generic meaning that it accepts ends of `Any` type.
+    * Edge types will be preserved and edge ends will reflect the mapped nodes.
     */
-  def map[NN](fNode: NodeT => NN)(implicit w: E[N] <:< GenericMapper, edgeMapper: EdgeCompanion[E]): This[NN, E]
+  def map[NN, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(implicit w1: E <:< GenericMapper,
+                                                        w2: EC[N] =:= E,
+                                                        fallbackMapper: EdgeCompanion[EC]): This[NN, EC[NN]]
 
   /** $mapNodes
-    * The target node type needs be of the type `N` or a subtype of `N` because, in case of constrained edges,
+    *
+    * The target node type needs be of the type `N` or a subtype of `N` because, in case of typed edges,
     * a supertype potentially requires to replace not just edge ends but also edge types.
     * To map to a super type of `N` use `map` with a second parameter for the edge transformation.
     */
-  def mapBounded[NN <: N](fNode: NodeT => NN): This[NN, E]
+  def mapBounded[NN <: N, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(implicit w: E <:< PartialMapper,
+                                                                    w2: EC[N] =:= E): This[NN, EC[NN]]
 
   /** $mapEdges
+    * $fEdge
     */
-  def map[NN, EE[X] <: AbstractEdge[X]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EE[NN])(
-      implicit edgeT: ClassTag[EE[NN]]): This[NN, EE]
+  def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC[NN])(
+      implicit edgeT: ClassTag[EC[NN]]): This[NN, EC[NN]]
+
+  /** $mapEdges
+    *
+    * This method accepts a typed edge mapper.
+    * $fEdge
+    */
+  def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC)(
+      implicit edgeT: ClassTag[EC]): This[NN, EC]
 }

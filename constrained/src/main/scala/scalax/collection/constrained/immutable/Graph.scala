@@ -20,7 +20,7 @@ import generic.{GraphConstrainedCompanion, ImmutableGraphCompanion}
 import config.ConstrainedConfig
 import PreCheckFollowUp._
 
-trait Graph[N, E[X] <: EdgeLike[X]]
+trait Graph[N, E <: EdgeLike[N]]
     extends scalax.collection.immutable.Graph[N, E]
     with scalax.collection.constrained.Graph[N, E]
     with GraphLike[N, E, Graph] {
@@ -30,25 +30,25 @@ trait Graph[N, E[X] <: EdgeLike[X]]
 
 object Graph extends ImmutableGraphCompanion[Graph] {
 
-  override def empty[N, E[X] <: EdgeLike[X]](implicit edgeT: ClassTag[E[N]], config: Config): Graph[N, E] =
+  override def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config): Graph[N, E] =
     DefaultGraphImpl.empty[N, E](edgeT, config)
 
-  override protected[collection] def fromUnchecked[N, E[X] <: EdgeLike[X]](
+  override protected[collection] def fromUnchecked[N, E <: EdgeLike[N]](
       nodes: Traversable[N],
-      edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]], config: Config): DefaultGraphImpl[N, E] =
+      edges: Traversable[E])(implicit edgeT: ClassTag[E], config: Config): DefaultGraphImpl[N, E] =
     DefaultGraphImpl.fromUnchecked[N, E](nodes, edges)(edgeT, config)
 
-  override def from[N, E[X] <: EdgeLike[X]](nodes: Traversable[N], edges: Traversable[E[N]])(
-      implicit edgeT: ClassTag[E[N]],
+  override def from[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(
+      implicit edgeT: ClassTag[E],
       config: Config): Graph[N, E] =
     DefaultGraphImpl.from[N, E](nodes, edges)(edgeT, config)
 
   // TODO: canBuildFrom
 }
 
-abstract class DefaultGraphImpl[N, E[X] <: EdgeLike[X]](iniNodes: Traversable[N] = Nil,
-                                                          iniEdges: Traversable[E[N]] = Nil)(
-    implicit override val edgeT: ClassTag[E[N]],
+abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = Nil,
+                                                          iniEdges: Traversable[E] = Nil)(
+    implicit override val edgeT: ClassTag[E],
     override val config: DefaultGraphImpl.Config)
     extends Graph[N, E]
     with AdjacencyListGraph[N, E, DefaultGraphImpl]
@@ -81,16 +81,16 @@ abstract class DefaultGraphImpl[N, E[X] <: EdgeLike[X]](iniNodes: Traversable[N]
 
 object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl] {
 
-  override def empty[N, E[X] <: EdgeLike[X]](implicit edgeT: ClassTag[E[N]], config: Config) =
-    from(Set.empty[N], Set.empty[E[N]])(edgeT, config)
+  override def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config) =
+    from(Set.empty[N], Set.empty[E])(edgeT, config)
 
-  override protected[collection] def fromUnchecked[N, E[X] <: EdgeLike[X]](
+  override protected[collection] def fromUnchecked[N, E <: EdgeLike[N]](
       nodes: Traversable[N],
-      edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]], config: Config): DefaultGraphImpl[N, E] =
+      edges: Traversable[E])(implicit edgeT: ClassTag[E], config: Config): DefaultGraphImpl[N, E] =
     new UserConstrainedGraphImpl[N, E](nodes, edges)(edgeT, config)
 
-  override def from[N, E[X] <: EdgeLike[X]](nodes: Traversable[N], edges: Traversable[E[N]])(
-      implicit edgeT: ClassTag[E[N]],
+  override def from[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(
+      implicit edgeT: ClassTag[E],
       config: Config): DefaultGraphImpl[N, E] = {
     val existElems     = nodes.nonEmpty || edges.nonEmpty
     var preCheckResult = PreCheckResult(Abort)
@@ -125,9 +125,9 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl] {
 }
 
 @SerialVersionUID(7700L)
-class UserConstrainedGraphImpl[N, E[X] <: EdgeLike[X]](iniNodes: Traversable[N] = Nil,
-                                                         iniEdges: Traversable[E[N]] = Nil)(
-    implicit override val edgeT: ClassTag[E[N]],
+class UserConstrainedGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = Nil,
+                                                         iniEdges: Traversable[E] = Nil)(
+    implicit override val edgeT: ClassTag[E],
     override val config: DefaultGraphImpl.Config)
     extends DefaultGraphImpl[N, E](iniNodes, iniEdges)(edgeT, config)
     with UserConstrainedGraph[N, E] {

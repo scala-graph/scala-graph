@@ -13,7 +13,7 @@ import scalax.collection.mutable.ArraySet
   * @author Peter Empen
   */
 trait AdjacencyListGraph[
-    N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with GraphOps[N, E, This]
     with AdjacencyListBase[N, E, This] { selfGraph: This[N, E] =>
@@ -53,7 +53,7 @@ trait AdjacencyListGraph[
 
   type EdgeSetT = EdgeSet
   class EdgeSet extends super.EdgeSet {
-    override protected[collection] def initialize(edges: Traversable[E[N]]): Unit =
+    override protected[collection] def initialize(edges: Traversable[E]): Unit =
       if (edges ne null)
         edges foreach (this += InnerEdge(_))
 
@@ -71,17 +71,17 @@ trait AdjacencyListGraph[
   }
   override def edges: EdgeSetT
 
-  def copy(nodes: Traversable[N], edges: Traversable[E[N]]): This[N, E]
+  def copy(nodes: Traversable[N], edges: Traversable[E]): This[N, E]
 
   def +(node: N): This[N, E] =
     if (this contains node) this
     else copy(nodes.toOuter.toBuffer += node, edges.toOuter)
 
-  def +(edge: E[N]): This[N, E] =
+  def +(edge: E): This[N, E] =
     if (this contains edge) this
     else copy(nodes.toOuter, edges.toOuter.toBuffer += edge)
 
-  final def ++(nodes: Iterable[N], edges: Iterable[E[N]]): This[N, E] = bulkOp(nodes, edges, plusPlus)
+  final def ++(nodes: Iterable[N], edges: Iterable[E]): This[N, E] = bulkOp(nodes, edges, plusPlus)
 
   final def ++(that: AnyGraph[N, E]): This[N, E] = this ++ (that.nodes.toOuter, that.edges.toOuter)
 
@@ -90,34 +90,34 @@ trait AdjacencyListGraph[
     case None     => this
   }
 
-  def -(edge: E[N]): This[N, E] =
+  def -(edge: E): This[N, E] =
     if (this contains edge) copy(nodes.toOuter, edges.toOuter.toBuffer -= edge)
     else this
 
-  final def --(nodes: Iterable[N], edges: Iterable[E[N]]): This[N, E] = bulkOp(nodes, edges, minusMinus)
+  final def --(nodes: Iterable[N], edges: Iterable[E]): This[N, E] = bulkOp(nodes, edges, minusMinus)
 
   final def --(that: AnyGraph[N, E]): This[N, E] = this -- (that.nodes.toOuter, that.edges.toOuter)
 
   final protected def bulkOp(nodes: Iterable[N],
-                             edges: Iterable[E[N]],
-                             op: (Iterator[N @uV], Iterator[E[N]]) => This[N, E] @uV): This[N, E] =
+                             edges: Iterable[E],
+                             op: (Iterator[N @uV], Iterator[E]) => This[N, E] @uV): This[N, E] =
     op(nodes.iterator, edges.iterator)
 
   /** Implements the heart of `++` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */
-  final protected def plusPlus(newNodes: Iterator[N], newEdges: Iterator[E[N]]): This[N, E] =
+  final protected def plusPlus(newNodes: Iterator[N], newEdges: Iterator[E]): This[N, E] =
     companion.from[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
 
   /** Implements the heart of `--` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */
-  final protected def minusMinus(delNodes: Iterator[N], delEdges: Iterator[E[N]]): This[N, E] = {
+  final protected def minusMinus(delNodes: Iterator[N], delEdges: Iterator[E]): This[N, E] = {
     val delNodesEdges = remaining(delNodes.to[Set], delEdges)
     companion.from[N, E](delNodesEdges._1, delNodesEdges._2)
   }
 
   /** Calculates the remaining nodes and edges of this graph after subtracting `delNodes` and `delEdges`.
     */
-  final protected def remaining(nodesToDelete: Set[N], edgesToDelete: Iterator[E[N]]): (Set[N], Set[E[N]]) =
+  final protected def remaining(nodesToDelete: Set[N], edgesToDelete: Iterator[E]): (Set[N], Set[E]) =
     nodesToDelete pipe { delNodeSet =>
       (nodes.toOuter -- delNodeSet, {
         val restEdges =

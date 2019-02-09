@@ -6,10 +6,10 @@ import scala.collection.Set
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 /** Base trait for ordinary `Constraint` companion objects. */
-trait ConstraintCompanion[+CC[N, E[X] <: EdgeLike[X]] <: Constraint[N, E]] { thisCompanion =>
+trait ConstraintCompanion[+CC[N, E <: EdgeLike[N]] <: Constraint[N, E]] { thisCompanion =>
 
   /** Instantiates a user constraint. */
-  def apply[N, E[X] <: EdgeLike[X]](self: Graph[N, E]): CC[N, E]
+  def apply[N, E <: EdgeLike[N]](self: Graph[N, E]): CC[N, E]
 
   /** Creates a new constraint companion of the type `ConstraintCompanionBinaryOp`
     * the `apply` of which returns `ConstraintBinaryOp` with the `And` operator.
@@ -23,7 +23,7 @@ trait ConstraintCompanion[+CC[N, E[X] <: EdgeLike[X]] <: Constraint[N, E]] { thi
 
   protected[constrained] class PrefixedConstraintCompanion(prefix: Option[String]) extends ConstraintCompanion[CC] {
     override val stringPrefix: Option[String]              = prefix
-    def apply[N, E[X] <: EdgeLike[X]](self: Graph[N, E]) = thisCompanion.apply(self)
+    def apply[N, E <: EdgeLike[N]](self: Graph[N, E]) = thisCompanion.apply(self)
   }
 
   /** The `stringPrefix` of constrained `Graph`s using `this` constraint will be replaced
@@ -47,7 +47,7 @@ trait ConstraintCompanion[+CC[N, E[X] <: EdgeLike[X]] <: Constraint[N, E]] { thi
   *         but it doesn't throw an exception.
   * @author Peter Empen
   */
-protected trait ConstraintHandlerMethods[N, E[X] <: EdgeLike[X]] {
+protected trait ConstraintHandlerMethods[N, E <: EdgeLike[N]] {
 
   /** This handler is called whenever an addition violates the constraints.
     *  The provided default implementation is empty.
@@ -56,7 +56,7 @@ protected trait ConstraintHandlerMethods[N, E[X] <: EdgeLike[X]] {
     * @param refusedEdges the edges passed to `preAdd`.
     * @return $HANDLERRET
     */
-  def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: Graph[N, E]): Boolean =
+  def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E], graph: Graph[N, E]): Boolean =
     false
 
   /** This handler is called whenever a subtraction violates the constraints.
@@ -90,7 +90,7 @@ import PreCheckFollowUp._
   *  further data calculated in course of the pre-check and reusable in the following post-check.
   */
 class PreCheckResult(val followUp: PreCheckFollowUp) {
-  def get[N, E[X] <: EdgeLike[X]](op: Constraint[N, E]): Option[PreCheckResult] = Some(this)
+  def get[N, E <: EdgeLike[N]](op: Constraint[N, E]): Option[PreCheckResult] = Some(this)
   final def apply()                                                               = followUp
 
   /** Whether `this.followUp` equals to `Abort`. */
@@ -159,7 +159,7 @@ object PreCheckResult extends PreCheckResultCompanion {
   *
   * @author Peter Empen
   */
-trait ConstraintMethods[N, E[X] <: EdgeLike[X]] {
+trait ConstraintMethods[N, E <: EdgeLike[N]] {
 
   /** When extending `Constraint`, `self` will denote the attached constrained graph.
     * The factory methods of the companion object `scalax.collection.constrained.Graph`
@@ -180,10 +180,10 @@ trait ConstraintMethods[N, E[X] <: EdgeLike[X]] {
     *  @param edges the outer edges the graph is to be populated with.
     *  @return $PRECHECKRET
     */
-  def preCreate(nodes: collection.Traversable[N], edges: collection.Traversable[E[N]]): PreCheckResult =
+  def preCreate(nodes: collection.Traversable[N], edges: collection.Traversable[E]): PreCheckResult =
     PreCheckResult.postCheck(
       (nodes forall ((n: N) => !preAdd(n).abort)) &&
-        (edges forall ((e: E[N]) => !preAdd(e).abort)))
+        (edges forall ((e: E) => !preAdd(e).abort)))
 
   /** This pre-check must return `Abort` if the addition is to be canceled, `PostCheck` if `postAdd`
     * is to be called to decide or `Complete` if the outer `node` is allowed to be added.
@@ -205,7 +205,7 @@ trait ConstraintMethods[N, E[X] <: EdgeLike[X]] {
     * @param edge to be added.
     * @return $PRECHECKRET
     */
-  def preAdd(edge: E[N]): PreCheckResult
+  def preAdd(edge: E): PreCheckResult
 
   /** This pre-check must return `Abort` if the addition of the outer nodes and/or edges in `elems`
     * is to be canceled, `PostCheck` if `postAdd` is to be called to decide or
@@ -241,7 +241,7 @@ trait ConstraintMethods[N, E[X] <: EdgeLike[X]] {
     */
   def postAdd(newGraph: Graph[N, E],
               passedNodes: Traversable[N],
-              passedEdges: Traversable[E[N]],
+              passedEdges: Traversable[E],
               preCheck: PreCheckResult): Boolean = true
 
   /** This pre-check must return `Abort` if the subtraction of `node` is to be canceled,
@@ -296,12 +296,12 @@ trait ConstraintMethods[N, E[X] <: EdgeLike[X]] {
     */
   def postSubtract(newGraph: Graph[N, E],
                    passedNodes: Traversable[N],
-                   passedEdges: Traversable[E[N]],
+                   passedEdges: Traversable[E],
                    preCheck: PreCheckResult): Boolean = true
 
   /** Consolidates all outer nodes of the arguments by adding the edge ends
     *  of `passedEdges` to `passedNodes`. */
-  protected def allNodes(passedNodes: Traversable[N], passedEdges: Traversable[E[N]]): Set[N] = {
+  protected def allNodes(passedNodes: Traversable[N], passedEdges: Traversable[E]): Set[N] = {
     val nodes = collection.mutable.Set[N]() ++ passedNodes
     passedEdges foreach (nodes ++= _)
     nodes
@@ -332,7 +332,7 @@ trait ConstraintMethods[N, E[X] <: EdgeLike[X]] {
   * @see ConstraintMethods
   * @author Peter Empen
   */
-trait Constrained[N, E[X] <: EdgeLike[X]] extends ConstraintMethods[N, E] with ConstraintHandlerMethods[N, E]
+trait Constrained[N, E <: EdgeLike[N]] extends ConstraintMethods[N, E] with ConstraintHandlerMethods[N, E]
 
 /** Template to be implemented and passed to a dynamically constrained graph class
   * by the user. Note that mutable state will be lost on any operation yielding a
@@ -343,7 +343,7 @@ trait Constrained[N, E[X] <: EdgeLike[X]] extends ConstraintMethods[N, E] with C
   * @see ConstraintMethods
   * @author Peter Empen
   */
-abstract class Constraint[N, E[X] <: EdgeLike[X]](override val self: Graph[N, E])
+abstract class Constraint[N, E <: EdgeLike[N]](override val self: Graph[N, E])
     extends ConstraintMethods[N, E]
     with ConstraintHandlerMethods[N, E] {
 

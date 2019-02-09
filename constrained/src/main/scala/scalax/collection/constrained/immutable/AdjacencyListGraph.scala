@@ -13,11 +13,11 @@ import config.GenConstrainedConfig
 import PreCheckFollowUp._
 
 trait AdjacencyListGraph[
-    N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with SimpleAdjacencyListGraph[N, E, This] { this: This[N, E] =>
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
-  override protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]) {
+  override protected def initialize(nodes: Traversable[N], edges: Traversable[E]) {
     withoutChecks { super.initialize(nodes, edges) }
   }
 
@@ -26,7 +26,7 @@ trait AdjacencyListGraph[
                                             preAdd: => PreCheckResult,
                                             copy: => G,
                                             nodes: => Traversable[N],
-                                            edges: => Traversable[E[N]]): This[N, E] =
+                                            edges: => Traversable[E]): This[N, E] =
     if (checkSuspended)
       copy.asInstanceOf[This[N, E]]
     else {
@@ -55,9 +55,9 @@ trait AdjacencyListGraph[
       preAdd = preAdd(node),
       copy = copy(nodes.toOuter.toBuffer += node, edges.toOuter),
       nodes = Set(node),
-      edges = Set.empty[E[N]])
+      edges = Set.empty[E])
 
-  override protected def +#(edge: E[N]) =
+  override protected def +#(edge: E) =
     checkedAdd(
       contained = edges contains InnerEdge(edge),
       preAdd = preAdd(edge),
@@ -79,7 +79,7 @@ trait AdjacencyListGraph[
           case Complete => graph = subtract
           case PostCheck =>
             graph = subtract
-            if (!postSubtract(graph, Set(node), Set.empty[E[N]], preCheckResult)) {
+            if (!postSubtract(graph, Set(node), Set.empty[E], preCheckResult)) {
               handle = true
               graph = this
             }
@@ -97,9 +97,9 @@ trait AdjacencyListGraph[
       copy(nodes.toOuter.toBuffer -= outeNode, edges.toOuter.toBuffer --= (innerNode.edges map (_.toOuter))))
 
   /** generic constrained subtraction of edges */
-  protected def checkedSubtractEdge[G >: This[N, E]](edge: E[N],
+  protected def checkedSubtractEdge[G >: This[N, E]](edge: E,
                                                      simple: Boolean,
-                                                     copy: (E[N], EdgeT) => G): This[N, E] =
+                                                     copy: (E, EdgeT) => G): This[N, E] =
     edges find edge map { innerEdge =>
       def subtract = copy(edge, innerEdge).asInstanceOf[This[N, E]]
       if (checkSuspended) subtract
@@ -122,9 +122,9 @@ trait AdjacencyListGraph[
       }
     } getOrElse this
 
-  override protected def -!(e: E[N]) = checkedSubtractEdge(
+  override protected def -!(e: E) = checkedSubtractEdge(
     e,
     false,
-    (outerEdge: E[N], innerEdge: EdgeT) =>
+    (outerEdge: E, innerEdge: EdgeT) =>
       copy(nodes.toOuter.toBuffer --= innerEdge.privateNodes map (n => n.value), edges.toOuter.toBuffer -= e))
 }

@@ -14,7 +14,7 @@ class TExtHashSetTest extends RefSpec with Matchers {
   import Data._
   val set                    = ExtHashSet(outerElemsOfDi_1: _*)
   val outerEdge: DiEdge[Int] = outerElemsOfDi_1.head
-  val graph                  = Graph.from(edges = outerElemsOfDi_1)
+  val graph                  = Graph(outerElemsOfDi_1: _*)
   val innerEdge              = graph get outerEdge
 
   object `Hash set extensions work properly` {
@@ -31,10 +31,10 @@ class TExtHashSetTest extends RefSpec with Matchers {
       val r           = new util.Random
       for (i <- 1 to (set.size * 32))
         randomElems += set draw r
-      randomElems should have size (set.size)
+      randomElems should have size set.size
     }
     def `iterate over hashCodes` {
-      set.hashCodeIterator(-228876066).toList should have size (0)
+      set.hashCodeIterator(-228876066).toList should have size 0
       outerEdge.hashCode should be(innerEdge.hashCode)
       val elems = set.hashCodeIterator(outerEdge.hashCode).toList
       elems should have size (1)

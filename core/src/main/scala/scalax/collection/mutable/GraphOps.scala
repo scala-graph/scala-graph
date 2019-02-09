@@ -6,7 +6,7 @@ import scala.language.higherKinds
 import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.GraphEdge.EdgeLike
 
-trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
+trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
     extends Growable[N, E]
     with Shrinkable[N, E]
     with AbstractBuilder[N, E]
@@ -16,7 +16,7 @@ trait GraphOps[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLik
   def ++=(other: AnyGraph[N, E]): this.type = ???
 
   /** Shrinks this graph to its intersection with the `outer` elements. */
-  def &=(nodes: Iterable[N] = Nil, edges: Iterable[E[N]] = Nil): this.type = {
+  def &=(nodes: Iterable[N] = Nil, edges: Iterable[E] = Nil): this.type = {
     nodes foreach -=
     edges foreach -=
     this

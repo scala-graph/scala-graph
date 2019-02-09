@@ -5,7 +5,7 @@ lazy val all = project
   .in(file("."))
   .settings(
     Seq(
-      name := "Graph for Scala",
+      name := "Graph for Scala 2",
       version := Version.highest,
       publishTo := None
     )

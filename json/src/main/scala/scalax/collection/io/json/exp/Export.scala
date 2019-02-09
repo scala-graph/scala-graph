@@ -13,7 +13,7 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge.EdgeLike, sc
 
 import descriptor._
 
-class Export[N, E[X] <: EdgeLike[X]](graph: Graph[N, E], descriptor: Descriptor[N])(
+class Export[N, E <: EdgeLike[N]](graph: Graph[N, E], descriptor: Descriptor[N])(
     implicit simpleClassNames: Boolean = true) {
   def jsonASTNodes: JField = {
     def className(a: Any) = {
@@ -50,7 +50,7 @@ class Export[N, E[X] <: EdgeLike[X]](graph: Graph[N, E], descriptor: Descriptor[
   def jsonASTEdges: JField = {
     implicit val descriptor = this.descriptor
     val classEdgesMap       = (for (e <- graph.edges) yield e.toOuter) groupBy (_.getClass)
-    case class EdgeValues(classEdges: (Class[_ <: E[N]], Set[E[N]])) {
+    case class EdgeValues(classEdges: (Class[_ <: E], Set[E])) {
       val (descr, jEdges: List[JValue]) = descriptor.edgeDescriptor(classEdges._1) match {
         case d: EdgeDescriptorBase[N, E, _] =>
           (d, (for (edge <- classEdges._2) yield d.decompose(edge)).toList)

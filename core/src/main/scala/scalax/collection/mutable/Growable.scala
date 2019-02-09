@@ -6,7 +6,7 @@ import scala.language.higherKinds
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.GraphPredef.{OuterEdge, OuterElem, OuterNode}
 
-trait Growable[-N, -E[X] <: EdgeLike[X]] {
+trait Growable[-N, -E <: EdgeLike[N @uV]] {
 
   /** Adds a single node to this graph.
     *
@@ -21,10 +21,10 @@ trait Growable[-N, -E[X] <: EdgeLike[X]] {
     *
     * @return `true` if this graph has not contained `edge` before
     */
-  def add(edge: E[N @uV]): Boolean
+  def add(edge: E): Boolean
 
   /** Adds a single edge to this graph. */
-  def +=(edge: E[N @uV]): this.type
+  def +=(edge: E): this.type
 
   /** Adds a single outer element to this graph. */
   def addOuter(elem: OuterElem[N, E]): this.type = {
@@ -39,7 +39,7 @@ trait Growable[-N, -E[X] <: EdgeLike[X]] {
   def ++=(outer: Iterable[OuterElem[N, E]]): this.type = { outer foreach addOuter; this }
 
   /** Adds all passed nodes and edges to this graph. */
-  def ++=(nodes: Iterable[N] = Nil, edges: Iterable[E[N] @uV] = Nil): this.type = {
+  def ++=(nodes: Iterable[N] = Nil, edges: Iterable[E @uV] = Nil): this.type = {
     nodes foreach +=
     edges foreach +=
     this

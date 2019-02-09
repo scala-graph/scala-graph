@@ -8,7 +8,8 @@ import scala.collection.generic.{GenericSetTemplate, MutableSetFactory}
 
 import interfaces.ExtSetMethods
 
-/* Alternatively we could use `hashTableContents` as suggested by Rüdiger Klaehn like
+/* Alternatively we could use `hashTableContents` as suggested by Rüdiger Klaehn.
+   Consider private[collection] def hashTableContents, though.
 
 package scala.collection.mutable
 object HashSetExt {
@@ -17,6 +18,7 @@ object HashSetExt {
       val table = value.hashTableContents.table
       ...
  */
+
 class ExtHashSet[A]
     extends HashSet[A]
     with SetLike[A, ExtHashSet[A]]

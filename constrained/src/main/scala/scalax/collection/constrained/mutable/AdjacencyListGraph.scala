@@ -21,14 +21,14 @@ import config.GenConstrainedConfig
   * @author Peter Empen
   */
 trait AdjacencyListGraph[
-    N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with SimpleAdjacencyListGraph[N, E, This] {
   selfGraph: This[N, E] =>
 
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
 
-  override protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]): Unit = withoutChecks {
+  override protected def initialize(nodes: Traversable[N], edges: Traversable[E]): Unit = withoutChecks {
     super.initialize(nodes, edges)
   }
 
@@ -45,14 +45,14 @@ trait AdjacencyListGraph[
           case Complete => doAdd
           case PostCheck =>
             doAdd
-            if (!postAdd(AdjacencyListGraph.this, Set(node.value), Set.empty[E[N]], preCheckResult)) {
+            if (!postAdd(AdjacencyListGraph.this, Set(node.value), Set.empty[E], preCheckResult)) {
               handle = true
               coll -= node
             }
           case Abort => handle = true
         }
         if (handle)
-          onAdditionRefused(Set(node), Set.empty[E[N]], AdjacencyListGraph.this)
+          onAdditionRefused(Set(node), Set.empty[E], AdjacencyListGraph.this)
       }
       !handle
     }

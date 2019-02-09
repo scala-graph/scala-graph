@@ -22,7 +22,7 @@ import org.gephi.preview.types.{DependantColor, EdgeColor}
 import org.gephi.project.api.{ProjectController, Workspace}
 import org.openide.util.Lookup
 import scalax.collection.Graph
-import scalax.collection.GraphEdge.{AbstractEdge, EdgeLike, LEdge, Label}
+import scalax.collection.GraphEdge.{AnyEdge, EdgeLike, LEdge, Label}
 
 /** Facilitates drawing any graph as an image.
   */
@@ -44,7 +44,7 @@ trait Drawable {
     * @tparam N type of node
     * @tparam E type of edge
     */
-  def makeImage[N, E[X] <: EdgeLike[X]](g: Graph[N, E], path: String, name: String): Try[File] = {
+  def makeImage[N, E <: EdgeLike[N]](g: Graph[N, E], path: String, name: String): Try[File] = {
 
     def initWorkspace: Workspace = {
       val pc: ProjectController = assertedLookup(classOf[ProjectController])
@@ -129,7 +129,7 @@ trait Drawable {
     * @tparam E type of edge
     * @return container
     */
-  def toContainer[N, E[X] <: EdgeLike[X]](g: Graph[N, E]): Try[Container] = Try {
+  def toContainer[N, E <: EdgeLike[N]](g: Graph[N, E]): Try[Container] = Try {
 
     val container: Container    = assertedLookup(classOf[Container.Factory]).newContainer
     val loader: ContainerLoader = container.getLoader
@@ -181,7 +181,7 @@ trait Drawable {
 
       if (edge.nonHyperEdge) {
         val (node1, node2) = edge match {
-          case AbstractEdge(_1: g.NodeT @unchecked, _2: g.NodeT @unchecked) => (_1, _2)
+          case AnyEdge(_1: g.NodeT @unchecked, _2: g.NodeT @unchecked) => (_1, _2)
         }
         val isInverted  = node1 == node2
         val isMultiEdge = !edge.isLooping && node1.connectionsWith(node2).size > 1

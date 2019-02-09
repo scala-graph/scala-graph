@@ -27,7 +27,7 @@ import interfaces.ExtSetMethods
   *         Nodes being the end of any of these edges will be added to the node set.
   * @author Peter Empen
   */
-trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBase[X, Y, This]]
+trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, Y, This]]
     extends GraphOps[N, E, This]
     with OuterElems[N, E]
     with Serializable { selfGraph =>
@@ -40,7 +40,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     * @param nodes $INNODES
     * @param edges $INEDGES
     */
-  protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]) {
+  protected def initialize(nodes: Traversable[N], edges: Traversable[E]) {
     this.nodes.initialize(nodes, edges)
     this.edges.initialize(edges)
   }
@@ -363,7 +363,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
       * @param nodes $INNODES
       * @param edges $INEDGES
       */
-    protected[collection] def initialize(nodes: Traversable[N], edges: Traversable[E[N]]): Unit
+    protected[collection] def initialize(nodes: Traversable[N], edges: Traversable[E]): Unit
     override def stringPrefix: String = "NodeSet"
 
     /** Sorts all nodes according to `ord` and concatenates them using `separator`.
@@ -432,7 +432,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     this: EdgeT with Mapper =>
 
     /** Synonym for `outer`. */
-    @inline final def toOuter: E[N] = outer
+    @inline final def toOuter: E = outer
 
     @inline final override def weight: Double = outer.weight
 
@@ -466,9 +466,9 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     override def toString: String = outer.toString
   }
   @transient object InnerEdge {
-    def unapply(edge: InnerEdge): Option[E[N]] = Some(edge.outer)
+    def unapply(edge: InnerEdge): Option[E] = Some(edge.outer)
 
-    def apply(outer: E[N]): EdgeT = {
+    def apply(outer: E): EdgeT = {
       @inline def lookup(n: N) = nodes lookup n
 
       if (outer.isHyperEdge) {
@@ -485,8 +485,8 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
           ends map mkNode
         }
         outer match {
-          case diHyper: AbstractDiHyperEdge[N] => newDiHyperEdge(outer, inner(diHyper.sources), inner(diHyper.targets))
-          case hyper: AbstractHyperEdge[N]     => newHyperEdge(outer, inner(hyper.ends))
+          case diHyper: AnyDiHyperEdge[N] => newDiHyperEdge(outer, inner(diHyper.sources), inner(diHyper.targets))
+          case hyper: AnyHyperEdge[N]     => newHyperEdge(outer, inner(hyper.ends))
         }
       } else {
         val (n_1, n_2) = (outer._n(0), outer._n(1))
@@ -512,13 +512,13 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
       def compare(e1: EdgeT, e2: EdgeT): Int = e1.arity compare e2.arity
     }
 
-    /** Allows to call methods of E[N] directly on EdgeT instances. */
-    implicit final def toOuterEdge(edge: EdgeT): E[N] = edge.outer
+    /** Allows to call methods of E directly on EdgeT instances. */
+    implicit final def toOuterEdge(edge: EdgeT): E = edge.outer
   }
 
-  protected def newHyperEdge(outer: E[N], nodes: Iterable[NodeT]): EdgeT
-  protected def newDiHyperEdge(outer: E[N], sources: Iterable[NodeT], targets: Iterable[NodeT]): EdgeT
-  protected def newEdge(outer: E[N], node_1: NodeT, node_2: NodeT): EdgeT
+  protected def newHyperEdge(outer: E, nodes: Iterable[NodeT]): EdgeT
+  protected def newDiHyperEdge(outer: E, sources: Iterable[NodeT], targets: Iterable[NodeT]): EdgeT
+  protected def newEdge(outer: E, node_1: NodeT, node_2: NodeT): EdgeT
 
   final lazy val defaultEdgeOrdering = EdgeOrdering(
     (a: EdgeT, b: EdgeT) => {
@@ -537,7 +537,7 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
       *
       * @param edges $INEDGES
       */
-    protected[collection] def initialize(edges: Traversable[E[N]]): Unit
+    protected[collection] def initialize(edges: Traversable[E]): Unit
 
     def contains(node: NodeT): Boolean
 
@@ -568,15 +568,15 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
       *
       * @return the inner node wrapped by `Some` if found, otherwise None.
       */
-    def find(outerEdge: E[N]): Option[EdgeT]
+    def find(outerEdge: E): Option[EdgeT]
 
     /** The maximum arity of all edges in this edge set. */
     def maxArity: Int = if (size == 0) 0 else max(InnerEdge.ArityOrdering).arity
 
     /** Converts this edge set to a set of outer edges.
       */
-    def toOuter: Set[E[N]] = {
-      val b = Set.newBuilder[E[N]]
+    def toOuter: Set[E] = {
+      val b = Set.newBuilder[E]
       this foreach (b += _.toOuter)
       b.result
     }
@@ -584,9 +584,9 @@ trait GraphBase[N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphBa
     final def draw(random: Random): EdgeT = (nodes draw random).edges draw random
 
     final def findElem[B](other: B, correspond: (EdgeT, B) => Boolean): EdgeT = {
-      def find(edge: E[N]): EdgeT = correspond match {
-        case c: ((EdgeT, E[N]) => Boolean) @unchecked => nodes.lookup(edge._n(0)).edges findElem (edge, c)
-        case _                                        => throw new IllegalArgumentException
+      def find(edge: E): EdgeT = correspond match {
+        case c: ((EdgeT, E) => Boolean) @unchecked => nodes.lookup(edge._n(0)).edges findElem (edge, c)
+        case _                                     => throw new IllegalArgumentException
       }
       other match {
         case OuterEdge(e) => find(e)

@@ -21,7 +21,7 @@ import org.junit.runner.RunWith
 class TJsonRootTest
     extends Suites(new TJsonTest[immutable.Graph](immutable.Graph), new TJsonTest[mutable.Graph](mutable.Graph))
 
-class TJsonTest[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class TJsonTest[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers {

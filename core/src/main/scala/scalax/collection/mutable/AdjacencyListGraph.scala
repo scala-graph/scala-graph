@@ -11,7 +11,7 @@ import scalax.collection.immutable.AdjacencyListBase
   * @author Peter Empen
   */
 trait AdjacencyListGraph[
-    N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with AdjacencyListBase[N, E, This] {
   selfGraph: This[N, E] =>
@@ -111,7 +111,7 @@ trait AdjacencyListGraph[
   class EdgeSet extends super[GraphLike].EdgeSet with super.EdgeSet {
     protected[AdjacencyListGraph] var initialized = false
 
-    override protected[collection] def initialize(edges: Traversable[E[N]]): Unit = {
+    override protected[collection] def initialize(edges: Traversable[E]): Unit = {
       if (edges ne null)
         edges foreach (this add InnerEdge(_))
       initialized = true
@@ -140,8 +140,8 @@ trait AdjacencyListGraph[
   }
   override def edges: EdgeSetT
 
-  @inline final def clear(): Unit               = nodes.clear()
-  @inline final def add(node: N): Boolean       = nodes add Node(node)
-  @inline final def add(edge: E[N]): Boolean    = edges add InnerEdge(edge)
-  @inline final def upsert(edge: E[N]): Boolean = edges upsert InnerEdge(edge)
+  @inline final def clear(): Unit            = nodes.clear()
+  @inline final def add(node: N): Boolean    = nodes add Node(node)
+  @inline final def add(edge: E): Boolean    = edges add InnerEdge(edge)
+  @inline final def upsert(edge: E): Boolean = edges upsert InnerEdge(edge)
 }

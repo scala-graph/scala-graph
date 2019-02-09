@@ -9,12 +9,12 @@ import edge._
 import edge.Implicits._
  */
 
-abstract class TGraph[N, E[X] <: EdgeLike[X], G[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+abstract class TGraph[N, E <: EdgeLike[N], G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, G]](
     val g: G[N, E]) {
-  def node(outer: N): g.NodeT    = g get outer
-  def n(outer: N): g.NodeT       = node(outer)
-  def edge(outer: E[N]): g.EdgeT = g get outer
-  def e(outer: E[N]): g.EdgeT    = edge(outer)
+  def node(outer: N): g.NodeT = g get outer
+  def n(outer: N): g.NodeT    = node(outer)
+  def edge(outer: E): g.EdgeT = g get outer
+  def e(outer: E): g.EdgeT    = edge(outer)
 }
 
 /** The Graph for Scala representation of graph pictures located in `scala/test/doc`.

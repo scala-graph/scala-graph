@@ -17,7 +17,7 @@ class TMapRootTest
       new TMap[mutable.Graph](mutable.Graph)
     )
 
-class TMap[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class TMap[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {
@@ -31,7 +31,7 @@ class TMap[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     def `yields another graph` {
       val g = originalG map fNode
 
-      g shouldBe a[CC[Int, UnDiEdge] @unchecked]
+      g shouldBe a[CC[Int, UnDiEdge[Int]] @unchecked]
       g.nodes.head.outer shouldBe an[Integer]
       g.edges.head shouldBe an[g.Inner.UnDiEdge]
       (g.edges.head.outer: UnDiEdge[Int]) shouldBe an[UnDiEdge[_]]
@@ -64,30 +64,27 @@ class TMap[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     private case class B(a: Int, b: Int) extends Node
 
     private object edges {
-      trait Edge[+N, +This <: AbstractEdge[N]] extends AbstractDiEdge[N] with PartialEdgeMapper[N, This]
+      type Connector[+N] = AnyDiEdge[N] with Edge[N, _]
 
-      case class NodeConnector(source: Node, target: Node) extends Edge[Node, NodeConnector] {
+      protected abstract class Edge[+N, +This <: AnyEdge[N]](override val source: N, override val target: N) extends AbstractDiEdge[N](source, target) with PartialEdgeMapper[N, This]
+
+      case class NodeConnector(override val source: Node, override val target: Node) extends Edge[Node, NodeConnector](source, target) {
         def map[NN]: PartialFunction[(NN, NN), NodeConnector] = {
           case (node_1: Node, node_2: Node) => copy(node_1, node_2)
         }
       }
 
-      case class AConnector(source: A, target: A) extends Edge[A, AConnector] {
+      case class AConnector(override val source: A, override val target: A) extends Edge[A, AConnector](source, target) {
         def map[NN]: PartialFunction[(NN, NN), AConnector] = {
           case (node_1: A, node_2: A) => copy(node_1, node_2)
         }
       }
+
+      // Necessary for `Graph.apply`. You may omit this implicit and use `Graph.from` instead.
+      @inline implicit def edgeToOuterEdge[N](e: Connector[N]): OuterEdge[N, Connector[N]] = OuterEdge(e)
     }
 
-    // Define aliases to typed edges to be able to pass them to `Graph` that requires edges with a type parameter
-    private type Edge[+N]          = AbstractDiEdge[N] with edges.Edge[N, _]
-    private type NodeConnector[+N] = AbstractDiEdge[N] with edges.NodeConnector
-    private type AConnector[+N]    = AbstractDiEdge[N] with edges.AConnector
-    private val NodeConnector = edges.NodeConnector
-    private val AConnector    = edges.AConnector
-
-    // Necessary for `Graph.apply`. You may omit this implicit and use `Graph.from` instead.
-    @inline implicit private def edgeToOuterEdge[N](e: Edge[N]): OuterEdge[N, Edge] = OuterEdge(e)
+    import edges._
 
     private val a_1 = A(1)
 
@@ -95,7 +92,7 @@ class TMap[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
 
     def `downcast nodes` {
       factory(NodeConnector(a_1, b_0_0)) pipe { g =>
-        (g.mapBounded(_ => b_0_0): CC[B, Edge]) should not be empty
+        (g.mapBounded(_ => b_0_0): CC[B, Connector[B]]) should not be empty
       }
     }
 
@@ -108,7 +105,7 @@ class TMap[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
 
     def `upcast nodes to another typed edge if the typed edge mapper is passed` {
       factory(AConnector(a_1, a_1)) pipe { g =>
-        g.map[Node, Edge](_ => b_0_0, NodeConnector) pipe { mapped: CC[Node, Edge] =>
+        g.mapBounded[Node, NodeConnector](_ => b_0_0, NodeConnector) pipe { mapped: CC[Node, NodeConnector] =>
           mapped.edges.head.outer should ===(NodeConnector(b_0_0, b_0_0))
         }
       }
@@ -118,7 +115,7 @@ class TMap[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
       factory(AConnector(a_1, a_1)) pipe { g =>
         def toString(a: A): String = s"""string-$a"""
 
-        def expect[E[X] <: EdgeLike[X]](mapped: CC[String, E], edge: E[String]): Unit = {
+        def expect[E[N] <: EdgeLike[N]](mapped: CC[String, E[String]], edge: E[String]): Unit = {
           mapped.size should ===(1)
           mapped.edges.head.outer should ===(edge)
         }

@@ -20,8 +20,7 @@ import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
   *
   * @author Peter Empen
   */
-trait AdjacencyListBase[
-    N, E[X] <: EdgeLike[X], +This[X, Y[X] <: EdgeLike[X]] <: GraphLike[X, Y, This] with SimpleGraph[X, Y]]
+trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y, This] with SimpleGraph[X, Y]]
     extends GraphLike[N, E, This] {
   selfGraph: This[N, E] =>
 
@@ -194,7 +193,7 @@ trait AdjacencyListBase[
   trait NodeSet extends super.NodeSet {
     protected val coll = ExtHashSet.empty[NodeT]
 
-    override protected[collection] def initialize(nodes: Traversable[N], edges: Traversable[E[N]]): Unit =
+    override protected[collection] def initialize(nodes: Traversable[N], edges: Traversable[E]): Unit =
       if (nodes ne null)
         coll ++= nodes map (Node(_))
 
@@ -235,7 +234,7 @@ trait AdjacencyListBase[
 
     final override def contains(node: NodeT): Boolean = nodes find node exists (_.edges.nonEmpty)
 
-    final override def find(elem: E[N]): Option[EdgeT] = nodes find elem._n(0) flatMap (_.edges find (_ == elem))
+    final override def find(elem: E): Option[EdgeT] = nodes find elem._n(0) flatMap (_.edges find (_ == elem))
 
     final def contains(edge: EdgeT): Boolean = nodes find edge.outer._n(0) exists (_.edges contains edge)
 
@@ -321,7 +320,7 @@ trait AdjacencyListBase[
             i -= 1
           }
       }
-    edges initialize (traversable[E[N]])
+    edges initialize (traversable[E])
     nodes initialize (traversable[N], null)
   }
 }

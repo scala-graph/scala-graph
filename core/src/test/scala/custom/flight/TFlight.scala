@@ -23,7 +23,7 @@ class TFlightRootTest
       new TFlight[scalax.collection.mutable.Graph](scalax.collection.mutable.Graph)
     )
 
-class TFlight[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
+class TFlight[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers
     with Visualizer[CC] {
@@ -34,11 +34,13 @@ class TFlight[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]
   object `Custom edge 'Flight'` {
     def `proper methods` {
       val outer = Flight(ham, gig, flightNo)
-      given(factory(outer)) { g =>
+
+      // TODO get apply work
+      given(factory.from[Airport, Flight](edges = outer :: Nil)) { g =>
         val e = g.edges.head
         e.ends.head.getClass should be(g.nodes.head.getClass)
-        e.fromAirport should be(ham)
-        e.toAirport should be(gig)
+        e.departure should be(ham)
+        e.destination should be(gig)
         e.flightNo should be(flightNo)
         e should be(outer)
         e.## should be(outer.##)
@@ -50,6 +52,7 @@ class TFlight[CC[N, E[X] <: EdgeLike[X]] <: Graph[N, E] with GraphLike[N, E, CC]
         e.## should not be (neFlight.##)
       }
     }
+
     def `proper method shortcuts` {
       val outer = Flight(ham, gig, flightNo)
       given(factory(outer)) { _ =>

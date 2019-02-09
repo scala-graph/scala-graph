@@ -24,9 +24,9 @@ final class EditingTest extends RefSpec with Matchers {
 
     def `iterating ` : Unit = {
       val g = Graph(2 ~ 3, 3 ~ 1)
-      g.iterator mkString "," shouldBe "1,2,3,2~3,3~1"
+      g.iterator mkString "," shouldBe "1,2,3,2 ~ 3,3 ~ 1"
       g.nodes mkString "-" shouldBe "1-2-3"
-      g.edges mkString " " shouldBe "2~3 3~1"
+      g.edges mkString " " shouldBe "2 ~ 3 3 ~ 1"
     }
 
     def `looking up`: Unit = {
@@ -40,16 +40,16 @@ final class EditingTest extends RefSpec with Matchers {
       g find 1 ~ 2 shouldBe Some(1 ~ 2) // Option[g.EdgeT]
       g find 1 shouldBe Some(1)         // Option[Param[Int,UnDiEdge]]
 
-      val h = mutable.Graph.empty[Int, UnDiEdge] ++= g
+      val h = mutable.Graph.empty[Int, UnDiEdge[Int]] ++= g
       h addAndGet 5 shouldBe 5 // g.NodeT
     }
 
     def `equality ` : Unit = {
       val g = Graph(1 ~ 2)
-      (g get 1) == 1 shouldBe true
-      (g get 1 ~ 2) == 2 ~ 1 shouldBe true
+      (g get 1) shouldBe 1
+      (g get 1 ~ 2) shouldBe 2 ~ 1
       (g get 1 ~ 2) eq 2 ~ 1 shouldBe false
-      (g get 1 ~ 2) == 2 ~ 2 shouldBe false
+      (g get 1 ~ 2) should not be 2 ~ 2
     }
 
     def `adding ` : Unit = {
@@ -66,9 +66,9 @@ final class EditingTest extends RefSpec with Matchers {
       g - 2 ~ 3 shouldBe Graph(1, 2, 3)
       g -- (nodes = List(2), edges = List(3 ~ 3)) shouldBe Graph(1, 3)
 
-      def h = mutable.Graph.from[Int, AbstractEdge](nodes = g.nodes.toOuter, edges = g.edges.toOuter)
+      def h = mutable.Graph.from[Int, AnyEdge[Int]](nodes = g.nodes.toOuter, edges = g.edges.toOuter)
       (h += 0) shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
-      (h += 3 ~> 1) shouldBe Graph[Int, AbstractEdge](1, 2, 3, 2 ~ 3, 3 ~> 1)
+      (h += 3 ~> 1) shouldBe Graph[Int, AnyEdge](1, 2, 3, 2 ~ 3, 3 ~> 1)
     }
 
     def `union ` : Unit = {
@@ -121,9 +121,9 @@ final class EditingTest extends RefSpec with Matchers {
      */
 
     def `neighbors ` : Unit = {
-      val g                                    = Graph[Int, AbstractEdge](0, 1 ~ 3, 3 ~> 2)
+      val g                                    = Graph[Int, AnyEdge](0, 1 ~ 3, 3 ~> 2)
       def n(outer: Int): g.NodeT               = g get outer
-      def e(outer: AbstractEdge[Int]): g.EdgeT = g get outer
+      def e(outer: AnyEdge[Int]): g.EdgeT = g get outer
 
       n(0).diSuccessors shouldBe Set.empty[g.NodeT]
       n(2).diSuccessors.isEmpty shouldBe true
@@ -134,14 +134,15 @@ final class EditingTest extends RefSpec with Matchers {
     }
 
     def `querying ` : Unit = {
-      val g                      = Graph[Int, AbstractEdge](2 ~> 3, 3 ~ 1, 5)
+      val g                      = Graph[Int, AnyEdge](2 ~> 3, 3 ~ 1, 5)
       def n(outer: Int): g.NodeT = g get outer
+
       g.nodes filter (_ > 2) shouldBe Set(n(5), n(3))
       g.nodes filter (_.degree > 1) shouldBe Set(n(3))
       g.edges filter (_ contains 4) shouldBe 'empty
 
-      g filter (fNode = _ >= 2) shouldBe Graph(2, 3, 5, 2 ~> 3)
-      g filter (fEdge = _.isDirected) shouldBe Graph(2, 3, 2 ~> 3)
+      g filter (fNode = _ >= 2) should === (Graph(2, 3, 5, 2 ~> 3))
+      g filter (fEdge = _.isDirected) should === (Graph(1, 5, 2, 3, 2 ~> 3))
     }
 
     /* TODO

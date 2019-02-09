@@ -24,16 +24,16 @@ package object dot {
   protected[dot] def DotAST = MGraph
 
   /** Enables to call `<g>.toDot` with `<g>` being a `Graph` instance. */
-  implicit def graph2DotExport[N, E[X] <: EdgeLike[X]](graph: Graph[N, E]): Export[N, E] =
+  implicit def graph2DotExport[N, E <: EdgeLike[N]](graph: Graph[N, E]): Export[N, E] =
     new Export[N, E](graph)
 
-  type NodeTransformer[N, E[X] <: EdgeLike[X]] =
+  type NodeTransformer[N, E <: EdgeLike[N]] =
     Graph[N, E]#NodeT => Option[(DotGraph, DotNodeStmt)]
 
-  type EdgeTransformer[N, E[X] <: EdgeLike[X]] =
+  type EdgeTransformer[N, E <: EdgeLike[N]] =
     Graph[N, E]#EdgeT => Option[(DotGraph, DotEdgeStmt)]
 
-  type HyperEdgeTransformer[N, E[X] <: EdgeLike[X]] =
+  type HyperEdgeTransformer[N, E <: EdgeLike[N]] =
     Graph[N, E]#EdgeT => Traversable[(DotGraph, DotEdgeStmt)]
 
   object implicits {

@@ -7,7 +7,7 @@ import scala.language.higherKinds
 import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.GraphEdge.EdgeLike
 
-trait Shrinkable[-N, -E[X] <: EdgeLike[X]] extends OuterElems[N @uV, E @uV] {
+trait Shrinkable[-N, -E <: EdgeLike[N @uV]] extends OuterElems[N @uV, E @uV] {
 
   /** Removes a single node from this graph.
     *
@@ -22,13 +22,13 @@ trait Shrinkable[-N, -E[X] <: EdgeLike[X]] extends OuterElems[N @uV, E @uV] {
     *
     * @return whether the edge existed before
     */
-  def remove(edge: E[N @uV]): Boolean
+  def remove(edge: E): Boolean
 
   /** Removes a single edge from this graph. */
-  def -=(edge: E[N @uV]): this.type
+  def -=(edge: E): this.type
 
   /** Removes all elements produced by `outer` from this graph. */
-  final def --=(nodes: Iterable[N] = Nil, edges: Iterable[E[N] @uV] = Nil): this.type = {
+  final def --=(nodes: Iterable[N] = Nil, edges: Iterable[E @uV] = Nil): this.type = {
     nodes foreach -=
     edges foreach -=
     this

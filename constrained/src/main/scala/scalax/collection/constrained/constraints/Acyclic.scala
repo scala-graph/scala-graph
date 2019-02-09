@@ -11,8 +11,8 @@ import scalax.collection.{Graph => SimpleGraph}
 import PreCheckFollowUp._
 
 /** Ensures that the underlying `Graph` is acyclic at any time. */
-class Acyclic[N, E[X] <: EdgeLike[X]](override val self: Graph[N, E]) extends Constraint[N, E](self) {
-  override def preCreate(nodes: Traversable[N], edges: Traversable[E[N]]) =
+class Acyclic[N, E <: EdgeLike[N]](override val self: Graph[N, E]) extends Constraint[N, E](self) {
+  override def preCreate(nodes: Traversable[N], edges: Traversable[E]) =
     PreCheckResult.postCheck(edges forall (_.nonLooping))
 
   /** Adding a single node cannot produce a cycle. */
@@ -22,7 +22,7 @@ class Acyclic[N, E[X] <: EdgeLike[X]](override val self: Graph[N, E]) extends Co
     * a cycle is produced if there exists a target node of this edge such that
     * there is a path from the target node to the source node.
     */
-  def preAdd(edge: E[N]) = PreCheckResult.complete(
+  def preAdd(edge: E) = PreCheckResult.complete(
     edge.nonLooping && {
       val isUndirected       = edge.isUndirected
       val checkFrom, checkTo = MutableSet.empty[self.NodeT]
@@ -82,7 +82,7 @@ class Acyclic[N, E[X] <: EdgeLike[X]](override val self: Graph[N, E]) extends Co
 
   override def postAdd(newGraph: Graph[N, E],
                        passedNodes: Traversable[N],
-                       passedEdges: Traversable[E[N]],
+                       passedEdges: Traversable[E],
                        preCheck: PreCheckResult) = preCheck match {
     case Result(docking) => !(docking exists (_.findCycle.isDefined))
     case _               => newGraph.isAcyclic
@@ -94,5 +94,5 @@ class Acyclic[N, E[X] <: EdgeLike[X]](override val self: Graph[N, E]) extends Co
     Complete)
 }
 object Acyclic extends ConstraintCompanion[Acyclic] {
-  def apply[N, E[X] <: EdgeLike[X]](self: Graph[N, E]) = new Acyclic[N, E](self)
+  def apply[N, E <: EdgeLike[N]](self: Graph[N, E]) = new Acyclic[N, E](self)
 }

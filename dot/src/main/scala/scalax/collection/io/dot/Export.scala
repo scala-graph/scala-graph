@@ -16,7 +16,7 @@ import GraphEdge.DiEdge
   * @define NORMALLY Normally, this method will be called internally by `toDot`
   *         but it may also be used for test purposes.
   */
-class Export[N, E[X] <: EdgeLike[X]](graph: Graph[N, E]) {
+class Export[N, E <: EdgeLike[N]](graph: Graph[N, E]) {
 
   /** Creates a DOT string by calling the node and edge transformers for the elements
     * of `graph`.
