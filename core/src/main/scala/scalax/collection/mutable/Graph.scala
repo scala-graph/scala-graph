@@ -153,6 +153,9 @@ object Graph extends MutableGraphCompanion[Graph] {
       implicit edgeT: ClassTag[E],
       config: Config = defaultConfig): Graph[N, E] =
     DefaultGraphImpl.from[N, E](nodes, edges)(edgeT, config)
+
+  override def from[N, E[X] <: EdgeLike[X]](edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]]) =
+    DefaultGraphImpl.from[N, E[N]](Nil, edges)(edgeT, defaultConfig)
 }
 
 @SerialVersionUID(74L)
@@ -202,8 +205,10 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
   def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config = defaultConfig) =
     new DefaultGraphImpl[N, E]()(edgeT, config)
 
-  override def from[N, E <: EdgeLike[N]](nodes: Traversable[N] = Nil, edges: Traversable[E])(
-      implicit edgeT: ClassTag[E],
-      config: Config = defaultConfig) =
+  override def from[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(implicit edgeT: ClassTag[E],
+                                                                                       config: Config = defaultConfig) =
     new DefaultGraphImpl[N, E](nodes, edges)(edgeT, config)
+
+  override def from[N, E[X] <: EdgeLike[X]](edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]]) =
+    new DefaultGraphImpl[N, E[N]](Nil, edges)(edgeT, defaultConfig)
 }

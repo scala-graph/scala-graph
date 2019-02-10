@@ -16,15 +16,20 @@ import scalax.collection.generic.GraphCompanion
 trait ConfigWrapper[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]] {
   val companion: GraphCompanion[CC]
   implicit val config: companion.Config
+
   def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: companion.Config): CC[N, E] =
     companion.empty[N, E]
-  def apply[N, E[X] <: EdgeLike[X]](elems: OuterElem[N, E[N]]*)(implicit edgeT: ClassTag[E[N]], config: companion.Config) =
+
+  def apply[N, E[X] <: EdgeLike[X]](elems: OuterElem[N, E[N]]*)(implicit edgeT: ClassTag[E[N]],
+                                                                config: companion.Config) =
     companion(elems: _*)
-  def from[N, E <: EdgeLike[N]](edges: collection.Iterable[E])(implicit edgeT: ClassTag[E], config: companion.Config) =
-    companion.from[N, E](edges = edges)
+
   def from[N, E <: EdgeLike[N]](nodes: collection.Iterable[N],
                                 edges: collection.Iterable[E])(implicit edgeT: ClassTag[E], config: companion.Config) =
     companion.from[N, E](nodes, edges)
+
+  def from[N, E[X] <: EdgeLike[X]](edges: collection.Iterable[E[N]])(implicit edgeT: ClassTag[E[N]]) =
+    companion.from[N, E](edges)
 }
 
 @RunWith(classOf[JUnitRunner])
@@ -48,7 +53,9 @@ class TEditRootTest
 
 @RunWith(classOf[JUnitRunner])
 class TEditImmutable extends RefSpec with Matchers {
-  private val Graph                = immutable.Graph
+  private val Graph = immutable.Graph
+
+  Graph.from(1 ~ 2 :: Nil)
 
   object `graphs ` {
     def `are immutable by default` {
@@ -291,9 +298,9 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
       def test(g: CC[Int, AnyHyperEdge[Int]], expected: Boolean): Unit = g.isHyper should be(expected)
 
       import HyperEdgeImplicits._
-      test(factory.from[Int, AnyHyperEdge[Int]](List(1 ~> 2, 1 ~~ 2 ~~ 3)), true)
-      test(factory.from[Int, AnyHyperEdge[Int]](1 ~ 2 :: Nil), false)
-      test(factory.from[Int, AnyHyperEdge[Int]](1 ~> 2 :: Nil), false)
+      test(factory.from[Int, AnyHyperEdge](List(1 ~> 2, 1 ~~ 2 ~~ 3)), true)
+      test(factory.from[Int, AnyHyperEdge](1 ~ 2 :: Nil), false)
+      test(factory.from[Int, AnyHyperEdge](1 ~> 2 :: Nil), false)
     }
 
     /* TODO missing examples... */
@@ -313,7 +320,7 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
     }
 
     def `toString ` {
-      gInt_1_3.toString should fullyMatch regex """Graph\([13], [13]\)"""
+      gInt_1_3.toString should fullyMatch regex """Graph\([1], [3]\)"""
       gString_A.toString should fullyMatch regex """Graph\(["A"]\)"""
     }
 
@@ -323,7 +330,7 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
 
       val g = factory(2 ~ 3)
       factory(g.edges.head) should equal(g)
-      factory.from[Int, UnDiEdge[Int]](g.edges.toOuter) should equal(g)
+      factory.from(g.edges.toOuter) should equal(g)
     }
 
     def `NodeSet ` {

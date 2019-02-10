@@ -358,7 +358,7 @@ object GraphEdge {
     final override protected def baseEquals(other: EdgeLike[_]): Boolean = other match {
       case edge: AnyDiEdge[_]                           => diBaseEquals(edge._1, edge._2)
       case hyper: AnyDiHyperEdge[_] if hyper.arity == 2 => diBaseEquals(hyper.sources.head, hyper.targets.head)
-      case _                                                 => false
+      case _                                            => false
     }
 
     override protected def baseHashCode: Int = (23 * _1.##) ^ _2.##
@@ -534,9 +534,7 @@ object GraphEdge {
   val ~~ = HyperEdge
 
   @SerialVersionUID(-52)
-  final case class OrderedHyperEdge[+N](override val ends: Iterable[N])
-      extends AnyHyperEdge[N]
-      with OrderedEndpoints {
+  final case class OrderedHyperEdge[+N](override val ends: Iterable[N]) extends AnyHyperEdge[N] with OrderedEndpoints {
     validate()
   }
   object OrderedHyperEdge extends HyperEdgeCompanion[OrderedHyperEdge] {
@@ -572,7 +570,8 @@ object GraphEdge {
     def nodeSeparator: String = " ~~> "
   }
 
-  abstract class AbstractDiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N]) extends AnyDiHyperEdge[N]
+  abstract class AbstractDiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])
+      extends AnyDiHyperEdge[N]
 
   /** The abstract methods of this trait must be implemented by companion objects of directed, non-weighted, non-labeled hyperedges.
     */
@@ -661,7 +660,7 @@ object GraphEdge {
     override protected def nodesToStringSeparator: String = AnyUnDiEdge.nodeSeparator
   }
   object AnyUnDiEdge {
-    val nodeSeparator                      = " ~ "
+    val nodeSeparator                 = " ~ "
     def unapply[N](e: AnyUnDiEdge[N]) = Some(e)
   }
 
@@ -701,10 +700,10 @@ object GraphEdge {
     final override def sources: Set[N @uV] = Set(source)
     final override def targets: Set[N @uV] = Set(target)
 
-    final override def hasSource[M >: N](node: M): Boolean = source == node
+    final override def hasSource[M >: N](node: M): Boolean    = source == node
     final override def hasSource(pred: N => Boolean): Boolean = pred(source)
 
-    final override def hasTarget[M >: N](node: M): Boolean = target == node
+    final override def hasTarget[M >: N](node: M): Boolean    = target == node
     final override def hasTarget(pred: N => Boolean): Boolean = pred(target)
 
     final override def matches[M >: N](n1: M, n2: M): Boolean               = diBaseEquals(n1, n2)
@@ -714,7 +713,7 @@ object GraphEdge {
   }
 
   object AnyDiEdge {
-    val nodeSeparator                    = " ~> "
+    val nodeSeparator               = " ~> "
     def unapply[N](e: AnyDiEdge[N]) = Some(e)
   }
 
