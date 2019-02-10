@@ -10,6 +10,8 @@ import org.scalatest.refspec.RefSpec
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
+import scalax.collection.visualization.Visualizer
+
 @RunWith(classOf[JUnitRunner])
 class TOpRootTest
     extends Suites(
@@ -35,7 +37,8 @@ protected trait Examples[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N
 class TOp[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers
-    with Examples[CC] {
+    with Examples[CC]
+    with Visualizer[CC] {
 
   def `union ` {
     val expected =
@@ -46,8 +49,8 @@ class TOp[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val f
   }
   def `intersection ` {
     val expected = factory(3 ~ 5, 4)
-    g intersect h should be(expected)
-    g & h should be(expected)
+    given(g intersect h) { _ should be(expected) }
+    given(g & h) { _ should be(expected) }
   }
 }
 

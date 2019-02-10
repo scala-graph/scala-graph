@@ -128,21 +128,19 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   }
 
   override def --=(elems: TraversableOnce[Param[N, E]]): this.type = {
-    lazy val p                        = partition(elems)
-    lazy val (outerNodes, outerEdges) = (p.toOuterNodes.toSet, p.toOuterEdges.toSet)
-    def innerNodes =
-      (outerNodes.view map (this find _) filter (_.isDefined) map (_.get) force).toSet
-    def innerEdges =
-      (outerEdges.view map (this find _) filter (_.isDefined) map (_.get) force).toSet
+    val p                        = partition(elems)
+    val (outerNodes, outerEdges) = (p.toOuterNodes.toSet, p.toOuterEdges.toSet)
+    val (innerNodes, innerEdges) = (outerNodes map find flatten, outerEdges map find flatten)
 
     type C_NodeT = self.NodeT
     type C_EdgeT = self.EdgeT
+
     var handle         = false
     val preCheckResult = preSubtract(innerNodes.asInstanceOf[Set[C_NodeT]], innerEdges.asInstanceOf[Set[C_EdgeT]], true)
     preCheckResult.followUp match {
       case Complete => withoutChecks { super.--=(elems) }
       case PostCheck =>
-        val subtractables = elems filter (this contains _)
+        val subtractables = (elems filter this.contains).toArray ++ innerNodes.flatMap(_.edges).toBuffer
         withoutChecks { super.--=(subtractables) }
         if (!postSubtract(this, outerNodes, outerEdges, preCheckResult)) {
           handle = true

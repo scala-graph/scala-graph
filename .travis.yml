@@ -1,11 +1,8 @@
-# See https://github.com/novus/salat/blob/master/.travis.yml
 language: scala
 scala:
    - 2.11.11
-   - 2.12.4
+   - 2.12.7
 jdk:
   - oraclejdk8
-
 script:
-  - sbt clean test
-  - sbt scalafmtSbtCheck scalafmtCheck test:scalafmtCheck
+  - sbt test scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
