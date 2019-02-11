@@ -55,6 +55,20 @@ class TConstrainedMutable extends RefSpec with Matchers {
       exceptionAndUnchanged(g)(_ -= 3)
       exceptionAndUnchanged(g)(_ --= List(3))
     }
+
+    def `when removing a node is valid but adding is not` {
+      implicit val config: Config = UserConstraints.Mario
+
+      val g                       = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
+      val before                   = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
+
+      g should have size (8)
+//      val before = g.clone()
+      before should have size (8)
+      a[IllegalArgumentException] should be thrownBy (g -= 1)
+      g should === (before)
+
+    }
   }
 }
 
@@ -172,6 +186,33 @@ private object UserConstraints {
   object EvenNodeByException extends ConstraintCompanion[EvenNode] {
     def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) =
       new EvenNodeByException[N, E](self)
+  }
+
+  class Mario[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
+    extends Constraint[N, E](self)
+      with ConstraintHandlerMethods[N, E] {
+    def preAdd(node: N) = PreCheckResult.complete(self contains node)
+    def preAdd(edge: E[N]) = checkComplete
+    def preSubtract(node: self.NodeT, forced: Boolean) = postCheck
+    def preSubtract(edge: self.EdgeT, simple: Boolean) = checkAbort
+
+    override def postSubtract(newGraph: Graph[N, E],
+                              passedNodes: Traversable[N],
+                              passedEdges: Traversable[E[N]],
+                              preCheck: PreCheckResult) = false
+
+    override def onSubtractionRefused(refusedNodes: Traversable[Graph[N, E]#NodeT],
+                                      refusedEdges: Traversable[Graph[N, E]#EdgeT],
+                                      graph: Graph[N, E]) =
+      throw new IllegalArgumentException(
+        "Subtraction refused: " +
+          "nodes = " + refusedNodes + ", " +
+          "edges = " + refusedEdges)
+  }
+
+  object Mario extends ConstraintCompanion[Mario] {
+    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) =
+      new Mario[N, E](self)
   }
 
   /* Constrains the graph to nodes having a minimal degree of `min` by utilizing pre- and post-checks.
