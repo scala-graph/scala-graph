@@ -42,20 +42,21 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
 
     /** generic constrained subtraction */
     protected def checkedRemove(node: NodeT, ripple: Boolean): Boolean = {
-      def remove          = withoutChecks { subtract(node, ripple, minus, minusEdges) }
       var removed, handle = false
+      def remove          = withoutChecks { subtract(node, ripple, minus, minusEdges) }
       if (checkSuspended) removed = remove
       else {
         val preCheckResult = preSubtract(node.asInstanceOf[self.NodeT], ripple)
         preCheckResult.followUp match {
           case Complete => removed = remove
           case PostCheck =>
+            val edges = node.edges.toBuffer
             removed = remove
             if (removed &&
                 !postSubtract(selfGraph, Set(node), Set.empty[E[N]], preCheckResult)) {
               handle = true
               selfGraph += node.value
-              selfGraph ++= node.edges
+              selfGraph ++= edges
             }
           case Abort => handle = true
         }
