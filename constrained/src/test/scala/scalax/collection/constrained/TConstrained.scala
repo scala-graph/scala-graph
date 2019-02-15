@@ -53,13 +53,16 @@ class TConstrainedMutable extends RefSpec with Matchers {
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(3))
     }
 
-    def `when postCheck fails` {
-      implicit val config: Config                              = UserConstraints.AlwaysFailingPostCheck
+    def `when postSubtract fails` {
+      implicit val config: Config                              = UserConstraints.AlwaysFailingPostSubtract
       implicit val expectedException: IllegalArgumentException = new IllegalArgumentException
 
       val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 1)
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 1 ~ 2)
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1))
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1 ~ 2, 2 ~ 3))
     }
 
     private def shouldThrowExceptionAndLeaveGraphUnchanged[N, E[X] <: EdgeLikeIn[X], EX <: Exception: ClassTag](
@@ -187,7 +190,7 @@ private object UserConstraints {
       new EvenNodeByException[N, E](self)
   }
 
-  class AlwaysFailingPostCheck[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
+  class AlwaysFailingPostSubtract[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
       extends Constraint[N, E](self)
       with ConstraintHandlerMethods[N, E] {
     def preAdd(node: N)                                = postCheck
@@ -206,8 +209,8 @@ private object UserConstraints {
       throw new IllegalArgumentException
   }
 
-  object AlwaysFailingPostCheck extends ConstraintCompanion[AlwaysFailingPostCheck] {
-    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new AlwaysFailingPostCheck[N, E](self)
+  object AlwaysFailingPostSubtract extends ConstraintCompanion[AlwaysFailingPostSubtract] {
+    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new AlwaysFailingPostSubtract[N, E](self)
   }
 
   /* Constrains the graph to nodes having a minimal degree of `min` by utilizing pre- and post-checks.
