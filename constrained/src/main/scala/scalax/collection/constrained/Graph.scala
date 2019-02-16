@@ -52,15 +52,13 @@ trait GraphLike[N,
     graphCompanion.fromUnchecked[N, E](delNodesEdges._1, delNodesEdges._2)(edgeT, config).asInstanceOf[This[N, E]]
   }
 
-  /** This flag is used to prevent constraint checking for single additions and
-    * subtractions triggered by a multiple addition/subtraction such as `++=`.
-    */
-  @transient protected var checkSuspended = false
+  @transient private var suspended = false
+  protected def checkSuspended: Boolean = suspended
   final protected def withoutChecks[R](exec: => R): R = {
-    val oldSuspended = checkSuspended
-    checkSuspended = true
+    val old = suspended
+    suspended = true
     val res = exec
-    checkSuspended = oldSuspended
+    suspended = old
     res
   }
 

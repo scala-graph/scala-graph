@@ -47,7 +47,7 @@ trait AdjacencyListGraph[
             doAdd
             if (!postAdd(AdjacencyListGraph.this, Set(node.value), Set.empty[E[N]], preCheckResult)) {
               handle = true
-              coll -= node
+              withoutChecks(coll -= node)
             }
           case Abort => handle = true
         }

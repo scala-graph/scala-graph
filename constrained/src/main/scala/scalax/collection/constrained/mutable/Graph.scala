@@ -55,8 +55,10 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
             if (removed &&
                 !postSubtract(selfGraph, Set(node), Set.empty[E[N]], preCheckResult)) {
               handle = true
-              selfGraph += node.value
-              selfGraph ++= edges
+              withoutChecks {
+                selfGraph += node.value
+                selfGraph ++= edges
+              }
             }
           case Abort => handle = true
         }
@@ -93,6 +95,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
       if (handle) onAdditionRefused(nodes, edges, this)
       graph
     }
+
   override def +(node: N) =
     checkedAdd(
       contained = nodes contains Node(node),
@@ -102,30 +105,31 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
       edges = Set.empty[E[N]])
 
   override def ++=(elems: TraversableOnce[Param[N, E]]): this.type = {
-    elems match {
-      case elems: Traversable[Param[N, E]] =>
-        val p              = new Param.Partitions[N, E](elems)
-        val inFiltered     = p.toInParams.toSet.filter(elem => !(this contains elem)).toSeq
-        var handle         = false
-        val preCheckResult = preAdd(inFiltered: _*)
-        if (preCheckResult.abort)
-          handle = true
-        else {
-          withoutChecks { super.++=(elems) }
-          if (preCheckResult.postCheck) {
-            val (outerNodes, outerEdges) = (p.toOuterNodes, p.toOuterEdges)
-            if (!postAdd(this, outerNodes, outerEdges, preCheckResult)) {
-              handle = true
-              withoutChecks {
-                super.--=(allNodes(outerNodes, outerEdges) map (n => OuterNode(n)))
+    def add = withoutChecks { super.++=(elems) }
+    if (checkSuspended) add
+    else
+      elems match {
+        case elems: Traversable[Param[N, E]] =>
+          val p              = new Param.Partitions[N, E](elems)
+          val inFiltered     = p.toInParams.toSet.filter(elem => !(this contains elem)).toSeq
+          var handle         = false
+          val preCheckResult = preAdd(inFiltered: _*)
+          if (preCheckResult.abort)
+            handle = true
+          else {
+            add
+            if (preCheckResult.postCheck) {
+              val (outerNodes, outerEdges) = (p.toOuterNodes, p.toOuterEdges)
+              if (!postAdd(this, outerNodes, outerEdges, preCheckResult)) {
+                handle = true
+                withoutChecks(super.--=(allNodes(outerNodes, outerEdges) map (n => OuterNode(n))))
               }
             }
           }
-        }
-        if (handle) onAdditionRefused(p.toOuterNodes, p.toOuterEdges, this)
+          if (handle) onAdditionRefused(p.toOuterNodes, p.toOuterEdges, this)
 
-      case _ => throw new IllegalArgumentException("Traversable expected")
-    }
+        case _ => throw new IllegalArgumentException("Traversable expected")
+      }
     this
   }
 
