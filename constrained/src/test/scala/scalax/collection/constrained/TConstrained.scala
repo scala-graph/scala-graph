@@ -13,6 +13,8 @@ import org.scalatest.refspec.RefSpec
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
+import scala.util.Try
+
 @RunWith(classOf[JUnitRunner])
 class TConstrainedRootTest
     extends Suites(
@@ -63,6 +65,14 @@ class TConstrainedMutable extends RefSpec with Matchers {
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 1 ~ 2)
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1))
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1 ~ 2, 2 ~ 3))
+    }
+
+    def `when cloning a graph` {
+      implicit val config: Config                              = UserConstraints.AlwaysThrowingPreAdd
+
+      val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3)
+      Try(g.clone).isSuccess should be (true)
+
     }
 
     private def shouldThrowExceptionAndLeaveGraphUnchanged[N, E[X] <: EdgeLikeIn[X], EX <: Exception: ClassTag](
@@ -211,6 +221,14 @@ private object UserConstraints {
 
   object AlwaysFailingPostSubtract extends ConstraintCompanion[AlwaysFailingPostSubtract] {
     def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new AlwaysFailingPostSubtract[N, E](self)
+  }
+
+  class AlwaysThrowingPreAdd[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extends AlwaysFailingPostSubtract[N, E](self: Graph[N, E]) {
+    override def preAdd(node: N): PreCheckResult = throw new NoSuchElementException
+  }
+
+  object AlwaysThrowingPreAdd extends ConstraintCompanion[AlwaysThrowingPreAdd] {
+    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new AlwaysThrowingPreAdd[N, E](self)
   }
 
   /* Constrains the graph to nodes having a minimal degree of `min` by utilizing pre- and post-checks.
