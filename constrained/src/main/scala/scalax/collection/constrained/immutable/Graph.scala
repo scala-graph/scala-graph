@@ -67,8 +67,6 @@ abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[
   initialize(iniNodes, iniEdges)
 
   @inline final override def empty: DefaultGraphImpl[N, E] = DefaultGraphImpl.empty(edgeT, config)
-  @inline final override def clone: DefaultGraphImpl[N, E] =
-    DefaultGraphImpl.fromWithoutCheck(nodes.toOuter, edges.toOuter)(edgeT, config)
 
   @SerialVersionUID(8081L)
   final protected class NodeBase(value: N, hints: ArraySet.Hints)

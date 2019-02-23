@@ -52,7 +52,7 @@ trait GraphLike[N,
     graphCompanion.fromWithoutCheck[N, E](delNodesEdges._1, delNodesEdges._2)(edgeT, config).asInstanceOf[This[N, E]]
   }
 
-  @transient private var suspended = false
+  @transient private var suspended      = false
   protected def checkSuspended: Boolean = suspended
   final protected def withoutChecks[R](exec: => R): R = {
     val old = suspended
