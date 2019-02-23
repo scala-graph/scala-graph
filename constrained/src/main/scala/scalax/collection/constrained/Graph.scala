@@ -44,12 +44,12 @@ trait GraphLike[N,
 
   override protected def plusPlus(newNodes: Traversable[N], newEdges: Traversable[E[N]]): This[N, E] =
     graphCompanion
-      .fromUnchecked[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)(edgeT, config)
+      .fromWithoutCheck[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)(edgeT, config)
       .asInstanceOf[This[N, E]]
 
   override protected def minusMinus(delNodes: Traversable[N], delEdges: Traversable[E[N]]): This[N, E] = {
     val delNodesEdges = minusMinusNodesEdges(delNodes, delEdges)
-    graphCompanion.fromUnchecked[N, E](delNodesEdges._1, delNodesEdges._2)(edgeT, config).asInstanceOf[This[N, E]]
+    graphCompanion.fromWithoutCheck[N, E](delNodesEdges._1, delNodesEdges._2)(edgeT, config).asInstanceOf[This[N, E]]
   }
 
   @transient private var suspended = false
@@ -148,10 +148,10 @@ object Graph extends GraphConstrainedCompanion[Graph] {
       implicit edgeT: ClassTag[E[N]],
       config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(edgeT, config)
-  override protected[collection] def fromUnchecked[N, E[X] <: EdgeLikeIn[X]](
+  override protected[collection] def fromWithoutCheck[N, E[X] <: EdgeLikeIn[X]](
       nodes: Traversable[N],
       edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
-    immutable.Graph.fromUnchecked[N, E](nodes, edges)(edgeT, config)
+    immutable.Graph.fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
 }
 
 trait UserConstrainedGraph[N, E[X] <: EdgeLikeIn[X]] extends Graph[N, E] {
