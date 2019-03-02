@@ -67,6 +67,15 @@ class TConstrainedMutable extends RefSpec with Matchers {
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1 ~ 2, 2 ~ 3))
     }
 
+    def `when postAdd fails` {
+      implicit val config: Config                              = UserConstraints.FailingPostAdd
+      implicit val expectedException: IllegalArgumentException = new IllegalArgumentException
+
+      val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
+
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 5, 5 ~ 6, 6 ~ 2))
+    }
+
     def `when cloning a graph` {
       implicit val config: Config = UserConstraints.AlwaysThrowingPreAdd
 
@@ -229,6 +238,31 @@ private object UserConstraints {
 
   object AlwaysThrowingPreAdd extends ConstraintCompanion[AlwaysThrowingPreAdd] {
     def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new AlwaysThrowingPreAdd[N, E](self)
+  }
+
+  class FailingPostAdd[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
+    extends Constraint[N, E](self)
+      with ConstraintHandlerMethods[N, E] {
+    def preAdd(node: N)                                = postCheck
+    def preAdd(edge: E[N])                             = postCheck
+    def preSubtract(node: self.NodeT, forced: Boolean) = postCheck
+    def preSubtract(edge: self.EdgeT, simple: Boolean) = postCheck
+
+    override def postAdd(newGraph: Graph[N, E],
+                              passedNodes: Traversable[N],
+                              passedEdges: Traversable[E[N]],
+                              preCheck: PreCheckResult) = {
+      passedEdges.size == 4
+    }
+
+    override def onAdditionRefused(refusedNodes: Traversable[N],
+                                      refusedEdges: Traversable[E[N]],
+                                      graph: Graph[N, E]) =
+      throw new IllegalArgumentException
+  }
+
+  object FailingPostAdd extends ConstraintCompanion[FailingPostAdd] {
+    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new FailingPostAdd[N, E](self)
   }
 
   /* Constrains the graph to nodes having a minimal degree of `min` by utilizing pre- and post-checks.
