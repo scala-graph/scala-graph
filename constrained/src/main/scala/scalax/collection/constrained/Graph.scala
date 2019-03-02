@@ -44,23 +44,21 @@ trait GraphLike[N,
 
   override protected def plusPlus(newNodes: Traversable[N], newEdges: Traversable[E]): This[N, E] =
     graphCompanion
-      .fromUnchecked[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)(edgeT, config)
+      .fromWithoutCheck[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)(edgeT, config)
       .asInstanceOf[This[N, E]]
 
   override protected def minusMinus(delNodes: Traversable[N], delEdges: Traversable[E]): This[N, E] = {
-    val delNodesEdges = remaining(delNodes, delEdges)
-    graphCompanion.fromUnchecked[N, E](delNodesEdges._1, delNodesEdges._2)(edgeT, config).asInstanceOf[This[N, E]]
+    val delNodesEdges = minusMinusNodesEdges(delNodes, delEdges)
+    graphCompanion.fromWithoutCheck[N, E](delNodesEdges._1, delNodesEdges._2)(edgeT, config).asInstanceOf[This[N, E]]
   }
 
-  /** This flag is used to prevent constraint checking for single additions and
-    * subtractions triggered by a multiple addition/subtraction such as `++=`.
-    */
-  @transient protected var checkSuspended = false
+  @transient private var suspended      = false
+  protected def checkSuspended: Boolean = suspended
   final protected def withoutChecks[R](exec: => R): R = {
-    val oldSuspended = checkSuspended
-    checkSuspended = true
+    val old = suspended
+    suspended = true
     val res = exec
-    checkSuspended = oldSuspended
+    suspended = old
     res
   }
 
@@ -150,10 +148,10 @@ object Graph extends GraphConstrainedCompanion[Graph] {
       implicit edgeT: ClassTag[E],
       config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(edgeT, config)
-  override protected[collection] def fromUnchecked[N, E <: EdgeLike[N]](
+  override protected[collection] def fromWithoutCheck[N, E <: EdgeLike[N]](
       nodes: Traversable[N],
       edges: Traversable[E])(implicit edgeT: ClassTag[E], config: Config = defaultConfig): Graph[N, E] =
-    immutable.Graph.fromUnchecked[N, E](nodes, edges)(edgeT, config)
+    immutable.Graph.fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
 }
 
 trait UserConstrainedGraph[N, E <: EdgeLike[N]] extends Graph[N, E] {

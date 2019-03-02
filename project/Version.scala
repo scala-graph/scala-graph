@@ -7,7 +7,7 @@ object Version {
   private val major      = "1.12"
   val highest            = s"$major.5$snapshot"
   val core               = s"$major.5$snapshot"
-  val constrained        = s"$major.5$snapshot"
+  val constrained        = s"$major.6$snapshot"
   val dot                = s"$major.1$snapshot"
   val json               = s"$major.1$snapshot"
   val misc               = s"$major.1$snapshot"

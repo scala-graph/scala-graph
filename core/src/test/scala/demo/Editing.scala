@@ -121,8 +121,8 @@ final class EditingTest extends RefSpec with Matchers {
      */
 
     def `neighbors ` : Unit = {
-      val g                                    = Graph[Int, AnyEdge](0, 1 ~ 3, 3 ~> 2)
-      def n(outer: Int): g.NodeT               = g get outer
+      val g                               = Graph[Int, AnyEdge](0, 1 ~ 3, 3 ~> 2)
+      def n(outer: Int): g.NodeT          = g get outer
       def e(outer: AnyEdge[Int]): g.EdgeT = g get outer
 
       n(0).diSuccessors shouldBe Set.empty[g.NodeT]
@@ -141,8 +141,8 @@ final class EditingTest extends RefSpec with Matchers {
       g.nodes filter (_.degree > 1) shouldBe Set(n(3))
       g.edges filter (_ contains 4) shouldBe 'empty
 
-      g filter (fNode = _ >= 2) should === (Graph(2, 3, 5, 2 ~> 3))
-      g filter (fEdge = _.isDirected) should === (Graph(1, 5, 2, 3, 2 ~> 3))
+      g filter (fNode = _ >= 2) should ===(Graph(2, 3, 5, 2 ~> 3))
+      g filter (fEdge = _.isDirected) should ===(Graph(1, 5, 2, 3, 2 ~> 3))
     }
 
     /* TODO

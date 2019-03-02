@@ -12,6 +12,8 @@ import org.scalatest.refspec.RefSpec
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
+import scala.util.Try
+
 @RunWith(classOf[JUnitRunner])
 class TConstrainedRootTest
     extends Suites(
@@ -23,7 +25,7 @@ class TConstrainedMutable extends RefSpec with Matchers {
 
   import mutable.Graph
 
-  object `constrains take effect using mutable operations` {
+  object `constrains work as expected using mutable operations` {
 
     def `when constraining Int nodes to even numbers` {
       implicit val config: Config = UserConstraints.EvenNode
@@ -39,21 +41,43 @@ class TConstrainedMutable extends RefSpec with Matchers {
     def `when constraining nodes to have a minimum degree` {
       import UserConstraints.{MinDegreeException, MinDegree_2}
 
-      def exceptionAndUnchanged(g: Graph[Int, UnDiEdge])(op: g.type => g.type): Unit = {
-        val before = g.clone
-        a[MinDegreeException] should be thrownBy op(g)
-        g should ===(before)
-      }
+      implicit val config: Config                        = MinDegree_2
+      implicit val expectedException: MinDegreeException = new MinDegreeException
 
-      implicit val config: Config = MinDegree_2
-      val g                       = Graph.empty[Int, UnDiEdge]
+      val g = Graph.empty[Int, UnDiEdge]
 
-      exceptionAndUnchanged(g)(_ ++= List(2, 3, 4))
-      exceptionAndUnchanged(g)(_ ++= List(1 ~ 2, 1 ~ 3, 2 ~ 4))
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(2, 3, 4))
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 2, 1 ~ 3, 2 ~ 4))
       (g ++= List(1 ~ 2, 1 ~ 3, 2 ~ 3)) should have size (6)
-      exceptionAndUnchanged(g)(_ += 3 ~ 4)
-      exceptionAndUnchanged(g)(_ -= 3)
-      exceptionAndUnchanged(g)(_ --= List(3))
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 3 ~ 4)
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 3)
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(3))
+    }
+
+    def `when postSubtract fails` {
+      implicit val config: Config                              = UserConstraints.AlwaysFailingPostSubtract
+      implicit val expectedException: IllegalArgumentException = new IllegalArgumentException
+
+      val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
+
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 1)
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 1 ~ 2)
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1))
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1 ~ 2, 2 ~ 3))
+    }
+
+    def `when cloning a graph` {
+      implicit val config: Config = UserConstraints.AlwaysThrowingPreAdd
+
+      val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3)
+      Try(g.clone).isSuccess should be(true)
+    }
+
+    private def shouldThrowExceptionAndLeaveGraphUnchanged[N, E[X] <: EdgeLikeIn[X], EX <: Exception: ClassTag](
+        g: Graph[N, E])(op: g.type => g.type)(implicit e: EX): Unit = {
+      val before = g.clone
+      a[EX] should be thrownBy op(g)
+      g should ===(before)
     }
   }
 }
@@ -174,8 +198,40 @@ private object UserConstraints {
       new EvenNodeByException[N, E](self)
   }
 
-  /* Constrains the graph to nodes having a minimal degree of `min`
-   * utilizing pre- and post-checks. */
+  class AlwaysFailingPostSubtract[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
+      extends Constraint[N, E](self)
+      with ConstraintHandlerMethods[N, E] {
+    def preAdd(node: N)                                = postCheck
+    def preAdd(edge: E[N])                             = postCheck
+    def preSubtract(node: self.NodeT, forced: Boolean) = postCheck
+    def preSubtract(edge: self.EdgeT, simple: Boolean) = postCheck
+
+    override def postSubtract(newGraph: Graph[N, E],
+                              passedNodes: Traversable[N],
+                              passedEdges: Traversable[E[N]],
+                              preCheck: PreCheckResult) = false
+
+    override def onSubtractionRefused(refusedNodes: Traversable[Graph[N, E]#NodeT],
+                                      refusedEdges: Traversable[Graph[N, E]#EdgeT],
+                                      graph: Graph[N, E]) =
+      throw new IllegalArgumentException
+  }
+
+  object AlwaysFailingPostSubtract extends ConstraintCompanion[AlwaysFailingPostSubtract] {
+    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new AlwaysFailingPostSubtract[N, E](self)
+  }
+
+  class AlwaysThrowingPreAdd[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
+      extends AlwaysFailingPostSubtract[N, E](self: Graph[N, E]) {
+    override def preAdd(node: N): PreCheckResult = throw new NoSuchElementException
+  }
+
+  object AlwaysThrowingPreAdd extends ConstraintCompanion[AlwaysThrowingPreAdd] {
+    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new AlwaysThrowingPreAdd[N, E](self)
+  }
+
+  /* Constrains the graph to nodes having a minimal degree of `min` by utilizing pre- and post-checks.
+   */
   abstract class MinDegree[N, E <: EdgeLike[N]](override val self: Graph[N, E])
       extends Constraint[N, E](self)
       with ConstraintHandlerMethods[N, E] {
@@ -265,5 +321,5 @@ private object UserConstraints {
       }
   }
 
-  class MinDegreeException(msg: String) extends IllegalArgumentException(msg)
+  class MinDegreeException(msg: String = "") extends IllegalArgumentException(msg)
 }

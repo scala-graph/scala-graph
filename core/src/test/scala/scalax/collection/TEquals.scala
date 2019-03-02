@@ -23,10 +23,10 @@ class TEqualsTest extends RefSpec with Matchers {
   object `equals works properly` {
     def `over immutable and mutable graphs` {
       val (iG, mG) = initG
-      iG should === (mG)
+      iG should ===(mG)
 
       val (iH, mH) = initH
-      iH should === (mH)
+      iH should ===(mH)
     }
   }
 }

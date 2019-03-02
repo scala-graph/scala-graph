@@ -23,7 +23,7 @@ trait GraphConstrainedCompanion[+GC[N, E <: EdgeLike[N]] <: Graph[N, E] with Gra
   def defaultConfig = ConstrainedConfig()
 
   /** Same as `from` except for constraint being suppressed. */
-  protected[collection] def fromUnchecked[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(
+  protected[collection] def fromWithoutCheck[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(
       implicit edgeT: ClassTag[E],
       config: Config): GC[N, E]
   override def newBuilder[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E],
