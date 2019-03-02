@@ -107,35 +107,48 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
   override def ++=(elems: TraversableOnce[Param[N, E]]): this.type = {
     def add = withoutChecks { super.++=(elems) }
     if (checkSuspended) add
-    else
-      elems match {
-        case elems: Traversable[Param[N, E]] =>
-          val p              = new Param.Partitions[N, E](elems)
-          val inFiltered     = p.toInParams.toSet.filter(elem => !(this contains elem)).toSeq
-          var handle         = false
-          val preCheckResult = preAdd(inFiltered: _*)
-          if (preCheckResult.abort)
-            handle = true
-          else {
-            add
-            if (preCheckResult.postCheck) {
-              val (outerNodes, outerEdges) = (p.toOuterNodes, p.toOuterEdges)
-              if (!postAdd(this, outerNodes, outerEdges, preCheckResult)) {
-                handle = true
-                withoutChecks(super.--=(allNodes(outerNodes, outerEdges) map (n => OuterNode(n))))
+    else {
+      def process(elems: Traversable[Param[N, E]]): Unit = {
+        val (filteredElems, newNodes, newEdges) = {
+          val p     = new Param.Partitions[N, E]((elems filterNot contains).toSet)
+          val edges = p.toOuterEdges
+          (
+            p.toInParams.toSeq,
+            nodesToAdd(p.toOuterNodes, edges),
+            edges
+          )
+        }
+        var handle         = false
+        val preCheckResult = preAdd(filteredElems: _*)
+        if (preCheckResult.abort)
+          handle = true
+        else {
+          add
+          if (preCheckResult.postCheck) {
+            if (!postAdd(this, newNodes, newEdges, preCheckResult)) {
+              handle = true
+              withoutChecks {
+                newNodes foreach super.remove
+                newEdges foreach super.remove
               }
             }
           }
-          if (handle) onAdditionRefused(p.toOuterNodes, p.toOuterEdges, this)
-
-        case _ => throw new IllegalArgumentException("Traversable expected")
+        }
+        if (handle) onAdditionRefused(newNodes, newEdges, this)
       }
+      elems match {
+        case elems: Traversable[Param[N, E]] => process(elems)
+        case traversableOnce                 => process(traversableOnce.toSet)
+      }
+    }
     this
   }
 
   override def --=(elems: TraversableOnce[Param[N, E]]): this.type = {
-    val p                        = partition(elems)
-    val (outerNodes, outerEdges) = (p.toOuterNodes.toSet, p.toOuterEdges.toSet)
+    val (outerNodes, outerEdges) = {
+      val p = partition(elems)
+      (p.toOuterNodes.toSet, p.toOuterEdges.toSet)
+    }
     val (innerNodes, innerEdges) = (outerNodes map find flatten, outerEdges map find flatten)
 
     type C_NodeT = self.NodeT
@@ -159,7 +172,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
   }
 }
 
-import scalax.collection.constrained.generic.{MutableGraphCompanion}
+import scalax.collection.constrained.generic.MutableGraphCompanion
 
 trait Graph[N, E[X] <: EdgeLikeIn[X]]
     extends scalax.collection.mutable.Graph[N, E]

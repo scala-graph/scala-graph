@@ -60,7 +60,7 @@ protected trait ConstraintHandlerMethods[N, E[X] <: EdgeLikeIn[X]] {
     false
 
   /** This handler is called whenever a subtraction violates the constraints.
-    *  The provided default implementation is empty.
+    * The provided default implementation is empty.
     *
     * @param refusedNodes the nodes passed to `preSubtract`.
     * @param refusedEdges the edges passed to `preSubtract`.
@@ -154,7 +154,7 @@ object PreCheckResult extends PreCheckResultCompanion {
   * @define SELFCOMMIT For immutable graphs, `self` maintains the state before the
   *         addition but for mutable graphs, it is already mutated to the required state.
   * @define PRECHECKRET The results of the pre-check containing the follow-up activity
-  *         and possible any intermediate computation results to be used during the
+  *         and possibly any intermediate computation result to be used during the
   *         post-check. To add computation results `PreCheckResult` must be extended.
   *
   * @author Peter Empen
@@ -233,11 +233,9 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X]] {
     * $SELFCOMMIT
     *
     * @param newGraph the after-addition would-be graph waiting for commit.
-    * @param passedNodes nodes passed to the running add operation except those
-    *        coming from node/edge input streams.
-    * @param passedEdges edges passed to the running add operation except those
-    *        coming from edge input streams.
-    * @param wasEmpty `true` if `self` was empty before the addition.
+    * @param passedNodes nodes passed to the running add operation
+    * @param passedEdges edges passed to the running add operation
+    * @param preCheck $PRECHECKRET
     */
   def postAdd(newGraph: Graph[N, E],
               passedNodes: Traversable[N],
@@ -298,6 +296,7 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X]] {
     * $SELFCOMMIT
     *
     * @param newGraph the after-subtraction would-be graph waiting for commit.
+    * @param preCheck $PRECHECKRET
     */
   def postSubtract(newGraph: Graph[N, E],
                    passedNodes: Traversable[N],
@@ -312,16 +311,8 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X]] {
     nodes
   }
 
-  /** Consolidates all inner nodes of the arguments by adding the edge ends
-    *  of `passedEdges` to `passedNodes`. */
-  protected def allNodes(
-      innerNodes: Set[self.NodeT],
-      innerEdges: Set[self.EdgeT]
-  ): Set[self.NodeT] = {
-    val nodes = collection.mutable.Set[self.NodeT]() ++ innerNodes
-    innerEdges foreach (nodes ++= _)
-    nodes
-  }
+  protected def nodesToAdd(passedNodes: Traversable[N], passedEdges: Traversable[E[N]]): Set[N] =
+    allNodes(passedNodes, passedEdges).filter(self.find(_).isEmpty)
 }
 
 /** Template to be mixed in by any constrained graph class.
