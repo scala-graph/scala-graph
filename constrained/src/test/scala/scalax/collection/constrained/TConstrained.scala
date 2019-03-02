@@ -3,17 +3,15 @@ package scalax.collection.constrained
 import scala.collection.Set
 import scala.language.{higherKinds, postfixOps}
 import scala.reflect.ClassTag
+import scala.util.Try
 
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import generic.GraphConstrainedCompanion
-
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
-
-import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
 class TConstrainedRootTest
@@ -77,7 +75,7 @@ class TConstrainedMutable extends RefSpec with Matchers {
     }
 
     def `when cloning a graph` {
-      implicit val config: Config = UserConstraints.AlwaysThrowingPreAdd
+      implicit val config: Config = UserConstraints.AlwaysFailingPreAdd
 
       val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3)
       Try(g.clone).isSuccess should be(true)
@@ -208,13 +206,17 @@ private object UserConstraints {
       new EvenNodeByException[N, E](self)
   }
 
-  class AlwaysFailingPostSubtract[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
+  abstract class NoPreCheck[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
       extends Constraint[N, E](self)
       with ConstraintHandlerMethods[N, E] {
     def preAdd(node: N)                                = postCheck
     def preAdd(edge: E[N])                             = postCheck
     def preSubtract(node: self.NodeT, forced: Boolean) = postCheck
     def preSubtract(edge: self.EdgeT, simple: Boolean) = postCheck
+  }
+
+  class AlwaysFailingPostSubtract[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
+      extends NoPreCheck[N, E](self) {
 
     override def postSubtract(newGraph: Graph[N, E],
                               passedNodes: Traversable[N],
@@ -231,33 +233,24 @@ private object UserConstraints {
     def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new AlwaysFailingPostSubtract[N, E](self)
   }
 
-  class AlwaysThrowingPreAdd[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
+  class AlwaysFailingPreAdd[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
       extends AlwaysFailingPostSubtract[N, E](self: Graph[N, E]) {
     override def preAdd(node: N): PreCheckResult = throw new NoSuchElementException
   }
 
-  object AlwaysThrowingPreAdd extends ConstraintCompanion[AlwaysThrowingPreAdd] {
-    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new AlwaysThrowingPreAdd[N, E](self)
+  object AlwaysFailingPreAdd extends ConstraintCompanion[AlwaysFailingPreAdd] {
+    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new AlwaysFailingPreAdd[N, E](self)
   }
 
-  class FailingPostAdd[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
-    extends Constraint[N, E](self)
-      with ConstraintHandlerMethods[N, E] {
-    def preAdd(node: N)                                = postCheck
-    def preAdd(edge: E[N])                             = postCheck
-    def preSubtract(node: self.NodeT, forced: Boolean) = postCheck
-    def preSubtract(edge: self.EdgeT, simple: Boolean) = postCheck
+  class FailingPostAdd[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extends NoPreCheck[N, E](self) {
 
     override def postAdd(newGraph: Graph[N, E],
-                              passedNodes: Traversable[N],
-                              passedEdges: Traversable[E[N]],
-                              preCheck: PreCheckResult) = {
+                         passedNodes: Traversable[N],
+                         passedEdges: Traversable[E[N]],
+                         preCheck: PreCheckResult) =
       passedEdges.size == 4
-    }
 
-    override def onAdditionRefused(refusedNodes: Traversable[N],
-                                      refusedEdges: Traversable[E[N]],
-                                      graph: Graph[N, E]) =
+    override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: Graph[N, E]) =
       throw new IllegalArgumentException
   }
 
