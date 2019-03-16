@@ -3,9 +3,7 @@ package mutable
 
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.Set
-import scala.collection.mutable.{HashSet, HashMap, Set => MutableSet}
 
-import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.mutable.{AdjacencyListGraph => SimpleAdjacencyListGraph}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
@@ -34,7 +32,8 @@ trait AdjacencyListGraph[
 
   @SerialVersionUID(8083L)
   class NodeSet extends super.NodeSet {
-    override def add(node: NodeT) = {
+
+    override def add(node: NodeT): Boolean = {
       def doAdd  = coll += node
       var handle = false
       if (coll.contains(node)) false
@@ -60,7 +59,9 @@ trait AdjacencyListGraph[
 
   @SerialVersionUID(8084L)
   class EdgeSet extends super.EdgeSet {
-    override def add(edge: EdgeT) = {
+
+    override def add(edge: EdgeT): Boolean = {
+      val newNodes      = edge.nodes filterNot contains
       def doAdd         = super.add(edge)
       var added, handle = false
       if (checkSuspended) added = doAdd
@@ -74,6 +75,7 @@ trait AdjacencyListGraph[
               if (!postAdd(selfGraph, Set.empty[N], Set(edge.toOuter), preCheckResult)) {
                 handle = true
                 remove(edge)
+                newNodes foreach nodes.remove
               }
           case Abort => handle = true
         }
@@ -84,7 +86,7 @@ trait AdjacencyListGraph[
     }
 
     /** generic constrained subtraction */
-    protected def checkedRemove(edge: EdgeT, forced: Boolean, remove: (EdgeT) => Boolean): Boolean = {
+    protected def checkedRemove(edge: EdgeT, forced: Boolean, remove: EdgeT => Boolean): Boolean = {
       var removed, handle = false
       if (checkSuspended) removed = remove(edge)
       else {
@@ -105,9 +107,9 @@ trait AdjacencyListGraph[
       removed && !handle
     }
 
-    override def remove(edge: EdgeT) = checkedRemove(edge, false, super.remove)
+    override def remove(edge: EdgeT): Boolean = checkedRemove(edge, false, super.remove)
 
-    override def removeWithNodes(edge: EdgeT) = {
+    override def removeWithNodes(edge: EdgeT): Boolean = {
       def uncheckedSuperRemoveWithNodes(e: EdgeT) =
         withoutChecks { super.removeWithNodes(e) }
       checkedRemove(edge, true, uncheckedSuperRemoveWithNodes)
