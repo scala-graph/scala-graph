@@ -31,10 +31,10 @@ class TConstrainedMutable extends RefSpec with Matchers {
       val g                       = Graph[Int, Nothing](1)
 
       g should be('isEmpty)
-      (g += 2) should have size (1)
-      (g += 3) should have size (1)
-      (g ++= List(1, 4)) should have size (1)
-      (g ++= List(2, 4, 6)) should have size (3)
+      (g += 2) should have size 1
+      (g += 3) should have size 1
+      (g ++= List(1, 4)) should have size 1
+      (g ++= List(2, 4, 6)) should have size 3
     }
 
     def `when constraining nodes to have a minimum degree` {
@@ -47,7 +47,7 @@ class TConstrainedMutable extends RefSpec with Matchers {
 
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(2, 3, 4))
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 2, 1 ~ 3, 2 ~ 4))
-      (g ++= List(1 ~ 2, 1 ~ 3, 2 ~ 3)) should have size (6)
+      (g ++= List(1 ~ 2, 1 ~ 3, 2 ~ 3)) should have size 6
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 3 ~ 4)
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 3)
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(3))
@@ -71,6 +71,7 @@ class TConstrainedMutable extends RefSpec with Matchers {
 
       val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 1 ~ 5)
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 5, 5 ~ 6, 6 ~ 2))
     }
 
@@ -106,7 +107,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
       g + 5 contains 5 should be(false)
       g + 6 contains 6 should be(true)
       (g ++ List[OuterNode[Int]](1, 2, 3)) should be('isEmpty)
-      (g ++ List[OuterNode[Int]](2, 4, 6)) should have size (3)
+      (g ++ List[OuterNode[Int]](2, 4, 6)) should have size 3
     }
 
     def `when constraining nodes to have a minimum degree` {
@@ -118,9 +119,9 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
       a[MinDegreeException] should be thrownBy { g + 1 ~ 2 }
 
       val g6 = g ++ List(1 ~ 2, 1 ~ 3, 2 ~ 3)
-      g6 should have size (6)
+      g6 should have size 6
       val g7 = g6 + 3 ~> 1
-      g7 should have size (7)
+      g7 should have size 7
       a[MinDegreeException] should be thrownBy { g6 + 4 }
       a[MinDegreeException] should be thrownBy { g6 + 3 ~ 4 }
       g6 + 1 ~> 2 should have('graphSize (4))
@@ -142,13 +143,13 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
       an[IllegalArgumentException] should be thrownBy { factory[Int, Nothing](1, 2, 3, 4) }
 
       val g = factory[Int, Nothing](2, 4)
-      g should have size (2)
+      g should have size 2
       an[IllegalArgumentException] should be thrownBy { g + 5 }
 
       g + 6 contains 6 should be(true)
       an[IllegalArgumentException] should be thrownBy { g ++ List[OuterNode[Int]](1, 2, 3) }
 
-      (g ++ List[OuterNode[Int]](2, 4, 6)) should have size (3)
+      (g ++ List[OuterNode[Int]](2, 4, 6)) should have size 3
     }
 
     def `be combined` {
@@ -162,7 +163,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
         implicit val config: Config = EvenNode && MinDegree_2
         val g2                      = factory.empty[Int, UnDiEdge]
         a[MinDegreeException] should be thrownBy { g2 + 2 }
-        g2 ++ List(0 ~ 2, 0 ~> 2) should have size (4)
+        g2 ++ List(0 ~ 2, 0 ~> 2) should have size 4
       }
     }
   }
