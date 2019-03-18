@@ -62,6 +62,7 @@ class TConstrainedMutable extends RefSpec with Matchers {
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 1)
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 1 ~ 2)
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1))
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1 ~ 2))
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1 ~ 2, 2 ~ 3))
     }
 
@@ -71,7 +72,10 @@ class TConstrainedMutable extends RefSpec with Matchers {
 
       val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 5)
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 1 ~ 5)
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(5))
+      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 5))
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 5, 5 ~ 6, 6 ~ 2))
     }
 
