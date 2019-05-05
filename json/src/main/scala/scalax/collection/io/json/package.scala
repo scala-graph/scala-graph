@@ -1,8 +1,16 @@
 package scalax.collection.io
 
+import net.liftweb.json.JValue
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
+import scalax.collection.edge.LBase._
+import scalax.collection.edge.WBase._
+import scalax.collection.edge.WLBase._
+import scalax.collection.edge._
 import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.io.json.imp.JsonList
+import scalax.collection.io.json.imp.Parser.parse
+import scalax.collection.io.json.imp.Stream.createOuterElems
 import scalax.collection.{Graph, GraphLike}
 
 import scala.language.higherKinds
@@ -18,10 +26,6 @@ import scala.reflect.ClassTag
   * @author Peter Empen
   */
 package object json {
-  import scalax.collection.edge.LBase._
-  import scalax.collection.edge.WBase._
-  import scalax.collection.edge.WLBase._
-  import scalax.collection.edge._
   type Descriptor[N]                                                            = descriptor.Descriptor[N]
   type NodeDescriptor[N]                                                        = descriptor.NodeDescriptor[N]
   type EdgeDescriptorBase[N, E[X] <: EdgeLikeIn[X], +C <: EdgeCompanionBase[E]] = descriptor.EdgeDescriptorBase[N, E, C]
@@ -40,11 +44,6 @@ package object json {
     descriptor.LHyperEdgeDescriptor[N, E, C, L]
   type WLHyperEdgeDescriptor[N, E[X] <: WLHyperEdge[X] with WLEdge[X], +C <: WLHyperEdgeCompanion[E], L <: AnyRef] =
     descriptor.WLHyperEdgeDescriptor[N, E, C, L]
-
-  import imp.Parser.parse
-  import imp.Stream.createOuterElems
-  import imp._
-  import net.liftweb.json.JValue
 
   implicit final class JsonGraphCoreCompanion[+G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
       val companion: GraphCoreCompanion[G])
