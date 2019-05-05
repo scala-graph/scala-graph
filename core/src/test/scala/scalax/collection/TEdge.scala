@@ -16,9 +16,9 @@ class TEdgeTest extends RefSpec with Matchers {
 
   object `WDiEdge ` {
     def `can have weight overridden`: Unit = {
-      val edge = "A" ~> "B" % 1
-      val newEdge = edge % 2
-      val oldEdge = newEdge % 1
+      val edge    = "A" ~> "B" % 1
+      val newEdge = edge       % 2
+      val oldEdge = newEdge    % 1
 
       edge.weight should ===(1)
       newEdge.weight should ===(2)
@@ -28,7 +28,7 @@ class TEdgeTest extends RefSpec with Matchers {
 
   object `LDiEdge ` {
     def `can have label overridden`: Unit = {
-      val edge = "A" ~> "B" + 1
+      val edge    = "A" ~> "B" + 1
       val newEdge = edge + 2
       val oldEdge = newEdge + 1
 
