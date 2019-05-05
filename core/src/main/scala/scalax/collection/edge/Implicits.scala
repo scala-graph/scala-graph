@@ -11,10 +11,12 @@ object Implicits {
   }
   implicit def edge2WUnDiEdgeAssoc[N](e: UnDiEdge[N]) = new WUnDiEdgeAssoc[N](e)
 
-  final class WDiEdgeAssoc[N](e: DiEdge[N]) {
+  final class WDiEdgeAssoc[N](e: DiEdgeLike[N]) {
     def %(weight: Double) = new WDiEdge[N](e.nodes, weight)
   }
   implicit def edge2WDiEdgeAssoc[N](e: DiEdge[N]) = new WDiEdgeAssoc[N](e)
+  // Overload resolution should choose this type instead of the UnDiEdge conversion because it's narrower
+  implicit def wEdge2WDiEdgeAssoc[N](e: WDiEdge[N]) = new WDiEdgeAssoc[N](e)
 
   final class WHyperEdgeAssoc[N](e: HyperEdge[N]) {
     def %(weight: Double) = new WHyperEdge[N](e.nodes, weight)
@@ -32,10 +34,12 @@ object Implicits {
   }
   implicit def edge2LUnDiEdgeAssoc[N](e: UnDiEdge[N]) = new LUnDiEdgeAssoc[N](e)
 
-  final class LDiEdgeAssoc[N](e: DiEdge[N]) {
+  final class LDiEdgeAssoc[N](e: DiEdgeLike[N]) {
     def +[L](label: L) = LDiEdge.from[N, L](e.nodes)(label)
   }
   implicit def edge2LDiEdgeAssoc[N](e: DiEdge[N]) = new LDiEdgeAssoc[N](e)
+  // Overload resolution should choose this type instead of the UnDiEdge conversion because it's narrower
+  implicit def lEdge2LDiEdgeAssoc[N](e: LDiEdge[N]) = new LDiEdgeAssoc[N](e)
 
   final class LHyperEdgeAssoc[N](e: HyperEdge[N])(implicit kind: CollectionKind = Bag) {
     def +[L](label: L) = LHyperEdge.from[N, L](e.nodes)(label)
