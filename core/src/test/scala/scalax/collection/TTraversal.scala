@@ -353,8 +353,8 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     given(gUnDi_2) { g =>
       def n(value: Int) = g get value
 
-      var nodes     = ListBuffer[g.NodeT]()
-      var edges     = ListBuffer[g.EdgeT]()
+      val nodes     = ListBuffer[g.NodeT]()
+      val edges     = ListBuffer[g.EdgeT]()
       val traverser = n(2).innerElemTraverser.withSubgraph(nodes = _ != 3)
       val p2_1_nNE3 = traverser
         .pathTo(n(1)) {
@@ -433,7 +433,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
       shp4.get.nodes.toList should be(List(jfc, fra, svx))
       shp4.get.edges.toList should be(List(flight("UA 8840"), flight("LH 1480")))
 
-      var visited = MSet[g.EdgeT]()
+      val visited = MSet[g.EdgeT]()
       (g get jfc).innerEdgeTraverser.shortestPathTo(g get lhr) { e: g.EdgeT =>
         visited += e
       }

@@ -20,10 +20,10 @@ protected trait State[N, E[X] <: EdgeLikeIn[X]] {
   import State._
 
   /** Flags in `inUse` refer to required but unclosed handles. */
-  private var inUse = new FlagStore
+  private val inUse = new FlagStore
 
   /** Flags in `dirty` refer to released handles with dirty flags at the nodes. */
-  private var dirty   = new FlagStore
+  private val dirty   = new FlagStore
   private val monitor = new Object with Serializable
 
   protected def dump(store: FlagStore): ExtBitSet = {

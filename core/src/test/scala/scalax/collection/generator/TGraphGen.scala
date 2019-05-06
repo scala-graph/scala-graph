@@ -61,7 +61,6 @@ class TGraphGenTest extends RefSpec with Matchers with PropertyChecks {
     degrees.max should be <= (nodeDegrees.max + tolerableMaxExceed)
 
     val totalDegree = g.totalDegree
-    val deviation   = totalDegree - expectedTotalDegree
     totalDegree should (be >= (expectedTotalDegree - maxDegreeDeviation) and
     be <= (expectedTotalDegree + maxDegreeDeviation))
   }
