@@ -322,7 +322,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
               )
           }
 
-          def relax(pred: NodeT, succ: NodeT) {
+          def relax(pred: NodeT, succ: NodeT): Unit = {
             val cost = dest(pred) +
               weight(pred.outgoingTo(succ).withFilter(subgraphEdges(_)).min)
             if (!dest.isDefinedAt(succ) || cost < dest(succ)) {
@@ -332,7 +332,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           }
 
           var nodeCnt = 0
-          @tailrec def rec(pq: PriorityQueue[PrioQueueElem]) {
+          @tailrec def rec(pq: PriorityQueue[PrioQueueElem]): Unit = {
             if (pq.nonEmpty && (pq.head.node ne potentialSuccessor)) {
               val PrioQueueElem(node, cumWeight, depth) = pq.dequeue
               if (!node.visited) {
@@ -341,7 +341,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                   else sortedAdjacentNodes(node, cumWeight, depth + 1)
                 pq ++= ordNodes
 
-                @tailrec def loop(pq2: PriorityQueue[PrioQueueElem]) {
+                @tailrec def loop(pq2: PriorityQueue[PrioQueueElem]): Unit = {
                   if (pq2.nonEmpty) {
                     relax(node, pq2.dequeue.node)
                     loop(pq2)
@@ -435,7 +435,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           val path: Stack[Element]  = Stack()
           var res: Option[NodeT]    = None
           var nodeCnt               = 0
-          @tailrec def loop {
+          @tailrec def loop: Unit = {
             if (stack.nonEmpty) {
               val popped @ Element(current, depth, cumWeight) = stack.pop
               if (depth > 0)
@@ -603,11 +603,11 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           def isGray(node: NodeT)   = isVisited(node) && !(node bit blackHandle)
           def isBlack(node: NodeT)  = node bit blackHandle
           def nonBlack(node: NodeT) = !isBlack(node)
-          def setGray(node: NodeT) { node.visited = true }
-          def setBlack(node: NodeT) { node.bit_=(isSet = true)(blackHandle) }
+          def setGray(node: NodeT): Unit = { node.visited = true }
+          def setBlack(node: NodeT): Unit = { node.bit_=(isSet = true)(blackHandle) }
 
-          def onNodeDown(node: NodeT) { setGray(node) }
-          def onNodeUp(node: NodeT) { setBlack(node) }
+          def onNodeDown(node: NodeT): Unit = { setGray(node) }
+          def onNodeUp(node: NodeT): Unit = { setBlack(node) }
 
           def isVisited(node: NodeT)  = node.visited
           def nonVisited(node: NodeT) = !isVisited(node)

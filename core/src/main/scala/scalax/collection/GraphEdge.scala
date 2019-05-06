@@ -104,7 +104,7 @@ object GraphEdge {
       *  @throws EdgeException if any of the basic validations or of eventually
       *  supplied additional validations fails.
       */
-    final protected def validate {
+    final protected def validate: Unit = {
       nodes match {
         case r: AnyRef if r eq null =>
           throw new EdgeException(s"null node in: $toString")

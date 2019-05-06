@@ -51,15 +51,15 @@ class TGraphSerializer[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
   }
 
   object `JSON serialization of any class containing a graph works fine` {
-    def `when exporting` {
+    def `when exporting`: Unit = {
       val g = factory.fromJson[String, WDiEdge](graphJsonText, descriptor)
       g should equal(graph)
     }
-    def `when reimporting` {
+    def `when reimporting`: Unit = {
       val g = factory.fromJson[String, WDiEdge](graphJsonText, descriptor)
       factory.fromJson[String, WDiEdge](g.toJson(descriptor), descriptor) should equal(g)
     }
-    def `when decomposing and parsing` {
+    def `when decomposing and parsing`: Unit = {
       import ContainerFixture._
 
       implicit val format: Formats = DefaultFormats +

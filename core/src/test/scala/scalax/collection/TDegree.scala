@@ -47,7 +47,7 @@ class TDegree[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
   }
 
   object `Degrees are calculated properly` {
-    def `for nodes` {
+    def `for nodes`: Unit = {
       {
         import UnDi_1._
         given(g) { _ =>
@@ -67,7 +67,7 @@ class TDegree[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
         }
       }
     }
-    def `for total graph` {
+    def `for total graph`: Unit = {
       emptyG.totalDegree should be(0);
       {
         import UnDi_1._
@@ -81,7 +81,7 @@ class TDegree[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
   }
 
   object `Degree statistics are calculated properly for` {
-    def `minimum degree` {
+    def `minimum degree`: Unit = {
       emptyG.minDegree should be(0);
       {
         import UnDi_1._
@@ -92,7 +92,7 @@ class TDegree[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
         given(g) { _.minDegree should be(degrees min) }
       }
     }
-    def `maximum degree` {
+    def `maximum degree`: Unit = {
       emptyG.maxDegree should be(0);
       {
         import UnDi_1._
@@ -103,7 +103,7 @@ class TDegree[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
         given(g) { _.maxDegree should be(degrees max) }
       }
     }
-    def `sequence of degrees` {
+    def `sequence of degrees`: Unit = {
       emptyG.degreeSeq should be(Seq.empty);
       {
         import UnDi_1._
@@ -114,7 +114,7 @@ class TDegree[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
         given(g) { _.degreeSeq should be(expectedDegreeSeq) }
       }
     }
-    def `set of degrees` {
+    def `set of degrees`: Unit = {
       emptyG.degreeSet should be(Set.empty);
       {
         import UnDi_1._
@@ -125,7 +125,7 @@ class TDegree[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
         given(g) { _.degreeSet should be(expectedDegreeSet) }
       }
     }
-    def `sequence of nodes sorted by degree` {
+    def `sequence of nodes sorted by degree`: Unit = {
       emptyG.degreeNodeSeq should be(Seq.empty);
       {
         import UnDi_1._
@@ -152,7 +152,7 @@ class TDegree[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
         given(g) { _.degreeNodeSeq should be(expectedDegreeNodeSeq) }
       }
     }
-    def `map of nodes by degree` {
+    def `map of nodes by degree`: Unit = {
       emptyG.degreeNodesMap should be(Map.empty);
       {
         import UnDi_1._
@@ -168,7 +168,7 @@ class TDegree[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
         }
       }
     }
-    def `map of degree by node` {
+    def `map of degree by node`: Unit = {
       emptyG.degreeCount should be(Map.empty);
       {
         import UnDi_1._

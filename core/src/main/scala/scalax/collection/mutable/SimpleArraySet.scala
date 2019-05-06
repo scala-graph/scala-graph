@@ -32,7 +32,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   private var arr: Array[A]                                = _
   private var hashSet: ExtHashSet[A]                       = _
 
-  private def initialize {
+  private def initialize: Unit = {
     val capacity = hints.nextCapacity(0)
     if (capacity == 0) hashSet = ExtHashSet.empty[A]
     else arr = new Array[AnyRef](capacity).asInstanceOf[Array[A]]
@@ -53,7 +53,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     this
   }
 
-  protected def removeIndex(i: Int) {
+  protected def removeIndex(i: Int): Unit = {
     if (i != -1) {
       if (i + 1 < nextFree)
         arraycopy(arr, i + 1, arr, i, nextFree - i - 1)
@@ -92,7 +92,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
         }
       }
 
-  override def foreach[U](f: (A) => U) {
+  override def foreach[U](f: (A) => U): Unit = {
     if (isHash) hashSet foreach f
     else {
       var i = 0
@@ -100,13 +100,13 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     }
   }
 
-  final protected def resizeArray(fromCapacity: Int, toCapacity: Int) {
+  final protected def resizeArray(fromCapacity: Int, toCapacity: Int): Unit = {
     val newArr: Array[AnyRef] = new Array(toCapacity)
     arraycopy(arr, 0, newArr, 0, math.min(fromCapacity, toCapacity))
     arr = newArr.asInstanceOf[Array[A]]
   }
 
-  final protected def setToArray(set: Iterable[A], size: Int) {
+  final protected def setToArray(set: Iterable[A], size: Int): Unit = {
     arr = new Array[AnyRef](size).asInstanceOf[Array[A]]
     nextFree = 0
     set foreach { elem =>
@@ -116,7 +116,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     hashSet = null
   }
 
-  def compact {
+  def compact: Unit = {
     if (isHash) {
       val _size = size
       if (_size < hints.hashTableThreshold)

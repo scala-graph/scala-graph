@@ -21,16 +21,16 @@ class TKatzTest extends RefSpec with Matchers {
     import Katz._
     val centralities: Map[network.NodeT,Float] = network.centralities()
     
-    def `yielding a non-empty map` {
+    def `yielding a non-empty map`: Unit = {
       centralities should be ('nonEmpty)
     }
 
-    def `using path dependent node types` {
+    def `using path dependent node types`: Unit = {
       implicit def ord = centralityMapOrdering[String,UnDiEdge,network.type](centralities)
       centralities.max._1 should be (network get jose)
     }
     
-    def `using type projection node types` {
+    def `using type projection node types`: Unit = {
       val pCentralities = centralities: Map[_ <: Graph[String,UnDiEdge]#NodeT, Float]
       implicit def projectionOrd = centralityProjectionMapOrdering(pCentralities)
       pCentralities.min._1 should be (network get samantha)

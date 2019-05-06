@@ -38,7 +38,7 @@ trait AdjacencyListGraph[
       inserted
     }
 
-    final protected def addDiSuccOrHook(edge: EdgeT) {
+    final protected def addDiSuccOrHook(edge: EdgeT): Unit = {
       if (edge.matches(nodeEqThis, nodeEqThis) && aHook.isEmpty)
         _aHook = Some(this -> edge)
       addDiSuccessors(edge, (n: NodeT) => diSucc put (n, edge))

@@ -42,7 +42,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
 
   implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
 
-  def `find successors in a tiny graph` {
+  def `find successors in a tiny graph`: Unit = {
     given(factory(1 ~> 2)) { g =>
       val (n1, n2) = (g get 1, g get 2)
 
@@ -61,7 +61,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `find predecessors in a tiny graph` {
+  def `find predecessors in a tiny graph`: Unit = {
     given(factory(1 ~> 2)) { g =>
       val (n1, n2) = (g get 1, g get 2)
 
@@ -80,7 +80,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `find connected nodes by predicate in a tiny graph` {
+  def `find connected nodes by predicate in a tiny graph`: Unit = {
     given(factory(1 ~> 2)) { g =>
       val (n1, n2) = (g get 1, g get 2)
 
@@ -104,7 +104,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
   object Di_1   extends TGraph(factory(elementsOfDi_1: _*))
   object UnDi_1 extends TGraph(factory(elementsOfUnDi_1: _*))
 
-  def `find successors in a mid-size graph` {
+  def `find successors in a mid-size graph`: Unit = {
     val g             = Di_1
     def n(outer: Int) = g.node(outer)
     var successor     = null.asInstanceOf[Option[g.g.NodeT]]
@@ -129,7 +129,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `find predecessors in a mid-size graph` {
+  def `find predecessors in a mid-size graph`: Unit = {
     val g             = Di_1
     def n(outer: Int) = g.node(outer)
     var predecessor   = null.asInstanceOf[Option[g.g.NodeT]]
@@ -154,7 +154,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `find connected nodes by predicate in a mid-size graph` {
+  def `find connected nodes by predicate in a mid-size graph`: Unit = {
     val g             = Di_1
     def n(outer: Int) = g.node(outer)
     var connected     = null.asInstanceOf[Option[g.g.NodeT]]
@@ -176,7 +176,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `find path to a successor in a tiny graph` {
+  def `find path to a successor in a tiny graph`: Unit = {
     given(factory(1, 2 ~ 3, 3 ~ 4, 5 ~ 6, 6 ~ 1)) { g =>
       val n1 = g get 1
       n1 pathUntil (_ == n1) should be(None)
@@ -197,7 +197,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `find path to a successor` {
+  def `find path to a successor`: Unit = {
     given(factory(0 ~ 1, 1 ~ 2)) { g =>
       def n(outer: Int) = g get outer
       for (i <- 0 to 2)
@@ -205,7 +205,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `assert fix_110409 of shortestPathTo` {
+  def `assert fix_110409 of shortestPathTo`: Unit = {
     given(factory(0 ~ 1, 1 ~ 2, 2 ~ 3)) { g =>
       def n(outer: Int) = g get outer
       (n(0) shortestPathTo n(0)).get.length should be(0)
@@ -214,14 +214,14 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `assert bug 9 of shortestPathTo is fixed` {
+  def `assert bug 9 of shortestPathTo is fixed`: Unit = {
     given(factory(0 ~> 1 % 3, 0 ~> 2 % 4, 1 ~> 3 % 3, 2 ~> 3 % 1)) { g =>
       def n(outer: Int) = g get outer
       (n(0) shortestPathTo n(3)).get.nodes.toList should be(List(0, 2, 3))
     }
   }
 
-  def `shortestPathTo in WDi_1` {
+  def `shortestPathTo in WDi_1`: Unit = {
     given(factory(elementsOfWDi_1: _*)) { g =>
       def n(outer: Int) = g get outer
 
@@ -235,7 +235,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `shortestPathTo in WDi_1 using Float` {
+  def `shortestPathTo in WDi_1 using Float`: Unit = {
     given(factory(elementsOfWDi_1: _*)) { g =>
       def n(outer: Int) = g get outer
 
@@ -252,7 +252,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `shortestPathTo in WUnDi_1` {
+  def `shortestPathTo in WUnDi_1`: Unit = {
     given(factory(elementsOfWUnDi_1: _*)) { g =>
       def shortestPathNodes(from: Int, to: Int): Stream[g.NodeT] = {
         def n(value: Int): g.NodeT = g get value
@@ -270,7 +270,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `shortestPathTo withMaxDepth` {
+  def `shortestPathTo withMaxDepth`: Unit = {
     given(factory(elementsOfWUnDi_1: _*)) { g =>
       def n(value: Int): g.NodeT = g get value
 
@@ -278,7 +278,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `shortestPathTo withMaxWeight` {
+  def `shortestPathTo withMaxWeight`: Unit = {
     given(factory(elementsOfWUnDi_1: _*)) { g =>
       def n(value: Int): g.NodeT = g get value
 
@@ -293,7 +293,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
   // 0        1         2         3        4         5
   val gUnDi_2 = factory.from[Int, WUnDiEdge](Set.empty, eUnDi_2)
 
-  def `shortestPathTo in UnDi_2` {
+  def `shortestPathTo in UnDi_2`: Unit = {
     given(gUnDi_2) { g =>
       def n(value: Int) = g get value
 
@@ -315,7 +315,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `traverser withSubgraph` {
+  def `traverser withSubgraph`: Unit = {
     given(gUnDi_2) { g =>
       def n(value: Int) = g get value
 
@@ -351,7 +351,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     private def floatWeight(e: g.EdgeT): Float = e.weight.toFloat
   }
 
-  def `traverser with a visitor` {
+  def `traverser with a visitor`: Unit = {
     given(gUnDi_2) { g =>
       def n(value: Int) = g get value
 
@@ -371,7 +371,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `traverser with an extended visitor` {
+  def `traverser with an extended visitor`: Unit = {
     import UnDi_1.g.ExtendedNodeVisitor
     import UnDi_1.g.Informer.DfsInformer
     def n(outer: Int) = UnDi_1.node(outer)
@@ -398,7 +398,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `shortestPathTo in the flight example graph` {
+  def `shortestPathTo in the flight example graph`: Unit = {
     import custom.flight._, Helper._, Flight.ImplicitEdge
     val (jfc, lhr, dme, svx, fra, prg) =
       (Airport("JFC"), Airport("LHR"), Airport("DME"), Airport("SVX"), Airport("FRA"), Airport("PRG"))
@@ -445,7 +445,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `traverser withMaxDepth` {
+  def `traverser withMaxDepth`: Unit = {
     import Data._
     object UnDi_1 extends TGraph(factory(elementsOfUnDi_1: _*)) {
       val expectedSumAll           = 15
@@ -474,7 +474,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `DownUp traverser` {
+  def `DownUp traverser`: Unit = {
     given(Di_1.g) { g =>
       def innerNode(outer: Int) = g get outer
       var stack                 = List.empty[Int]
@@ -491,7 +491,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `DownUp traverser for computing braces` {
+  def `DownUp traverser for computing braces`: Unit = {
     val root = "A"
     given(factory(root ~> "B1", root ~> "B2")) { g =>
       val innerRoot = g get root
@@ -511,7 +511,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     def balance: Int
   }
 
-  def `DownUp traverser for computing sums` {
+  def `DownUp traverser for computing sums`: Unit = {
     case class Node(override val name: String) extends Elem(name) {
       var sum: Int = 0
       def balance  = sum
@@ -550,7 +550,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `traverser withDirection` {
+  def `traverser withDirection`: Unit = {
     // https://groups.google.com/forum/?fromgroups=#!topic/scala-internals/9NMPfU4xdhU
     object DDi_1 extends TGraph(factory(elementsOfDi_1: _*)) {
       val expectedSumSuccessorsOf_4   = 12
@@ -592,7 +592,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `traverser withOrdering for nodes` {
+  def `traverser withOrdering for nodes`: Unit = {
     given(
       factory(
         0 ~> 4,
@@ -627,7 +627,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `traverser withOrdering for edges` {
+  def `traverser withOrdering for edges`: Unit = {
     val outerEdges = List(1 ~> 4 % 2, 1 ~> 2 % 5, 1 ~> 3 % 4, 3 ~> 6 % 4, 3 ~> 5 % 5, 3 ~> 7 % 2)
     given(factory(outerEdges: _*)) { g =>
       val root = g get 1
@@ -640,14 +640,14 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `map Traverser result` {
+  def `map Traverser result`: Unit = {
     given(Di_1.g) { _ =>
       val t = Di_1.g.nodes.head.outerNodeTraverser
       t map (_ + 1) should be(t.toList map (_ + 1))
     }
   }
 
-  def `traverser for inner elements` {
+  def `traverser for inner elements`: Unit = {
     import Di_1._
     import g.{InnerEdge, InnerNode}
 
@@ -663,7 +663,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     }
   }
 
-  def `shortest path exists if path exists` {
+  def `shortest path exists if path exists`: Unit = {
     implicit val arbitraryWDiGraph = Arbitrary {
       import GraphGen.SmallInt._
       new GraphGen[Int, WDiEdge, G](factory, order, nodeGen, nodeDegrees, Set(WDiEdge), connected).apply

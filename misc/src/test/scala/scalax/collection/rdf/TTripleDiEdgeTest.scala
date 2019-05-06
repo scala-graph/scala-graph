@@ -23,7 +23,7 @@ class TTripleDiEdgeTest extends RefSpec with Matchers {
   )
   
   object `The custom directed edge 'TripleDiEdge'` {
-    def `has the expected properties` {
+    def `has the expected properties`: Unit = {
       val stmt = initialTriples.head
       
       stmt.subject   should be (subj_1)
@@ -33,13 +33,13 @@ class TTripleDiEdgeTest extends RefSpec with Matchers {
   }
   
   object `A triple store based on the custom directed edge 'TripleDiEdge'` {
-    def `may be created` {
+    def `may be created`: Unit = {
       val g: Graph[RdfNode,Triple] = Graph.from(edges = initialTriples)
   
       g.order should be (4)
       g.graphSize should be (initialTriples.size)
     }
-    def `has inner edges with the expected properties` {
+    def `has inner edges with the expected properties`: Unit = {
       val g = Graph.from(edges = initialTriples)
       val stmt = g.get(initialTriples.head)
       

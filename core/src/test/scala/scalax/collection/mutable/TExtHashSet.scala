@@ -18,7 +18,7 @@ class TExtHashSetTest extends RefSpec with Matchers {
   val innerEdge              = graph get outerEdge
 
   object `Hash set extensions work properly` {
-    def `find entry` {
+    def `find entry`: Unit = {
       /* `inner.edge == outer` returns the expected result because Graph#InnerEdge.equal
        * is aware of the inner edge structure. The opposite will be false since, as a rule,
        * outer object types will not be Graph-aware with regard to their equal.
@@ -26,21 +26,21 @@ class TExtHashSetTest extends RefSpec with Matchers {
       def eq(outer: DiEdge[Int], inner: graph.EdgeT) = inner.edge == outer
       set.findElem(innerEdge, eq) should be(outerEdge)
     }
-    def `draw element` {
+    def `draw element`: Unit = {
       val randomElems = collection.mutable.Set.empty[DiEdge[Int]]
       val r           = new util.Random
       for (i <- 1 to (set.size * 32))
         randomElems += set draw r
       randomElems should have size (set.size)
     }
-    def `iterate over hashCodes` {
+    def `iterate over hashCodes`: Unit = {
       set.hashCodeIterator(-228876066).toList should have size (0)
       outerEdge.hashCode should be(innerEdge.hashCode)
       val elems = set.hashCodeIterator(outerEdge.hashCode).toList
       elems should have size (1)
       elems.head should be(outerEdge)
     }
-    def `iterate over duplicate hashCodes` {
+    def `iterate over duplicate hashCodes`: Unit = {
       case class C(i: Int, j: Int) {
         override def hashCode = i.##
       }

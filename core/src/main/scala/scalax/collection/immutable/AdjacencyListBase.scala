@@ -102,7 +102,7 @@ trait AdjacencyListBase[
 
     final def hasPredecessors: Boolean = edges exists (_.hasSource((n: NodeT) => n ne this))
 
-    final protected[collection] def addDiPredecessors(edge: EdgeT, add: (NodeT) => Unit) {
+    final protected[collection] def addDiPredecessors(edge: EdgeT, add: (NodeT) => Unit): Unit = {
       edge withSources (n => if (n ne this) add(n))
     }
 
@@ -112,7 +112,7 @@ trait AdjacencyListBase[
       new EqSetFacade(m)
     }
 
-    final protected[collection] def addNeighbors(edge: EdgeT, add: (NodeT) => Unit) {
+    final protected[collection] def addNeighbors(edge: EdgeT, add: (NodeT) => Unit): Unit = {
       edge foreach (n => if (n ne this) add(n))
     }
 
@@ -281,7 +281,7 @@ trait AdjacencyListBase[
     object Inner extends InnermostIterator[EdgeT] {
       protected type I = EdgeT
       protected var iterator: Iterator[I] = _
-      protected def onOuterChange(newOuter: OuterElm) {
+      protected def onOuterChange(newOuter: OuterElm): Unit = {
         iterator = newOuter.edges.filter(_.edge._1 == newOuter).iterator
       }
       protected def elmToCurrent(elm: EdgeT) = elm

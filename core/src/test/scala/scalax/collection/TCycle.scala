@@ -67,7 +67,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       )
     }
 
-    def `the cycle returned by 'findCycle' contains the expected nodes` {
+    def `the cycle returned by 'findCycle' contains the expected nodes`: Unit = {
       given(acyclic_1) { g =>
         (g get 1 findCycle) should be(None)
       }
@@ -100,7 +100,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
         var i, j = 0
         factory.fill(5) { i += 1; j = i + 1; i ~> j }
       }
-      def fromEachNode[N, E[X] <: EdgeLikeIn[X]](noCycles: Set[N], cycle: Graph[N, E]#Cycle) {
+      def fromEachNode[N, E[X] <: EdgeLikeIn[X]](noCycles: Set[N], cycle: Graph[N, E]#Cycle): Unit = {
         given(cycle.nodes.head.containingGraph.asInstanceOf[CC[N, E]]) {
           _.nodes foreach { n =>
             val found = n.findCycle
@@ -123,7 +123,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       }
     }
 
-    def `the cycle returned by 'findCycleContaining' contains the expected nodes` {
+    def `the cycle returned by 'findCycleContaining' contains the expected nodes`: Unit = {
       given(acyclic_1) { g =>
         g.findCycleContaining(g get 1) should be(None)
       }
@@ -156,7 +156,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       }
     }
 
-    def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes` {
+    def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes`: Unit = {
       given(cyclic_22) { g =>
         def n(outer: Int) = g get outer
 
@@ -168,7 +168,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       }
     }
 
-    def `the cycle returned by 'findCycle' contains the expected edges` {
+    def `the cycle returned by 'findCycle' contains the expected edges`: Unit = {
       given(acyclic_1) { _.findCycle should be(None) }
       given(cyclic_1) { _.findCycle.get.edges should contain(cyclicEdge_1) }
       given(acyclic_2) { _.findCycle should be(None) }
@@ -176,7 +176,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       given(cyclic_22) { _.findCycle.get.edges should contain(cyclicEdge_22) }
     }
 
-    def `the cycle returned by 'findCycleContaining' contains the expected edges` {
+    def `the cycle returned by 'findCycleContaining' contains the expected edges`: Unit = {
       given(cyclic_1) { g =>
         g.findCycleContaining(g get 2).get.edges should contain(cyclicEdge_1)
       }
@@ -188,7 +188,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       }
     }
 
-    def `'isCyclic' returns the expected result` {
+    def `'isCyclic' returns the expected result`: Unit = {
       given(acyclic_1) { _ should be('isAcyclic) }
       given(cyclic_1) { _ should be('isCyclic) }
       given(acyclic_2) { _ should be('isAcyclic) }
@@ -196,7 +196,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       given(cyclic_22) { _ should be('isCyclic) }
     }
 
-    def `they are cyclic if they contain a self loop #76` {
+    def `they are cyclic if they contain a self loop #76`: Unit = {
       val loop = 1 ~> 1
       given(acyclic_1 + loop) { _ should be('isCyclic) }
       given(factory(loop)) { g =>
@@ -215,7 +215,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
     private val unDiCyclic_21 = unDiAcyclic_2 + 3 ~ 5
     private val unDiCyclic_22 = unDiAcyclic_2 ++ List(3 ~ 6, 6 ~ 7, 7 ~ 4)
 
-    def `the cycle returned by 'findCycle' contains the expected nodes` {
+    def `the cycle returned by 'findCycle' contains the expected nodes`: Unit = {
       given(unDiAcyclic_1) { g =>
         (g get 1 findCycle) should be(None)
       }
@@ -233,7 +233,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       }
     }
 
-    def `the cycle returned by 'findCycleContaining' contains the expected nodes` {
+    def `the cycle returned by 'findCycleContaining' contains the expected nodes`: Unit = {
       given(unDiAcyclic_1) { g =>
         g.findCycleContaining(g get 1) should be(None)
       }
@@ -257,7 +257,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       }
     }
 
-    def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes` {
+    def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes`: Unit = {
       given(unDiCyclic_21) { g =>
         (g get 1).withSubgraph(nodes = _ != 2) partOfCycle () should be(None)
       }
@@ -273,7 +273,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
     private val (e1, e2) = (WkUnDiEdge(1, 2)(0), WkUnDiEdge(1, 2)(1))
     private val g        = factory(e1, e2)
 
-    def `the cycle returned by 'findCycle' contains the expected edges` {
+    def `the cycle returned by 'findCycle' contains the expected edges`: Unit = {
       given(g) { g =>
         val c = (g get 1).findCycle
         c should be('isDefined)
@@ -282,7 +282,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       }
     }
 
-    def `the cycle returned by 'findCycleContaining' contains the expected edges` {
+    def `the cycle returned by 'findCycleContaining' contains the expected edges`: Unit = {
       given(g) { g =>
         val c = g.findCycleContaining(g get 1)
         c should be('isDefined)
@@ -296,7 +296,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
 
     private val mixed = factory(Data.elementsOfUnDi_1: _*)
 
-    def `'findCycle' finds a cycle following any route` {
+    def `'findCycle' finds a cycle following any route`: Unit = {
       given(
         factory(
           1 ~> 3,
@@ -319,7 +319,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       }
     }
 
-    def `the cycle returned by 'findCycleContaining' contains the expected nodes` {
+    def `the cycle returned by 'findCycleContaining' contains the expected nodes`: Unit = {
       given(mixed) { g =>
         def n(outer: Int) = g get outer
 
@@ -344,7 +344,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       }
     }
 
-    def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes` {
+    def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes`: Unit = {
       given(mixed) { g =>
         def n(outer: Int) = g get outer
 
@@ -364,7 +364,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
     private val g          = factory(1 ~ 2, 1 ~> 2, 2 ~ 3)
     private val cycleEdges = List(1 ~> 2, 1 ~ 2)
 
-    def `the cycle returned by 'findCycle' contains the expected edges` {
+    def `the cycle returned by 'findCycle' contains the expected edges`: Unit = {
       given(g) { g =>
         g.graphSize should be(3)
         g.nodes foreach { n =>
@@ -375,7 +375,7 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       }
     }
 
-    def `the cycle returned by 'findCycleContaining' contains the expected edges` {
+    def `the cycle returned by 'findCycleContaining' contains the expected edges`: Unit = {
       given(g) { g =>
         g.nodes.filterNot(_.toOuter == 3) foreach { n =>
           val c = g.findCycleContaining(g get n)

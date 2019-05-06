@@ -33,7 +33,7 @@ class TFlight[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
   val flightNo   = "LH007"
 
   object `Custom edge 'Flight'` {
-    def `proper methods` {
+    def `proper methods`: Unit = {
       val outer = Flight(ham, gig, flightNo)
       given(factory(outer)) { g =>
         val e = g.edges.head
@@ -51,7 +51,7 @@ class TFlight[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
         e.## should not be (neFlight.##)
       }
     }
-    def `proper method shortcuts` {
+    def `proper method shortcuts`: Unit = {
       val outer = Flight(ham, gig, flightNo)
       given(factory(outer)) { _ =>
         ham ~> gig ## flightNo should be(outer)

@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
 @RunWith(classOf[JUnitRunner])
 class TExtByImplicitTest extends RefSpec with Matchers {
   object `graphs may be enriched` {
-    def `at graph level for any edge type` {
+    def `at graph level for any edge type`: Unit = {
 
       implicit final class ExtGraph[N, E[X] <: EdgeLikeIn[X]](val g: Graph[N, E]) {
         /* Set of all directed edges contained in g.
@@ -28,7 +28,7 @@ class TExtByImplicitTest extends RefSpec with Matchers {
       Graph(1 ~ 2, 2 ~> 3).diEdges should have size (1)
     }
 
-    def `at graph level restricted to directed graphs` {
+    def `at graph level restricted to directed graphs`: Unit = {
       /* Provide graph enrichment restricted to graphs with edges of type `DiEdgeLike` or edges derived from this type.
        */
       implicit final class ExtDiGraph[N, E[X] <: DiEdgeLikeIn[X]](val g: Graph[N, E]) {
@@ -45,7 +45,7 @@ class TExtByImplicitTest extends RefSpec with Matchers {
       // Graph(1~2).alwaysTrue
     }
 
-    def `at graph level for a specific edge type` {
+    def `at graph level for a specific edge type`: Unit = {
       /* Provide graph enrichment restricted to graphs with edges of type `UnDiEdge`.
        * Note that a lower bound must also be defined to exclude directed edges.
        */
@@ -63,7 +63,7 @@ class TExtByImplicitTest extends RefSpec with Matchers {
       // Graph(1~>2).alwaysTrue
     }
 
-    def `at node level` {
+    def `at node level`: Unit = {
       /* Provide node enrichment.
        * Note that this way of enrichment is not suitable for methods returning
        * inner nodes or inner edges.
@@ -88,7 +88,7 @@ class TExtByImplicitTest extends RefSpec with Matchers {
       (g get 3).outgoingWeights should be(5)
     }
 
-    def `at node level to return inner elements with easy consumption` {
+    def `at node level to return inner elements with easy consumption`: Unit = {
       /* Provide node enrichment also suitable for methods returning inner nodes.
        */
       implicit def toExtNode[N, E[X] <: EdgeLikeIn[X]](node: Graph[N, E]#NodeT)(implicit graph: Graph[N, E]) = {
@@ -105,7 +105,7 @@ class TExtByImplicitTest extends RefSpec with Matchers {
       incoming.map(_.shortestPathTo(g get 3)()) should be('isDefined)
     }
 
-    def `at node level to return inner elements with less easy consumption but the recommended way` {
+    def `at node level to return inner elements with less easy consumption but the recommended way`: Unit = {
       /* Provide node enrichment also suitable for methods returning inner nodes.
        * This is the recommended, type-safe way of extending nodes.
        */

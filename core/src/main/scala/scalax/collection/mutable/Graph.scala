@@ -31,7 +31,7 @@ abstract protected[collection] class BuilderImpl[
     }
   )
 
-  protected def add(elem: Param[N, E]) {
+  protected def add(elem: Param[N, E]): Unit = {
     elem match {
       case n: OuterNode[N]               => nodes += n.value
       case n: InnerNodeParam[N]          => nodes += n.value
@@ -51,7 +51,7 @@ abstract protected[collection] class BuilderImpl[
     this
   }
 
-  def clear() {
+  def clear(): Unit = {
     nodes.clear
     edges.clear
   }

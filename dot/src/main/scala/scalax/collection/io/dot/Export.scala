@@ -141,7 +141,7 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N, E]) {
     (dotAST get root).innerNodeDownUpTraverser foreach {
       case (true, cluster) =>
         def format(kv: DotAttr): String = s"${kv.name} = ${kv.value}"
-        def outStmtList(stmtList: Seq[DotAttrStmt]) {
+        def outStmtList(stmtList: Seq[DotAttrStmt]): Unit = {
           stmtList foreach {
             case DotAttrStmt(t, attrs) =>
               separate(true)
@@ -149,13 +149,13 @@ class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N, E]) {
               res append s" [${attrs map format mkString ", "}]"
           }
         }
-        def outIdList(kvList: Seq[DotAttr]) {
+        def outIdList(kvList: Seq[DotAttr]): Unit = {
           kvList foreach { attr =>
             separate(true)
             res append format(attr)
           }
         }
-        def outAttrList(attrList: Seq[DotAttr]) {
+        def outAttrList(attrList: Seq[DotAttr]): Unit = {
           if (attrList.nonEmpty) {
             res append " ["
             attrList foreach { attr =>

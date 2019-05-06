@@ -41,7 +41,7 @@ class TJsonDemoTest extends RefSpec with Matchers {
   }
 
   object `When calling JSON import/export ` {
-    def `it is required that proper node descriptors are passed` {
+    def `it is required that proper node descriptors are passed`: Unit = {
       val quickJson = new Descriptor[Library](
         defaultNodeDescriptor = authorDescriptor,
         defaultEdgeDescriptor = DiHyper.descriptor[Library]()
@@ -52,7 +52,7 @@ class TJsonDemoTest extends RefSpec with Matchers {
         }
       caught.msg should be("""No 'NodeDescriptor' capable of processing type "demo.Book" found.""")
     }
-    def `it is required that proper edge descriptors are passed` {
+    def `it is required that proper edge descriptors are passed`: Unit = {
       val quickJson = new Descriptor[Library](
         defaultNodeDescriptor = authorDescriptor,
         defaultEdgeDescriptor = DiHyper.descriptor[Library](),
@@ -77,7 +77,7 @@ class TJsonDemoTest extends RefSpec with Matchers {
         namedEdgeDescriptors = Seq(Di.descriptor[Library]())
       )
     }
-    def `export works fine` {
+    def `export works fine`: Unit = {
       val exported = library.toJson(Named.descriptor)
 
       import net.liftweb.json._
@@ -116,7 +116,7 @@ class TJsonDemoTest extends RefSpec with Matchers {
           }
         }*/
     }
-    def `importing the exported JSON yields an equal graph` {
+    def `importing the exported JSON yields an equal graph`: Unit = {
       val expLibrary = library.toJson(Named.descriptor)
       Graph.fromJson[Library, HyperEdge](expLibrary, Named.descriptor) should equal(library)
     }
@@ -160,7 +160,7 @@ class TJsonDemoTest extends RefSpec with Matchers {
         namedEdgeDescriptors = Seq(Di.descriptor[Library](Some(new EdgeSerializer)))
       )
     }
-    def `export works fine` {
+    def `export works fine`: Unit = {
       val exported = library.toJson(Positioned.descriptor)
 
       import net.liftweb.json._
@@ -178,7 +178,7 @@ class TJsonDemoTest extends RefSpec with Matchers {
         }
      */
     }
-    def `importing the exported JSON yields an equal graph` {
+    def `importing the exported JSON yields an equal graph`: Unit = {
       val expLibrary = library.toJson(Positioned.descriptor)
       Graph.fromJson[Library, HyperEdge](expLibrary, Positioned.descriptor) should equal(library)
     }

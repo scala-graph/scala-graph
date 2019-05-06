@@ -17,7 +17,7 @@ trait AdjacencyListGraph[
     extends GraphLike[N, E, This]
     with SimpleAdjacencyListGraph[N, E, This] { this: This[N, E] =>
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
-  override protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]) {
+  override protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]): Unit = {
     withoutChecks { super.initialize(nodes, edges) }
   }
 

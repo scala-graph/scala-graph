@@ -16,7 +16,7 @@ import org.junit.runner.RunWith
 @RunWith(classOf[JUnitRunner])
 class TExportTest extends RefSpec with Matchers {
 
-  def `Example at http://en.wikipedia.org/wiki/DOT_language will be produced` {
+  def `Example at http://en.wikipedia.org/wiki/DOT_language will be produced`: Unit = {
 
     implicit def toLDiEdge[N](diEdge: DiEdge[N]) = LDiEdge(diEdge._1, diEdge._2)("")
     val g = Graph[String, LDiEdge](
@@ -113,7 +113,7 @@ class TExportTest extends RefSpec with Matchers {
       be(expected_2))
   }
 
-  def `DOT headers are covered even in edge cases` {
+  def `DOT headers are covered even in edge cases`: Unit = {
     val g = Graph.empty[String, UnDiEdge]
     val dot = g.toDot(
       dotRoot = DotRootGraph(
@@ -130,7 +130,7 @@ class TExportTest extends RefSpec with Matchers {
     dot should be(expected)
   }
 
-  def `Directed hyperedges may be mapped to multiple directed DOT edges` {
+  def `Directed hyperedges may be mapped to multiple directed DOT edges`: Unit = {
     val hg   = Graph(1 ~> 2 ~> 3)
     val root = DotRootGraph(directed = true, id = None)
     val dot = hg.toDot(
@@ -149,7 +149,7 @@ class TExportTest extends RefSpec with Matchers {
     sortMid(dot) should be(expected)
   }
 
-  def `Colons (':') in node_id's are handeled correctly` {
+  def `Colons (':') in node_id's are handeled correctly`: Unit = {
     def struct(i: Int) = s"struct$i"
     import implicits._, Record._
     val (f0, f1, f2, here) = ("f0", "f1", "f2", "here")
@@ -207,7 +207,7 @@ class TExportTest extends RefSpec with Matchers {
     sortMid(dot) should be(expected)
   }
 
-  def `doubly-nested subgraphs #69` {
+  def `doubly-nested subgraphs #69`: Unit = {
     import scalax.collection.Graph
     import scalax.collection.GraphEdge.DiEdge
     import scalax.collection.io.dot.implicits._

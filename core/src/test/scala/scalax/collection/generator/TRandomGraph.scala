@@ -42,10 +42,10 @@ class TRandomGraphTest extends RefSpec with Matchers {
       val graphConfig = graphCompanion.defaultConfig
     }
 
-  def checkOrder(g: Graph[Int, DiEdge])(implicit metrics: Metrics[Int]) {
+  def checkOrder(g: Graph[Int, DiEdge])(implicit metrics: Metrics[Int]): Unit = {
     g.order should be(metrics.order)
   }
-  def checkSize(g: Graph[Int, DiEdge])(implicit metrics: Metrics[Int]) {
+  def checkSize(g: Graph[Int, DiEdge])(implicit metrics: Metrics[Int]): Unit = {
     import metrics._
     val totalDegree = g.totalDegree
     val deviation   = totalDegree - expectedTotalDegree
@@ -63,7 +63,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
     implicit def metrics: Metrics[Int] = normal
     val g                              = generator[Int, DiEdge, Graph](DiEdge, Graph, false).draw
 
-    def `should have expected size` {
+    def `should have expected size`: Unit = {
       checkOrder(g)
       checkSize(g)
     }
@@ -72,7 +72,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
     implicit def metrics: Metrics[Int] = normal
     val g                              = generator[Int, DiEdge, MGraph](DiEdge, MGraph, true).draw
 
-    def `should have expected size` {
+    def `should have expected size`: Unit = {
       checkOrder(g)
       checkSize(g)
     }
@@ -86,7 +86,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
 
     def `should have dense metrics`: Unit =
       dense should be('isDense)
-    def `should have expected size` {
+    def `should have expected size`: Unit = {
       checkOrder(g)
       checkSize(g)
     }
@@ -95,7 +95,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
     implicit val metrics: Metrics[Int] = RandomGraph.TinyInt
     val g                              = generator[Int, WDiEdge, Graph](WDiEdge, Graph, true).draw
 
-    def `should have distinct weights` {
+    def `should have distinct weights`: Unit = {
       val weights = MSet.empty[Long] ++ (g.edges map (_.weight))
       weights.size should be(g.graphSize)
     }
@@ -104,7 +104,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
     implicit val metrics: Metrics[Int] = RandomGraph.SmallInt
     val g                              = generator[Int, LDiEdge, Graph](LDiEdge, Graph, true).draw
 
-    def `should have distinct labels` {
+    def `should have distinct labels`: Unit = {
       val labels = MSet.empty[Any] ++ (g.edges map (_.label))
       labels.size should be(g.graphSize)
     }
@@ -117,11 +117,11 @@ class TRandomGraphTest extends RefSpec with Matchers {
     }
     var g: MGraph[Int, DiEdge] = _
 
-    def `should be fast enough` {
+    def `should be fast enough`: Unit = {
       g = generator[Int, DiEdge, MGraph](DiEdge, MGraph, true).draw
     }
 
-    def `should have expected size` {
+    def `should have expected size`: Unit = {
       checkOrder(g)
       checkSize(g)
     }

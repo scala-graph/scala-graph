@@ -27,13 +27,13 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extends 
       val isUndirected       = edge.isUndirected
       val checkFrom, checkTo = MutableSet.empty[self.NodeT]
       def find(n: N)         = self find n
-      def add1(n: N) {
-        find(n) map { inner =>
+      def add1(n: N): Unit = {
+        find(n) foreach { inner =>
           checkFrom += inner
           if (isUndirected) checkTo += inner
         }
       }
-      def add2(toSet: MutableSet[self.NodeT], n: N, nUndi: N) {
+      def add2(toSet: MutableSet[self.NodeT], n: N, nUndi: N): Unit = {
         find(n) map (inner => toSet += inner)
         find(nUndi) map { inner =>
           if (isUndirected) toSet += inner
