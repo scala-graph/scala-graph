@@ -345,8 +345,6 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     def `calling BreadthFirst` = given(WUnDi_1.g) { _ =>
       check(BreadthFirst)
     }
-
-    private def floatWeight(e: g.EdgeT): Float = e.weight.toFloat
   }
 
   def `traverser with a visitor`: Unit = {
