@@ -34,13 +34,13 @@ class TExportTest extends RefSpec with Matchers {
     def edgeTransformer(innerEdge: Graph[String, LDiEdge]#EdgeT): Option[(DotGraph, DotEdgeStmt)] = {
       val edge  = innerEdge.edge
       val label = edge.label.asInstanceOf[String]
-      Some(
+      Some((
         root,
         DotEdgeStmt(
           NodeId(edge.from.toString),
           NodeId(edge.to.toString),
           if (label.nonEmpty) List(DotAttr(Id("label"), Id(label)))
-          else Nil))
+          else Nil)))
     }
     def nodeTransformer(innerNode: Graph[String, LDiEdge]#NodeT): Option[(DotGraph, DotNodeStmt)] =
       Some(

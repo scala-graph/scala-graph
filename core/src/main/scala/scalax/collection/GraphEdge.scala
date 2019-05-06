@@ -659,7 +659,7 @@ object GraphEdge {
       if (endpointsKind.orderSignificant) new HyperEdge[N](nodes) with OrderedEndpoints
       else new HyperEdge[N](nodes)
     def unapplySeq[N](e: HyperEdge[N]) =
-      if (e eq null) None else Some(e._1, e.nodeSeq drop 1)
+      if (e eq null) None else Some((e._1, e.nodeSeq drop 1))
   }
 
   /** $SHORTCUT `hyperedge match {case n1 ~~ (n2, n3) => f(n1, n2, n3)}`.
@@ -695,7 +695,7 @@ object GraphEdge {
       if (targetsKind.orderSignificant) new DiHyperEdge[N](nodes) with OrderedEndpoints
       else new DiHyperEdge[N](nodes)
     def unapplySeq[N](e: DiHyperEdge[N]) =
-      if (e eq null) None else Some(e.from, e.nodeSeq drop 1)
+      if (e eq null) None else Some((e.from, e.nodeSeq drop 1))
   }
 
   /** $SHORTCUT `diHyperedge match {case source ~~> (t1, t2) => f(source, t1, t2)}`.
@@ -753,7 +753,7 @@ object GraphEdge {
     def apply[N](node_1: N, node_2: N)                = new UnDiEdge[N](NodeProduct(node_1, node_2))
     def apply[N](nodes: Tuple2[N, N])                 = new UnDiEdge[N](nodes)
     protected[collection] def from[N](nodes: Product) = new UnDiEdge[N](nodes)
-    def unapply[N](e: UnDiEdge[N])                    = if (e eq null) None else Some(e._1, e._2)
+    def unapply[N](e: UnDiEdge[N])                    = if (e eq null) None else Some((e._1, e._2))
   }
 
   /** $SHORTCUT `edge match {case n1 ~ n2 => f(n1, n2)}`.
@@ -783,7 +783,7 @@ object GraphEdge {
     def apply[N](from: N, to: N)                      = new DiEdge[N](NodeProduct(from, to))
     def apply[N](nodes: Tuple2[N, N])                 = new DiEdge[N](nodes)
     protected[collection] def from[N](nodes: Product) = new DiEdge[N](nodes)
-    def unapply[N](e: DiEdge[N])                      = if (e eq null) None else Some(e.source, e.target)
+    def unapply[N](e: DiEdge[N])                      = if (e eq null) None else Some((e.source, e.target))
   }
 
   /** $SHORTCUT `edge match {case source ~> target => f(source, target)}`.

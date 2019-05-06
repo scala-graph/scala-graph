@@ -269,9 +269,9 @@ abstract class RandomGraph[N, E[X] <: EdgeLikeIn[X], G[X, Y[Z] <: EdgeLikeIn[Z]]
 
     def draw(n1: N, n2: N): E[N] =
       (c match {
-        case c: WLEdgeCompanion[E]    => c.from(n1, n2)(weightFactory(), labelFactory())
-        case c: WEdgeCompanion[E]     => c.from(n1, n2)(weightFactory())
-        case c: LEdgeCompanion[E]     => c.from(n1, n2)(labelFactory())
+        case c: WLEdgeCompanion[E]    => c.from((n1, n2))(weightFactory(), labelFactory())
+        case c: WEdgeCompanion[E]     => c.from((n1, n2))(weightFactory())
+        case c: LEdgeCompanion[E]     => c.from((n1, n2))(labelFactory())
         case c: EdgeCompanion[E]      => c(n1, n2)
         case c: HyperEdgeCompanion[E] => c(n1, n2)
         case x                        => RandomEdge.throwUnsupportedEdgeCompanionException(x)

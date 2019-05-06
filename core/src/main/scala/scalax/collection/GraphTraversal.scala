@@ -1237,7 +1237,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       }
       type DfsStack = Iterator[Element]
       type DfsPath  = Iterator[Element]
-      def unapply(inf: DfsInformer): Option[(DfsStack, DfsPath)] = Some(inf.stackIterator, inf.pathIterator)
+      def unapply(inf: DfsInformer): Option[(DfsStack, DfsPath)] = Some((inf.stackIterator, inf.pathIterator))
     }
 
     case class CycleStackElem(node: NodeT, edges: Iterable[EdgeT]) extends NodeElement
@@ -1263,7 +1263,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
           extends NodeElement
       type WgbStack = Iterator[Element]
       type WgbPath  = Iterator[CycleStackElem]
-      def unapply(inf: WgbInformer): Option[(WgbStack, WgbPath)] = Some(inf.stackIterator, inf.pathIterator)
+      def unapply(inf: WgbInformer): Option[(WgbStack, WgbPath)] = Some((inf.stackIterator, inf.pathIterator))
     }
 
     /** Extended node visitor informer for breath first searches.
@@ -1292,7 +1292,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       type DijkstraQueue[T] = Iterator[Element[T]]
       type DijkstraCosts[T] = Iterator[(NodeT, T)]
       def unapply[T: Numeric](inf: DijkstraInformer[T]): Option[(DijkstraQueue[T], DijkstraCosts[T])] =
-        Some(inf.queueIterator, inf.costsIterator)
+        Some((inf.queueIterator, inf.costsIterator))
     }
 
     /** Extended node visitor informer for Tarjan's algorithm.

@@ -33,11 +33,11 @@ object LDiEdge {
 
 object :~> {
   def unapply[N,L](e: LDiEdge[N,L]): Option[(N, (N,L))] =
-    if (e eq null) None else Some(e._1, (e._2, e.label))
+    if (e eq null) None else Some((e._1, (e._2, e.label)))
 }
 object + {
   def unapply[N,L](nl: (N, L)): Option[(N, L)] =
-    if (nl eq null) None else Some(nl._1, nl._2)
+    if (nl eq null) None else Some((nl._1, nl._2))
 }
 
 object DemoLDiEdge extends App {

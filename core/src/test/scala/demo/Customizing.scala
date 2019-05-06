@@ -60,7 +60,7 @@ class CustomizingTest extends RefSpec with Matchers {
         def apply(from: Airport, to: Airport, no: String) =
           new Flight[Airport](NodeProduct(from, to), no)
         def unapply(e: Flight[Airport]): Option[(Airport, Airport, String)] =
-          if (e eq null) None else Some(e.from, e.to, e.flightNo)
+          if (e eq null) None else Some((e.from, e.to, e.flightNo))
       }
 
       implicit class FlightAssoc[A <: Airport](val e: DiEdge[A]) {

@@ -128,7 +128,7 @@ trait PreCheckResultCompanion {
 object PreCheckResult extends PreCheckResultCompanion {
   def apply(followUp: PreCheckFollowUp) = new PreCheckResult(followUp)
   def unapply(preCheck: PreCheckResult): Option[(PreCheckResult, PreCheckFollowUp)] =
-    if (preCheck eq null) None else Some(preCheck, preCheck.followUp)
+    if (preCheck eq null) None else Some((preCheck, preCheck.followUp))
 }
 
 /** This template contains all methods that constrained graphs call

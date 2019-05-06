@@ -125,17 +125,17 @@ object Implicits {
     */
   object :~ {
     def unapply[N](e: WUnDiEdge[N]): Option[(N, (N, Double))] =
-      if (e eq null) None else Some(e._1, (e._2, e.weight))
+      if (e eq null) None else Some((e._1, (e._2, e.weight)))
 
     def unapply[N](e: WkUnDiEdge[N]): Option[(N, (N, Double))] = unapply(e: WUnDiEdge[N])
 
     def unapply[N](e: LUnDiEdge[N]): Option[(N, (N, LUnDiEdge[N]#L1))] =
-      if (e eq null) None else Some(e._1, (e._2, e.label))
+      if (e eq null) None else Some((e._1, (e._2, e.label)))
 
     def unapply[N](e: LkUnDiEdge[N]): Option[(N, (N, LUnDiEdge[N]#L1))] = unapply(e: LUnDiEdge[N])
 
     def unapply[N](e: WLUnDiEdge[N]): Option[(N, (N, Double, WLUnDiEdge[N]#L1))] =
-      if (e eq null) None else Some(e._1, (e._2, e.weight, e.label))
+      if (e eq null) None else Some((e._1, (e._2, e.weight, e.label)))
 
     def unapply[N](e: WLkUnDiEdge[N]): Option[(N, (N, Double, WLUnDiEdge[N]#L1))]  = unapply(e: WLUnDiEdge[N])
     def unapply[N](e: WkLUnDiEdge[N]): Option[(N, (N, Double, WLUnDiEdge[N]#L1))]  = unapply(e: WLUnDiEdge[N])
@@ -172,18 +172,18 @@ object Implicits {
   /** Weight extractor to be combined with `:~` or `:~>`. */
   object % {
     def unapply[N](nw: (N, Double)): Option[(N, Double)] =
-      if (nw eq null) None else Some(nw._1, nw._2)
+      if (nw eq null) None else Some((nw._1, nw._2))
   }
 
   /** Label extractor to be combined with `:~` or `:~>`. */
   object + {
     def unapply[N, L](nl: (N, L)): Option[(N, L)] =
-      if (nl eq null) None else Some(nl._1, nl._2)
+      if (nl eq null) None else Some((nl._1, nl._2))
   }
 
   /** Weight and label extractor to be combined with `:~` or `:~>`. */
   object %+ {
     def unapply[N, L](nwl: (N, Double, L)): Option[(N, Double, L)] =
-      if (nwl eq null) None else Some(nwl._1, nwl._2, nwl._3)
+      if (nwl eq null) None else Some((nwl._1, nwl._2, nwl._3))
   }
 }

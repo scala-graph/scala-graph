@@ -673,7 +673,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                               edge
                             case (_, InnerEdge(edge)) => edge
                           }
-                          return Some(start, shortenedPath)
+                          return Some((start, shortenedPath))
                         }
                       }
                   }
@@ -691,7 +691,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
                 } map ((_, path))
 
               if (current.hook.isDefined && mustContain.forall(_ eq current))
-                Some(current, path)
+                Some((current, path))
               else {
                 import TraverserImpl._
                 def color(n: NodeT): Wgb =

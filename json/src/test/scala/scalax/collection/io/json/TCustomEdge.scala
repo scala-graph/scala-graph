@@ -111,7 +111,7 @@ object Transition extends CEdgeCompanion[Transition] {
     new Transition[String](from, to, key, keyMod)
   def unapply[N](e: Transition[String]): Option[(String, String, Char, KeyModifier)] =
     if (e eq null) None
-    else Some(e.from, e.to, e.key, e.keyMod)
+    else Some((e.from, e.to, e.key, e.keyMod))
 
   type P = (Char, KeyModifier)
   override protected def newEdge[N](nodes: Product, attributes: P) = nodes match {
