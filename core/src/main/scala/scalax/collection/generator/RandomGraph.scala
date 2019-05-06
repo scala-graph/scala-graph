@@ -42,9 +42,9 @@ abstract class RandomGraph[N, E[X] <: EdgeLikeIn[X], G[X, Y[Z] <: EdgeLikeIn[Z]]
 
   implicit val graphConfig: graphCompanion.Config
 
-  protected val doTrace = false
-  protected def trace(str: => String): Unit = { if (doTrace) print(str) }
-  protected def traceln(str: => String): Unit = { if (doTrace) println(str) }
+  protected val doTrace                       = false
+  protected def trace(str: => String): Unit   = if (doTrace) print(str)
+  protected def traceln(str: => String): Unit = if (doTrace) println(str)
 
   final protected[RandomGraph] class DefaultWeightFactory {
     private[this] var weightCount = 0L

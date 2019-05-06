@@ -8,7 +8,6 @@ import scalax.collection.GraphEdge._
 import scalax.collection.edge._
 import scalax.collection.io.edge._
 
-
 trait PredefinedEdgeDescriptorBase {
   def typeId = this.toString + "Edge"
   /* this check is currently of no value since T/Serializer[T] is unchecked */

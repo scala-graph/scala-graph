@@ -29,7 +29,7 @@ trait AdjacencyListGraph[
 
   type NodeSetT = NodeSet
   class NodeSet extends super.NodeSet {
-    @inline final override protected def minus(node: NodeT): Unit = { coll -= node }
+    @inline final override protected def minus(node: NodeT): Unit = coll -= node
     def +(node: NodeT) =
       if (coll contains node) this
       else { val c = copy; c.coll += node; c }
@@ -64,9 +64,9 @@ trait AdjacencyListGraph[
       this
     }
 
-    @inline final protected[immutable] def addEdge(edge: EdgeT): Unit = { +=(edge) }
-    @inline final def +(edge: EdgeT): Set[EdgeT] = toSet + edge
-    @inline final def -(edge: EdgeT): Set[EdgeT] = toSet - edge
+    @inline final protected[immutable] def addEdge(edge: EdgeT): Unit = +=(edge)
+    @inline final def +(edge: EdgeT): Set[EdgeT]                      = toSet + edge
+    @inline final def -(edge: EdgeT): Set[EdgeT]                      = toSet - edge
 
     @inline final override lazy val maxArity        = super.maxArity
     @inline final override lazy val hasAnyMultiEdge = super.hasAnyMultiEdge

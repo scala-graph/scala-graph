@@ -33,16 +33,15 @@ final protected[collection] class ExtBitSet(words: Array[Long]) extends BitSet(w
 
   @inline def apply(h: Handle): Boolean = apply(h.index, h.mask)
 
-  def update(idx: Int, mask: Long, isSet: Boolean): Unit = {
+  def update(idx: Int, mask: Long, isSet: Boolean): Unit =
     if (isSet) {
       val word =
         if (idx >= nwords) { expand(idx); 0L } else elems(idx)
       elems(idx) = word | mask
     } else if (idx < nwords)
       elems(idx) = elems(idx) & ~mask
-  }
 
-  @inline def update(h: Handle, isSet: Boolean): Unit = { update(h.index, h.mask, isSet) }
+  @inline def update(h: Handle, isSet: Boolean): Unit = update(h.index, h.mask, isSet)
 
   def unary_~ : ExtBitSet = {
     val newBits = new ExtBitSet(nwords)

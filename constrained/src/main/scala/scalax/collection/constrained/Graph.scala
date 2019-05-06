@@ -4,7 +4,7 @@ import scala.language.{higherKinds, postfixOps}
 import scala.collection.{GenTraversableOnce, Set}
 import scala.reflect.ClassTag
 
-import scalax.collection.GraphPredef.{EdgeLikeIn, InParam,Param}
+import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, Param}
 import scalax.collection.{GraphLike => SimpleGraphLike, Graph => SimpleGraph}
 import scalax.collection.config.GraphConfig
 

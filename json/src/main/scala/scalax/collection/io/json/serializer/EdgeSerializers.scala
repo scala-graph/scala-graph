@@ -109,13 +109,12 @@ class WLEdgeSerializer[L: Manifest](labelSerializers: Serializer[L]*)
   }
 }
 trait HyperEdgeChecker {
-  final def checkNodeIds(jsonIds: List[JValue], parameters: HyperEdgeNodeIds): Unit = {
+  final def checkNodeIds(jsonIds: List[JValue], parameters: HyperEdgeNodeIds): Unit =
     jsonIds.size match {
       case size if size < 2                => throw err(InsufficientNodes, jsonIds.toString)
       case size if size != parameters.size => throw err(UnexpectedNodeId, jsonIds.toString)
       case _                               => None
     }
-  }
   final protected def prepareNodes(jsonIds: List[JValue]): List[String] = {
     val par = jsonIds collect { case JString(nId) => nId }
     checkNodeIds(jsonIds, par)

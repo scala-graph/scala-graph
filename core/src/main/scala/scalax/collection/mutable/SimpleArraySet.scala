@@ -53,13 +53,12 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     this
   }
 
-  protected def removeIndex(i: Int): Unit = {
+  protected def removeIndex(i: Int): Unit =
     if (i != -1) {
       if (i + 1 < nextFree)
         arraycopy(arr, i + 1, arr, i, nextFree - i - 1)
       nextFree -= 1
     }
-  }
 
   protected[collection] def +=!(elem: A): this.type = {
     if (isHash) hashSet add elem
@@ -92,13 +91,12 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
         }
       }
 
-  override def foreach[U](f: (A) => U): Unit = {
+  override def foreach[U](f: (A) => U): Unit =
     if (isHash) hashSet foreach f
     else {
       var i = 0
       while (i < nextFree) { f(arr(i)); i += 1 }
     }
-  }
 
   final protected def resizeArray(fromCapacity: Int, toCapacity: Int): Unit = {
     val newArr: Array[AnyRef] = new Array(toCapacity)
@@ -116,7 +114,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     hashSet = null
   }
 
-  def compact: Unit = {
+  def compact: Unit =
     if (isHash) {
       val _size = size
       if (_size < hints.hashTableThreshold)
@@ -127,7 +125,6 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
                  case perc                => perc >= nextFree * 100 / capacity
                })
       resizeArray(capacity, nextFree)
-  }
 
   final protected def indexOf[B](elem: B, pred: (A, B) => Boolean): Int = {
     var i = 0

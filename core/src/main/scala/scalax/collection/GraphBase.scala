@@ -331,15 +331,12 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     def apply(node: N)    = newNode(node)
     def unapply(n: NodeT) = Some(n)
 
-    @inline final protected[collection] def addDiSuccessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit): Unit = {
+    @inline final protected[collection] def addDiSuccessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit): Unit =
       node.addDiSuccessors(edge, add)
-    }
-    @inline final protected[collection] def addDiPredecessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit): Unit = {
+    @inline final protected[collection] def addDiPredecessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit): Unit =
       node.addDiPredecessors(edge, add)
-    }
-    @inline final protected[collection] def addNeighbors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit): Unit = {
+    @inline final protected[collection] def addNeighbors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit): Unit =
       node.addNeighbors(edge, add)
-    }
 
     /** Allows to call methods of N directly on Node instances.
       *

@@ -129,7 +129,7 @@ protected trait State[N, E[X] <: EdgeLikeIn[X]] {
     @inline final protected[collection] def visited(implicit handle: Handle): Boolean =
       bit(handle)
 
-    @inline final protected[collection] def bit_=[T](isSet: Boolean)(implicit handle: Handle): Unit = {
+    @inline final protected[collection] def bit_=[T](isSet: Boolean)(implicit handle: Handle): Unit =
       monitor.synchronized {
         if (handle.index == singleWord)
           flags =
@@ -137,12 +137,10 @@ protected trait State[N, E[X] <: EdgeLikeIn[X]] {
             else flags & ~handle.mask
         else withFlagsExt(_.update(handle.index, handle.mask, isSet))
       }
-    }
 
     /** Sets this node to `visited` with respect to to `handle`. */
-    @inline final protected[collection] def visited_=(visited: Boolean)(implicit handle: Handle): Unit = {
+    @inline final protected[collection] def visited_=(visited: Boolean)(implicit handle: Handle): Unit =
       bit_=(visited)(handle)
-    }
   }
 
   protected def clearNodeStates(flags: FlagWord, flagsExt: ExtBitSet): Unit = {
@@ -187,14 +185,13 @@ object State {
         flagsExt(handle.index, handle.mask)
 
     /** Sets `store` to `isSet` with respect to `handle`. */
-    def update(handle: Handle, isSet: Boolean): Unit = {
+    def update(handle: Handle, isSet: Boolean): Unit =
       if (handle.index == singleWord)
         flags =
           if (isSet) flags | handle.mask
           else flags & ~handle.mask
       else
         flagsExt(handle.index, handle.mask) = isSet
-    }
   }
 
   /** Dumps the state flags of a `node`. */
