@@ -5,11 +5,9 @@ package predefined
 import net.liftweb.json._
 
 import scalax.collection.GraphEdge._
-import scalax.collection.edge._, scalax.collection.edge.WBase._, scalax.collection.edge.LBase._,
-scalax.collection.edge.WLBase._
+import scalax.collection.edge._
 import scalax.collection.io.edge._
 
-import serializer._
 
 trait PredefinedEdgeDescriptorBase {
   def typeId = this.toString + "Edge"

@@ -2,8 +2,7 @@ package scalax.collection
 package generator
 
 import scala.language.higherKinds
-import scala.collection.mutable.{ArrayBuffer, ListBuffer, Set => MSet}
-import scala.math.pow
+import scala.collection.mutable.{ArrayBuffer, Set => MSet}
 import scala.util.Random
 import scala.reflect.ClassTag
 

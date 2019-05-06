@@ -145,7 +145,6 @@ c1 <- fc1
       val g = Graph(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4, 4 ~> 2)
   
       import g.ExtendedNodeVisitor
-      import scalax.collection.GraphTraversal._
 
       type ValDepth = (Int,Int)
       var info = List.empty[ValDepth]

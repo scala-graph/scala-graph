@@ -1,6 +1,6 @@
 package scalax.collection
 
-import language.{higherKinds, implicitConversions}
+import language.higherKinds
 import scala.annotation.{switch, tailrec}
 import scala.collection.{AbstractTraversable, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, Buffer, ArrayStack => Stack, Map => MMap}

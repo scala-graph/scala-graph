@@ -1,12 +1,11 @@
 package scalax.collection.constrained
 package constraints
 
-import scala.language.{higherKinds, postfixOps}
+import scala.language.{higherKinds}
 
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.{Graph => SimpleGraph}
-import PreCheckFollowUp._
 import generic.GraphConstrainedCompanion
 
 import org.scalatest._

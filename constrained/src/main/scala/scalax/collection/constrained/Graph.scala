@@ -1,14 +1,10 @@
 package scalax.collection.constrained
 
 import scala.language.{higherKinds, postfixOps}
-import scala.collection.{GenTraversableOnce, Set, SetLike}
-import scala.collection.generic.CanBuildFrom
+import scala.collection.{GenTraversableOnce, Set}
 import scala.reflect.ClassTag
 
-import scalax.collection.GraphPredef.{
-  seqToGraphParam, EdgeLikeIn, InParam, InnerEdgeParam, InnerNodeParam, OutParam, OuterEdge, OuterNode, Param
-}
-import scalax.collection.GraphEdge.{EdgeCompanionBase, EdgeLike}
+import scalax.collection.GraphPredef.{EdgeLikeIn, InParam,Param}
 import scalax.collection.{GraphLike => SimpleGraphLike, Graph => SimpleGraph}
 import scalax.collection.config.GraphConfig
 

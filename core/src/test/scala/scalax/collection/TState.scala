@@ -1,7 +1,7 @@
 package scalax.collection
 
 import scala.language.postfixOps
-import scala.collection.mutable.{ListBuffer, Map => MutableMap}
+import scala.collection.mutable.{Map => MutableMap}
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._

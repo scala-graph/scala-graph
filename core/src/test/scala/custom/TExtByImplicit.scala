@@ -1,6 +1,6 @@
 package custom
 
-import language.{higherKinds, implicitConversions, postfixOps, reflectiveCalls}
+import language.{higherKinds, implicitConversions, reflectiveCalls}
 
 import scalax.collection.Graph
 import scalax.collection.GraphPredef._

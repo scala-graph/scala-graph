@@ -1,12 +1,9 @@
 package scalax.collection.io.json
 package descriptor
 
-import language.existentials
-import reflect.ClassTag
-
 import net.liftweb.json._
 
-import error.JsonGraphError._, error.JsonGraphWarning._
+import error.JsonGraphError._
 
 /** Provides information on how to extract node data from a JValue and how to
   * decompose the node to a JValue.

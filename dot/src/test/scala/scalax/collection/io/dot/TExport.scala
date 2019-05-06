@@ -1,7 +1,7 @@
 package scalax.collection
 package io.dot
 
-import language.{existentials, implicitConversions}
+import language.implicitConversions
 import scala.collection.SortedMap
 
 import GraphPredef._, GraphEdge._, edge.LDiEdge, edge.Implicits._

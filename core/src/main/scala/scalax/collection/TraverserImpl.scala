@@ -6,7 +6,6 @@ import scala.collection.FilteredSet
 import scala.collection.generic.FilterMonadic
 import scala.collection.mutable.{ArrayBuffer, PriorityQueue, Queue, ArrayStack => Stack, Map => MMap}
 import scala.language.higherKinds
-import scala.math.abs
 
 import scalax.collection.GraphPredef.EdgeLikeIn
 import immutable.SortedArraySet
@@ -162,7 +161,6 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           case a: ArraySet[A] => a.sorted(ordering)
           case t =>
             @inline def newArray(len: Int): Array[A] = new Array[B](len).asInstanceOf[Array[A]]
-            val size                                 = abs(maxOrEst)
             var cnt                                  = 0
             val arr =
               if (maxOrEst >= 0) {

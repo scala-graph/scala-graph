@@ -1,7 +1,7 @@
 package scalax.collection.constrained
 
 import scala.collection.Set
-import scala.language.{higherKinds, postfixOps}
+import scala.language.higherKinds
 import scala.reflect.ClassTag
 import scala.util.Try
 
@@ -38,7 +38,7 @@ class TConstrainedMutable extends RefSpec with Matchers {
     }
 
     def `when constraining nodes to have a minimum degree`: Unit = {
-      import UserConstraints.{MinDegreeException, MinDegree_2}
+      import UserConstraints.MinDegree_2
 
       implicit val config: Config                        = MinDegree_2
       implicit val expectedException: MinDegreeException = new MinDegreeException

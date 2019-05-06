@@ -1,7 +1,7 @@
 package scalax.collection
 package mutable
 
-import GraphPredef._, GraphEdge._
+import GraphEdge._
 
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec

@@ -5,7 +5,7 @@ import language.{higherKinds, postfixOps}
 import collection.Set
 import collection.mutable.{Set => MutableSet}
 
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
 import scalax.collection.{Graph => SimpleGraph}
 
 import PreCheckFollowUp._
@@ -75,7 +75,6 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extends 
         PreCheckResult(Abort)
       else {
         val found        = (for (n <- p.toOuterNodes) yield self find n) filter (_.isDefined)
-        val dockingNodes = Set()
         Result(PostCheck, (found map (_.get)) toSet)
       }
     } else PreCheckResult(PostCheck)

@@ -5,15 +5,12 @@ import java.io.{ObjectInputStream, ObjectOutputStream}
 
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.Set
-import scala.collection.generic.{CanBuildFrom, Growable, Shrinkable}
-import scala.collection.mutable.{Builder, Cloneable, ListBuffer, Set => MutableSet}
+import scala.collection.generic.{Growable, Shrinkable}
+import scala.collection.mutable.Cloneable
 import scala.reflect.ClassTag
 
-import scalax.collection.{Graph => CommonGraph, GraphTraversalImpl}
-import scalax.collection.GraphEdge.{EdgeCompanionBase, EdgeLike}
-import scalax.collection.GraphPredef.{
-  EdgeLikeIn, InParam, InnerEdgeParam, InnerNodeParam, NodeParam, OutParam, OuterEdge, OuterNode, Param
-}
+import scalax.collection.GraphTraversalImpl
+import scalax.collection.GraphPredef.{EdgeLikeIn, Param}
 import scalax.collection.mutable.{ArraySet, BuilderImpl}
 import scalax.collection.config.AdjacencyListArrayConfig
 

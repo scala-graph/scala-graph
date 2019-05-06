@@ -1,14 +1,12 @@
 package scalax.collection.constrained
 package immutable
 
-import scala.language.{higherKinds, postfixOps}
-import scala.collection.generic.CanBuildFrom
+import scala.language.higherKinds
 
-import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, OuterEdge, OuterNode}
+import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.immutable.{AdjacencyListGraph => SimpleAdjacencyListGraph}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 
-import generic.GraphConstrainedCompanion
 import config.GenConstrainedConfig
 import PreCheckFollowUp._
 

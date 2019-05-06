@@ -314,7 +314,7 @@ object WLkBase {
 
 /** Base traits for key-weighted and key-labeled edges. */
 object WkLkBase {
-  import WLBase._, WkBase._, LkBase._
+  import WLBase._
   trait WkLkEdge[+N] extends WLEdge[N] { this: EdgeLike[N] with Eq =>
     override protected def equals(other: EdgeLike[_]) = other match {
       case that: WkLkEdge[_] =>

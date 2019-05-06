@@ -1,7 +1,5 @@
 package scalax.collection.io.edge
 
-import scalax.collection.GraphEdge.CollectionKind
-
 object Types {
   type EdgeNodeIds      = (String, String)
   type HyperEdgeNodeIds = List[String]

@@ -1,9 +1,9 @@
 package scalax.collection.constrained
 
-import scala.language.{higherKinds, postfixOps}
+import scala.language.higherKinds
 import scala.collection.Set
 
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
 
 /** Base trait for ordinary `Constraint` companion objects. */
 trait ConstraintCompanion[+CC[N, E[X] <: EdgeLikeIn[X]] <: Constraint[N, E]] { thisCompanion =>

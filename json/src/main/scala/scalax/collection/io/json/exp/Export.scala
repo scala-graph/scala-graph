@@ -7,9 +7,7 @@ import scala.collection.immutable.Iterable
 
 import net.liftweb.json._
 
-import error.JsonGraphError._, error.JsonGraphWarning._
-
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge.EdgeLike, scalax.collection.Graph
+import scalax.collection.GraphPredef._, scalax.collection.Graph
 
 import descriptor._
 

@@ -1,10 +1,9 @@
 package scalax.collection.constrained
 package generic
 
-import scala.language.{higherKinds, postfixOps}
+import scala.language.higherKinds
 import scala.annotation.unchecked.uncheckedVariance
-import scala.collection.mutable.{Builder, ListBuffer}
-import scala.collection.generic.CanBuildFrom
+import scala.collection.mutable.Builder
 import scala.reflect.ClassTag
 
 import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, Param}
@@ -12,7 +11,6 @@ import scalax.collection.generic.GraphCompanion
 import scalax.collection.mutable.ArraySet
 import scalax.collection.config.GraphConfig
 
-import constraints.NoneConstraint
 import mutable.GraphBuilder
 import config.ConstrainedConfig
 

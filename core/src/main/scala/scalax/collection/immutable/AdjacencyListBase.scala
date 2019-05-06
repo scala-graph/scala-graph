@@ -35,13 +35,6 @@ trait AdjacencyListBase[
 
     def edges: ArraySet[EdgeT]
 
-    final private def sizeHint(edgesSize: Int): Int =
-      if (isHyper) size * 2
-      else if (isDirected)
-        if (size < 8) size
-        else (size / 4) * 3
-      else size
-
     @inline final protected def nodeEqThis = (n: NodeT) => n eq this
     protected[collection] object Adj extends Serializable { // lazy adjacents
       @transient protected[collection] var _aHook: Option[(NodeT, EdgeT)] = _

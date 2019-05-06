@@ -5,7 +5,6 @@ import scala.reflect.ClassTag
 
 import GraphPredef._, GraphEdge._
 import generic.GraphCompanion
-import config._
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
@@ -188,7 +187,7 @@ class TEditMutable extends RefSpec with Matchers {
     }
     def `fulfill labeled edege equality`: Unit = {
       import edge.Implicits._
-      import edge.{LDiEdge, LUnDiEdge}
+      import edge.LDiEdge
 
       type StringLabel = Option[String]
       val str                = "A"
@@ -206,7 +205,6 @@ class TEditMutable extends RefSpec with Matchers {
 
       type ListLabel = List[Int]
       object ListLabelImplicit extends LEdgeImplicits[ListLabel]
-      import ListLabelImplicit._
       implicit val factory = LDiEdge
       val listLabel        = List(1, 0, 1)
       g.addLEdge(3, 4)(listLabel) should be(true)
@@ -219,7 +217,7 @@ class TEditMutable extends RefSpec with Matchers {
     }
     def `fulfill labeled directed hyperedege equality`: Unit = {
       import edge.Implicits._
-      import edge.{LDiHyperEdge, LHyperEdge}
+      import edge.LHyperEdge
 
       type StringLabel = String
       val outerLabels = Seq("A", "BC", "CDE")
@@ -233,7 +231,6 @@ class TEditMutable extends RefSpec with Matchers {
 
       import edge.LBase.{LEdgeImplicits}
       object StringLabelImplicit extends LEdgeImplicits[StringLabel]
-      import StringLabelImplicit._
       val innerLabels: collection.mutable.Set[_ >: StringLabel] =
         g.edges filter (_.isLabeled) map (_.label)
       innerLabels should have size (outerLabels.size)
@@ -252,7 +249,7 @@ class TEditMutable extends RefSpec with Matchers {
         ++= mutable.Graph(1 ~ 2)) should equal(gAfter)
     }
     def `are upsertable`: Unit = {
-      import edge.LDiEdge, edge.LBase._
+      import edge.LDiEdge
       val (label, modLabel) = ("A", "B")
       val g                 = mutable.Graph(LDiEdge(1, 2)(label), LDiEdge(2, 3)(label))
 

@@ -3,21 +3,15 @@ package immutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.language.{higherKinds, postfixOps}
+import scala.language.higherKinds
 import scala.collection.Set
-import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
-import scalax.collection.{Graph => CommonGraph}
-import scalax.collection.GraphEdge.{EdgeCompanionBase, EdgeLike}
-import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, Param}
+import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.GraphTraversalImpl
 import scalax.collection.mutable.ArraySet
-import scalax.collection.generic.GraphCompanion
-import scalax.collection.config.AdjacencyListArrayConfig
 
-import generic.{GraphConstrainedCompanion, ImmutableGraphCompanion}
-import config.ConstrainedConfig
+import generic.ImmutableGraphCompanion
 import PreCheckFollowUp._
 
 trait Graph[N, E[X] <: EdgeLikeIn[X]]

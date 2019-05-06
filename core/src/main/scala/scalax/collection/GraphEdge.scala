@@ -3,7 +3,7 @@ package scalax.collection
 import language.higherKinds
 import scala.annotation.{switch, tailrec}
 
-import GraphPredef.{InnerNodeParam, OuterEdge}
+import GraphPredef.OuterEdge
 import edge.LBase.LEdge
 
 /** Container for basic edge types to be used in the context of `Graph`.

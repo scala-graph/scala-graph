@@ -5,7 +5,6 @@ import scala.reflect.ClassTag
 
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._, scalax.collection.{Graph, GraphLike}
 import scalax.collection.generic.GraphCoreCompanion
-import scalax.collection.config.GraphConfig
 
 /** Facilitates populating graphs with nodes/edges from JSON text
   * and exporting `Graph`instances to JSON text.

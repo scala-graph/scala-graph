@@ -1,9 +1,8 @@
 package scalax.collection
 package mutable
 
-import collection.mutable.{ListBuffer, Map => MutableMap, Set => MutableSet}
+import collection.mutable.{Set => MutableSet}
 
-import GraphPredef._, GraphEdge._
 import edge.LkDiEdge, edge.WUnDiEdge, edge.Implicits._
 import immutable.SortedArraySet
 
