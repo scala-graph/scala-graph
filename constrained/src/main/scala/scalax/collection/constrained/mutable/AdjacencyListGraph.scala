@@ -103,7 +103,7 @@ trait AdjacencyListGraph[
           case Abort => handle = true
         }
       }
-      if (handle) onSubtractionRefused(Set.empty[self.NodeT], Set(edge.asInstanceOf[self.EdgeT]), selfGraph)
+      if (handle) onSubtractionRefused(Set.empty[NodeT], Set(edge), selfGraph)
       removed && !handle
     }
 

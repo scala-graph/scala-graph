@@ -5,13 +5,13 @@ import language.{higherKinds, postfixOps}
 import collection.Set
 import collection.mutable.{Set => MutableSet}
 
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
 import scalax.collection.{Graph => SimpleGraph}
-
 import PreCheckFollowUp._
+import scalax.collection.config.CoreConfig
 
 /** Ensures that the underlying `Graph` is acyclic at any time. */
-class Acyclic[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extends Constraint[N, E](self) {
+class Acyclic[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) extends Constraint[N, E, G](self) {
   override def preCreate(nodes: Traversable[N], edges: Traversable[E[N]]) =
     PreCheckResult.postCheck(edges forall (_.nonLooping))
 
@@ -63,14 +63,15 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extends 
     def unapply(result: Result): Option[Set[self.NodeT]]                 = Some(result.dockingNodes)
   }
 
-  /** If `elems` is relatively small, preventively ensure that there is no cycle
-    *  within the new elements.
+  /** If `elems` is relatively small, preventively ensure that there is no cycle within the new elements.
     */
   override def preAdd(elems: InParam[N, E]*) =
     if (elems.size * 10 < self.size) {
       val p = Param.Partitions(elems)
       val graphAdd =
-        SimpleGraph.from(p.toOuterNodes, p.toOuterEdges)(self.edgeT, self.config.asInstanceOf[SimpleGraph.Config])
+        SimpleGraph.from(p.toOuterNodes, p.toOuterEdges)(
+          self.edgeT,
+          CoreConfig(self.config.orderHint, self.config.adjacencyListHints))
       if (graphAdd.isCyclic)
         PreCheckResult(Abort)
       else {
@@ -80,10 +81,10 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extends 
       }
     } else PreCheckResult(PostCheck)
 
-  override def postAdd(newGraph: Graph[N, E],
-                       passedNodes: Traversable[N],
-                       passedEdges: Traversable[E[N]],
-                       preCheck: PreCheckResult) = preCheck match {
+  override def postAdd[G <: Graph[N, E]](newGraph: G,
+                                         passedNodes: Traversable[N],
+                                         passedEdges: Traversable[E[N]],
+                                         preCheck: PreCheckResult) = preCheck match {
     case Result(docking) => !(docking exists (_.findCycle.isDefined))
     case _               => newGraph.isAcyclic
   }
@@ -94,5 +95,5 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extends 
     Complete)
 }
 object Acyclic extends ConstraintCompanion[Acyclic] {
-  def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new Acyclic[N, E](self)
+  def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new Acyclic[N, E, G](self)
 }

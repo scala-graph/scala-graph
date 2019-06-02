@@ -94,7 +94,7 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl] {
     var preCheckResult = PreCheckResult(Abort)
     if (existElems) {
       val emptyGraph = empty[N, E](edgeT, config)
-      val constraint = config.constraintCompanion(emptyGraph)
+      val constraint = config.constraintCompanion[N, E, DefaultGraphImpl[N, E]](emptyGraph)
       preCheckResult = constraint.preCreate(nodes, edges)
       if (preCheckResult.abort) {
         constraint onAdditionRefused (nodes, edges, emptyGraph)
@@ -104,7 +104,7 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl] {
     val newGraph = fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
     if (existElems) {
       val emptyGraph = empty[N, E](edgeT, config)
-      val constraint = config.constraintCompanion(emptyGraph)
+      val constraint = config.constraintCompanion[N, E, DefaultGraphImpl[N, E]](emptyGraph)
       var handle     = false
       preCheckResult.followUp match {
         case Complete  =>
@@ -128,7 +128,7 @@ class UserConstrainedGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N
     implicit override val edgeT: ClassTag[E[N]],
     override val config: DefaultGraphImpl.Config)
     extends DefaultGraphImpl[N, E](iniNodes, iniEdges)(edgeT, config)
-    with UserConstrainedGraph[N, E] {
+    with UserConstrainedGraph[N, E, DefaultGraphImpl[N, E]] {
 
   final override val self              = this
   final override val constraintFactory = config.constraintCompanion

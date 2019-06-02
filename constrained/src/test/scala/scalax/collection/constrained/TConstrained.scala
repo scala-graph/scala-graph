@@ -1,5 +1,6 @@
 package scalax.collection.constrained
 
+import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.Set
 import scala.language.{higherKinds, postfixOps}
 import scala.reflect.ClassTag
@@ -181,9 +182,9 @@ private object UserConstraints {
   val checkComplete = PreCheckResult(Complete)
 
   /* Constrains nodes to even numbers of type Int relying solely on pre-checks. */
-  class EvenNode[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
-      extends Constraint[N, E](self)
-      with ConstraintHandlerMethods[N, E] {
+  class EvenNode[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+      extends Constraint[N, E, G](self)
+      with ConstraintHandlerMethods[N, E, G] {
     def preAdd(node: N) = PreCheckResult.complete(node match {
       case i: Int => i % 2 == 0
       case _      => false
@@ -196,78 +197,78 @@ private object UserConstraints {
   }
 
   object EvenNode extends ConstraintCompanion[EvenNode] {
-    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) =
-      new EvenNode[N, E](self)
+    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new EvenNode[N, E, G](self)
   }
 
   /* Same as EvenNode but throws an exception on constraint violation. */
-  class EvenNodeByException[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extends EvenNode[N, E](self) {
-    override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: Graph[N, E]) =
+  class EvenNodeByException[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+      extends EvenNode[N, E, G](self) {
+    override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: G @uV) =
       throw new IllegalArgumentException("Non-integer or uneven node found.")
   }
 
   object EvenNodeByException extends ConstraintCompanion[EvenNode] {
-    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) =
-      new EvenNodeByException[N, E](self)
+    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new EvenNodeByException[N, E, G](self)
   }
 
-  abstract class NoPreCheck[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
-      extends Constraint[N, E](self)
-      with ConstraintHandlerMethods[N, E] {
+  abstract class NoPreCheck[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+      extends Constraint[N, E, G](self)
+      with ConstraintHandlerMethods[N, E, G] {
     def preAdd(node: N)                                = postCheck
     def preAdd(edge: E[N])                             = postCheck
     def preSubtract(node: self.NodeT, forced: Boolean) = postCheck
     def preSubtract(edge: self.EdgeT, simple: Boolean) = postCheck
   }
 
-  class AlwaysFailingPostSubtract[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
-      extends NoPreCheck[N, E](self) {
+  class AlwaysFailingPostSubtract[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+      extends NoPreCheck[N, E, G](self) {
 
-    override def postSubtract(newGraph: Graph[N, E],
-                              passedNodes: Traversable[N],
-                              passedEdges: Traversable[E[N]],
-                              preCheck: PreCheckResult) = false
+    override def postSubtract[G <: Graph[N, E]](newGraph: G,
+                                                passedNodes: Traversable[N],
+                                                passedEdges: Traversable[E[N]],
+                                                preCheck: PreCheckResult) = false
 
-    override def onSubtractionRefused(refusedNodes: Traversable[Graph[N, E]#NodeT],
-                                      refusedEdges: Traversable[Graph[N, E]#EdgeT],
-                                      graph: Graph[N, E]) =
+    override def onSubtractionRefused(refusedNodes: Traversable[G#NodeT],
+                                      refusedEdges: Traversable[G#EdgeT],
+                                      graph: G) =
       throw new IllegalArgumentException
   }
 
   object AlwaysFailingPostSubtract extends ConstraintCompanion[AlwaysFailingPostSubtract] {
-    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new AlwaysFailingPostSubtract[N, E](self)
+    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new AlwaysFailingPostSubtract[N, E, G](self)
   }
 
-  class AlwaysFailingPreAdd[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
-      extends AlwaysFailingPostSubtract[N, E](self: Graph[N, E]) {
+  class AlwaysFailingPreAdd[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+      extends AlwaysFailingPostSubtract[N, E, G](self: G) {
     override def preAdd(node: N): PreCheckResult = throw new NoSuchElementException
   }
 
   object AlwaysFailingPreAdd extends ConstraintCompanion[AlwaysFailingPreAdd] {
-    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new AlwaysFailingPreAdd[N, E](self)
+    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new AlwaysFailingPreAdd[N, E, G](self)
   }
 
-  class FailingPostAdd[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E]) extends NoPreCheck[N, E](self) {
+  class FailingPostAdd[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+      extends NoPreCheck[N, E, G](self) {
 
-    override def postAdd(newGraph: Graph[N, E],
-                         passedNodes: Traversable[N],
-                         passedEdges: Traversable[E[N]],
-                         preCheck: PreCheckResult) =
+    override def postAdd[G <: Graph[N, E]](newGraph: G,
+                                           passedNodes: Traversable[N],
+                                           passedEdges: Traversable[E[N]],
+                                           preCheck: PreCheckResult) =
       passedEdges.size == 4
 
-    override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: Graph[N, E]) =
+    override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: G) =
       throw new IllegalArgumentException
   }
 
   object FailingPostAdd extends ConstraintCompanion[FailingPostAdd] {
-    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) = new FailingPostAdd[N, E](self)
+    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new FailingPostAdd[N, E, G](self)
   }
 
   /* Constrains the graph to nodes having a minimal degree of `min` by utilizing pre- and post-checks.
    */
-  abstract class MinDegree[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E])
-      extends Constraint[N, E](self)
-      with ConstraintHandlerMethods[N, E] {
+  abstract class MinDegree[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+      extends Constraint[N, E, G](self)
+      with ConstraintHandlerMethods[N, E, G] {
     // the required minimal degree
     val min: Int
 
@@ -283,13 +284,13 @@ private object UserConstraints {
     override def preAdd(elems: InParam[N, E]*) = postCheck
 
     // inspecting the would-be graph is much easier
-    override def postAdd(newGraph: Graph[N, E],
-                         passedNodes: Traversable[N],
-                         passedEdges: Traversable[E[N]],
-                         preCheck: PreCheckResult) =
+    override def postAdd[G <: Graph[N, E]](newGraph: G,
+                                           passedNodes: Traversable[N],
+                                           passedEdges: Traversable[E[N]],
+                                           preCheck: PreCheckResult) =
       allNodes(passedNodes, passedEdges) forall (n => (newGraph get n).degree >= min)
 
-    override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: Graph[N, E]) =
+    override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: G) =
       throw new MinDegreeException(
         "Addition refused: " +
           "nodes = " + refusedNodes + ", " +
@@ -329,19 +330,19 @@ private object UserConstraints {
         }
       )
 
-    override def postSubtract(newGraph: Graph[N, E],
-                              passedNodes: Traversable[N],
-                              passedEdges: Traversable[E[N]],
-                              preCheck: PreCheckResult) = preCheck match {
+    override def postSubtract[G <: Graph[N, E]](newGraph: G,
+                                                passedNodes: Traversable[N],
+                                                passedEdges: Traversable[E[N]],
+                                                preCheck: PreCheckResult) = preCheck match {
       case Result(nodesToCheck) =>
         nodesToCheck forall { n =>
           newGraph.get(n).degree >= min
         }
     }
 
-    override def onSubtractionRefused(refusedNodes: Traversable[Graph[N, E]#NodeT],
-                                      refusedEdges: Traversable[Graph[N, E]#EdgeT],
-                                      graph: Graph[N, E]) =
+    override def onSubtractionRefused(refusedNodes: Traversable[G#NodeT],
+                                      refusedEdges: Traversable[G#EdgeT],
+                                      graph: G) =
       throw new MinDegreeException(
         "Subtraction refused: " +
           "nodes = " + refusedNodes + ", " +
@@ -349,8 +350,8 @@ private object UserConstraints {
   }
 
   object MinDegree_2 extends ConstraintCompanion[MinDegree] {
-    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) =
-      new MinDegree[N, E](self) {
+    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) =
+      new MinDegree[N, E, G](self) {
         val min = 2
       }
   }

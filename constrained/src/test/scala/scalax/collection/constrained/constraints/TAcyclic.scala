@@ -1,18 +1,17 @@
 package scalax.collection.constrained
 package constraints
 
+import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.language.{higherKinds, postfixOps}
-
-import scalax.collection.GraphPredef._
-import scalax.collection.GraphEdge._
-
-import PreCheckFollowUp._
-import generic.GraphConstrainedCompanion
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+
+import scalax.collection.GraphPredef._
+import scalax.collection.GraphEdge._
+import scalax.collection.constrained.generic.GraphConstrainedCompanion
 
 @RunWith(classOf[JUnitRunner])
 class TAcyclicRootTest
@@ -77,11 +76,9 @@ class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
 }
 object AcyclicWithException {
   object Acyclic extends ConstraintCompanion[Acyclic] {
-    def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) =
-      new Acyclic[N, E](self) {
-        override def onAdditionRefused(refusedNodes: Traversable[N],
-                                       refusedEdges: Traversable[E[N]],
-                                       graph: Graph[N, E]) =
+    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G): Acyclic[N, E, G] =
+      new Acyclic[N, E, G](self) {
+        override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: G @uV) =
           throw new CycleException(
             "Addition refused: " +
               "nodes = " + refusedNodes + ", " +

@@ -12,37 +12,37 @@ sealed trait BinaryOp extends Op
 case object And       extends BinaryOp
 case object Or        extends BinaryOp
 
-abstract class ConstraintOp[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E], val operator: Op)
-    extends Constraint[N, E](self)
+abstract class ConstraintOp[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G, val operator: Op)
+    extends Constraint[N, E, G](self)
 
-class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E],
-                                                   operator: BinaryOp,
-                                                   left: Constraint[N, E],
-                                                   right: Constraint[N, E])
-    extends ConstraintOp[N, E](self, operator) {
+class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G,
+                                                                     operator: BinaryOp,
+                                                                     left: Constraint[N, E, G],
+                                                                     right: Constraint[N, E, G])
+    extends ConstraintOp[N, E, G](self, operator) {
+
   assert((self eq left.self) && (left.self eq right.self))
 
   protected class PreCheckResults(override val followUp: PreCheckFollowUp,
-                                  constraint: Constraint[N, E],
+                                  constraint: Constraint[N, E, G],
                                   result: PreCheckResult)
       extends PreCheckResult(followUp) {
-    val results: MMap[Constraint[N, E], PreCheckResult] = result match {
+    val results: MMap[Constraint[N, E, G], PreCheckResult] = result match {
       case r: PreCheckResults => MMap(r.results.toSeq: _*)
       case _                  => MMap(constraint -> result)
     }
-    def +=(op: Constraint[N, E], result: PreCheckResult) = {
+    def +=(op: Constraint[N, E, G], result: PreCheckResult) = {
       result match {
         case r: PreCheckResults => results ++= r.results
         case _                  => results += op -> result
       }
       this
     }
-    override def get[N, E[X] <: EdgeLikeIn[X]](op: Constraint[N, E]) =
-      results.asInstanceOf[MMap[Constraint[N, E], PreCheckResult]] get op
   }
-  protected def eval(left: Constraint[N, E],
+
+  protected def eval(left: Constraint[N, E, G],
                      leftResult: PreCheckResult,
-                     right: Constraint[N, E],
+                     right: Constraint[N, E, G],
                      rightResult: => PreCheckResult): PreCheckResult = {
     var rightDone          = false
     val leftFollowUp       = leftResult.followUp
@@ -66,11 +66,13 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E
       } else leftResult
     }
   }
+
   protected def eval(left: Boolean, right: => Boolean): Boolean =
     operator match {
       case And => left && right
       case Or  => left || right
     }
+
   private type LNodeT = left.self.NodeT
   private type RNodeT = right.self.NodeT
   private type LEdgeT = left.self.EdgeT
@@ -85,10 +87,10 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E
   final override def preAdd(elems: InParam[N, E]*) =
     eval(left, left preAdd (elems: _*), right, right preAdd (elems: _*))
 
-  final override def postAdd(newGraph: scalax.collection.constrained.Graph[N, E],
-                             passedNodes: Traversable[N],
-                             passedEdges: Traversable[E[N]],
-                             preCheck: PreCheckResult) =
+  final override def postAdd[G <: Graph[N, E]](newGraph: G,
+                                               passedNodes: Traversable[N],
+                                               passedEdges: Traversable[E[N]],
+                                               preCheck: PreCheckResult) =
     eval(
       left postAdd (newGraph, passedNodes, passedEdges, preCheck),
       right postAdd (newGraph, passedNodes, passedEdges, preCheck))
@@ -115,21 +117,21 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X]](override val self: Graph[N, E
       right preSubtract (nodes.asInstanceOf[Set[RNodeT]], edges.asInstanceOf[Set[REdgeT]], simple)
     )
 
-  final override def postSubtract(newGraph: Graph[N, E],
-                                  passedNodes: Traversable[N],
-                                  passedEdges: Traversable[E[N]],
-                                  preCheck: PreCheckResult) =
+  final override def postSubtract[G <: Graph[N, E]](newGraph: G,
+                                                    passedNodes: Traversable[N],
+                                                    passedEdges: Traversable[E[N]],
+                                                    preCheck: PreCheckResult) =
     eval(
       left postSubtract (newGraph, passedNodes, passedEdges, preCheck),
       right postSubtract (newGraph, passedNodes, passedEdges, preCheck))
-  final override def onAdditionRefused(refusedNodes: Traversable[N],
-                                       refusedEdges: Traversable[E[N]],
-                                       graph: Graph[N, E]) =
+
+  final override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: G) =
     left.onAdditionRefused(refusedNodes, refusedEdges, graph) ||
       right.onAdditionRefused(refusedNodes, refusedEdges, graph)
-  final override def onSubtractionRefused(refusedNodes: Traversable[Graph[N, E]#NodeT],
-                                          refusedEdges: Traversable[Graph[N, E]#EdgeT],
-                                          graph: Graph[N, E]) =
+
+  final override def onSubtractionRefused(refusedNodes: Traversable[G#NodeT],
+                                          refusedEdges: Traversable[G#EdgeT],
+                                          graph: G) =
     left.onSubtractionRefused(refusedNodes, refusedEdges, graph) ||
       right.onSubtractionRefused(refusedNodes, refusedEdges, graph)
 }
@@ -140,11 +142,12 @@ abstract class ConstraintCompanionOp(val operator: Op) extends ConstraintCompani
 
 /** Facilitates binary operations on `ConstraintCompanion`s.
   */
-class ConstraintCompanionBinaryOp(operator: BinaryOp,
-                                  left: ConstraintCompanion[Constraint],
-                                  right: ConstraintCompanion[Constraint])
-    extends ConstraintCompanionOp(operator) {
+class ConstraintCompanionBinaryOp[CC[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]] <: Constraint[N, E, G]](
+    operator: BinaryOp,
+    left: ConstraintCompanion[CC],
+    right: ConstraintCompanion[CC]
+) extends ConstraintCompanionOp(operator) {
 
-  def apply[N, E[X] <: EdgeLikeIn[X]](self: Graph[N, E]) =
-    new ConstraintBinaryOp[N, E](self, operator, left(self), right(self))
+  def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) =
+    new ConstraintBinaryOp[N, E, G](self, operator, left(self), right(self))
 }

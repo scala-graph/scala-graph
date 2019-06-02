@@ -1,14 +1,13 @@
 package scalax.collection.constrained
 package immutable
 
+import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.language.{higherKinds, postfixOps}
-import scala.collection.generic.CanBuildFrom
 
 import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, OuterEdge, OuterNode}
 import scalax.collection.immutable.{AdjacencyListGraph => SimpleAdjacencyListGraph}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 
-import generic.GraphConstrainedCompanion
 import config.GenConstrainedConfig
 import PreCheckFollowUp._
 
@@ -16,28 +15,30 @@ trait AdjacencyListGraph[
     N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with SimpleAdjacencyListGraph[N, E, This] { this: This[N, E] =>
+
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
+
   override protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]) {
     withoutChecks { super.initialize(nodes, edges) }
   }
 
   /** generic constrained addition */
-  protected def checkedAdd[G >: This[N, E]](contained: => Boolean,
-                                            preAdd: => PreCheckResult,
-                                            copy: => G,
-                                            nodes: => Traversable[N],
-                                            edges: => Traversable[E[N]]): This[N, E] =
+  protected def checkedAdd(contained: => Boolean,
+                           preAdd: => PreCheckResult,
+                           copy: => This[N, E] @uV,
+                           nodes: => Traversable[N],
+                           edges: => Traversable[E[N]]): This[N, E] =
     if (checkSuspended)
-      copy.asInstanceOf[This[N, E]]
+      copy
     else {
       var graph = this
       if (!contained) {
         var handle         = false
         val preCheckResult = preAdd
         preCheckResult.followUp match {
-          case Complete => graph = copy.asInstanceOf[This[N, E]]
+          case Complete => graph = copy
           case PostCheck =>
-            graph = copy.asInstanceOf[This[N, E]]
+            graph = copy
             if (!postAdd(graph, nodes, edges, preCheckResult)) {
               handle = true
               graph = this
@@ -84,7 +85,7 @@ trait AdjacencyListGraph[
             }
           case Abort => handle = true
         }
-        if (handle) onSubtractionRefused(Set(innerNode.asInstanceOf[Graph[N, E]#NodeT]), Set.empty[self.EdgeT], graph)
+        if (handle) onSubtractionRefused(Set(innerNode), Set.empty[EdgeT], graph)
         graph
       }
     } getOrElse this
@@ -129,7 +130,7 @@ trait AdjacencyListGraph[
             }
           case Abort => handle = true
         }
-        if (handle) onSubtractionRefused(Set.empty[self.NodeT], Set(innerEdge.asInstanceOf[self.EdgeT]), graph)
+        if (handle) onSubtractionRefused(Set.empty[This[N, E]#NodeT], Set(innerEdge), graph)
         graph
       }
     } getOrElse this

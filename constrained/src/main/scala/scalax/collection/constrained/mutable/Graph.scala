@@ -5,18 +5,14 @@ import java.io.{ObjectInputStream, ObjectOutputStream}
 
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.Set
-import scala.collection.generic.{CanBuildFrom, Growable, Shrinkable}
-import scala.collection.mutable.{Builder, Cloneable, ListBuffer, Set => MutableSet}
+import scala.collection.generic.{Growable, Shrinkable}
+import scala.collection.mutable.Cloneable
 import scala.reflect.ClassTag
 
-import scalax.collection.{Graph => CommonGraph, GraphTraversalImpl}
-import scalax.collection.GraphEdge.{EdgeCompanionBase, EdgeLike}
-import scalax.collection.GraphPredef.{
-  EdgeLikeIn, InParam, InnerEdgeParam, InnerNodeParam, NodeParam, OutParam, OuterEdge, OuterNode, Param
-}
+import scalax.collection.GraphTraversalImpl
+import scalax.collection.GraphPredef.{EdgeLikeIn, Param}
 import scalax.collection.mutable.{ArraySet, BuilderImpl}
 import scalax.collection.config.AdjacencyListArrayConfig
-
 import scalax.collection.constrained.{Graph => CGraph, GraphLike => CGraphLike}
 import PreCheckFollowUp._
 import generic.GraphConstrainedCompanion
@@ -28,12 +24,13 @@ class GraphBuilder[N, E[X] <: EdgeLikeIn[X], GC[N, E[X] <: EdgeLikeIn[X]] <: CGr
   def result: This =
     companion.from(nodes, edges)(edgeT, config.asInstanceOf[companion.Config])
 }
+
 trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
     extends scalax.collection.mutable.GraphLike[N, E, This]
     with scalax.collection.constrained.GraphLike[N, E, This]
     with Growable[Param[N, E]]
     with Shrinkable[Param[N, E]]
-    with Cloneable[Graph[N, E]]
+    with Cloneable[This[N, E]]
     with Mutable {
   selfGraph: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
   This[N, E] with GraphLike[N, E, This] with Graph[N, E] =>
@@ -63,7 +60,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
           case Abort => handle = true
         }
       }
-      if (handle) onSubtractionRefused(Set(node.asInstanceOf[self.NodeT]), Set.empty[self.EdgeT], selfGraph)
+      if (handle) onSubtractionRefused(Set(node), Set.empty[EdgeT], selfGraph)
       removed && !handle
     }
     override def remove(node: NodeT)       = checkedRemove(node, true)
@@ -167,7 +164,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
         }
       case Abort => handle = true
     }
-    if (handle) onSubtractionRefused(innerNodes.asInstanceOf[Set[C_NodeT]], innerEdges.asInstanceOf[Set[C_EdgeT]], this)
+    if (handle) onSubtractionRefused(innerNodes, innerEdges, this)
     this
   }
 }
@@ -253,7 +250,7 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
     var preCheckResult = PreCheckResult(Abort)
     if (existElems) {
       val emptyGraph = empty[N, E](edgeT, config)
-      val constraint = config.constraintCompanion(emptyGraph)
+      val constraint = config.constraintCompanion[N, E, DefaultGraphImpl[N, E]](emptyGraph)
       preCheckResult = constraint.preCreate(nodes, edges)
       if (preCheckResult.abort) {
         constraint onAdditionRefused (nodes, edges, emptyGraph)
@@ -263,7 +260,7 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
     val newGraph = fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
     if (existElems) {
       val emptyGraph = empty[N, E](edgeT, config)
-      val constraint = config.constraintCompanion(emptyGraph)
+      val constraint = config.constraintCompanion[N, E, DefaultGraphImpl[N, E]](emptyGraph)
       var handle     = false
       preCheckResult.followUp match {
         case Complete  =>
@@ -286,7 +283,7 @@ class UserConstrainedGraphImpl[N, E[X] <: EdgeLikeIn[X]](
     iniNodes: Traversable[N] = Nil,
     iniEdges: Traversable[E[N]] = Nil)(implicit override val edgeT: ClassTag[E[N]], _config: DefaultGraphImpl.Config)
     extends DefaultGraphImpl[N, E](iniNodes, iniEdges)(edgeT, _config)
-    with UserConstrainedGraph[N, E] {
+    with UserConstrainedGraph[N, E, DefaultGraphImpl[N, E]] {
 
   final override val self              = this
   final override val constraintFactory = config.constraintCompanion

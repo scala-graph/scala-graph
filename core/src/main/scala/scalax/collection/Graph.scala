@@ -336,8 +336,8 @@ trait GraphLike[N,
             e.asEdgeT[N, E, ThisGraph](thisGraph).toOuter
       }
   }
-  override def ++(elems: GenTraversableOnce[Param[N, E]]) = bulkOp(elems, true)
-  override def --(elems: GenTraversableOnce[Param[N, E]]) = bulkOp(elems, false)
+  override def ++(elems: GenTraversableOnce[Param[N, E]]): This[N, E] = bulkOp(elems, isPlusPlus = true)
+  override def --(elems: GenTraversableOnce[Param[N, E]]): This[N, E] = bulkOp(elems, isPlusPlus = false)
 
   /** Prepares and calls `plusPlus` or `minusMinus`. */
   final protected def bulkOp(elems: GenTraversableOnce[Param[N, E]], isPlusPlus: Boolean): This[N, E] = {
