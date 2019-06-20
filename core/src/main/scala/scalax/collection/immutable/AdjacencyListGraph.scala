@@ -88,7 +88,7 @@ trait AdjacencyListGraph[
     case None     => this
   }
 
-  def -?(n: N) = nodes find n match {
+  def minusIsolated(n: N) = nodes find n match {
     case Some(nf) =>
       val newNodes = nodes.toOuter.toBuffer
       val newEdges = edges.toOuter.toBuffer

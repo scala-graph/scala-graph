@@ -3,6 +3,7 @@ package mutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
+import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.Set
 import scala.collection.generic.{Growable, Shrinkable}
@@ -28,6 +29,7 @@ class GraphBuilder[N, E[X] <: EdgeLikeIn[X], GC[N, E[X] <: EdgeLikeIn[X]] <: CGr
 trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
     extends scalax.collection.mutable.GraphLike[N, E, This]
     with scalax.collection.constrained.GraphLike[N, E, This]
+    with GraphOps[N, E, This]
     with Growable[Param[N, E]]
     with Shrinkable[Param[N, E]]
     with Cloneable[This[N, E]]
@@ -37,63 +39,55 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
 
   trait NodeSet extends super.NodeSet {
 
-    /** generic constrained subtraction */
-    protected def checkedRemove(node: NodeT, ripple: Boolean): Boolean = {
-      var removed, handle = false
-      def remove          = withoutChecks { subtract(node, ripple, minus, minusEdges) }
-      if (checkSuspended) removed = remove
+    protected def checkedRemove(node: NodeT, ripple: Boolean): Either[ConstraintViolation, Boolean] = {
+      def remove = withoutChecks { subtract(node, ripple, minus, minusEdges) }
+      if (checkSuspended) Right(remove)
       else {
         val preCheckResult = preSubtract(node.asInstanceOf[self.NodeT], ripple)
         preCheckResult.followUp match {
-          case Complete => removed = remove
+          case Complete => Right(remove)
           case PostCheck =>
-            val edges = node.edges.toBuffer
-            removed = remove
-            if (removed &&
-                !postSubtract(selfGraph, Set(node), Set.empty[E[N]], preCheckResult)) {
-              handle = true
-              withoutChecks {
-                selfGraph += node.value
-                selfGraph ++= edges
-              }
-            }
-          case Abort => handle = true
+            if (remove) {
+              postSubtract(selfGraph, Set(node), Set.empty[E[N]], preCheckResult).fold(
+                failure => {
+                  withoutChecks { selfGraph += node.value; selfGraph ++= node.edges.toBuffer }
+                  Left(failure)
+                },
+                _ => Right(true)
+              )
+            } else Right(false)
+          case Abort => Left(constraintViolation(preCheckResult))
         }
       }
-      if (handle) onSubtractionRefused(Set(node), Set.empty[EdgeT], selfGraph)
-      removed && !handle
     }
-    override def remove(node: NodeT)       = checkedRemove(node, true)
-    override def removeGently(node: NodeT) = checkedRemove(node, false)
+
+    final override def remove(node: NodeT): Boolean = remove_?(node) getOrElse false
+
+    def remove_?(node: NodeT): Either[ConstraintViolation, Boolean] = checkedRemove(node, ripple = true)
+
+    final override def removeGently(node: NodeT): Boolean = removeGently_?(node) getOrElse false
+
+    def removeGently_?(node: NodeT): Either[ConstraintViolation, Boolean] = checkedRemove(node, ripple = false)
   }
 
-  /** generic checked addition */
-  protected def checkedAdd[G >: This[N, E]](contained: => Boolean,
-                                            preAdd: => PreCheckResult,
-                                            copy: => G,
-                                            nodes: => Traversable[N],
-                                            edges: => Traversable[E[N]]): This[N, E] =
-    if (contained) this
-    else if (checkSuspended) copy.asInstanceOf[This[N, E]]
+  protected def checkedAdd(contained: => Boolean,
+                           preAdd: => PreCheckResult,
+                           copy: => This[N, E] @uV,
+                           nodes: => Traversable[N],
+                           edges: => Traversable[E[N]]): Either[ConstraintViolation, This[N, E]] =
+    if (contained) Right(this)
+    else if (checkSuspended) Right(copy)
     else {
-      var graph          = this
-      var handle         = false
       val preCheckResult = preAdd
       preCheckResult.followUp match {
-        case Complete => graph = copy.asInstanceOf[This[N, E]]
+        case Complete => Right(copy)
         case PostCheck =>
-          graph = copy.asInstanceOf[This[N, E]]
-          if (!postAdd(graph, nodes, edges, preCheckResult)) {
-            handle = true
-            graph = this
-          }
-        case Abort => handle = true
+          postAdd(copy, nodes, edges, preCheckResult).fold(failure => Left(failure), Right(_))
+        case Abort => Left(constraintViolation(preCheckResult))
       }
-      if (handle) onAdditionRefused(nodes, edges, this)
-      graph
     }
 
-  override def +(node: N) =
+  def +?(node: N): Either[ConstraintViolation, This[N, E]] =
     checkedAdd(
       contained = nodes contains Node(node),
       preAdd = preAdd(node),
@@ -101,11 +95,13 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
       nodes = Set(node),
       edges = Set.empty[E[N]])
 
-  override def ++=(elems: TraversableOnce[Param[N, E]]): this.type = {
-    def add = withoutChecks { super.++=(elems) }
-    if (checkSuspended) add
+  final protected def +#?(e: E[N]): Either[ConstraintViolation, This[N, E]] = ??? //clone +=#? edge
+
+  def ++=?(elems: TraversableOnce[Param[N, E]]): Either[ConstraintViolation, this.type] = {
+    def add: this.type = withoutChecks { super.++=(elems) }
+    if (checkSuspended) Right(add)
     else {
-      def process(elems: Traversable[Param[N, E]]): Unit = {
+      def process(elems: Traversable[Param[N, E]]): Option[ConstraintViolation] = {
         val (filteredElems, newNodes, newEdges) = {
           val p     = new Param.Partitions[N, E]((elems filterNot contains).toSet)
           val edges = p.toOuterEdges
@@ -115,57 +111,57 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
             edges
           )
         }
-        var handle         = false
         val preCheckResult = preAdd(filteredElems: _*)
-        if (preCheckResult.abort)
-          handle = true
+        if (preCheckResult.abort) Some(constraintViolation(preCheckResult))
         else {
           add
           if (preCheckResult.postCheck) {
-            if (!postAdd(this, newNodes, newEdges, preCheckResult)) {
-              handle = true
-              withoutChecks {
-                newNodes foreach super.remove
-                newEdges foreach super.remove
-              }
-            }
-          }
+            postAdd(this, newNodes, newEdges, preCheckResult).fold(
+              failure => {
+                withoutChecks {
+                  newNodes foreach super.remove
+                  newEdges foreach super.remove
+                }
+                Some(failure)
+              },
+              _ => None
+            )
+          } else None
         }
-        if (handle) onAdditionRefused(newNodes, newEdges, this)
       }
-      elems match {
+      (elems match {
         case elems: Traversable[Param[N, E]] => process(elems)
         case traversableOnce                 => process(traversableOnce.toSet)
-      }
+      }).fold[Either[ConstraintViolation, this.type]](Right(this))(Left(_))
     }
-    this
   }
 
-  override def --=(elems: TraversableOnce[Param[N, E]]): this.type = {
+  final def -?(node: N): Either[ConstraintViolation, This[N, E]] = ??? //clone -=_? node
+
+  final protected def -#?(e: E[N]): Either[ConstraintViolation, This[N, E]] = ??? // clone -=#? edge
+
+  def --=?(elems: TraversableOnce[Param[N, E]]): Either[ConstraintViolation, this.type] = {
     val (outerNodes, outerEdges) = {
       val p = partition(elems)
       (p.toOuterNodes.toSet, p.toOuterEdges.toSet)
     }
     val (innerNodes, innerEdges) = (outerNodes map find flatten, outerEdges map find flatten)
-
-    type C_NodeT = self.NodeT
-    type C_EdgeT = self.EdgeT
-
-    var handle         = false
-    val preCheckResult = preSubtract(innerNodes.asInstanceOf[Set[C_NodeT]], innerEdges.asInstanceOf[Set[C_EdgeT]], true)
+    val preCheckResult =
+      preSubtract(innerNodes.asInstanceOf[Set[self.NodeT]], innerEdges.asInstanceOf[Set[self.EdgeT]], true)
     preCheckResult.followUp match {
-      case Complete => withoutChecks { super.--=(elems) }
+      case Complete => Right(withoutChecks { super.--=(elems) })
       case PostCheck =>
         val subtractables = (elems filter this.contains).toArray ++ innerNodes.flatMap(_.edges).toBuffer
         withoutChecks { super.--=(subtractables) }
-        if (!postSubtract(this, outerNodes, outerEdges, preCheckResult)) {
-          handle = true
-          withoutChecks { super.++=(subtractables) }
-        }
-      case Abort => handle = true
+        postSubtract(this, outerNodes, outerEdges, preCheckResult).fold(
+          failure => {
+            withoutChecks { super.++=(subtractables) }
+            Left(failure)
+          },
+          _ => Right(this)
+        )
+      case Abort => Left(constraintViolation(preCheckResult))
     }
-    if (handle) onSubtractionRefused(innerNodes, innerEdges, this)
-    this
   }
 }
 
@@ -208,8 +204,6 @@ abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[
   protected type Config = DefaultGraphImpl.Config
   final override def config = _config.asInstanceOf[graphCompanion.Config with Config]
 
-  class NodeSet extends super[AdjacencyListGraph].NodeSet with super[Graph].NodeSet
-
   @inline final protected def newNodeSet: NodeSetT = new NodeSet
   @transient protected[this] var _nodes: NodeSetT  = newNodeSet
   @inline final override def nodes                 = _nodes
@@ -243,38 +237,31 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
       edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]], config: Config): DefaultGraphImpl[N, E] =
     new UserConstrainedGraphImpl[N, E](nodes, edges)(edgeT, config)
 
-  override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N], edges: Traversable[E[N]])(
+  final override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N], edges: Traversable[E[N]])(
       implicit edgeT: ClassTag[E[N]],
-      config: Config): DefaultGraphImpl[N, E] = {
-    val existElems     = nodes.nonEmpty || edges.nonEmpty
-    var preCheckResult = PreCheckResult(Abort)
-    if (existElems) {
-      val emptyGraph = empty[N, E](edgeT, config)
-      val constraint = config.constraintCompanion[N, E, DefaultGraphImpl[N, E]](emptyGraph)
-      preCheckResult = constraint.preCreate(nodes, edges)
-      if (preCheckResult.abort) {
-        constraint onAdditionRefused (nodes, edges, emptyGraph)
-        return emptyGraph
+      config: Config): DefaultGraphImpl[N, E] = from_?(nodes, edges) getOrElse empty[N, E](edgeT, config)
+
+  def from_?[N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N], edges: Traversable[E[N]])(
+      implicit edgeT: ClassTag[E[N]],
+      config: Config): Either[ConstraintViolation, DefaultGraphImpl[N, E]] = {
+    def emptyGraph = empty[N, E](edgeT, config)
+
+    if (nodes.isEmpty && edges.isEmpty) Right(empty[N, E](edgeT, config))
+    else {
+      val constraint     = config.constraintCompanion[N, E, DefaultGraphImpl[N, E]](emptyGraph)
+      val preCheckResult = constraint.preCreate(nodes, edges)
+      if (preCheckResult.abort) Left(constraintViolation(preCheckResult))
+      else {
+        val newGraph = fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
+        preCheckResult.followUp match {
+          case Complete  => Right(newGraph)
+          case PostCheck => constraint.postAdd(newGraph, nodes, edges, preCheckResult)
+          case Abort     => Left(constraintViolation(preCheckResult))
+        }
       }
     }
-    val newGraph = fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
-    if (existElems) {
-      val emptyGraph = empty[N, E](edgeT, config)
-      val constraint = config.constraintCompanion[N, E, DefaultGraphImpl[N, E]](emptyGraph)
-      var handle     = false
-      preCheckResult.followUp match {
-        case Complete  =>
-        case PostCheck => handle = !constraint.postAdd(newGraph, nodes, edges, preCheckResult)
-        case Abort     => handle = true
-      }
-      if (handle) {
-        constraint.onAdditionRefused(nodes, edges, newGraph)
-        emptyGraph
-      } else
-        newGraph
-    } else
-      newGraph
   }
+
   // TODO canBuildFrom
 }
 

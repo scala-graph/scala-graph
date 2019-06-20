@@ -1,6 +1,7 @@
 package scalax.collection.constrained
 package constraints
 
+import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.Set
 
@@ -45,10 +46,12 @@ class Connected[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G
   }
 
   /** Check the whole `newGraph`. */
-  override def postAdd[G <: Graph[N, E]](newGraph: G,
-                                         passedNodes: Traversable[N],
-                                         passedEdges: Traversable[E[N]],
-                                         preCheck: PreCheckResult): Boolean = newGraph.isConnected
+  override def postAdd(newGraph: G @uV,
+                       passedNodes: Traversable[N],
+                       passedEdges: Traversable[E[N]],
+                       preCheck: PreCheckResult): Either[ConstraintViolation, G] =
+    if (newGraph.isConnected) Right(newGraph)
+    else Left(constraintViolation(s"Unexpected isolated node found when adding $passedNodes, $passedEdges."))
 
   /** Checks within any `preSubtract` whether the neighborhood of the elements
     * to be subtracted remains connected after the subtraction thus preventing

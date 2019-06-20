@@ -32,19 +32,25 @@ package object constrained {
   import generic._
   import config.ConstrainedConfig
 
+  type PostCheckFailure    = Any
+  type ConstraintViolation = Either[PreCheckResult, PostCheckFailure]
+
+  def constraintViolation(r: PreCheckResult): ConstraintViolation   = Left(r)
+  def constraintViolation(r: PostCheckFailure): ConstraintViolation = Right(r)
+
   /** Aims defining a constraint valid for `Graph` instances in the scope:
-      {{{
-      implicit val config: Config = Acyclic
-      val g = Graph(0 ~> 3) // g is constrained to Acyclic
-      }}}
+    *{{{
+    *implicit val config: Config = Acyclic
+    *val g = Graph(0 ~> 3) // g is constrained to Acyclic
+    *}}}
     */
   type Config = ConstrainedConfig
 
   /** Companion object to configure `Graph` instances in the scope including `ArraySet.Hints`:
-      {{{
-      implicit val config = Config(Acyclic)(ArraySet.Hints(64, 0, 64, 75))
-      val g = Graph(0 ~> 3) // g is constrained to Acyclic using the above optimization hints
-      }}}
+    *{{{
+    *implicit val config = Config(Acyclic)(ArraySet.Hints(64, 0, 64, 75))
+    *val g = Graph(0 ~> 3) // g is constrained to Acyclic using the above optimization hints
+    *}}}
     */
   def Config = ConstrainedConfig
 

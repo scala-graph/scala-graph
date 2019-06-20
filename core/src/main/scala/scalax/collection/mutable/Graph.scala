@@ -140,8 +140,8 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
     * @param edge the edge to add.
     * @return the inner edge containing the added edge.
     */
-  @inline final def addAndGet(edge: E[N]): EdgeT = { add(edge); find(edge).get }
-  @inline final protected def +#(edge: E[N])     = clone +=# edge
+  @inline final def addAndGet(edge: E[N]): EdgeT         = { add(edge); find(edge).get }
+  @inline final protected def +#(edge: E[N]): This[N, E] = clone +=# edge
   protected def +=#(edge: E[N]): this.type
   def +=(elem: Param[N, E]): this.type =
     elem match {
@@ -160,19 +160,19 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
     */
   def upsert(edge: E[N]): Boolean
 
-  @inline final def -(node: N): This[N, E]   = clone -= node
-  @inline final def remove(node: N): Boolean = nodes find node exists (nodes remove _)
-  @inline final def -=(node: N): this.type   = { remove(node); this }
-  @inline final def -?=(node: N): this.type  = { removeGently(node); this }
-  @inline final def -?(node: N): This[N, E]  = clone -?= node
-  final def removeGently(node: N): Boolean   = nodes find node exists (nodes removeGently _)
+  @inline def -(node: N): This[N, E]                   = clone -= node
+  @inline def remove(node: N): Boolean                 = nodes find node exists (nodes remove _)
+  @inline final def -=(node: N): this.type             = { remove(node); this }
+  @inline final def -?=(node: N): this.type            = { removeGently(node); this }
+  @inline final def minusIsolated(node: N): This[N, E] = clone -?= node
+  final def removeGently(node: N): Boolean             = nodes find node exists (nodes removeGently _)
 
   @inline final def -(edge: E[N])                         = clone -=# edge
   @inline final def remove(edge: E[N])                    = edges remove Edge(edge)
   @inline final protected def -=#(edge: E[N]): this.type  = { remove(edge); this }
   @inline final protected def -!=#(edge: E[N]): this.type = { removeWithNodes(edge); this }
   @inline final def -!(edge: E[N])                        = clone -!=# edge
-  @inline final protected def -#(edge: E[N])              = clone -=# edge
+  @inline protected def -#(edge: E[N])                    = clone -=# edge
   @inline final protected def -!#(edge: E[N])             = clone -!=# edge
   @inline final def removeWithNodes(edge: E[N])           = edges removeWithNodes Edge(edge)
 
@@ -218,7 +218,6 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
   *
   * @tparam N the type of the nodes (vertices) in this graph.
   * @tparam E the kind of the edges in this graph.
-  *
   * @author Peter Empen
   */
 trait Graph[N, E[X] <: EdgeLikeIn[X]] extends CommonGraph[N, E] with GraphLike[N, E, Graph] {

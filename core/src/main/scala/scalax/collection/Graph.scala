@@ -1,15 +1,13 @@
 package scalax.collection
 
 import language.higherKinds
-import collection.{GenTraversable, GenTraversableOnce, SetLike}
-import collection.generic.GenericCompanion
+import collection.{GenTraversableOnce, SetLike}
 import scala.reflect.ClassTag
 
 import GraphPredef.{EdgeLikeIn, InParam, InnerEdgeParam, InnerNodeParam, OutParam, OuterEdge, OuterNode, Param}
-import GraphEdge.{DiEdge, DiHyperEdgeLike, EdgeCompanionBase, EdgeLike, Keyed, UnDiEdge}
+import GraphEdge.{DiEdge, DiHyperEdgeLike, Keyed, UnDiEdge}
 import generic.{GraphCompanion, GraphCoreCompanion}
 import config.GraphConfig
-import io._
 
 /** A template trait for graphs.
   *
@@ -368,7 +366,7 @@ trait GraphLike[N,
   /** Calculates the `nodes` and `edges` arguments to be passed to a factory method
     *  when delNodes and delEdges are to be deleted by `--`.
     */
-  protected def minusMinusNodesEdges(delNodes: Traversable[N], delEdges: Traversable[E[N]]) =
+  protected def minusMinusNodesEdges(delNodes: Traversable[N], delEdges: Traversable[E[N]]): (Set[N], Set[E[N]]) =
     (nodes.toOuter -- delNodes, {
       val delNodeSet = delNodes.toSet
       val restEdges =
@@ -392,7 +390,7 @@ trait GraphLike[N,
     *  @return the new subgraph of this graph after the "gentle" deletion of `node`.
     *          If `node` could not be deleted, the new graph is a copy of this graph.
     */
-  def -?(node: N): This[N, E]
+  def minusIsolated(node: N): This[N, E]
 
   /** Creates a new subgraph consisting of all nodes and edges of this graph but `edge`.
     * The node set remains unchanged.
@@ -480,8 +478,7 @@ trait GraphLike[N,
     }
     minusMinus(
       delNodes ++
-        (unconnectedNodeCandidates filter (nc =>
-          this find nc map (n => n.edges forall (delEdgeSet contains _)) getOrElse false)),
+        (unconnectedNodeCandidates filter (nc => this find nc exists (n => n.edges forall (delEdgeSet contains _)))),
       delEdges)
   }
 

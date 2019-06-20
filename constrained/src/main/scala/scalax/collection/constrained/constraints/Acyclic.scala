@@ -1,9 +1,10 @@
 package scalax.collection.constrained
 package constraints
 
-import language.{higherKinds, postfixOps}
-import collection.Set
-import collection.mutable.{Set => MutableSet}
+import scala.annotation.unchecked.{uncheckedVariance => uV}
+import scala.language.{higherKinds, postfixOps}
+import scala.collection.Set
+import scala.collection.mutable.{Set => MutableSet}
 
 import scalax.collection.GraphPredef._
 import scalax.collection.{Graph => SimpleGraph}
@@ -12,17 +13,16 @@ import scalax.collection.config.CoreConfig
 
 /** Ensures that the underlying `Graph` is acyclic at any time. */
 class Acyclic[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) extends Constraint[N, E, G](self) {
-  override def preCreate(nodes: Traversable[N], edges: Traversable[E[N]]) =
+  override def preCreate(nodes: Traversable[N], edges: Traversable[E[N]]): PreCheckResult =
     PreCheckResult.postCheck(edges forall (_.nonLooping))
 
   /** Adding a single node cannot produce a cycle. */
   override def preAdd(node: N) = PreCheckResult(Complete)
 
-  /** When inserting an edge with a source contained in the graph
-    * a cycle is produced if there exists a target node of this edge such that
-    * there is a path from the target node to the source node.
+  /** When inserting an edge with a source contained in the graph a cycle is produced
+    * if there exists a target node of this edge such that there is a path from the target node to the source node.
     */
-  def preAdd(edge: E[N]) = PreCheckResult.complete(
+  def preAdd(edge: E[N]): PreCheckResult = PreCheckResult.complete(
     edge.nonLooping && {
       val isUndirected       = edge.isUndirected
       val checkFrom, checkTo = MutableSet.empty[self.NodeT]
@@ -65,7 +65,7 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) 
 
   /** If `elems` is relatively small, preventively ensure that there is no cycle within the new elements.
     */
-  override def preAdd(elems: InParam[N, E]*) =
+  override def preAdd(elems: InParam[N, E]*): PreCheckResult =
     if (elems.size * 10 < self.size) {
       val p = Param.Partitions(elems)
       val graphAdd =
@@ -81,18 +81,28 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) 
       }
     } else PreCheckResult(PostCheck)
 
-  override def postAdd[G <: Graph[N, E]](newGraph: G,
-                                         passedNodes: Traversable[N],
-                                         passedEdges: Traversable[E[N]],
-                                         preCheck: PreCheckResult) = preCheck match {
-    case Result(docking) => !(docking exists (_.findCycle.isDefined))
-    case _               => newGraph.isAcyclic
+  override def postAdd(newGraph: G @uV,
+                       passedNodes: Traversable[N],
+                       passedEdges: Traversable[E[N]],
+                       preCheck: PreCheckResult): Either[ConstraintViolation, G] = {
+    def msg(at: Option[self.NodeT]) =
+      s"Unexpected cycle ${at.fold("")("at " + _)}when adding $passedNodes, $passedEdges."
+    preCheck match {
+      case Result(docking) =>
+        docking find (_.findCycle.isDefined) match {
+          case Some(node) => Left(constraintViolation(msg(Some(node))))
+          case None       => Right(newGraph)
+        }
+      case _ =>
+        if (newGraph.isAcyclic) Right(newGraph)
+        else Left(constraintViolation(msg(None)))
+    }
   }
 
   override def preSubtract(node: self.NodeT, forced: Boolean) = PreCheckResult(Complete)
   override def preSubtract(edge: self.EdgeT, forced: Boolean) = PreCheckResult(Complete)
-  override def preSubtract(nodes: => Set[self.NodeT], edges: => Set[self.EdgeT], simple: Boolean) = PreCheckResult(
-    Complete)
+  override def preSubtract(nodes: => Set[self.NodeT], edges: => Set[self.EdgeT], simple: Boolean): PreCheckResult =
+    PreCheckResult(Complete)
 }
 object Acyclic extends ConstraintCompanion[Acyclic] {
   def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new Acyclic[N, E, G](self)

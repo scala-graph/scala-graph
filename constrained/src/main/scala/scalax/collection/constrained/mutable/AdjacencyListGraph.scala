@@ -20,8 +20,8 @@ import config.GenConstrainedConfig
   */
 trait AdjacencyListGraph[
     N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
-    extends GraphLike[N, E, This]
-    with SimpleAdjacencyListGraph[N, E, This] {
+    extends SimpleAdjacencyListGraph[N, E, This]
+    with GraphLike[N, E, This] {
   selfGraph: This[N, E] =>
 
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
@@ -31,88 +31,87 @@ trait AdjacencyListGraph[
   }
 
   @SerialVersionUID(8083L)
-  class NodeSet extends super.NodeSet {
+  class NodeSet extends super[AdjacencyListGraph].NodeSet with super.NodeSet {
 
-    override def add(node: NodeT): Boolean = {
-      def doAdd  = coll += node
-      var handle = false
-      if (coll.contains(node)) false
-      else if (checkSuspended) doAdd
+    final override def add(node: NodeT): Boolean = add_?(node) getOrElse false
+
+    def add_?(node: NodeT): Either[ConstraintViolation, Boolean] = {
+      def doAdd = { coll += node; true }
+      if (coll.contains(node)) Right(false)
+      else if (checkSuspended) Right(doAdd)
       else {
         val preCheckResult = preAdd(node)
         preCheckResult.followUp match {
-          case Complete => doAdd
+          case Complete => Right(doAdd)
           case PostCheck =>
             doAdd
-            if (!postAdd(AdjacencyListGraph.this, Set(node.value), Set.empty[E[N]], preCheckResult)) {
-              handle = true
-              withoutChecks(coll -= node)
-            }
-          case Abort => handle = true
+            postAdd(AdjacencyListGraph.this, Set(node.value), Set.empty[E[N]], preCheckResult).fold(
+              { failure =>
+                withoutChecks(coll -= node)
+                Left(failure)
+              },
+              _ => Right(true)
+            )
+          case Abort => Left(constraintViolation(preCheckResult))
         }
-        if (handle)
-          onAdditionRefused(Set(node), Set.empty[E[N]], AdjacencyListGraph.this)
       }
-      !handle
     }
   }
 
   @SerialVersionUID(8084L)
   class EdgeSet extends super.EdgeSet {
 
-    override def add(edge: EdgeT): Boolean = {
-      val newNodes      = edge.nodes filterNot contains
-      def doAdd         = super.add(edge)
-      var added, handle = false
-      if (checkSuspended) added = doAdd
+    final override def add(edge: EdgeT): Boolean = add_?(edge) getOrElse false
+
+    def add_?(edge: EdgeT): Either[ConstraintViolation, Boolean] = {
+      def added = super.add(edge)
+      if (checkSuspended) Right(added)
       else {
         val preCheckResult = preAdd(edge.toOuter)
         preCheckResult.followUp match {
-          case Complete => added = doAdd
+          case Complete => Right(added)
           case PostCheck =>
-            added = doAdd
             if (added)
-              if (!postAdd(selfGraph, Set.empty[N], Set(edge.toOuter), preCheckResult)) {
-                handle = true
-                remove(edge)
-                newNodes foreach nodes.remove
-              }
-          case Abort => handle = true
+              postAdd(selfGraph, Set.empty[N], Set(edge.toOuter), preCheckResult).fold(
+                failure => {
+                  remove(edge)
+                  (edge.nodes filterNot contains) foreach nodes.remove
+                  Left(failure)
+                },
+                _ => Right(true)
+              )
+            else Right(false)
+          case Abort => Left(constraintViolation(preCheckResult))
         }
       }
-      if (handle)
-        onAdditionRefused(Set.empty[N], Set(edge.toOuter), AdjacencyListGraph.this)
-      added && !handle
     }
 
-    /** generic constrained subtraction */
-    protected def checkedRemove(edge: EdgeT, forced: Boolean, remove: EdgeT => Boolean): Boolean = {
-      var removed, handle = false
-      if (checkSuspended) removed = remove(edge)
+    protected def checkedRemove(edge: EdgeT,
+                                forced: Boolean,
+                                remove: EdgeT => Boolean): Either[ConstraintViolation, Boolean] =
+      if (checkSuspended) Right(remove(edge))
       else {
         val preCheckResult = preSubtract(edge.asInstanceOf[self.EdgeT], !forced)
         preCheckResult.followUp match {
-          case Complete => removed = remove(edge)
+          case Complete => Right(remove(edge))
           case PostCheck =>
-            removed = remove(edge)
-            if (removed)
-              if (!postSubtract(selfGraph, Set.empty[N], Set(edge.toOuter), preCheckResult)) {
-                handle = true
-                selfGraph += edge
-              }
-          case Abort => handle = true
+            if (remove(edge))
+              postSubtract(selfGraph, Set.empty[N], Set(edge.toOuter), preCheckResult).fold(
+                failure => { selfGraph += edge; Left(failure) },
+                _ => Right(true)
+              )
+            else Right(false)
+          case Abort => Left(constraintViolation(preCheckResult))
         }
       }
-      if (handle) onSubtractionRefused(Set.empty[NodeT], Set(edge), selfGraph)
-      removed && !handle
-    }
 
-    override def remove(edge: EdgeT): Boolean = checkedRemove(edge, false, super.remove)
+    final override def remove(edge: EdgeT): Boolean = remove_?(edge) getOrElse false
 
-    override def removeWithNodes(edge: EdgeT): Boolean = {
-      def uncheckedSuperRemoveWithNodes(e: EdgeT) =
-        withoutChecks { super.removeWithNodes(e) }
-      checkedRemove(edge, true, uncheckedSuperRemoveWithNodes)
-    }
+    def remove_?(edge: EdgeT): Either[ConstraintViolation, Boolean] = checkedRemove(edge, forced = false, super.remove)
+
+    final override def removeWithNodes(edge: EdgeT): Boolean = removeWithNodes_?(edge) getOrElse false
+
+    def removeWithNodes_?(edge: EdgeT): Either[ConstraintViolation, Boolean] =
+      checkedRemove(edge, forced = true, withoutChecks(super.removeWithNodes))
   }
 }

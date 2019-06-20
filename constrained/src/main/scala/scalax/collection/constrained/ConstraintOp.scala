@@ -1,5 +1,6 @@
 package scalax.collection.constrained
 
+import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.Set
 import scala.collection.mutable.{Map => MMap}
@@ -49,12 +50,10 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override va
     lazy val rightFollowUp = { rightDone = true; rightResult.followUp }
     val followUp =
       operator match {
-        case And =>
-          if (leftFollowUp != Abort) min(leftFollowUp, rightFollowUp)
-          else Abort
-        case Or =>
-          if (leftFollowUp != Abort) leftFollowUp
-          else rightFollowUp
+        case And if leftFollowUp != Abort => min(leftFollowUp, rightFollowUp)
+        case And                          => Abort
+        case Or if leftFollowUp != Abort  => leftFollowUp
+        case Or                           => rightFollowUp
       }
     if (followUp == Abort) PreCheckResult(Abort)
     else {
@@ -67,10 +66,12 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override va
     }
   }
 
-  protected def eval(left: Boolean, right: => Boolean): Boolean =
-    operator match {
-      case And => left && right
-      case Or  => left || right
+  protected def eval(left: Either[ConstraintViolation, G],
+                     right: => Either[ConstraintViolation, G]): Either[ConstraintViolation, G] =
+    (left, right) match {
+      case (success @ Right(_), Right(_)) => success
+      case (failure @ Left(_), _)         => failure
+      case (_, failure @ Left(_))         => failure
     }
 
   private type LNodeT = left.self.NodeT
@@ -78,38 +79,32 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override va
   private type LEdgeT = left.self.EdgeT
   private type REdgeT = right.self.EdgeT
 
-  final override def preCreate(nodes: collection.Traversable[N], edges: collection.Traversable[E[N]]) =
+  final override def preCreate(nodes: collection.Traversable[N], edges: collection.Traversable[E[N]]): PreCheckResult =
     eval(left, left preCreate (nodes, edges), right, right preCreate (nodes, edges))
 
-  final override def preAdd(node: N)    = eval(left, left preAdd node, right, right preAdd node)
-  final override def preAdd(edge: E[N]) = eval(left, left preAdd edge, right, right preAdd edge)
+  final override def preAdd(node: N): PreCheckResult    = eval(left, left preAdd node, right, right preAdd node)
+  final override def preAdd(edge: E[N]): PreCheckResult = eval(left, left preAdd edge, right, right preAdd edge)
 
-  final override def preAdd(elems: InParam[N, E]*) =
+  final override def preAdd(elems: InParam[N, E]*): PreCheckResult =
     eval(left, left preAdd (elems: _*), right, right preAdd (elems: _*))
 
-  final override def postAdd[G <: Graph[N, E]](newGraph: G,
-                                               passedNodes: Traversable[N],
-                                               passedEdges: Traversable[E[N]],
-                                               preCheck: PreCheckResult) =
-    eval(
-      left postAdd (newGraph, passedNodes, passedEdges, preCheck),
-      right postAdd (newGraph, passedNodes, passedEdges, preCheck))
-
-  final override def preSubtract(node: self.NodeT, forced: Boolean) =
+  final override def preSubtract(node: self.NodeT, forced: Boolean): PreCheckResult =
     eval(
       left,
       left preSubtract (node.asInstanceOf[LNodeT], forced),
       right,
       right preSubtract (node.asInstanceOf[RNodeT], forced))
 
-  final override def preSubtract(edge: self.EdgeT, simple: Boolean) =
+  final override def preSubtract(edge: self.EdgeT, simple: Boolean): PreCheckResult =
     eval(
       left,
       left preSubtract (edge.asInstanceOf[LEdgeT], simple),
       right,
       right preSubtract (edge.asInstanceOf[REdgeT], simple))
 
-  final override def preSubtract(nodes: => Set[self.NodeT], edges: => Set[self.EdgeT], simple: Boolean) =
+  final override def preSubtract(nodes: => Set[self.NodeT],
+                                 edges: => Set[self.EdgeT],
+                                 simple: Boolean): PreCheckResult =
     eval(
       left,
       left preSubtract (nodes.asInstanceOf[Set[LNodeT]], edges.asInstanceOf[Set[LEdgeT]], simple),
@@ -117,23 +112,22 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override va
       right preSubtract (nodes.asInstanceOf[Set[RNodeT]], edges.asInstanceOf[Set[REdgeT]], simple)
     )
 
-  final override def postSubtract[G <: Graph[N, E]](newGraph: G,
-                                                    passedNodes: Traversable[N],
-                                                    passedEdges: Traversable[E[N]],
-                                                    preCheck: PreCheckResult) =
+  final override def postAdd(newGraph: G @uV,
+                             passedNodes: Traversable[N],
+                             passedEdges: Traversable[E[N]],
+                             preCheck: PreCheckResult): Either[ConstraintViolation, G] =
+    eval(
+      (left postAdd (newGraph, passedNodes, passedEdges, preCheck)).asInstanceOf[Either[ConstraintViolation, G]],
+      (right postAdd (newGraph, passedNodes, passedEdges, preCheck)).asInstanceOf[Either[ConstraintViolation, G]]
+    )
+
+  final override def postSubtract(newGraph: G @uV,
+                                  passedNodes: Traversable[N],
+                                  passedEdges: Traversable[E[N]],
+                                  preCheck: PreCheckResult): Either[ConstraintViolation, G] =
     eval(
       left postSubtract (newGraph, passedNodes, passedEdges, preCheck),
       right postSubtract (newGraph, passedNodes, passedEdges, preCheck))
-
-  final override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: G) =
-    left.onAdditionRefused(refusedNodes, refusedEdges, graph) ||
-      right.onAdditionRefused(refusedNodes, refusedEdges, graph)
-
-  final override def onSubtractionRefused(refusedNodes: Traversable[G#NodeT],
-                                          refusedEdges: Traversable[G#EdgeT],
-                                          graph: G) =
-    left.onSubtractionRefused(refusedNodes, refusedEdges, graph) ||
-      right.onSubtractionRefused(refusedNodes, refusedEdges, graph)
 }
 
 /** Base class for any operation on `ConstraintCompanion`s.

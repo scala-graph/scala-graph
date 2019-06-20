@@ -41,39 +41,6 @@ trait ConstraintCompanion[+CC[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]] <: Con
   }
 }
 
-/** This template contains handler methods that are called by constrained graphs
-  * whenever a constraint has been violated.
-  *
-  * These methods must be overridden to get the handlers become active.
-  *
-  * @define HANDLERRET must be true if the handler has been overridden
-  *         but it doesn't throw an exception.
-  * @author Peter Empen
-  */
-protected trait ConstraintHandlerMethods[N, E[X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
-
-  /** This handler is called whenever an addition violates the constraints.
-    *  The provided default implementation is empty.
-    *
-    * @param refusedNodes the nodes passed to `preAdd`.
-    * @param refusedEdges the edges passed to `preAdd`.
-    * @return $HANDLERRET
-    */
-  def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: G @uV): Boolean = false
-
-  /** This handler is called whenever a subtraction violates the constraints.
-    * The provided default implementation is empty.
-    *
-    * @param refusedNodes the nodes passed to `preSubtract`.
-    * @param refusedEdges the edges passed to `preSubtract`.
-    * @return $HANDLERRET
-    */
-  def onSubtractionRefused(refusedNodes: Traversable[G#NodeT @uV],
-                           refusedEdges: Traversable[G#EdgeT @uV],
-                           graph: G @uV): Boolean =
-    false
-}
-
 /** Enumerates the possible return statuses (also: follow-up activity) of a pre-check:
   * `Abort` instructs the caller to cancel the operation because the pre-check failed;
   * `PostCheck` means that the post-check (commit) still must be called;
@@ -99,24 +66,16 @@ class PreCheckResult(val followUp: PreCheckFollowUp) {
   /** Whether `this.followUp` equals to `Abort`. */
   final def abort: Boolean = followUp == Abort
 
-  /** Whether `this.followUp` does not equal to `Abort`. */
-  final def noAbort: Boolean = !abort
-
   /** Whether `this.followUp` equals to `PostCheck`. */
   final def postCheck: Boolean = followUp == PostCheck
-
-  /** Whether `this.followUp` does not equal to `PostCheck`. */
-  final def noPostCheck: Boolean = !postCheck
 
   /** Whether `this.followUp` equals to `Complete`. */
   final def complete: Boolean = followUp == Complete
 
-  /** Whether `this.followUp` does not equal to `Complete`. */
-  final def noComplete: Boolean = !complete
-
   /** Returns a tuple of `this` and `this.followUp`. */
   final def tupled: (PreCheckResult, PreCheckFollowUp) = this match { case PreCheckResult(r, f) => (r, f) }
 }
+
 trait PreCheckResultCompanion {
   def apply(followUp: PreCheckFollowUp): PreCheckResult
 
@@ -229,21 +188,6 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
       }
     })
 
-  /** This post-check must return whether `newGraph` should be committed or the add
-    * operation is to be rolled back.
-    * $SELFGRAPH
-    * $SELFCOMMIT
-    *
-    * @param newGraph the after-addition would-be graph waiting for commit.
-    * @param passedNodes nodes passed to the running add operation
-    * @param passedEdges edges passed to the running add operation
-    * @param preCheck $PRECHECKRET
-    */
-  def postAdd[G <: Graph[N, E]](newGraph: G,
-                                passedNodes: Traversable[N],
-                                passedEdges: Traversable[E[N]],
-                                preCheck: PreCheckResult): Boolean = true
-
   /** This pre-check must return `Abort` if the subtraction of `node` is to be canceled,
     * `PostCheck` if `postSubtract` is to be called to decide or
     * `Complete` if the the `node` is allowed to be subtracted.
@@ -292,18 +236,37 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
       (nodes forall (n => !preSubtract(n, simple).abort)) &&
         (edges forall (e => !preSubtract(e, simple).abort)))
 
+  /** This post-check must return whether `newGraph` should be committed or the add
+    * operation is to be rolled back.
+    * $SELFGRAPH
+    * $SELFCOMMIT
+    *
+    * @param newGraph the after-addition would-be graph waiting for commit.
+    * @param passedNodes the normalized nodes passed to the add operation.
+    * @param passedEdges the normalized edges passed to the add operation.
+    * @param preCheck the result of `preAdd`.
+    * @return `None` to accept `newGraph` or `Some` reason for constraint violation resp. rejection
+    */
+  def postAdd(newGraph: G @uV,
+              passedNodes: Traversable[N],
+              passedEdges: Traversable[E[N]],
+              preCheck: PreCheckResult): Either[ConstraintViolation, G] = Right(newGraph)
+
   /** This post-check must return whether `newGraph` should be committed or the subtraction
     * is to be rolled back.
     * $SELFGRAPH
     * $SELFCOMMIT
     *
     * @param newGraph the after-subtraction would-be graph waiting for commit.
-    * @param preCheck $PRECHECKRET
+    * @param passedNodes the normalized nodes passed to the subtraction operation.
+    * @param passedEdges the normalized edges passed to the subtraction operation.
+    * @param preCheck the result of `preSubtract`.
+    * @return `None` to accept `newGraph` or `Some` reason for constraint violation resp. rejection
     */
-  def postSubtract[G <: Graph[N, E]](newGraph: G,
-                                     passedNodes: Traversable[N],
-                                     passedEdges: Traversable[E[N]],
-                                     preCheck: PreCheckResult): Boolean = true
+  def postSubtract(newGraph: G @uV,
+                   passedNodes: Traversable[N],
+                   passedEdges: Traversable[E[N]],
+                   preCheck: PreCheckResult): Either[ConstraintViolation, G] = Right(newGraph)
 
   /** Consolidates all outer nodes of the arguments by adding the edge ends
     *  of `passedEdges` to `passedNodes`. */
@@ -330,9 +293,7 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
   * @see ConstraintMethods
   * @author Peter Empen
   */
-trait Constrained[N, E[X] <: EdgeLikeIn[X], +G <: Graph[N, E]]
-    extends ConstraintMethods[N, E, G]
-    with ConstraintHandlerMethods[N, E, G]
+trait Constrained[N, E[X] <: EdgeLikeIn[X], +G <: Graph[N, E]] extends ConstraintMethods[N, E, G]
 
 /** Template to be implemented and passed to a dynamically constrained graph class
   * by the user. Note that mutable state will be lost on any operation yielding a
@@ -344,8 +305,7 @@ trait Constrained[N, E[X] <: EdgeLikeIn[X], +G <: Graph[N, E]]
   * @author Peter Empen
   */
 abstract class Constraint[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
-    extends ConstraintMethods[N, E, G]
-    with ConstraintHandlerMethods[N, E, G] {
+    extends ConstraintMethods[N, E, G] {
 
   /** Creates a new constraint of the type `ConstraintBinaryOp` with pre- and post-check methods
     * each of which returning `true` if both `this`' ''and'' `that`'s corresponding

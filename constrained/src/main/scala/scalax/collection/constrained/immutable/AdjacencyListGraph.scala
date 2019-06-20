@@ -4,17 +4,16 @@ package immutable
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.language.{higherKinds, postfixOps}
 
-import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, OuterEdge, OuterNode}
+import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.immutable.{AdjacencyListGraph => SimpleAdjacencyListGraph}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
-
 import config.GenConstrainedConfig
 import PreCheckFollowUp._
 
 trait AdjacencyListGraph[
     N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
-    extends GraphLike[N, E, This]
-    with SimpleAdjacencyListGraph[N, E, This] { this: This[N, E] =>
+    extends SimpleAdjacencyListGraph[N, E, This]
+    with GraphLike[N, E, This] { this: This[N, E] =>
 
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
 
@@ -27,29 +26,21 @@ trait AdjacencyListGraph[
                            preAdd: => PreCheckResult,
                            copy: => This[N, E] @uV,
                            nodes: => Traversable[N],
-                           edges: => Traversable[E[N]]): This[N, E] =
-    if (checkSuspended)
-      copy
+                           edges: => Traversable[E[N]]): Either[ConstraintViolation, This[N, E]] =
+    if (checkSuspended) Right(copy)
+    else if (contained) Right(this)
     else {
-      var graph = this
-      if (!contained) {
-        var handle         = false
-        val preCheckResult = preAdd
-        preCheckResult.followUp match {
-          case Complete => graph = copy
-          case PostCheck =>
-            graph = copy
-            if (!postAdd(graph, nodes, edges, preCheckResult)) {
-              handle = true
-              graph = this
-            }
-          case Abort => handle = true
-        }
-        if (handle) onAdditionRefused(nodes, edges, this)
+      val preCheckResult = preAdd
+      preCheckResult.followUp match {
+        case Complete  => Right(copy)
+        case PostCheck => postAdd(copy, nodes, edges, preCheckResult)
+        case Abort     => Left(constraintViolation(preCheckResult))
       }
-      graph
     }
-  override def +(node: N) =
+
+  def copy_?(nodes: Traversable[N], edges: Traversable[E[N]]): Either[ConstraintViolation, This[N, E]]
+
+  def +?(node: N): Either[ConstraintViolation, This[N, E]] =
     checkedAdd(
       contained = nodes contains Node(node),
       preAdd = preAdd(node),
@@ -57,7 +48,9 @@ trait AdjacencyListGraph[
       nodes = Set(node),
       edges = Set.empty[E[N]])
 
-  override protected def +#(edge: E[N]) =
+  final override protected def +#(edge: E[N]): This[N, E] = +#?(edge) getOrElse this
+
+  protected def +#?(edge: E[N]): Either[ConstraintViolation, This[N, E]] =
     checkedAdd(
       contained = edges contains Edge(edge),
       preAdd = preAdd(edge),
@@ -66,43 +59,40 @@ trait AdjacencyListGraph[
       edges = Set(edge))
 
   /** generic constrained subtraction of nodes */
-  protected def checkedSubtractNode[G >: This[N, E]](node: N, forced: Boolean, copy: (N, NodeT) => G): This[N, E] =
+  protected def checkedSubtractNode(node: N,
+                                    forced: Boolean,
+                                    copy: (N, NodeT) => This[N, E] @uV): Either[ConstraintViolation, This[N, E]] =
     nodes find node map { innerNode =>
-      def subtract = copy(node, innerNode).asInstanceOf[This[N, E]]
+      def subtract = copy(node, innerNode)
       if (checkSuspended)
-        copy(node, innerNode).asInstanceOf[This[N, E]]
+        Right(copy(node, innerNode))
       else {
-        var graph          = this
-        var handle         = false
         val preCheckResult = preSubtract(innerNode.asInstanceOf[self.NodeT], forced)
         preCheckResult.followUp match {
-          case Complete => graph = subtract
-          case PostCheck =>
-            graph = subtract
-            if (!postSubtract(graph, Set(node), Set.empty[E[N]], preCheckResult)) {
-              handle = true
-              graph = this
-            }
-          case Abort => handle = true
+          case Complete  => Right(subtract)
+          case PostCheck => postSubtract(subtract, Set(node), Set.empty[E[N]], preCheckResult)
+          case Abort     => Left(constraintViolation(preCheckResult))
         }
-        if (handle) onSubtractionRefused(Set(innerNode), Set.empty[EdgeT], graph)
-        graph
       }
-    } getOrElse this
-  override def -(n: N) = checkedSubtractNode(
+    } getOrElse Right(this)
+
+  def -?(n: N): Either[ConstraintViolation, This[N, E]] = checkedSubtractNode(
     n,
-    true,
-    (outeNode: N, innerNode: NodeT) =>
-      copy(nodes.toOuter.toBuffer -= outeNode, edges.toOuter.toBuffer --= (innerNode.edges map (_.toOuter))))
-  override def -?(n: N) = checkedSubtractNode(
+    forced = true,
+    (outerNode: N, innerNode: NodeT) =>
+      copy(nodes.toOuter.toBuffer -= outerNode, edges.toOuter.toBuffer --= (innerNode.edges map (_.toOuter))))
+
+  final override def minusIsolated(n: N): This[N, E] = minusIsolated_?(n) getOrElse this
+
+  def minusIsolated_?(n: N): Either[ConstraintViolation, This[N, E]] = checkedSubtractNode(
     n,
-    false,
+    forced = false,
     (outerNode: N, innerNode: NodeT) => {
       var newNodes = nodes.toOuter.toBuffer
       var newEdges = edges.toOuter.toBuffer
       nodes.subtract(
         innerNode,
-        false,
+        rippleDelete = false,
         innerNode => newNodes -= outerNode,
         innerNode => newEdges --= (innerNode.edges map (_.toOuter)))
       copy(newNodes, newEdges)
@@ -110,37 +100,34 @@ trait AdjacencyListGraph[
   )
 
   /** generic constrained subtraction of edges */
-  protected def checkedSubtractEdge[G >: This[N, E]](edge: E[N],
-                                                     simple: Boolean,
-                                                     copy: (E[N], EdgeT) => G): This[N, E] =
+  protected def checkedSubtractEdge(edge: E[N],
+                                    simple: Boolean,
+                                    copy: (E[N], EdgeT) => This[N, E] @uV): Either[ConstraintViolation, This[N, E]] =
     edges find edge map { innerEdge =>
-      def subtract = copy(edge, innerEdge).asInstanceOf[This[N, E]]
-      if (checkSuspended) subtract
+      def subtract = copy(edge, innerEdge)
+      if (checkSuspended) Right(subtract)
       else {
-        var graph          = this
-        var handle         = false
         val preCheckResult = preSubtract(innerEdge.asInstanceOf[self.EdgeT], simple)
         preCheckResult.followUp match {
-          case Complete => graph = subtract
-          case PostCheck =>
-            graph = subtract
-            if (!postSubtract(graph, Set.empty[N], Set(edge), preCheckResult)) {
-              handle = true
-              graph = this
-            }
-          case Abort => handle = true
+          case Complete  => Right(subtract)
+          case PostCheck => postSubtract(subtract, Set.empty[N], Set(edge), preCheckResult)
+          case Abort     => Left(constraintViolation(preCheckResult))
         }
-        if (handle) onSubtractionRefused(Set.empty[This[N, E]#NodeT], Set(innerEdge), graph)
-        graph
       }
-    } getOrElse this
-  override protected def -#(e: E[N]) = checkedSubtractEdge(
+    } getOrElse Right(this)
+
+  final override protected def -#(e: E[N]): This[N, E] = -#?(e) getOrElse this
+
+  protected def -#?(e: E[N]): Either[ConstraintViolation, This[N, E]] = checkedSubtractEdge(
     e,
-    true,
+    simple = true,
     (outerEdge: E[N], innerEdge: EdgeT) => copy(nodes.toOuter, edges.toOuter.toBuffer -= outerEdge))
-  override protected def -!#(e: E[N]) = checkedSubtractEdge(
+
+  final override protected def -!#(e: E[N]): This[N, E] = -!#?(e) getOrElse this
+
+  protected def -!#?(e: E[N]): Either[ConstraintViolation, This[N, E]] = checkedSubtractEdge(
     e,
-    false,
+    simple = false,
     (outerEdge: E[N], innerEdge: EdgeT) =>
       copy(nodes.toOuter.toBuffer --= innerEdge.privateNodes map (n => n.value), edges.toOuter.toBuffer -= e))
 }

@@ -58,7 +58,7 @@ final class EditingTest extends RefSpec with Matchers {
       g - 0 shouldBe g
       g - 1 shouldBe Graph(2, 3, 2 ~ 3)
       g - 2 shouldBe Graph(1, 3)
-      g -? 2 shouldBe g
+      g minusIsolated 2 shouldBe g
       g - 2 ~ 3 shouldBe Graph(1, 2, 3)
       g -! 2 ~ 3 shouldBe Graph(1)
       g -- List[Param[Int, UnDiEdge]](2, 3 ~ 3) shouldBe Graph(1, 3)
