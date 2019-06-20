@@ -180,7 +180,7 @@ object Graph extends MutableGraphCompanion[Graph] {
 
   override protected[collection] def fromWithoutCheck[N, E[X] <: EdgeLikeIn[X]](
       nodes: Traversable[N],
-      edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]], config: Config): DefaultGraphImpl[N, E] =
+      edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]], config: Config): Graph[N, E] =
     DefaultGraphImpl.fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
 
   override def from[N, E[X] <: EdgeLikeIn[X]](nodes: Traversable[N], edges: Traversable[E[N]])(
@@ -229,8 +229,8 @@ abstract class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[
 }
 
 object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
-  override def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config) =
-    from(Set.empty[N], Set.empty[E[N]])(edgeT, config)
+  override def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config): DefaultGraphImpl[N, E] =
+    fromWithoutCheck(Set.empty, Set.empty)(edgeT, config)
 
   override protected[collection] def fromWithoutCheck[N, E[X] <: EdgeLikeIn[X]](
       nodes: Traversable[N],
@@ -261,8 +261,6 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
       }
     }
   }
-
-  // TODO canBuildFrom
 }
 
 @SerialVersionUID(7701L)
