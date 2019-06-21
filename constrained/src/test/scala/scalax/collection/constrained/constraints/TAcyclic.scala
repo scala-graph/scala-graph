@@ -78,11 +78,11 @@ object AcyclicWithException {
   object Acyclic extends ConstraintCompanion[Acyclic] {
     def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G): Acyclic[N, E, G] =
       new Acyclic[N, E, G](self) {
-        override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: G @uV) =
-          throw new CycleException(
-            "Addition refused: " +
-              "nodes = " + refusedNodes + ", " +
-              "edges = " + refusedEdges)
+//        override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: G @uV) =
+//          throw new CycleException(
+//            "Addition refused: " +
+//              "nodes = " + refusedNodes + ", " +
+//              "edges = " + refusedEdges)
       }
   }
   class CycleException(msg: String) extends IllegalArgumentException(msg)
