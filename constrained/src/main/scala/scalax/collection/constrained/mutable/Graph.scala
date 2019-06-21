@@ -93,9 +93,17 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
       preAdd = preAdd(node),
       copy = clone += node,
       nodes = Set(node),
-      edges = Set.empty[E[N]])
+      edges = Set.empty)
 
-  final protected def +#?(e: E[N]): Either[ConstraintViolation, This[N, E]] = ??? //clone +=#? edge
+  final override protected def +#(e: E[N]): This[N, E] = +#?(e) getOrElse this
+
+  final protected def +#?(e: E[N]): Either[ConstraintViolation, This[N, E]] =
+    checkedAdd(
+      contained = edges contains Edge(e),
+      preAdd = preAdd(e),
+      copy = clone +=# e,
+      nodes = Set.empty,
+      edges = Set(e))
 
   def ++=?(elems: TraversableOnce[Param[N, E]]): Either[ConstraintViolation, this.type] = {
     def add: this.type = withoutChecks { super.++=(elems) }
@@ -137,6 +145,8 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
   }
 
   final def -?(node: N): Either[ConstraintViolation, This[N, E]] = ??? //clone -=_? node
+
+  final override protected def -#(e: E[N]): This[N, E] = +#?(e) getOrElse this
 
   final protected def -#?(e: E[N]): Either[ConstraintViolation, This[N, E]] = ??? // clone -=#? edge
 

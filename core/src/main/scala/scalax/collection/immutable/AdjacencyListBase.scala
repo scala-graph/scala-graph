@@ -212,10 +212,10 @@ trait AdjacencyListBase[
       def eq(inner: NodeT, outer: N) = inner.value == outer
       coll.findElem[N](elem, eq)
     }
-    @inline final def contains(node: NodeT)     = coll contains node
-    @inline final def iterator: Iterator[NodeT] = coll.iterator
-    @inline final override def size: Int        = coll.size
-    @inline final def draw(random: Random)      = coll draw random
+    @inline final def contains(node: NodeT): Boolean = coll contains node
+    @inline final def iterator: Iterator[NodeT]      = coll.iterator
+    @inline final override def size: Int             = coll.size
+    @inline final def draw(random: Random): NodeT    = coll draw random
     @inline final def findElem[B](toMatch: B, correspond: (NodeT, B) => Boolean): NodeT =
       coll findElem (toMatch, correspond)
     protected[collection] def +=(edge: EdgeT): this.type
@@ -226,8 +226,6 @@ trait AdjacencyListBase[
 
   type EdgeSetT <: EdgeSet
   trait EdgeSet extends super.EdgeSet {
-    protected[AdjacencyListBase] def addEdge(edge: EdgeT): Unit
-
     final override def contains(node: NodeT): Boolean = nodes find node exists (_.edges.nonEmpty)
 
     final override def find(elem: E[N]): Option[EdgeT] = nodes find elem._1 flatMap (_.edges find (_.edge == elem))

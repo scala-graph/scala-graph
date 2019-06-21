@@ -48,15 +48,15 @@ trait AdjacencyListGraph[
       nodes = Set(node),
       edges = Set.empty[E[N]])
 
-  final override protected def +#(edge: E[N]): This[N, E] = +#?(edge) getOrElse this
+  final override protected def +#(e: E[N]): This[N, E] = +#?(e) getOrElse this
 
-  protected def +#?(edge: E[N]): Either[ConstraintViolation, This[N, E]] =
+  protected def +#?(e: E[N]): Either[ConstraintViolation, This[N, E]] =
     checkedAdd(
-      contained = edges contains Edge(edge),
-      preAdd = preAdd(edge),
-      copy = copy(nodes.toOuter, edges.toOuter.toBuffer += edge),
+      contained = edges contains Edge(e),
+      preAdd = preAdd(e),
+      copy = copy(nodes.toOuter, edges.toOuter.toBuffer += e),
       nodes = Set.empty[N],
-      edges = Set(edge))
+      edges = Set(e))
 
   /** generic constrained subtraction of nodes */
   protected def checkedSubtractNode(node: N,

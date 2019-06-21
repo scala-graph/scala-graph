@@ -32,7 +32,7 @@ trait AdjacencyListGraph[
         true
       } else false
 
-    protected[AdjacencyListGraph] def upsert(edge: EdgeT): Boolean = {
+    protected[collection] def upsert(edge: EdgeT): Boolean = {
       val inserted = edges upsert edge
       if (selfGraph.edges.initialized) addDiSuccOrHook(edge)
       inserted
@@ -46,63 +46,44 @@ trait AdjacencyListGraph[
 
     final def diSuccessors: Set[NodeT] = new immutable.EqSet(diSucc)
 
-    protected[AdjacencyListGraph] def remove(edge: EdgeT): Boolean =
+    protected[collection] def remove(edge: EdgeT): Boolean =
       if (edges.remove(edge)) {
         if (selfGraph.edges.initialized) {
 
-          def onLooping: Unit =
+          def onLooping(): Unit =
             edges.find((e: EdgeT) => e.isLooping).fold(ifEmpty = _aHook = None)((e: EdgeT) => _aHook = Some(this -> e))
 
-          def onNonLooping: Unit = edge withTargets (t =>
+          def onNonLooping(): Unit = edge withTargets (t =>
             edges
               .find((e: EdgeT) => e.hasTarget((n: NodeT) => n eq t))
               .fold[Unit](ifEmpty = diSucc remove t)((e: EdgeT) => if (e hasSource this) diSucc put (t, e)))
 
           if (edge.isHyperEdge)
             if (edge.isLooping) {
-              onLooping
-              onNonLooping
-            } else onNonLooping
-          else if (edge.isLooping) onLooping
-          else onNonLooping
+              onLooping()
+              onNonLooping()
+            } else onNonLooping()
+          else if (edge.isLooping) onLooping()
+          else onNonLooping()
         }
         true
       } else false
   }
 
-  type NodeSetT = NodeSet
-  class NodeSet extends super[GraphLike].NodeSet with super.NodeSet {
-    override def add(node: NodeT)                = coll add node
-    @inline final def +=(node: NodeT): this.type = { add(node); this }
+  type NodeSetT <: NodeSet
+  trait NodeSet extends super[GraphLike].NodeSet with super.NodeSet {
+    protected[collection] def add(edge: EdgeT): Boolean
+    protected[collection] def upsert(edge: EdgeT): Boolean
+    protected[collection] def remove(edge: EdgeT): Boolean
 
-    protected[collection] def add(edge: EdgeT): Boolean = {
-      var someNew = false
-      edge foreach { n =>
-        val inColl = coll findElem n getOrElse { coll += n; n }
-        someNew = (inColl add edge) || someNew
-      }
-      someNew
-    }
+    @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
+    @inline final def +=(node: NodeT): this.type                       = { add(node); this }
 
-    protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
+    @inline final protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }
 
-    protected[collection] def upsert(edge: EdgeT): Boolean = {
-      var someNew = false
-      edge foreach { n =>
-        val inColl = coll findElem n getOrElse { coll += n; n }
-        someNew = (inColl upsert edge) || someNew
-      }
-      someNew
-    }
-
-    protected[collection] def remove(edge: EdgeT): Boolean =
-      edge.nodes.toSet forall (n => (coll findElem n) exists (_ remove edge))
-
-    protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }
-    override protected def minus(node: NodeT): Unit      = coll -= node
-    override protected def minusEdges(node: NodeT): Unit =
-      // toList is necessary to avoid failure of -=(node) like in TEdit.test_MinusEq_2
-      edges --= node.edges.toList
+    final protected def minus(node: NodeT): Unit = coll -= node
+    final protected def minusEdges(node: NodeT): Unit =
+      edges --= node.edges.toList // toList is necessary to avoid failure of -=(node) like in TEdit.test_MinusEq_2
   }
   override def nodes: NodeSetT
 
@@ -114,7 +95,7 @@ trait AdjacencyListGraph[
   class EdgeImpl(override val edge: E[NodeT]) extends EdgeBase(edge) {
     def remove: Boolean = edges remove this
 
-    def removeWithNodes(edge: E[N]) =
+    def removeWithNodes(edge: E[N]): Boolean =
       if (edges remove this) {
         selfGraph.nodes --= privateNodes; true
       } else false
@@ -134,24 +115,15 @@ trait AdjacencyListGraph[
       initialized = true
     }
 
-    override def add(edge: EdgeT): Boolean =
-      if (nodes add edge) statistics(edge, plus = true) else false
+    final override def add(edge: EdgeT): Boolean    = if (nodes add edge) statistics(edge, plus = true) else false
+    final def upsert(edge: EdgeT): Boolean          = if (nodes upsert edge) statistics(edge, plus = true) else false
+    final override def remove(edge: EdgeT): Boolean = if (nodes remove edge) statistics(edge, plus = false) else false
 
-    @inline final protected[collection] def addEdge(edge: EdgeT): Unit = add(edge)
-
-    def upsert(edge: EdgeT): Boolean =
-      if (nodes upsert edge) statistics(edge, plus = true) else false
-
-    override def remove(edge: EdgeT): Boolean =
-      if (nodes remove edge) statistics(edge, plus = false) else false
-
-    def removeWithNodes(edge: EdgeT) = {
-      val privateNodes = edge.privateNodes
+    def removeWithNodes(edge: EdgeT): Boolean =
       if (remove(edge)) {
-        nodes --= privateNodes
+        nodes --= edge.privateNodes
         true
       } else false
-    }
 
     @inline final override def maxArity: Int = super.maxArity
   }

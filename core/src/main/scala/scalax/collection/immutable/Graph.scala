@@ -15,6 +15,8 @@ import generic.ImmutableGraphCompanion
 import config.AdjacencyListArrayConfig
 import mutable.{ArraySet, GraphBuilder}
 
+/** The main trait for immutable graphs bundling functionality that is not specific to graph representation.
+  */
 trait Graph[N, E[X] <: EdgeLikeIn[X]] extends CommonGraph[N, E] with GraphLike[N, E, Graph] {
   override def empty: Graph[N, E] = Graph.empty[N, E]
 }
@@ -57,6 +59,14 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[
   override protected[this] def newBuilder                                  = new GraphBuilder[N, E, DefaultGraphImpl](DefaultGraphImpl)
   final override def empty: DefaultGraphImpl[N, E]                         = DefaultGraphImpl.empty[N, E]
   final override def copy(nodes: Traversable[N], edges: Traversable[E[N]]) = DefaultGraphImpl.from[N, E](nodes, edges)
+
+  final protected def +#(e: E[N]): DefaultGraphImpl[N, E] =
+    if (edges contains Edge(e)) this
+    else copy(nodes.toOuter, edges.toOuter.toBuffer += e)
+
+  protected def -#(e: E[N]): DefaultGraphImpl[N, E] =
+    if (edges contains Edge(e)) copy(nodes.toOuter, edges.toOuter.toBuffer -= e)
+    else this
 
   @SerialVersionUID(7170L)
   final protected class NodeBase(value: N, hints: ArraySet.Hints)

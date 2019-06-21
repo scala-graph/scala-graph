@@ -89,13 +89,9 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
   trait NodeSet extends MutableSet[NodeT] with super.NodeSet {
     @inline final override def -=(node: NodeT): this.type = { remove(node); this }
     @inline final def -?=(node: NodeT): this.type         = { removeGently(node); this }
-    @inline final def -?(node: NodeT) = {
-      val c = copy
-      c subtract (node, false, minus, (NodeT) => {})
-      c
-    }
-    override def remove(node: NodeT) = subtract(node, true, minus, minusEdges)
-    def removeGently(node: NodeT)    = subtract(node, false, minus, minusEdges)
+
+    override def remove(node: NodeT): Boolean = subtract(node, true, minus, minusEdges)
+    def removeGently(node: NodeT): Boolean    = subtract(node, false, minus, minusEdges)
 
     /** removes all incident edges of `node` from the edge set leaving the node set unchanged.
       *
@@ -140,8 +136,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
     * @param edge the edge to add.
     * @return the inner edge containing the added edge.
     */
-  @inline final def addAndGet(edge: E[N]): EdgeT         = { add(edge); find(edge).get }
-  @inline final protected def +#(edge: E[N]): This[N, E] = clone +=# edge
+  @inline final def addAndGet(edge: E[N]): EdgeT = { add(edge); find(edge).get }
   protected def +=#(edge: E[N]): this.type
   def +=(elem: Param[N, E]): this.type =
     elem match {
@@ -172,7 +167,6 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
   @inline final protected def -=#(edge: E[N]): this.type  = { remove(edge); this }
   @inline final protected def -!=#(edge: E[N]): this.type = { removeWithNodes(edge); this }
   @inline final def -!(edge: E[N])                        = clone -!=# edge
-  @inline protected def -#(edge: E[N])                    = clone -=# edge
   @inline final protected def -!#(edge: E[N])             = clone -!=# edge
   @inline final def removeWithNodes(edge: E[N])           = edges removeWithNodes Edge(edge)
 
@@ -213,8 +207,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
   @inline final def --!=(coll: Iterable[Param[N, E]]): This[N, E] = (this /: coll)(_ -!= _)
 }
 
-/** The main trait for mutable graphs bundling the functionality of traits concerned with
-  * specific aspects.
+/** The main trait for mutable graphs bundling functionality that is not specific to graph representation.
   *
   * @tparam N the type of the nodes (vertices) in this graph.
   * @tparam E the kind of the edges in this graph.
@@ -239,6 +232,7 @@ object Graph extends MutableGraphCompanion[Graph] {
     new GraphCanBuildFrom[N, E]()(edgeT, config)
       .asInstanceOf[GraphCanBuildFrom[N, E] with CanBuildFrom[Graph[_, UnDiEdge], Param[N, E], Graph[N, E]]]
 }
+
 @SerialVersionUID(74L)
 class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[N](),
                                                  iniEdges: Traversable[E[N]] = Set[E[N]]())(
@@ -250,6 +244,21 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[
   final override val graphCompanion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
+  type NodeSetT = NodeSet
+  class NodeSet extends super.NodeSet {
+    @inline final override def add(node: NodeT): Boolean   = coll add node
+    protected[collection] def add(edge: EdgeT): Boolean    = fold(edge, (_: NodeT).add)
+    protected[collection] def upsert(edge: EdgeT): Boolean = fold(edge, (_: NodeT).upsert)
+
+    private def fold(edge: EdgeT, op: NodeT => EdgeT => Boolean): Boolean =
+      edge.foldLeft(false) {
+        case (cum, n) =>
+          op(coll findElem n getOrElse { coll += n; n })(edge) || cum
+      }
+
+    protected[collection] def remove(edge: EdgeT): Boolean =
+      edge.nodes.toSet forall (n => (coll findElem n) exists (_ remove edge))
+  }
   @inline final protected def newNodeSet: NodeSetT = new NodeSet
   @transient private[this] var _nodes: NodeSetT    = newNodeSet
   @inline final override def nodes                 = _nodes
@@ -262,6 +271,9 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[
   override protected[this] def newBuilder          = new GraphBuilder[N, E, DefaultGraphImpl](DefaultGraphImpl)
   final override def empty: DefaultGraphImpl[N, E] = DefaultGraphImpl.empty[N, E]
   final override def clone: this.type              = super.clone.asInstanceOf[this.type]
+
+  @inline final protected def +#(edge: E[N]): DefaultGraphImpl[N, E] = clone +=# edge
+  @inline protected def -#(edge: E[N]): DefaultGraphImpl.this.type   = clone -=# edge
 
   @SerialVersionUID(7370L)
   final protected class NodeBase(value: N, hints: ArraySet.Hints)

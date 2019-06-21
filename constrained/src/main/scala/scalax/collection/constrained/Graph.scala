@@ -75,7 +75,7 @@ trait GraphLike[N,
 
   protected def +#?(e: E[N]): Either[ConstraintViolation, This[N, E]]
 
-  def ++?[A](elems: GenTraversableOnce[Param[N, E]]): Either[ConstraintViolation, This[N, E]] = {
+  def ++?(elems: GenTraversableOnce[Param[N, E]]): Either[ConstraintViolation, This[N, E]] = {
     val (outerNodes, outerEdges, preCheckResult) = {
       val it = elems match {
         case x: Iterable[Param[N, E]]        => x

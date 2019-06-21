@@ -30,8 +30,18 @@ trait AdjacencyListGraph[
     super.initialize(nodes, edges)
   }
 
+  type NodeSetT = NodeSet
   @SerialVersionUID(8083L)
   class NodeSet extends super[AdjacencyListGraph].NodeSet with super.NodeSet {
+    final protected[collection] def add(edge: EdgeT): Boolean    = ??? // fold(edge, (_: NodeT).add)
+    final protected[collection] def upsert(edge: EdgeT): Boolean = ??? //fold(edge, (_: NodeT).upsert)
+    final protected[collection] def remove(edge: EdgeT): Boolean = ??? //edge.nodes.toSet forall (n => (coll findElem n) exists (_ remove edge))
+
+    private def fold(edge: EdgeT, op: NodeT => EdgeT => Boolean): Boolean =
+      edge.foldLeft(false) {
+        case (cum, n) =>
+          op(coll findElem n getOrElse { coll += n; n })(edge) || cum
+      }
 
     final override def add(node: NodeT): Boolean = add_?(node) getOrElse false
 
@@ -45,7 +55,7 @@ trait AdjacencyListGraph[
           case Complete => Right(doAdd)
           case PostCheck =>
             doAdd
-            postAdd(AdjacencyListGraph.this, Set(node.value), Set.empty[E[N]], preCheckResult).fold(
+            postAdd(AdjacencyListGraph.this, Set(node.value), Set.empty, preCheckResult).fold(
               { failure =>
                 withoutChecks(coll -= node)
                 Left(failure)
@@ -60,8 +70,6 @@ trait AdjacencyListGraph[
 
   @SerialVersionUID(8084L)
   class EdgeSet extends super.EdgeSet {
-
-    final override def add(edge: EdgeT): Boolean = add_?(edge) getOrElse false
 
     def add_?(edge: EdgeT): Either[ConstraintViolation, Boolean] = {
       def added = super.add(edge)
@@ -104,8 +112,6 @@ trait AdjacencyListGraph[
           case Abort => Left(constraintViolation(preCheckResult))
         }
       }
-
-    final override def remove(edge: EdgeT): Boolean = remove_?(edge) getOrElse false
 
     def remove_?(edge: EdgeT): Either[ConstraintViolation, Boolean] = checkedRemove(edge, forced = false, super.remove)
 
