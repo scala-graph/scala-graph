@@ -126,8 +126,9 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
     * @return inner node containing the added node.
     */
   @inline final def addAndGet(node: N): NodeT = { add(node); find(node).get }
-  def +(node: N) = if (nodes contains Node(node)) this.asInstanceOf[This[N, E]]
-  else clone += node
+  def +(node: N) =
+    if (nodes contains Node(node)) this.asInstanceOf[This[N, E]]
+    else clone += node
   @inline final def +=(node: N): this.type = { add(node); this }
   def add(edge: E[N]): Boolean
 
@@ -244,21 +245,6 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[
   final override val graphCompanion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
-  type NodeSetT = NodeSet
-  class NodeSet extends super.NodeSet {
-    @inline final override def add(node: NodeT): Boolean   = coll add node
-    protected[collection] def add(edge: EdgeT): Boolean    = fold(edge, (_: NodeT).add)
-    protected[collection] def upsert(edge: EdgeT): Boolean = fold(edge, (_: NodeT).upsert)
-
-    private def fold(edge: EdgeT, op: NodeT => EdgeT => Boolean): Boolean =
-      edge.foldLeft(false) {
-        case (cum, n) =>
-          op(coll findElem n getOrElse { coll += n; n })(edge) || cum
-      }
-
-    protected[collection] def remove(edge: EdgeT): Boolean =
-      edge.nodes.toSet forall (n => (coll findElem n) exists (_ remove edge))
-  }
   @inline final protected def newNodeSet: NodeSetT = new NodeSet
   @transient private[this] var _nodes: NodeSetT    = newNodeSet
   @inline final override def nodes                 = _nodes

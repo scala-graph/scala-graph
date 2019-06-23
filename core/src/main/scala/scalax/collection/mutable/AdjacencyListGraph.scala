@@ -70,11 +70,20 @@ trait AdjacencyListGraph[
       } else false
   }
 
-  type NodeSetT <: NodeSet
-  trait NodeSet extends super[GraphLike].NodeSet with super.NodeSet {
-    protected[collection] def add(edge: EdgeT): Boolean
-    protected[collection] def upsert(edge: EdgeT): Boolean
-    protected[collection] def remove(edge: EdgeT): Boolean
+  type NodeSetT = NodeSet
+  class NodeSet extends super[GraphLike].NodeSet with super.NodeSet {
+    @inline override def add(node: NodeT): Boolean         = coll add node
+    protected[collection] def add(edge: EdgeT): Boolean    = fold(edge, (_: NodeT).add)
+    protected[collection] def upsert(edge: EdgeT): Boolean = fold(edge, (_: NodeT).upsert)
+
+    private def fold(edge: EdgeT, op: NodeT => EdgeT => Boolean): Boolean =
+      edge.foldLeft(false) {
+        case (cum, n) =>
+          op(coll findElem n getOrElse { coll += n; n })(edge) || cum
+      }
+
+    protected[collection] def remove(edge: EdgeT): Boolean =
+      edge.nodes.toSet forall (n => (coll findElem n) exists (_ remove edge))
 
     @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
     @inline final def +=(node: NodeT): this.type                       = { add(node); this }
@@ -115,9 +124,9 @@ trait AdjacencyListGraph[
       initialized = true
     }
 
-    final override def add(edge: EdgeT): Boolean    = if (nodes add edge) statistics(edge, plus = true) else false
-    final def upsert(edge: EdgeT): Boolean          = if (nodes upsert edge) statistics(edge, plus = true) else false
-    final override def remove(edge: EdgeT): Boolean = if (nodes remove edge) statistics(edge, plus = false) else false
+    override def add(edge: EdgeT): Boolean    = if (nodes add edge) statistics(edge, plus = true) else false
+    final def upsert(edge: EdgeT): Boolean    = if (nodes upsert edge) statistics(edge, plus = true) else false
+    override def remove(edge: EdgeT): Boolean = if (nodes remove edge) statistics(edge, plus = false) else false
 
     def removeWithNodes(edge: EdgeT): Boolean =
       if (remove(edge)) {

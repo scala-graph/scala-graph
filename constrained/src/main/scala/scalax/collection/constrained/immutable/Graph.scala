@@ -118,7 +118,7 @@ class UserConstrainedGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N
   final override val constraintFactory = config.constraintCompanion
   final override val constraint        = constraintFactory(this)
 
-  final override def copy(nodes: Traversable[N], edges: Traversable[E[N]]): DefaultGraphImpl[N, E] =
+  final protected def copy(nodes: Traversable[N], edges: Traversable[E[N]]): DefaultGraphImpl[N, E] =
     copy_?(nodes, edges) getOrElse empty
 
   def copy_?(nodes: Traversable[N], edges: Traversable[E[N]]): Either[ConstraintViolation, DefaultGraphImpl[N, E]] =

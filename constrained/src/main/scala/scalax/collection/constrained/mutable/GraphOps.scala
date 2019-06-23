@@ -25,19 +25,13 @@ trait GraphOps[
   /** Same as `+=` but $Info. */
   def +=?(node: N): Either[ConstraintViolation, This[N, E]] = ???
 
-  final override def +=(elem: Param[N, E]): this.type = +=?(elem) getOrElse this
-
   /** Same as `+=` but $Info. */
   def +=?(elem: Param[N, E]): Either[ConstraintViolation, this.type] = ???
 
   protected def +=#?(edge: E[N]): Either[ConstraintViolation, this.type] = ???
 
-  final override def ++=(elems: TraversableOnce[Param[N, E]]): this.type = ++=?(elems) getOrElse this
-
   /** Same as `++=` but $Info. */
   def ++=?(elems: TraversableOnce[Param[N, E]]): Either[ConstraintViolation, this.type]
-
-  final override def remove(node: N): Boolean = remove_?(node) getOrElse false
 
   /** Same as `remove` but $Info. */
   def remove_?(node: N): Either[ConstraintViolation, Boolean] = ???
@@ -45,14 +39,10 @@ trait GraphOps[
   /** Same as `-=` but $Info. */
   def -=?(node: N): Either[ConstraintViolation, This[N, E]] = ???
 
-  final override def -=(elem: Param[N, E]): this.type = -=?(elem) getOrElse this
-
   /** Same as `-=` but $Info. */
   def -=?(elem: Param[N, E]): Either[ConstraintViolation, this.type] = ???
 
   protected def -=#?(edge: E[N]): Either[ConstraintViolation, this.type] = ???
-
-  final override def --=(elems: TraversableOnce[Param[N, E]]): this.type = --=?(elems) getOrElse this
 
   /** Same as `--=` but $Info. */
   def --=?(elems: TraversableOnce[Param[N, E]]): Either[ConstraintViolation, this.type]

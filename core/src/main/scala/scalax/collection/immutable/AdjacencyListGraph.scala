@@ -73,7 +73,7 @@ trait AdjacencyListGraph[
   }
   override def edges: EdgeSetT
 
-  def copy(nodes: Traversable[N], edges: Traversable[E[N]]): This[N, E]
+  protected def copy(nodes: Traversable[N], edges: Traversable[E[N]]): This[N, E]
 
   def +(n: N) =
     if (nodes contains Node(n)) this

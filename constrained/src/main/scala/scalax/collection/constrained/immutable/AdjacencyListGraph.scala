@@ -40,6 +40,8 @@ trait AdjacencyListGraph[
 
   def copy_?(nodes: Traversable[N], edges: Traversable[E[N]]): Either[ConstraintViolation, This[N, E]]
 
+  override def +(node: N): This[N, E] = +?(node) getOrElse this
+
   def +?(node: N): Either[ConstraintViolation, This[N, E]] =
     checkedAdd(
       contained = nodes contains Node(node),

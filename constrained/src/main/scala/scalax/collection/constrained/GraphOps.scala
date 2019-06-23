@@ -18,8 +18,6 @@ trait GraphOps[
     +This[X, Y[X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[Param[X, Y]] with Graph[X, Y]
 ] { _: This[N, E] with SimpleGraphLike[N, E, This] with GraphOps[N, E, This] =>
 
-  final override def +(node: N): This[N, E] = +?(node) getOrElse this
-
   /** Same as `+` but $Info. */
   def +?(node: N): Either[ConstraintViolation, This[N, E]]
 

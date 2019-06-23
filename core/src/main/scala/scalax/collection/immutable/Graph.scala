@@ -56,9 +56,9 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[
 
   initialize(iniNodes, iniEdges)
 
-  override protected[this] def newBuilder                                  = new GraphBuilder[N, E, DefaultGraphImpl](DefaultGraphImpl)
-  final override def empty: DefaultGraphImpl[N, E]                         = DefaultGraphImpl.empty[N, E]
-  final override def copy(nodes: Traversable[N], edges: Traversable[E[N]]) = DefaultGraphImpl.from[N, E](nodes, edges)
+  override protected[this] def newBuilder                                   = new GraphBuilder[N, E, DefaultGraphImpl](DefaultGraphImpl)
+  final override def empty: DefaultGraphImpl[N, E]                          = DefaultGraphImpl.empty[N, E]
+  final protected def copy(nodes: Traversable[N], edges: Traversable[E[N]]) = DefaultGraphImpl.from[N, E](nodes, edges)
 
   final protected def +#(e: E[N]): DefaultGraphImpl[N, E] =
     if (edges contains Edge(e)) this
