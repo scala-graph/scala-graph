@@ -156,20 +156,20 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
     */
   def upsert(edge: E[N]): Boolean
 
-  @inline def -(node: N): This[N, E]                   = clone -= node
-  @inline def remove(node: N): Boolean                 = nodes find node exists (nodes remove _)
+  @inline final def -(node: N): This[N, E]             = clone -= node
+  @inline final def remove(node: N): Boolean           = nodes find node exists (nodes remove _)
   @inline final def -=(node: N): this.type             = { remove(node); this }
   @inline final def -?=(node: N): this.type            = { removeGently(node); this }
   @inline final def minusIsolated(node: N): This[N, E] = clone -?= node
-  final def removeGently(node: N): Boolean             = nodes find node exists (nodes removeGently _)
+  @inline final def removeGently(node: N): Boolean     = nodes find node exists (nodes removeGently _)
 
-  @inline final def -(edge: E[N])                         = clone -=# edge
-  @inline final def remove(edge: E[N])                    = edges remove Edge(edge)
+  @inline final def -(edge: E[N]): This[N, E]             = clone -=# edge
+  @inline final def remove(edge: E[N]): Boolean           = edges remove Edge(edge)
   @inline final protected def -=#(edge: E[N]): this.type  = { remove(edge); this }
   @inline final protected def -!=#(edge: E[N]): this.type = { removeWithNodes(edge); this }
-  @inline final def -!(edge: E[N])                        = clone -!=# edge
-  @inline final protected def -!#(edge: E[N])             = clone -!=# edge
-  @inline final def removeWithNodes(edge: E[N])           = edges removeWithNodes Edge(edge)
+  @inline final def -!(edge: E[N]): This[N, E]            = clone -!=# edge
+  @inline final protected def -!#(edge: E[N]): This[N, E] = clone -!=# edge
+  @inline final def removeWithNodes(edge: E[N]): Boolean  = edges removeWithNodes Edge(edge)
 
   def -=(elem: Param[N, E]): this.type = elem match {
     case n: OuterNode[N]               => this -= n.value
@@ -245,10 +245,12 @@ class DefaultGraphImpl[N, E[X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set[
   final override val graphCompanion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
+  type NodeSetT = NodeSet
   @inline final protected def newNodeSet: NodeSetT = new NodeSet
   @transient private[this] var _nodes: NodeSetT    = newNodeSet
   @inline final override def nodes                 = _nodes
 
+  type EdgeSetT = EdgeSet
   @transient private[this] var _edges: EdgeSetT = new EdgeSet
   @inline final override def edges              = _edges
 

@@ -70,11 +70,11 @@ trait AdjacencyListGraph[
       } else false
   }
 
-  type NodeSetT = NodeSet
+  type NodeSetT <: NodeSet
   class NodeSet extends super[GraphLike].NodeSet with super.NodeSet {
-    @inline override def add(node: NodeT): Boolean         = coll add node
-    protected[collection] def add(edge: EdgeT): Boolean    = fold(edge, (_: NodeT).add)
-    protected[collection] def upsert(edge: EdgeT): Boolean = fold(edge, (_: NodeT).upsert)
+    @inline override def add(node: NodeT): Boolean               = coll add node
+    final protected[collection] def add(edge: EdgeT): Boolean    = fold(edge, (_: NodeT).add)
+    final protected[collection] def upsert(edge: EdgeT): Boolean = fold(edge, (_: NodeT).upsert)
 
     private def fold(edge: EdgeT, op: NodeT => EdgeT => Boolean): Boolean =
       edge.foldLeft(false) {
@@ -82,7 +82,7 @@ trait AdjacencyListGraph[
           op(coll findElem n getOrElse { coll += n; n })(edge) || cum
       }
 
-    protected[collection] def remove(edge: EdgeT): Boolean =
+    final protected[collection] def remove(edge: EdgeT): Boolean =
       edge.nodes.toSet forall (n => (coll findElem n) exists (_ remove edge))
 
     @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
@@ -114,11 +114,11 @@ trait AdjacencyListGraph[
     if (innerEdge.isInstanceOf[OrderedEndpoints]) new EdgeT(innerEdge) with OrderedEndpoints
     else new EdgeT(innerEdge)
 
-  type EdgeSetT = EdgeSet
+  type EdgeSetT <: EdgeSet
   class EdgeSet extends super[GraphLike].EdgeSet with super.EdgeSet {
-    protected[AdjacencyListGraph] var initialized = false
+    final protected[AdjacencyListGraph] var initialized = false
 
-    override protected[collection] def initialize(edges: Traversable[E[N]]): Unit = {
+    final override protected[collection] def initialize(edges: Traversable[E[N]]): Unit = {
       if (edges ne null)
         edges foreach (this add Edge(_))
       initialized = true

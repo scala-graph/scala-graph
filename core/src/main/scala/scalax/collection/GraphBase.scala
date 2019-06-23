@@ -451,11 +451,11 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       * @return the inner node if found, otherwise `null`.
       */
     def lookup(outerNode: N): NodeT
-    def adjacencyListsToString =
+
+    def adjacencyListsToString: String =
       (for (n <- this)
-        yield
-          (n.value.toString + ": " +
-            ((for (a <- n.diSuccessors) yield a.value) mkString ","))) mkString "\n"
+        yield n.value.toString + ": " + ((for (a <- n.diSuccessors) yield a.value) mkString ",")) mkString "\n"
+
     def draw(random: Random): NodeT
   }
 

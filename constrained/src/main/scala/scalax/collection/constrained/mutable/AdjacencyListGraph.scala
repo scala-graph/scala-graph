@@ -30,9 +30,11 @@ trait AdjacencyListGraph[
     super.initialize(nodes, edges)
   }
 
+  type NodeSetT = NodeSet
   @SerialVersionUID(8083L)
-  class NodeSet extends super[AdjacencyListGraph].NodeSet with super.NodeSet {
-    final override def add(node: NodeT): Boolean = add_?(node) getOrElse false
+  final class NodeSet extends super[AdjacencyListGraph].NodeSet with super.NodeSet {
+
+    override def add(node: NodeT): Boolean = add_?(node) getOrElse false
 
     def add_?(node: NodeT): Either[ConstraintViolation, Boolean] = {
       def doAdd = { coll += node; true }
@@ -57,8 +59,9 @@ trait AdjacencyListGraph[
     }
   }
 
+  type EdgeSetT = EdgeSet
   @SerialVersionUID(8084L)
-  class EdgeSet extends super.EdgeSet {
+  final class EdgeSet extends super.EdgeSet {
 
     override def add(edge: EdgeT): Boolean = add_?(edge) getOrElse false
 
@@ -107,8 +110,14 @@ trait AdjacencyListGraph[
     override def remove(edge: EdgeT): Boolean                       = remove_?(edge) getOrElse false
     def remove_?(edge: EdgeT): Either[ConstraintViolation, Boolean] = checkedRemove(edge, forced = false, super.remove)
 
-    final override def removeWithNodes(edge: EdgeT): Boolean = removeWithNodes_?(edge) getOrElse false
+    override def removeWithNodes(edge: EdgeT): Boolean = removeWithNodes_?(edge) getOrElse false
     def removeWithNodes_?(edge: EdgeT): Either[ConstraintViolation, Boolean] =
       checkedRemove(edge, forced = true, (e: EdgeT) => withoutChecks(super.removeWithNodes(e)))
   }
+
+  def add_?(node: N): Either[ConstraintViolation, Boolean]    = nodes add_? Node(node)
+  def add_?(edge: E[N]): Either[ConstraintViolation, Boolean] = edges add_? Edge(edge)
+
+  def remove_?(node: N): Either[ConstraintViolation, Boolean]    = nodes remove_? Node(node)
+  def remove_?(edge: E[N]): Either[ConstraintViolation, Boolean] = edges remove_? Edge(edge)
 }

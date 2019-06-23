@@ -70,11 +70,11 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
     def removeGently_?(node: NodeT): Either[ConstraintViolation, Boolean] = checkedRemove(node, ripple = false)
   }
 
-  protected def checkedAdd(contained: => Boolean,
-                           preAdd: => PreCheckResult,
-                           copy: => This[N, E] @uV,
-                           nodes: => Traversable[N],
-                           edges: => Traversable[E[N]]): Either[ConstraintViolation, This[N, E]] =
+  final private def checkedAddByCloning(contained: => Boolean,
+                                        preAdd: => PreCheckResult,
+                                        copy: => This[N, E] @uV,
+                                        nodes: => Traversable[N],
+                                        edges: => Traversable[E[N]]): Either[ConstraintViolation, This[N, E]] =
     if (contained) Right(this)
     else if (checkSuspended) Right(copy)
     else {
@@ -90,7 +90,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
   override def +(node: N): This[N, E] = +?(node) getOrElse this
 
   def +?(node: N): Either[ConstraintViolation, This[N, E]] =
-    checkedAdd(
+    checkedAddByCloning(
       contained = nodes contains Node(node),
       preAdd = preAdd(node),
       copy = clone += node,
@@ -100,7 +100,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
   final override protected def +#(e: E[N]): This[N, E] = +#?(e) getOrElse this
 
   final protected def +#?(e: E[N]): Either[ConstraintViolation, This[N, E]] =
-    checkedAdd(
+    checkedAddByCloning(
       contained = edges contains Edge(e),
       preAdd = preAdd(e),
       copy = clone +=# e,
