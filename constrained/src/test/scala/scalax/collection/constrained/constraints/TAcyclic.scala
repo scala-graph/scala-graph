@@ -29,7 +29,8 @@ class TAcyclicMutable extends RefSpec with Matchers {
     def `directed mutable graphs` {
       implicit val config: Config = Acyclic
       val g                       = Graph(1 ~> 2, 2 ~> 3)
-      a[CycleException] should be thrownBy { g += 3 ~> 1 }
+      (g +=? 3 ~> 1).isLeft should be(true)
+//      a[CycleException] should be thrownBy { g += 3 ~> 1 }
       g + 3 ~> 4 should have size (7)
     }
   }
@@ -72,6 +73,7 @@ class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
 //      g + 1~6 should have size (9)
 //    }
     def `self loops #76` {
+      //@todo how to test factory creation
       a[CycleException] should be thrownBy { factory(1 ~> 1) }
       a[CycleException] should be thrownBy { factory[Int, DiEdge]() + 1 ~> 1 }
     }
