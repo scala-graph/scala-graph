@@ -29,13 +29,14 @@ class TAcyclicMutable extends RefSpec with Matchers {
     def `directed mutable graphs` {
       implicit val config: Config = Acyclic
       val g                       = Graph(1 ~> 2, 2 ~> 3)
-      a[CycleException] should be thrownBy { g += 3 ~> 1 }
+      (g +=? 3 ~> 1) should be('left)
+//      a[CycleException] should be thrownBy { g += 3 ~> 1 }
       g + 3 ~> 4 should have size (7)
     }
   }
 }
 
-class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC] with GraphOps[N, E, CC]](
     val factory: GraphConstrainedCompanion[CC])
     extends RefSpec
     with Matchers {
@@ -48,17 +49,20 @@ class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
   object `The 'Acyclic' constraint works fine with` {
     def `directed graphs` {
       val g = factory(1 ~> 2, 2 ~> 3)
-      a[CycleException] should be thrownBy { g + 3 ~> 1 }
+      (g +? 3 ~> 1) should be('left)
+//      a[CycleException] should be thrownBy { g + 3 ~> 1 }
       g + 3 ~> 4 should have size (7)
     }
     def `directed hypergraphs` {
       val g = factory[Int, HyperEdge](1 ~> 2 ~> 3, 2 ~> 3 ~> 4)
-      a[CycleException] should be thrownBy { g + 4 ~> 2 }
+      (g +? 4 ~> 2) should be('left)
+//      a[CycleException] should be thrownBy { g + 4 ~> 2 }
       g + 1 ~> 4 should have size (7)
     }
     def `undirected graphs` {
       val g = factory(1 ~ 2, 2 ~ 3)
-      a[CycleException] should be thrownBy { g + 3 ~ 1 }
+      (g +? 3 ~ 1) should be('left)
+//      a[CycleException] should be thrownBy { g + 3 ~ 1 }
       g + 3 ~ 4 should have size (7)
     }
     // TODO: GraphTraversal findCycle
@@ -69,6 +73,7 @@ class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
 //      g + 1~6 should have size (9)
 //    }
     def `self loops #76` {
+      //@todo how to test factory creation
       a[CycleException] should be thrownBy { factory(1 ~> 1) }
       a[CycleException] should be thrownBy { factory[Int, DiEdge]() + 1 ~> 1 }
     }
