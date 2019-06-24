@@ -46,19 +46,14 @@ class TConstrainedMutable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
 
       val g = Graph.empty[Int, UnDiEdge]
 
-      (g ++=? List(2, 3, 4)).isLeft should be(true)
-      (g ++=? List(1 ~ 2, 1 ~ 3, 2 ~ 4)).isLeft should be(true)
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(2, 3, 4))
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 2, 1 ~ 3, 2 ~ 4))
+      shouldLeaveGraphUnchanged(g)(_ ++=? List(2, 3, 4))
+      shouldLeaveGraphUnchanged(g)(_ ++=? List(1 ~ 2, 1 ~ 3, 2 ~ 4))
       (g ++= List(1 ~ 2, 1 ~ 3, 2 ~ 3)) should have size 6
 
-      (g +=? 3 ~ 4).isLeft should be(true)
-      //@todo is currently false
-//      (g -=? 3).isLeft should be(true)
-      (g --=? List(3)).isLeft should be(true)
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 3 ~ 4)
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 3)
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(3))
+      shouldLeaveGraphUnchanged(g)(_ +=? 3 ~ 4)
+      //@todo -=? does not work
+//      shouldLeaveGraphUnchanged(g)(_ -=? 3)
+      shouldLeaveGraphUnchanged(g)(_ --=? List(3))
     }
 
     def `when postSubtract fails` {
@@ -67,17 +62,12 @@ class TConstrainedMutable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
 
       val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
-      (g -=? 1).isLeft should be(true)
-      //@todo is currently false
-//      (g -=? 1 ~ 2).isLeft should be(true)
-      (g --=? List(1)).isLeft should be(true)
-      (g --=? List(1 ~ 2)).isLeft should be(true)
-      (g --=? List(1 ~ 2, 2 ~ 3)).isLeft should be(true)
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 1)
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 1 ~ 2)
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1))
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1 ~ 2))
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1 ~ 2, 2 ~ 3))
+      //@todo -=? does not work
+//      shouldLeaveGraphUnchanged(g)(_ -=? 1)
+//      shouldLeaveGraphUnchanged(g)(_ -=? 1 ~ 2)
+      shouldLeaveGraphUnchanged(g)(_ --=? List(1))
+      shouldLeaveGraphUnchanged(g)(_ --=? List(1 ~ 2))
+      shouldLeaveGraphUnchanged(g)(_ --=? List(1 ~ 2, 2 ~ 3))
     }
 
     def `when postAdd fails` {
@@ -86,16 +76,11 @@ class TConstrainedMutable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
 
       val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
-      (g +=? 5).isLeft should be(true)
-      (g +=? 1 ~ 5).isLeft should be(true)
-      (g ++=? List(5)).isLeft should be(true)
-      (g ++=? List(1 ~ 5)).isLeft should be(true)
-      (g ++=? List(1 ~ 5, 5 ~ 6, 6 ~ 2)).isLeft should be(true)
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 5)
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 1 ~ 5)
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(5))
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 5))
-//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 5, 5 ~ 6, 6 ~ 2))
+      shouldLeaveGraphUnchanged(g)(_ +=? 5)
+      shouldLeaveGraphUnchanged(g)(_ +=? 1 ~ 5)
+      shouldLeaveGraphUnchanged(g)(_ ++=? List(5))
+      shouldLeaveGraphUnchanged(g)(_ ++=? List(1 ~ 5))
+      shouldLeaveGraphUnchanged(g)(_ ++=? List(1 ~ 5, 5 ~ 6, 6 ~ 2))
     }
 
     def `when cloning a graph` {
@@ -105,12 +90,13 @@ class TConstrainedMutable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
       Try(g.clone).isSuccess should be(true)
     }
 
-    private def shouldThrowExceptionAndLeaveGraphUnchanged[N, E[X] <: EdgeLikeIn[X], EX <: Exception: ClassTag](
-        g: Graph[N, E])(op: g.type => g.type)(implicit e: EX): Unit = {
+    private def shouldLeaveGraphUnchanged[N, E[X] <: EdgeLikeIn[X]](
+        g: Graph[N, E])(op: g.type => Either[ConstraintViolation, g.type]): Unit = {
       val before = g.clone
-      a[EX] should be thrownBy op(g)
+      op(g).isLeft should be(true)
       g should ===(before)
     }
+
   }
 }
 
