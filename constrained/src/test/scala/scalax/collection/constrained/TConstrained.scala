@@ -21,7 +21,7 @@ class TConstrainedRootTest
       new TConstrained[mutable.Graph](mutable.Graph),
       new TConstrainedMutable)
 
-class TConstrainedMutable extends RefSpec with Matchers {
+class TConstrainedMutable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC] with GraphOps[N, E, CC]] extends RefSpec with Matchers {
 
   import mutable.Graph
 
@@ -46,12 +46,19 @@ class TConstrainedMutable extends RefSpec with Matchers {
 
       val g = Graph.empty[Int, UnDiEdge]
 
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(2, 3, 4))
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 2, 1 ~ 3, 2 ~ 4))
+      (g ++=? List(2, 3, 4)).isLeft should be(true)
+      (g ++=? List(1 ~ 2, 1 ~ 3, 2 ~ 4)).isLeft should be(true)
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(2, 3, 4))
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 2, 1 ~ 3, 2 ~ 4))
       (g ++= List(1 ~ 2, 1 ~ 3, 2 ~ 3)) should have size 6
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 3 ~ 4)
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 3)
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(3))
+
+      //@todo implementation missing
+//      (g +=? 3 ~ 4).isLeft should be(true)
+//      (g -=? 3).isLeft should be(true)
+      (g --=? List(3)).isLeft should be(true)
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 3 ~ 4)
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 3)
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(3))
     }
 
     def `when postSubtract fails` {
@@ -60,11 +67,17 @@ class TConstrainedMutable extends RefSpec with Matchers {
 
       val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 1)
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 1 ~ 2)
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1))
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1 ~ 2))
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1 ~ 2, 2 ~ 3))
+      //@todo implementation missing
+//      (g -=? 1).isLeft should be(true)
+//      (g -=? 1 ~ 2).isLeft should be(true)
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 1)
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ -= 1 ~ 2)
+      (g --=? List(1)).isLeft should be(true)
+      (g --=? List(1 ~ 2)).isLeft should be(true)
+      (g --=? List(1 ~ 2, 2 ~ 3)).isLeft should be(true)
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1))
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1 ~ 2))
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1 ~ 2, 2 ~ 3))
     }
 
     def `when postAdd fails` {
@@ -73,11 +86,17 @@ class TConstrainedMutable extends RefSpec with Matchers {
 
       val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 5)
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 1 ~ 5)
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(5))
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 5))
-      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 5, 5 ~ 6, 6 ~ 2))
+      //@todo implementation missing
+//      (g +=? 5).isLeft should be(true)
+//      (g +=? 1 ~ 5).isLeft should be(true)
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 5)
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ += 1 ~ 5)
+      (g ++=? List(5)).isLeft should be(true)
+      (g ++=? List(1 ~ 5)).isLeft should be(true)
+      (g ++=? List(1 ~ 5, 5 ~ 6, 6 ~ 2)).isLeft should be(true)
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(5))
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 5))
+//      shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 5, 5 ~ 6, 6 ~ 2))
     }
 
     def `when cloning a graph` {
