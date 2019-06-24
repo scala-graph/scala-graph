@@ -29,7 +29,7 @@ class TAcyclicMutable extends RefSpec with Matchers {
     def `directed mutable graphs` {
       implicit val config: Config = Acyclic
       val g                       = Graph(1 ~> 2, 2 ~> 3)
-      (g +=? 3 ~> 1).isLeft should be(true)
+      (g +=? 3 ~> 1) should be('left)
 //      a[CycleException] should be thrownBy { g += 3 ~> 1 }
       g + 3 ~> 4 should have size (7)
     }
@@ -49,19 +49,19 @@ class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
   object `The 'Acyclic' constraint works fine with` {
     def `directed graphs` {
       val g = factory(1 ~> 2, 2 ~> 3)
-      (g +? 3 ~> 1).isLeft should be(true)
+      (g +? 3 ~> 1) should be('left)
 //      a[CycleException] should be thrownBy { g + 3 ~> 1 }
       g + 3 ~> 4 should have size (7)
     }
     def `directed hypergraphs` {
       val g = factory[Int, HyperEdge](1 ~> 2 ~> 3, 2 ~> 3 ~> 4)
-      (g +? 4 ~> 2).isLeft should be(true)
+      (g +? 4 ~> 2) should be('left)
 //      a[CycleException] should be thrownBy { g + 4 ~> 2 }
       g + 1 ~> 4 should have size (7)
     }
     def `undirected graphs` {
       val g = factory(1 ~ 2, 2 ~ 3)
-      (g +? 3 ~ 1).isLeft should be(true)
+      (g +? 3 ~ 1) should be('left)
 //      a[CycleException] should be thrownBy { g + 3 ~ 1 }
       g + 3 ~ 4 should have size (7)
     }

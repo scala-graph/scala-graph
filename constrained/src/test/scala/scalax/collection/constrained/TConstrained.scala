@@ -93,7 +93,7 @@ class TConstrainedMutable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
     private def shouldLeaveGraphUnchanged[N, E[X] <: EdgeLikeIn[X]](
         g: Graph[N, E])(op: g.type => Either[ConstraintViolation, g.type]): Unit = {
       val before = g.clone
-      op(g).isLeft should be(true)
+      op(g) should be('left)
       g should ===(before)
     }
 
@@ -126,15 +126,15 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
       //@todo how to test factory creation
 //      a[MinDegreeException] should be thrownBy { factory(1, 2, 3 ~ 4) }
       val g = factory.empty[Int, UnDiEdge]
-      (g +? 1 ~ 2).isLeft should be(true)
+      (g +? 1 ~ 2) should be('left)
 //      a[MinDegreeException] should be thrownBy { g + 1 ~ 2 }
 
       val g6 = g ++ List(1 ~ 2, 1 ~ 3, 2 ~ 3)
       g6 should have size 6
       val g7 = g6 + 3 ~> 1
       g7 should have size 7
-      (g6 +? 4).isLeft should be(true)
-      (g6 +? 3 ~ 4).isLeft should be(true)
+      (g6 +? 4) should be('left)
+      (g6 +? 3 ~ 4) should be('left)
 //      a[MinDegreeException] should be thrownBy { g6 + 4 }
 //      a[MinDegreeException] should be thrownBy { g6 + 3 ~ 4 }
       g6 + 1 ~> 2 should have('graphSize (4))
@@ -159,11 +159,11 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
 
       val g = factory[Int, Nothing](2, 4)
       g should have size 2
-      (g +? 5).isLeft should be(true)
+      (g +? 5) should be('left)
 //      an[IllegalArgumentException] should be thrownBy { g + 5 }
 
       g + 6 contains 6 should be(true)
-      (g ++? List[OuterNode[Int]](1, 2, 3)).isLeft should be(true)
+      (g ++? List[OuterNode[Int]](1, 2, 3)) should be('left)
 //      an[IllegalArgumentException] should be thrownBy { g ++ List[OuterNode[Int]](1, 2, 3) }
 
       (g ++ List[OuterNode[Int]](2, 4, 6)) should have size 3
@@ -179,7 +179,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
       {
         implicit val config: Config = EvenNode && MinDegree_2
         val g2                      = factory.empty[Int, UnDiEdge]
-        (g2 +? 2).isLeft should be(true)
+        (g2 +? 2) should be('left)
 //        a[MinDegreeException] should be thrownBy { g2 + 2 }
         g2 ++ List(0 ~ 2, 0 ~> 2) should have size 4
       }
