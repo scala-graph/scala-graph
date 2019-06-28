@@ -89,11 +89,13 @@ trait AdjacencyListGraph[
         graph
       }
     } getOrElse this
+
   override def -(n: N) = checkedSubtractNode(
     n,
     true,
     (outeNode: N, innerNode: NodeT) =>
       copy(nodes.toOuter.toBuffer -= outeNode, edges.toOuter.toBuffer --= (innerNode.edges map (_.toOuter))))
+
   override def -?(n: N) = checkedSubtractNode(
     n,
     false,
@@ -134,10 +136,12 @@ trait AdjacencyListGraph[
         graph
       }
     } getOrElse this
+
   override protected def -#(e: E[N]) = checkedSubtractEdge(
     e,
     true,
     (outerEdge: E[N], innerEdge: EdgeT) => copy(nodes.toOuter, edges.toOuter.toBuffer -= outerEdge))
+
   override protected def -!#(e: E[N]) = checkedSubtractEdge(
     e,
     false,

@@ -107,12 +107,8 @@ trait AdjacencyListGraph[
       removed && !handle
     }
 
-    override def remove(edge: EdgeT): Boolean = checkedRemove(edge, false, super.remove)
-
-    override def removeWithNodes(edge: EdgeT): Boolean = {
-      def uncheckedSuperRemoveWithNodes(e: EdgeT) =
-        withoutChecks { super.removeWithNodes(e) }
-      checkedRemove(edge, true, uncheckedSuperRemoveWithNodes)
-    }
+    override def remove(edge: EdgeT): Boolean = checkedRemove(edge, forced = false, super.remove)
+    override def removeWithNodes(edge: EdgeT): Boolean =
+      checkedRemove(edge, forced = true, (e: EdgeT) => withoutChecks(super.removeWithNodes(e)))
   }
 }

@@ -114,7 +114,7 @@ trait AdjacencyListGraph[
   class EdgeImpl(override val edge: E[NodeT]) extends EdgeBase(edge) {
     def remove: Boolean = edges remove this
 
-    def removeWithNodes(edge: E[N]) =
+    def removeWithNodes(edge: E[N]): Boolean =
       if (edges remove this) {
         selfGraph.nodes --= privateNodes; true
       } else false
@@ -134,24 +134,17 @@ trait AdjacencyListGraph[
       initialized = true
     }
 
-    override def add(edge: EdgeT): Boolean =
-      if (nodes add edge) statistics(edge, plus = true) else false
-
     @inline final protected[collection] def addEdge(edge: EdgeT): Unit = add(edge)
 
-    def upsert(edge: EdgeT): Boolean =
-      if (nodes upsert edge) statistics(edge, plus = true) else false
+    override def add(edge: EdgeT): Boolean    = if (nodes add edge) statistics(edge, plus = true) else false
+    def upsert(edge: EdgeT): Boolean          = if (nodes upsert edge) statistics(edge, plus = true) else false
+    override def remove(edge: EdgeT): Boolean = if (nodes remove edge) statistics(edge, plus = false) else false
 
-    override def remove(edge: EdgeT): Boolean =
-      if (nodes remove edge) statistics(edge, plus = false) else false
-
-    def removeWithNodes(edge: EdgeT) = {
-      val privateNodes = edge.privateNodes
+    def removeWithNodes(edge: EdgeT): Boolean =
       if (remove(edge)) {
-        nodes --= privateNodes
+        nodes --= edge.privateNodes
         true
       } else false
-    }
 
     @inline final override def maxArity: Int = super.maxArity
   }
