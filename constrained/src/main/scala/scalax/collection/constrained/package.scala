@@ -2,7 +2,8 @@ package scalax.collection
 
 import language.{higherKinds, implicitConversions}
 
-import GraphPredef._, GraphEdge._
+import GraphPredef._
+import GraphEdge._
 import config.GraphConfig
 
 /** Traits enabling to implement constraints and use constrained graphs.
@@ -37,6 +38,11 @@ package object constrained {
 
   def constraintViolation(r: PreCheckResult): ConstraintViolation   = Left(r)
   def constraintViolation(r: PostCheckFailure): ConstraintViolation = Right(r)
+
+  implicit def postCheckFailureToConstraintViolation(v: PostCheckFailure): ConstraintViolation = constraintViolation(v)
+
+  implicit def postCheckResultToConstrainedOpResult[G](r: Either[PostCheckFailure, G]): Either[ConstraintViolation, G] =
+    r.left map constraintViolation
 
   /** Aims defining a constraint valid for `Graph` instances in the scope:
     *{{{

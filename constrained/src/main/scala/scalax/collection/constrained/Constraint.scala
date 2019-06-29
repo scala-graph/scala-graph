@@ -250,7 +250,7 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
   def postAdd(newGraph: G @uV,
               passedNodes: Traversable[N],
               passedEdges: Traversable[E[N]],
-              preCheck: PreCheckResult): Either[ConstraintViolation, G] = Right(newGraph)
+              preCheck: PreCheckResult): Either[PostCheckFailure, G] = Right(newGraph)
 
   /** This post-check must return whether `newGraph` should be committed or the subtraction
     * is to be rolled back.
@@ -266,7 +266,7 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
   def postSubtract(newGraph: G @uV,
                    passedNodes: Traversable[N],
                    passedEdges: Traversable[E[N]],
-                   preCheck: PreCheckResult): Either[ConstraintViolation, G] = Right(newGraph)
+                   preCheck: PreCheckResult): Either[PostCheckFailure, G] = Right(newGraph)
 
   /** Consolidates all outer nodes of the arguments by adding the edge ends
     *  of `passedEdges` to `passedNodes`. */

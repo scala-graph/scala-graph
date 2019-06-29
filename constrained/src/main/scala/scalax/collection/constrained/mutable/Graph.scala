@@ -3,7 +3,6 @@ package mutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.language.{higherKinds, postfixOps}
 import scala.collection.Set
 import scala.collection.generic.{Growable, Shrinkable}
