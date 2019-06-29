@@ -21,9 +21,10 @@ class TConstrainedRootTest
       new TConstrained[mutable.Graph](mutable.Graph),
       new TConstrainedMutable)
 
-class TConstrainedMutable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC] with GraphOps[N, E, CC]] extends RefSpec with Matchers {
+class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Graph] {
 
   import mutable.Graph
+  val factory = mutable.Graph
 
   object `constrains work as expected using mutable operations` {
 
@@ -51,8 +52,7 @@ class TConstrainedMutable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
       (g ++= List(1 ~ 2, 1 ~ 3, 2 ~ 3)) should have size 6
 
       shouldLeaveGraphUnchanged(g)(_ +=? 3 ~ 4)
-      //@todo -=? does not work
-//      shouldLeaveGraphUnchanged(g)(_ -=? 3)
+      shouldLeaveGraphUnchanged(g)(_ -=? 3)
       shouldLeaveGraphUnchanged(g)(_ --=? List(3))
     }
 
@@ -62,9 +62,8 @@ class TConstrainedMutable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
 
       val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
-      //@todo -=? does not work
-//      shouldLeaveGraphUnchanged(g)(_ -=? 1)
-//      shouldLeaveGraphUnchanged(g)(_ -=? 1 ~ 2)
+      shouldLeaveGraphUnchanged(g)(_ -=? 1)
+      shouldLeaveGraphUnchanged(g)(_ -=? 1 ~ 2)
       shouldLeaveGraphUnchanged(g)(_ --=? List(1))
       shouldLeaveGraphUnchanged(g)(_ --=? List(1 ~ 2))
       shouldLeaveGraphUnchanged(g)(_ --=? List(1 ~ 2, 2 ~ 3))
@@ -89,14 +88,6 @@ class TConstrainedMutable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
       val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3)
       Try(g.clone).isSuccess should be(true)
     }
-
-    private def shouldLeaveGraphUnchanged[N, E[X] <: EdgeLikeIn[X]](
-        g: Graph[N, E])(op: g.type => Either[ConstraintViolation, g.type]): Unit = {
-      val before = g.clone
-      op(g) should be('left)
-      g should ===(before)
-    }
-
   }
 }
 
@@ -237,7 +228,7 @@ private object UserConstraints {
     override def postSubtract(newGraph: G,
                                                 passedNodes: Traversable[N],
                                                 passedEdges: Traversable[E[N]],
-                                                preCheck: PreCheckResult) = Left(constraintViolation(preCheck))
+                                                preCheck: PreCheckResult) = Left(constraintViolation(()))
 
 //    override def onSubtractionRefused(refusedNodes: Traversable[G#NodeT],
 //                                      refusedEdges: Traversable[G#EdgeT],
@@ -265,7 +256,7 @@ private object UserConstraints {
                                            passedNodes: Traversable[N],
                                            passedEdges: Traversable[E[N]],
                                            preCheck: PreCheckResult) =
-      if (passedEdges.size == 4) Right(newGraph) else Left(constraintViolation(preCheck))
+      if (passedEdges.size == 4) Right(newGraph) else Left(constraintViolation(()))
 
 //    override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: G) =
 //      throw new IllegalArgumentException
@@ -299,7 +290,7 @@ private object UserConstraints {
                                            passedEdges: Traversable[E[N]],
                                            preCheck: PreCheckResult) =
       if (allNodes(passedNodes, passedEdges) forall (n => (newGraph get n).degree >= min)) Right(newGraph)
-      else Left(constraintViolation(preCheck))
+      else Left(constraintViolation(()))
 
 //    override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: G) =
 //      throw new MinDegreeException(
@@ -348,7 +339,7 @@ private object UserConstraints {
       case Result(nodesToCheck) =>
         if (nodesToCheck forall { n =>
           newGraph.get(n).degree >= min
-        }) Right(newGraph) else Left(constraintViolation(preCheck))
+        }) Right(newGraph) else Left(constraintViolation(()))
     }
 
 //    override def onSubtractionRefused(refusedNodes: Traversable[G#NodeT],
