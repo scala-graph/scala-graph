@@ -228,7 +228,7 @@ private object UserConstraints {
     override def postSubtract(newGraph: G,
                                                 passedNodes: Traversable[N],
                                                 passedEdges: Traversable[E[N]],
-                                                preCheck: PreCheckResult) = Left(constraintViolation(()))
+                                                preCheck: PreCheckResult) = Left(())
 
 //    override def onSubtractionRefused(refusedNodes: Traversable[G#NodeT],
 //                                      refusedEdges: Traversable[G#EdgeT],
@@ -256,7 +256,7 @@ private object UserConstraints {
                                            passedNodes: Traversable[N],
                                            passedEdges: Traversable[E[N]],
                                            preCheck: PreCheckResult) =
-      if (passedEdges.size == 4) Right(newGraph) else Left(constraintViolation(()))
+      if (passedEdges.size == 4) Right(newGraph) else Left(())
 
 //    override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: G) =
 //      throw new IllegalArgumentException
@@ -290,7 +290,7 @@ private object UserConstraints {
                                            passedEdges: Traversable[E[N]],
                                            preCheck: PreCheckResult) =
       if (allNodes(passedNodes, passedEdges) forall (n => (newGraph get n).degree >= min)) Right(newGraph)
-      else Left(constraintViolation(()))
+      else Left(())
 
 //    override def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E[N]], graph: G) =
 //      throw new MinDegreeException(
@@ -339,7 +339,7 @@ private object UserConstraints {
       case Result(nodesToCheck) =>
         if (nodesToCheck forall { n =>
           newGraph.get(n).degree >= min
-        }) Right(newGraph) else Left(constraintViolation(()))
+        }) Right(newGraph) else Left(())
     }
 
 //    override def onSubtractionRefused(refusedNodes: Traversable[G#NodeT],

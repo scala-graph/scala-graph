@@ -50,7 +50,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
               postSubtract(selfGraph, Set(node), Set.empty[E[N]], preCheckResult).fold(
                 failure => {
                   withoutChecks { selfGraph += node.value; selfGraph ++= node.edges.toBuffer }
-                  Left(failure)
+                  Left(constraintViolation(failure))
                 },
                 _ => Right(true)
               )
@@ -116,7 +116,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
                   newNodes foreach super.remove
                   newEdges foreach super.remove
                 }
-                Some(failure)
+                Some(constraintViolation(failure))
               },
               _ => None
             )
@@ -154,7 +154,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
         postSubtract(this, outerNodes, outerEdges, preCheckResult).fold(
           failure => {
             withoutChecks { super.++=(subtractables) }
-            Left(failure)
+            Left(constraintViolation(failure))
           },
           _ => Right(this)
         )
