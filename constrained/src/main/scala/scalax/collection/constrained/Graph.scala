@@ -125,6 +125,55 @@ trait GraphLike[N,
       case Abort => Left(constraintViolation(preCheckResult))
     }
   }
+
+  protected def checkedPlus(contained: => Boolean,
+                            preAdd: => PreCheckResult,
+                            copy: => This[N, E] @uV,
+                            nodes: => Traversable[N],
+                            edges: => Traversable[E[N]]): Either[ConstraintViolation, This[N, E]] =
+    if (checkSuspended) Right(copy)
+    else if (contained) Right(this)
+    else {
+      val preCheckResult = preAdd
+      preCheckResult.followUp match {
+        case Complete  => Right(copy)
+        case PostCheck => postAdd(copy, nodes, edges, preCheckResult)
+        case Abort     => Left(constraintViolation(preCheckResult))
+      }
+    }
+
+  protected def checkedMinusNode(node: N,
+                                 forced: Boolean,
+                                 copy: (N, NodeT) => This[N, E] @uV): Either[ConstraintViolation, This[N, E]] =
+    nodes find node map { innerNode =>
+      def subtract = copy(node, innerNode)
+      if (checkSuspended)
+        Right(subtract)
+      else {
+        val preCheckResult = preSubtract(innerNode.asInstanceOf[self.NodeT], forced)
+        preCheckResult.followUp match {
+          case Complete  => Right(subtract)
+          case PostCheck => postSubtract(subtract, Set(node), Set.empty[E[N]], preCheckResult)
+          case Abort     => Left(constraintViolation(preCheckResult))
+        }
+      }
+    } getOrElse Right(this)
+
+  protected def checkedMinusEdge(edge: E[N],
+                                 simple: Boolean,
+                                 copy: (E[N], EdgeT) => This[N, E] @uV): Either[ConstraintViolation, This[N, E]] =
+    edges find edge map { innerEdge =>
+      def subtract = copy(edge, innerEdge)
+      if (checkSuspended) Right(subtract)
+      else {
+        val preCheckResult = preSubtract(innerEdge.asInstanceOf[self.EdgeT], simple)
+        preCheckResult.followUp match {
+          case Complete  => Right(subtract)
+          case PostCheck => postSubtract(subtract, Set.empty[N], Set(edge), preCheckResult)
+          case Abort     => Left(constraintViolation(preCheckResult))
+        }
+      }
+    } getOrElse Right(this)
 }
 
 // ----------------------------------------------------------------------------

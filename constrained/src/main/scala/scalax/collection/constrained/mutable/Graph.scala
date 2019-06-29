@@ -70,27 +70,10 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
     def removeGently_?(node: NodeT): Either[ConstraintViolation, Boolean] = checkedRemove(node, ripple = false)
   }
 
-  final private def checkedAddByCloning(contained: => Boolean,
-                                        preAdd: => PreCheckResult,
-                                        copy: => This[N, E] @uV,
-                                        nodes: => Traversable[N],
-                                        edges: => Traversable[E[N]]): Either[ConstraintViolation, This[N, E]] =
-    if (contained) Right(this)
-    else if (checkSuspended) Right(copy)
-    else {
-      val preCheckResult = preAdd
-      preCheckResult.followUp match {
-        case Complete => Right(copy)
-        case PostCheck =>
-          postAdd(copy, nodes, edges, preCheckResult).fold(failure => Left(failure), Right(_))
-        case Abort => Left(constraintViolation(preCheckResult))
-      }
-    }
-
   override def +(node: N): This[N, E] = +?(node) getOrElse this
 
   def +?(node: N): Either[ConstraintViolation, This[N, E]] =
-    checkedAddByCloning(
+    checkedPlus(
       contained = nodes contains Node(node),
       preAdd = preAdd(node),
       copy = clone += node,
@@ -100,7 +83,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
   final override protected def +#(e: E[N]): This[N, E] = +#?(e) getOrElse this
 
   final protected def +#?(e: E[N]): Either[ConstraintViolation, This[N, E]] =
-    checkedAddByCloning(
+    checkedPlus(
       contained = edges contains Edge(e),
       preAdd = preAdd(e),
       copy = clone +=# e,
@@ -148,11 +131,13 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
     }
   }
 
-  final def -?(node: N): Either[ConstraintViolation, This[N, E]] = ??? //clone -=_? node
+  final def -?(node: N): Either[ConstraintViolation, This[N, E]] =
+    checkedMinusNode(node, forced = true, (outer: N, inner: NodeT) => { val c = clone; c -= outer; c })
 
   final override protected def -#(e: E[N]): This[N, E] = +#?(e) getOrElse this
 
-  final protected def -#?(e: E[N]): Either[ConstraintViolation, This[N, E]] = ??? // clone -=#? edge
+  final protected def -#?(e: E[N]): Either[ConstraintViolation, This[N, E]] =
+    checkedMinusEdge(e, simple = true, (outer: E[N], inner: EdgeT) => { val c = clone; c -=# outer; c })
 
   def --=?(elems: TraversableOnce[Param[N, E]]): Either[ConstraintViolation, this.type] = {
     val (outerNodes, outerEdges) = {
