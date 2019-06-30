@@ -90,8 +90,8 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
     @inline final override def -=(node: NodeT): this.type = { remove(node); this }
     @inline final def -?=(node: NodeT): this.type         = { removeGently(node); this }
 
-    override def remove(node: NodeT): Boolean = subtract(node, true, minus, minusEdges)
-    def removeGently(node: NodeT): Boolean    = subtract(node, false, minus, minusEdges)
+    override def remove(node: NodeT): Boolean = subtract(node, rippleDelete = true, minus, minusEdges)
+    def removeGently(node: NodeT): Boolean    = subtract(node, rippleDelete = false, minus, minusEdges)
 
     /** removes all incident edges of `node` from the edge set leaving the node set unchanged.
       *

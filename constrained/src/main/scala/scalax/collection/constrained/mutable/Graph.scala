@@ -38,35 +38,40 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
 
   trait NodeSet extends super.NodeSet {
 
-    protected def checkedRemove(node: NodeT, ripple: Boolean): Either[ConstraintViolation, Boolean] = {
-      def remove = withoutChecks { subtract(node, ripple, minus, minusEdges) }
-      if (checkSuspended) Right(remove)
-      else {
-        val preCheckResult = preSubtract(node.asInstanceOf[self.NodeT], ripple)
-        preCheckResult.followUp match {
-          case Complete => Right(remove)
-          case PostCheck =>
-            if (remove) {
-              postSubtract(selfGraph, Set(node), Set.empty[E[N]], preCheckResult).fold(
-                failure => {
-                  withoutChecks { selfGraph += node.value; selfGraph ++= node.edges.toBuffer }
-                  Left(constraintViolation(failure))
-                },
-                _ => Right(true)
-              )
-            } else Right(false)
-          case Abort => Left(constraintViolation(preCheckResult))
+    protected def checkedRemove(fake: NodeT, ripple: Boolean): Either[ConstraintViolation, Boolean] =
+      nodes find fake map { node =>
+        def remove = withoutChecks {
+          subtract(node, ripple, minus, minusEdges)
         }
-      }
-    }
+        if (checkSuspended) Right(remove)
+        else {
+          val preCheckResult = preSubtract(node.asInstanceOf[self.NodeT], ripple)
+          preCheckResult.followUp match {
+            case Complete => Right(remove)
+            case PostCheck =>
+              val incidentEdges = node.edges.toBuffer
+              if (remove) {
+                postSubtract(selfGraph, Set(node), Set.empty[E[N]], preCheckResult).fold(
+                  failure => {
+                    withoutChecks {
+                      selfGraph += node.value
+                      selfGraph ++= incidentEdges
+                    }
+                    Left(constraintViolation(failure))
+                  },
+                  _ => Right(true)
+                )
+              } else Right(false)
+            case Abort => Left(constraintViolation(preCheckResult))
+          }
+        }
+      } getOrElse Right(false)
 
-    final override def remove(node: NodeT): Boolean = remove_?(node) getOrElse false
-
-    def remove_?(node: NodeT): Either[ConstraintViolation, Boolean] = checkedRemove(node, ripple = true)
-
+    final override def remove(node: NodeT): Boolean       = remove_?(node) getOrElse false
     final override def removeGently(node: NodeT): Boolean = removeGently_?(node) getOrElse false
 
-    def removeGently_?(node: NodeT): Either[ConstraintViolation, Boolean] = checkedRemove(node, ripple = false)
+    def remove_?(fake: NodeT): Either[ConstraintViolation, Boolean]       = checkedRemove(fake, ripple = true)
+    def removeGently_?(fake: NodeT): Either[ConstraintViolation, Boolean] = checkedRemove(fake, ripple = false)
   }
 
   override def +(node: N): This[N, E] = +?(node) getOrElse this

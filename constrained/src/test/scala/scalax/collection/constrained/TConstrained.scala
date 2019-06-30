@@ -22,15 +22,13 @@ class TConstrainedRootTest
       new TConstrainedMutable)
 
 class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Graph] {
-
-  import mutable.Graph
   val factory = mutable.Graph
 
   object `constrains work as expected using mutable operations` {
 
     def `when constraining Int nodes to even numbers` {
       implicit val config: Config = UserConstraints.EvenNode
-      val g                       = Graph[Int, Nothing](1)
+      val g                       = factory[Int, Nothing](1)
 
       g should be('isEmpty)
       (g += 2) should have size 1
@@ -45,7 +43,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
       implicit val config: Config                        = MinDegree_2
       implicit val expectedException: MinDegreeException = new MinDegreeException
 
-      val g = Graph.empty[Int, UnDiEdge]
+      val g = factory.empty[Int, UnDiEdge]
 
       shouldLeaveGraphUnchanged(g)(_ ++=? List(2, 3, 4))
       shouldLeaveGraphUnchanged(g)(_ ++=? List(1 ~ 2, 1 ~ 3, 2 ~ 4))
@@ -60,7 +58,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
       implicit val config: Config                              = UserConstraints.AlwaysFailingPostSubtract
       implicit val expectedException: IllegalArgumentException = new IllegalArgumentException
 
-      val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
+      val g = factory[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
       shouldLeaveGraphUnchanged(g)(_ -=? 1)
       shouldLeaveGraphUnchanged(g)(_ -=? 1 ~ 2)
@@ -73,7 +71,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
       implicit val config: Config                              = UserConstraints.FailingPostAdd
       implicit val expectedException: IllegalArgumentException = new IllegalArgumentException
 
-      val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
+      val g = factory[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
       shouldLeaveGraphUnchanged(g)(_ +=? 5)
       shouldLeaveGraphUnchanged(g)(_ +=? 1 ~ 5)
@@ -85,7 +83,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
     def `when cloning a graph` {
       implicit val config: Config = UserConstraints.AlwaysFailingPreAdd
 
-      val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3)
+      val g = factory[Int, UnDiEdge](1 ~ 2, 2 ~ 3)
       Try(g.clone).isSuccess should be(true)
     }
   }
