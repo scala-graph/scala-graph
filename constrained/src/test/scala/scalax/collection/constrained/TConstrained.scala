@@ -28,7 +28,8 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
 
     def `when constraining Int nodes to even numbers` {
       implicit val config: Config = UserConstraints.EvenNode
-      val g                       = factory[Int, Nothing](1)
+
+      val g = factory[Int, Nothing](1)
 
       g should be('isEmpty)
       (g += 2) should have size 1
@@ -38,10 +39,9 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
     }
 
     def `when constraining nodes to have a minimum degree` {
-      import UserConstraints.{MinDegreeException, MinDegree_2}
+      import UserConstraints.MinDegree_2
 
-      implicit val config: Config                        = MinDegree_2
-      implicit val expectedException: MinDegreeException = new MinDegreeException
+      implicit val config: Config = MinDegree_2
 
       val g = factory.empty[Int, UnDiEdge]
 
@@ -55,8 +55,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
     }
 
     def `when postSubtract fails` {
-      implicit val config: Config                              = UserConstraints.AlwaysFailingPostSubtract
-      implicit val expectedException: IllegalArgumentException = new IllegalArgumentException
+      implicit val config: Config = UserConstraints.AlwaysFailingPostSubtract
 
       val g = factory[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
@@ -68,8 +67,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
     }
 
     def `when postAdd fails` {
-      implicit val config: Config                              = UserConstraints.FailingPostAdd
-      implicit val expectedException: IllegalArgumentException = new IllegalArgumentException
+      implicit val config: Config = UserConstraints.FailingPostAdd
 
       val g = factory[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
@@ -100,7 +98,8 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
 
     def `when constraining Int nodes to even numbers` {
       implicit val config: Config = UserConstraints.EvenNode
-      val g                       = factory[Int, Nothing](1, 2, 3, 4)
+
+      val g = factory[Int, Nothing](1, 2, 3, 4)
       g should be('isEmpty)
       g + 5 contains 5 should be(false)
       g + 6 contains 6 should be(true)
@@ -109,11 +108,11 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
     }
 
     def `when constraining nodes to have a minimum degree` {
-      import UserConstraints.{MinDegreeException, MinDegree_2}
+      import UserConstraints.MinDegree_2
       implicit val config: Config = MinDegree_2
 
-      //@todo how to test factory creation
-//      a[MinDegreeException] should be thrownBy { factory(1, 2, 3 ~ 4) }
+      factory(1, 2, 3 ~ 4) should be('isEmpty)
+
       val g = factory.empty[Int, UnDiEdge]
       (g +? 1 ~ 2) should be('left)
 
@@ -139,8 +138,8 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
 
     def `be defined to return Left on constraint violations` {
       implicit val config: Config = UserConstraints.EvenNode
-      //@todo how to test factory creation
-//      an[IllegalArgumentException] should be thrownBy { factory[Int, Nothing](1, 2, 3, 4) }
+
+      factory[Int, Nothing](1, 2, 3, 4) should be('isEmpty)
 
       val g = factory[Int, Nothing](2, 4)
       g should have size 2
@@ -177,8 +176,7 @@ private object UserConstraints {
   val checkComplete = PreCheckResult(Complete)
 
   /* Constrains nodes to even numbers of type Int relying solely on pre-checks. */
-  class EvenNode[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
-      extends Constraint[N, E, G](self) {
+  class EvenNode[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) extends Constraint[N, E, G](self) {
     def preAdd(node: N) = PreCheckResult.complete(node match {
       case i: Int => i % 2 == 0
       case _      => false
@@ -206,9 +204,9 @@ private object UserConstraints {
       extends NoPreCheck[N, E, G](self) {
 
     override def postSubtract(newGraph: G,
-                                                passedNodes: Traversable[N],
-                                                passedEdges: Traversable[E[N]],
-                                                preCheck: PreCheckResult) = Left(())
+                              passedNodes: Traversable[N],
+                              passedEdges: Traversable[E[N]],
+                              preCheck: PreCheckResult) = Left(())
 
   }
 
@@ -229,9 +227,9 @@ private object UserConstraints {
       extends NoPreCheck[N, E, G](self) {
 
     override def postAdd(newGraph: G,
-                                           passedNodes: Traversable[N],
-                                           passedEdges: Traversable[E[N]],
-                                           preCheck: PreCheckResult) =
+                         passedNodes: Traversable[N],
+                         passedEdges: Traversable[E[N]],
+                         preCheck: PreCheckResult) =
       if (passedEdges.size == 4) Right(newGraph) else Left(())
 
   }
@@ -260,9 +258,9 @@ private object UserConstraints {
 
     // inspecting the would-be graph is much easier
     override def postAdd(newGraph: G,
-                                           passedNodes: Traversable[N],
-                                           passedEdges: Traversable[E[N]],
-                                           preCheck: PreCheckResult) =
+                         passedNodes: Traversable[N],
+                         passedEdges: Traversable[E[N]],
+                         preCheck: PreCheckResult) =
       if (allNodes(passedNodes, passedEdges) forall (n => (newGraph get n).degree >= min)) Right(newGraph)
       else Left(())
 
@@ -294,20 +292,21 @@ private object UserConstraints {
         PostCheck, {
           val nodesToSubtract =
             if (simple) nodes
-            else nodes ++ (edges.map(_.privateNodes).flatten)
-          nodes.map(_.neighbors).flatten ++
-            edges.map(_.nodes).flatten -- nodesToSubtract
+            else nodes ++ edges.flatMap(_.privateNodes)
+          nodes.flatMap(_.neighbors) ++
+            edges.flatMap(_.nodes) -- nodesToSubtract
         }
       )
 
     override def postSubtract(newGraph: G,
-                                                passedNodes: Traversable[N],
-                                                passedEdges: Traversable[E[N]],
-                                                preCheck: PreCheckResult) = preCheck match {
+                              passedNodes: Traversable[N],
+                              passedEdges: Traversable[E[N]],
+                              preCheck: PreCheckResult) = preCheck match {
       case Result(nodesToCheck) =>
         if (nodesToCheck forall { n =>
-          newGraph.get(n).degree >= min
-        }) Right(newGraph) else Left(())
+              newGraph.get(n).degree >= min
+            }) Right(newGraph)
+        else Left(())
     }
 
   }
@@ -319,5 +318,4 @@ private object UserConstraints {
       }
   }
 
-  class MinDegreeException(msg: String = "") extends IllegalArgumentException(msg)
 }

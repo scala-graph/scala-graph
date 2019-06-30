@@ -68,8 +68,7 @@ class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
 //      g + 1~6 should have size (9)
 //    }
     def `self loops #76` {
-      //@todo how to test factory creation
-//      a[CycleException] should be thrownBy { factory(1 ~> 1) }
+      factory(1 ~> 1) should be('isEmpty)
       val g = factory[Int, DiEdge]()
       (g +? 1 ~> 1) should be('left)
     }
