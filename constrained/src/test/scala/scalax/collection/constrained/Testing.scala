@@ -11,7 +11,7 @@ trait Testing[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
   def factory: GraphConstrainedCompanion[CC]
 
   protected def shouldLeaveGraphUnchanged[N, E[X] <: EdgeLikeIn[X]](g: CC[N, E])(
-      op: g.type => Either[ConstraintViolation, g.type]): Unit = {
+      op: CC[N, E] => Either[ConstraintViolation, CC[N, E]]): Unit = {
     val before = factory.from(g.nodes.toOuter, g.edges.toOuter)(g.edgeT, g.config)
     op(g) should be('Left)
     g should ===(before)
