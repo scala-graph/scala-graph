@@ -155,7 +155,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
     def `be combined` {
       import UserConstraints._
       {
-        implicit val config: Config = EvenNode && EvenNode
+        implicit val config: Config = EvenNode
 
         val g1 = factory[Int, Nothing](2, 4)
         g1 should have('order (2), 'graphSize (0))
