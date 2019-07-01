@@ -90,7 +90,8 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
 class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphConstrainedCompanion[CC])
     extends RefSpec
-    with Matchers {
+    with Matchers
+    with Testing[CC] {
 
   info("factory = " + factory.getClass)
 
@@ -114,21 +115,21 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
       factory(1, 2, 3 ~ 4) should be('isEmpty)
 
       val g = factory.empty[Int, UnDiEdge]
-      (g +? 1 ~ 2) should be('left)
+      shouldLeaveGraphUnchanged(g)(_ +? 1 ~ 2)
 
       val g6 = g ++ List(1 ~ 2, 1 ~ 3, 2 ~ 3)
       g6 should have size 6
       val g7 = g6 + 3 ~> 1
       g7 should have size 7
-      (g6 +? 4) should be('left)
-      (g6 +? 3 ~ 4) should be('left)
+      shouldLeaveGraphUnchanged(g6)(_ +? 4)
+      shouldLeaveGraphUnchanged(g6)(_ +? 3 ~ 4)
       g6 + 1 ~> 2 should have('graphSize (4))
 
-      (g6 -? 3) should be('left)
-      (g6 -? 2 ~ 3) should be('left)
+      shouldLeaveGraphUnchanged(g6)(_ -? 3)
+      shouldLeaveGraphUnchanged(g6)(_ -? 2 ~ 3)
       g7 - 3 ~> 1 should have('graphSize (3))
 
-      (g6 --? List(2 ~ 3)) should be('left)
+      shouldLeaveGraphUnchanged(g6)(_ --? List(2 ~ 3))
       (g6 -- List(1, 2, 3)) should be('empty)
       (g7 -- List(3 ~> 1)) should have('graphSize (3))
     }
@@ -155,12 +156,14 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
       import UserConstraints._
       {
         implicit val config: Config = EvenNode && EvenNode
-        val g1                      = factory[Int, Nothing](2, 4)
+
+        val g1 = factory[Int, Nothing](2, 4)
         g1 should have('order (2), 'graphSize (0))
       }
       {
         implicit val config: Config = EvenNode && MinDegree_2
-        val g2                      = factory.empty[Int, UnDiEdge]
+
+        val g2 = factory.empty[Int, UnDiEdge]
         (g2 +? 2) should be('left)
         g2 ++ List(0 ~ 2, 0 ~> 2) should have size 4
       }

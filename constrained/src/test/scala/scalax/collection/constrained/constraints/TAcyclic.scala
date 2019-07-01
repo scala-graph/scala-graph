@@ -1,7 +1,6 @@
 package scalax.collection.constrained
 package constraints
 
-import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.language.{higherKinds, postfixOps}
 
 import org.scalatest._
@@ -20,15 +19,17 @@ class TAcyclicRootTest
       new TAcyclic[mutable.Graph](mutable.Graph),
       new TAcyclicMutable)
 
-class TAcyclicMutable extends RefSpec with Matchers {
+class TAcyclicMutable extends RefSpec with Matchers with Testing[mutable.Graph] {
 
   import mutable.Graph
+  val factory = mutable.Graph
 
   object `The 'Acyclic' constraint works fine with` {
     def `directed mutable graphs` {
       implicit val config: Config = Acyclic
-      val g                       = Graph(1 ~> 2, 2 ~> 3)
-      (g +=? 3 ~> 1) should be('left)
+
+      val g = Graph(1 ~> 2, 2 ~> 3)
+      shouldLeaveGraphUnchanged(g)(_ +=? 3 ~> 1)
       g + 3 ~> 4 should have size (7)
     }
   }
@@ -47,17 +48,17 @@ class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
   object `The 'Acyclic' constraint works fine with` {
     def `directed graphs` {
       val g = factory(1 ~> 2, 2 ~> 3)
-      (g +? 3 ~> 1) should be('left)
+      shouldLeaveGraphUnchanged(g)(_ +? 3 ~> 1)
       g + 3 ~> 4 should have size (7)
     }
     def `directed hypergraphs` {
       val g = factory[Int, HyperEdge](1 ~> 2 ~> 3, 2 ~> 3 ~> 4)
-      (g +? 4 ~> 2) should be('left)
+      shouldLeaveGraphUnchanged(g)(_ +? 4 ~> 2)
       g + 1 ~> 4 should have size (7)
     }
     def `undirected graphs` {
       val g = factory(1 ~ 2, 2 ~ 3)
-      (g +? 3 ~ 1) should be('left)
+      shouldLeaveGraphUnchanged(g)(_ +? 3 ~ 1)
       g + 3 ~ 4 should have size (7)
     }
     // TODO: GraphTraversal findCycle
@@ -70,7 +71,7 @@ class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
     def `self loops #76` {
       factory(1 ~> 1) should be('isEmpty)
       val g = factory[Int, DiEdge]()
-      (g +? 1 ~> 1) should be('left)
+      shouldLeaveGraphUnchanged(g)(_ +? 1 ~> 1)
     }
   }
 }
