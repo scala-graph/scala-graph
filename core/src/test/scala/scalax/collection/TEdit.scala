@@ -78,7 +78,7 @@ class TEditMutable extends RefSpec with Matchers {
       g remove 1 should be(true)
       g should be(mutable.Graph(2 ~ 3, 4))
       g remove 5 should be(false)
-      g minusIsolated  2 should be(g)
+      g minusIsolated 2 should be(g)
       (g -?= 2) should be(g)
       (g -= 2) should be(mutable.Graph[Int, UnDiEdge](3, 4))
       g.clear
