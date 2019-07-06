@@ -79,7 +79,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
     }
 
     def `when cloning a graph` {
-      implicit val config: Config = UserConstraints.AlwaysFailingPreAdd
+      implicit val config: Config = UserConstraints.ThrowingExceptionPreAdd
 
       val g = factory[Int, UnDiEdge](1 ~ 2, 2 ~ 3)
       Try(g.clone).isSuccess should be(true)
@@ -144,10 +144,10 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
 
       val g = factory[Int, Nothing](2, 4)
       g should have size 2
-      (g +? 5) should be('left)
+      shouldLeaveGraphUnchanged[Int, Nothing](g)(_ +? 5)
 
       g + 6 contains 6 should be(true)
-      (g ++? List[OuterNode[Int]](1, 2, 3)) should be('left)
+      shouldLeaveGraphUnchanged[Int, Nothing](g)(_ ++? List[OuterNode[Int]](1, 2, 3))
 
       (g ++ List[OuterNode[Int]](2, 4, 6)) should have size 3
     }
@@ -164,7 +164,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
         implicit val config: Config = EvenNode && MinDegree_2
 
         val g2 = factory.empty[Int, UnDiEdge]
-        (g2 +? 2) should be('left)
+        shouldLeaveGraphUnchanged[Int, UnDiEdge](g2)(_ +? 2)
         g2 ++ List(0 ~ 2, 0 ~> 2) should have size 4
       }
     }
@@ -217,13 +217,13 @@ private object UserConstraints {
     def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new AlwaysFailingPostSubtract[N, E, G](self)
   }
 
-  class AlwaysFailingPreAdd[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+  class ThrowingExceptionPreAdd[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
       extends AlwaysFailingPostSubtract[N, E, G](self: G) {
     override def preAdd(node: N): PreCheckResult = throw new NoSuchElementException
   }
 
-  object AlwaysFailingPreAdd extends ConstraintCompanion[AlwaysFailingPreAdd] {
-    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new AlwaysFailingPreAdd[N, E, G](self)
+  object ThrowingExceptionPreAdd extends ConstraintCompanion[ThrowingExceptionPreAdd] {
+    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new ThrowingExceptionPreAdd[N, E, G](self)
   }
 
   class FailingPostAdd[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
