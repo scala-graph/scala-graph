@@ -78,8 +78,7 @@ class TEditMutable extends RefSpec with Matchers {
       g remove 1 should be(true)
       g should be(mutable.Graph(2 ~ 3, 4))
       g remove 5 should be(false)
-// @todo check compile error
-//      g -? 2 should be(g)
+      g minusIsolated  2 should be(g)
       (g -?= 2) should be(g)
       (g -= 2) should be(mutable.Graph[Int, UnDiEdge](3, 4))
       g.clear
@@ -417,8 +416,7 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       val h = factory(1, 2, 2 ~ 3)
       h - 0 should be(h)
       h - 1 should be(factory(2, 2 ~ 3))
-// @todo check compile error
-//      h -? 2 should be(h)
+      h minusIsolated 2 should be(h)
       h - 2 should be(factory[Int, UnDiEdge](1, 3))
     }
     def `-- ` {
