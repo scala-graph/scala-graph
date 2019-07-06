@@ -79,7 +79,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
     }
 
     def `when cloning a graph` {
-      implicit val config: Config = UserConstraints.AlwaysFailingPreAdd
+      implicit val config: Config = UserConstraints.ThrowingExceptionPreAdd
 
       val g = factory[Int, UnDiEdge](1 ~ 2, 2 ~ 3)
       Try(g.clone).isSuccess should be(true)
@@ -217,13 +217,13 @@ private object UserConstraints {
     def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new AlwaysFailingPostSubtract[N, E, G](self)
   }
 
-  class AlwaysFailingPreAdd[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+  class ThrowingExceptionPreAdd[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
       extends AlwaysFailingPostSubtract[N, E, G](self: G) {
     override def preAdd(node: N): PreCheckResult = throw new NoSuchElementException
   }
 
-  object AlwaysFailingPreAdd extends ConstraintCompanion[AlwaysFailingPreAdd] {
-    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new AlwaysFailingPreAdd[N, E, G](self)
+  object ThrowingExceptionPreAdd extends ConstraintCompanion[ThrowingExceptionPreAdd] {
+    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new ThrowingExceptionPreAdd[N, E, G](self)
   }
 
   class FailingPostAdd[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
