@@ -144,10 +144,10 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
 
       val g = factory[Int, Nothing](2, 4)
       g should have size 2
-      (g +? 5) should be('left)
+      shouldLeaveGraphUnchanged[Int, Nothing](g)(_ +? 5)
 
       g + 6 contains 6 should be(true)
-      (g ++? List[OuterNode[Int]](1, 2, 3)) should be('left)
+      shouldLeaveGraphUnchanged[Int, Nothing](g)(_ ++? List[OuterNode[Int]](1, 2, 3))
 
       (g ++ List[OuterNode[Int]](2, 4, 6)) should have size 3
     }
@@ -164,7 +164,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
         implicit val config: Config = EvenNode && MinDegree_2
 
         val g2 = factory.empty[Int, UnDiEdge]
-        (g2 +? 2) should be('left)
+        shouldLeaveGraphUnchanged[Int, UnDiEdge](g2)(_ +? 2)
         g2 ++ List(0 ~ 2, 0 ~> 2) should have size 4
       }
     }
