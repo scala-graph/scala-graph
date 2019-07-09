@@ -50,11 +50,11 @@ class TEditRootTest
 @RunWith(classOf[JUnitRunner])
 class TEditImmutable extends RefSpec with Matchers {
   object `graphs ` {
-    def `are immutable by default` {
+    def `are immutable by default`: Unit = {
       val g = Graph[Nothing, Nothing]()
       g.isInstanceOf[immutable.Graph[Nothing, Nothing]] should be(true)
     }
-    def `yield another graph when mapped` {
+    def `yield another graph when mapped`: Unit = {
       val g                                 = immutable.Graph(1 ~ 2)
       val m: immutable.Graph[Int, UnDiEdge] = g map Helper.icrementNode
       m.edges.head should be(UnDiEdge(2, 3))
@@ -65,14 +65,14 @@ class TEditImmutable extends RefSpec with Matchers {
 @RunWith(classOf[JUnitRunner])
 class TEditMutable extends RefSpec with Matchers {
   object `mutable graphs` {
-    def `serve += properly` {
+    def `serve += properly`: Unit = {
       val g = mutable.Graph[Int, Nothing](1, 3)
       g += 2
       g should have size (3)
       for (i <- 1 to 3)
         g.contains(i) should be(true) //g should contain (i)
     }
-    def `serve -= properly` {
+    def `serve -= properly`: Unit = {
       val g = mutable.Graph(1, 2, 2 ~ 3, 4)
       g remove 1 should be(true)
       g should be(mutable.Graph(2 ~ 3, 4))
@@ -83,12 +83,12 @@ class TEditMutable extends RefSpec with Matchers {
       g.clear
       g should be('empty)
     }
-    def `serve -= properly (2)` {
+    def `serve -= properly (2)` : Unit = {
       val g = mutable.Graph(1 ~ 2, 2 ~ 3)
       (g -= 2) should be(mutable.Graph[Int, UnDiEdge](1, 3))
       g.graphSize should be(0)
     }
-    def `serve 'directed' properly` {
+    def `serve 'directed' properly`: Unit = {
       val (di, unDi)                        = (1 ~> 2, 2 ~ 3)
       val g                                 = mutable.Graph(unDi)
       def directed(expected: Boolean): Unit = g.isDirected should be(expected)
@@ -99,7 +99,7 @@ class TEditMutable extends RefSpec with Matchers {
       g += unDi; directed(false)
       g.clear; directed(true)
     }
-    def `serve 'diSuccessors' when directed` {
+    def `serve 'diSuccessors' when directed`: Unit = {
       val (one, two, oneOne, oneTwo) = (1, 2, 1 ~> 1, 1 ~> 2)
       val g                          = mutable.Graph(oneOne, oneTwo, one ~> 3, one ~> 4)
       val (n1, n2)                   = (g get one, g get two)
@@ -122,7 +122,7 @@ class TEditMutable extends RefSpec with Matchers {
       (n1 diSuccessors) should be(Set(two, 3))
       (n1 ~>? n1) should be(Some(e11))
     }
-    def `'diSuccessors' when directed hypergraph` {
+    def `'diSuccessors' when directed hypergraph`: Unit = {
       val (one, two, three, oneOneTwo, oneTwoThree) = (1, 2, 3, 1 ~> 1 ~> 2, 1 ~> 2 ~> 3)
       val g                                         = mutable.Graph(oneOneTwo, oneTwoThree)
       val (n1, n2)                                  = (g get one, g get two)
@@ -144,7 +144,7 @@ class TEditMutable extends RefSpec with Matchers {
       (n1 diSuccessors) should be(Set(2))
       (n1 ~>? n1) should be(Some(oneOneTwo))
     }
-    def `serve +~` {
+    def `serve +~` : Unit = {
       val g                    = mutable.Graph(2 ~ 3)
       def n(i: Int)            = g get i
       implicit val unDiFactory = UnDiEdge
@@ -160,14 +160,14 @@ class TEditMutable extends RefSpec with Matchers {
       (n(3) +~ n(2))(DiEdge)
       g should have('order (3), 'graphSize (5))
     }
-    def `serve +~ for hyperedeges` {
+    def `serve +~ for hyperedeges`: Unit = {
       implicit val factory = HyperEdge
       val h                = mutable.Graph(1 ~ 1 ~ 2)
       h should have('order (2), 'graphSize (1))
       h +~= (0, 1, 2, 3)
       h should have('order (4), 'graphSize (2))
     }
-    def `serve +~%= for weighted edeges` {
+    def `serve +~%= for weighted edeges`: Unit = {
       val g          = mutable.Graph(2 ~ 3)
       implicit val f = edge.WUnDiEdge
       g.addWEdge(3, 4)(2)
@@ -176,7 +176,7 @@ class TEditMutable extends RefSpec with Matchers {
       g should have('order (3), 'graphSize (3), 'totalWeight (6))
       // (g +~%= (0,1,2,3))(3)(edge.WHyperEdge) // must not compile
     }
-    def `serve +~%= weighted hyperedeges` {
+    def `serve +~%= weighted hyperedeges`: Unit = {
       implicit val factory = edge.WHyperEdge
       val h                = mutable.Graph(1 ~ 1 ~ 2)
       h should have('order (2), 'graphSize (1))
@@ -185,7 +185,7 @@ class TEditMutable extends RefSpec with Matchers {
       (h +~%= (0, 1, 2, 3))(3)
       h should have('order (6), 'graphSize (3), 'totalWeight (6))
     }
-    def `fulfill labeled edege equality` {
+    def `fulfill labeled edege equality`: Unit = {
       import edge.Implicits._
       import edge.LDiEdge
 
@@ -215,7 +215,7 @@ class TEditMutable extends RefSpec with Matchers {
       added.directed should be(true)
       added.count(_ > 0) should be(List(1, 0, 1).count(_ > 0))
     }
-    def `fulfill labeled directed hyperedege equality` {
+    def `fulfill labeled directed hyperedege equality`: Unit = {
       import edge.Implicits._
       import edge.LHyperEdge
 
@@ -241,14 +241,14 @@ class TEditMutable extends RefSpec with Matchers {
        */
       (innerLabels: Iterable[Any]) forall (outerLabels contains _) should be(true)
     }
-    def `serve ++=` {
+    def `serve ++=` : Unit = {
       val (gBefore, gAfter) = (mutable.Graph(1, 2 ~ 3), mutable.Graph(0, 1 ~ 2, 2 ~ 3))
       (gBefore ++= List[Param[Int, UnDiEdge]](1 ~ 2, 2 ~ 3, 0)) should equal(gAfter)
       (gBefore ++= mutable.Graph(0, 1 ~ 2)) should equal(gAfter)
       (gBefore ++= mutable.Graph[Int, UnDiEdge](0)
         ++= mutable.Graph(1 ~ 2)) should equal(gAfter)
     }
-    def `are upsertable` {
+    def `are upsertable`: Unit = {
       import edge.LDiEdge
       val (label, modLabel) = ("A", "B")
       val g                 = mutable.Graph(LDiEdge(1, 2)(label), LDiEdge(2, 3)(label))
@@ -261,7 +261,7 @@ class TEditMutable extends RefSpec with Matchers {
       g should have('graphSize (2))
       g.edges foreach { _.label should be(modLabel) }
     }
-    def `yield another graph when mapped` {
+    def `yield another graph when mapped`: Unit = {
       import mutable.Graph
       val g                       = Graph(1 ~ 2)
       val m: Graph[Int, UnDiEdge] = g map Helper.icrementNode
@@ -283,13 +283,13 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
   val gString_A = factory[String, Nothing]("A")
 
   object `graph editing includes` {
-    def `empty ` {
+    def `empty ` : Unit = {
       val eg = factory.empty[Nothing, Nothing]
       eg should be('isEmpty)
       eg should have size (0)
       eg should equal(eg.empty)
     }
-    def `apply ` {
+    def `apply ` : Unit = {
       gInt_1_3 should not be ('isEmpty)
       gInt_1_3 should have size (2)
       gInt_1_3(0) should be(false)
@@ -309,13 +309,13 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       h.edges should have size (2)
       h should have size (5)
     }
-    def `nodes of ADT fixes #40` {
+    def `nodes of ADT fixes #40`: Unit = {
       trait Node
       case class N1() extends Node
       case class N2() extends Node
       factory(N1() ~> N2(), N1() ~> N1())
     }
-    def `isDirected ` {
+    def `isDirected ` : Unit = {
       def directed(g: CC[Int, UnDiEdge], expected: Boolean): Unit = g.isDirected should be(expected)
       val wDi                                                     = edge.WDiEdge(1, 2)(0)
 
@@ -325,14 +325,14 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       directed(factory(wDi), true)
       directed(factory(0 ~> 1, wDi), true)
     }
-    def `isHyper ` {
+    def `isHyper ` : Unit = {
       def hyper(g: CC[Int, HyperEdge], expected: Boolean): Unit = g.isHyper should be(expected)
 
       factory(1 ~ 2).isHyper should be(false)
       hyper(factory(1 ~> 2, 1 ~ 2 ~ 3), true)
       hyper(factory(1 ~> 2), false)
     }
-    def `isMulti ` {
+    def `isMulti ` : Unit = {
       import edge.WkDiEdge
       def multi(g: CC[Int, UnDiEdge], expected: Boolean): Unit = g.isMulti should be(expected)
       val (wDi_1, wDi_2)                                       = (WkDiEdge(1, 2)(0), WkDiEdge(1, 2)(1))
@@ -341,7 +341,7 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       multi(factory(1 ~ 2, 1 ~> 2), false)
       multi(factory(wDi_1, wDi_2), true)
     }
-    def `from ` {
+    def `from ` : Unit = {
       val (n_start, n_end) = (11, 20)
       val nodes            = List.range(n_start, n_end)
       val edges            = List[DiEdge[Int]](14 ~> 16, 16 ~> 18, 18 ~> 20, 20 ~> 22)
@@ -349,18 +349,18 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       g.nodes.size should be(nodes.size + 2)
       g.edges.size should be(edges.size)
     }
-    def `contains ` {
+    def `contains ` : Unit = {
       seq_1_3 foreach { i =>
         gInt_1_3.contains(i) should be(true) //gInt_1_3 should contain (i)
       }
       gInt_1_3.head.isInstanceOf[InnerNodeParam[Int]] should be(true)
     }
-    def `toString ` {
+    def `toString ` : Unit = {
       val nodePrefix = OuterNode.stringPrefix
       gInt_1_3.toString should fullyMatch regex ("""Graph\(""" + nodePrefix + """[13], """ + nodePrefix + """[13]\)""")
       gString_A.toString should fullyMatch regex ("""Graph\(""" + nodePrefix + """["A"]\)""")
     }
-    def `from inner ` {
+    def `from inner ` : Unit = {
       val gn = factory[Int, UnDiEdge](2, 3)
       factory(gn.nodes: _*) should equal(gn)
       factory.from[Int, Nothing](gn.nodes, Nil) should equal(gn)
@@ -370,14 +370,14 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       factory(g.edges: _*) should equal(g)
       factory.from[Int, UnDiEdge](edges = g.edges) should equal(g)
     }
-    def `+ Int` {
+    def `+ Int`: Unit = {
       val g = factory(1, 2 ~ 3)
       g + 1 should be(g)
       g + 0 should be(Graph(0, 1, 2, 3, 2 ~ 3))
       g + 0 ~ 1 should be(Graph(0, 1, 2, 3, 0 ~ 1, 2 ~ 3))
       //g + "A" !!! // error: type mismatch
     }
-    def `+ String ` {
+    def `+ String ` : Unit = {
       val g = gString_A + "B"
       g should have size (2)
       g.contains("A") should be(true) //g should contain ("A")
@@ -389,7 +389,7 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       h.edges should have size (1)
       h should have size (3)
     }
-    def `++ ` {
+    def `++ ` : Unit = {
       val g = gString_A + "B" + "C"
       g should have size (3)
       g.contains("A") should be(true) //g should contain ("A")
@@ -401,7 +401,7 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       gBefore ++ factory(0, 1 ~ 2) should equal(gAfter)
       gBefore ++ factory[Int, UnDiEdge](0) ++ factory(1 ~ 2) should equal(gAfter)
     }
-    def `- ` {
+    def `- ` : Unit = {
       var g = gString_A - "B"
       g should have size (1)
 
@@ -416,24 +416,24 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       h -? 2 should be(h)
       h - 2 should be(factory[Int, UnDiEdge](1, 3))
     }
-    def `-- ` {
+    def `-- ` : Unit = {
       val g = factory(1, 2 ~ 3, 3 ~ 4)
       g -- List[Param[Int, UnDiEdge]](2, 3 ~ 3) should be(factory(1, 3 ~ 4))
       g -- List[Param[Int, UnDiEdge]](2, 3 ~ 4) should be(factory[Int, UnDiEdge](1, 3, 4))
       g --! List[Param[Int, UnDiEdge]](1, 3 ~ 4) should be(factory(2 ~ 3))
     }
-    def `CanBuildFrom UnDi` {
+    def `CanBuildFrom UnDi`: Unit = {
       val g                       = factory(0, 1 ~ 2)
       val m: Graph[Int, UnDiEdge] = g map Helper.icrementNode
       m find 1 should be('defined)
       m.edges.head should be(UnDiEdge(2, 3))
     }
-    def `CanBuildFrom Di` {
+    def `CanBuildFrom Di`: Unit = {
       val g                          = factory(1 ~> 2)
       val m: Graph[String, UnDiEdge] = g map Helper.nodeToString
       m.edges.head should be("1" ~ "2")
     }
-    def `NodeSet ` {
+    def `NodeSet ` : Unit = {
       val o = Array.range(0, 4)
       val g = factory(o(1) ~ o(2), o(2) ~ o(3))
       val n = o map (g.nodes find _ getOrElse g.nodes.head)
@@ -450,7 +450,7 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       restored should contain(n(3))
       restored.find(_ == n(1)).get.edges should have size (1)
     }
-    def `Eq ` {
+    def `Eq ` : Unit = {
       factory[Int, Nothing]() shouldEqual factory[Int, Nothing]()
       gInt_1_3 shouldEqual factory(seq_1_3.toOuterNodes[DiEdge]: _*)
       gString_A shouldEqual factory[String, Nothing]("A")
@@ -461,7 +461,7 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
 
       gInt_1_3 should be(factory[Int, DiEdge](1) + 3)
     }
-    def `EdgeAssoc ` {
+    def `EdgeAssoc ` : Unit = {
       val e = 1 ~ 2
       e.isInstanceOf[UnDiEdge[Int]] should be(true)
       val x = factory(3 ~ 4).nodes
@@ -490,22 +490,22 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       dhe._n(3) should be("D")
     }
     object `diSuccessors ` {
-      def `for UnDi` {
+      def `for UnDi`: Unit = {
         val g = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
         (g get 1 diSuccessors) should be(Set(2, 3, 4))
         (g get 2 diSuccessors) should be(Set(1))
       }
-      def `for Di` {
+      def `for Di`: Unit = {
         val g = factory(1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
         (g get 1 diSuccessors) should be(Set(2, 3, 4))
         (g get 2 diSuccessors) should be(Set.empty)
       }
-      def `for mixed` {
+      def `for mixed`: Unit = {
         val g = factory(1 ~> 1, 2 ~> 3, 4 ~ 3)
         (g get 2 diSuccessors) should be(Set(3))
         (g get 3 diSuccessors) should be(Set(4))
       }
-      def `for DiHyper` {
+      def `for DiHyper`: Unit = {
         val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9)
         (h get 1 diSuccessors) should be(Set(2, 3, 4, 5, 9))
         (h get 2 diSuccessors) should be(Set.empty)
@@ -513,22 +513,22 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       }
     }
     object `diPredecessors ` {
-      def `for UnDi` {
+      def `for UnDi`: Unit = {
         val g = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
         (g get 1 diPredecessors) should be(Set(2, 3, 4))
         (g get 2 diPredecessors) should be(Set(1))
       }
-      def `for Di` {
+      def `for Di`: Unit = {
         val g = factory(1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
         (g get 1 diPredecessors) should be(Set.empty)
         (g get 2 diPredecessors) should be(Set(1))
       }
-      def `for mixed` {
+      def `for mixed`: Unit = {
         val g = factory(1 ~> 2, 2 ~> 3, 4 ~ 3)
         (g get 2 diPredecessors) should be(Set(1))
         (g get 3 diSuccessors) should be(Set(4))
       }
-      def `for DiHyper` {
+      def `for DiHyper`: Unit = {
         val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9)
         (h get 1 diPredecessors) should be(Set.empty)
         (h get 2 diPredecessors) should be(Set(1))
@@ -536,35 +536,35 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       }
     }
     object `neighbors ` {
-      def `for UnDi` {
+      def `for UnDi`: Unit = {
         val g = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
         (g get 1 neighbors) should be(Set(2, 3, 4))
         (g get 2 neighbors) should be(Set(1))
       }
-      def `for Di` {
+      def `for Di`: Unit = {
         val g = factory(1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
         (g get 1 neighbors) should be(Set(2, 3, 4))
         (g get 2 neighbors) should be(Set(1))
       }
-      def `for DiHyper` {
+      def `for DiHyper`: Unit = {
         val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9)
         (h get 1 neighbors) should be(Set(2, 3, 4, 5, 9))
         (h get 2 neighbors) should be(Set(1, 5))
         (h get 5 neighbors) should be(Set(1, 2, 3))
       }
     }
-    def `findOutgoingTo Di` {
+    def `findOutgoingTo Di`: Unit = {
       val g         = factory(1 ~> 1, 1 ~> 2, 2 ~> 1)
       def n(i: Int) = g get i
       (n(1) findOutgoingTo n(2)) should be(Some(1 ~> 2))
       (n(1) findOutgoingTo n(1)) should be(Some(1 ~> 1))
     }
-    def `degree ` {
+    def `degree ` : Unit = {
       val g = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
       (g get 1 degree) should be(5)
       (g get 2 degree) should be(1)
     }
-    def `incoming ` {
+    def `incoming ` : Unit = {
       val uEdges = Seq[UnDiEdge[Int]](1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4) // bug if no type param given
       val g      = factory(uEdges(0), uEdges(1), uEdges(2), uEdges(3))
       (g get 1 incoming) should be(uEdges.toSet)
@@ -575,12 +575,12 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       (h get 1 incoming) should be(Set(dEdges(0)))
       (h get 2 incoming) should be(Set(dEdges(1)))
     }
-    def `edgeAdjacents UnDi` {
+    def `edgeAdjacents UnDi`: Unit = {
       val g = Graph(1 ~ 2, 2 ~ 3, 1 ~> 3, 1 ~ 5, 3 ~ 5, 3 ~ 4, 4 ~> 4, 4 ~> 5)
       ((g get 4 ~> 4) adjacents) should be(Set(3 ~ 4, 4 ~> 5))
       ((g get 1 ~ 2) adjacents) should be(Set(1 ~> 3, 1 ~ 5, 2 ~ 3))
     }
-    def `filter ` {
+    def `filter ` : Unit = {
       val g = factory(2 ~> 3, 3 ~> 1, 5)
       g filter ((n: Int) => n > 1) should be(factory(2 ~> 3, 5))
       g filter ((n: Int) => n < 2) should be(factory[Int, DiEdge](1))
@@ -589,7 +589,7 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       g filter g.having(edge = _._1 == 2) should be(factory(2 ~> 3))
       g filter g.having(edge = _ contains 2) should be(factory(2 ~> 3))
     }
-    def `match ` {
+    def `match ` : Unit = {
       val di = 1 ~> 2
       (di match { case DiEdge(src, _) => src }) should be(1)
       (di match { case src ~> trg     => src + trg }) should be(3)

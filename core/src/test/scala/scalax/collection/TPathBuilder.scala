@@ -18,7 +18,7 @@ trait WalkBehaviors {
 
   import AGraph.UnDi_1._
 
-  def walk(builder: => g.WalkBuilder) {
+  def walk(builder: => g.WalkBuilder): Unit = {
     it should "accept neighbors" in { builder add n(3) should be(true) }
     it should "refuse non-neighbors" in { builder add n(4) should be(false) }
     it should "accept outgoing edge" in { builder add (g get 1 ~ 2) should be(true) }

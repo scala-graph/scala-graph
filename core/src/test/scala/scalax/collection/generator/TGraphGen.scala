@@ -19,7 +19,7 @@ class TGraphGenTest extends RefSpec with Matchers with PropertyChecks {
   implicit val config     = PropertyCheckConfiguration(minSuccessful = minSuccessful, maxDiscardedFactor = 1.0)
 
   object `nr of minimum successful tests` {
-    def `should be met` {
+    def `should be met`: Unit = {
       var count = 0
       forAll { (i: Int) =>
         count += 1
@@ -39,16 +39,15 @@ class TGraphGenTest extends RefSpec with Matchers with PropertyChecks {
         Set(DiEdge)
       ).outerNodeSet
 
-    def `should conform to the passed size` {
+    def `should conform to the passed size`: Unit =
       forAll(arbitrary[Set[Int]]) { (outerNodes: Set[Int]) =>
         outerNodes should have size (order)
       }
-    }
   }
 
   type IntDiGraph = Graph[Int, DiEdge]
 
-  def checkMetrics(g: IntDiGraph, metrics: GraphGen.Metrics[Int]) {
+  def checkMetrics(g: IntDiGraph, metrics: GraphGen.Metrics[Int]): Unit = {
     import metrics._
 
     val degrees                 = g.degreeSeq
@@ -69,20 +68,18 @@ class TGraphGenTest extends RefSpec with Matchers with PropertyChecks {
   object `tiny connected graph of [Int,DiEdge]` {
     implicit val arbitraryGraph = GraphGen.tinyConnectedIntDi[Graph](Graph)
 
-    def `should conform to tiny metrics` {
+    def `should conform to tiny metrics`: Unit =
       forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
         checkMetrics(g, GraphGen.TinyInt)
       }
-    }
   }
 
   object `small connected graph of [Int,DiEdge]` {
     implicit val arbitraryGraph = GraphGen.smallConnectedIntDi[Graph](Graph)
 
-    def `should conform to small metrics` {
+    def `should conform to small metrics`: Unit =
       forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
         checkMetrics(g, GraphGen.SmallInt)
       }
-    }
   }
 }

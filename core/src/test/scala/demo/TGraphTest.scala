@@ -165,11 +165,10 @@ object TGraphTest extends App {
         implicit val arbitraryTinyGraph =
           GraphGen.tinyConnectedIntDi[Graph](Graph)
 
-        def `should conform to tiny metrics` {
+        def `should conform to tiny metrics`: Unit =
           forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
             g.order should equal(GraphGen.TinyInt.order)
           }
-        }
       }
     }
   }

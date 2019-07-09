@@ -53,12 +53,10 @@ class TCustomEdge[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, 
     Transition("Menu", "Settings", 'S', NoneModifier))
 
   object `JSON import/export of graphs with custom edges works fine` {
-    def `when importing` {
+    def `when importing`: Unit =
       factory.fromJson[String, Transition](jsonText, descriptor) should be(graph)
-    }
-    def `when reimporting` {
+    def `when reimporting`: Unit =
       factory.fromJson[String, Transition](graph.toJson(descriptor), descriptor) should be(graph)
-    }
   }
 }
 

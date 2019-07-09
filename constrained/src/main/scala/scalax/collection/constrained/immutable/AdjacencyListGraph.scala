@@ -18,9 +18,8 @@ trait AdjacencyListGraph[
 
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
 
-  override protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]) {
+  override protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]): Unit =
     withoutChecks { super.initialize(nodes, edges) }
-  }
 
   /** generic constrained addition */
   protected def checkedAdd(contained: => Boolean,

@@ -83,16 +83,15 @@ private class TTopologicalSort[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with G
       fail(s"Cycle expected but topological order ${order.toLayered} found")
   }
 
-  def `empty graph` {
+  def `empty graph`: Unit =
     given(factory.empty[Int, DiEdge]) {
       _.topologicalSort.fold(
         Topo.unexpectedCycle,
         _ should be('empty)
       )
     }
-  }
 
-  def `daily activities` {
+  def `daily activities`: Unit = {
 
     object Activities {
       val (coffee, coding, inspiration, shopping, sleeping, supper, gaming) =
@@ -132,7 +131,7 @@ private class TTopologicalSort[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with G
     }
   }
 
-  def `connected graph` {
+  def `connected graph`: Unit = {
     val someOuter @ (n0 :: n1 :: n5 :: Nil) = 0 :: 1 :: 5 :: Nil
     given(factory[Int, DiEdge](n0 ~> n1, 2 ~> 4, 2 ~> n5, n0 ~> 3, n1 ~> 4, 4 ~> 3)) { g =>
       g should not be 'isMulti
@@ -155,7 +154,7 @@ private class TTopologicalSort[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with G
     }
   }
 
-  def `multi graph` {
+  def `multi graph`: Unit =
     given(factory(WkDiEdge(1, 2)(0), WkDiEdge(1, 2)(1))) { g =>
       g.topologicalSort.fold(
         Topo.unexpectedCycle,
@@ -165,9 +164,8 @@ private class TTopologicalSort[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with G
         }
       )
     }
-  }
 
-  def `unconnected graph` {
+  def `unconnected graph`: Unit = {
     val expectedLayer_0 @ (_1 :: _3 :: Nil) = List(1, 3)
     val expectedLayer_1 @ (_2 :: _4 :: Nil) = List(2, 4)
     given(factory(_1 ~> _2, _3 ~> _4)) {
@@ -183,25 +181,23 @@ private class TTopologicalSort[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with G
     }
   }
 
-  def `cyclic graph` {
+  def `cyclic graph`: Unit =
     given(factory(1 ~> 2, 2 ~> 1)) {
       _.topologicalSort.fold(
         identity,
         Topo.unexpectedRight
       )
     }
-  }
 
-  def `cyclic graph #68` {
+  def `cyclic graph #68`: Unit =
     given(factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)) {
       _.topologicalSort.fold(
         identity,
         Topo.unexpectedRight
       )
     }
-  }
 
-  def `combining with filtered edges by withSubgraph #104` {
+  def `combining with filtered edges by withSubgraph #104`: Unit =
     given(factory((1 ~+> 3)("a"), (1 ~+> 2)("b"), (2 ~+> 3)("a"))) { g =>
       val n1 = (g get 1)
       n1.topologicalSort() should be('isRight)
@@ -216,5 +212,4 @@ private class TTopologicalSort[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with G
           }
         )
     }
-  }
 }

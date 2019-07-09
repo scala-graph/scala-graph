@@ -39,7 +39,7 @@ final class TraversingTest extends RefSpec with Matchers {
   def n(outer: Int): g.NodeT = g get outer
 
   object `demonstraiting ` {
-    def `traversals for a result` {
+    def `traversals for a result`: Unit = {
       
       n(1) findSuccessor (_.outDegree >  3)              should be (None) 
       n(1) findSuccessor (_.outDegree >= 3)              should be (Some(3)) 
@@ -77,7 +77,7 @@ final class TraversingTest extends RefSpec with Matchers {
       pO2.map(_.nodes)             .get.toList should be (List(4, 5, 1, 2)) 
     }
   
-    def `cycle detection` {
+    def `cycle detection`: Unit = {
       val g = Graph(1~>2, 1~>3, 2~>3, 3~>4, 4~>2)
       val fc1 = g.findCycle
                                    fc1.get.sameElements(List(
@@ -93,7 +93,7 @@ c1 <- fc1
  c2 <- fc2} yield c1 sameAs c2      should be (true)
     }
     
-    def `ordered traversal` {
+    def `ordered traversal`: Unit = {
       val root = 1
       val g = Graph(root~>4 % 2, root~>2 % 5, root~>3 % 4,
                        3~>6 % 4,    3~>5 % 5,    3~>7 % 2)
@@ -104,7 +104,7 @@ c1 <- fc1
       traverser.toList             should be (List(1,2,3,4,5,6,7))
     }
     
-    def `traversers with fluent properties` {
+    def `traversers with fluent properties`: Unit = {
       val g = Graph(1~>2 % 1, 1~>3 % 2, 2~>3 % 3, 3~>4 % 1)
       val n1 = g get 1
       
@@ -124,7 +124,7 @@ c1 <- fc1
                                    1, 2, 3, 1~>3 % 2, 2~>3 % 3))
     }
     
-    def `DownUp traverser` {
+    def `DownUp traverser`: Unit = {
       import scala.collection.mutable.ArrayBuffer
   
       val root = "A"
@@ -141,7 +141,7 @@ c1 <- fc1
                                   be ("(A[B2][B1])"))
     }
   
-    def `extended traverser` {
+    def `extended traverser`: Unit = {
       val g = Graph(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4, 4 ~> 2)
   
       import g.ExtendedNodeVisitor
@@ -158,7 +158,7 @@ c1 <- fc1
         a._1 == b._1 && a._2 < b._2) should be (List((1,0), (2,1), (3,1), (4,2)))    
     }
     
-    def `cycle detection for side effect` {
+    def `cycle detection for side effect`: Unit = {
       val g = Graph(1~>2, 1~>3, 2~>3, 3~>4, 4~>2)
       
       var center: Option[g.NodeT] = None
@@ -172,7 +172,7 @@ c1 <- fc1
       center.get should be (2)
     }
   
-    def `weak component traverser` {
+    def `weak component traverser`: Unit = {
       val componentEdges = {
         def edges(i: Int) = List(i ~> (i + 1), i ~> (i + 2), (i + 1) ~> (i + 2))
         (edges(1), edges(5))
@@ -187,7 +187,7 @@ c1 <- fc1
       anyNode.weakComponent.nodes should have size componentEdges._1.size
     }
     
-    def `strong component traverser` {
+    def `strong component traverser`: Unit = {
       type G = Graph[Symbol,DiEdge]
       val sccExpected: (G, G) = (
           Graph('a ~> 'b, 'b ~> 'c, 'c ~> 'd, 'd ~> 'a, 'd ~> 'e, 'c ~> 'e, 'e ~> 'c),
@@ -202,7 +202,7 @@ c1 <- fc1
       startAt.innerNodeTraverser.strongComponents(_ => ())
     }
 
-    def `path builder` {
+    def `path builder`: Unit = {
       val builder = g.newPathBuilder(n(1))
       builder += n(3) += n(4)
       builder.result               .toString should be ("Path(1, 1~>3 %5.0, 3, 3~4 %1.0, 4)")

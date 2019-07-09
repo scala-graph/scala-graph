@@ -29,7 +29,7 @@ class TConnectedMutable extends RefSpec with Matchers {
   implicit val config: Config = Connected
 
   object `The 'Connected' constraint works fine with mutable graphs on` {
-    def `adding nodes or edges` {
+    def `adding nodes or edges`: Unit = {
       val init    = Seq(1 ~> 2, 2 ~> 3)
       val simpleG = SimpleGraph(init: _*)
       val g       = Graph(init: _*)
@@ -44,7 +44,7 @@ class TConnectedMutable extends RefSpec with Matchers {
       val newElems = Seq(4 ~> 5, 5 ~> 6, 6 ~> 1)
       (g ++= newElems) should be(simpleG ++= newElems)
     }
-    def `substracting nodes or edges` {
+    def `substracting nodes or edges`: Unit = {
       val (e1, e2, e3) = (1 ~ 2, 2 ~ 3, 3 ~ 4)
       val init         = Seq(e1, e2, e3)
       val simpleG      = SimpleGraph(init: _*)
@@ -77,13 +77,13 @@ class TConnected[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
   info("factory = " + factory.getClass)
 
   object `The 'Connected' constraint works fine with graphs on` {
-    def `creation ` {
+    def `creation ` : Unit = {
       val g1 = Graph(1 ~> 2, 2 ~> 3)
       g1 should have size (5)
       val g2 = Graph(1 ~> 2, 3 ~> 4)
       g2 should have size (0)
     }
-    def `adding nodes or edges` {
+    def `adding nodes or edges`: Unit = {
       val init    = Seq(1 ~> 2, 2 ~> 3)
       val simpleG = SimpleGraph(init: _*)
       val g       = Graph(init: _*)
@@ -98,7 +98,7 @@ class TConnected[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
       val newElems = Seq(4 ~> 5, 5 ~> 6, 6 ~> 1)
       g ++ newElems should be(simpleG ++ newElems)
     }
-    def `substracting nodes or edges` {
+    def `substracting nodes or edges`: Unit = {
       val (e1, e2, e3) = (1 ~ 2, 2 ~ 3, 3 ~ 4)
       val init         = Seq(e1, e2, e3)
       val simpleG      = SimpleGraph(init: _*)

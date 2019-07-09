@@ -36,28 +36,25 @@ final class TConnectivity[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphL
     import Data.elementsOfDi_1
     val g = factory(elementsOfDi_1: _*)
 
-    def `there exists no pair of mutually reachable nodes` {
+    def `there exists no pair of mutually reachable nodes`: Unit =
       given(g) {
         _.nodes.toList.combinations(2) foreach {
           case List(a, b) => List(a pathTo b, b pathTo a) should contain(None)
         }
       }
-    }
 
-    def `evaluating strong components from any node yields single-node components` {
+    def `evaluating strong components from any node yields single-node components`: Unit =
       given(g) {
         _.nodes foreach { n =>
           val components = n.innerNodeTraverser.strongComponents
           components foreach (_.nodes should have size (1))
         }
       }
-    }
 
-    def `evaluating all strong components yields a component for every node` {
+    def `evaluating all strong components yields a component for every node`: Unit =
       given(g) { g =>
         g.strongComponentTraverser().size should be(g.order)
       }
-    }
   }
 
   object `Having two strong components` {
@@ -69,14 +66,13 @@ final class TConnectivity[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphL
     assert(sccExpected.size == 2)
     assert(sccExpected(0).intersect(sccExpected(1)) == factory.empty)
 
-    def `each is detected as such` {
+    def `each is detected as such`: Unit =
       sccExpected foreach (g =>
         given(g) {
           _.strongComponentTraverser() should have size (1)
         })
-    }
 
-    def `connected by a diEdge yields a graph with the very same two strong components` {
+    def `connected by a diEdge yields a graph with the very same two strong components`: Unit = {
       val r     = new Random
       val union = (factory.empty[Symbol, DiEdge] /: sccExpected)((r, g) => g union r)
       val connectors = {
@@ -108,9 +104,8 @@ final class TConnectivity[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphL
 
   object `Having two weak components` {
 
-    def `weak components are detected, fix #57` {
+    def `weak components are detected, fix #57`: Unit =
       given(factory(11 ~> 12, 13 ~> 14)) { _.componentTraverser() should have size 2 }
-    }
   }
 
   object `Having a bigger graph` {
@@ -124,19 +119,17 @@ final class TConnectivity[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphL
     }
     lazy val strongComponents = g.strongComponentTraverser().toVector
 
-    def `no stack overflow occurs` {
+    def `no stack overflow occurs`: Unit =
       given(g) { _ =>
         strongComponents
       }
-    }
 
-    def `strong components are complete` {
+    def `strong components are complete`: Unit =
       given(g) { _ =>
         (Set.empty[g.NodeT] /: strongComponents)((cum, sc) => cum ++ sc.nodes) should be(g.nodes)
       }
-    }
 
-    def `strong components are proper` {
+    def `strong components are proper`: Unit =
       given(g) { _ =>
         val maxProbes = 10
         val arbitraryNodes: Vector[Set[g.NodeT]] = strongComponents map { sc =>
@@ -178,6 +171,5 @@ final class TConnectivity[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphL
           }
         }
       }
-    }
   }
 }

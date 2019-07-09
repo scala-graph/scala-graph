@@ -31,14 +31,13 @@ abstract protected[collection] class BuilderImpl[
     }
   )
 
-  protected def add(elem: Param[N, E]) {
+  protected def add(elem: Param[N, E]): Unit =
     elem match {
       case n: OuterNode[N]               => nodes += n.value
       case n: InnerNodeParam[N]          => nodes += n.value
       case e: OuterEdge[N, E]            => edges += e.edge
       case e: InnerEdgeParam[N, E, _, E] => edges += e.asEdgeTProjection[N, E].toOuter
     }
-  }
 
   override def +=(elem: Param[N, E]): this.type = {
     add(elem)
@@ -51,7 +50,7 @@ abstract protected[collection] class BuilderImpl[
     this
   }
 
-  def clear() {
+  def clear(): Unit = {
     nodes.clear
     edges.clear
   }

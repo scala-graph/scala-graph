@@ -27,7 +27,7 @@ class TConstrainedMutable extends RefSpec with Matchers {
 
   object `constrains work as expected using mutable operations` {
 
-    def `when constraining Int nodes to even numbers` {
+    def `when constraining Int nodes to even numbers`: Unit = {
       implicit val config: Config = UserConstraints.EvenNode
       val g                       = Graph[Int, Nothing](1)
 
@@ -38,7 +38,7 @@ class TConstrainedMutable extends RefSpec with Matchers {
       (g ++= List(2, 4, 6)) should have size 3
     }
 
-    def `when constraining nodes to have a minimum degree` {
+    def `when constraining nodes to have a minimum degree`: Unit = {
       import UserConstraints.{MinDegreeException, MinDegree_2}
 
       implicit val config: Config                        = MinDegree_2
@@ -54,7 +54,7 @@ class TConstrainedMutable extends RefSpec with Matchers {
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(3))
     }
 
-    def `when postSubtract fails` {
+    def `when postSubtract fails`: Unit = {
       implicit val config: Config                              = UserConstraints.AlwaysFailingPostSubtract
       implicit val expectedException: IllegalArgumentException = new IllegalArgumentException
 
@@ -67,7 +67,7 @@ class TConstrainedMutable extends RefSpec with Matchers {
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ --= List(1 ~ 2, 2 ~ 3))
     }
 
-    def `when postAdd fails` {
+    def `when postAdd fails`: Unit = {
       implicit val config: Config                              = UserConstraints.FailingPostAdd
       implicit val expectedException: IllegalArgumentException = new IllegalArgumentException
 
@@ -80,7 +80,7 @@ class TConstrainedMutable extends RefSpec with Matchers {
       shouldThrowExceptionAndLeaveGraphUnchanged(g)(_ ++= List(1 ~ 5, 5 ~ 6, 6 ~ 2))
     }
 
-    def `when cloning a graph` {
+    def `when cloning a graph`: Unit = {
       implicit val config: Config = UserConstraints.AlwaysFailingPreAdd
 
       val g = Graph[Int, UnDiEdge](1 ~ 2, 2 ~ 3)
@@ -105,7 +105,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
 
   object `constrains take effect` {
 
-    def `when constraining Int nodes to even numbers` {
+    def `when constraining Int nodes to even numbers`: Unit = {
       implicit val config: Config = UserConstraints.EvenNode
       val g                       = factory[Int, Nothing](1, 2, 3, 4)
       g should be('isEmpty)
@@ -115,7 +115,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
       (g ++ List[OuterNode[Int]](2, 4, 6)) should have size 3
     }
 
-    def `when constraining nodes to have a minimum degree` {
+    def `when constraining nodes to have a minimum degree`: Unit = {
       import UserConstraints.{MinDegreeException, MinDegree_2}
       implicit val config: Config = MinDegree_2
 
@@ -143,7 +143,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
 
   object `constraints may` {
 
-    def `be defined to throw exceptions on constraint violations` {
+    def `be defined to throw exceptions on constraint violations`: Unit = {
       implicit val config: Config = UserConstraints.EvenNodeByException
       an[IllegalArgumentException] should be thrownBy { factory[Int, Nothing](1, 2, 3, 4) }
 
@@ -157,7 +157,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
       (g ++ List[OuterNode[Int]](2, 4, 6)) should have size 3
     }
 
-    def `be combined` {
+    def `be combined`: Unit = {
       import UserConstraints._
       {
         implicit val config: Config = EvenNode && EvenNode

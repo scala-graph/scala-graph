@@ -45,7 +45,7 @@ class TEdgeTest extends RefSpec with Matchers {
 
     def outerEdges(implicit kind: CollectionKind = Bag): List[E[_]]
 
-    def `are treated as a bag by default` {
+    def `are treated as a bag by default`: Unit = {
       val edges = outerEdges()
       edges(1) should be(edges(2))
       val g = Graph(edges: _*)
@@ -53,7 +53,7 @@ class TEdgeTest extends RefSpec with Matchers {
       ordered(g.edges) should be(false)
     }
 
-    def `may be defined to be sorted.` {
+    def `may be defined to be sorted.` : Unit = {
       val edges = outerEdges(Sequence)
       edges(1) should not equal (edges(2))
       val g = Graph(edges: _*)
@@ -86,7 +86,7 @@ class TEdgeTest extends RefSpec with Matchers {
 
   object `Custom edge tests` {
 
-    def `LkDiEdge ` {
+    def `LkDiEdge ` : Unit = {
       val outer = LkDiEdge(ham, gig)(Flight(flightNo))
       val g     = Graph(outer)
       val e     = g.edges.head
@@ -104,15 +104,15 @@ class TEdgeTest extends RefSpec with Matchers {
       e.## should not be (neFlight.##)
     }
 
-    def `LkDiEdgeShortcut ` {
+    def `LkDiEdgeShortcut ` : Unit = {
       val outer = LkDiEdge(ham, gig)(Flight(flightNo))
       (ham ~+#> gig)(Flight(flightNo)) should be(outer)
       (ham ~+#> gig)(Flight(flightNo, 11 o 20)) should be(outer)
     }
 
-    def `matching weighted edges` {
+    def `matching weighted edges`: Unit = {
       val (n1, n2, w) = (1, 2, 5)
-      def check(_n1: Int, _n2: Int, _w: Double) {
+      def check(_n1: Int, _n2: Int, _w: Double): Unit = {
         _n1 should be(n1)
         _n2 should be(n2)
         _w should be(w)
@@ -129,12 +129,12 @@ class TEdgeTest extends RefSpec with Matchers {
       wkDi match { case s :~> t % w => check(s, t, w) }
     }
 
-    def `matching labeled edges` {
+    def `matching labeled edges`: Unit = {
       object StringLabel extends LEdgeImplicits[String]
       import StringLabel._
 
       val (n1, n2, label) = (1, 2, "A")
-      def check(_n1: Int, _n2: Int, _label: String) {
+      def check(_n1: Int, _n2: Int, _label: String): Unit = {
         _n1 should be(n1)
         _n2 should be(n2)
         _label should be(label)
@@ -151,12 +151,12 @@ class TEdgeTest extends RefSpec with Matchers {
       lkDi match { case s :~> t + l => check(s, t, l) }
     }
 
-    def `matching weighted labeled edges` {
+    def `matching weighted labeled edges`: Unit = {
       object StringLabel extends LEdgeImplicits[String]
       import StringLabel._
 
       val (n1, n2, label, weight) = (1, 2, "A", 4d)
-      def check(_n1: Int, _n2: Int, _weight: Double, _label: String) {
+      def check(_n1: Int, _n2: Int, _weight: Double, _label: String): Unit = {
         _n1 should be(n1)
         _n2 should be(n2)
         _weight should be(weight)
@@ -174,7 +174,7 @@ class TEdgeTest extends RefSpec with Matchers {
       wlkDi match { case s :~> t %+ (w, l) => check(s, t, w, l) }
     }
 
-    def `findOutgoingTo LkDiEdge` {
+    def `findOutgoingTo LkDiEdge`: Unit = {
       import edge.LkDiEdge
       val le  = LkDiEdge(1, 1)(1)
       val lg  = Graph(le)
@@ -182,7 +182,7 @@ class TEdgeTest extends RefSpec with Matchers {
       (ln1 findOutgoingTo ln1) should be(Some(le))
     }
 
-    def `LkHyperEdge equality` {
+    def `LkHyperEdge equality`: Unit = {
       val e1 = LkDiHyperEdge(1, 1)("a")
       val e2 = LkHyperEdge(1, 1)("b")
       val g  = Graph[Int, LHyperEdge](e1, e2)
@@ -191,7 +191,7 @@ class TEdgeTest extends RefSpec with Matchers {
       g find e2 should be('defined)
     }
 
-    def `LkDiHyperEdge equality` {
+    def `LkDiHyperEdge equality`: Unit = {
       val e  = LkDiHyperEdge(1, 2, 3)("a")
       val g  = Graph[Int, LHyperEdge](e)
       val eo = g.edges.head.toOuter

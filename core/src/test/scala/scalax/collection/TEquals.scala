@@ -18,7 +18,7 @@ class TEqualsTest extends RefSpec with Matchers {
   def initH                = (iFactory.from(none, oEdgesH), mFactory.from(none, oEdgesH))
 
   object `equals works properly` {
-    def `over immutable and mutable graphs` {
+    def `over immutable and mutable graphs`: Unit = {
       val (iG, mG) = initG
       val (iH, mH) = initH
       val ok       = iG == mG

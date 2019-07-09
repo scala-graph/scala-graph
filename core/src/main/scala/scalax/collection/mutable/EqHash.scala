@@ -19,7 +19,7 @@ trait EqHash[A <: AnyRef, This <: EqHash[A, This]] {
     (length / 3, new Array[AnyRef](length))
   }
 
-  def from(other: This) {
+  def from(other: This): Unit = {
     threshold = other.threshold
     table = other.table.clone
     _size = other.size
@@ -67,12 +67,12 @@ trait EqHash[A <: AnyRef, This <: EqHash[A, This]] {
     index(maskedKey, hash(maskedKey, len, step - 1), len)
   }
 
-  override def clear {
+  override def clear: Unit = {
     java.util.Arrays.fill(table, null)
     _size = 0
   }
 
-  protected def resize {
+  protected def resize: Unit = {
     val oldTable  = table
     val oldLength = oldTable.length
     val newLength = 2 * oldLength
@@ -90,7 +90,7 @@ trait EqHash[A <: AnyRef, This <: EqHash[A, This]] {
 
   protected def move(oldTable: Array[AnyRef], oldLength: Int, newTable: Array[AnyRef], newLength: Int): Unit
 
-  final protected def closeDeletion(index: Int) {
+  final protected def closeDeletion(index: Int): Unit = {
     // Knuth Section 6.4 Algorithm R
     val tab  = table
     val len  = tab.length

@@ -36,23 +36,20 @@ class TStateTest extends RefSpec with Matchers {
   val nrNodesExpected = g.order
   val aLotOfTimes     = 162 // at least 2 times State.nrOfFlagWordBits
 
-  def dump {
+  def dump: Unit =
     println(State.dump(g))
-  }
 
   object `Single-threaded shared state proves robust` {
-    def `when looping` {
+    def `when looping`: Unit =
       for (i <- 1 to aLotOfTimes)
         countNodes() should be(nrNodesExpected)
-    }
-    def `when looping at visited nodes` {
+    def `when looping at visited nodes`: Unit =
       g.nodes.head.innerNodeTraverser foreach (_ => `when looping`)
-    }
-    def `when called recursively` {
+    def `when called recursively`: Unit = {
       val depth = 5
       countNodes(depth) should be(math.pow(3, depth) * nrNodesExpected)
     }
-    def `when called deep-recursively` {
+    def `when called deep-recursively`: Unit = {
       val recurseAt = g.nodes.head
       def countNodesDeep(recursion: Int): Int = {
         assert(recursion >= 0)
@@ -68,7 +65,7 @@ class TStateTest extends RefSpec with Matchers {
       }
       for (i <- 1 to 2) countNodesDeep(aLotOfTimes)
     }
-    def `when cleared up after lots of unconnected traversals` {
+    def `when cleared up after lots of unconnected traversals`: Unit = {
       val order          = 5000
       val r              = new Random(10 * order)
       def intNodeFactory = r.nextInt
@@ -84,7 +81,7 @@ class TStateTest extends RefSpec with Matchers {
     }
   }
   object `Multi-threaded shared state proves robust` {
-    def `when traversing by futures` {
+    def `when traversing by futures`: Unit = {
       val traversals = Future.sequence(
         for (i <- 1 to aLotOfTimes)
           yield Future { countNodes() }
@@ -97,7 +94,7 @@ class TStateTest extends RefSpec with Matchers {
       // each traversal must yield the same result
       stat should be(Map(nrNodesExpected -> aLotOfTimes))
     }
-    def `when tested under stress fixing #34` {
+    def `when tested under stress fixing #34`: Unit = {
       import Data._
       object g extends TGraph[Int, DiEdge, Graph](Graph(elementsOfDi_1: _*))
       def n(outer: Int) = g.node(outer)

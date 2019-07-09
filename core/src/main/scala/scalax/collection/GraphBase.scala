@@ -39,7 +39,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     * @param nodes $INNODES
     * @param edges $INEDGES
     */
-  protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]) {
+  protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]): Unit = {
     this.nodes.initialize(nodes, edges)
     this.edges.initialize(edges)
   }
@@ -185,7 +185,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     /** Whether this node has any predecessors. */
     def hasPredecessors: Boolean
 
-    protected[collection] def addDiPredecessors(edge: EdgeT, add: (NodeT) => Unit)
+    protected[collection] def addDiPredecessors(edge: EdgeT, add: (NodeT) => Unit): Unit
 
     /** Synonym for `diPredecessors`. */
     @inline final def inNeighbors = diPredecessors
@@ -199,7 +199,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       * @return set of all neighbors.
       */
     def neighbors: Set[NodeT]
-    protected[collection] def addNeighbors(edge: EdgeT, add: (NodeT) => Unit)
+    protected[collection] def addNeighbors(edge: EdgeT, add: (NodeT) => Unit): Unit
 
     /** Synonym for `neighbors`. */
     @inline final def ~| = neighbors
@@ -331,15 +331,12 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     def apply(node: N)    = newNode(node)
     def unapply(n: NodeT) = Some(n)
 
-    @inline final protected[collection] def addDiSuccessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit) {
+    @inline final protected[collection] def addDiSuccessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit): Unit =
       node.addDiSuccessors(edge, add)
-    }
-    @inline final protected[collection] def addDiPredecessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit) {
+    @inline final protected[collection] def addDiPredecessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit): Unit =
       node.addDiPredecessors(edge, add)
-    }
-    @inline final protected[collection] def addNeighbors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit) {
+    @inline final protected[collection] def addNeighbors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit): Unit =
       node.addNeighbors(edge, add)
-    }
 
     /** Allows to call methods of N directly on Node instances.
       *

@@ -42,15 +42,15 @@ class TDefaultSerialization[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Gra
   }
 
   object `JSON import/export of node classes not known at compilation time works fine` {
-    def `when exporting` {
+    def `when exporting`: Unit = {
       import Fixture._
       graph.toJson(descriptor(extClasses)) should be(jsonText)
     }
-    def `when importing` {
+    def `when importing`: Unit = {
       import Fixture._
       factory.fromJson[Node, DiEdge](jsonText, descriptor(extClasses)) should be(graph)
     }
-    def `when reimporting` {
+    def `when reimporting`: Unit = {
       import Fixture._
       factory.fromJson[Node, DiEdge](graph.toJson(descriptor(extClasses)), descriptor(extClasses)) should be(graph)
     }

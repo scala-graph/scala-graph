@@ -77,7 +77,9 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   organization := "org.scala-graph",
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports",
-    "-Yrangepos"
+    "-Yrangepos",
+    "-Xfuture",
+    "-deprecation",
   ),
   addCompilerPlugin(scalafixSemanticdb),
   Test / parallelExecution := false,

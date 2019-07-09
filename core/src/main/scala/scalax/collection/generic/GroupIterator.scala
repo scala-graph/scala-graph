@@ -19,7 +19,7 @@ trait GroupIterator[A] extends Iterator[A] {
 
   /** Called on the first time when `hasNext` of the innermost iterator returns
     * `false`. The default implementation does nothing. */
-  def onExit {}
+  def onExit: Unit = {}
 
   sealed protected trait LevelIterator[A] extends Iterator[A] {
 
@@ -87,7 +87,7 @@ trait GroupIterator[A] extends Iterator[A] {
     * grouped by countries, the implementation of this trait will correspond to the
     * city iterator. */
   trait InnermostIterator[A] extends LevelIterator[A] with InnermostIteratorDecl {
-    final protected[GroupIterator] def init {
+    final protected[GroupIterator] def init: Unit = {
       onOuterChange(outer.current)
       optHasNext = None
     }

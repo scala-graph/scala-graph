@@ -52,7 +52,7 @@ class Descriptor[N](val defaultNodeDescriptor: NodeDescriptor[N],
                     namedNodeDescriptors: Iterable[NodeDescriptor[N]] = Seq.empty[NodeDescriptor[N]],
                     namedEdgeDescriptors: Iterable[GenEdgeDescriptor[N]] = Seq.empty[GenEdgeDescriptor[N]],
                     val sectionIds: SectionId = DefaultSectionId) {
-  def requireUniqueTypeIds(descriptors: Iterable[TypeId]) {
+  def requireUniqueTypeIds(descriptors: Iterable[TypeId]): Unit = {
     def duplicateTypeId =
       (namedNodeDescriptors.map(_.typeId).toList).sorted sliding 2 find
         (strings => if (strings.size == 2) strings.head == strings.tail else false)

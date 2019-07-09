@@ -55,7 +55,7 @@ class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
           )
         val graph = factory("A" ~ "B", "B" ~ "C", ("A" ~%#> "B")(3), ("B" ~%#> "C")(4), "X" ~ "Y", "Y" ~ "A")
       }
-      def `on parsing` {
+      def `on parsing`: Unit = {
         import FixtureMixed._
         val lists = graphParse(jsonText, descriptor).toList
 
@@ -138,12 +138,12 @@ class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
           case _ => fail
         }
       }
-      def `on importing` {
+      def `on importing`: Unit = {
         import FixtureMixed._
         val g = factory.fromJson[String, UnDiEdge](jsonText, descriptor)
         g should equal(graph)
       }
-      def `on reimporting` {
+      def `on reimporting`: Unit = {
         import FixtureMixed._
         val g = factory.fromJson[String, UnDiEdge](jsonText, descriptor)
         factory.fromJson[String, UnDiEdge](g.toJson(descriptor), descriptor) should equal(g)
@@ -164,12 +164,12 @@ class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
             }""".filterNot(_.isWhitespace)
           val descriptor = new Descriptor[String](StringNodeDescriptor, LDi.descriptor[String, String](aLabel = ""))
         }
-        def `on importing` {
+        def `on importing`: Unit = {
           import FixtureLEdge._
           val g = factory.fromJson[String, LDiEdge](jsonText, descriptor)
           g should equal(graph)
         }
-        def `on reimporting` {
+        def `on reimporting`: Unit = {
           import FixtureLEdge._
           val g = factory.fromJson[String, LDiEdge](jsonText, descriptor)
           factory.fromJson[String, LDiEdge](g.toJson(descriptor), descriptor) should equal(g)
@@ -188,12 +188,12 @@ class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
             StringNodeDescriptor,
             LDi.descriptor[String, String]("", Some(new LEdgeSerializer[String](new StringSerializer))))
         }
-        def `on importing` {
+        def `on importing`: Unit = {
           import FixtureLEdgeCustom._
           val g = factory.fromJson[String, LDiEdge](jsonText, descriptor)
           g should equal(graph)
         }
-        def `on reimporting` {
+        def `on reimporting`: Unit = {
           import FixtureLEdgeCustom._
           val g = factory.fromJson[String, LDiEdge](jsonText, descriptor)
           factory.fromJson[String, LDiEdge](g.toJson(descriptor), descriptor) should equal(g)
@@ -219,12 +219,12 @@ class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
         )
         val graph = factory(("A" ~%+> "B")(100, "CLabel-1"), ("B" ~%+> "A")(200, "CLabel-2"))
       }
-      def `on importing` {
+      def `on importing`: Unit = {
         import FixtureWLEdgeCustom._
         val g = factory.fromJson[String, WLDiEdge](jsonText, descriptor)
         g should equal(graph)
       }
-      def `on reimporting` {
+      def `on reimporting`: Unit = {
         import FixtureWLEdgeCustom._
         val g = factory.fromJson[String, WLDiEdge](jsonText, descriptor)
         factory.fromJson[String, WLDiEdge](g.toJson(descriptor), descriptor) should equal(g)
@@ -235,7 +235,7 @@ class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
 
     object `hypergraphs ` {
       object `with weighted labeled edges using custom edge desriptors` {
-        def `on importing` {
+        def `on importing`: Unit = {
           val jsonText = s"""
             { "nodes" : [["A"], ["B"], ["C"]],
               "edges": [
@@ -260,7 +260,7 @@ class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
     }
     object `directed hypergraphs` {
       object `using default edge desriptors` {
-        def `on exporting` {
+        def `on exporting`: Unit = {
           val g = factory("B" ~> "A" ~> "C")
           val descr =
             new Descriptor[String](StringNodeDescriptor, DiHyper.descriptor[String](Some(new HyperEdgeSerializer)))
@@ -287,7 +287,7 @@ class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
           )
           val graph = factory[String, DiHyperEdge](DiHyperEdge("A", "B"), "B" ~> "A" ~> "C")
         }
-        def `on importing` {
+        def `on importing`: Unit = {
           import FixtureDiHyperEdgeCustom._
           val g = factory.fromJson[String, DiHyperEdge](
             jsonText,
@@ -298,7 +298,7 @@ class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
           )
           g should equal(graph)
         }
-        def `on reimporting` {
+        def `on reimporting`: Unit = {
           import FixtureDiHyperEdgeCustom._
           val g = factory.fromJson[String, DiHyperEdge](jsonText, descriptor)
           factory.fromJson[String, DiHyperEdge](g.toJson(descriptor), descriptor) should equal(g)
