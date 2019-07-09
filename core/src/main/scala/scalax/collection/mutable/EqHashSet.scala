@@ -9,7 +9,6 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity)
     with EqHash[A, EqHashSet[A]] {
 
   import EqHash.{anyHash, defCapacity}
-  import EqHashSet._
 
   final protected def sizeHint: Int = _sizeHint
   final protected def step          = 1

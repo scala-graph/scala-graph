@@ -1,21 +1,14 @@
 package scalax.collection
 package generator
 
-import scala.language.higherKinds
-import scala.util.Random
 
 import org.scalacheck.{Arbitrary, Gen}
 import Arbitrary.arbitrary
-import org.scalacheck.Prop.forAll
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
 import org.scalatest.prop.PropertyChecks
-import org.scalatest.prop.Configuration.PropertyCheckConfiguration
-import org.scalatest.prop.Checkers._
 
-import GraphPredef._, GraphEdge._
-import mutable.{Graph => MGraph}
-import generic.GraphCompanion
+import GraphEdge._
 
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith

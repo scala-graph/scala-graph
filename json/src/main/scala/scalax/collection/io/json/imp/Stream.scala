@@ -7,7 +7,7 @@ import scala.collection.mutable.ArrayBuffer
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scalax.collection.edge._, scalax.collection.edge.WBase._, scalax.collection.edge.LBase._,
 scalax.collection.edge.WLBase._, scalax.collection.edge.CBase._
-import scalax.collection.io._, scalax.collection.io.edge._
+import scalax.collection.io.edge._
 
 import descriptor._
 import error.JsonGraphError._, error.JsonGraphWarning._

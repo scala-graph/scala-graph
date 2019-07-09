@@ -2,7 +2,7 @@ package custom
 
 import language.postfixOps
 
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
 import immutable.{MyExtGraph => Graph}
 import mutable.{MyExtGraph => MutableGraph}
 

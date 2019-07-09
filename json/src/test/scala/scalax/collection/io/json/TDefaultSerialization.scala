@@ -2,13 +2,12 @@ package scalax.collection.io.json
 
 import language.higherKinds
 
-import net.liftweb.json._
 
 import scalax.collection._
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scalax.collection.generic.GraphCoreCompanion
 
-import serializer._, imp._, descriptor._, descriptor.predefined._, descriptor.Defaults._, exp.Export
+import descriptor.predefined._
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec

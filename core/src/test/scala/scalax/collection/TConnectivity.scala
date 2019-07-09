@@ -1,20 +1,16 @@
 package scalax.collection
 
 import scala.language.{higherKinds, postfixOps}
-import scala.collection.mutable.{ListBuffer, Stack}
 import scala.util.Random
 
 import GraphPredef._, GraphEdge._
-import GraphTraversal._, GraphTraversal.Parameters._
 import generic.GraphCoreCompanion
-import edge.WDiEdge, edge.WUnDiEdge, edge.Implicits._
+import edge.Implicits._
 import generator._, RandomGraph._
 
-import org.scalacheck._
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 import org.scalatest.prop.PropertyChecks
-import org.scalatest.prop.Configuration.PropertyCheckConfiguration
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 

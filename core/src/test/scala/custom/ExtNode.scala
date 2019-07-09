@@ -9,9 +9,6 @@ import scala.reflect.ClassTag
 
 import scalax.collection._
 import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, Param}
-import scalax.collection.GraphEdge._
-import scalax.collection.generic.GraphCompanion
-import scalax.collection.immutable.AdjacencyListBase
 import scalax.collection.mutable.ArraySet
 import config.AdjacencyListArrayConfig
 

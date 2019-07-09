@@ -1,9 +1,7 @@
 package scalax.collection
 
-import language.{higherKinds, postfixOps}
 
 import GraphPredef._, GraphEdge._
-import generic.GraphCoreCompanion
 
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec

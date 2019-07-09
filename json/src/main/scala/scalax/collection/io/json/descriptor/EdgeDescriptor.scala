@@ -1,17 +1,15 @@
 package scalax.collection.io.json
 package descriptor
 
-import language.{existentials, higherKinds}
+import language.higherKinds
 import reflect.ClassTag
 
 import net.liftweb.json._
 
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._, scalax.collection.Graph
+import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scalax.collection.edge._, scalax.collection.edge.WBase._, scalax.collection.edge.LBase._,
 scalax.collection.edge.WLBase._, scalax.collection.edge.CBase._
 import scalax.collection.io.edge._
-
-import serializer._
 
 /** Generic base trait for any `*EdgeDescriptor` excluding edge types
   * to be used as type argument to collections containing edge descriptors

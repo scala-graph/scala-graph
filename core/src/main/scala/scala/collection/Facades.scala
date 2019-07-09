@@ -1,7 +1,5 @@
 package scala.collection
 
-import scala.collection.generic.{CanBuildFrom, FilterMonadic}
-
 /** Wraps `t` to a [[scala.collection.Seq Seq]]. It helps to avoid the creation of a copy
   *  of the elements of `t` when passing `t` to repeated parameters of type `A`.
   *  `apply` is O(N).

@@ -2,9 +2,9 @@ package scalax.collection.constrained
 package immutable
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.language.{higherKinds, postfixOps}
+import scala.language.higherKinds
 
-import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, OuterEdge, OuterNode}
+import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.immutable.{AdjacencyListGraph => SimpleAdjacencyListGraph}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 

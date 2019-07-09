@@ -75,6 +75,11 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion := Version.compiler_2_12,
   crossScalaVersions := Seq(scalaVersion.value, Version.compiler_2_11),
   organization := "org.scala-graph",
+  scalacOptions ++= Seq(
+    "-Ywarn-unused:imports",
+    "-Yrangepos"
+  ),
+  addCompilerPlugin(scalafixSemanticdb),
   Test / parallelExecution := false,
   Compile / doc / scalacOptions ++=
     Opts.doc.title(name.value) ++

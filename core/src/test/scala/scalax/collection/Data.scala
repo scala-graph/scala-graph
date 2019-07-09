@@ -3,8 +3,6 @@ package scalax.collection
 import language.higherKinds
 
 import GraphPredef.{EdgeLikeIn, _}
-import GraphEdge._
-import edge._
 import edge.Implicits._
 
 abstract class TGraph[N, E[X] <: EdgeLikeIn[X], G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](

@@ -2,7 +2,7 @@ package scalax.collection.immutable
 
 import scala.collection.{AbstractIterator, SortedSetLike}
 import scala.collection.immutable.SortedSet
-import scala.collection.generic.{CanBuildFrom, GenericCompanion, GenericSetTemplate, SortedSetFactory}
+import scala.collection.generic.{CanBuildFrom, SortedSetFactory}
 import compat.Platform.arraycopy
 
 @SerialVersionUID(1L)
