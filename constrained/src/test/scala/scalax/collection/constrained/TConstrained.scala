@@ -47,7 +47,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
 
       shouldLeaveGraphUnchanged(g)(_ ++=? List(2, 3, 4))
       shouldLeaveGraphUnchanged(g)(_ ++=? List(1 ~ 2, 1 ~ 3, 2 ~ 4))
-      (g ++= List(1 ~ 2, 1 ~ 3, 2 ~ 3)) should have size 6
+      given(g, List(1 ~ 2, 1 ~ 3, 2 ~ 3)) both (_ ++= _, _ ++=? _) should meet((_: Graph[Int, UnDiEdge]).size == 6)
 
       shouldLeaveGraphUnchanged(g)(_ +=? 3 ~ 4)
       shouldLeaveGraphUnchanged(g)(_ -=? 3)
@@ -123,15 +123,15 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
       g7 should have size 7
       shouldLeaveGraphUnchanged(g6)(_ +? 4)
       shouldLeaveGraphUnchanged(g6)(_ +? 3 ~ 4)
-      g6 + 1 ~> 2 should have('graphSize (4))
+      given(g6, 1 ~> 2) both (_ + _, _ +? _) should meet((_: Graph[Int, UnDiEdge]).graphSize == 4)
 
       shouldLeaveGraphUnchanged(g6)(_ -? 3)
       shouldLeaveGraphUnchanged(g6)(_ -? 2 ~ 3)
-      g7 - 3 ~> 1 should have('graphSize (3))
+      given(g7, 3 ~> 1) both (_ - _, _ -? _) should meet((_: Graph[Int, UnDiEdge]).graphSize == 3)
 
       shouldLeaveGraphUnchanged(g6)(_ --? List(2 ~ 3))
-      (g6 -- List(1, 2, 3)) should be('empty)
-      (g7 -- List(3 ~> 1)) should have('graphSize (3))
+      given(g6, List(1, 2, 3)) both (_ -- _, _ --? _) should meet((_: Graph[Int, UnDiEdge]).isEmpty)
+      given(g7, List(3 ~> 1)) both (_ -- _, _ --? _) should meet((_: Graph[Int, UnDiEdge]).graphSize == 3)
     }
   }
 
@@ -165,7 +165,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
 
         val g2 = factory.empty[Int, UnDiEdge]
         shouldLeaveGraphUnchanged[Int, UnDiEdge](g2)(_ +? 2)
-        g2 ++ List(0 ~ 2, 0 ~> 2) should have size 4
+        given(g2, List(0 ~ 2, 0 ~> 2)) both (_ ++ _, _ ++? _) should meet((_: Graph[Int, UnDiEdge]).size == 4)
       }
     }
   }

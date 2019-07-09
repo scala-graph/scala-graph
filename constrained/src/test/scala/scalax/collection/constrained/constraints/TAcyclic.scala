@@ -30,7 +30,7 @@ class TAcyclicMutable extends RefSpec with Matchers with Testing[mutable.Graph] 
 
       val g = Graph(1 ~> 2, 2 ~> 3)
       shouldLeaveGraphUnchanged(g)(_ +=? 3 ~> 1)
-      g + 3 ~> 4 should have size (7)
+      given(g, 3 ~> 4) both (_ + _, _ +? _) should meet((_: Graph[Int, DiEdge]).size == 7)
     }
   }
 }
@@ -49,17 +49,17 @@ class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
     def `directed graphs` {
       val g = factory(1 ~> 2, 2 ~> 3)
       shouldLeaveGraphUnchanged(g)(_ +? 3 ~> 1)
-      g + 3 ~> 4 should have size (7)
+      given(g, 3 ~> 4) both (_ + _, _ +? _) should meet((_: Graph[Int, DiEdge]).size == 7)
     }
     def `directed hypergraphs` {
       val g = factory[Int, HyperEdge](1 ~> 2 ~> 3, 2 ~> 3 ~> 4)
       shouldLeaveGraphUnchanged(g)(_ +? 4 ~> 2)
-      g + 1 ~> 4 should have size (7)
+      given(g, 1 ~> 4) both (_ + _, _ +? _) should meet((_: Graph[Int, HyperEdge]).size == 7)
     }
     def `undirected graphs` {
       val g = factory(1 ~ 2, 2 ~ 3)
       shouldLeaveGraphUnchanged(g)(_ +? 3 ~ 1)
-      g + 3 ~ 4 should have size (7)
+      given(g, 3 ~ 4) both (_ + _, _ +? _) should meet((_: Graph[Int, UnDiEdge]).size == 7)
     }
     // TODO: GraphTraversal findCycle
 //    def `hypergraphs ` {
