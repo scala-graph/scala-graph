@@ -84,41 +84,45 @@ class TConnected[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
 
   object `The 'Connected' constraint works fine with graphs on` {
     def `creation ` {
-      val g1 = Graph(1 ~> 2, 2 ~> 3)
+      val g1 = factory[Int, DiEdge](1 ~> 2, 2 ~> 3)
       g1 should have size (5)
-      val g2 = Graph(1 ~> 2, 3 ~> 4)
+      val g2 = factory[Int, DiEdge](1 ~> 2, 3 ~> 4)
       g2 should have size (0)
     }
     def `adding nodes or edges` {
+      type Di = Graph[Int, DiEdge]
+
       val init    = Seq(1 ~> 2, 2 ~> 3)
       val simpleG = SimpleGraph(init: _*)
-      val g       = Graph(init: _*)
+      val g       = factory[Int, DiEdge](init: _*)
 
-      g + 4 should be(g)
+      given(g, 4) both (_ + _, _ +? _) should meet((_: Di) === g)
 
-      g + 4 ~> 5 should be(g)
+      given(g, 4 ~> 5) both (_ + _, _ +? _) should meet((_: Di) === g)
       val newEdge = 4 ~> 3
-      g + newEdge should be(simpleG + newEdge)
+      given(g, newEdge) both (_ + _, _ +? _) should meet((_: Di) === simpleG + newEdge)
 
-      g ++ Seq(4 ~> 5, 5 ~> 6) should be(g)
+      given(g, Seq(4 ~> 5, 5 ~> 6)) both (_ ++ _, _ ++? _) should meet((_: Di) === g)
       val newElems = Seq(4 ~> 5, 5 ~> 6, 6 ~> 1)
-      g ++ newElems should be(simpleG ++ newElems)
+      given(g, newElems) both (_ ++ _, _ ++? _) should meet((_: Di) === simpleG ++ newElems)
     }
     def `substracting nodes or edges` {
+      type UnDi = Graph[Int, UnDiEdge]
+
       val (e1, e2, e3) = (1 ~ 2, 2 ~ 3, 3 ~ 4)
       val init         = Seq(e1, e2, e3)
       val simpleG      = SimpleGraph(init: _*)
 
-      val g = Graph(init: _*)
+      val g = factory[Int, UnDiEdge](init: _*)
       g should have size (7)
 
-      g - e2 should be(g)
-      g - e1 should be(g)
+      given(g, e2) both (_ - _, _ -? _) should meet((_: UnDi) === g)
+      given(g, e1) both (_ - _, _ -? _) should meet((_: UnDi) === g)
       g -! e1 should be(simpleG -! e1)
 
-      g -- List(e2, e3) should be(g)
+      given(g, List(e2, e3)) both (_ -- _, _ --? _) should meet((_: UnDi) === g)
       val minusNodes = List(1, 2).toOuterNodes[UnDiEdge]
-      g -- minusNodes should be(simpleG -- minusNodes)
+      given(g, minusNodes) both (_ -- _, _ --? _) should meet((_: UnDi) === g -- minusNodes)
       val minusEdges = List(e2, e3)
       g --! minusEdges should be(simpleG --! minusEdges)
     }
