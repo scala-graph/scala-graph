@@ -5,7 +5,6 @@ import scala.language.{higherKinds, postfixOps}
 
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
-import scalax.collection.{Graph => SimpleGraph}
 import PreCheckFollowUp._
 import generic.GraphConstrainedCompanion
 
@@ -93,8 +92,8 @@ class TConnected[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
       type Di = Graph[Int, DiEdge]
 
       val init    = Seq(1 ~> 2, 2 ~> 3)
-      val simpleG = SimpleGraph(init: _*)
-      val g       = factory[Int, DiEdge](init: _*)
+      val simpleG = factory[Int, DiEdge](init: _*)
+      val g       = simpleG
 
       given(g, 4) both (_ + _, _ +? _) should meet((_: Di) === g)
 
@@ -111,9 +110,9 @@ class TConnected[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
 
       val (e1, e2, e3) = (1 ~ 2, 2 ~ 3, 3 ~ 4)
       val init         = Seq(e1, e2, e3)
-      val simpleG      = SimpleGraph(init: _*)
+      val simpleG      = factory[Int, UnDiEdge](init: _*)
 
-      val g = factory[Int, UnDiEdge](init: _*)
+      val g = simpleG
       g should have size (7)
 
       given(g, e2) both (_ - _, _ -? _) should meet((_: UnDi) === g)
