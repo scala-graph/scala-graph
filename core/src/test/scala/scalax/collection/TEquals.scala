@@ -1,6 +1,5 @@
 package scalax.collection
 
-
 import GraphPredef._, GraphEdge._
 
 import org.scalatest.Matchers

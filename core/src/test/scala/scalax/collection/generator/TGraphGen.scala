@@ -1,7 +1,6 @@
 package scalax.collection
 package generator
 
-
 import org.scalacheck.{Arbitrary, Gen}
 import Arbitrary.arbitrary
 import org.scalatest.Matchers

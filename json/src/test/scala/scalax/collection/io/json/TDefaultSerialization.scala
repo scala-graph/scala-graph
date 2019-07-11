@@ -2,7 +2,6 @@ package scalax.collection.io.json
 
 import language.higherKinds
 
-
 import scalax.collection._
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scalax.collection.generic.GraphCoreCompanion
