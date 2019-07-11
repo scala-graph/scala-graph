@@ -4,11 +4,10 @@ package generic
 import language.higherKinds
 import annotation.unchecked.uncheckedVariance
 import collection.generic.CanBuildFrom
-import collection.mutable.{Builder, ListBuffer}
+import collection.mutable.Builder
 import scala.reflect.ClassTag
 
-import GraphEdge.{EdgeCompanionBase, EdgeLike}
-import GraphPredef.{EdgeLikeIn, OuterNode, Param}
+import GraphPredef.{EdgeLikeIn, Param}
 import config.{CoreConfig, GraphConfig}
 import mutable.GraphBuilder
 

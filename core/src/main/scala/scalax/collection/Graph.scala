@@ -1,15 +1,13 @@
 package scalax.collection
 
 import language.higherKinds
-import collection.{GenTraversable, GenTraversableOnce, SetLike}
-import collection.generic.GenericCompanion
+import collection.{GenTraversableOnce, SetLike}
 import scala.reflect.ClassTag
 
 import GraphPredef.{EdgeLikeIn, InParam, InnerEdgeParam, InnerNodeParam, OutParam, OuterEdge, OuterNode, Param}
-import GraphEdge.{DiEdge, DiHyperEdgeLike, EdgeCompanionBase, EdgeLike, Keyed, UnDiEdge}
+import GraphEdge.{DiEdge, DiHyperEdgeLike, Keyed, UnDiEdge}
 import generic.{GraphCompanion, GraphCoreCompanion}
 import config.GraphConfig
-import io._
 
 /** A template trait for graphs.
   *

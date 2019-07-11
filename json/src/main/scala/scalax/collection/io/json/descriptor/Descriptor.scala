@@ -4,10 +4,6 @@ package descriptor
 import language.existentials
 import reflect.ClassTag
 
-import scalax.collection.GraphEdge._
-import scalax.collection.edge._, scalax.collection.edge.WBase._, scalax.collection.edge.LBase._,
-scalax.collection.edge.WLBase._
-
 import error.JsonGraphError._
 
 /** Contains string constants to denote node/edge sections in a JSON text.

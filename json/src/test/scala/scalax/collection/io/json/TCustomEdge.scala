@@ -12,8 +12,7 @@ import scalax.collection.edge.CBase._
 import scalax.collection.io.edge.CEdgeParameters
 import scalax.collection.io.json.descriptor.CEdgeDescriptor
 
-import serializer._, imp._, imp.Parser.{parse => graphParse}, descriptor._, descriptor.predefined._,
-descriptor.Defaults._, exp.Export
+import descriptor._
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
