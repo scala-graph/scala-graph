@@ -95,7 +95,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
 
   info("factory = " + factory.getClass)
 
-  type unDi = Graph[Int, UnDiEdge]
+  type UnDi = Graph[Int, UnDiEdge]
 
   object `constrains take effect` {
 
@@ -125,15 +125,15 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
       g7 should have size 7
       shouldLeaveGraphUnchanged(g6)(_ +? 4)
       shouldLeaveGraphUnchanged(g6)(_ +? 3 ~ 4)
-      given(g6, 1 ~> 2) both (_ + _, _ +? _) should meet((_: unDi).graphSize == 4)
+      given(g6, 1 ~> 2) both (_ + _, _ +? _) should meet((_: UnDi).graphSize == 4)
 
       shouldLeaveGraphUnchanged(g6)(_ -? 3)
       shouldLeaveGraphUnchanged(g6)(_ -? 2 ~ 3)
-      given(g7, 3 ~> 1) both (_ - _, _ -? _) should meet((_: unDi).graphSize == 3)
+      given(g7, 3 ~> 1) both (_ - _, _ -? _) should meet((_: UnDi).graphSize == 3)
 
       shouldLeaveGraphUnchanged(g6)(_ --? List(2 ~ 3))
-      given(g6, List(1, 2, 3)) both (_ -- _, _ --? _) should meet((_: unDi).isEmpty)
-      given(g7, List(3 ~> 1)) both (_ -- _, _ --? _) should meet((_: unDi).graphSize == 3)
+      given(g6, List(1, 2, 3)) both (_ -- _, _ --? _) should meet((_: UnDi).isEmpty)
+      given(g7, List(3 ~> 1)) both (_ -- _, _ --? _) should meet((_: UnDi).graphSize == 3)
     }
   }
 
@@ -167,7 +167,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
 
         val g2 = factory.empty[Int, UnDiEdge]
         shouldLeaveGraphUnchanged[Int, UnDiEdge](g2)(_ +? 2)
-        given(g2, List(0 ~ 2, 0 ~> 2)) both (_ ++ _, _ ++? _) should meet((_: unDi).size == 4)
+        given(g2, List(0 ~ 2, 0 ~> 2)) both (_ ++ _, _ ++? _) should meet((_: UnDi).size == 4)
       }
     }
   }
