@@ -21,7 +21,8 @@ class TConnectedRootTest
       new TConnected[mutable.Graph](mutable.Graph),
       new TConnectedMutable)
 
-class TConnectedMutable extends RefSpec with Matchers {
+class TConnectedMutable extends RefSpec with Matchers with Testing[mutable.Graph] {
+  val factory = mutable.Graph
 
   import mutable.Graph
   import scalax.collection.mutable.{Graph => SimpleGraph}
@@ -34,15 +35,15 @@ class TConnectedMutable extends RefSpec with Matchers {
       val simpleG = SimpleGraph(init: _*)
       val g       = Graph(init: _*)
 
-      (g += 4) should be(simpleG)
-      (g += 4 ~> 5) should be(simpleG)
-      (g ++= Seq(4 ~> 5, 5 ~> 6)) should be(simpleG)
+      given(g, 4) both (_ += _, _ +=? _) should meet((_: Graph[Int, DiEdge]) === simpleG)
+      given(g, 4 ~> 5) both (_ += _, _ +=? _) should meet((_: Graph[Int, DiEdge]) === simpleG)
+      given(g, Seq(4 ~> 5, 5 ~> 6)) both (_ ++= _, _ ++=? _) should meet((_: Graph[Int, DiEdge]) === simpleG)
 
       val newEdge = 4 ~> 3
-      (g += newEdge) should be(simpleG += newEdge)
+      given(g, newEdge) both (_ += _, _ +=? _) should meet((_: Graph[Int, DiEdge]) === (simpleG += newEdge))
 
       val newElems = Seq(4 ~> 5, 5 ~> 6, 6 ~> 1)
-      (g ++= newElems) should be(simpleG ++= newElems)
+      given(g, newElems) both (_ ++= _, _ ++=? _) should meet((_: Graph[Int, DiEdge]) === (simpleG ++= newElems))
     }
     def `substracting nodes or edges` {
       val (e1, e2, e3) = (1 ~ 2, 2 ~ 3, 3 ~ 4)
@@ -50,19 +51,19 @@ class TConnectedMutable extends RefSpec with Matchers {
       val simpleG      = SimpleGraph(init: _*)
       val g            = Graph(init: _*)
 
-      (g -= e2) should be(simpleG)
-      (g -= e1) should be(simpleG)
-      (g --= List(e2, e3)) should be(simpleG)
+      given(g, e2) both (_ -= _, _ -=? _) should meet((_: Graph[Int, UnDiEdge]) === simpleG)
+      given(g, e1) both (_ -= _, _ -=? _) should meet((_: Graph[Int, UnDiEdge]) === simpleG)
+      given(g, List(e2, e3)) both (_ --= _, _ --=? _) should meet((_: Graph[Int, UnDiEdge]) === simpleG)
 
       (g -!= e1) should be(simpleG -!= e1)
       val minusNodes = List(1, 2).toOuterNodes[UnDiEdge]
-      (g --= minusNodes) should be(simpleG --= minusNodes)
+      given(g, minusNodes) both (_ --= _, _ --=? _) should meet((_: Graph[Int, UnDiEdge]) === (simpleG --= minusNodes))
       val minusEdges = List(e2, e3)
       (g --!= minusEdges) should be(simpleG --!= minusEdges)
 
-      (g ++= init) should be(simpleG ++= init)
+      given(g, init) both (_ ++= _, _ ++=? _) should meet((_: Graph[Int, UnDiEdge]) === (simpleG ++= init))
       val minus = List[InParam[Int, UnDiEdge]](1 ~ 2, 1)
-      (g --= minus) should be(simpleG --= minus)
+      given(g, minus) both (_ --= _, _ --=? _) should meet((_: Graph[Int, UnDiEdge]) === (simpleG --= minus))
     }
   }
 }
@@ -70,7 +71,8 @@ class TConnectedMutable extends RefSpec with Matchers {
 class TConnected[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphConstrainedCompanion[CC])
     extends RefSpec
-    with Matchers {
+    with Matchers
+    with Testing[CC] {
 
   implicit val config: Config = Connected
 
