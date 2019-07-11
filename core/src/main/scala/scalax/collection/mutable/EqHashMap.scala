@@ -42,7 +42,6 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
   override def remove(key: K): Option[V] = (index(key): @switch) match {
     case i if i < 0 => None
     case i =>
-      val item = table(i)
       _size -= 1
       val oldValue = table(i + 1)
       table(i + 1) = null

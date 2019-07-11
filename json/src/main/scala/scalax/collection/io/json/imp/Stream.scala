@@ -186,11 +186,8 @@ object Stream {
               buf += {
                 val params: HyperEdgeParameters =
                   d.extract(jsonEdge).asInstanceOf[HyperEdgeParameters]
-                val nodeIds = params.nodeIds map lookupNode
-                var rest    = nodeIds
-                val _1      = rest.head; rest = rest.tail
-                val _2      = rest.head; rest = rest.tail
-                val _n      = rest
+                val nodeIds          = params.nodeIds map lookupNode
+                val _1 +: _2 +: rest = nodeIds
                 d.edgeCompanion(_1, _2, rest: _*)
               }
 

@@ -75,8 +75,7 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) 
       if (graphAdd.isCyclic)
         PreCheckResult(Abort)
       else {
-        val found        = (for (n <- p.toOuterNodes) yield self find n) filter (_.isDefined)
-        val dockingNodes = Set()
+        val found = (for (n <- p.toOuterNodes) yield self find n) filter (_.isDefined)
         Result(PostCheck, (found map (_.get)) toSet)
       }
     } else PreCheckResult(PostCheck)

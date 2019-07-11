@@ -180,7 +180,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
       n1 pathUntil (_ == n1) should be(None)
 
       val n2 = g get 2
-      val p2 = n2 pathUntil (_ == n1) should be(None)
+      n2 pathUntil (_ == n1) should be(None)
 
       val n5       = g get 5
       val n6       = g get 6
@@ -345,18 +345,16 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     def `calling BreadthFirst` = given(WUnDi_1.g) { _ =>
       check(BreadthFirst)
     }
-
-    private def floatWeight(e: g.EdgeT): Float = e.weight.toFloat
   }
 
   def `traverser with a visitor` {
     given(gUnDi_2) { g =>
       def n(value: Int) = g get value
 
-      var nodes     = ListBuffer[g.NodeT]()
-      var edges     = ListBuffer[g.EdgeT]()
+      val nodes     = ListBuffer[g.NodeT]()
+      val edges     = ListBuffer[g.EdgeT]()
       val traverser = n(2).innerElemTraverser.withSubgraph(nodes = _ != 3)
-      val p2_1_nNE3 = traverser
+      traverser
         .pathTo(n(1)) {
           _ match {
             case g.InnerNode(n) => nodes += n
@@ -433,7 +431,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
       shp4.get.nodes.toList should be(List(jfc, fra, svx))
       shp4.get.edges.toList should be(List(flight("UA 8840"), flight("LH 1480")))
 
-      var visited = MSet[g.EdgeT]()
+      val visited = MSet[g.EdgeT]()
       (g get jfc).innerEdgeTraverser.shortestPathTo(g get lhr) { e: g.EdgeT =>
         visited += e
       }

@@ -1,7 +1,7 @@
 package scalax.collection
 
 import scala.language.postfixOps
-import scala.collection.mutable.{ListBuffer, Map => MutableMap}
+import scala.collection.mutable.{Map => MutableMap}
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
@@ -91,7 +91,7 @@ class TStateTest extends RefSpec with Matchers {
       )
       // statistics map with key = nrOfNodesCounted, value = frequency
       val stat = MutableMap.empty[Int, Int]
-      val a = Await.result(traversals, 1 seconds) foreach { cnt =>
+      Await.result(traversals, 1 seconds) foreach { cnt =>
         stat += cnt -> (stat.getOrElse(cnt, 0) + 1)
       }
       // each traversal must yield the same result
@@ -103,8 +103,7 @@ class TStateTest extends RefSpec with Matchers {
       def n(outer: Int) = g.node(outer)
       val (n1, n2)      = (n(2), n(5))
 
-      val times  = 200000
-      val errors = ListBuffer.empty[Int]
+      val times = 200000
       def run: Boolean =
         (1 to times).par forall { i =>
           (n1 pathTo n2).nonEmpty
