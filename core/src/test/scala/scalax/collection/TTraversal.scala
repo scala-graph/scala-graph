@@ -354,14 +354,11 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
       val nodes     = ListBuffer[g.NodeT]()
       val edges     = ListBuffer[g.EdgeT]()
       val traverser = n(2).innerElemTraverser.withSubgraph(nodes = _ != 3)
-      traverser
-        .pathTo(n(1)) {
-          _ match {
-            case g.InnerNode(n) => nodes += n
-            case g.InnerEdge(e) => edges += e
-          }
-        }
-        .get
+      traverser.pathTo(n(1)) {
+        case g.InnerNode(n) => nodes += n
+        case g.InnerEdge(e) => edges += e
+      }
+
       nodes should be(List(n(2), n(1)))
       edges.toList.sorted(g.Edge.WeightOrdering) should be(List(eUnDi_2(1), eUnDi_2(5), eUnDi_2(0)))
     }
