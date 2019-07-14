@@ -3,8 +3,8 @@ package scalax.collection.constrained
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.language.higherKinds
-import org.scalatest.{Assertion, Matchers}
-import scalax.collection.GraphPredef.{EdgeLikeIn, Param}
+import org.scalatest.Matchers
+import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.constrained.generic.GraphConstrainedCompanion
 
 trait Testing[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] { this: Matchers =>

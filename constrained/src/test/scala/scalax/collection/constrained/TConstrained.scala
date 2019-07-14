@@ -1,9 +1,7 @@
 package scalax.collection.constrained
 
-import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.Set
-import scala.language.{higherKinds, postfixOps}
-import scala.reflect.ClassTag
+import scala.language.higherKinds
 import scala.util.Try
 
 import scalax.collection.GraphPredef._

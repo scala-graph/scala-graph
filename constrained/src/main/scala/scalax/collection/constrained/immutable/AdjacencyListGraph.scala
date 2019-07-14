@@ -1,14 +1,12 @@
 package scalax.collection.constrained
 package immutable
 
-import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.language.higherKinds
 
 import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.immutable.{AdjacencyListGraph => SimpleAdjacencyListGraph}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 import config.GenConstrainedConfig
-import PreCheckFollowUp._
 
 trait AdjacencyListGraph[
     N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
