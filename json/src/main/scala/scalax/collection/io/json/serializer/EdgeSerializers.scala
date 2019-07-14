@@ -3,10 +3,10 @@ package serializer
 
 import net.liftweb.json._
 
-import scalax.collection.GraphEdge.{Bag, CollectionKind}
+import scalax.collection.GraphEdge.Bag
 import scalax.collection.io.edge._, scalax.collection.io.edge.Types._
 
-import error.JsonGraphIssue, error.JsonGraphError._, error.JsonGraphWarning._
+import error.JsonGraphError._
 
 // TODO MappingException
 /** Lift-JSON `Serializer` to serialize `EdgeParameters` to JSON arrays of the form

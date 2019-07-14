@@ -1,7 +1,6 @@
 package scalax.time
 
 import scala.language.implicitConversions
-import scala.collection.AbstractTraversable
 import scala.collection.mutable.ArrayBuffer
 
 /** Provides lightweight syntax for simple time measurement and the comparison of results.

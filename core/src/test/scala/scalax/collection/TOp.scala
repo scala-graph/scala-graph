@@ -1,6 +1,6 @@
 package scalax.collection
 
-import language.{higherKinds, postfixOps}
+import language.higherKinds
 
 import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion

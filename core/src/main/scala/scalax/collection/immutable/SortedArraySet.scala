@@ -2,7 +2,7 @@ package scalax.collection.immutable
 
 import scala.collection.{AbstractIterator, SortedSetLike}
 import scala.collection.immutable.SortedSet
-import scala.collection.generic.{CanBuildFrom, GenericCompanion, GenericSetTemplate, SortedSetFactory}
+import scala.collection.generic.{CanBuildFrom, SortedSetFactory}
 import compat.Platform.arraycopy
 
 @SerialVersionUID(1L)
@@ -26,7 +26,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
     }
 
   override def -(elem: A): SortedArraySet[A] = {
-    val idx = index(elem)
+    val idx = array.indexOf(elem)
     if (idx == -1) this
     else {
       val newSize = size - 1
@@ -40,7 +40,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
   def keysIteratorFrom(start: A): Iterator[A] =
     search(start, ordering.lt) map iterator getOrElse Iterator.empty
 
-  def contains(elem: A): Boolean = index(elem) >= 0
+  def contains(elem: A): Boolean = array.indexOf(elem) >= 0
 
   final protected def iterator(from: Int): Iterator[A] =
     new AbstractIterator[A] {
@@ -76,15 +76,8 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
     }
   }
 
-  final protected def index(elem: A): Int = { // 'arr contains c' works but would be too slow
-    var i = 0
-    while (i < size) if (array(i) == elem) return i
-    else i += 1
-    -1
-  }
-
   def find(elem: A): Option[A] = {
-    val i = index(elem)
+    val i = array.indexOf(elem)
     if (i >= 0) Some(array(i)) else None
   }
 

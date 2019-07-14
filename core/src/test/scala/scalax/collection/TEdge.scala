@@ -9,7 +9,7 @@ import org.junit.runner.RunWith
 
 import GraphPredef._, GraphEdge._, edge._, edge.LBase._, edge.Implicits._
 
-import custom.flight._, custom.flight.Helper._, custom.flight.Flight.ImplicitEdge
+import custom.flight._, custom.flight.Helper._
 
 @RunWith(classOf[JUnitRunner])
 class TEdgeTest extends RefSpec with Matchers {

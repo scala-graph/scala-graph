@@ -1,7 +1,6 @@
 package demo
 
 import scala.collection.SortedSet
-import scala.language.higherKinds
 
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
@@ -99,7 +98,6 @@ final class EditingTest extends RefSpec with Matchers {
 
       import scalax.collection.edge.LBase._
       object StringLabel extends LEdgeImplicits[String]
-      import StringLabel._
 
       (0 /: g.edges)((sum, e) =>
         e.edge match {

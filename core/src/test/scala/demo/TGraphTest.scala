@@ -154,7 +154,6 @@ object TGraphTest extends App {
     // Integrating with ScalaTest, limiting the minimum # of successful test
     import org.scalatest.Matchers
     import org.scalatest.prop.PropertyChecks
-    import org.scalatest.prop.Configuration.PropertyCheckConfiguration
     import org.scalatest.refspec.RefSpec
 
     class TGraphGenTest extends RefSpec with Matchers with PropertyChecks {

@@ -54,7 +54,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
                  | isDense=$isDense,
                  | maxDev=$maxDegreeDeviation,
                  | deviation=$deviation,
-                 | (${100f * deviation / totalDegree}%2.2f percent)""".stripMargin.lines.mkString)
+                 | (${100f * deviation / totalDegree}%2.2f percent)""".stripMargin.linesIterator.mkString)
     totalDegree should (be >= (expectedTotalDegree - maxDegreeDeviation) and
     be <= (expectedTotalDegree + maxDegreeDeviation))
   }

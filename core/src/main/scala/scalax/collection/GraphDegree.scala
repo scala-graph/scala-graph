@@ -4,8 +4,7 @@ import language.{higherKinds, postfixOps}
 import collection.{SortedMap, SortedSet}
 import collection.mutable.{Map => MutableMap}
 
-import GraphPredef.{EdgeLikeIn, InnerEdgeParam, InnerNodeParam, NodeParam, OuterNode}
-import GraphEdge.EdgeLike
+import GraphPredef.EdgeLikeIn
 
 /** A trait for graph degree calculations.
   *

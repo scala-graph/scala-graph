@@ -1,7 +1,7 @@
 package scalax.collection.constrained
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.language.{higherKinds, postfixOps}
+import scala.language.higherKinds
 import scala.collection.Set
 import scala.collection.mutable.{Map => MMap}
 

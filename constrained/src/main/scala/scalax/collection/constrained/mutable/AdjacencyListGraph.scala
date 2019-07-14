@@ -1,7 +1,7 @@
 package scalax.collection.constrained
 package mutable
 
-import scala.language.{higherKinds, postfixOps}
+import scala.language.higherKinds
 import scala.collection.Set
 
 import scalax.collection.GraphPredef.EdgeLikeIn

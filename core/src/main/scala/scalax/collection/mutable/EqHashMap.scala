@@ -10,7 +10,6 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
     with EqHash[(K, V), EqHashMap[K, V]] {
 
   import EqHash.{defCapacity, evenHash}
-  import EqHashMap._
 
   final protected def sizeHint: Int = _sizeHint
   final protected def step          = 2

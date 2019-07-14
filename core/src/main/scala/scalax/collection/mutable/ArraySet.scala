@@ -3,7 +3,7 @@ package mutable
 
 import collection.SortedSet
 import collection.mutable.{SetLike => MutableSetLike}
-import collection.generic.{CanBuildFrom, FilterMonadic, GenericCompanion, GenericSetTemplate, MutableSetFactory}
+import collection.generic.{CanBuildFrom, GenericCompanion, GenericSetTemplate, MutableSetFactory}
 
 import interfaces.ExtSetMethods
 
