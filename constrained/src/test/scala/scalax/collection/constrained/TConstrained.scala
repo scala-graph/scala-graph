@@ -45,7 +45,10 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
 
       shouldLeaveGraphUnchanged(g)(_ ++=? List(2, 3, 4))
       shouldLeaveGraphUnchanged(g)(_ ++=? List(1 ~ 2, 1 ~ 3, 2 ~ 4))
-      given(g, List(1 ~ 2, 1 ~ 3, 2 ~ 3)) both (_ ++= _, _ ++=? _) should meet((_: Graph[Int, UnDiEdge]).size == 6)
+
+      val validEdges = Set(1 ~ 2, 1 ~ 3, 2 ~ 3)
+      given(g, validEdges) both (_ ++= _, _ ++=? _) should meet((_: Graph[Int, UnDiEdge]).edges == validEdges)
+      g ++= validEdges
 
       shouldLeaveGraphUnchanged(g)(_ +=? 3 ~ 4)
       shouldLeaveGraphUnchanged(g)(_ -=? 3)
