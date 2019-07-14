@@ -96,6 +96,6 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   libraryDependencies ++= Seq(
     "junit"                  % "junit"      % "4.12"  % "test",
     "org.scalatest"          %% "scalatest" % "3.0.8" % "test",
-    "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test"
+    "org.scala-lang.modules" %% "scala-xml" % "1.2.0" % "test"
   )
 ) ++ GraphSonatype.settings
