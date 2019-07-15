@@ -21,6 +21,12 @@ lazy val core = project
       libraryDependencies ++= Seq(
         "org.scalacheck" %% "scalacheck"   % "1.13.4" % "optional;provided",
         "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all"
+      ),
+      dependencyOverrides ++= Seq(
+        "org.netbeans.modules" % "org-netbeans-core"              % "RELEASE90" % "test",
+        "org.netbeans.modules" % "org-netbeans-core-startup-base" % "RELEASE90" % "test",
+        "org.netbeans.modules" % "org-netbeans-modules-masterfs"  % "RELEASE90" % "test",
+        "org.netbeans.api"     % "org-openide-util-lookup"        % "RELEASE90" % "test",
       )
     )
   )
@@ -64,12 +70,6 @@ lazy val misc = project
   )
 
 ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
-
-ThisBuild / resolvers ++= Seq(
-  "NetBeans nexus" at "http://bits.netbeans.org/nexus/content/groups/netbeans/",
-  "NetBeans spring" at "http://repo.spring.io/libs-release-remote/",
-  "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
-)
 
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion := Version.compiler_2_12,
