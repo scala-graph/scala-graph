@@ -69,6 +69,10 @@ lazy val misc = project
     )
   )
 
+ThisBuild / resolvers ++= Seq(
+  "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
+)
+
 ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
 
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
