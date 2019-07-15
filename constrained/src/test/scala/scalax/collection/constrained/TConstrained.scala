@@ -73,6 +73,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
       val g = factory[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
       shouldLeaveGraphUnchanged(g)(_ +=? 5)
+      (g +=? 5) should be(Left("Warning, you can add only 4 edges at a time"))
       shouldLeaveGraphUnchanged(g)(_ +=? 1 ~ 5)
       shouldLeaveGraphUnchanged(g)(_ ++=? List(5))
       shouldLeaveGraphUnchanged(g)(_ ++=? List(1 ~ 5))
@@ -236,7 +237,7 @@ private object UserConstraints {
                          passedNodes: Traversable[N],
                          passedEdges: Traversable[E[N]],
                          preCheck: PreCheckResult) =
-      if (passedEdges.size == 4) Right(newGraph) else Left(())
+      if (passedEdges.size == 4) Right(newGraph) else Left("Warning, you can add only 4 edges at a time")
 
   }
 
