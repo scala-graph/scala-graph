@@ -84,18 +84,18 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) 
   override def postAdd(newGraph: G @uV,
                        passedNodes: Traversable[N],
                        passedEdges: Traversable[E[N]],
-                       preCheck: PreCheckResult): Either[ConstraintViolation, G] = {
+                       preCheck: PreCheckResult): Either[PostCheckFailure, G] = {
     def msg(at: Option[self.NodeT]) =
       s"Unexpected cycle ${at.fold("")("at " + _)}when adding $passedNodes, $passedEdges."
     preCheck match {
       case Result(docking) =>
         docking find (_.findCycle.isDefined) match {
-          case Some(node) => Left(constraintViolation(msg(Some(node))))
+          case Some(node) => Left(PostCheckFailure(msg(Some(node))))
           case None       => Right(newGraph)
         }
       case _ =>
         if (newGraph.isAcyclic) Right(newGraph)
-        else Left(constraintViolation(msg(None)))
+        else Left(PostCheckFailure(msg(None)))
     }
   }
 

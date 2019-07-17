@@ -74,7 +74,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
 
       given(g, 5) both (_ += _, _ +=? _) should beRejected[Int, UnDiEdge]
       (g +=? 5) should be(Left(Right(UserConstraints.FailingPostAdd.leftWarning)))
-      given(g,  1 ~ 5) both (_ += _, _ +=? _) should beRejected[Int, UnDiEdge]
+      given(g, 1 ~ 5) both (_ += _, _ +=? _) should beRejected[Int, UnDiEdge]
       given(g, List(5)) both (_ ++= _, _ ++=? _) should beRejected[Int, UnDiEdge]
       given(g, List(1 ~ 5)) both (_ ++= _, _ ++=? _) should beRejected[Int, UnDiEdge]
       given(g, List(1 ~ 5, 5 ~ 6, 6 ~ 2)) both (_ ++= _, _ ++=? _) should beRejected[Int, UnDiEdge]
@@ -213,7 +213,7 @@ private object UserConstraints {
     override def postSubtract(newGraph: G,
                               passedNodes: Traversable[N],
                               passedEdges: Traversable[E[N]],
-                              preCheck: PreCheckResult) = Left(())
+                              preCheck: PreCheckResult) = Left(PostCheckFailure())
 
   }
 
@@ -237,7 +237,7 @@ private object UserConstraints {
                          passedNodes: Traversable[N],
                          passedEdges: Traversable[E[N]],
                          preCheck: PreCheckResult) =
-      if (passedEdges.size == 4) Right(newGraph) else Left(FailingPostAdd.leftWarning)
+      if (passedEdges.size == 4) Right(newGraph) else Left(PostCheckFailure(FailingPostAdd.leftWarning))
 
   }
 
@@ -270,7 +270,7 @@ private object UserConstraints {
                          passedEdges: Traversable[E[N]],
                          preCheck: PreCheckResult) =
       if (allNodes(passedNodes, passedEdges) forall (n => (newGraph get n).degree >= min)) Right(newGraph)
-      else Left(())
+      else Left(PostCheckFailure(()))
 
     def preSubtract(node: self.NodeT, forced: Boolean) = PreCheckResult.complete(
       if (forced) node.neighbors forall (_.degree > min)
@@ -314,7 +314,7 @@ private object UserConstraints {
         if (nodesToCheck forall { n =>
               newGraph.get(n).degree >= min
             }) Right(newGraph)
-        else Left(())
+        else Left(PostCheckFailure(()))
     }
 
   }

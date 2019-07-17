@@ -57,12 +57,12 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
                       selfGraph += node.value
                       selfGraph ++= incidentEdges
                     }
-                    Left(constraintViolation(failure))
+                    Left(failure)
                   },
                   _ => Right(true)
                 )
               } else Right(false)
-            case Abort => Left(constraintViolation(preCheckResult))
+            case Abort => Left(preCheckResult)
           }
         }
       } getOrElse Right(false)
@@ -111,7 +111,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
           )
         }
         val preCheckResult = preAdd(filteredElems: _*)
-        if (preCheckResult.abort) Some(constraintViolation(preCheckResult))
+        if (preCheckResult.abort) Some(preCheckResult)
         else {
           add
           if (preCheckResult.postCheck) {
@@ -121,7 +121,7 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
                   newNodes foreach super.remove
                   newEdges foreach super.remove
                 }
-                Some(constraintViolation(failure))
+                Some(failure)
               },
               _ => None
             )
@@ -159,11 +159,11 @@ trait GraphLike[N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: Gra
         postSubtract(this, outerNodes, outerEdges, preCheckResult).fold(
           failure => {
             withoutChecks { super.++=(subtractables) }
-            Left(constraintViolation(failure))
+            Left(failure)
           },
           _ => Right(this)
         )
-      case Abort => Left(constraintViolation(preCheckResult))
+      case Abort => Left(preCheckResult)
     }
   }
 }
@@ -253,13 +253,13 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
     else {
       val constraint     = config.constraintCompanion[N, E, DefaultGraphImpl[N, E]](emptyGraph)
       val preCheckResult = constraint.preCreate(nodes, edges)
-      if (preCheckResult.abort) Left(constraintViolation(preCheckResult))
+      if (preCheckResult.abort) Left(preCheckResult)
       else {
         val newGraph = fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
         preCheckResult.followUp match {
           case Complete  => Right(newGraph)
           case PostCheck => constraint.postAdd(newGraph, nodes, edges, preCheckResult)
-          case Abort     => Left(constraintViolation(preCheckResult))
+          case Abort     => Left(preCheckResult)
         }
       }
     }

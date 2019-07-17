@@ -49,11 +49,11 @@ trait AdjacencyListGraph[
             postAdd(AdjacencyListGraph.this, Set(node.value), Set.empty, preCheckResult).fold(
               { failure =>
                 withoutChecks(coll -= node)
-                Left(constraintViolation(failure))
+                Left(failure)
               },
               _ => Right(true)
             )
-          case Abort => Left(constraintViolation(preCheckResult))
+          case Abort => Left(preCheckResult)
         }
       }
     }
@@ -78,12 +78,12 @@ trait AdjacencyListGraph[
                 failure => {
                   remove(edge)
                   (edge.nodes filterNot contains) foreach nodes.remove
-                  Left(constraintViolation(failure))
+                  Left(failure)
                 },
                 _ => Right(true)
               )
             else Right(false)
-          case Abort => Left(constraintViolation(preCheckResult))
+          case Abort => Left(preCheckResult)
         }
       }
     }
@@ -99,11 +99,11 @@ trait AdjacencyListGraph[
           case PostCheck =>
             if (remove(edge))
               postSubtract(selfGraph, Set.empty[N], Set(edge.toOuter), preCheckResult).fold(
-                failure => { selfGraph += edge; Left(constraintViolation(failure)) },
+                failure => { selfGraph += edge; Left(failure) },
                 _ => Right(true)
               )
             else Right(false)
-          case Abort => Left(constraintViolation(preCheckResult))
+          case Abort => Left(preCheckResult)
         }
       }
 

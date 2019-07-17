@@ -88,7 +88,7 @@ trait GraphLike[N,
     preCheckResult.followUp match {
       case Complete  => Right(plusPlus(outerNodes, outerEdges))
       case PostCheck => postAdd(plusPlus(outerNodes, outerEdges), outerNodes, outerEdges, preCheckResult)
-      case Abort     => Left(constraintViolation(preCheckResult))
+      case Abort     => Left(preCheckResult)
     }
   }
 
@@ -122,7 +122,7 @@ trait GraphLike[N,
       case Complete => Right(minusMinus(outerNodes, outerEdges))
       case PostCheck =>
         postSubtract(minusMinus(outerNodes, outerEdges), outerNodes, outerEdges, preCheckResult)
-      case Abort => Left(constraintViolation(preCheckResult))
+      case Abort => Left(preCheckResult)
     }
   }
 
@@ -138,7 +138,7 @@ trait GraphLike[N,
       preCheckResult.followUp match {
         case Complete  => Right(copy)
         case PostCheck => postAdd(copy, nodes, edges, preCheckResult)
-        case Abort     => Left(constraintViolation(preCheckResult))
+        case Abort     => Left(preCheckResult)
       }
     }
 
@@ -154,7 +154,7 @@ trait GraphLike[N,
         preCheckResult.followUp match {
           case Complete  => Right(subtract)
           case PostCheck => postSubtract(subtract, Set(node), Set.empty[E[N]], preCheckResult)
-          case Abort     => Left(constraintViolation(preCheckResult))
+          case Abort     => Left(preCheckResult)
         }
       }
     } getOrElse Right(this)
@@ -170,7 +170,7 @@ trait GraphLike[N,
         preCheckResult.followUp match {
           case Complete  => Right(subtract)
           case PostCheck => postSubtract(subtract, Set.empty[N], Set(edge), preCheckResult)
-          case Abort     => Left(constraintViolation(preCheckResult))
+          case Abort     => Left(preCheckResult)
         }
       }
     } getOrElse Right(this)

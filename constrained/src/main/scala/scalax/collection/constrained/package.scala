@@ -33,15 +33,6 @@ package object constrained {
   import generic._
   import config.ConstrainedConfig
 
-  type PostCheckFailure    = Any
-  type ConstraintViolation = Either[PreCheckResult, PostCheckFailure]
-
-  def constraintViolation(r: PreCheckResult): ConstraintViolation   = Left(r)
-  def constraintViolation(r: PostCheckFailure): ConstraintViolation = Right(r)
-
-  implicit def postCheckResultToConstrainedOpResult[G](r: Either[PostCheckFailure, G]): Either[ConstraintViolation, G] =
-    r.left map constraintViolation
-
   /** Aims defining a constraint valid for `Graph` instances in the scope:
     *{{{
     *implicit val config: Config = Acyclic

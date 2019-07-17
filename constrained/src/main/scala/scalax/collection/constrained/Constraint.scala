@@ -55,11 +55,13 @@ object PreCheckFollowUp extends Enumeration {
 }
 import PreCheckFollowUp._
 
+sealed trait ConstraintViolation
+
 /** The return type of any pre-check. `followUp` contains the return status (follow-up
   *  activity). `Constraint` implementations are encouraged to extend this class to contain
   *  further data calculated in course of the pre-check and reusable in the following post-check.
   */
-class PreCheckResult(val followUp: PreCheckFollowUp) {
+class PreCheckResult(val followUp: PreCheckFollowUp) extends ConstraintViolation {
 
   final def apply(): PreCheckFollowUp = followUp
 
@@ -87,11 +89,14 @@ trait PreCheckResultCompanion {
     *  otherwise to `Abort`. */
   def complete(ok: Boolean): PreCheckResult = apply(if (ok) Complete else Abort)
 }
+
 object PreCheckResult extends PreCheckResultCompanion {
   def apply(followUp: PreCheckFollowUp) = new PreCheckResult(followUp)
   def unapply(preCheck: PreCheckResult): Option[(PreCheckResult, PreCheckFollowUp)] =
     if (preCheck eq null) None else Some(preCheck, preCheck.followUp)
 }
+
+case class PostCheckFailure(cause: Any) extends ConstraintViolation
 
 /** This template contains all methods that constrained graphs call
   * to decide whether operations altering a mutable graph or operations

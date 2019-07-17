@@ -66,8 +66,7 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override va
     }
   }
 
-  protected def eval(left: Either[ConstraintViolation, G],
-                     right: => Either[ConstraintViolation, G]): Either[ConstraintViolation, G] =
+  protected def eval[V <: ConstraintViolation](left: Either[V, G], right: => Either[V, G]): Either[V, G] =
     (left, right) match {
       case (success @ Right(_), Right(_)) => success
       case (failure @ Left(_), _)         => failure
@@ -115,16 +114,16 @@ class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override va
   final override def postAdd(newGraph: G @uV,
                              passedNodes: Traversable[N],
                              passedEdges: Traversable[E[N]],
-                             preCheck: PreCheckResult): Either[ConstraintViolation, G] =
+                             preCheck: PreCheckResult): Either[PostCheckFailure, G] =
     eval(
-      (left postAdd (newGraph, passedNodes, passedEdges, preCheck)).asInstanceOf[Either[ConstraintViolation, G]],
-      (right postAdd (newGraph, passedNodes, passedEdges, preCheck)).asInstanceOf[Either[ConstraintViolation, G]]
+      left postAdd (newGraph, passedNodes, passedEdges, preCheck),
+      right postAdd (newGraph, passedNodes, passedEdges, preCheck)
     )
 
   final override def postSubtract(newGraph: G @uV,
                                   passedNodes: Traversable[N],
                                   passedEdges: Traversable[E[N]],
-                                  preCheck: PreCheckResult): Either[ConstraintViolation, G] =
+                                  preCheck: PreCheckResult): Either[PostCheckFailure, G] =
     eval(
       left postSubtract (newGraph, passedNodes, passedEdges, preCheck),
       right postSubtract (newGraph, passedNodes, passedEdges, preCheck))

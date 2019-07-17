@@ -49,9 +49,9 @@ class Connected[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G
   override def postAdd(newGraph: G @uV,
                        passedNodes: Traversable[N],
                        passedEdges: Traversable[E[N]],
-                       preCheck: PreCheckResult): Either[ConstraintViolation, G] =
+                       preCheck: PreCheckResult): Either[PostCheckFailure, G] =
     if (newGraph.isConnected) Right(newGraph)
-    else Left(constraintViolation(s"Unexpected isolated node found when adding $passedNodes, $passedEdges."))
+    else Left(PostCheckFailure(s"Unexpected isolated node found when adding $passedNodes, $passedEdges."))
 
   /** Checks within any `preSubtract` whether the neighborhood of the elements
     * to be subtracted remains connected after the subtraction thus preventing

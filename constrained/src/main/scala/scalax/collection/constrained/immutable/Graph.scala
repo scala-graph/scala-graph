@@ -93,13 +93,13 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl] {
     else {
       val constraint     = config.constraintCompanion[N, E, DefaultGraphImpl[N, E]](emptyGraph)
       val preCheckResult = constraint.preCreate(nodes, edges)
-      if (preCheckResult.abort) Left(constraintViolation(preCheckResult))
+      if (preCheckResult.abort) Left(preCheckResult)
       else {
         val newGraph = fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
         preCheckResult.followUp match {
           case Complete  => Right(newGraph)
           case PostCheck => constraint.postAdd(newGraph, nodes, edges, preCheckResult)
-          case Abort     => Left(constraintViolation(preCheckResult))
+          case Abort     => Left(preCheckResult)
         }
       }
     }
