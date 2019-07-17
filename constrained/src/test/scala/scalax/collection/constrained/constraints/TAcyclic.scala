@@ -29,7 +29,7 @@ class TAcyclicMutable extends RefSpec with Matchers with Testing[mutable.Graph] 
       implicit val config: Config = Acyclic
 
       val g = Graph(1 ~> 2, 2 ~> 3)
-      shouldLeaveGraphUnchanged(g)(_ +=? 3 ~> 1)
+      given(g, 3 ~> 1) both (_ += _, _ +=? _) should beRejected[Int, DiEdge]
       given(g, 3 ~> 4) both (_ + _, _ +? _) should meet((_: Graph[Int, DiEdge]).size == 7)
     }
   }
@@ -48,17 +48,17 @@ class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
   object `The 'Acyclic' constraint works fine with` {
     def `directed graphs` {
       val g = factory(1 ~> 2, 2 ~> 3)
-      shouldLeaveGraphUnchanged(g)(_ +? 3 ~> 1)
+      given(g, 3 ~> 1) both (_ + _, _ +? _) should beRejected[Int, DiEdge]
       given(g, 3 ~> 4) both (_ + _, _ +? _) should meet((_: Graph[Int, DiEdge]).size == 7)
     }
     def `directed hypergraphs` {
       val g = factory[Int, HyperEdge](1 ~> 2 ~> 3, 2 ~> 3 ~> 4)
-      shouldLeaveGraphUnchanged(g)(_ +? 4 ~> 2)
+      given(g, 4 ~> 2) both (_ + _, _ +? _) should beRejected[Int, HyperEdge]
       given(g, 1 ~> 4) both (_ + _, _ +? _) should meet((_: Graph[Int, HyperEdge]).size == 7)
     }
     def `undirected graphs` {
       val g = factory(1 ~ 2, 2 ~ 3)
-      shouldLeaveGraphUnchanged(g)(_ +? 3 ~ 1)
+      given(g, 3 ~ 1) both (_ + _, _ +? _) should beRejected[Int, UnDiEdge]
       given(g, 3 ~ 4) both (_ + _, _ +? _) should meet((_: Graph[Int, UnDiEdge]).size == 7)
     }
     // TODO: GraphTraversal findCycle
@@ -71,7 +71,7 @@ class TAcyclic[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
     def `self loops #76` {
       factory(1 ~> 1) should be('isEmpty)
       val g = factory[Int, DiEdge]()
-      shouldLeaveGraphUnchanged(g)(_ +? 1 ~> 1)
+      given(g, 1 ~> 1) both (_ + _, _ +? _) should beRejected[Int, DiEdge]
     }
   }
 }

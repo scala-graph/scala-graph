@@ -54,6 +54,21 @@ trait Testing[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
       }
     }
 
+  protected def beRejected[N, E[X] <: EdgeLikeIn[X]]: Matcher[Results[N, E]] =
+    new Matcher[Results[N, E]] {
+      def apply(left: Results[N, E]): MatchResult = left match {
+        case (before, after, afterVerbose) =>
+          val silentResult = after === before
+          val verboseResult = afterVerbose.isLeft
+          def msg(negate: Boolean): String =
+            s"""One or both operations have ${if (negate) "" else "not "}been rejected:
+               |  before:     $before
+               |  silent  op: $after
+               |  verbose op: $afterVerbose""".stripMargin
+          MatchResult(silentResult && verboseResult, msg(false), msg(true))
+      }
+    }
+
   private def isolated[N, E[X] <: EdgeLikeIn[X]](g: CC[N, E]): CC[N, E] =
     g match {
       case mG: mutable.Graph[N, E] => factory.from(mG.nodes.toOuter, mG.edges.toOuter)(mG.edgeT, mG.config)

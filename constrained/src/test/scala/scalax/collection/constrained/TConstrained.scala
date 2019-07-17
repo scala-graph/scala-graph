@@ -43,16 +43,16 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
 
       val g = factory.empty[Int, UnDiEdge]
 
-      shouldLeaveGraphUnchanged(g)(_ ++=? List(2, 3, 4))
-      shouldLeaveGraphUnchanged(g)(_ ++=? List(1 ~ 2, 1 ~ 3, 2 ~ 4))
+      given(g, List(2, 3, 4)) both (_ ++= _, _ ++=? _) should beRejected[Int, UnDiEdge]
+      given(g, List(1 ~ 2, 1 ~ 3, 2 ~ 4)) both (_ ++= _, _ ++=? _) should beRejected[Int, UnDiEdge]
 
       val validEdges = Set(1 ~ 2, 1 ~ 3, 2 ~ 3)
       given(g, validEdges) both (_ ++= _, _ ++=? _) should meet((_: Graph[Int, UnDiEdge]).edges == validEdges)
       g ++= validEdges
 
-      shouldLeaveGraphUnchanged(g)(_ +=? 3 ~ 4)
-      shouldLeaveGraphUnchanged(g)(_ -=? 3)
-      shouldLeaveGraphUnchanged(g)(_ --=? List(3))
+      given(g, 3 ~ 4) both (_ += _, _ +=? _) should beRejected[Int, UnDiEdge]
+      given(g, 3) both (_ -= _, _ -=? _) should beRejected[Int, UnDiEdge]
+      given(g, List(3)) both (_ --= _, _ --=? _) should beRejected[Int, UnDiEdge]
     }
 
     def `when postSubtract fails` {
@@ -60,11 +60,11 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
 
       val g = factory[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
-      shouldLeaveGraphUnchanged(g)(_ -=? 1)
-      shouldLeaveGraphUnchanged(g)(_ -=? 1 ~ 2)
-      shouldLeaveGraphUnchanged(g)(_ --=? List(1))
-      shouldLeaveGraphUnchanged(g)(_ --=? List(1 ~ 2))
-      shouldLeaveGraphUnchanged(g)(_ --=? List(1 ~ 2, 2 ~ 3))
+      given(g, 1) both (_ -= _, _ -=? _) should beRejected[Int, UnDiEdge]
+      given(g, 1 ~ 2) both (_ -= _, _ -=? _) should beRejected[Int, UnDiEdge]
+      given(g, List(1)) both (_ --= _, _ --=? _) should beRejected[Int, UnDiEdge]
+      given(g, List(1 ~ 2)) both (_ --= _, _ --=? _) should beRejected[Int, UnDiEdge]
+      given(g, List(1 ~ 2, 2 ~ 3)) both (_ --= _, _ --=? _) should beRejected[Int, UnDiEdge]
     }
 
     def `when postAdd fails` {
@@ -72,12 +72,12 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
 
       val g = factory[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
-      shouldLeaveGraphUnchanged(g)(_ +=? 5)
+      given(g, 5) both (_ += _, _ +=? _) should beRejected[Int, UnDiEdge]
       (g +=? 5) should be(Left(Right(UserConstraints.FailingPostAdd.leftWarning)))
-      shouldLeaveGraphUnchanged(g)(_ +=? 1 ~ 5)
-      shouldLeaveGraphUnchanged(g)(_ ++=? List(5))
-      shouldLeaveGraphUnchanged(g)(_ ++=? List(1 ~ 5))
-      shouldLeaveGraphUnchanged(g)(_ ++=? List(1 ~ 5, 5 ~ 6, 6 ~ 2))
+      given(g,  1 ~ 5) both (_ += _, _ +=? _) should beRejected[Int, UnDiEdge]
+      given(g, List(5)) both (_ ++= _, _ ++=? _) should beRejected[Int, UnDiEdge]
+      given(g, List(1 ~ 5)) both (_ ++= _, _ ++=? _) should beRejected[Int, UnDiEdge]
+      given(g, List(1 ~ 5, 5 ~ 6, 6 ~ 2)) both (_ ++= _, _ ++=? _) should beRejected[Int, UnDiEdge]
     }
 
     def `when cloning a graph` {
@@ -119,21 +119,21 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
       factory(1, 2, 3 ~ 4) should be('isEmpty)
 
       val g = factory.empty[Int, UnDiEdge]
-      shouldLeaveGraphUnchanged(g)(_ +? 1 ~ 2)
+      given(g, 1 ~ 2) both (_ + _, _ +? _) should beRejected[Int, UnDiEdge]
 
       val g6 = g ++ List(1 ~ 2, 1 ~ 3, 2 ~ 3)
       g6 should have size 6
       val g7 = g6 + 3 ~> 1
       g7 should have size 7
-      shouldLeaveGraphUnchanged(g6)(_ +? 4)
-      shouldLeaveGraphUnchanged(g6)(_ +? 3 ~ 4)
+      given(g6, 4) both (_ + _, _ +? _) should beRejected[Int, UnDiEdge]
+      given(g6, 3 ~ 4) both (_ + _, _ +? _) should beRejected[Int, UnDiEdge]
       given(g6, 1 ~> 2) both (_ + _, _ +? _) should meet((_: UnDi).graphSize == 4)
 
-      shouldLeaveGraphUnchanged(g6)(_ -? 3)
-      shouldLeaveGraphUnchanged(g6)(_ -? 2 ~ 3)
+      given(g6, 3) both (_ - _, _ -? _) should beRejected[Int, UnDiEdge]
+      given(g6, 2 ~ 3) both (_ - _, _ -? _) should beRejected[Int, UnDiEdge]
       given(g7, 3 ~> 1) both (_ - _, _ -? _) should meet((_: UnDi).graphSize == 3)
 
-      shouldLeaveGraphUnchanged(g6)(_ --? List(2 ~ 3))
+      given(g6, List(2 ~ 3)) both (_ -- _, _ --? _) should beRejected[Int, UnDiEdge]
       given(g6, List(1, 2, 3)) both (_ -- _, _ --? _) should meet((_: UnDi).isEmpty)
       given(g7, List(3 ~> 1)) both (_ -- _, _ --? _) should meet((_: UnDi).graphSize == 3)
     }
@@ -168,7 +168,7 @@ class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N,
         implicit val config: Config = EvenNode && MinDegree_2
 
         val g2 = factory.empty[Int, UnDiEdge]
-        shouldLeaveGraphUnchanged[Int, UnDiEdge](g2)(_ +? 2)
+        given(g2, 2) both (_ + _, _ +? _) should beRejected[Int, UnDiEdge]
         given(g2, List(0 ~ 2, 0 ~> 2)) both (_ ++ _, _ ++? _) should meet((_: UnDi).size == 4)
       }
     }
