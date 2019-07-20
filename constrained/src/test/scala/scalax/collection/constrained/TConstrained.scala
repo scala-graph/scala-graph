@@ -214,7 +214,7 @@ private object UserConstraints {
     override def postSubtract(newGraph: G,
                               passedNodes: Traversable[N],
                               passedEdges: Traversable[E[N]],
-                              preCheck: PreCheckResult) = Left(PostCheckFailure())
+                              preCheck: PreCheckResult) = Left(PostCheckFailure(()))
 
   }
 
