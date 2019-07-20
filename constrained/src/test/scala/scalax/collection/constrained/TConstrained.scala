@@ -68,12 +68,13 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
     }
 
     def `when postAdd fails` {
-      implicit val config: Config = UserConstraints.FailingPostAdd
+      import UserConstraints.FailingPostAdd
+      implicit val config: Config = FailingPostAdd
 
       val g = factory[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
       given(g, 5) both (_ += _, _ +=? _) should beRejected[Int, UnDiEdge]
-      (g +=? 5) should be(Left(Right(UserConstraints.FailingPostAdd.leftWarning)))
+      (g +=? 5) should be(Left(PostCheckFailure(FailingPostAdd.leftWarning)))
       given(g, 1 ~ 5) both (_ += _, _ +=? _) should beRejected[Int, UnDiEdge]
       given(g, List(5)) both (_ ++= _, _ ++=? _) should beRejected[Int, UnDiEdge]
       given(g, List(1 ~ 5)) both (_ ++= _, _ ++=? _) should beRejected[Int, UnDiEdge]
