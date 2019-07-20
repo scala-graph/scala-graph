@@ -37,37 +37,46 @@ trait Testing[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
     meet(_ === expected)
 
   protected def meet[N, E[X] <: EdgeLikeIn[X]](p: CC[N, E] => Boolean): Matcher[Results[N, E]] =
-    new Matcher[Results[N, E]] {
-      def apply(left: Results[N, E]): MatchResult = left match {
-        case (before, after, afterVerbose) =>
-          val silentResult = p(after)
-          val verboseResult = afterVerbose match {
-            case Right(g) => p(g)
-            case Left(_)  => p(before)
-          }
-          def msg(negate: Boolean): String =
-            s"""One or both operations ${if (negate) "" else "don't "}meet the expectation:
-               |  before:     $before
-               |  silent  op: $after
-               |  verbose op: $afterVerbose""".stripMargin
-          MatchResult(silentResult && verboseResult, msg(false), msg(true))
-      }
+    new Matcher[Results[N, E]] with BothMatcher[N, E] {
+      protected def silentResult(before: CC[N, E], after: CC[N, E]): Boolean = p(after)
+      protected def verboseResult(before: CC[N, E], afterVerbose: Either[ConstraintViolation, CC[N, E]]): Boolean =
+        afterVerbose match {
+          case Right(g) => p(g)
+          case Left(_)  => p(before)
+        }
+      protected def msgTitle(negate: Boolean): String =
+        s"One or both operations ${if (negate) "" else "don't "}meet the expectation"
     }
 
   protected def beRejected[N, E[X] <: EdgeLikeIn[X]]: Matcher[Results[N, E]] =
-    new Matcher[Results[N, E]] {
-      def apply(left: Results[N, E]): MatchResult = left match {
-        case (before, after, afterVerbose) =>
-          val silentResult  = after === before
-          val verboseResult = afterVerbose.isLeft
-          def msg(negate: Boolean): String =
-            s"""One or both operations have ${if (negate) "" else "not "}been rejected:
-               |  before:     $before
-               |  silent  op: $after
-               |  verbose op: $afterVerbose""".stripMargin
-          MatchResult(silentResult && verboseResult, msg(false), msg(true))
-      }
+    new Matcher[Results[N, E]] with BothMatcher[N, E] {
+      protected def silentResult(before: CC[N, E], after: CC[N, E]): Boolean = after === before
+      protected def verboseResult(before: CC[N, E], afterVerbose: Either[ConstraintViolation, CC[N, E]]): Boolean =
+        afterVerbose.isLeft
+      protected def msgTitle(negate: Boolean): String =
+        s"One or both operations have ${if (negate) "" else "not "}been rejected"
     }
+
+  private trait BothMatcher[N, E[X] <: EdgeLikeIn[X]] { this: Matcher[Results[N, E]] =>
+    protected def silentResult(before: CC[N, E], after: CC[N, E]): Boolean
+    protected def verboseResult(before: CC[N, E], afterVerbose: Either[ConstraintViolation, CC[N, E]]): Boolean
+    protected def msgTitle(negate: Boolean): String
+
+    final protected def msg(before: CC[N, E],
+                            after: CC[N, E],
+                            afterVerbose: Either[ConstraintViolation, CC[N, E]],
+                            negate: Boolean): String =
+      s"""${msgTitle(negate)}:
+         |  before:     $before
+         |  silent  op: $after
+         |  verbose op: $afterVerbose""".stripMargin
+
+    final override def apply(left: Results[N, E]): MatchResult = left match {
+      case (before, after, afterVerbose) =>
+        def msg(negate: Boolean) = this.msg(before, after, afterVerbose, negate)
+        MatchResult(silentResult(before, after) && verboseResult(before, afterVerbose), msg(false), msg(true))
+    }
+  }
 
   private def isolated[N, E[X] <: EdgeLikeIn[X]](g: CC[N, E]): CC[N, E] =
     g match {
