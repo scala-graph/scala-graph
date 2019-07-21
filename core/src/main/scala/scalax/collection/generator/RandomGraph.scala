@@ -358,9 +358,8 @@ abstract class RandomGraph[N, E[X] <: EdgeLikeIn[X], G[X, Y[Z] <: EdgeLikeIn[Z]]
 
 /** Provides convenience metrics and methods for the generation of random graphs.
   *
-  * @define COMPANION The graph companion object such as `scalax.collection.Graph`
-  *         to be used to generate graphs.
-  * @define METRICS The `Metrics` to be applied to the generated graph.
+  * @define COMPANION The graph companion object such as `scalax.collection.Graph` to be used to generate graphs.
+  * @define METRICS   The `Metrics` to be applied to the generated graph.
   */
 object RandomGraph {
 
@@ -416,7 +415,7 @@ object RandomGraph {
     }
     lazy val expectedTotalDegree: Int = (order * nodeDegrees.mean).toInt
     lazy val divisor: Int = {
-      val d = if (isDense) 12 else 25
+      val d = if (isDense) 8 else 22
       if (order > 50) d else d / 6
     }
     lazy val maxDegreeDeviation: Int = expectedTotalDegree / divisor
@@ -448,7 +447,7 @@ object RandomGraph {
   /** Returns a generator for tiny, connected, non-labeled directed graphs
     *  with the metrics defined by `TinyInt`.
     *
-    *  @param companion $COMPANION
+    *  @param graphCompanion $COMPANION
     */
   def tinyConnectedIntDi[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
       graphCompanion: GraphCompanion[G]): RandomGraph[Int, DiEdge, G] =
@@ -457,7 +456,7 @@ object RandomGraph {
   /** Returns a generator for small, connected, non-labeled directed graphs
     *  with the metrics defined by `SmallInt`.
     *
-    *  @param companion $COMPANION
+    *  @param graphCompanion $COMPANION
     */
   def smallConnectedIntDi[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
       graphCompanion: GraphCompanion[G]): RandomGraph[Int, DiEdge, G] =
@@ -465,7 +464,7 @@ object RandomGraph {
 
   /** Returns a generator for non-labeled directed graphs of any metrics and any type.
     *
-    * @param companion $COMPANION
+    * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
   def diGraph[N, G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
@@ -475,7 +474,7 @@ object RandomGraph {
 
   /** Returns a generator for non-labeled undirected graphs of any metrics and any type.
     *
-    * @param companion $COMPANION
+    * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
   def unDiGraph[N, G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](

@@ -136,9 +136,9 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
 
       private[this] def directionEdges(n: NodeT): NodeT => Set[EdgeT] with FilterableSet[EdgeT] =
         parameters.direction match {
-          case Successors   => n outgoingTo _
-          case Predecessors => n incomingFrom _
-          case AnyConnected => n connectionsWith _
+          case Successors   => n.outgoingTo
+          case Predecessors => n.incomingFrom
+          case AnyConnected => n.connectionsWith
         }
 
       @inline protected[Impl] def apply(): Option[NodeT] =
@@ -149,7 +149,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
         if (thisGraph.isHyper) max * 4 else max
       }
 
-      def maxDepth =
+      private def maxDepth =
         if (parameters.maxDepth > 0) parameters.maxDepth
         else java.lang.Integer.MAX_VALUE
 
@@ -254,8 +254,7 @@ trait TraverserImpl[N, E[X] <: EdgeLikeIn[X]] {
           w => w.edgeWeight(directionEdges(n)(neighbor) withFilter edgeFilter(cumWeight) min w.ordering)
         )
 
-      final private[this] def filteredEdges(edges: AnySet[EdgeT],
-                                            cumWeight: Double): FilterMonadic[EdgeT, AnySet[EdgeT]] =
+      private[this] def filteredEdges(edges: AnySet[EdgeT], cumWeight: Double): FilterMonadic[EdgeT, AnySet[EdgeT]] =
         if (doEdgeFilter) edges withFilter edgeFilter(cumWeight)
         else edges
 

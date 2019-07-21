@@ -203,6 +203,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
   protected type TopoSortSetup = (Buffer[NodeT], MMap[NodeT, Int], Option[NodeT])
 
   /** Calculates in-degrees of nodes spanned by `traversable`.
+    *
     *  @param traversable supplies the nodes for which the degree is to be calculated
     *  @param maybeHandle to be used to mark visited nodes
     *  @param includeAnyway include this node in the resulting list of nodes without predecessors
@@ -648,7 +649,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
     def startNode: NodeT = nodes.head
     def endNode: NodeT   = nodes.last
 
-    private type AnyGraph = GraphTraversalImpl[N, E]
+    private type AnyGraph = GraphTraversalImpl[N, E] // scalafix warning not correct, see https://github.com/scalacenter/scalafix/issues/969
 
     override def equals(other: Any): Boolean = other match {
       case that: AnyGraph#Path =>

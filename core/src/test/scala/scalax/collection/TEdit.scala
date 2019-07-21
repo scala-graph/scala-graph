@@ -227,7 +227,6 @@ class TEditMutable extends RefSpec with Matchers {
       g.addLEdge(4, 5, 6)(outerLabels(2)) should be(true)
       g should have('order (6), 'graphSize (4))
 
-      import edge.LBase.LEdgeImplicits
       val innerLabels: collection.mutable.Set[_ >: StringLabel] =
         g.edges filter (_.isLabeled) map (_.label)
       innerLabels should have size (outerLabels.size)
