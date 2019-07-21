@@ -13,7 +13,6 @@ import error.JsonGraphError._
   * ["<n1>","<n2>"] and reversely where <n1> and <n2> represent the node-Ids.
   */
 class EdgeSerializer extends Serializer[EdgeParameters] {
-  private val clazz = classOf[EdgeParameters]
   override def deserialize(implicit format: Formats) = {
     case (TypeInfo(clazz, _), json) =>
       json match {
@@ -35,7 +34,6 @@ class EdgeSerializer extends Serializer[EdgeParameters] {
   * and `<weight>` a JSON number mapping to `Double`.
   */
 class WEdgeSerializer extends Serializer[WEdgeParameters] {
-  private val clazz = classOf[WEdgeParameters]
   override def deserialize(implicit format: Formats) = {
     case (TypeInfo(clazz, _), json) =>
       json match {
@@ -69,7 +67,6 @@ abstract class LSerializer[L: Manifest](labelSerializers: Serializer[L]*) {
 class LEdgeSerializer[L: Manifest](labelSerializers: Serializer[L]*)
     extends LSerializer[L](labelSerializers: _*)
     with Serializer[LEdgeParameters[L]] {
-  private val clazz = classOf[LEdgeParameters[_]]
   override def deserialize(implicit format: Formats) = {
     case (TypeInfo(clazz, _), json) =>
       json match {
@@ -96,7 +93,6 @@ class LEdgeSerializer[L: Manifest](labelSerializers: Serializer[L]*)
 class WLEdgeSerializer[L: Manifest](labelSerializers: Serializer[L]*)
     extends LSerializer[L](labelSerializers: _*)
     with Serializer[WLEdgeParameters[L]] {
-  private val clazz = classOf[WLEdgeParameters[_]]
   override def deserialize(implicit format: Formats) = {
     case (TypeInfo(clazz, _), json) =>
       json match {

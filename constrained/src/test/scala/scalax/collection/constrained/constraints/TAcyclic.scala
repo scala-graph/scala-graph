@@ -2,7 +2,7 @@ package scalax.collection.constrained
 package constraints
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.language.{higherKinds, postfixOps}
+import scala.language.higherKinds
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec

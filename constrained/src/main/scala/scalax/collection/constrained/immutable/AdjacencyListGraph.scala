@@ -100,8 +100,8 @@ trait AdjacencyListGraph[
     n,
     false,
     (outerNode: N, innerNode: NodeT) => {
-      var newNodes = nodes.toOuter.toBuffer
-      var newEdges = edges.toOuter.toBuffer
+      val newNodes = nodes.toOuter.toBuffer
+      val newEdges = edges.toOuter.toBuffer
       nodes.subtract(
         innerNode,
         false,

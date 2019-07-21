@@ -607,7 +607,7 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
       def foreach[U](f: S => U): Unit = {
         enclosed(0) foreach f
         var i    = upper
-        var size = i
+        val size = i
         while (i > 0) {
           i -= 1
           f(s(i))

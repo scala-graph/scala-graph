@@ -83,6 +83,7 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
     "-Ywarn-unused:imports",
     "-Yrangepos"
   ),
+  Compile / scalacOptions in compile += "-Ywarn-unused:privates",
   addCompilerPlugin(scalafixSemanticdb),
   Test / parallelExecution := false,
   Compile / doc / scalacOptions ++=
