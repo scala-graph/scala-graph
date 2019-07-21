@@ -498,7 +498,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       * @return set of connecting edges including hooks.
       */
     def adjacents: Set[EdgeT] = {
-      var a = new mutable.EqHashMap[EdgeT, Null]
+      val a = new mutable.EqHashMap[EdgeT, Null]
       this foreach (n => n.edges foreach (e => a put (e, null)))
       a -= this
       new immutable.EqSet(a)

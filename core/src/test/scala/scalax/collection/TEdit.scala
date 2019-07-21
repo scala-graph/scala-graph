@@ -126,7 +126,6 @@ class TEditMutable extends RefSpec with Matchers {
       val (one, two, three, oneOneTwo, oneTwoThree) = (1, 2, 3, 1 ~> 1 ~> 2, 1 ~> 2 ~> 3)
       val g                                         = mutable.Graph(oneOneTwo, oneTwoThree)
       val (n1, n2)                                  = (g get one, g get two)
-      val e112                                      = g get oneOneTwo
 
       (n2 diSuccessors) should be('isEmpty)
       (n1 diSuccessors) should be(Set(two, three))
@@ -204,7 +203,6 @@ class TEditMutable extends RefSpec with Matchers {
       }
 
       type ListLabel = List[Int]
-      object ListLabelImplicit extends LEdgeImplicits[ListLabel]
       implicit val factory = LDiEdge
       val listLabel        = List(1, 0, 1)
       g.addLEdge(3, 4)(listLabel) should be(true)
@@ -229,8 +227,7 @@ class TEditMutable extends RefSpec with Matchers {
       g.addLEdge(4, 5, 6)(outerLabels(2)) should be(true)
       g should have('order (6), 'graphSize (4))
 
-      import edge.LBase.{LEdgeImplicits}
-      object StringLabelImplicit extends LEdgeImplicits[StringLabel]
+      import edge.LBase.LEdgeImplicits
       val innerLabels: collection.mutable.Set[_ >: StringLabel] =
         g.edges filter (_.isLabeled) map (_.label)
       innerLabels should have size (outerLabels.size)
@@ -464,7 +461,6 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
     def `EdgeAssoc ` {
       val e = 1 ~ 2
       e.isInstanceOf[UnDiEdge[Int]] should be(true)
-      val x = factory(3 ~ 4).nodes
       // Error in Scala compiler: assertion failed
       // Graph(3).nodes contains 3 //should be (true)
 

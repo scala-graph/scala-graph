@@ -55,8 +55,8 @@ trait AdjacencyListGraph[
     n,
     forced = false,
     (outerNode: N, innerNode: NodeT) => {
-      var newNodes = nodes.toOuter.toBuffer
-      var newEdges = edges.toOuter.toBuffer
+      val newNodes = nodes.toOuter.toBuffer
+      val newEdges = edges.toOuter.toBuffer
       nodes.subtract(
         innerNode,
         rippleDelete = false,
