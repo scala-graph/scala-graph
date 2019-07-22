@@ -46,7 +46,7 @@ lazy val dot = project
   .dependsOn(core)
   .settings(
     defaultSettings ++ Seq(
-      name := "Graph DOT", 
+      name := "Graph DOT",
       version := Version.dot
     )
   )
