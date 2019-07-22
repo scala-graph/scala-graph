@@ -19,8 +19,8 @@ lazy val core = project
       name := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck"   % "1.13.4" % "optional;provided",
-        "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all",
+        "org.scalacheck" %% "scalacheck"   % "1.14.0" % "optional;provided",
+        "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all"
       ),
       dependencyOverrides ++= {
         val release                        = "RELEASE90"
@@ -55,7 +55,10 @@ lazy val dot = project
   .in(file("dot"))
   .dependsOn(core)
   .settings(
-    defaultSettings ++ Seq(name := "Graph DOT", version := Version.dot)
+    defaultSettings ++ Seq(
+      name := "Graph DOT",
+      version := Version.dot
+    )
   )
 
 lazy val json = project
@@ -65,6 +68,7 @@ lazy val json = project
     defaultSettings ++ Seq(
       name := "Graph JSON",
       version := Version.json,
+      crossScalaVersions := Seq(Version.compiler_2_12),
       libraryDependencies += "net.liftweb" %% "lift-json" % "3.1.1"
     )
   )
@@ -88,14 +92,14 @@ ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
 
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion := Version.compiler_2_12,
-  crossScalaVersions := Seq(scalaVersion.value, Version.compiler_2_11),
+  crossScalaVersions := Seq(Version.compiler_2_12, Version.compiler_2_13),
   organization := "org.scala-graph",
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports",
     "-Yrangepos"
   ),
   Compile / scalacOptions in compile += "-Ywarn-unused:privates",
-  addCompilerPlugin(scalafixSemanticdb),
+  addCompilerPlugin(scalafixSemanticdb("4.2.0")),
   Test / parallelExecution := false,
   Compile / doc / scalacOptions ++=
     Opts.doc.title(name.value) ++
