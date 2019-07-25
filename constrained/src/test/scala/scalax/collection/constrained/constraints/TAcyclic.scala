@@ -5,14 +5,10 @@ import scala.language.higherKinds
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.constrained.generic.GraphConstrainedCompanion
 
-@RunWith(classOf[JUnitRunner])
 class TAcyclicRootTest
     extends Suites(
       new TAcyclic[immutable.Graph](immutable.Graph),

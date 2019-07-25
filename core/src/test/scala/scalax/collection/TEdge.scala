@@ -3,15 +3,11 @@ package scalax.collection
 import scala.language.higherKinds
 
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
 import org.scalatest.refspec.RefSpec
-import org.junit.runner.RunWith
-
 import GraphPredef._, GraphEdge._, edge._, edge.LBase._, edge.Implicits._
 
 import custom.flight._, custom.flight.Helper._
 
-@RunWith(classOf[JUnitRunner])
 class TEdgeTest extends RefSpec with Matchers {
 
   object `WDiEdge ` {

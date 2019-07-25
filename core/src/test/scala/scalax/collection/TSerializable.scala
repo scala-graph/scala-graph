@@ -9,12 +9,8 @@ import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion
 
 import org.scalatest._
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 import scalax.collection.visualization.Visualizer
 
-@RunWith(classOf[JUnitRunner])
 class TSerializableRootTest
     extends Suites(new TSerializable[immutable.Graph](immutable.Graph), new TSerializable[mutable.Graph](mutable.Graph))
 

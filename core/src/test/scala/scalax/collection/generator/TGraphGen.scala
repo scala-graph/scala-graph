@@ -9,10 +9,6 @@ import org.scalatest.prop.PropertyChecks
 
 import GraphEdge._
 
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
-@RunWith(classOf[JUnitRunner])
 class TGraphGenTest extends RefSpec with Matchers with PropertyChecks {
 
   final val minSuccessful = 5

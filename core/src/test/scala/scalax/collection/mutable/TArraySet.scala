@@ -8,10 +8,6 @@ import immutable.SortedArraySet
 
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
-@RunWith(classOf[JUnitRunner])
 class TArraySetTest extends RefSpec with Matchers {
 
   implicit val hints = ArraySet.Hints(4, 4, 12, 100)

@@ -11,13 +11,9 @@ import org.scalatest._
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.refspec.RefSpec
 
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 import scalax.collection.edge.WkDiEdge
 import scalax.collection.visualization.Visualizer
 
-@RunWith(classOf[JUnitRunner])
 class TTopologicalSortRootTest
     extends Suites(
       new TTopologicalSort[immutable.Graph](immutable.Graph),

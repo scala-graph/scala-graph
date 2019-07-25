@@ -5,10 +5,6 @@ import GraphEdge._
 
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
-@RunWith(classOf[JUnitRunner])
 class TExtHashSetTest extends RefSpec with Matchers {
 
   import Data._

@@ -8,8 +8,6 @@ import generic.GraphCompanion
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 
 /** This wrapper trait enables to transparently pass `GraphCompanion` objects with
   *  non-default configuration parameters to tests in a type-safe way. */
@@ -28,7 +26,6 @@ trait ConfigWrapper[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N
       config: companion.Config) = companion.from(nodes, edges)
 }
 
-@RunWith(classOf[JUnitRunner])
 class TEditRootTest
     extends Suites(
       new TEdit[Graph](new ConfigWrapper[Graph] {
@@ -47,7 +44,6 @@ class TEditRootTest
       new TEditMutable
     )
 
-@RunWith(classOf[JUnitRunner])
 class TEditImmutable extends RefSpec with Matchers {
   object `graphs ` {
     def `are immutable by default` {
@@ -62,7 +58,6 @@ class TEditImmutable extends RefSpec with Matchers {
   }
 }
 
-@RunWith(classOf[JUnitRunner])
 class TEditMutable extends RefSpec with Matchers {
   object `mutable graphs` {
     def `serve += properly` {

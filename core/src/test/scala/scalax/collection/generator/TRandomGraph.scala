@@ -13,10 +13,6 @@ import mutable.{Graph => MGraph}
 import generic.GraphCompanion
 import edge.{LDiEdge, WDiEdge}
 
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
-@RunWith(classOf[JUnitRunner])
 class TRandomGraphTest extends RefSpec with Matchers {
 
   import RandomGraph._

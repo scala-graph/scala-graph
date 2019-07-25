@@ -8,12 +8,8 @@ import generic.GraphCoreCompanion
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 import scalax.collection.visualization.Visualizer
 
-@RunWith(classOf[JUnitRunner])
 class TDegreeRootTest
     extends Suites(new TDegree[immutable.Graph](immutable.Graph), new TDegree[mutable.Graph](mutable.Graph))
 

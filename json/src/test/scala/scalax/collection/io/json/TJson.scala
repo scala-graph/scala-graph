@@ -14,10 +14,6 @@ descriptor.Defaults._, exp.Export
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
-@RunWith(classOf[JUnitRunner])
 class TJsonRootTest
     extends Suites(new TJsonTest[immutable.Graph](immutable.Graph), new TJsonTest[mutable.Graph](mutable.Graph))
 

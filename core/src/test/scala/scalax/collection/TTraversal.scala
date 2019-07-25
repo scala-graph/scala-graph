@@ -16,11 +16,8 @@ import Arbitrary.arbitrary
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 import org.scalatest.prop.PropertyChecks
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 import scalax.collection.visualization.Visualizer
 
-@RunWith(classOf[JUnitRunner])
 class TTraversalRootTest
     extends Suites(
       new TTraversal[immutable.Graph](immutable.Graph),

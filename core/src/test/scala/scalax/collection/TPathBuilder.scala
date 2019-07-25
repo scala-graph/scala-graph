@@ -3,9 +3,6 @@ package scalax.collection
 import GraphEdge._, GraphPredef._
 
 import org.scalatest._
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 // The single graph used for this test
 object AGraph {
   import Data._
@@ -26,7 +23,6 @@ trait WalkBehaviors {
   }
 }
 
-@RunWith(classOf[JUnitRunner])
 class TPathBuilderTest extends FlatSpec with WalkBehaviors with Matchers {
 
   import AGraph.UnDi_1._

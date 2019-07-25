@@ -10,13 +10,9 @@ import scalax.collection.mutable
 import org.scalatest.refspec.RefSpec
 import org.scalatest.Matchers
 
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-operations.html
   *  Graph Operations]].
   */
-@RunWith(classOf[JUnitRunner])
 final class EditingTest extends RefSpec with Matchers {
 
   object `demonstraiting ` {

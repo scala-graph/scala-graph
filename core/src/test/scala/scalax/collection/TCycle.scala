@@ -9,12 +9,8 @@ import edge._
 import org.scalatest.refspec.RefSpec
 import org.scalatest.{Matchers, Suites}
 import org.scalatest.matchers.{MatchResult, Matcher}
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 import scalax.collection.visualization.Visualizer
 
-@RunWith(classOf[JUnitRunner])
 class TCycleRootTest
     extends Suites(new TCycle[immutable.Graph](immutable.Graph), new TCycle[mutable.Graph](mutable.Graph))
 
