@@ -19,13 +19,25 @@ lazy val core = project
       name := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck"       %% "scalacheck"                    % "1.13.4"    % "optional;provided",
-        "org.gephi"            % "gephi-toolkit"                  % "0.9.2"     % "test" classifier "all",
-        "org.netbeans.modules" % "org-netbeans-core"              % "RELEASE90" % "test",
-        "org.netbeans.modules" % "org-netbeans-core-startup-base" % "RELEASE90" % "test",
-        "org.netbeans.modules" % "org-netbeans-modules-masterfs"  % "RELEASE90" % "test",
-        "org.netbeans.api"     % "org-openide-util-lookup"        % "RELEASE90" % "test"
-      )
+        "org.scalacheck" %% "scalacheck"   % "1.13.4" % "optional;provided",
+        "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all",
+      ),
+      dependencyOverrides ++= {
+        val release                        = "RELEASE90"
+        def netbeansModule(module: String) = "org.netbeans.modules" % module % release % "test"
+        def netbeansApi(module: String)    = "org.netbeans.api" % module % release % "test"
+        Seq(
+          netbeansModule("org-netbeans-core"),
+          netbeansModule("org-netbeans-core-startup-base"),
+          netbeansModule("org-netbeans-modules-masterfs"),
+          netbeansApi("org-openide-util-lookup"),
+          netbeansApi("org-openide-filesystems"),
+          netbeansApi("org-openide-util-ui"),
+          netbeansApi("org-openide-dialogs"),
+          netbeansApi("org-openide-nodes"),
+          netbeansApi("org-netbeans-api-annotations-common")
+        )
+      }
     )
   )
 
