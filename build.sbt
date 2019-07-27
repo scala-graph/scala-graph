@@ -24,8 +24,8 @@ lazy val core = project
       ),
       dependencyOverrides ++= {
         val release                        = "RELEASE90"
-        def netbeansModule(module: String) = "org.netbeans.modules" % module % release % "test"
-        def netbeansApi(module: String)    = "org.netbeans.api" % module % release % "test"
+        def netbeansModule(module: String) = "org.netbeans.modules" % module % release
+        def netbeansApi(module: String)    = "org.netbeans.api" % module % release
         Seq(
           netbeansModule("org-netbeans-core"),
           netbeansModule("org-netbeans-core-startup-base"),
