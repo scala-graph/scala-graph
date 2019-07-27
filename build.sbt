@@ -20,7 +20,7 @@ lazy val core = project
       version := Version.core,
       libraryDependencies ++= Seq(
         "org.scalacheck" %% "scalacheck"   % "1.13.4" % "optional;provided",
-        "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all"
+        "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test"
       ),
       dependencyOverrides ++= Seq(
         "org.netbeans.modules" % "org-netbeans-core"              % "RELEASE90" % "test",
