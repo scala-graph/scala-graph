@@ -390,7 +390,7 @@ trait GraphLike[N,
     *  @return the new subgraph of this graph after the "gentle" deletion of `node`.
     *          If `node` could not be deleted, the new graph is a copy of this graph.
     */
-  @deprecated("To remove a node conditionally, check for the prerequisites beforehand.", "1.14")
+  @deprecated("To remove a node conditionally, check for the prerequisites beforehand.", "1.13")
   def minusIsolated(node: N): This[N, E]
 
   /** Creates a new subgraph consisting of all nodes and edges of this graph but `edge`.
@@ -440,7 +440,7 @@ trait GraphLike[N,
     *  @return a new subgraph of this graph after the "ripple" deletion of the passed
     *          node or edge.
     */
-  @deprecated("When deleting an edge, to get nodes deleted that become isolated, delete them beforehand.", "1.14")
+  @deprecated("When deleting an edge, to get nodes deleted that become isolated, delete them beforehand.", "1.13")
   def -!(elem: Param[N, E]): This[N, E] = elem match {
     case in: InParam[N, E] =>
       in match {
@@ -465,7 +465,7 @@ trait GraphLike[N,
     * @return the new subgraph containing all nodes and edges of this graph
     *         after the "ripple" deletion of nodes and the simple deletion of edges in `coll` .
     */
-  @deprecated("When deleting edges, to get nodes deleted that become isolated, delete them beforehand.", "1.14")
+  @deprecated("When deleting edges, to get nodes deleted that become isolated, delete them beforehand.", "1.13")
   def --!(elems: GenTraversableOnce[Param[N, E]]): This[N, E] = {
     val p                    = partition(elems)
     val (delNodes, delEdges) = (p.toOuterNodes, p.toOuterEdges)
