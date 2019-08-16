@@ -13,6 +13,8 @@ trait ExtSetMethods[A] {
     */
   def draw(random: Random): A
 
+  def findElem(elem: A): Option[A] = Option(findElem[A](elem, _ == _))
+
   /** Finds an entry in the collection based on `toMatch`'s `hashCode` and a correspondence
     *  function but not on the argument type.
     *
