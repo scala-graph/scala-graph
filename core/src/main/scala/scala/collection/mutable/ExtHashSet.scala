@@ -424,13 +424,13 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
     keys(random.nextInt(keys.knownSize))
   }
 
-  private[this] def withBucket[B](hashCode: Int)(empty: B)(body: Node[A] => B): B =
+  private[this] def withBucket[B](hashCode: Int)(empty: => B)(body: Node[A] => B): B =
     table(index(improveHash(hashCode))) match {
       case null => empty
       case node => body(node)
     }
 
-  override def findElem[B](toMatch: B, correspond: (A, B) => Boolean): A = {
+  override protected def findElem[B](toMatch: B, correspond: (A, B) => Boolean): A = {
     val hash = toMatch.##
     @inline def nullAsA = null.asInstanceOf[A]
     withBucket(hash)(nullAsA)(

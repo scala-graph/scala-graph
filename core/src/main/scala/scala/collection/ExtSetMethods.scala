@@ -23,5 +23,5 @@ trait ExtSetMethods[A] {
     *  @param correspond function returning whether  a given entry corresponds to `other`
     *  @return the entry corresponding to `toMatch` or null if not contained
     */
-  def findElem[B](toMatch: B, correspond: (A, B) => Boolean): A
+  protected def findElem[B](toMatch: B, correspond: (A, B) => Boolean): A
 }
