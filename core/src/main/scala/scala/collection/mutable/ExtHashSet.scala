@@ -411,7 +411,6 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
   override def draw(random: Random): A = {
     val len = table.length
     val drawn = random.nextInt(len)
-
     @tailrec def firstBucket(i: Int, upper: Int): Node[A] =
       if (i < upper) {
         val n = table(i)
@@ -421,24 +420,60 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
       else
         throw new IllegalArgumentException(s"Expected non-empty set.")
 
-    val b = ArrayBuffer.empty[A]
-    firstBucket(drawn, len) foreach b.+=
-    b(random.nextInt(b.size))
+    val keys = firstBucket(drawn, len).keys
+    keys(random.nextInt(keys.knownSize))
   }
 
-  override def findElem[B](toMatch: B, correspond: (A, B) => Boolean): A = {
-    val hash = improveHash(toMatch.##)
-    def nullAsA = null.asInstanceOf[A]
-    table(index(hash)) match {
-      case null => nullAsA
-      case node =>
-        @tailrec def findNode(n: Node[A]): A =
-          if (hash == n.hash && correspond(n.key, toMatch)) n.key
-          else if ((n.next eq null) || (n.hash > hash)) nullAsA
-          else findNode(n.next)
-
-        findNode(node)
+  private[this] def withBucket[B](hashCode: Int)(empty: => B)(body: Node[A] => B): B =
+    table(index(improveHash(hashCode))) match {
+      case null => empty
+      case node => body(node)
     }
+
+  override protected def findElem[B](toMatch: B, correspond: (A, B) => Boolean): A = {
+    val hash = toMatch.##
+    @inline def nullAsA = null.asInstanceOf[A]
+    withBucket(hash)(nullAsA)(
+      _.findNode(improveHash(hash), n => correspond(n.key, toMatch)) match {
+        case null => nullAsA
+        case n => n.key
+      })
+  }
+
+  /** Returns an `Iterator` over all entries having the passed `hashCode`.
+    */
+  protected[collection] def hashCodeIterator(hCode: Int): Iterator[A] =
+    withBucket(hCode)(Iterator.empty[A])(_.keys.iterator)
+
+  /** Updates or inserts `elem`. An update is only meaningful for equalling mutable elements.
+    * @return `true` if an insertion took place.
+    */
+  def upsert(elem: A with AnyRef): Boolean = {
+    val hCode = elem.##
+    val improved = improveHash(hCode)
+    @inline def add = addElem(elem, improved)
+    withBucket(hCode)(
+      add
+    ) { bucket =>
+      if (bucket.hash == improved && bucket.key == elem) {
+        table(index(improved)) = new Node(elem, improved, bucket.next)
+        false
+      } else
+        bucket.findNode(n => {val next = n.next; (next ne null) && next == elem}) match {
+        case null =>
+          add
+          true
+        case prev =>
+          val update = prev.next
+          prev.next = new Node(elem, update.hash, update.next)
+          false
+      }
+    }
+  }
+
+  protected[mutable] def dump: Array[ArrayBuffer[Int]] = table map {
+    case null => ArrayBuffer.empty[Int]
+    case node => node.nodes.map(_.hash)
   }
 }
 
@@ -508,6 +543,33 @@ object ExtHashSet extends IterableFactory[ExtHashSet] {
       f(_key)
       if (_next ne null) _next.foreach(f)
     }
+
+    @tailrec
+    def findNode(h: Int, pred: Node[K] => Boolean): Node[K] =
+      if (h == _hash && pred(this)) this
+      else if ((_next eq null) || (_hash > h)) null
+      else _next.findNode(h, pred)
+
+    @tailrec
+    def findNode(pred: Node[K] => Boolean): Node[K] =
+      if (pred(this)) this
+      else if (_next eq null) null
+      else _next.findNode(pred)
+
+    @tailrec
+    def foreachNode[U](f: Node[K] => U): Unit = {
+      f(this)
+      if (_next ne null) _next.foreachNode(f)
+    }
+
+    private[this] def toBuffer[U](f: Node[K] => U): ArrayBuffer[U] = {
+      val b = ArrayBuffer.empty[U]
+      foreachNode(n => b += f(n))
+      b
+    }
+
+    def nodes: ArrayBuffer[Node[K]] = toBuffer(identity)
+    def keys: ArrayBuffer[K]        = toBuffer(_.key)
 
     override def toString = s"Node($key, $hash) -> $next"
   }
