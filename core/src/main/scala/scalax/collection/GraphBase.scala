@@ -2,12 +2,11 @@ package scalax.collection
 
 import scala.language.{higherKinds, implicitConversions}
 import scala.util.Random
+import scala.collection.{ExtSetMethods, FilterableSet}
 
-import scala.collection.FilterableSet
 import GraphPredef.{EdgeLikeIn, InnerEdgeParam, InnerNodeParam, OuterEdge}
 import GraphEdge.{DiHyperEdgeLike, EdgeLike}
 import generic.AnyOrdering
-import interfaces.ExtSetMethods
 
 /** Base template trait for graphs.
   *
@@ -29,7 +28,7 @@ import interfaces.ExtSetMethods
   *
   * @author Peter Empen
   */
-trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
+trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
 
   /** Populates this graph with `nodes` and `edges`.
     *
@@ -39,7 +38,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     * @param nodes $INNODES
     * @param edges $INEDGES
     */
-  protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]) {
+  protected def initialize(nodes: Iterable[N], edges: Iterable[E[N]]) {
     this.nodes.initialize(nodes, edges)
     this.edges.initialize(edges)
   }
@@ -401,7 +400,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       * @param nodes $INNODES
       * @param edges $INEDGES
       */
-    protected[collection] def initialize(nodes: Traversable[N], edges: Traversable[E[N]]): Unit
+    protected[collection] def initialize(nodes: Iterable[N], edges: Iterable[E[N]]): Unit
     override def stringPrefix: String = "NodeSet"
 
     /** Sorts all nodes according to `ord` and concatenates them using `separator`.
@@ -457,6 +456,8 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
         yield n.value.toString + ": " + ((for (a <- n.diSuccessors) yield a.value) mkString ",")) mkString "\n"
 
     def draw(random: Random): NodeT
+
+    final override def diff(that: AnySet[NodeT]): NodeSetT = ??? //(this -- that).asInstanceOf[NodeSetT]
   }
 
   /** The node (vertex) set of this `Graph` commonly referred to as V(G).
@@ -513,10 +514,11 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
      * 'to' to GenTraversableOnce in the standard library. So we must delegate the call. */
     def to: NodeT = edge match {
       case di: DiHyperEdgeLike[NodeT] => di.to
-      case unDi @ _                   => unDi.edge._2
+      case unDi                       => unDi.edge._2
     }
 
-    override def canEqual(that: Any) = that.isInstanceOf[GraphBase[N, E]#InnerEdge] ||
+    // TODO do we want to keep this? Iterable no longer extends trait Equals (previously through IterableLike)
+    /*override*/ def canEqual(that: Any) = that.isInstanceOf[GraphBase[N, E]#InnerEdge] ||
       that.isInstanceOf[EdgeLike[_]]
     override def equals(other: Any) = other match {
       case that: GraphBase[N, E]#InnerEdge =>
@@ -538,7 +540,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
         case 3 => Tuple3(edge._1.value, edge._2.value, edge._n(2).value)
         case 4 => Tuple4(edge._1.value, edge._2.value, edge._n(2).value, edge._n(3).value)
         case 5 => Tuple5(edge._1.value, edge._2.value, edge._n(2).value, edge._n(3).value, edge._n(4).value)
-        case _ => edge.map(n => n.value).toList
+        case _ => ??? //edge.map(n => n.value).toList
       }
       edge.copy[N](newNs).asInstanceOf[E[N]]
     }
@@ -575,7 +577,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
         case 3 => Tuple3(mkNode(edge._1), mkNode(edge._2), mkNode(edge._n(2)))
         case 4 => Tuple4(mkNode(edge._1), mkNode(edge._2), mkNode(edge._n(2)), mkNode(edge._n(3)))
         case 5 => Tuple5(mkNode(edge._1), mkNode(edge._2), mkNode(edge._n(2)), mkNode(edge._n(3)), mkNode(edge._n(4)))
-        case _ => (edge map mkNode).toList
+        case _ => ??? //(edge map mkNode).toList
       }
       edge.copy[NodeT](newNodes).asInstanceOf[E[NodeT]]
     }
@@ -589,7 +591,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
             case 1 => Tuple3(n_1, n_2, mkNode(nodes(0)))
             case 2 => Tuple4(n_1, n_2, mkNode(nodes(0)), mkNode(nodes(1)))
             case 3 => Tuple5(n_1, n_2, mkNode(nodes(0)), mkNode(nodes(1)), mkNode(nodes(2)))
-            case _ => (nodes map mkNode).toList ::: List(n_1, n_2)
+            case _ => ??? //(nodes map mkNode).toList ::: List(n_1, n_2)
           }
       newNodes
     }
@@ -612,7 +614,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
 
   final lazy val defaultEdgeOrdering = EdgeOrdering(
     (a: EdgeT, b: EdgeT) => {
-      val unequal = (a.edge zip b.edge) find (z => z._1 != z._2)
+      val unequal: Option[(NodeT, NodeT)] = (a.edge zip b.edge) find (z => z._1 != z._2)
       unequal map (t => anyOrdering.compare(t._1.value, t._2.value)) getOrElse
         Ordering.Int.compare(a.arity, b.arity)
     }
@@ -626,7 +628,7 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       *
       * @param edges $INEDGES
       */
-    protected[collection] def initialize(edges: Traversable[E[N]]): Unit
+    protected[collection] def initialize(edges: Iterable[E[N]]): Unit
     def contains(node: NodeT): Boolean
     override def stringPrefix: String = "EdgeSet"
 
@@ -678,9 +680,11 @@ trait GraphBase[N, E[X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       other match {
         case e: OuterEdge[N, E]            => find(e.edge)
         case e: InnerEdgeParam[N, E, _, E] => find(e.asEdgeT[N, E, selfGraph.type](selfGraph).toOuter)
-        case _                             => null.asInstanceOf[EdgeT]
+        case _                                => null.asInstanceOf[EdgeT]
       }
     }
+
+    final override def diff(that: AnySet[EdgeT]): EdgeSetT = ??? // (this -- that).asInstanceOf[EdgeSetT]
   }
 
   /** The edge set of this `Graph` commonly referred to as E(G).

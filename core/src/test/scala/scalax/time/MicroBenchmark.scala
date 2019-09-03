@@ -30,6 +30,7 @@ object MicroBenchmark {
     def times(x: NanoSecond, y: NanoSecond)             = num.times(x, y)
     def negate(x: NanoSecond)                           = num.negate(x)
     def fromInt(x: Int)                                 = x.toLong
+    def parseString(str: String)                        = ??? // TODO parseString was added to Numeric[T]
     def toInt(x: NanoSecond)                            = x.value.toInt
     def toLong(x: NanoSecond)                           = x.value.toLong
     def toFloat(x: NanoSecond)                          = x.value.toFloat

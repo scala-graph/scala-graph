@@ -18,7 +18,7 @@ final class TraversingTest extends RefSpec with Matchers {
   import scalax.collection.edge.Implicits._
 
   // format: off
-  private def validatePath[N, E[X] <: EdgeLikeIn[X]](p: Graph[N,E]#Path,
+  private def validatePath[N, E[+X] <: EdgeLikeIn[X]](p: Graph[N,E]#Path,
                                              sample: List[Param[N,E]]): Unit = {
     def toN(p: Param[N,E]): N = p match {
       case OuterNode(n) => n

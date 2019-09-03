@@ -9,6 +9,7 @@ import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion
 
 import org.scalatest._
+
 import scalax.collection.visualization.Visualizer
 
 class TSerializableRootTest
@@ -16,7 +17,7 @@ class TSerializableRootTest
 
 /**	Tests for standard java serialization.
   */
-final class TSerializable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC])
     extends FlatSpec
     with Matchers
@@ -29,11 +30,11 @@ final class TSerializable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
 
   trait GraphStore {
     protected trait Exec {
-      def save[N, E[X] <: EdgeLikeIn[X]](g: CC[N, E]): Unit
-      def restore[N, E[X] <: EdgeLikeIn[X]]: CC[N, E]
+      def save[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): Unit
+      def restore[N, E[+X] <: EdgeLikeIn[X]]: CC[N, E]
     }
     protected def newTest: Exec
-    def test[N, E[X] <: EdgeLikeIn[X]](g: CC[N, E]): CC[N, E] = {
+    def test[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): CC[N, E] = {
       val exec = newTest
       exec.save[N, E](g)
       val r = exec.restore[N, E]
@@ -46,11 +47,11 @@ final class TSerializable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
   object GraphFile extends GraphStore {
     protected class Exec(filename: String) extends super.Exec {
       import FileSerialization._
-      def save[N, E[X] <: EdgeLikeIn[X]](g: CC[N, E]): Unit = write(g, filename) recover {
+      def save[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): Unit = write(g, filename) recover {
         case e => fail(s"Couldn't write $g: $e")
       }
 
-      def restore[N, E[X] <: EdgeLikeIn[X]]: CC[N, E] = read(filename).recover {
+      def restore[N, E[+X] <: EdgeLikeIn[X]]: CC[N, E] = read(filename).recover {
         case e => fail(s"Couldn't read graph: $e")
       }.get
     }
@@ -69,12 +70,12 @@ final class TSerializable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
       import ByteArraySerialization._
       private var _saved: Array[Byte] = _
 
-      def save[N, E[X] <: EdgeLikeIn[X]](g: CC[N, E]): Unit = write(g) match {
+      def save[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): Unit = write(g) match {
         case Success(s) => _saved = s
         case Failure(e) => fail("Couldn't write: " + g, e)
       }
 
-      def restore[N, E[X] <: EdgeLikeIn[X]]: CC[N, E] = read[CC[N, E]](_saved) match {
+      def restore[N, E[+X] <: EdgeLikeIn[X]]: CC[N, E] = read[CC[N, E]](_saved) match {
         case Success(s) => s
         case Failure(e) => fail("Couldn't read graph", e)
       }
@@ -180,9 +181,9 @@ final class TSerializable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
   }
 
   trait EdgeStore {
-    def save[N, E[X] <: EdgeLikeIn[X]](e: Iterable[InParam[N, E]]): Unit
-    def restore[N, E[X] <: EdgeLikeIn[X]]: Iterable[InParam[N, E]]
-    def test[N, E[X] <: EdgeLikeIn[X]](e: Iterable[InParam[N, E]]): Iterable[InParam[N, E]] = {
+    def save[N, E[+X] <: EdgeLikeIn[X]](e: Iterable[InParam[N, E]]): Unit
+    def restore[N, E[+X] <: EdgeLikeIn[X]]: Iterable[InParam[N, E]]
+    def test[N, E[+X] <: EdgeLikeIn[X]](e: Iterable[InParam[N, E]]): Iterable[InParam[N, E]] = {
       save[N, E](e)
       val r = restore[N, E]
       r should be(e)
@@ -194,12 +195,12 @@ final class TSerializable[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
     import ByteArraySerialization._
     private var _saved: Array[Byte] = _
 
-    def save[N, E[X] <: EdgeLikeIn[X]](it: Iterable[InParam[N, E]]): Unit = write(it) match {
+    def save[N, E[+X] <: EdgeLikeIn[X]](it: Iterable[InParam[N, E]]): Unit = write(it) match {
       case Success(s) => _saved = s
       case Failure(e) => fail(s"Couldn't write '$it': $e")
     }
 
-    def restore[N, E[X] <: EdgeLikeIn[X]]: Iterable[InParam[N, E]] =
+    def restore[N, E[+X] <: EdgeLikeIn[X]]: Iterable[InParam[N, E]] =
       readWithCustomClassLoader[Iterable[InParam[N, E]]](_saved) match {
         case Success(s) => s
         case Failure(e) => fail(s"Couldn't read iterable: $e")

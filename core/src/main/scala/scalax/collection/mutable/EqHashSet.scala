@@ -1,11 +1,10 @@
 package scalax.collection.mutable
 
 import scala.annotation.switch
-import scala.collection.mutable.{Set, SetLike}
+import scala.collection.mutable.Set
 
 class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity)
     extends Set[A]
-    with SetLike[A, EqHashSet[A]]
     with EqHash[A, EqHashSet[A]] {
 
   import EqHash.{anyHash, defCapacity}
@@ -22,7 +21,7 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity)
 
   @inline final override def contains(elem: A): Boolean = index(elem) >= 0
 
-  def +=(elem: A): this.type = { add(elem); this }
+  override def addOne(elem: A): this.type = { add(elem); this }
 
   override def add(elem: A): Boolean = {
     val masked  = maskNull(elem)
@@ -54,7 +53,7 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity)
     }
   }
 
-  def -=(elem: A): this.type = { remove(elem); this }
+  override def subtractOne(elem: A): this.type = { remove(elem); this }
 
   override def remove(elem: A): Boolean = (index(elem): @switch) match {
     case i if i < 0 => false
@@ -87,6 +86,6 @@ object EqHashSet {
   import EqHash._
 
   def apply[A <: AnyRef](elems: A*)                   = empty ++= elems
-  def empty[A <: AnyRef]: EqHashSet[A]                = empty(defCapacity)
+  def empty[A <: AnyRef]: EqHashSet[A]                = empty(sizeHint = defCapacity)
   def empty[A <: AnyRef](sizeHint: Int): EqHashSet[A] = new EqHashSet[A](sizeHint)
 }

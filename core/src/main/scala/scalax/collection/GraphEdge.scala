@@ -2,9 +2,8 @@ package scalax.collection
 
 import language.higherKinds
 import scala.annotation.{switch, tailrec}
-
+import scala.collection.AbstractIterator
 import GraphPredef.OuterEdge
-import edge.LBase.LEdge
 
 /** Container for basic edge types to be used in the context of `Graph`.
   * You will usually simply import all its members along with the members of Param:
@@ -180,7 +179,7 @@ object GraphEdge {
       throw new UnsupportedOperationException("Call of label for a non-labeled edge.")
 
     /** `true` if this edge is labeled. See also `label`. */
-    def isLabeled = this.isInstanceOf[LEdge[N]]
+    def isLabeled = ??? // this.isInstanceOf[edge.LBase.LEdge[N]]
 
     /** Same as `isAt`. */
     @inline final def contains[M >: N](node: M): Boolean = isAt(node)
@@ -207,16 +206,18 @@ object GraphEdge {
     def withSources[U](f: N => U): Unit
 
     /** All source ends of this edge. */
-    def sources: Traversable[N] = new Traversable[N] {
-      def foreach[U](f: N => U): Unit = withSources(f)
+    def sources: Iterable[N] = new Iterable[N] {
+      override def foreach[U](f: N => U): Unit = withSources(f)
+      override def iterator = ???
     }
 
     /** Applies `f` to the target ends of this edge without new memory allocation. */
     def withTargets[U](f: N => U): Unit
 
     /** All target ends of this edge. */
-    def targets: Traversable[N] = new Traversable[N] {
-      def foreach[U](f: N => U): Unit = withTargets(f)
+    def targets: Iterable[N] = new Iterable[N] {
+      override def foreach[U](f: N => U): Unit = withTargets(f)
+      override def iterator = ???
     }
 
     /** `true` if<br />
@@ -230,7 +231,7 @@ object GraphEdge {
       *  b) `p1` holds for a source and `p2` for a target of this directed edge. */
     def matches(p1: N => Boolean, p2: N => Boolean): Boolean
 
-    override def canEqual(that: Any): Boolean = that.isInstanceOf[EdgeLike[_]]
+    def canEqual(that: Any): Boolean = that.isInstanceOf[EdgeLike[_]]
 
     override def equals(other: Any): Boolean = other match {
       case that: EdgeLike[_] =>
@@ -261,7 +262,7 @@ object GraphEdge {
     protected def nodesToString =
       if (nodesToStringWithParenthesis)
         nodes match {
-          case it: Iterable[N] => it.toString.patch(0, stringPrefix, it.stringPrefix.length)
+          case it: Iterable[N] => ??? //it.toString.patch(0, stringPrefix, it.stringPrefix.length)
           case _               => stringPrefix + nodes.toString
         } else
         iterator mkString nodesToStringSeparator
@@ -303,13 +304,13 @@ object GraphEdge {
     * @author Peter Empen
     */
   object NodeProduct {
-    @inline final def apply[N](node_1: N, node_2: N): Tuple2[N, N] = Tuple2(node_1, node_2)
+    @inline final def apply[N](node_1: N, node_2: N): (N, N) = (node_1, node_2)
     @inline def apply[N](node_1: N, node_2: N, nodes: N*): Product =
       (nodes.size: @scala.annotation.switch) match {
-        case 1 => Tuple3(node_1, node_2, nodes(0))
-        case 2 => Tuple4(node_1, node_2, nodes(0), nodes(1))
-        case 3 => Tuple5(node_1, node_2, nodes(0), nodes(1), nodes(2))
-        case _ => List[N](node_1, node_2) ::: List(nodes: _*)
+        case 1 => (node_1, node_2, nodes(0))
+        case 2 => (node_1, node_2, nodes(0), nodes(1))
+        case 3 => (node_1, node_2, nodes(0), nodes(1), nodes(2))
+        case _ => ??? //new NodeProduct(Array(node_1, node_2, nodes???))
       }
     final def apply[N](nodes: Iterable[N]): Product = nodes match {
       case n1 :: n2 :: rest =>
@@ -322,6 +323,11 @@ object GraphEdge {
         if (it.hasNext) apply(n1, n2, it.toList: _*)
         else apply(n1, n2)
     }
+  }
+  class NodeProduct(elems: Array[Any]) extends Product {
+    override def productArity = elems.length
+    override def productElement(n: Int) = elems(n)
+    override def canEqual(that: Any) = ???
   }
   protected[collection] trait Keyed
 
@@ -391,7 +397,7 @@ object GraphEdge {
       val thatOrdered = right.isInstanceOf[OrderedEndpoints]
       thisOrdered == thatOrdered && (
         if (thisOrdered) leftEnds.toSeq sameElements rightEnds.toSeq
-        else Eq.nrEqualingNodes(leftEnds.toIterator, rightEnds.toIterable) == arity
+        else Eq.nrEqualingNodes(leftEnds.iterator, rightEnds) == arity
       )
     }
   }
@@ -430,7 +436,7 @@ object GraphEdge {
     override protected def baseHashCode = {
       var m                = 4
       def mul(i: Int): Int = { m += 3; m * i }
-      (0 /: iterator)((s: Int, n: Any) => s ^ mul(n.hashCode))
+      iterator.foldLeft(0)((s: Int, n: Any) => s ^ mul(n.hashCode))
     }
   }
   protected[collection] trait EqUnDi extends Eq {
@@ -654,7 +660,7 @@ object GraphEdge {
     def apply[N](node_1: N, node_2: N, nodes: N*)(implicit endpointsKind: CollectionKind = Bag): HyperEdge[N] =
       from(NodeProduct(node_1, node_2, nodes: _*))
     def apply[N](nodes: Iterable[N])(implicit endpointsKind: CollectionKind): HyperEdge[N] =
-      from(nodes.toList)
+      from(NodeProduct(nodes))
     protected[collection] def from[N](nodes: Product)(implicit endpointsKind: CollectionKind): HyperEdge[N] =
       if (endpointsKind.orderSignificant) new HyperEdge[N](nodes) with OrderedEndpoints
       else new HyperEdge[N](nodes)
@@ -690,7 +696,7 @@ object GraphEdge {
     def apply[N](from: N, to_1: N, to_n: N*)(implicit targetsKind: CollectionKind = Bag): DiHyperEdge[N] =
       DiHyperEdge.from(NodeProduct(from, to_1, to_n: _*))
     def apply[N](nodes: Iterable[N])(implicit targetsKind: CollectionKind): DiHyperEdge[N] =
-      DiHyperEdge.from(nodes.toList)
+      DiHyperEdge.from(NodeProduct(nodes))
     protected[collection] def from[N](nodes: Product)(implicit targetsKind: CollectionKind): DiHyperEdge[N] =
       if (targetsKind.orderSignificant) new DiHyperEdge[N](nodes) with OrderedEndpoints
       else new DiHyperEdge[N](nodes)
@@ -781,7 +787,7 @@ object GraphEdge {
     */
   object DiEdge extends EdgeCompanion[DiEdge] {
     def apply[N](from: N, to: N)                      = new DiEdge[N](NodeProduct(from, to))
-    def apply[N](nodes: Tuple2[N, N])                 = new DiEdge[N](nodes)
+    def apply[N](nodes: (N, N))                       = new DiEdge[N](nodes)
     protected[collection] def from[N](nodes: Product) = new DiEdge[N](nodes)
     def unapply[N](e: DiEdge[N])                      = if (e eq null) None else Some(e.source, e.target)
   }

@@ -16,6 +16,7 @@ package scala.collection
 package mutable
 
 import scala.annotation.tailrec
+import scala.collection.ExtSetMethods
 import scala.collection.Stepper.EfficientSplit
 import scala.collection.generic.DefaultSerializationProxy
 import scala.util.Random
@@ -30,7 +31,7 @@ import scala.util.Random
   * @define willNotTerminateInf
   */
 final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
-    extends AbstractSet[A]
+  extends AbstractSet[A]
     with SetOps[A, ExtHashSet, ExtHashSet[A]]
     with StrictOptimizedIterableOps[A, ExtHashSet, ExtHashSet[A]]
     with IterableFactoryDefaults[A, ExtHashSet]
@@ -224,8 +225,8 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
     }
 
   override def stepper[S <: Stepper[_]](
-    implicit shape: StepperShape[A, S]
-  ): S with EfficientSplit = {
+                                         implicit shape: StepperShape[A, S]
+                                       ): S with EfficientSplit = {
     import convert.impl._
     val s = shape.shape match {
       case StepperShape.IntShape =>
@@ -430,7 +431,7 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
       case node => body(node)
     }
 
-  override protected def findElem[B](toMatch: B, correspond: (A, B) => Boolean): A = {
+  override def findElem[B](toMatch: B, correspond: (A, B) => Boolean): A = {
     val hash = toMatch.##
     @inline def nullAsA = null.asInstanceOf[A]
     withBucket(hash)(nullAsA)(
@@ -460,14 +461,14 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
         false
       } else
         bucket.findNode(n => {val next = n.next; (next ne null) && next == elem}) match {
-        case null =>
-          add
-          true
-        case prev =>
-          val update = prev.next
-          prev.next = new Node(elem, update.hash, update.next)
-          false
-      }
+          case null =>
+            add
+            true
+          case prev =>
+            val update = prev.next
+            prev.next = new Node(elem, update.hash, update.next)
+            false
+        }
     }
   }
 
@@ -516,7 +517,7 @@ object ExtHashSet extends IterableFactory[ExtHashSet] {
   @SerialVersionUID(3L)
   private final class DeserializationFactory[A](val tableLength: Int,
                                                 val loadFactor: Double)
-      extends Factory[A, ExtHashSet[A]]
+    extends Factory[A, ExtHashSet[A]]
       with Serializable {
     def fromSpecific(it: IterableOnce[A]): ExtHashSet[A] =
       new ExtHashSet[A](tableLength, loadFactor) ++= it

@@ -1,12 +1,11 @@
 package scalax.collection.mutable
 
 import scala.annotation.switch
-import scala.collection.mutable.{Map, MapLike}
+import scala.collection.mutable.Map
 import scala.language.implicitConversions
 
 class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
     extends Map[K, V]
-    with MapLike[K, V, EqHashMap[K, V]]
     with EqHash[(K, V), EqHashMap[K, V]] {
 
   import EqHash.{defCapacity, evenHash}
@@ -50,7 +49,7 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
       Some(oldValue)
   }
 
-  def -=(key: K) = { remove(key); this }
+  override def subtractOne(key: K) = { remove(key); this }
 
   protected def move(oldTable: Array[AnyRef], oldLength: Int, newTable: Array[AnyRef], newLength: Int): Unit = {
     var j = 0
@@ -90,7 +89,7 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
     }
   }
 
-  def +=(kv: (K, V)) = { put(kv._1, kv._2); this }
+  override def addOne(kv: (K, V)) = { put(kv._1, kv._2); this }
 
   override protected def elemHashCode: (Array[AnyRef], Int) => Int = (tab, i) => {
     val k = unmaskNull(tab(i))
@@ -133,6 +132,6 @@ object EqHashMap {
   import EqHash._
 
   def apply[K <: AnyRef, V](elems: (K, V)*)                 = empty ++= elems
-  def empty[K <: AnyRef, V]: EqHashMap[K, V]                = empty(defCapacity)
+  def empty[K <: AnyRef, V]: EqHashMap[K, V]                = empty(sizeHint = defCapacity)
   def empty[K <: AnyRef, V](sizeHint: Int): EqHashMap[K, V] = new EqHashMap[K, V](sizeHint)
 }
