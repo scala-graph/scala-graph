@@ -12,7 +12,7 @@ import mutable.ArraySet
   * @author Peter Empen
   */
 trait AdjacencyListGraph[
-    N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with AdjacencyListBase[N, E, This] { selfGraph: This[N, E] =>
 
@@ -29,15 +29,15 @@ trait AdjacencyListGraph[
 
   type NodeSetT = NodeSet
   class NodeSet extends super.NodeSet {
-    @inline final override protected def minus(node: NodeT) { coll -= node }
-    def +(node: NodeT) =
-      if (coll contains node) this
-      else { val c = copy; c.coll += node; c }
+    @inline final override protected def minus(node: NodeT) { collection -= node }
+    override def +(node: NodeT) =
+      if (collection contains node) this
+      else { val c = copy; c.collection += node; c }
 
     protected[AdjacencyListGraph] def add(edge: EdgeT): Boolean = {
       var added = false
       edge foreach { n =>
-        val inColl = coll findElem n getOrElse { coll += n; n }
+        val inColl = coll findElem n getOrElse { collection += n; n }
         added = (inColl add edge) || added
       }
       added
@@ -65,8 +65,8 @@ trait AdjacencyListGraph[
     }
 
     @inline final protected[immutable] def addEdge(edge: EdgeT) { +=(edge) }
-    @inline final def +(edge: EdgeT): Set[EdgeT] = toSet + edge
-    @inline final def -(edge: EdgeT): Set[EdgeT] = toSet - edge
+    @inline final def addOne(edge: EdgeT): Set[EdgeT] = toSet + edge
+    @inline final def minusOne(edge: EdgeT): Set[EdgeT] = toSet - edge
 
     @inline final override lazy val maxArity        = super.maxArity
     @inline final override lazy val hasAnyMultiEdge = super.hasAnyMultiEdge

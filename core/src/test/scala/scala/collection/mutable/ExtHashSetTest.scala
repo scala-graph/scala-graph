@@ -1,10 +1,9 @@
-package scala.collection
-package mutable
-
-import scala.util.Random
+package scala.collection.mutable
 
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
+
+import scala.util.Random
 
 class ExtHashSetTest extends RefSpec with Matchers {
 
@@ -13,7 +12,7 @@ class ExtHashSetTest extends RefSpec with Matchers {
     def `draw element` {
       val size = 32
       val r = new Random
-      val set = mutable.ExtHashSet.fill(size)(r.nextInt(size * 2))
+      val set = ExtHashSet.fill(size)(r.nextInt(size * 2))
       val nrProbes = set.size * 10
       val probes = Array.fill(nrProbes)(set draw r)
       val lengths = probes.groupBy(identity).values.map(_.length)
@@ -24,10 +23,9 @@ class ExtHashSetTest extends RefSpec with Matchers {
       case class C(value: Int) {
         override def hashCode(): Int = 0
       }
-      val s = mutable.ExtHashSet(C(1), C(2))
+      val s = ExtHashSet(C(1), C(2))
       s.findElem(C(3), (i: C, j: C) => i.value == j.value - 1) should === (C(2))
     }
-
 
     def `upsert elements`: Unit = {
       class MutableElem(val a: Int, var b: Int) {
@@ -40,7 +38,7 @@ class ExtHashSetTest extends RefSpec with Matchers {
       }
 
       val elem = new MutableElem(1, 0)
-      val set = mutable.ExtHashSet(elem)
+      val set = ExtHashSet(elem)
 
       val mutation = new MutableElem(1, 1)
       mutation should ===(elem)
@@ -53,11 +51,14 @@ class ExtHashSetTest extends RefSpec with Matchers {
     }
 
     def `iterate over hashCodes` {
-      set.hashCodeIterator(-228876066).toList should have size (0)
-      outerEdge.hashCode should be(innerEdge.hashCode)
-      val elems = set.hashCodeIterator(outerEdge.hashCode).toList
+      case class C(value: Int) {
+        override def hashCode(): Int = value
+      }
+      val set = ExtHashSet(C(1), C(2))
+      set.hashCodeIterator(3).toList should have size (0)
+      val elems = set.hashCodeIterator(1).toList
       elems should have size (1)
-      elems.head should be(outerEdge)
+      elems.head should be (C(1))
     }
 
     def `iterate over duplicate hashCodes` {

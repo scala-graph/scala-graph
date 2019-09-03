@@ -16,11 +16,8 @@ import Arbitrary.arbitrary
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 import org.scalatest.prop.PropertyChecks
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 import scalax.collection.visualization.Visualizer
 
-@RunWith(classOf[JUnitRunner])
 class TTraversalRootTest
     extends Suites(
       new TTraversal[immutable.Graph](immutable.Graph),
@@ -31,7 +28,7 @@ class TTraversalRootTest
   *	by the Graph factory and passed to the constructor. For instance,
   *	this allows the same tests to be run for mutable and immutable Graphs.
   */
-final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G])
     extends RefSpec
     with Matchers
@@ -257,7 +254,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
 
         val path = n(from) shortestPathTo n(to)
         path shouldBe defined
-        path.get.nodes.to[Stream]
+        path.get.nodes.to(Stream)
       }
       shortestPathNodes(2, 5) should contain theSameElementsInOrderAs Array(2, 3, 4, 5)
       shortestPathNodes(4, 5) should contain theSameElementsInOrderAs Array(4, 5)

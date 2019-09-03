@@ -13,15 +13,16 @@ final class EqSet[K <: AnyRef](map: EqHashMap[K, _]) extends Set[K] {
   def iterator         = map.keysIterator
 
   /** $ON unless `elem` is already contained.*/
-  def +(elem: K) = if (map contains elem) this
-  else {
-    val newMap = map.clone
-    newMap.asInstanceOf[EqHashMap[K, Any]] put (elem, true)
-    new EqSet(newMap)
-  }
+  def incl(elem: K) =
+    if (map contains elem) this
+    else {
+      val newMap = map.clone
+      newMap.asInstanceOf[EqHashMap[K, Any]] put (elem, true)
+      new EqSet(newMap)
+    }
 
   /** $ON unless `elem` is not contained.*/
-  def -(elem: K) =
+  def excl(elem: K) =
     if (map contains elem) {
       val newMap = map.clone
       newMap -= elem

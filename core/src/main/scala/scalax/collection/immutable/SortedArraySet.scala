@@ -1,21 +1,25 @@
 package scalax.collection.immutable
 
-import scala.collection.{AbstractIterator, SortedSetLike}
-import scala.collection.immutable.SortedSet
-import scala.collection.generic.{CanBuildFrom, SortedSetFactory}
-import compat.Platform.arraycopy
+import scala.collection.generic.DefaultSerializable
+import scala.collection.immutable.{AbstractSet, Set, SortedSet, SortedSetOps, StrictOptimizedSortedSetOps}
+import scala.collection.mutable.{ArrayBuffer, ReusableBuilder}
+import scala.collection.{SortedIterableFactory, SortedSetFactoryDefaults}
+import scala.compat.Platform.arraycopy
 
 @SerialVersionUID(1L)
 class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Array[A]])(
     implicit val ordering: Ordering[A])
-    extends SortedSet[A]
-    with SortedSetLike[A, SortedArraySet[A]]
-    with Serializable { self =>
+    extends AbstractSet[A]
+    with SortedSet[A]
+    with SortedSetOps[A, SortedArraySet, SortedArraySet[A]]
+    with StrictOptimizedSortedSetOps[A, SortedArraySet, SortedArraySet[A]]
+    with SortedSetFactoryDefaults[A, SortedArraySet, Set]
+    with DefaultSerializable { self =>
   java.util.Arrays.sort(array.asInstanceOf[Array[AnyRef]], ordering.asInstanceOf[Ordering[Object]])
 
-  override def empty = SortedArraySet.empty
+  override def sortedIterableFactory = SortedArraySet
 
-  override def +(elem: A): SortedArraySet[A] =
+  override def incl(elem: A): SortedArraySet[A] =
     if (contains(elem)) this
     else {
       val newSize = size + 1
@@ -25,7 +29,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
       new SortedArraySet(newArr)
     }
 
-  override def -(elem: A): SortedArraySet[A] = {
+  override def excl(elem: A): SortedArraySet[A] = {
     val idx = array.indexOf(elem)
     if (idx == -1) this
     else {
@@ -37,13 +41,13 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
     }
   }
 
-  def keysIteratorFrom(start: A): Iterator[A] =
+  def iteratorFrom(start: A): Iterator[A] =
     search(start, ordering.lt) map iterator getOrElse Iterator.empty
 
   def contains(elem: A): Boolean = array.indexOf(elem) >= 0
 
   final protected def iterator(from: Int): Iterator[A] =
-    new AbstractIterator[A] {
+    new scala.collection.AbstractIterator[A] {
       private[this] var i = from
       def hasNext         = i < self.size
       def next            = { val elm = array(i); i += 1; elm }
@@ -83,9 +87,17 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
 
   override def size: Int = array.length
 }
-object SortedArraySet extends SortedSetFactory[SortedArraySet] {
-  implicit def canBuildFrom[A](implicit ordering: Ordering[A]): CanBuildFrom[Coll, A, SortedArraySet[A]] =
-    newCanBuildFrom[A]
+object SortedArraySet extends SortedIterableFactory[SortedArraySet] {
   override def empty[A](implicit ordering: Ordering[A]): SortedArraySet[A] =
-    new SortedArraySet[A](new Array[AnyRef](0).asInstanceOf[Array[A]])
+    new SortedArraySet[A]()
+
+  override def from[E](it: IterableOnce[E])(implicit ordering: Ordering[E]): SortedArraySet[E] =
+    newBuilder.addAll(it).result()
+
+  override def newBuilder[A](implicit ordering: Ordering[A]) = new ReusableBuilder[A, SortedArraySet[A]] {
+    val buffer = new ArrayBuffer[AnyRef]()
+    override def clear(): Unit = buffer.clear()
+    override def result() = new SortedArraySet(buffer.toArray.asInstanceOf[Array[A]])
+    override def addOne(elem: A) = { buffer.addOne(elem.asInstanceOf[AnyRef]); this }
+  }
 }

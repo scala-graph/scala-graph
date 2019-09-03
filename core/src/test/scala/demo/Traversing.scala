@@ -9,20 +9,16 @@ import scalax.collection.Graph
 import org.scalatest.refspec.RefSpec
 import org.scalatest.Matchers
 
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-traversing.html
   * Traversing Graphs]].
   */
-@RunWith(classOf[JUnitRunner])
 final class TraversingTest extends RefSpec with Matchers {
 
   import scalax.collection.edge.WUnDiEdge
   import scalax.collection.edge.Implicits._
 
   // format: off
-  private def validatePath[N, E[X] <: EdgeLikeIn[X]](p: Graph[N,E]#Path,
+  private def validatePath[N, E[+X] <: EdgeLikeIn[X]](p: Graph[N,E]#Path,
                                              sample: List[Param[N,E]]): Unit = {
     def toN(p: Param[N,E]): N = p match {
       case OuterNode(n) => n

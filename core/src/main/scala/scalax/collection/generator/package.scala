@@ -15,7 +15,8 @@ package object generator {
   /* for some reason Set(DiEdge) is not accepted by the compiler to be of type
    * Set[EdgeCompanionBase[DiEdge]] so we need this implicit conversion
    */
-  implicit def toEdgeCompanionSet[E[X] <: EdgeLikeIn[X], C <: EdgeCompanionBase[E]](
+  // TODO is this still needed?
+  implicit def toEdgeCompanionSet[E[+X] <: EdgeLikeIn[X], C <: EdgeCompanionBase[E]](
       set: Set[C]): Set[EdgeCompanionBase[E]] = set.asInstanceOf[Set[EdgeCompanionBase[E]]]
 
   type NodeDegreeRange = parameters.NodeDegreeRange

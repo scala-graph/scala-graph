@@ -11,19 +11,16 @@ import generator._, RandomGraph._
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 import org.scalatest.prop.PropertyChecks
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 
 import scalax.collection.visualization.Visualizer
 
-@RunWith(classOf[JUnitRunner])
 class TConnectivityRootTest
     extends Suites(
       new TConnectivity[immutable.Graph](immutable.Graph),
       new TConnectivity[mutable.Graph](mutable.Graph)
     )
 
-final class TConnectivity[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+final class TConnectivity[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G])
     extends RefSpec
     with Matchers

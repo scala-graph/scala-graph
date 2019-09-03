@@ -28,7 +28,7 @@ trait GroupIterator[A] extends Iterator[A] {
 
     /** Internal level-specific iterator. When referencing iterators take care to
       *  override with `val`. */
-    protected def iterator: Iterator[I]
+    protected def levelIterator: Iterator[I]
 
     /** Current element of `iterator` converted to `A`. This variable will be set
       *  by the predefined level-specific implementations of `hasNext` so the
@@ -66,10 +66,10 @@ trait GroupIterator[A] extends Iterator[A] {
     /** Cashed implementation of `hasNext` which also initializes the inner
       *  iterator bound to this outer iterator. */
     def hasNext: Boolean = optHasNext getOrElse {
-      val has = iterator.hasNext
+      val has = levelIterator.hasNext
       optHasNext = Some(has)
       if (has) {
-        _current = elmToCurrent(iterator.next)
+        _current = elmToCurrent(levelIterator.next)
         inner.init
         true
       } else false
@@ -96,10 +96,10 @@ trait GroupIterator[A] extends Iterator[A] {
       * bound to this inner iterator if `this` iterator has been exhausted. */
     def hasNext: Boolean = optHasNext getOrElse {
       while (outer.hasNext) {
-        val has = iterator.hasNext
+        val has = levelIterator.hasNext
         optHasNext = Some(has)
         if (has) {
-          _current = elmToCurrent(iterator.next)
+          _current = elmToCurrent(levelIterator.next)
           return true
         } else outer.next
       }
@@ -119,10 +119,10 @@ trait GroupIterator[A] extends Iterator[A] {
       *  b) initializing the inner iterator bound to this mid-level iterator. */
     override def hasNext: Boolean = optHasNext getOrElse {
       while (outer.hasNext) {
-        val has = iterator.hasNext
+        val has = levelIterator.hasNext
         optHasNext = Some(has)
         if (has) {
-          _current = elmToCurrent(iterator.next)
+          _current = elmToCurrent(levelIterator.next)
           inner.init
           return true
         } else outer.next

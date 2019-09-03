@@ -13,10 +13,6 @@ import mutable.{Graph => MGraph}
 import generic.GraphCompanion
 import edge.{LDiEdge, WDiEdge}
 
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
-@RunWith(classOf[JUnitRunner])
 class TRandomGraphTest extends RefSpec with Matchers {
 
   import RandomGraph._
@@ -28,7 +24,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
   /** Creates a `RandomGraph` generator that produces a graph
     *  with a constant order, constant `NodeDegreeRange` and a single edge type.
     */
-  def generator[N, E[X] <: EdgeLikeIn[X], G[X, Y[Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def generator[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       edgeCompanion: EdgeCompanionBase[E],
       gCompanion: GraphCompanion[G],
       connected: Boolean)(implicit edgeTag: ClassTag[E[N]], nodeTag: ClassTag[N], metrics: Metrics[N]) =

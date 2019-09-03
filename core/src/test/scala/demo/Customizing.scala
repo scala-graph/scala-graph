@@ -21,7 +21,7 @@ class CustomizingTest extends RefSpec with Matchers {
   object `demonstraiting how to` {
 
     def `enrich graphs`: Unit = {
-      implicit class ExtGraph[N, E[X] <: EdgeLikeIn[X]](protected val g: Graph[N, E]) {
+      implicit class ExtGraph[N, E[+X] <: EdgeLikeIn[X]](protected val g: Graph[N, E]) {
         def foo: String = "foo"
       }
       val g           = Graph(1 ~ 2)
@@ -29,7 +29,7 @@ class CustomizingTest extends RefSpec with Matchers {
     }
 
     def `enrich inner nodes`: Unit = {
-      implicit class ExtGraphNode[N, E[X] <: EdgeLikeIn[X]](node_ : Graph[N, E]#NodeT) {
+      implicit class ExtGraphNode[N, E[+X] <: EdgeLikeIn[X]](node_ : Graph[N, E]#NodeT) {
         protected type NodeT = graph.NodeT
         protected val graph       = node_.containingGraph
         protected val node: NodeT = node_.asInstanceOf[NodeT]
@@ -46,7 +46,7 @@ class CustomizingTest extends RefSpec with Matchers {
       }
       val (ham, ny) = (Airport("HAM"), Airport("JFK"))
 
-      class Flight[N](nodes: Product, val flightNo: String)
+      class Flight[+N](nodes: Product, val flightNo: String)
           extends DiEdge[N](nodes)
           with ExtendedKey[N]
           with EdgeCopy[Flight]

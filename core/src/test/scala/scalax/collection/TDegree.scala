@@ -8,22 +8,19 @@ import generic.GraphCoreCompanion
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 
 import scalax.collection.visualization.Visualizer
 
-@RunWith(classOf[JUnitRunner])
 class TDegreeRootTest
     extends Suites(new TDegree[immutable.Graph](immutable.Graph), new TDegree[mutable.Graph](mutable.Graph))
 
-class TDegree[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
+class TDegree[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers
     with Visualizer[CC] {
 
   val emptyG = factory.empty[Int, DiEdge]
-  abstract class TGraphDegree[N, E[X] <: EdgeLikeIn[X]](override val g: CC[N, E]) extends TGraph(g) {
+  abstract class TGraphDegree[N, E[+X] <: EdgeLikeIn[X]](override val g: CC[N, E]) extends TGraph(g) {
     def degree(outer: N)                  = node(outer) degree
     val nodeDegrees: List[(g.NodeT, Int)] = g.nodes.toList map (n => (n, n.degree))
     val degrees: List[Int]                = nodeDegrees map (_._2)

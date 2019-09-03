@@ -12,7 +12,7 @@ import immutable.AdjacencyListBase
   * @author Peter Empen
   */
 trait AdjacencyListGraph[
-    N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with AdjacencyListBase[N, E, This] {
   selfGraph: This[N, E] =>
@@ -72,27 +72,27 @@ trait AdjacencyListGraph[
 
   type NodeSetT <: NodeSet
   class NodeSet extends super[GraphLike].NodeSet with super.NodeSet {
-    @inline override def add(node: NodeT): Boolean               = coll add node
+    @inline override def add(node: NodeT): Boolean               = collection add node
     final protected[collection] def add(edge: EdgeT): Boolean    = fold(edge, (_: NodeT).add)
     final protected[collection] def upsert(edge: EdgeT): Boolean = fold(edge, (_: NodeT).upsert)
 
     private def fold(edge: EdgeT, op: NodeT => EdgeT => Boolean): Boolean =
       edge.foldLeft(false) {
         case (cum, n) =>
-          op(coll findElem n getOrElse { coll += n; n })(edge) || cum
+          op(collection findElem n getOrElse { collection += n; n })(edge) || cum
       }
 
     final protected[collection] def remove(edge: EdgeT): Boolean =
-      edge.nodes.toSet forall (n => (coll findElem n) exists (_ remove edge))
+      edge.nodes.toSet forall (n => (collection findElem n) exists (_ remove edge))
 
     @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
-    @inline final def +=(node: NodeT): this.type                       = { add(node); this }
+    @inline final def addOne(node: NodeT): this.type                   = { add(node); this }
 
     @inline final protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }
 
-    final protected def minus(node: NodeT): Unit = coll -= node
+    final protected def minus(node: NodeT): Unit = collection -= node
     final protected def minusEdges(node: NodeT): Unit =
-      edges --= node.edges.toList // toList is necessary to avoid failure of -=(node) like in TEdit.test_MinusEq_2
+      edges --= node.edges.toList // TODO toList is necessary to avoid failure of -=(node) like in TEdit.test_MinusEq_2
   }
   override def nodes: NodeSetT
 
