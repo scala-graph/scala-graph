@@ -1,7 +1,9 @@
 language: scala
 scala:
-   - 2.12.8
+   - 2.13.0
+#  - 2.12.8
 jdk:
   - oraclejdk8
 script:
-  - sbt test scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
+  - sbt test 
+#scalafmtCheck test:scalafmtCheck scalafmtSbtCheck

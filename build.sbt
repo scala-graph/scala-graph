@@ -10,7 +10,7 @@ lazy val all = project
       publishTo := None
     )
   )
-  .aggregate(core, constrained, dot, json)
+  .aggregate(core/*, constrained, dot, json*/)
 
 lazy val core = project
   .in(file("core"))
@@ -40,7 +40,7 @@ lazy val core = project
       }
     )
   )
-
+/*
 lazy val constrained = project
   .in(file("constrained"))
   .dependsOn(core % "compile->compile;test->test")
@@ -82,7 +82,7 @@ lazy val misc = project
       version := Version.misc
     )
   )
-
+*/
 ThisBuild / resolvers ++= Seq(
   "NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/",
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
@@ -91,15 +91,16 @@ ThisBuild / resolvers ++= Seq(
 ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
 
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
-  scalaVersion := Version.compiler_2_12,
-  crossScalaVersions := Seq(Version.compiler_2_12, Version.compiler_2_13),
+  scalaVersion := Version.compiler_2_13,
+  crossScalaVersions := Seq(/*Version.compiler_2_12, */Version.compiler_2_13),
   organization := "org.scala-graph",
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports",
     "-Yrangepos"
   ),
   Compile / scalacOptions in compile += "-Ywarn-unused:privates",
-  addCompilerPlugin(scalafixSemanticdb("4.2.0")),
+  //TODO disable this plugin for now
+  //addCompilerPlugin(scalafixSemanticdb("4.2.0")),
   Test / parallelExecution := false,
   Compile / doc / scalacOptions ++=
     Opts.doc.title(name.value) ++
