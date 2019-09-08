@@ -1,94 +1,130 @@
 import sbt._
 import Keys._
-import org.scalajs.sbtplugin.ScalaJSPlugin
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
-// SBT: project coreCrossJS, fastOptJS, publishSigned
+lazy val all = project
+  .in(file("."))
+  .dependsOn(coreJVM, coreJS, constrainedJVM, constrainedJS, dotJVM, dotJS, jsonJVM, jsonJS)
+  .aggregate(coreJVM, coreJS, constrainedJVM, constrainedJS, dotJVM, dotJS, jsonJVM, jsonJS)
+  .settings(
+    Seq(
+      name := "Graph for Scala",
+      version := Version.highest,
+      crossPaths := true,
+      publishTo := None
+    )
+  )
 
-lazy val all = Project(
-  id = "Graph-all",
-  base = file("."),
-  settings = Seq(
-    name := "Graph for Scala",
-    version := Version.highest,
-    publishTo := None
-  ),
-  aggregate = Seq(core, constrained, dot, json)
+lazy val coreJS = core.js
+lazy val coreJVM = core.jvm
+lazy val core = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CompatCrossType) // [Pure, Full, Dummy], default: CrossType.Full
+  .in(file("core"))
+  .settings(
+    defaultSettings ++ Seq(
+      name := "Graph Core",
+      version := Version.core,
+      crossPaths := true,
+      libraryDependencies ++= Seq(
+        "org.scalacheck" %% "scalacheck"   % "1.13.4" % "optional;provided",
+        "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all",
+      ),
+      dependencyOverrides ++= {
+        val release                        = "RELEASE90"
+        def netbeansModule(module: String) = "org.netbeans.modules" % module % release
+        def netbeansApi(module: String)    = "org.netbeans.api" % module % release
+        Seq(
+          netbeansModule("org-netbeans-core"),
+          netbeansModule("org-netbeans-core-startup-base"),
+          netbeansModule("org-netbeans-modules-masterfs"),
+          netbeansApi("org-openide-util-lookup"),
+          netbeansApi("org-openide-filesystems"),
+          netbeansApi("org-openide-util-ui"),
+          netbeansApi("org-openide-dialogs"),
+          netbeansApi("org-openide-nodes"),
+          netbeansApi("org-netbeans-api-annotations-common")
+        )
+      }
+    )
+  )
+
+lazy val constrainedJVM = constrained.jvm
+lazy val constrainedJS = constrained.js
+lazy val constrained = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure) // [Pure, Full, Dummy], default: CrossType.Full
+  .in(file("constrained"))
+  .dependsOn(core % "compile->compile;test->test")
+  .settings(
+    defaultSettings ++ Seq(
+      name := "Graph Constrained",
+      version := Version.constrained
+    )
+  )
+
+lazy val dotJVM = dot.jvm
+lazy val dotJS = dot.js
+lazy val dot = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CompatCrossType) // [Pure, Full, Dummy], default: CrossType.Full
+  .in(file("dot"))
+  .dependsOn(core)
+  .settings(
+    defaultSettings ++ Seq(name := "Graph DOT", version := Version.dot)
+  )
+
+lazy val jsonJVM = json.jvm
+lazy val jsonJS = json.js
+lazy val json = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure) // [Pure, Full, Dummy], default: CrossType.Full
+  .in(file("json"))
+  .dependsOn(core)
+  .settings(
+    defaultSettings ++ Seq(
+      name := "Graph JSON",
+      version := Version.json,
+      libraryDependencies += "net.liftweb" %% "lift-json" % "3.1.1"
+    )
+  )
+
+lazy val miscJVM = misc.jvm
+lazy val miscJS = misc.js
+lazy val misc = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure) // [Pure, Full, Dummy], default: CrossType.Full
+  .in(file("misc"))
+  .dependsOn(core)
+  .settings(
+    defaultSettings ++ Seq(
+      name := "Graph Miscellaneous",
+      version := Version.misc
+    )
+  )
+
+ThisBuild / resolvers ++= Seq(
+  "NetBeans" at "http://bits.netbeans.org/maven2/",
+  "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
 )
 
-lazy val coreCross = crossProject.crossType(CrossType.Pure).in(file("core"))
-  .settings(defaultCrossSettings:_*)
-  .jvmSettings(defaultSettings:_*)
-  .settings(
-    name      := "Graph Core",
-    version   := Version.core,
-    libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.13.4" % "optional;provided"
-  )
+ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
 
-lazy val core   = coreCross.jvm
-lazy val corejs = coreCross.js
-
-lazy val constrained = Project(
-  id = "Graph-constrained",
-  base = file("constrained"),
-  settings = defaultSettings ++ Seq(
-    name := "Graph Constrained",
-    version := Version.constrained
-  )
-) dependsOn (core % "compile->compile;test->test")
-
-lazy val dot = Project(
-  id = "Graph-dot",
-  base = file("dot"),
-  settings = defaultSettings ++ Seq(
-    name := "Graph DOT",
-    version := Version.dot
-  )
-) dependsOn core
-
-lazy val json = Project(
-  id = "Graph-json",
-  base = file("json"),
-  settings = defaultSettings ++ Seq(
-    name := "Graph JSON",
-    version := Version.json,
-    libraryDependencies += "net.liftweb" %% "lift-json" % "3.0.1"
-  )
-) dependsOn core
-
-lazy val misc = Project(
-  id = "Graph-misc",
-  base = file("misc"),
-  settings = defaultSettings ++ Seq(
-    name := "Graph Miscellaneous",
-    version := Version.misc
-  )
-) dependsOn core
-
-lazy val defaultCrossSettings = Defaults.coreDefaultSettings ++ Seq(
+lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion := Version.compiler_2_12,
-  crossScalaVersions  := Seq(scalaVersion.value, Version.compiler_2_11),
-  organization := "org.scala-graph"
-) ++ GraphSonatype.settings
-    
-lazy val defaultSettings = defaultCrossSettings ++ Seq(
-  parallelExecution in Test := false,
-  scalacOptions in (Compile, doc) ++=
+  crossScalaVersions := Seq(scalaVersion.value, Version.compiler_2_11),
+  organization := "org.scala-graph",
+  scalacOptions ++= Seq(
+    "-Ywarn-unused:imports",
+    "-Yrangepos"
+  ),
+  Compile / scalacOptions in compile += "-Ywarn-unused:privates",
+  addCompilerPlugin(scalafixSemanticdb),
+  Test / parallelExecution := false,
+  Compile / doc / scalacOptions ++=
     Opts.doc.title(name.value) ++
-    Opts.doc.version(version.value),
+      Opts.doc.version(version.value),
   // prevents sbteclipse from including java source directories
-  unmanagedSourceDirectories in Compile := (scalaSource in Compile) (Seq(_)).value,
-  unmanagedSourceDirectories in Test := (scalaSource in Test) (Seq(_)).value,
-  scalacOptions in(Compile, doc) ++= List("-diagrams", "-implicits"),
-  scalacOptions in(Compile, doc) ++= (baseDirectory map { d =>
-    Seq("-doc-root-content", d / "rootdoc.txt" getPath)
+  Compile / doc / scalacOptions ++= List("-diagrams", "-implicits"),
+  Compile / doc / scalacOptions ++= (baseDirectory map { d =>
+    Seq("-doc-root-content", (d / "rootdoc.txt").getPath)
   }).value,
   autoAPIMappings := true,
-  testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
-  libraryDependencies ++= Seq(
-    "junit" % "junit" % "4.12" % "test",
-    "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-    "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test"
-  )
-)
-
+  Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Test"))),
+  libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % "test"
+) ++ GraphSonatype.settings
