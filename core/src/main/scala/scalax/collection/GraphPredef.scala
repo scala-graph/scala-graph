@@ -2,7 +2,7 @@ package scalax.collection
 
 import language.{higherKinds, implicitConversions}
 
-import scala.collection.{AbstractIterable, AbstractIterator}
+import scala.collection.{AbstractIterable, AbstractIterator, SeqFacade}
 import GraphEdge.{DiEdgeLike, DiHyperEdgeLike, EdgeCopy, EdgeLike}
 
 /** This object serves as a container for several `Graph`-related definitions like
@@ -84,8 +84,8 @@ object GraphPredef {
       }
     }
 
-  implicit def nodeSetToSeq[N, E[+X] <: EdgeLikeIn[X]](nodes: Graph[N, E]#NodeSetT): Seq[OutParam[N, E]] = ??? //new SeqFacade(nodes)
-  implicit def edgeSetToSeq[N, E[+X] <: EdgeLikeIn[X]](edges: Graph[N, E]#EdgeSetT): Seq[OutParam[N, E]] = ??? //new SeqFacade(edges)
+  implicit def nodeSetToSeq[N, E[+X] <: EdgeLikeIn[X]](nodes: Graph[N, E]#NodeSetT): Seq[OutParam[N, E]] = new SeqFacade(nodes)
+  implicit def edgeSetToSeq[N, E[+X] <: EdgeLikeIn[X]](edges: Graph[N, E]#EdgeSetT): Seq[OutParam[N, E]] = new SeqFacade(edges)
 
   implicit def edgeSetToOuter[N, E[+X] <: EdgeLikeIn[X]](edges: Graph[N, E]#EdgeSetT): Iterable[E[N]] =
     new AbstractIterable[E[N]] {
@@ -212,8 +212,7 @@ object GraphPredef {
 
   implicit class TraversableEnrichments[N, T[X] <: Traversable[X]](val t: T[N]) extends AnyVal {
     def toOuterNodes[E[+X] <: EdgeLike[X]]: Seq[InParam[N, E]] =
-      //t.map(toOuterNode[N, E])(collection.breakOut)
-      ??? //t.view.map(toOuterNode[N, E]).to(Seq)
+      t.view.map(toOuterNode[N, E]).to(Seq)
   }
 
   private def toOuterNode[N, E[+X] <: EdgeLike[X]](node: N): InParam[N, E] =
