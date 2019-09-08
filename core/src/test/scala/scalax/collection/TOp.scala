@@ -26,13 +26,11 @@ class TOp[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]]
     given(g union h) { _ should be(expected) }
     given(g ++ h) { _ should be(expected) }
   }
-  /* TODO missing parameter type for expanded function
   def `difference ` {
     val expected = factory(1 ~ 2)
     given(g diff h) { _ should be(expected) }
     given(g -- h) { _ should be(expected) }
   }
-  */
   def `intersection ` {
     val expected = factory(3 ~ 5, 4)
     given(g intersect h) { _ should be(expected) }
