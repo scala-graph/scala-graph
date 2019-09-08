@@ -1,6 +1,6 @@
 package scalax
 
-import scala.collection.ExtSetMethods
+import scala.collection.{AbstractIterable, ExtSetMethods}
 
 /** Contains the base traits and objects needed to use '''Graph for Scala'''.
   *
@@ -24,6 +24,10 @@ package object collection {
 
   protected[scalax] type MSet[A] = scala.collection.mutable.Set[A]
   @inline final protected[scalax] def MSet = scala.collection.mutable.Set
+
+  @inline final protected[scalax] def mkIterable[A](it: => Iterator[A]): Iterable[A] = new AbstractIterable[A] {
+    override def iterator = it
+  }
 
   /** Adds chaining methods `tap` and `pipe` to `Any`. Back ported from Scala 2.13.
     */
