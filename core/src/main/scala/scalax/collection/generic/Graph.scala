@@ -98,7 +98,7 @@ trait GraphCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
   def newBuilder[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
                                            config: Config): Builder[Param[N, E], CC[N, E]] =
     new GraphBuilder[N, E, CC](this)
-  /* TODO build from
+  /* TODO build from... still needed?
   class GraphCanBuildFrom[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config)
       extends CanBuildFrom[Coll, Param[N, E], CC[N, E]] {
     def apply(from: Coll) = newBuilder[N, E]

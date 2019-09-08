@@ -529,8 +529,8 @@ object Graph extends GraphCoreCompanion[Graph] {
       implicit edgeT: ClassTag[E[N]],
       config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(edgeT, config)
-/*
-  // TODO build from
+  /*
+  // TODO build from... still needed?
   implicit def cbfUnDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
     new GraphCanBuildFrom[N, E]()(edgeT, config)
       .asInstanceOf[GraphCanBuildFrom[N, E] with CanBuildFrom[Graph[_, UnDiEdge], Param[N, E], Graph[N, E]]]
@@ -538,6 +538,6 @@ object Graph extends GraphCoreCompanion[Graph] {
   implicit def cbfDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
     new GraphCanBuildFrom[N, E]()(edgeT, config)
       .asInstanceOf[GraphCanBuildFrom[N, E] with CanBuildFrom[Graph[_, DiEdge], Param[N, E], Graph[N, E]]]
- */
+  */
 }
 
