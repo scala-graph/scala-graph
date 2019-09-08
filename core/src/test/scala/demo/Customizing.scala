@@ -9,13 +9,9 @@ import scalax.collection.Graph
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
 
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-customizing.html
   *  Customizing Graphs]].
   */
-@RunWith(classOf[JUnitRunner])
 class CustomizingTest extends RefSpec with Matchers {
 
   object `demonstraiting how to` {
