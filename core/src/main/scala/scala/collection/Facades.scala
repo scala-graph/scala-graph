@@ -8,7 +8,7 @@ package scala.collection
   *
   * @param i the underlying `Iterable`.
   */
-final class SeqFacade[A](i: Iterable[A]) extends Seq[A] {
+final class SeqFacade[+A](i: Iterable[A]) extends immutable.Seq[A] {
   def iterator: Iterator[A] = i.iterator
   def apply(idx: Int): A = {
     val it = iterator
