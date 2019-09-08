@@ -8,6 +8,7 @@ import scalax.collection.GraphEdge._
 
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
+
 class TExtByImplicitTest extends RefSpec with Matchers {
   object `graphs may be enriched` {
     def `at graph level for any edge type` {

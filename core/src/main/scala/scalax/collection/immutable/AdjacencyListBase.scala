@@ -260,30 +260,7 @@ trait AdjacencyListBase[
     }
   }
 
-  def edgeIterator: Iterator[EdgeT] = ??? // nodes.iterator.flatMap(node => node.edges.iterator.filter(...why?))
-  /*new GroupIterator[EdgeT] {
-    object Outer extends OutermostIterator[NodeT] {
-      protected type I = NodeT
-      protected val iterator                 = nodes.iterator
-      protected def elmToCurrent(elm: NodeT) = elm
-
-      protected type InnerElm = EdgeT
-      protected lazy val inner = Inner
-    }
-    object Inner extends InnermostIterator[EdgeT] {
-      protected type I = EdgeT
-      protected var iterator: Iterator[I] = _
-      protected def onOuterChange(newOuter: OuterElm) {
-        iterator = newOuter.edges.filter(_.edge._1 == newOuter).iterator
-      }
-      protected def elmToCurrent(elm: EdgeT) = elm
-
-      protected type OuterElm = NodeT
-      protected lazy val outer = Outer
-    }
-    def hasNext = Inner.hasNext
-    def next    = Inner.next
-  }*/
+  def edgeIterator: Iterator[EdgeT] = nodes.iterator.flatMap(node => node.edges.iterator.filter(_.edge._1 == node))
 
   final protected def serializeTo(out: ObjectOutputStream): Unit = {
     out.defaultWriteObject()
