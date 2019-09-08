@@ -52,6 +52,16 @@ trait GraphCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
     * @return  A new graph instance containing the nodes and edges derived from `elems`.
     */
   def apply[N, E[+X] <: EdgeLikeIn[X]](elems: Param[N, E]*)(implicit edgeT: ClassTag[E[N]], config: Config): CC[N, E] =
+    from(elems)
+
+  /** Creates a `Graph` with a node set built from all nodes in `elems` including
+   * edge ends and with an edge set containing all edges in `elems`.
+   * $DUPLEXCL
+   *
+   * @param   elems sequence of nodes and/or edges in an arbitrary order
+   * @return  A new graph instance containing the nodes and edges derived from `elems`.
+   */
+  def from[N, E[+X] <: EdgeLikeIn[X]](elems: IterableOnce[Param[N, E]])(implicit edgeT: ClassTag[E[N]], config: Config): CC[N, E] =
     (newBuilder[N, E] ++= elems).result
 
   /** Produces a graph with a node set containing all `nodes` and edge ends in `edges`

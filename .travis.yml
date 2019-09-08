@@ -7,3 +7,6 @@ jdk:
 script:
   - sbt test 
 #scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
+cache:
+  directories:
+    - $HOME/.m2
