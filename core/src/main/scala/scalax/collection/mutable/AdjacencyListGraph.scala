@@ -92,7 +92,12 @@ trait AdjacencyListGraph[
 
     final protected def minus(node: NodeT): Unit = collection -= node
     final protected def minusEdges(node: NodeT): Unit =
-      edges --= node.edges.toList // TODO toList is necessary to avoid failure of -=(node) like in TEdit.test_MinusEq_2
+      edges --= node.edges.toList // toList is necessary to avoid failure of -=(node) like in TEdit.test_MinusEq_2
+
+    override def clear(): Unit = {
+      for (elem <- this.toList)
+        this -= elem
+    }
   }
   override def nodes: NodeSetT
 
@@ -138,7 +143,7 @@ trait AdjacencyListGraph[
   }
   override def edges: EdgeSetT
 
-  @inline final def clear: Unit                          = nodes.clear
+  @inline final def clear(): Unit                        = { nodes.clear() }
   @inline final def add(node: N): Boolean                = nodes add Node(node)
   @inline final def add(edge: E[N]): Boolean             = edges add Edge(edge)
   @inline final protected def +=#(edge: E[N]): this.type = { add(edge); this }

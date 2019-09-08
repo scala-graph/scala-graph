@@ -89,7 +89,6 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
     @inline final override def subtractOne(node: NodeT): this.type = { remove(node); this }
     @inline final def -?=(node: NodeT): this.type = { removeGently(node); this }
 
-    override def clear(): Unit = ???
     override def remove(node: NodeT): Boolean = subtract(node, rippleDelete = true, minus, minusEdges)
     def removeGently(node: NodeT): Boolean    = subtract(node, rippleDelete = false, minus, minusEdges)
 
