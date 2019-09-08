@@ -9,4 +9,4 @@ script:
 #scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
 cache:
   directories:
-    - $HOME/.m2
+    - $HOME/.ivy2/cache

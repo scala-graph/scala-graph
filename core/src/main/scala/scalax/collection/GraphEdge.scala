@@ -4,6 +4,7 @@ import language.higherKinds
 import scala.annotation.{switch, tailrec}
 import scala.collection.AbstractIterator
 import GraphPredef.OuterEdge
+import edge.LBase.LEdge
 
 /** Container for basic edge types to be used in the context of `Graph`.
   * You will usually simply import all its members along with the members of Param:
@@ -179,7 +180,7 @@ object GraphEdge {
       throw new UnsupportedOperationException("Call of label for a non-labeled edge.")
 
     /** `true` if this edge is labeled. See also `label`. */
-    def isLabeled = ??? // this.isInstanceOf[edge.LBase.LEdge[N]]
+    def isLabeled = this.isInstanceOf[LEdge[N]]
 
     /** Same as `isAt`. */
     @inline final def contains[M >: N](node: M): Boolean = isAt(node)
@@ -203,22 +204,18 @@ object GraphEdge {
     def hasTarget(pred: N => Boolean): Boolean
 
     /** Applies `f` to all source ends of this edge without new memory allocation. */
-    def withSources[U](f: N => U): Unit
+    @deprecated("use sources.foreach instead")
+    final def withSources[U](f: N => U): Unit = sources.foreach(f)
 
     /** All source ends of this edge. */
-    def sources: Iterable[N] = new Iterable[N] {
-      override def foreach[U](f: N => U): Unit = withSources(f)
-      override def iterator = ???
-    }
+    def sources: Iterable[N]
 
     /** Applies `f` to the target ends of this edge without new memory allocation. */
-    def withTargets[U](f: N => U): Unit
+    @deprecated("use targets.foreach instead")
+    final def withTargets[U](f: N => U): Unit = targets.foreach(f)
 
     /** All target ends of this edge. */
-    def targets: Iterable[N] = new Iterable[N] {
-      override def foreach[U](f: N => U): Unit = withTargets(f)
-      override def iterator = ???
-    }
+    def targets: Iterable[N]
 
     /** `true` if<br />
       *  a) both `n1` and `n2` are at this edge for an undirected edge<br />
@@ -310,7 +307,7 @@ object GraphEdge {
         case 1 => (node_1, node_2, nodes(0))
         case 2 => (node_1, node_2, nodes(0), nodes(1))
         case 3 => (node_1, node_2, nodes(0), nodes(1), nodes(2))
-        case _ => ??? //new NodeProduct(Array(node_1, node_2, nodes???))
+        case _ => new NodeProduct((node_1 +: node_2 +: nodes).toArray[Any])
       }
     final def apply[N](nodes: Iterable[N]): Product = nodes match {
       case n1 :: n2 :: rest =>
@@ -492,8 +489,8 @@ object GraphEdge {
     override def hasTarget[M >: N](node: M)    = targets exists (_ == node)
     override def hasTarget(pred: N => Boolean) = targets exists pred
 
-    override def withSources[U](f: N => U) = f(this._1)
-    override def withTargets[U](f: N => U) = (iterator drop 1) foreach f
+    override def sources = Iterable.single(from)
+    override def targets = mkIterable(iterator.drop(1))
 
     override def matches[M >: N](n1: M, n2: M): Boolean =
       source == n1 && (targets exists (_ == n2))
@@ -511,8 +508,8 @@ object GraphEdge {
     final override def hasTarget[M >: N](node: M)    = this._2 == node
     final override def hasTarget(pred: N => Boolean) = pred(this._2)
 
-    final override def withTargets[U](f: N => U) = f(this._2)
-    final override def withSources[U](f: N => U) = f(this._1)
+    override def sources = Iterable.single(this._1)
+    override def targets = Iterable.single(this._2)
 
     override def matches[M >: N](n1: M, n2: M): Boolean = diBaseEquals(n1, n2)
     override def matches(p1: N => Boolean, p2: N => Boolean): Boolean =
@@ -614,12 +611,14 @@ object GraphEdge {
       if (this.isInstanceOf[OrderedEndpoints]) new HyperEdge[NN](newNodes) with OrderedEndpoints
       else new HyperEdge[NN](newNodes)
 
-    /** Iterator for the nodes (end-points) of this edge.
-      */
+    /** Iterator for the nodes (end-points) of this edge. */
     def iterator: Iterator[N] = nodes match {
-      case i: Iterable[N] => i.iterator
+      case i: Iterable[N] => i.iterator // TODO cannot happen? since List no longer is-a Product, this will either be a tuple or a NodeProduct
       case p: Product     => p.productIterator.asInstanceOf[Iterator[N]]
     }
+
+    override def sources = mkIterable(iterator)
+    override def targets = mkIterable(iterator)
 
     override def isAt[M >: N](node: M)    = iterator contains node
     override def isAt(pred: N => Boolean) = iterator exists pred
@@ -629,9 +628,6 @@ object GraphEdge {
 
     override def hasTarget[M >: N](node: M)    = isAt(node)
     override def hasTarget(pred: N => Boolean) = isAt(pred)
-
-    override def withSources[U](f: N => U) = iterator foreach f
-    override def withTargets[U](f: N => U) = withSources(f)
 
     final protected def matches(fList: List[N => Boolean]): Boolean = {
       val it = iterator
@@ -740,9 +736,6 @@ object GraphEdge {
 
     override def isAt[M >: N](node: M)    = this._1 == node || this._2 == node
     override def isAt(pred: N => Boolean) = pred(this._1) || pred(this._2)
-
-    override def withSources[U](f: N => U) = { f(this._1); f(this._2) }
-    override def withTargets[U](f: N => U) = withSources(f)
 
     override def matches[M >: N](n1: M, n2: M): Boolean = unDiBaseEquals(n1, n2)
     override def matches(p1: N => Boolean, p2: N => Boolean): Boolean =
