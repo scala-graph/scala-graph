@@ -328,8 +328,8 @@ trait GraphLike[N,
     case e: InnerEdgeParam[N, E, _, E] => this +# e.asEdgeT[N, E, ThisGraph](thisGraph).toOuter
   }
   override def concat(elems: IterableOnce[Param[N, E]]): This[N, E] = bulkOp(elems, isPlusPlus = true)
+  override def diff(that: AnySet[Param[N, E]]): This[N, E] = this -- that // TODO is this correct?
   override def --(elems: IterableOnce[Param[N, E]]): This[N, E] = bulkOp(elems, isPlusPlus = false)
-  override def diff(that: AnySet[Param[N, E]]): This[N, E] = ??? // TODO is this the same as --???
 
   /** Prepares and calls `plusPlus` or `minusMinus`. */
   final protected def bulkOp(elems: IterableOnce[Param[N, E]], isPlusPlus: Boolean): This[N, E] = {
