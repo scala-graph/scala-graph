@@ -56,7 +56,7 @@ trait GraphLike[N,
   implicit def config: graphCompanion.Config with Config
 
   override def empty = graphCompanion.empty
-  override protected def fromSpecific(coll: IterableOnce[Param[N, E]]) = ??? // graphCompanion.from(...toOuterNodes, ...toOuterEdges)
+  override protected def fromSpecific(coll: IterableOnce[Param[N, E]]): This[N, E] = graphCompanion.from(coll)
   override protected def newSpecificBuilder = graphCompanion.newBuilder
 
   override def stringPrefix: String = "Graph"
