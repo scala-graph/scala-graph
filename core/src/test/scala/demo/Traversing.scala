@@ -9,18 +9,15 @@ import scalax.collection.Graph
 import org.scalatest.refspec.RefSpec
 import org.scalatest.Matchers
 
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-traversing.html
- *  Traversing Graphs]]. 
- */
-@RunWith(classOf[JUnitRunner])
+  * Traversing Graphs]].
+  */
 final class TraversingTest extends RefSpec with Matchers {
 
-  import scalax.collection.edge.{WDiEdge, WUnDiEdge}
+  import scalax.collection.edge.WUnDiEdge
   import scalax.collection.edge.Implicits._
 
+  // format: off
   private def validatePath[N, E[X] <: EdgeLikeIn[X]](p: Graph[N,E]#Path,
                                              sample: List[Param[N,E]]): Unit = {
     def toN(p: Param[N,E]): N = p match {
@@ -84,8 +81,12 @@ final class TraversingTest extends RefSpec with Matchers {
       val fc2 = (g get 4).findCycle
                                    fc2.get.sameElements(List(
                                    4, 4~>2, 2, 2~>3, 3, 3~>4, 4)) should be (true)
-      for (c1 <- fc1; c2 <- fc2) yield c1 == c2          should be (false)
-      for (c1 <- fc1; c2 <- fc2) yield c1 sameAs c2      should be (true)
+      for {
+c1 <- fc1
+ c2 <- fc2} yield c1 == c2          should be (false)
+      for {
+c1 <- fc1
+ c2 <- fc2} yield c1 sameAs c2      should be (true)
     }
     
     def `ordered traversal` {
@@ -140,7 +141,6 @@ final class TraversingTest extends RefSpec with Matchers {
       val g = Graph(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4, 4 ~> 2)
   
       import g.ExtendedNodeVisitor
-      import scalax.collection.GraphTraversal._
 
       type ValDepth = (Int,Int)
       var info = List.empty[ValDepth]
@@ -190,7 +190,7 @@ final class TraversingTest extends RefSpec with Matchers {
           Graph('f ~> 'g, 'g ~> 'f, 'g ~> 'h, 'h ~> 'j, 'j ~> 'i, 'i ~> 'g, 'i ~> 'f, 'f ~> 'i)
       )
       val connected = (sccExpected._1 union sccExpected._2) + 'e ~> 'f
-      val scc       = connected.strongComponentTraverser().map(_.toGraph)
+      val scc       = connected.strongComponentTraverser().map(_.to(Graph))
       scc.toSet should be (Set(sccExpected._1, sccExpected._2))
       
       val startAt = sccExpected._2.nodes.head
@@ -208,7 +208,7 @@ final class TraversingTest extends RefSpec with Matchers {
       builder.result               .toString should be ("Path(1, 1~>3 %5.0, 3)")
       
       builder.clear
-      builder add n(4)             should be (false)
+      builder add n(4)                should be (false)
     }
   }
 }

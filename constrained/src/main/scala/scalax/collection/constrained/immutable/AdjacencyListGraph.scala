@@ -1,150 +1,83 @@
 package scalax.collection.constrained
 package immutable
 
-import scala.language.{higherKinds, postfixOps}
-import scala.collection.generic.CanBuildFrom
+import scala.language.higherKinds
 
-import scalax.collection.GraphPredef.{EdgeLikeIn, OuterNode, OuterEdge, InParam}
+import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.immutable.{AdjacencyListGraph => SimpleAdjacencyListGraph}
-import scalax.collection.config.{GraphConfig, AdjacencyListArrayConfig}
-
-import generic.GraphConstrainedCompanion
+import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 import config.GenConstrainedConfig
-import PreCheckFollowUp._
 
-trait AdjacencyListGraph[N,
-                         E[X] <: EdgeLikeIn[X],
-                        +This[X, Y[X]<:EdgeLikeIn[X]]
-                              <: AdjacencyListGraph[X,Y,This] with Graph[X,Y]]
-  extends GraphLike[N,E,This]
-  with    SimpleAdjacencyListGraph[N,E,This]
-{ this: This[N,E] =>
-  protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig 
-  override protected def initialize(nodes: Traversable[N],
-                                    edges: Traversable[E[N]] ) {
+trait AdjacencyListGraph[
+    N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    extends SimpleAdjacencyListGraph[N, E, This]
+    with GraphLike[N, E, This] { this: This[N, E] =>
+
+  protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
+
+  final override protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]) {
     withoutChecks { super.initialize(nodes, edges) }
   }
-  /** generic constrained addition */
-  protected def checkedAdd[G >: This[N,E]]
-            ( contained: => Boolean,
-              preAdd:    => PreCheckResult,
-              copy:      => G,
-              nodes:     => Traversable[N],
-              edges:     => Traversable[E[N]] ): This[N,E] =
-  { if (checkSuspended)
-      copy.asInstanceOf[This[N,E]]
-    else {
-      var graph = this
-      if (! contained) {
-        var handle = false
-        val preCheckResult = preAdd
-        preCheckResult.followUp match { 
-          case Complete  => graph = copy.asInstanceOf[This[N,E]]
-          case PostCheck => graph = copy.asInstanceOf[This[N,E]]
-            if (! postAdd(graph, nodes, edges, preCheckResult)) {
-              handle = true
-              graph = this
-            }
-          case Abort     => handle = true
-        }
-        if (handle) onAdditionRefused(nodes, edges, this)
-      }
-      graph
-    }
-  }
-  override def + (node: N) = 
-    checkedAdd (contained = nodes contains Node(node),
-                preAdd    = preAdd(node),
-                copy      = copy(nodes.toOuter.toBuffer += node,
-                                 edges.toOuter),
-                nodes     = Set(node),
-                edges     = Set.empty[E[N]])
 
-  override protected def +#(edge: E[N]) =
-    checkedAdd (contained = edges contains Edge(edge),
-                preAdd    = preAdd(edge),
-                copy      = copy(nodes.toOuter,
-                                 edges.toOuter.toBuffer += edge),
-                nodes     = Set.empty[N],
-                edges     = Set(edge))
-  /** generic constrained subtraction of nodes */
-  protected def checkedSubtractNode[G >: This[N,E]]
-              ( node:   N,
-                forced: Boolean,
-                copy:   (N, NodeT) => G): This[N,E] =
-  { nodes find node map { innerNode =>
-      def subtract = copy(node, innerNode).asInstanceOf[This[N,E]]
-      if (checkSuspended)
-        copy(node, innerNode).asInstanceOf[This[N,E]]
-      else {
-        var graph = this
-        var handle = false
-        val preCheckResult = preSubtract(innerNode.asInstanceOf[self.NodeT], forced)
-        preCheckResult.followUp match { 
-          case Complete  => graph = subtract
-          case PostCheck => graph = subtract
-            if (! postSubtract(graph, Set(node), Set.empty[E[N]], preCheckResult)) {
-              handle = true
-              graph = this
-            }
-          case Abort     => handle = true
-        }
-        if (handle) onSubtractionRefused(Set(innerNode.asInstanceOf[Graph[N,E]#NodeT]),
-                                         Set.empty[self.EdgeT], graph)
-        graph
-      }
-    } getOrElse this
-  }
-  override def - (n: N) = checkedSubtractNode(
-    n, true,
-    (outeNode: N, innerNode: NodeT) =>
-      copy (nodes.toOuter.toBuffer  -= outeNode,
-            edges.toOuter.toBuffer --= (innerNode.edges map (_.toOuter))))
-  override def -? (n: N) = checkedSubtractNode(
-    n, false,
+  def copy_?(nodes: Traversable[N], edges: Traversable[E[N]]): Either[ConstraintViolation, This[N, E]]
+
+  final override def +(node: N): This[N, E] = +?(node) getOrElse this
+
+  final def +?(node: N): Either[ConstraintViolation, This[N, E]] =
+    checkedPlus(
+      contained = nodes contains Node(node),
+      preAdd = preAdd(node),
+      copy = copy(nodes.toOuter.toBuffer += node, edges.toOuter),
+      nodes = Set(node),
+      edges = Set.empty[E[N]])
+
+  final override protected def +#(e: E[N]): This[N, E] = +#?(e) getOrElse this
+
+  final protected def +#?(e: E[N]): Either[ConstraintViolation, This[N, E]] =
+    checkedPlus(
+      contained = edges contains Edge(e),
+      preAdd = preAdd(e),
+      copy = copy(nodes.toOuter, edges.toOuter.toBuffer += e),
+      nodes = Set.empty[N],
+      edges = Set(e))
+
+  final override def -(node: N): This[N, E] = -?(node) getOrElse this
+
+  final def -?(n: N): Either[ConstraintViolation, This[N, E]] = checkedMinusNode(
+    n,
+    forced = true,
+    (outerNode: N, innerNode: NodeT) =>
+      copy(nodes.toOuter.toBuffer -= outerNode, edges.toOuter.toBuffer --= (innerNode.edges map (_.toOuter))))
+
+  final override def minusIsolated(n: N): This[N, E] = minusIsolated_?(n) getOrElse this
+
+  final def minusIsolated_?(n: N): Either[ConstraintViolation, This[N, E]] = checkedMinusNode(
+    n,
+    forced = false,
     (outerNode: N, innerNode: NodeT) => {
-      var newNodes = nodes.toOuter.toBuffer
-      var newEdges = edges.toOuter.toBuffer
-      nodes.subtract(innerNode,
-                     false,
-                     innerNode => newNodes  -= outerNode,
-                     innerNode => newEdges --= (innerNode.edges map (_.toOuter)))
+      val newNodes = nodes.toOuter.toBuffer
+      val newEdges = edges.toOuter.toBuffer
+      nodes.subtract(
+        innerNode,
+        rippleDelete = false,
+        innerNode => newNodes -= outerNode,
+        innerNode => newEdges --= (innerNode.edges map (_.toOuter)))
       copy(newNodes, newEdges)
     }
   )
-  /** generic constrained subtraction of edges */
-  protected def checkedSubtractEdge[G >: This[N,E]]
-              ( edge:   E[N],
-                simple: Boolean,
-                copy:   (E[N], EdgeT) => G): This[N,E] =
-  { edges find edge map { innerEdge =>
-      def subtract = copy(edge, innerEdge).asInstanceOf[This[N,E]]
-      if (checkSuspended) subtract
-      else {
-        var graph = this
-        var handle = false
-        val preCheckResult = preSubtract(innerEdge.asInstanceOf[self.EdgeT], simple)
-        preCheckResult.followUp match { 
-          case Complete  => graph = subtract 
-          case PostCheck => graph = subtract
-            if (! postSubtract(graph, Set.empty[N], Set(edge), preCheckResult)) {
-              handle = true
-              graph = this
-            }
-          case Abort     => handle = true
-        }
-        if (handle) onSubtractionRefused(Set.empty[self.NodeT],
-                                          Set(innerEdge.asInstanceOf[self.EdgeT]), graph)
-        graph
-      }
-    } getOrElse this
-  }
-  override protected def -# (e: E[N]) = checkedSubtractEdge(
-    e, true, (outerEdge: E[N], innerEdge: EdgeT) =>
-                copy(nodes.toOuter, edges.toOuter.toBuffer -= outerEdge))
-  override protected def -!#(e: E[N]) = checkedSubtractEdge(
-    e, false,
+
+  final override protected def -#(e: E[N]): This[N, E] = -#?(e) getOrElse this
+
+  final protected def -#?(e: E[N]): Either[ConstraintViolation, This[N, E]] = checkedMinusEdge(
+    e,
+    simple = true,
+    (outerEdge: E[N], innerEdge: EdgeT) => copy(nodes.toOuter, edges.toOuter.toBuffer -= outerEdge))
+
+  final override protected def -!#(e: E[N]): This[N, E] = -!#?(e) getOrElse this
+
+  final protected def -!#?(e: E[N]): Either[ConstraintViolation, This[N, E]] = checkedMinusEdge(
+    e,
+    simple = false,
     (outerEdge: E[N], innerEdge: EdgeT) =>
-      copy (nodes.toOuter.toBuffer --= innerEdge.privateNodes map (n => n.value),
-            edges.toOuter.toBuffer -= e))
+      copy(nodes.toOuter.toBuffer --= innerEdge.privateNodes map (n => n.value), edges.toOuter.toBuffer -= e))
 }
