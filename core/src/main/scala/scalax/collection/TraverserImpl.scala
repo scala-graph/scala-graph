@@ -1,7 +1,7 @@
 package scalax.collection
 
 import scala.annotation.{switch, tailrec}
-import scala.collection.{FilterableSet, FilteredSet, WithFilter}
+import scala.collection.{FilterableSet, FilteredSet}
 import scala.collection.mutable.{ArrayBuffer, PriorityQueue, Queue, ArrayStack => Stack, Map => MMap}
 import scala.language.higherKinds
 import scalax.collection.GraphPredef.EdgeLikeIn
@@ -149,9 +149,9 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
       private def maxDepth =
         if (parameters.maxDepth > 0) parameters.maxDepth
         else java.lang.Integer.MAX_VALUE
-      /* TODO implement without FilterMonadic
+
       private[this] def sorted[A <: InnerElem with B, B <: InnerElem: reflect.ClassTag](
-          set: FilterMonadic[A, AnySet[A]],
+          set: AnySet[A],
           maxOrEst: Int, // maximum size of set or negative for an estimate
           ordering: Ordering[A]): AnySet[A] =
         set match {
@@ -187,7 +187,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
 
       private[this] def filtered(node: NodeT,
                                  nodeFilter: NodeFilter,
-                                 _edges: FilterMonadic[EdgeT, AnySet[EdgeT]], // already filtered if adequate
+                                 _edges: AnySet[EdgeT], // already filtered if adequate
                                  reverse: Boolean): Traversable[NodeT] = {
 
         val edges = {
@@ -223,7 +223,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
           else succ
         }
       }
-      */
+
       private[this] val withEdgeFiltering: Boolean =
         doEdgeFilter || doEdgeSort || isDefined(edgeVisitor) || maxWeight.isDefined
 
@@ -234,11 +234,11 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
       private[this] def filtered(nodes: AnySet[NodeT],
                                  maxNodes: Int,
                                  nodeFilter: NodeFilter,
-                                 reverse: Boolean): AnySet[NodeT] = ??? /*{
+                                 reverse: Boolean): AnySet[NodeT] = {
         val filtered = new FilteredSet(nodes, chooseFilter(nodeFilter))
         if (doNodeSort) sortedNodes(filtered, maxNodes, reverse)
         else filtered
-      }*/
+      }
 
       private[this] def edgeFilter(cumWeight: Double): EdgeFilter = maxWeight.fold(ifEmpty = subgraphEdges)(w => {
         def weightFilter: EdgeFilter = e => cumWeight + w.edgeWeight(e) <= w.value
