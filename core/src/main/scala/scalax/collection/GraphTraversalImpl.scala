@@ -279,10 +279,10 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
         withHandles(2) { handles =>
           implicit val visitedHandle: State.Handle = handles(0)
           for (node <- nodes if !node.visited && subgraphNodes(node)) {
-//            val res: Option[Cycle] = ??? //traverser.withRoot(node).Runner(noNode, visitor).dfsWGB(handles)
-//            if (res.isDefined)
-//              return cycle(res, subgraphEdges)
-            ???
+            val nodeTraverser: InnerElemTraverser = traverser.withRoot(node) // TODO not sure why this is needed
+            val res = nodeTraverser.Runner(noNode, visitor).dfsWGB(handles)
+            if (res.isDefined)
+              return cycle(res, subgraphEdges)
           }
         }
         None
@@ -584,9 +584,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
                                                                   enclosed: Array[Option[S]] = Array[Option[S]](None, None))
       extends Iterable[NodeT] {
 
-    // TODO replace foreach with iterator
-    //@inline def foreach[U](f: NodeT => U): Unit = source foreach (s => f(s.node))
-    override def iterator = ??? //source.map(_.node).iterator
+    override def iterator = source.map(_.node).iterator
 
     override def stringPrefix = "Nodes"
 
@@ -615,9 +613,12 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
     }
 
     private[GraphTraversalImpl] lazy val source: Iterable[S] = new AbstractIterable[S] {
-      override def iterator = ???
-      /* TODO replace foreach with iterator
-      def foreach[U](f: S => U): Unit = {
+      override def iterator = {
+        val buffer = ArrayBuffer[S]()
+        foreach(buffer += _)
+        buffer.iterator
+      }
+      override def foreach[U](f: S => U): Unit = {
         enclosed(0) foreach f
         var i    = upper
         val size = i
@@ -627,7 +628,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
         }
         enclosed(1) foreach f
         if (_size.isEmpty) _size = Some(size + enclosed.count(_.isDefined))
-      }*/
+      }
     }
   }
 

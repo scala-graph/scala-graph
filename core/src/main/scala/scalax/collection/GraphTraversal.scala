@@ -1043,12 +1043,16 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       with Iterable[A] {
     this: This =>
 
-    override def iterator = ???
-/*
-    def foreach[U](f: A => U): Unit =
+    override def iterator = {
+      val buffer = ArrayBuffer[A]()
+      foreach(buffer += _)
+      buffer.iterator
+    }
+
+    override def foreach[U](f: A => U): Unit =
       if (subgraphNodes(root))
         apply(noNode, f)
-*/
+
     /** Completes a traversal and creates a new connected graph populated with the
       *  elements visited.
       */
