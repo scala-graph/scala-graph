@@ -260,18 +260,23 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     def startNode: NodeT
     def endNode: NodeT
 
-    override def iterator: Iterator[InnerElem] = ??? // something like nodes.iterator.intersperse(edges.iterator)
-    /* TODO replace foreach with iterator
-    def foreach[U](f: InnerElem => U): Unit = {
-      f(nodes.head)
-      val edges = this.edges.toIterator
-      for (n <- nodes.tail;
-           e = edges.next) {
-        f(e)
-        f(n)
+    override def iterator: Iterator[InnerElem] = {
+      assert(this.nodes.size == this.edges.size + 1)
+      val nodes = this.nodes.iterator
+      val edges = this.edges.iterator
+      val total = this.nodes.size + this.edges.size
+      new Iterator[InnerElem] {
+        var index = 0
+        override def hasNext = index < total
+        override def next() = {
+          val elem = if (index % 2 == 0) nodes.next()
+                     else                edges.next()
+          index = index + 1
+          elem
+        }
       }
     }
-    */
+
     /** Returns whether the nodes and edges of this walk are valid with respect
       *  to this graph. $SANECHECK */
     def isValid: Boolean = {

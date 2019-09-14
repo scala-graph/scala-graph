@@ -269,8 +269,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
       }
     }
 
-    //def foreach[U](f: Component => U): Unit = components foreach f
-    override def iterator = ??? // components
+    override def iterator = components.iterator
 
     def findCycle[U](implicit visitor: InnerElem => U = Visitor.empty): Option[Cycle] =
       if (order == 0) None
@@ -329,20 +328,19 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
     final protected def newTraverser
       : (NodeT, Parameters, NodeFilter, EdgeFilter, ElemOrdering, Option[Weight]) => StrongComponentTraverser = copy
 
-    protected lazy val components: Iterable[Component] = ??? /*{
+    protected lazy val components: Iterable[Component] = {
       val traverser =
         InnerNodeTraverser(root, parameters withDirection Successors, subgraphNodes, subgraphEdges, ordering)
       withHandle() { implicit handle =>
         (for (node <- nodes if !node.visited && subgraphNodes(node))
-          // TODO value Runner is not a member of GraphTraversalImpl.this.InnerNodeTraverser
-          yield traverser.withRoot(node).Runner(noNode, empty).dfsTarjan(Some(handle))).flatten
+          yield {
+            val nodeTraverser: InnerNodeTraverser = traverser.withRoot(node)
+            nodeTraverser.Runner(noNode, Visitor.empty).dfsTarjan(Some(handle))
+          }).flatten
       }
     }
-    */
-    override def iterator = ??? // components
-    /* TODO replace foreach with iterator
-    def foreach[U](f: Component => U): Unit = components foreach f
-    */
+
+    override def iterator = components.iterator
   }
 
   def strongComponentTraverser(parameters: Parameters = Parameters(),
@@ -652,9 +650,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
       stack
     }
 
-    // TODO replace foreach with iterator
-    //@inline def foreach[U](f: T => U): Unit = s foreach f
-    override def iterator = ??? // s
+    override def iterator = s.iterator
   }
 
   /** Path based on the passed collection of nodes with lazy evaluation of edges.
