@@ -2,7 +2,7 @@ package scalax.collection
 
 import scala.annotation.{switch, tailrec}
 import scala.collection.{FilterableSet, FilteredSet}
-import scala.collection.mutable.{ArrayBuffer, PriorityQueue, Queue, ArrayStack => Stack, Map => MMap}
+import scala.collection.mutable.{ArrayBuffer, Buffer, PriorityQueue, Queue, ArrayStack => Stack, Map => MMap}
 import scala.language.higherKinds
 import scalax.collection.GraphPredef.EdgeLikeIn
 import immutable.SortedArraySet
@@ -63,7 +63,8 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
           includeInDegree = if (ignorePredecessors) !ignore(_) else anyNode,
           includeAnyway = if (ignorePredecessors) Some(root) else None
         )
-      Runner(StopCondition.None, Visitor.empty).topologicalSort(inDegrees.copy(_1 = ??? /*inDegrees._1 -- predecessors*/))
+      val WithoutPreds = inDegrees._1.iterator.filterNot(predecessors.contains).to(Buffer)
+      Runner(StopCondition.None, Visitor.empty).topologicalSort(inDegrees.copy(_1 = WithoutPreds))
     }
 
     final def shortestPathTo[T: Numeric, U](potentialSuccessor: NodeT,
@@ -202,11 +203,11 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
         val doEdgeVisitor  = isDefined(edgeVisitor)
         val estimatedNodes = estimatedNrOfNodes(node)
 
-        def withEdges(withNode: NodeT => Unit): Unit = ??? /*
+        def withEdges(withNode: NodeT => Unit): Unit =
           edges foreach { e =>
             addMethod(node, e, withNode)
             if (doEdgeVisitor) edgeVisitor(e)
-          }*/
+          }
 
         if (doEdgeSort) {
           /* The node set to be returned must reflect edge ordering.
@@ -246,22 +247,22 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
         else weightFilter
       })
 
-      private[this] def minWeight(n: NodeT, neighbor: NodeT, cumWeight: Double): Double = ??? /*
+      private[this] def minWeight(n: NodeT, neighbor: NodeT, cumWeight: Double): Double =
         maxWeight.fold[Double](ifEmpty = throw new MatchError("maxWeight is expected to be defined."))(
-          w => w.edgeWeight(directionEdges(n)(neighbor) withFilter edgeFilter(cumWeight) min w.ordering)
+          w => w.edgeWeight(directionEdges(n)(neighbor) withSetFilter edgeFilter(cumWeight) min w.ordering)
         )
-      */
-      /*
-      private[this] def filteredEdges(edges: AnySet[EdgeT], cumWeight: Double): FilterMonadic[EdgeT, AnySet[EdgeT]] =
-        if (doEdgeFilter) edges withFilter edgeFilter(cumWeight)
+
+      private[this] def filteredEdges(edges: AnySet[EdgeT], cumWeight: Double): AnySet[EdgeT] =
+        // TODO filter lazy, e.g. withSetFilter
+        if (doEdgeFilter) edges filter edgeFilter(cumWeight)
         else edges
-      */
+
       private[this] def filteredSuccessors(node: NodeT,
                                            nodeFilter: NodeFilter,
                                            cumWeight: Double,
                                            reverse: Boolean): Traversable[NodeT] =
         if (withEdgeFiltering)
-          ??? //filtered(node, nodeFilter, filteredEdges(node.outgoing, cumWeight), reverse)
+          filtered(node, nodeFilter, filteredEdges(node.outgoing, cumWeight), reverse)
         else {
           val succ = node.diSuccessors
           filtered(succ, succ.size, nodeFilter, reverse)
@@ -281,7 +282,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
                                           cumWeight: Double,
                                           reverse: Boolean): Traversable[NodeT] =
         if (withEdgeFiltering)
-          ??? //filtered(node, nodeFilter, filteredEdges(node.edges, cumWeight), reverse)
+          filtered(node, nodeFilter, filteredEdges(node.edges, cumWeight), reverse)
         else
           filtered(node.neighbors, -estimatedNrOfNodes(node), nodeFilter, reverse)
 

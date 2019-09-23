@@ -710,7 +710,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
 
     final def selectEdge(from: NodeT, to: NodeT): EdgeT =
       if (isCustomEdgeFilter(edgeFilter))
-        ??? //(from outgoingTo to withFilter edgeFilter) min weightOrdering
+        (from outgoingTo to).withSetFilter(edgeFilter) min weightOrdering
       else
         from outgoingTo to min weightOrdering
   }
