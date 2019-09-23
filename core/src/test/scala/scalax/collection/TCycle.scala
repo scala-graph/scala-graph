@@ -152,19 +152,19 @@ class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
         g.findCycleContaining(n(2)) should haveOneNodeSequenceOf(Seq(2, 3, 7, 4, 5, 6, 1, 2))
       }
     }
-    /* TODO withSubgraph node predicate type mismatch
+
     def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes` {
       given(cyclic_22) { g =>
         def n(outer: Int) = g get outer
 
-        n(1).withSubgraph(nodes = _ != 3) partOfCycle () should haveOneNodeSequenceOf(
+        n(1).withSubgraph(nodes = _ != 3).partOfCycle() should haveOneNodeSequenceOf(
           Seq(1, 5, 6, 1),
           Seq(1, 4, 5, 6, 1))
-        n(4).withSubgraph(nodes = _ != 3) partOfCycle () should haveOneNodeSequenceOf(Seq(4, 5, 6, 1, 4))
-        n(2).withSubgraph(nodes = _ != 3) partOfCycle () should be(None)
+        n(4).withSubgraph(nodes = _ != 3).partOfCycle() should haveOneNodeSequenceOf(Seq(4, 5, 6, 1, 4))
+        n(2).withSubgraph(nodes = _ != 3).partOfCycle() should be(None)
       }
     }
-    */
+
     def `the cycle returned by 'findCycle' contains the expected edges` {
       given(acyclic_1) { _.findCycle should be(None) }
       given(cyclic_1)  { _.findCycle.get.edges should contain(cyclicEdge_1) }
