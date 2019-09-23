@@ -275,24 +275,13 @@ trait AdjacencyListBase[
 
   protected def initializeFrom(in: ObjectInputStream, nodes: NodeSetT, edges: EdgeSetT): Unit = {
     in.defaultReadObject()
-  /*
-    def traversable[A]: Traversable[A] =
-      new AbstractTraversable[A] {
-        var i = in.readInt
-        override def foreach[U](f: A => U): Unit =
-          while (i > 0) {
-            f(in.readObject.asInstanceOf[A])
-            i -= 1
-          }
-      }
-  */
-    // TODO or IterableOnce?
-    def iterable[A]: Iterable[A] = ??? /*new AbstractIterable[A] {
+
+    def iterable[A] = new AbstractIterable[A] {
       override def iterator = {
         val count = in.readInt()
         (0 until count).map(_ => in.readObject.asInstanceOf[A]).iterator
       }
-    }*/
+    }
 
     edges initialize (iterable[E[N]])
     nodes initialize (iterable[N], null)
