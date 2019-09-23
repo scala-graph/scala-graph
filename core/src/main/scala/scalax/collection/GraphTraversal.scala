@@ -154,14 +154,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       override protected val toA: NodeT => A)(implicit override val layerOrdering: NodeOrdering = NodeOrdering.None)
       extends AbstractTopologicalOrder[A, A] {
 
-    override def iterator = ??? //layers.flatMap(layer => ordered(layer.nodes)).map(toA)
-    /* TODO replace foreach with iterator
-    def foreach[U](f: A => U): Unit =
-      for {
-        layer <- layers
-        node  <- ordered(layer.nodes)
-      } f(toA(node))
-    */
+    override def iterator = layers.flatMap(layer => ordered(layer.nodes)).map(toA).iterator
+
     def withLayerOrdering(newOrdering: NodeOrdering): TopologicalOrder[A] =
       new TopologicalOrder(layers, toA)(newOrdering)
 
@@ -183,11 +177,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       override protected val toA: NodeT => A)(implicit override val layerOrdering: NodeOrdering = NodeOrdering.None)
       extends AbstractTopologicalOrder[A, (Int, Iterable[A])] {
 
-    override def iterator = ??? //layers.map(layer => layer.index -> toIterable2(layer.nodes)).iterator
-    /* TODO replace foreach with iterator
-    def foreach[U](f: Tuple2[Int, Iterable[A]] => U): Unit =
-      for (layer <- layers) f(layer.index -> toIterable(layer.nodes))
-    */
+    override def iterator = layers.map(layer => layer.index -> toIterable2(layer.nodes)).iterator
+
     def withLayerOrdering(newOrdering: NodeOrdering): LayeredTopologicalOrder[A] =
       new LayeredTopologicalOrder(layers, toA)(newOrdering)
 

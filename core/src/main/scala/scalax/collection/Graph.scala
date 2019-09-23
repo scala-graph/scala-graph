@@ -209,7 +209,7 @@ trait GraphLike[N,
   type EdgeT <: InnerEdgeParam[N, E, NodeT, E] with InnerEdge with Serializable
   class EdgeBase(override val edge: E[NodeT]) extends InnerEdgeParam[N, E, NodeT, E] with InnerEdge {
     this: EdgeT =>
-    override def iterator: Iterator[NodeT] = edge.iterator.asInstanceOf[Iterator[NodeT]]
+    override def iterator: Iterator[NodeT] = edge.iterator
     override def stringPrefix              = super.stringPrefix
   }
   type EdgeSetT <: EdgeSet
