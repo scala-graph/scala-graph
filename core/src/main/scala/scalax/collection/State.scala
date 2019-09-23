@@ -177,7 +177,7 @@ object State {
   def emptyHandle = new Handle(singleWord, 0L)
   def initFlagSet = new ExtBitSet
 
-  final protected class FlagStore(var flags: FlagWord = 0L, var flagsExt: ExtBitSet = initFlagSet) extends Serializable {
+  final protected class FlagStore(var flags: FlagWord = 0L, val flagsExt: ExtBitSet = initFlagSet) extends Serializable {
 
     /** Whether `store` is set with respect to `handle`. */
     def apply(handle: Handle): Boolean =

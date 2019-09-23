@@ -90,6 +90,8 @@ final protected[collection] class ExtBitSet(words: Array[Long]) extends BitSet(w
     Array.copy(elems, 0, newElems, 0, nwords)
     elems = newElems
   }
+
+  override protected[this] def writeReplace() = this
 }
 object ExtBitSet {
   val incrWords = 8
