@@ -54,8 +54,7 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
   override def size: Int = contentSize
 
   /** Performs the inverse operation of improveHash. In this case, it happens to be identical to improveHash*/
-  @`inline` private[collection] def unimproveHash(improvedHash: Int): Int =
-    improveHash(improvedHash)
+  @`inline` private[collection] def unimproveHash(improvedHash: Int): Int = improveHash(improvedHash)
 
   /** Computes the improved hash of an original (`any.##`) hash. */
   private[this] def improveHash(originalHash: Int): Int = {
@@ -76,13 +75,13 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
     val hash = computeHash(elem)
     table(index(hash)) match {
       case null => null
-      case nd   => nd.findNode(elem, hash)
+      case nd => nd.findNode(elem, hash)
     }
   }
 
   override def sizeHint(size: Int): Unit = {
     val target = tableSizeFor(((size + 1).toDouble / loadFactor).toInt)
-    if (target > table.length) growTable(target)
+    if(target > table.length) growTable(target)
   }
 
   override def add(elem: A): Boolean = {
@@ -136,7 +135,7 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
     * @param elem element to add
     * @param hash the **improved** hash of `elem` (see computeHash)
     */
-  private[this] def addElem(elem: A, hash: Int): Boolean = {
+  private[this] def addElem(elem: A, hash: Int) : Boolean = {
     val idx = index(hash)
     table(idx) match {
       case null =>
@@ -144,12 +143,12 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
       case old =>
         var prev: Node[A] = null
         var n = old
-        while ((n ne null) && n.hash <= hash) {
-          if (n.hash == hash && elem == n.key) return false
+        while((n ne null) && n.hash <= hash) {
+          if(n.hash == hash && elem == n.key) return false
           prev = n
           n = n.next
         }
-        if (prev eq null)
+        if(prev eq null)
           table(idx) = new Node(elem, hash, old)
         else
           prev.next = new Node(elem, hash, prev.next)
@@ -161,7 +160,7 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
   private[this] def remove(elem: A, hash: Int): Boolean = {
     val idx = index(hash)
     table(idx) match {
-      case null                                    => false
+      case null => false
       case nd if nd.hash == hash && nd.key == elem =>
         // first element matches
         table(idx) = nd.next
@@ -171,8 +170,8 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
         // find an element that matches
         var prev = nd
         var next = nd.next
-        while ((next ne null) && next.hash <= hash) {
-          if (next.hash == hash && next.key == elem) {
+        while((next ne null) && next.hash <= hash) {
+          if(next.hash == hash && next.key == elem) {
             prev.next = next.next
             contentSize -= 1
             return true
@@ -184,7 +183,7 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
     }
   }
 
-  override def remove(elem: A): Boolean = remove(elem, computeHash(elem))
+  override def remove(elem: A) : Boolean = remove(elem, computeHash(elem))
 
   private[this] abstract class HashSetIterator[B] extends AbstractIterator[B] {
     private[this] var i = 0
@@ -194,19 +193,19 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
     protected[this] def extract(nd: Node[A]): B
 
     def hasNext: Boolean = {
-      if (node ne null) true
+      if(node ne null) true
       else {
-        while (i < len) {
+        while(i < len) {
           val n = table(i)
           i += 1
-          if (n ne null) { node = n; return true }
+          if(n ne null) { node = n; return true }
         }
         false
       }
     }
 
     def next(): B =
-      if (!hasNext) Iterator.empty.next()
+      if(!hasNext) Iterator.empty.next()
       else {
         val r = extract(node)
         node = node.next
@@ -219,54 +218,17 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
   }
 
   /** Returns an iterator over the nodes stored in this ExtHashSet */
-  private[collection] def nodeIterator: Iterator[Node[A]] =
-    new HashSetIterator[Node[A]] {
-      override protected[this] def extract(nd: Node[A]): Node[A] = nd
-    }
+  private[collection] def nodeIterator: Iterator[Node[A]] = new HashSetIterator[Node[A]] {
+    override protected[this] def extract(nd: Node[A]): Node[A] = nd
+  }
 
-  override def stepper[S <: Stepper[_]](
-                                         implicit shape: StepperShape[A, S]
-                                       ): S with EfficientSplit = {
+  override def stepper[S <: Stepper[_]](implicit shape: StepperShape[A, S]): S with EfficientSplit = {
     import convert.impl._
     val s = shape.shape match {
-      case StepperShape.IntShape =>
-        new IntTableStepper[Node[A]](
-          size,
-          table,
-          _.next,
-          _.key.asInstanceOf[Int],
-          0,
-          table.length
-        )
-      case StepperShape.LongShape =>
-        new LongTableStepper[Node[A]](
-          size,
-          table,
-          _.next,
-          _.key.asInstanceOf[Long],
-          0,
-          table.length
-        )
-      case StepperShape.DoubleShape =>
-        new DoubleTableStepper[Node[A]](
-          size,
-          table,
-          _.next,
-          _.key.asInstanceOf[Double],
-          0,
-          table.length
-        )
-      case _ =>
-        shape.parUnbox(
-          new AnyTableStepper[A, Node[A]](
-            size,
-            table,
-            _.next,
-            _.key,
-            0,
-            table.length
-          )
-        )
+      case StepperShape.IntShape    => new IntTableStepper[Node[A]]   (size, table, _.next, _.key.asInstanceOf[Int],    0, table.length)
+      case StepperShape.LongShape   => new LongTableStepper[Node[A]]  (size, table, _.next, _.key.asInstanceOf[Long],   0, table.length)
+      case StepperShape.DoubleShape => new DoubleTableStepper[Node[A]](size, table, _.next, _.key.asInstanceOf[Double], 0, table.length)
+      case _         => shape.parUnbox(new AnyTableStepper[A, Node[A]](size, table, _.next, _.key,                      0, table.length))
     }
     s.asInstanceOf[S with EfficientSplit]
   }
@@ -274,26 +236,26 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
   private[this] def growTable(newlen: Int) = {
     var oldlen = table.length
     threshold = newThreshold(newlen)
-    if (size == 0) table = new Array(newlen)
+    if(size == 0) table = new Array(newlen)
     else {
       table = java.util.Arrays.copyOf(table, newlen)
       val preLow: Node[A] = new Node(null.asInstanceOf[A], 0, null)
       val preHigh: Node[A] = new Node(null.asInstanceOf[A], 0, null)
       // Split buckets until the new length has been reached. This could be done more
       // efficiently when growing an already filled table to more than double the size.
-      while (oldlen < newlen) {
+      while(oldlen < newlen) {
         var i = 0
         while (i < oldlen) {
           val old = table(i)
-          if (old ne null) {
+          if(old ne null) {
             preLow.next = null
             preHigh.next = null
             var lastLow: Node[A] = preLow
             var lastHigh: Node[A] = preHigh
             var n = old
-            while (n ne null) {
+            while(n ne null) {
               val next = n.next
-              if ((n.hash & oldlen) == 0) { // keep low
+              if((n.hash & oldlen) == 0) { // keep low
                 lastLow.next = n
                 lastLow = n
               } else { // move to high
@@ -303,8 +265,8 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
               n = next
             }
             lastLow.next = null
-            if (old ne preLow.next) table(i) = preLow.next
-            if (preHigh.next ne null) {
+            if(old ne preLow.next) table(i) = preLow.next
+            if(preHigh.next ne null) {
               table(i + oldlen) = preHigh.next
               lastHigh.next = null
             }
@@ -369,10 +331,10 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
     }
     assert(contentSize == count)
   }
-   */
+  */
 
   private[this] def tableSizeFor(capacity: Int) =
-    (Integer.highestOneBit((capacity - 1).max(4)) * 2).min(1 << 30)
+    (Integer.highestOneBit((capacity-1).max(4))*2).min(1 << 30)
 
   private[this] def newThreshold(size: Int) = (size.toDouble * loadFactor).toInt
 
@@ -394,18 +356,14 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
   override def foreach[U](f: A => U): Unit = {
     val len = table.length
     var i = 0
-    while (i < len) {
+    while(i < len) {
       val n = table(i)
-      if (n ne null) n.foreach(f)
+      if(n ne null) n.foreach(f)
       i += 1
     }
   }
 
-  protected[this] def writeReplace(): AnyRef =
-    new DefaultSerializationProxy(
-      new ExtHashSet.DeserializationFactory[A](table.length, loadFactor),
-      this
-    )
+  protected[this] def writeReplace(): AnyRef = new DefaultSerializationProxy(new ExtHashSet.DeserializationFactory[A](table.length, loadFactor), this)
 
   override protected[this] def className = "ExtHashSet"
 
@@ -480,7 +438,6 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
 
 /**
   * $factoryInfo
-  *
   * @define Coll `mutable.ExtHashSet`
   * @define coll mutable hash set
   */
@@ -489,22 +446,16 @@ object ExtHashSet extends IterableFactory[ExtHashSet] {
 
   def from[B](it: scala.collection.IterableOnce[B]): ExtHashSet[B] = {
     val k = it.knownSize
-    val cap =
-      if (k > 0) ((k + 1).toDouble / defaultLoadFactor).toInt
-      else defaultInitialCapacity
+    val cap = if(k > 0) ((k + 1).toDouble / defaultLoadFactor).toInt else defaultInitialCapacity
     new ExtHashSet[B](cap, defaultLoadFactor) ++= it
   }
 
   def empty[A]: ExtHashSet[A] = new ExtHashSet[A]
 
-  def newBuilder[A]: Builder[A, ExtHashSet[A]] =
-    newBuilder(defaultInitialCapacity, defaultLoadFactor)
+  def newBuilder[A]: Builder[A, ExtHashSet[A]] = newBuilder(defaultInitialCapacity, defaultLoadFactor)
 
-  def newBuilder[A](initialCapacity: Int,
-                    loadFactor: Double): Builder[A, ExtHashSet[A]] =
-    new GrowableBuilder[A, ExtHashSet[A]](
-      new ExtHashSet[A](initialCapacity, loadFactor)
-    ) {
+  def newBuilder[A](initialCapacity: Int, loadFactor: Double): Builder[A, ExtHashSet[A]] =
+    new GrowableBuilder[A, ExtHashSet[A]](new ExtHashSet[A](initialCapacity, loadFactor)) {
       override def sizeHint(size: Int) = elems.sizeHint(size)
     }
 
@@ -515,34 +466,27 @@ object ExtHashSet extends IterableFactory[ExtHashSet] {
   final def defaultInitialCapacity: Int = 16
 
   @SerialVersionUID(3L)
-  private final class DeserializationFactory[A](val tableLength: Int,
-                                                val loadFactor: Double)
-    extends Factory[A, ExtHashSet[A]]
-      with Serializable {
-    def fromSpecific(it: IterableOnce[A]): ExtHashSet[A] =
-      new ExtHashSet[A](tableLength, loadFactor) ++= it
-    def newBuilder: Builder[A, ExtHashSet[A]] =
-      ExtHashSet.newBuilder(tableLength, loadFactor)
+  private final class DeserializationFactory[A](val tableLength: Int, val loadFactor: Double) extends Factory[A, ExtHashSet[A]] with Serializable {
+    def fromSpecific(it: IterableOnce[A]): ExtHashSet[A] = new ExtHashSet[A](tableLength, loadFactor) ++= it
+    def newBuilder: Builder[A, ExtHashSet[A]] = ExtHashSet.newBuilder(tableLength, loadFactor)
   }
 
-  private[collection] final class Node[K](_key: K,
-                                          _hash: Int,
-                                          private[this] var _next: Node[K]) {
+  private[collection] final class Node[K](_key: K, _hash: Int, private[this] var _next: Node[K]) {
     def key: K = _key
     def hash: Int = _hash
     def next: Node[K] = _next
-    def next_=(n: Node[K]): Unit = _next = n
+    def next_= (n: Node[K]): Unit = _next = n
 
     @tailrec
     def findNode(k: K, h: Int): Node[K] =
-      if (h == _hash && k == _key) this
-      else if ((_next eq null) || (_hash > h)) null
+      if(h == _hash && k == _key) this
+      else if((_next eq null) || (_hash > h)) null
       else _next.findNode(k, h)
 
     @tailrec
     def foreach[U](f: K => U): Unit = {
       f(_key)
-      if (_next ne null) _next.foreach(f)
+      if(_next ne null) _next.foreach(f)
     }
 
     @tailrec
