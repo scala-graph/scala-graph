@@ -460,7 +460,7 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
         table(index(improved)) = new Node(elem, improved, bucket.next)
         false
       } else
-        bucket.findNode(n => {val next = n.next; (next ne null) && next == elem}) match {
+        bucket.findNode(n => {val next = n.next; (next ne null) && next.key == elem}) match {
           case null =>
             add
             true
