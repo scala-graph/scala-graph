@@ -127,26 +127,29 @@ class TArraySetTest extends RefSpec with Matchers {
     }
 
     object `supports upsert` {
-      def upsert(toAdd: Int) {
+      def upsert(setSize: Int) {
         val edges = new WUnDiEdgeGenerator
         val pos   = 1
-        pos < toAdd should be(true)
+        pos < setSize should be(true)
 
         val arr = ArraySet.emptyWithHints[WUnDiEdge[Int]] ++=
-          (for (i <- 1 to toAdd) yield edges.draw)
-        arr.size should be(toAdd)
+          (for (i <- 1 to setSize) yield edges.draw)
+        arr.size should be(setSize)
 
         def edge = arr.drop(pos).head
         edge match {
           case WUnDiEdge(n1, n2, w) =>
             val newWeight = w + 1
-            val inserted  = arr.upsert(WUnDiEdge(n1, n2)(newWeight))
-            inserted should be(false) // updated // TODO inserted is now true for some reason...
+            val toUpsert = WUnDiEdge(n1, n2)(newWeight)
+            toUpsert should be(edge)
+
+            val inserted  = arr.upsert(toUpsert)
+            inserted should === (false)
             edge.weight should be(newWeight)
         }
-        arr.size should be(toAdd)
-        (arr upsert edges.draw) should be(true) // inserted
-        arr.size should be(toAdd + 1)
+        arr.size should be(setSize)
+        (arr upsert edges.draw) should === (true)
+        arr.size should be(setSize + 1)
       }
       def `when represented by an Array` {
         upsert(hints.hashTableThreshold - 3)
