@@ -235,7 +235,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     final def weight: Double = edges.foldLeft(0d)((sum, edge) => sum + edge.weight)
 
     /** $CUMWEIGHT
-      *  @param f The weight function overriding edge weights. */
+      *
+      * @param f The weight function overriding edge weights. */
     final def weight[T: Numeric](f: EdgeT => T): T = {
       val num = implicitly[Numeric[T]]
       import num._
@@ -249,23 +250,27 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     override def size: Int = 2 * length + 1
 
     def startNode: NodeT
+
     def endNode: NodeT
 
-    override def iterator: Iterator[InnerElem] = {
-      assert(this.nodes.size == this.edges.size + 1)
-      val nodes = this.nodes.iterator
-      val edges = this.edges.iterator
-      val total = this.nodes.size + this.edges.size
-      new Iterator[InnerElem] {
-        var index = 0
-        override def hasNext = index < total
-        override def next() = {
-          val elem = if (index % 2 == 0) nodes.next()
-                     else                edges.next()
-          index = index + 1
-          elem
+    override def iterator: Iterator[InnerElem] = new AbstractIterator[InnerElem] {
+      private[this] var start, edgeToFollow = true
+      private[this] val nodeIt              = nodes.iterator
+      private[this] val firstNode           = nodeIt.next
+      private[this] val edgeIt              = edges.iterator
+
+      def hasNext: Boolean = start || !edgeToFollow || edgeIt.hasNext
+      def next(): InnerElem =
+        if (start) {
+          start = false
+          firstNode
+        } else if (edgeToFollow) {
+          edgeToFollow = false
+          edgeIt.next
+        } else {
+          edgeToFollow = true
+          nodeIt.next
         }
-      }
     }
 
     /** Returns whether the nodes and edges of this walk are valid with respect
@@ -481,7 +486,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
         new Cycle {
           def nodes: Iterable[NodeT] = List(startNode, endNode)
           def edges: Iterable[EdgeT] = List(hook)
-          def startNode: NodeT          = node
+          def startNode: NodeT       = node
         }
       }
     protected[collection] def of(start: NodeT, mid: NodeT): Cycle =
@@ -1033,10 +1038,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     *  Provides methods to refine the properties and to invoke traversals.
     *  Instances will be created by [[innerNodeTraverser]] etc.
     */
-  trait Traverser[A, +This <: Traverser[A, This]]
-      extends TraverserMethods[A, This]
-      with Properties
-      with Iterable[A] {
+  trait Traverser[A, +This <: Traverser[A, This]] extends TraverserMethods[A, This] with Properties with Iterable[A] {
     this: This =>
 
     override def iterator = {
