@@ -83,6 +83,8 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
         def hasNext =
           i < nextFree
         def next = {
+          if (i >= nextFree)
+            throw new NoSuchElementException
           prevElm = arr(i)
           i += 1
           prevElm
