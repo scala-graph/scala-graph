@@ -63,8 +63,8 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
           includeInDegree = if (ignorePredecessors) !ignore(_) else anyNode,
           includeAnyway = if (ignorePredecessors) Some(root) else None
         )
-      val WithoutPreds = inDegrees._1.iterator.filterNot(predecessors.contains).to(Buffer)
-      Runner(StopCondition.None, Visitor.empty).topologicalSort(inDegrees.copy(_1 = WithoutPreds))
+      val withoutPreds = inDegrees._1.iterator.filterNot(predecessors.contains).to(Buffer)
+      Runner(StopCondition.None, Visitor.empty).topologicalSort(inDegrees.copy(_1 = withoutPreds))
     }
 
     final def shortestPathTo[T: Numeric, U](potentialSuccessor: NodeT,
