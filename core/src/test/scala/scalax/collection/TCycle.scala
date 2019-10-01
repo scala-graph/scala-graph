@@ -253,16 +253,14 @@ class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
         g.findCycleContaining(n(5)) should be(None)
       }
     }
-    /* TODO withSubgraph node predicate type mismatch
     def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes` {
       given(unDiCyclic_21) { g =>
-        (g get 1).withSubgraph(nodes = _ != 2) partOfCycle () should be(None)
+        (g get 1).withSubgraph(nodes = _ != 2).partOfCycle() should be(None)
       }
       given(unDiCyclic_22) { g =>
-        (g get 3).withSubgraph(nodes = _ != 2) partOfCycle () should be(None)
+        (g get 3).withSubgraph(nodes = _ != 2).partOfCycle() should be(None)
       }
     }
-    */
   }
 
   object `given an undirected multigraph` {
