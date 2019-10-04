@@ -49,7 +49,7 @@ class TEdgeTest extends RefSpec with Matchers {
       g.graphSize should be(2)
       ordered(g.edges) should be(false)
     }
-    /* TODO edges type mismatch
+
     def `may be defined to be sorted.` {
       val edges = outerEdges(Sequence)
       edges(1) should not equal (edges(2))
@@ -58,7 +58,6 @@ class TEdgeTest extends RefSpec with Matchers {
       ordered(g.edges) should be(true)
       ordered((g - g.edges.head).edges) should be(true)
     }
-    */
   }
 
   object `DiHyperEdge target nodes` extends OrderedEndpointsTest[DiHyperEdge] {
