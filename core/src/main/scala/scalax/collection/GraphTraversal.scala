@@ -278,7 +278,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     def isValid: Boolean = {
       val valid = nodeValidator
       nodes.headOption exists { startNode =>
-        val (nodesIt, edgesIt) = (nodes.tail.toIterator, edges.toIterator)
+        val (nodesIt, edgesIt) = (nodes.tail.iterator, edges.iterator)
 
         @tailrec def ok(prev: NodeT, count: Int): Boolean =
           if (nodesIt.hasNext && edgesIt.hasNext) {
@@ -297,14 +297,12 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
     protected trait NodeValidator extends (NodeT => Boolean)
 
-    protected def nodeValidator: NodeValidator =
-      new NodeValidator {
-        def apply(node: NodeT): Boolean = true
-      }
+    protected def nodeValidator: NodeValidator = _ => true
 
     /** The `Graph` instance that contains `this` walk. */
     final def containingGraph: thisGraph.type = thisGraph
   }
+
   object Walk {
     protected[GraphTraversal] trait Zero {
       this: Walk =>

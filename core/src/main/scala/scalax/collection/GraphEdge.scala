@@ -251,7 +251,7 @@ object GraphEdge {
     final protected def thisSimpleClassName = try {
       this.getClass.getSimpleName
     } catch { // Malformed class name
-      case e: java.lang.InternalError => this.getClass.getName
+      case _: java.lang.InternalError => this.getClass.getName
     }
     override def stringPrefix                  = "Nodes"
     protected def nodesToStringWithParenthesis = false

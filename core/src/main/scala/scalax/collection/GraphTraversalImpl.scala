@@ -619,13 +619,12 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
       override def foreach[U](f: S => U): Unit = {
         enclosed(0) foreach f
         var i    = upper
-        val size = i
         while (i > 0) {
           i -= 1
           f(s(i))
         }
         enclosed(1) foreach f
-        if (_size.isEmpty) _size = Some(size + enclosed.count(_.isDefined))
+        if (_size.isEmpty) _size = Some(upper + enclosed.count(_.isDefined))
       }
     }
   }
@@ -729,7 +728,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
       val isDiGraph = thisGraph.isDirected
       nodes.source.tail.foldLeft(nodes.head) { (prev: NodeT, elem: CycleStackElem) =>
         val CycleStackElem(n, conn) = elem
-        def get(edges: Iterable[EdgeT], pred: EdgeFilter) = {
+        def get(edges: Iterable[EdgeT], pred: EdgeFilter): EdgeT = {
           def ok(e: EdgeT): Boolean = !multi.contains(e) && edgeFilter(e) && pred(e)
           if (isDiGraph)
             (edges find ok).get
