@@ -59,7 +59,7 @@ trait GraphLike[N,
   override protected def fromSpecific(coll: IterableOnce[Param[N, E]]): This[N, E] = graphCompanion.from(coll)
   override protected def newSpecificBuilder = graphCompanion.newBuilder
 
-  override def stringPrefix: String = "Graph"
+  override def className: String = "Graph"
 
   /** Ensures sorted nodes/edges unless this `Graph` has more than 100 elements.
     * See also `asSortedString` and `toSortedString`.

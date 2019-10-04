@@ -401,7 +401,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       * @param edges $INEDGES
       */
     protected[collection] def initialize(nodes: Iterable[N], edges: Iterable[E[N]]): Unit
-    override def stringPrefix: String = "NodeSet"
+    override def className: String = "NodeSet"
 
     /** Sorts all nodes according to `ord` and concatenates them using `separator`.
       *
@@ -630,7 +630,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       */
     protected[collection] def initialize(edges: Iterable[E[N]]): Unit
     def contains(node: NodeT): Boolean
-    override def stringPrefix: String = "EdgeSet"
+    override def className: String = "EdgeSet"
 
     /** Sorts all edges according to `ord` and concatenates them using `separator`.
       *

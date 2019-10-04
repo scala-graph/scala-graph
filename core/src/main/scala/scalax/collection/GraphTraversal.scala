@@ -144,7 +144,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       case _ => false
     }
 
-    override def stringPrefix = getClass.getSimpleName
+    override def className = getClass.getSimpleName
   }
 
   /** A traversable topological order of nodes of a graph or of an isolated graph component.
@@ -196,7 +196,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
         def hasNext: Boolean = it.hasNext
         def next(): A        = toA(it.next)
       }
-      override def stringPrefix = "Nodes"
+      override def className = "Nodes"
     }
   }
 
@@ -223,7 +223,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     * @define CUMWEIGHT The cumulated weight of all edges on this path/walk.
     */
   trait Walk extends Iterable[InnerElem] {
-    override def stringPrefix = "Walk"
+    override def className = "Walk"
 
     /** All nodes on this path/walk in proper order. */
     def nodes: Iterable[NodeT]
@@ -383,7 +383,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     * Nodes and edges on the path are distinct. $WALKPATH
     */
   trait Path extends Walk {
-    override def stringPrefix = "Path"
+    override def className = "Path"
 
     /** Returns whether the nodes and edges on this path are valid with respect
       *  to this graph. $SANECHECK
@@ -441,7 +441,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     * being the start node and its head being the third element etc.
     */
   trait Cycle extends Path {
-    override def stringPrefix = "Cycle"
+    override def className = "Cycle"
 
     override def endNode: NodeT = startNode
 
