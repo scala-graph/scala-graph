@@ -728,9 +728,9 @@ trait GraphTraversalImpl[N, E[X] <: EdgeLikeIn[X]]
           }
         }
         val edge = (conn.size: @switch) match {
-          case 0 => get(n.edges, (e: EdgeT) => e.hasTarget((x: NodeT) => x eq prev))
+          case 0 => get(n.edges, (e: EdgeT) => e.hasSource((x: NodeT) => x eq prev))
           case 1 => conn.head
-          case _ => get(conn, (e: EdgeT) => e.hasSource((x: NodeT) => x eq n))
+          case _ => get(conn, (e: EdgeT) => e.hasTarget((x: NodeT) => x eq n))
         }
         buf += edge
         multi += edge

@@ -306,7 +306,12 @@ class TCycle[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
           12 ~> 3,
           20 ~> 10
         )) { g =>
-        g.findCycle should (be('isDefined) and beValid)
+        g.findCycle pipe { cycle =>
+          cycle should (be('isDefined) and beValid)
+          cycle foreach (_.nodes foreach { n =>
+            g.innerNodeTraverser(n).findCycle should (be('isDefined) and beValid)
+          })
+        }
         (g get 13).innerNodeTraverser.withOrdering(g.NodeOrdering((a, b) => b.value - a.value)).findCycle should (be(
           'isDefined) and beValid)
       }
