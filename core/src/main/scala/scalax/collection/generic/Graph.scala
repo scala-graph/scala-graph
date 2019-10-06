@@ -116,7 +116,7 @@ trait GraphCoreCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
   def empty[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): CC[N, E]
   override def apply[N, E[+X] <: EdgeLikeIn[X]](elems: Param[N, E]*)(implicit edgeT: ClassTag[E[N]],
                                                                      config: Config = defaultConfig): CC[N, E] =
-    super.apply(elems: _*)(edgeT, config)
+    from(elems)(edgeT, config)
   def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Nil, edges: Iterable[E[N]])(
       implicit edgeT: ClassTag[E[N]],
       config: Config = defaultConfig): CC[N, E]

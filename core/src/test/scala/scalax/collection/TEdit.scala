@@ -50,13 +50,11 @@ class TEditImmutable extends RefSpec with Matchers {
       val g = Graph[Nothing, Nothing]()
       g.isInstanceOf[immutable.Graph[Nothing, Nothing]] should be(true)
     }
-    /* TODO graph map
     def `yield another graph when mapped` {
       val g                                 = immutable.Graph(1 ~ 2)
-      val m: immutable.Graph[Int, UnDiEdge] = g map Helper.icrementNode
+      val m: immutable.Graph[Int, UnDiEdge] = g map Helper.incrementNode
       m.edges.head should be(UnDiEdge(2, 3))
     }
-    */
   }
 }
 
@@ -300,14 +298,12 @@ class TEditMutable extends RefSpec with Matchers {
       g should have('graphSize (2))
       g.edges foreach { _.label should be(modLabel) }
     }
-    /* TODO graph map
     def `yield another graph when mapped` {
       import mutable.Graph
       val g                       = Graph(1 ~ 2)
-      val m: Graph[Int, UnDiEdge] = g map Helper.icrementNode
+      val m: Graph[Int, UnDiEdge] = g map Helper.incrementNode
       m.edges.head should be(UnDiEdge(2, 3))
     }
-    */
   }
 }
 
@@ -463,10 +459,9 @@ class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       g -- List[Param[Int, UnDiEdge]](2, 3 ~ 4) should be(factory[Int, UnDiEdge](1, 3, 4))
       g --! List[Param[Int, UnDiEdge]](1, 3 ~ 4) should be(factory(2 ~ 3))
     }
-    /* TODO graph.map
     def `CanBuildFrom UnDi` {
       val g                       = factory(0, 1 ~ 2)
-      val m: Graph[Int, UnDiEdge] = g map Helper.icrementNode
+      val m: Graph[Int, UnDiEdge] = g map Helper.incrementNode
       m find 1 should be('defined)
       m.edges.head should be(UnDiEdge(2, 3))
     }
@@ -475,7 +470,6 @@ class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       val m: Graph[String, UnDiEdge] = g map Helper.nodeToString
       m.edges.head should be("1" ~ "2")
     }
-    */
     /* TODO no ClassTag available for g.NodeT
     def `NodeSet ` {
       val o = Array.range(0, 4)
@@ -653,8 +647,7 @@ class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
   }
 }
 private object Helper {
-  // TODO increment?
-  def icrementNode(p: Param[Int, UnDiEdge]): Param[Int, UnDiEdge] = p match {
+  def incrementNode(p: Param[Int, UnDiEdge]): Param[Int, UnDiEdge] = p match {
     case out: OutParam[_, _] =>
       out match {
         case InnerNodeParam(n) => OuterNode(n + 1)

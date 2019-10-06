@@ -278,7 +278,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
         withHandles(2) { handles =>
           implicit val visitedHandle: State.Handle = handles(0)
           for (node <- nodes if !node.visited && subgraphNodes(node)) {
-            val nodeTraverser: InnerElemTraverser = traverser.withRoot(node) // TODO not sure why this is needed
+            val nodeTraverser: InnerElemTraverser = traverser.withRoot(node) // TODO not sure why this declaration is needed
             val res = nodeTraverser.Runner(noNode, visitor).dfsWGB(handles)
             if (res.isDefined)
               return cycle(res, subgraphEdges)
@@ -591,6 +591,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
 
     @inline override def last: NodeT = enclosed(1).fold(ifEmpty = s.head.node)(_.node)
 
+    // TODO unreachable?
     def reverse: Iterable[NodeT] = new AbstractIterable[NodeT] {
       override def iterator = ???
       /* TODO replace foreach with iterator

@@ -495,11 +495,9 @@ trait GraphLike[N,
     nodePred orElse edgePred
   }
 
-  // TODO I don't see a way to have map return Graph[M, F] when B = Param[M, F]...
-  // override def map[B](f: Param[N, E] => B): AnySet[B] = ???
-
-  // TODO but we could do something like this instead
-  //def mapGraph[M,F](f: Param[N, E] => Param[M, F]): Graph[M, F] = this.view.map(f).to(Graph)
+  def map[NN, EE[+X] <: EdgeLikeIn[X]](f: Param[N, E] => Param[NN, EE])(implicit edgeT: ClassTag[EE[NN]]): This[NN, EE] = {
+    graphCompanion.from(view.map(f))(edgeT, config)
+  }
 }
 
 // ----------------------------------------------------------------------------
