@@ -5,7 +5,7 @@ import scala.util.Random
 import scala.collection.{ExtSetMethods, FilterableSet}
 
 import GraphPredef.{EdgeLikeIn, InnerEdgeParam, InnerNodeParam, OuterEdge}
-import GraphEdge.{DiHyperEdgeLike, EdgeLike}
+import GraphEdge.{DiHyperEdgeLike, EdgeLike, NodeProduct}
 import generic.AnyOrdering
 
 /** Base template trait for graphs.
@@ -540,7 +540,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
         case 3 => Tuple3(edge._1.value, edge._2.value, edge._n(2).value)
         case 4 => Tuple4(edge._1.value, edge._2.value, edge._n(2).value, edge._n(3).value)
         case 5 => Tuple5(edge._1.value, edge._2.value, edge._n(2).value, edge._n(3).value, edge._n(4).value)
-        case _ => ??? //edge.map(n => n.value).toList
+        case _ => NodeProduct(edge.map(_.value))
       }
       edge.copy[N](newNs).asInstanceOf[E[N]]
     }
@@ -577,7 +577,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
         case 3 => Tuple3(mkNode(edge._1), mkNode(edge._2), mkNode(edge._n(2)))
         case 4 => Tuple4(mkNode(edge._1), mkNode(edge._2), mkNode(edge._n(2)), mkNode(edge._n(3)))
         case 5 => Tuple5(mkNode(edge._1), mkNode(edge._2), mkNode(edge._n(2)), mkNode(edge._n(3)), mkNode(edge._n(4)))
-        case _ => ??? //(edge map mkNode).toList
+        case _ => NodeProduct(edge.map(mkNode))
       }
       edge.copy[NodeT](newNodes).asInstanceOf[E[NodeT]]
     }
@@ -591,7 +591,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
             case 1 => Tuple3(n_1, n_2, mkNode(nodes(0)))
             case 2 => Tuple4(n_1, n_2, mkNode(nodes(0)), mkNode(nodes(1)))
             case 3 => Tuple5(n_1, n_2, mkNode(nodes(0)), mkNode(nodes(1)), mkNode(nodes(2)))
-            case _ => ??? //(nodes map mkNode).toList ::: List(n_1, n_2)
+            case _ => NodeProduct(n_1, n_2, nodes.map(mkNode): _*)
           }
       newNodes
     }

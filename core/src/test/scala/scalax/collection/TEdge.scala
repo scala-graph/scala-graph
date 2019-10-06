@@ -189,11 +189,13 @@ class TEdgeTest extends RefSpec with Matchers {
     }
 
     def `LkDiHyperEdge equality` {
-      val e  = LkDiHyperEdge(1, 2, 3)("a")
-      val g  = Graph[Int, LHyperEdge](e)
-      val eo = g.edges.head.toOuter
+      val e1 = LkDiHyperEdge(1, 2, 3)("a")
+      val e2 = LkDiHyperEdge(10, 11, 12, 13, 14, 15, 16)("b")
+      val g  = Graph[Int, LHyperEdge](e1, e2)
+      val List(eo1, eo2) = g.edges.toOuter.toList
 
-      g find eo should be('defined)
+      g find eo1 should be('defined)
+      g find eo2 should be('defined)
     }
   }
 }

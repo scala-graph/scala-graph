@@ -321,10 +321,16 @@ object GraphEdge {
         else apply(n1, n2)
     }
   }
-  class NodeProduct(elems: Array[Any]) extends Product {
+  final class NodeProduct(val elems: Array[Any]) extends Product {
     override def productArity = elems.length
     override def productElement(n: Int) = elems(n)
-    override def canEqual(that: Any) = ???
+
+    override def hashCode = elems.hashCode
+    override def equals(obj: Any) = obj match {
+      case that: NodeProduct => java.util.Arrays.equals(this.elems, that.elems)
+      case _ => false
+    }
+    override def canEqual(that: Any) = that.isInstanceOf[NodeProduct]
   }
   protected[collection] trait Keyed
 

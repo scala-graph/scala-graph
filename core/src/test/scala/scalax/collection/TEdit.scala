@@ -206,6 +206,8 @@ class TEditMutable extends RefSpec with Matchers {
       h should have('order (2), 'graphSize (1))
       h +~= (0, 1, 2, 3)
       h should have('order (4), 'graphSize (2))
+      h +~= (11, 12, 13, 14, 15, 16) // edge with at least 6 endpoints will trigger use of NodeProduct
+      h should have('order (10), 'graphSize (3))
     }
     def `serve +~%= for weighted edeges` {
       val g          = mutable.Graph(2 ~ 3)
@@ -367,6 +369,7 @@ class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
 
       factory(1 ~ 2).isHyper should be(false)
       hyper(factory(1 ~> 2, 1 ~ 2 ~ 3), true)
+      hyper(factory(1 ~> 2 ~> 3 ~> 4 ~> 5 ~> 6), true)
       hyper(factory(1 ~> 2), false)
     }
     def `isMulti ` {
@@ -544,10 +547,12 @@ class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
         (g get 3 diSuccessors) should be(Set(4))
       }
       def `for DiHyper` {
-        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9)
+        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9, 11 ~> 12 ~> 13 ~> 14 ~> 15 ~> 16)
         (h get 1 diSuccessors) should be(Set(2, 3, 4, 5, 9))
         (h get 2 diSuccessors) should be(Set.empty)
         (h get 5 diSuccessors) should be(Set.empty)
+        (h get 11 diSuccessors) should be(Set(12, 13, 14, 15, 16))
+        (h get 12 diSuccessors) should be(Set.empty)
       }
     }
     object `diPredecessors ` {
@@ -567,10 +572,12 @@ class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
         (g get 3 diSuccessors) should be(Set(4))
       }
       def `for DiHyper` {
-        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9)
+        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9, 11 ~> 12 ~> 13 ~> 14 ~> 15 ~> 16)
         (h get 1 diPredecessors) should be(Set.empty)
         (h get 2 diPredecessors) should be(Set(1))
         (h get 5 diPredecessors) should be(Set(1))
+        (h get 12 diPredecessors) should be(Set(11))
+        (h get 16 diPredecessors) should be(Set(11))
       }
     }
     object `neighbors ` {
@@ -585,10 +592,12 @@ class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
         (g get 2 neighbors) should be(Set(1))
       }
       def `for DiHyper` {
-        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9)
+        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9, 11 ~> 12 ~> 13 ~> 14 ~> 15 ~> 16)
         (h get 1 neighbors) should be(Set(2, 3, 4, 5, 9))
         (h get 2 neighbors) should be(Set(1, 5))
         (h get 5 neighbors) should be(Set(1, 2, 3))
+        (h get 11 neighbors) should be(Set(12, 13, 14, 15, 16))
+        (h get 15 neighbors) should be(Set(11, 12, 13, 14, 16))
       }
     }
     def `findOutgoingTo Di` {
