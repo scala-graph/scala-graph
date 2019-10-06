@@ -55,11 +55,11 @@ trait GraphLike[N,
   protected type Config <: GraphConfig
   implicit def config: graphCompanion.Config with Config
 
-  override def empty = graphCompanion.empty
+  override def empty = graphCompanion.empty[N, E]
   override protected def fromSpecific(coll: IterableOnce[Param[N, E]]): This[N, E] = graphCompanion.from(coll)
   override protected def newSpecificBuilder = graphCompanion.newBuilder
 
-  override def className: String = "Graph"
+  override def stringPrefix: String = "Graph"
 
   /** Ensures sorted nodes/edges unless this `Graph` has more than 100 elements.
     * See also `asSortedString` and `toSortedString`.

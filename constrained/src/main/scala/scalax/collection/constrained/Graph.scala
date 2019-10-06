@@ -38,7 +38,7 @@ trait GraphLike[N,
   protected type Config <: GraphConfig with GenConstrainedConfig
 
   val constraintFactory: ConstraintCompanion[Constraint]
-  override def className: String = constraintFactory.stringPrefix getOrElse super.className
+  override def stringPrefix: String = constraintFactory.stringPrefix getOrElse super.stringPrefix
 
   override protected def plusPlus(newNodes: Traversable[N], newEdges: Traversable[E[N]]): This[N, E] =
     graphCompanion.fromWithoutCheck[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)(edgeT, config)
