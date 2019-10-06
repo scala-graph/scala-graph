@@ -86,15 +86,17 @@ ThisBuild / resolvers ++= Seq(
 
 ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
 
+val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion := Version.compiler_2_12,
   crossScalaVersions := Seq(scalaVersion.value, Version.compiler_2_11),
   organization := "org.scala-graph",
   scalacOptions ++= Seq(
-    "-Ywarn-unused:imports",
-    "-Yrangepos"
+    unusedImports,
+    "-Yrangepos",
+    "-Ywarn-unused:privates"
   ),
-  Compile / scalacOptions in compile += "-Ywarn-unused:privates",
+  Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports),
   addCompilerPlugin(scalafixSemanticdb),
   Test / parallelExecution := false,
   Compile / doc / scalacOptions ++=
