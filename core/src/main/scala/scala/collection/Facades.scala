@@ -53,10 +53,10 @@ final class EqSetFacade[A <: AnyRef](t: Iterable[A]) extends SetFacade[A](t) {
   *  returns a `Set` instead of just `FilterMonadic`.
   */
 trait FilterableSet[A] {
-  this: FilteredSet[A] =>
+  this: Set[A] =>
 
-  def withSetFilter(q: (A) => Boolean): immutable.Set[A] with FilterableSet[A] =
-    new FilteredSet(set, elem => p(elem) && q(elem))
+  def withSetFilter(p: (A) => Boolean): immutable.Set[A] with FilterableSet[A] =
+    new FilteredSet(this, elem => p(elem))
 }
 
 /** A `Set` implementation extended by `FilterableSet`.
@@ -66,4 +66,7 @@ final class FilteredSet[A](val set: Set[A], val p: (A) => Boolean) extends immut
   def iterator: Iterator[A] = set.iterator withFilter p
   def excl(elem: A)         = if (contains(elem)) iterator.toSet - elem else this
   def incl(elem: A)         = if (contains(elem)) this else iterator.toSet + elem
+
+  override def withSetFilter(q: (A) => Boolean): immutable.Set[A] with FilterableSet[A] =
+    new FilteredSet(this, elem => p(elem) && q(elem))
 }

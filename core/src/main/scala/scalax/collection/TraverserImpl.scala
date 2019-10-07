@@ -252,9 +252,8 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
           w => w.edgeWeight(directionEdges(n)(neighbor) withSetFilter edgeFilter(cumWeight) min w.ordering)
         )
 
-      private[this] def filteredEdges(edges: AnySet[EdgeT], cumWeight: Double): AnySet[EdgeT] =
-        // TODO filter lazy, e.g. withSetFilter
-        if (doEdgeFilter) edges filter edgeFilter(cumWeight)
+      private[this] def filteredEdges(edges: AnySet[EdgeT] with FilterableSet[EdgeT], cumWeight: Double): AnySet[EdgeT] =
+        if (doEdgeFilter) edges withSetFilter edgeFilter(cumWeight)
         else edges
 
       private[this] def filteredSuccessors(node: NodeT,
@@ -273,7 +272,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
                                              cumWeight: Double,
                                              reverse: Boolean): Traversable[NodeT] =
         if (withEdgeFiltering)
-          ??? //filtered(node, nodeFilter, filteredEdges(node.incoming, cumWeight), reverse)
+          filtered(node, nodeFilter, filteredEdges(node.incoming, cumWeight), reverse)
         else
           filtered(node.diPredecessors, -estimatedNrOfNodes(node), nodeFilter, reverse)
 

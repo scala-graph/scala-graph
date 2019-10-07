@@ -2,7 +2,7 @@ package scala.collection
 
 import scala.util.Random
 
-trait ExtSetMethods[A] {
+trait ExtSetMethods[A] extends FilterableSet[A] {
   this: Set[A] =>
 
   /** Returns a random element of the set if it is `nonEmpty` otherwise throws
@@ -25,7 +25,4 @@ trait ExtSetMethods[A] {
     */
   // TODO can this become protected?
   def findElem[B](toMatch: B, correspond: (A, B) => Boolean): A
-
-  /** Returns a lazily filtered immutable Set. */
-  def withSetFilter(p: (A) => Boolean): FilteredSet[A] = new FilteredSet(this, p)
 }
