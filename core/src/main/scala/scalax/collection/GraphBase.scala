@@ -518,7 +518,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     }
 
     // TODO do we want to keep this? Iterable no longer extends trait Equals (previously through IterableLike)
-    /*override*/ def canEqual(that: Any) = that.isInstanceOf[GraphBase[N, E]#InnerEdge] ||
+    def canEqual(that: Any) = that.isInstanceOf[GraphBase[N, E]#InnerEdge] ||
       that.isInstanceOf[EdgeLike[_]]
     override def equals(other: Any) = other match {
       case that: GraphBase[N, E]#InnerEdge =>
@@ -680,7 +680,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       other match {
         case e: OuterEdge[N, E]            => find(e.edge)
         case e: InnerEdgeParam[N, E, _, E] => find(e.asEdgeT[N, E, selfGraph.type](selfGraph).toOuter)
-        case _                                => null.asInstanceOf[EdgeT]
+        case _                             => null.asInstanceOf[EdgeT]
       }
     }
 

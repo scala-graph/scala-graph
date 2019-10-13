@@ -305,30 +305,20 @@ object GraphEdge {
         case 1 => (node_1, node_2, nodes(0))
         case 2 => (node_1, node_2, nodes(0), nodes(1))
         case 3 => (node_1, node_2, nodes(0), nodes(1), nodes(2))
-        case _ => new NodeProduct((node_1 +: node_2 +: nodes).toArray[Any])
+        case _ => new NodeProduct(Vector(node_1, node_2) ++ nodes)
       }
-    final def apply[N](nodes: Iterable[N]): Product = nodes match {
-      case n1 :: n2 :: rest =>
-        if (rest eq Nil) apply(n1, n2)
-        else apply(n1, n2, rest: _*)
-      case _ =>
-        val it = nodes.iterator
-        val n1 = it.next
-        val n2 = it.next
-        if (it.hasNext) apply(n1, n2, it.toList: _*)
-        else apply(n1, n2)
+    final def apply[N](nodes: Iterable[N]): Product = {
+      val it = nodes.iterator
+      val n1 = it.next
+      val n2 = it.next
+      if (it.hasNext) new NodeProduct(nodes.toIndexedSeq)
+      else apply(n1, n2)
     }
   }
-  final class NodeProduct(val elems: Array[Any]) extends Product {
-    override def productArity = elems.length
-    override def productElement(n: Int) = elems(n)
-
-    override def hashCode = elems.hashCode
-    override def equals(obj: Any) = obj match {
-      case that: NodeProduct => java.util.Arrays.equals(this.elems, that.elems)
-      case _ => false
-    }
-    override def canEqual(that: Any) = that.isInstanceOf[NodeProduct]
+  final private class NodeProduct[N] private (val elems: IndexedSeq[N]) extends Product {
+    override def productArity: Int            = elems.length
+    override def productElement(n: Int): N    = elems(n)
+    override def canEqual(that: Any): Boolean = ??? // never used
   }
   protected[collection] trait Keyed
 
@@ -623,8 +613,9 @@ object GraphEdge {
 
     /** Iterator for the nodes (end-points) of this edge. */
     def iterator: Iterator[N] = nodes match {
-      case i: Iterable[N] => i.iterator // TODO cannot happen? since List no longer is-a Product, this will either be a tuple or a NodeProduct
-      case p: Product     => p.productIterator.asInstanceOf[Iterator[N]]
+      case i: Iterable[N] =>
+        i.iterator // TODO cannot happen? since List no longer is-a Product, this will either be a tuple or a NodeProduct
+      case p: Product => p.productIterator.asInstanceOf[Iterator[N]]
     }
 
     override def sources = mkIterable(iterator)
