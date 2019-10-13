@@ -37,6 +37,9 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
 
   implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
 
+  val predecessors = Parameters(direction = Predecessors)
+  val anyConnected = Parameters(direction = AnyConnected)
+
   def `find successors in a tiny graph` {
     given(factory(1 ~> 2)) { g =>
       val (n1, n2) = (g get 1, g get 2)
@@ -344,6 +347,21 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
     }
   }
 
+  def `traverser to graph`: Unit = {
+    given (Di_1.g) { g =>
+      def innerNode(outer: Int) = g get outer
+
+      innerNode(1).outerNodeTraverser.toGraph should equal (
+        factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
+
+      innerNode(2).outerNodeTraverser(anyConnected).toGraph should equal (
+        factory(1 ~> 2, 2 ~> 3, 4 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
+
+      innerNode(3).outerNodeTraverser(predecessors).toGraph should equal (
+        factory(4 ~> 3, 1 ~> 3, 2 ~> 3, 1 ~> 2))
+    }
+  }
+
   def `traverser with a visitor` {
     given(gUnDi_2) { g =>
       def n(value: Int) = g get value
@@ -469,14 +487,14 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
       def innerNode(outer: Int) = g get outer
       var stack                 = List.empty[Int]
 
-      innerNode(4).innerNodeDownUpTraverser foreach (_ match {
+      innerNode(4).innerNodeDownUpTraverser foreach {
         case (down, node) =>
           if (down) stack = node.value +: stack
           else {
             stack.head should be(node.value)
             stack = stack.tail
           }
-      })
+      }
       stack should be('empty)
     }
   }
@@ -522,14 +540,14 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
         nBA ~> Leaf("BA2", 11),
         nBA ~> Leaf("BA3", 12)
       )) { g =>
-      (g get root).innerNodeDownUpTraverser foreach (_ match {
+      (g get root).innerNodeDownUpTraverser foreach {
         case (down, node) =>
           if (!down)
             node.value match {
               case n: Node => n.sum = (0 /: node.diSuccessors)(_ + _.balance)
               case _       =>
             }
-      })
+      }
       val expected = Map(root -> 39, nA -> 3, nB -> 36, nBA -> 33)
       g.nodes foreach {
         _.value match {
@@ -556,8 +574,6 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
     {
       import DDi_1._
       given(DDi_1.g) { _ =>
-        val predecessors = Parameters(direction = Predecessors)
-        val anyConnected = Parameters(direction = AnyConnected)
         val maxDepth_1   = Parameters(maxDepth = 1)
 
         node(4).outerNodeTraverser.sum should be(expectedSumSuccessorsOf_4)

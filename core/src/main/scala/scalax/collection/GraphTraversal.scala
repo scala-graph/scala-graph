@@ -1052,7 +1052,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     /** Completes a traversal and creates a new connected graph populated with the
       *  elements visited.
       */
-    final def toGraph: Graph[N, E] = ??? /*thisGraph match {
+    final def toGraph: Graph[N, E] = thisGraph match {
       case g: Graph[N, E] =>
         val b = Graph.newBuilder(g.edgeT, Graph.defaultConfig)
         b += root
@@ -1064,7 +1064,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
           b += e
         }
         b.result
-    }*/
+    }
   }
 
   /** Controls the properties of inner-node graph traversals. $TOSTART
