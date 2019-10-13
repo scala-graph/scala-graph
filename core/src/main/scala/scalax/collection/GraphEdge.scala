@@ -203,16 +203,14 @@ object GraphEdge {
     /** `true` if any target end of this edge fulfills `pred`. */
     def hasTarget(pred: N => Boolean): Boolean
 
-    /** Applies `f` to all source ends of this edge without new memory allocation. */
-    @deprecated("use sources.foreach instead")
-    final def withSources[U](f: N => U): Unit = sources.foreach(f)
+    /** Applies `f` to all source ends of this edge without any memory allocation. */
+    def withSources[U](f: N => U): Unit
 
     /** All source ends of this edge. */
     def sources: Iterable[N]
 
-    /** Applies `f` to the target ends of this edge without new memory allocation. */
-    @deprecated("use targets.foreach instead")
-    final def withTargets[U](f: N => U): Unit = targets.foreach(f)
+    /** Applies `f` to the target ends of this edge without any memory allocation. */
+    def withTargets[U](f: N => U): Unit
 
     /** All target ends of this edge. */
     def targets: Iterable[N]
@@ -413,7 +411,7 @@ object GraphEdge {
         Eq.equalTargets(this, this.sources, other, other.sources, thisArity)
       else false
     }
-    override protected def baseHashCode: Int = (0 /: iterator)(_ ^ _.hashCode)
+    override protected def baseHashCode: Int = iterator.foldLeft(0)(_ ^ _.hashCode)
   }
 
   /** Equality for targets handled as a $BAG.
@@ -495,6 +493,9 @@ object GraphEdge {
     override def hasTarget[M >: N](node: M)    = targets exists (_ == node)
     override def hasTarget(pred: N => Boolean) = targets exists pred
 
+    override def withSources[U](f: N => U) = f(this._1)
+    override def withTargets[U](f: N => U) = targets foreach f
+
     override def sources = Iterable.single(from)
     override def targets = mkIterable(iterator.drop(1))
 
@@ -513,6 +514,9 @@ object GraphEdge {
 
     final override def hasTarget[M >: N](node: M)    = this._2 == node
     final override def hasTarget(pred: N => Boolean) = pred(this._2)
+
+    final override def withTargets[U](f: N => U) = f(this._2)
+    final override def withSources[U](f: N => U) = f(this._1)
 
     override def sources = Iterable.single(this._1)
     override def targets = Iterable.single(this._2)
@@ -635,6 +639,9 @@ object GraphEdge {
     override def hasTarget[M >: N](node: M)    = isAt(node)
     override def hasTarget(pred: N => Boolean) = isAt(pred)
 
+    override def withSources[U](f: N => U) = iterator foreach f
+    override def withTargets[U](f: N => U) = withSources(f)
+
     final protected def matches(fList: List[N => Boolean]): Boolean = {
       val it = iterator
       @tailrec def loop(checks: List[N => Boolean]): Boolean =
@@ -666,7 +673,7 @@ object GraphEdge {
     protected[collection] def from[N](nodes: Product)(implicit endpointsKind: CollectionKind): HyperEdge[N] =
       if (endpointsKind.orderSignificant) new HyperEdge[N](nodes) with OrderedEndpoints
       else new HyperEdge[N](nodes)
-    def unapplySeq[N](e: HyperEdge[N]) =
+    def unapplySeq[N](e: HyperEdge[N]): Option[(N, Seq[N])] =
       if (e eq null) None else Some(e._1, e.nodeSeq drop 1)
   }
 
@@ -742,6 +749,9 @@ object GraphEdge {
 
     override def isAt[M >: N](node: M)    = this._1 == node || this._2 == node
     override def isAt(pred: N => Boolean) = pred(this._1) || pred(this._2)
+
+    override def withSources[U](f: N => U) = { f(this._1); f(this._2) }
+    override def withTargets[U](f: N => U) = withSources(f)
 
     override def matches[M >: N](n1: M, n2: M): Boolean = unDiBaseEquals(n1, n2)
     override def matches(p1: N => Boolean, p2: N => Boolean): Boolean =
