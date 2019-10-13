@@ -315,11 +315,12 @@ object GraphEdge {
       else apply(n1, n2)
     }
   }
-  final private class NodeProduct[N] private (val elems: IndexedSeq[N]) extends Product {
-    override def productArity: Int            = elems.length
-    override def productElement(n: Int): N    = elems(n)
+  final private class NodeProduct[N] private (elems: IndexedSeq[N]) extends Product {
+    @inline override def productArity: Int            = elems.length
+    @inline override def productElement(n: Int): N    = elems(n)
     override def canEqual(that: Any): Boolean = ??? // never used
   }
+
   protected[collection] trait Keyed
 
   /** Defines how to handle the ends of hyperedges, or the source/target ends of directed hyperedges,
