@@ -473,9 +473,8 @@ class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       val m: Graph[String, UnDiEdge] = g map Helper.nodeToString
       m.edges.head should be("1" ~ "2")
     }
-    /* TODO no ClassTag available for g.NodeT
     def `NodeSet ` {
-      val o = Array.range(0, 4)
+      val o = Range(0, 4)
       val g = factory(o(1) ~ o(2), o(2) ~ o(3))
       val n = o map (g.nodes find _ getOrElse g.nodes.head)
 
@@ -491,7 +490,6 @@ class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       restored should contain(n(3))
       restored.find(_ == n(1)).get.edges should have size (1)
     }
-    */
     def `Eq ` {
       factory[Int, Nothing]() shouldEqual factory[Int, Nothing]()
       gInt_1_3 shouldEqual factory(seq_1_3.toOuterNodes[DiEdge]: _*)
