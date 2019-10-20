@@ -367,20 +367,21 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
 
   override protected[this] def className = "ExtHashSet"
 
+  /* We don't deal with different number of elements in buckets.
+   * This means that the distribution is only uniform if all buckets happen to have the same number of elements.
+   * Elements in bigger than average buckets will be drawn less frequently.
+   */
   override def draw(random: Random): A = {
     val len = table.length
-    val drawn = random.nextInt(len)
-    @tailrec def firstBucket(i: Int, upper: Int): Node[A] =
-      if (i < upper) {
-        val n = table(i)
-        if (n eq null) firstBucket(i + 1, upper) else n
-      } else if (upper == len)
-        firstBucket(0, drawn)
-      else
-        throw new IllegalArgumentException(s"Expected non-empty set.")
-
-    val keys = firstBucket(drawn, len).keys
-    keys(random.nextInt(keys.knownSize))
+    if (size * 50L > len) {
+      val bucket = table(LazyList.continually(random.nextInt(len)).iterator.dropWhile(table(_) eq null).next)
+      val keys = bucket.keys
+      keys(random.nextInt(keys.knownSize))
+    } else if (size > 0) {
+      // since `table` is sparse forget about hitting an index randomly
+      iterator.drop(random.nextInt(size)).next
+    } else
+      throw new IllegalArgumentException(s"Cannot draw from empty set.")
   }
 
   private[this] def withBucket[B](hashCode: Int)(empty: => B)(body: Node[A] => B): B =
