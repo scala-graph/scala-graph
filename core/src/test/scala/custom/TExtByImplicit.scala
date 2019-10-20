@@ -1,6 +1,6 @@
 package custom
 
-import language.{higherKinds, implicitConversions, reflectiveCalls}
+import language.{implicitConversions, reflectiveCalls}
 
 import scalax.collection.Graph
 import scalax.collection.GraphPredef._
@@ -21,7 +21,7 @@ class TExtByImplicitTest extends RefSpec with Matchers {
 
       /* Consume graph enrichment.
        */
-      Graph(1 ~ 2, 2 ~ 3).diEdges should be('isEmpty)
+      Graph(1 ~ 2, 2 ~ 3).diEdges should be(empty)
       Graph(1 ~ 2, 2 ~> 3).diEdges should have size (1)
     }
 
@@ -36,17 +36,18 @@ class TExtByImplicitTest extends RefSpec with Matchers {
        */
       Graph(1 ~> 2).alwaysTrue should be(true)
 
-      /* Comment in the following lines to assure yourself that the compiler rejects other edge types.
-       */
-      // Graph(1~2~3).alwaysTrue
-      // Graph(1~2).alwaysTrue
+      "Graph(1~2~3).alwaysTrue" shouldNot typeCheck
+      "Graph(1~2).alwaysTrue" shouldNot typeCheck
     }
     /* TODO covariant type X occurs in contravariant position in type [+X] >: scalax.collection.GraphEdge.UnDiEdge[X] <: scalax.collection.GraphEdge.UnDiEdge[X] of type E
+     */
     def `at graph level for a specific edge type` {
+      import scala.annotation.unchecked.uncheckedVariance
+
       /* Provide graph enrichment restricted to graphs with edges of type `UnDiEdge`.
        * Note that a lower bound must also be defined to exclude directed edges.
        */
-      implicit final class ExtUnDiGraph[N, E[+X] >: UnDiEdge[X] <: UnDiEdge[X]](val g: Graph[N, E]) {
+      implicit final class ExtUnDiGraph[N, E[+X] >: UnDiEdge[X @uncheckedVariance] <: UnDiEdge[X]](val g: Graph[N, E]) {
         def alwaysTrue = true
       }
 
@@ -54,12 +55,9 @@ class TExtByImplicitTest extends RefSpec with Matchers {
        */
       Graph(1 ~ 2).alwaysTrue should be(true)
 
-      /* Comment in the following lines to assure yourself that the compiler rejects other edge types.
-       */
-      // Graph(1~2~3).alwaysTrue
-      // Graph(1~>2).alwaysTrue
+      "Graph(1~2~3).alwaysTrue" shouldNot typeCheck
+      "Graph(1~>2).alwaysTrue" shouldNot typeCheck
     }
-    */
     def `at node level` {
       /* Provide node enrichment.
        * Note that this way of enrichment is not suitable for methods returning
