@@ -98,10 +98,8 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
       */
     protected def minusEdges(node: NodeT): Unit
 
-    override def clear(): Unit = {
-      for (elem <- this.toList)
-        this -= elem
-    }
+    override def diff(that: AnySet[NodeT]) = this -- that
+    override def clear(): Unit = this.toList.foreach(elem => this -= elem)
   }
 
   type EdgeSetT <: EdgeSet
@@ -113,10 +111,8 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
     @inline final def subtractOne(edge: EdgeT): this.type = { remove(edge); this }
     def removeWithNodes(edge: EdgeT): Boolean
 
-    override def clear(): Unit = {
-      for (elem <- this.toList)
-        this -= elem
-    }
+    override def diff(that: AnySet[EdgeT]) = this -- that
+    override def clear(): Unit = this.toList.foreach(elem => this -= elem)
   }
 
   override def addAll(xs: TraversableOnce[Param[N, E]]): this.type = { xs foreach +=; this }
