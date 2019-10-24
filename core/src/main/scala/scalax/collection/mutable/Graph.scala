@@ -97,17 +97,26 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
       * @param node the node the incident edges of which are to be removed from the edge set.
       */
     protected def minusEdges(node: NodeT): Unit
+
+    override def clear(): Unit = {
+      for (elem <- this.toList)
+        this -= elem
+    }
   }
 
   type EdgeSetT <: EdgeSet
   trait EdgeSet extends MutableSet[EdgeT] with super.EdgeSet {
     @inline final def addOne(edge: EdgeT): this.type = { add(edge); this }
 
-    override def clear(): Unit = ???
     /** Same as `upsert` at graph level. */
     def upsert(edge: EdgeT): Boolean
     @inline final def subtractOne(edge: EdgeT): this.type = { remove(edge); this }
     def removeWithNodes(edge: EdgeT): Boolean
+
+    override def clear(): Unit = {
+      for (elem <- this.toList)
+        this -= elem
+    }
   }
 
   override def addAll(xs: TraversableOnce[Param[N, E]]): this.type = { xs foreach +=; this }
