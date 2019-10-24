@@ -256,10 +256,8 @@ object GraphEdge {
     protected def nodesToStringSeparator       = EdgeLike.nodeSeparator
     protected def nodesToString =
       if (nodesToStringWithParenthesis)
-        nodes match {
-          case it: Iterable[N] => ??? //it.toString.patch(0, stringPrefix, it.stringPrefix.length)
-          case _               => stringPrefix + nodes.toString
-        } else
+        stringPrefix + nodes.toString
+      else
         iterator mkString nodesToStringSeparator
     protected def attributesToString      = ""
     protected def toStringWithParenthesis = false
