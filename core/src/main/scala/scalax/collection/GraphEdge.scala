@@ -318,7 +318,15 @@ object GraphEdge {
   final private class NodeProduct[N] private (elems: IndexedSeq[N]) extends Product {
     @inline override def productArity: Int            = elems.length
     @inline override def productElement(n: Int): N    = elems(n)
-    override def canEqual(that: Any): Boolean = ??? // never used
+
+    override def canEqual(that: Any) = that.isInstanceOf[NodeProduct[N]]
+    override def equals(obj: Any) = obj match {
+      case that: NodeProduct[N] =>
+        this.productArity == that.productArity &&
+          (0 until productArity).forall(i => this.productElement(i) == that.productElement(i))
+      case _ => false
+    }
+    override def toString = elems.mkString("(", ", ", ")")
   }
 
   protected[collection] trait Keyed
