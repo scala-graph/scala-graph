@@ -14,7 +14,6 @@ object Compat {
     @inline def +=(elem: A): this.type = addOne(elem)
   }
 
-  // TODO maybe Growable, Shrinkable, Mutable?
   trait AddSubtract[A, +This] {
     def addOne(elem: A): this.type
     def subtractOne(elem: A): this.type

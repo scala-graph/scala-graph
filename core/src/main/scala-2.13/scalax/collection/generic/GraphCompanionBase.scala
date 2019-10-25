@@ -10,6 +10,7 @@ import scalax.collection.{Graph, GraphLike}
 
 import scala.collection.BuildFrom
 
+// TODO is this an appropriate name?
 private[collection]
 trait GraphCompanionBase[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] {
 

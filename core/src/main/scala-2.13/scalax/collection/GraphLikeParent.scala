@@ -7,6 +7,7 @@ import scalax.collection.generic.GraphCompanion
 import scala.collection.{SetOps, mutable}
 import scala.reflect.ClassTag
 
+// TODO is this an appropriate name?
 private[collection]
 trait GraphLikeBase[N,
                     E[+X] <: EdgeLikeIn[X],
