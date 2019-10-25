@@ -11,20 +11,16 @@ import org.scalatest._
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.refspec.RefSpec
 
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 import scalax.collection.edge.WkDiEdge
 import scalax.collection.visualization.Visualizer
 
-@RunWith(classOf[JUnitRunner])
 class TTopologicalSortRootTest
     extends Suites(
       new TTopologicalSort[immutable.Graph](immutable.Graph),
       new TTopologicalSort[mutable.Graph](mutable.Graph)
     )
 
-private class TTopologicalSort[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G])
     extends RefSpec
     with Matchers
@@ -33,7 +29,7 @@ private class TTopologicalSort[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with G
 
   private object Topo {
 
-    class Checker[N, E[X] <: EdgeLikeIn[X]](val graph: G[N, E]) {
+    class Checker[N, E[+X] <: EdgeLikeIn[X]](val graph: G[N, E]) {
 
       def checkOuterNodes(seq: Traversable[N]): Unit =
         checkInnerNodes(seq map (graph get _))
@@ -76,10 +72,10 @@ private class TTopologicalSort[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with G
       }
     }
 
-    def unexpectedCycle[N, E[X] <: EdgeLikeIn[X]](cycleNode: Graph[N, E]#NodeT) =
+    def unexpectedCycle[N, E[+X] <: EdgeLikeIn[X]](cycleNode: Graph[N, E]#NodeT) =
       fail(s"Unexpected cycle starting at ${cycleNode.value}")
 
-    def unexpectedRight[N, E[X] <: EdgeLikeIn[X]](order: Graph[N, E]#TopologicalOrder[_]) =
+    def unexpectedRight[N, E[+X] <: EdgeLikeIn[X]](order: Graph[N, E]#TopologicalOrder[_]) =
       fail(s"Cycle expected but topological order ${order.toLayered} found")
   }
 

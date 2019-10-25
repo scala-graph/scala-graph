@@ -1,12 +1,10 @@
 package scalax.collection
 package mutable
 
-import util.Random
-import scala.collection.{AbstractIterator, SortedSet}
-import scala.collection.mutable.{SetLike => MutableSetLike, GrowingBuilder}
-import scala.collection.generic.{CanBuildFrom, GenericCompanion, GenericSetTemplate, MutableSetFactory}
+import scala.collection.{IterableFactory, IterableFactoryDefaults, SortedSet, StrictOptimizedIterableOps}
+import scala.collection.mutable.{ExtHashSet,GrowableBuilder}
 import scala.compat.Platform.arraycopy
-
+import scala.util.Random
 import immutable.SortedArraySet
 
 /** A basic [[ArraySet]] implementation suitable for efficient add operations.
@@ -20,34 +18,34 @@ import immutable.SortedArraySet
 @SerialVersionUID(1L)
 final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     extends ArraySet[A]
-    with GenericSetTemplate[A, SimpleArraySet]
-    with MutableSetLike[A, SimpleArraySet[A]]
+    with StrictOptimizedIterableOps[A, SimpleArraySet, SimpleArraySet[A]]
+    with IterableFactoryDefaults[A, SimpleArraySet]
     with Serializable {
 
-  override def companion: GenericCompanion[SimpleArraySet] = SimpleArraySet
-  override def newBuilder                                  = new SimpleArraySet.CheckingBuilder[A](this)
+  override def iterableFactory = SimpleArraySet
+
   protected[collection] def newNonCheckingBuilder[B]       = new SimpleArraySet.NonCheckingBuilder[A, B](this)
   override def clone                                       = (newNonCheckingBuilder ++= this).result
   private var nextFree: Int                                = 0
   private var arr: Array[A]                                = _
   private var hashSet: ExtHashSet[A]                       = _
 
-  private def initialize {
+  private def initialize() {
     val capacity = hints.nextCapacity(0)
     if (capacity == 0) hashSet = ExtHashSet.empty[A]
     else arr = new Array[AnyRef](capacity).asInstanceOf[Array[A]]
   }
-  initialize
+  initialize()
 
-  final def capacity: Int             = if (isHash) 0 else arr.length
+  def capacity: Int                   = if (isHash) 0 else arr.length
   @inline private def isHash: Boolean = arr eq null
-  @inline final def isArray: Boolean  = !isHash
+  @inline def isArray: Boolean        = !isHash
   protected[collection] def array     = arr
   protected[collection] def set       = hashSet
 
-  def +=(elem: A) = { add(elem); this }
+  def addOne(elem: A) = { add(elem); this }
 
-  def -=(elem: A) = {
+  def subtractOne(elem: A) = {
     if (isHash) hashSet -= elem
     else removeIndex(indexOf(elem))
     this
@@ -70,22 +68,23 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
         }
       arr(nextFree) = elem
       nextFree += 1
-      true
     }
     this
   }
 
-  protected[collection] def map(xs: TraversableOnce[A]): this.type = this
+  protected[collection] def map(xs: IterableOnce[A]): this.type = this
 
   override def iterator: Iterator[A] =
     if (isHash) hashSet.iterator
     else
-      new AbstractIterator[A] {
+      new scala.collection.AbstractIterator[A] {
         private[this] var i          = 0
         private[this] var prevElm: A = _
         def hasNext =
           i < nextFree
         def next = {
+          if (i >= nextFree)
+            throw new NoSuchElementException
           prevElm = arr(i)
           i += 1
           prevElm
@@ -100,13 +99,13 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     }
   }
 
-  final protected def resizeArray(fromCapacity: Int, toCapacity: Int) {
+  protected def resizeArray(fromCapacity: Int, toCapacity: Int) {
     val newArr: Array[AnyRef] = new Array(toCapacity)
     arraycopy(arr, 0, newArr, 0, math.min(fromCapacity, toCapacity))
     arr = newArr.asInstanceOf[Array[A]]
   }
 
-  final protected def setToArray(set: Iterable[A], size: Int) {
+  protected def setToArray(set: Iterable[A], size: Int) {
     arr = new Array[AnyRef](size).asInstanceOf[Array[A]]
     nextFree = 0
     set foreach { elem =>
@@ -116,7 +115,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     hashSet = null
   }
 
-  def compact {
+  def compact() {
     if (isHash) {
       val _size = size
       if (_size < hints.hashTableThreshold)
@@ -129,7 +128,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       resizeArray(capacity, nextFree)
   }
 
-  final protected def indexOf[B](elem: B, pred: (A, B) => Boolean): Int = {
+  protected def indexOf[B](elem: B, pred: (A, B) => Boolean): Int = {
     var i = 0
     while (i < nextFree) if (pred(arr(i), elem)) return i
     else i += 1
@@ -137,7 +136,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   }
 
   /* Optimized 'arr contains c'. */
-  final protected def indexOf(elem: A): Int = {
+  protected def indexOf(elem: A): Int = {
     var i = 0
     while (i < nextFree) if (arr(i) == elem) return i
     else i += 1
@@ -162,8 +161,10 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
         if (resizedToHash)
           return add(elem)
       var i = 0
-      while (i < nextFree) if (arr(i) == elem) return false
-      else i += 1
+      while (i < nextFree) {
+        if (arr(i) == elem) return false
+        else i += 1
+      }
       arr(nextFree) = elem
       nextFree += 1
       true
@@ -224,11 +225,9 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     }
 
   def sorted(implicit ord: Ordering[A]): SortedSet[A] =
-    if (isHash)
-      hashSet match {
-        case sorted: SortedSet[_] => sorted
-        case unsorted             => SortedSet[A](hashSet.toList: _*)
-      } else {
+    if (isHash) {
+      SortedSet.from(hashSet)
+    } else {
       val newArr: Array[AnyRef] = new Array(nextFree)
       arraycopy(arr, 0, newArr, 0, nextFree)
       new SortedArraySet(newArr.asInstanceOf[Array[A]])
@@ -244,12 +243,15 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   def draw(random: Random): A =
     if (isHash) hashSet draw random
     else arr(random.nextInt(size))
+
+  override def clear(): Unit =
+    for (elem <- this.toList)
+      this -= elem
 }
 
 /** @define FROM The [[ArraySet]] instance an operation of which this builder is invoked on.
   */
-object SimpleArraySet extends MutableSetFactory[SimpleArraySet] {
-  implicit def canBuildFrom[A]: CanBuildFrom[Coll, A, SimpleArraySet[A]] = setCanBuildFrom[A]
+object SimpleArraySet extends IterableFactory[SimpleArraySet] {
 
   /** Returns an empty set with default hints. */
   override def empty[A]: SimpleArraySet[A] = new SimpleArraySet[A](ArraySet.Hints())
@@ -268,14 +270,17 @@ object SimpleArraySet extends MutableSetFactory[SimpleArraySet] {
     * @param from $FROM
     */
   protected class CheckingBuilder[A](from: ArraySet[A])
-      extends GrowingBuilder[A, SimpleArraySet[A]](emptyWithPropagatedHints(from))
+      extends GrowableBuilder[A, SimpleArraySet[A]](emptyWithPropagatedHints(from))
 
   /** An `ArraySet` builder without duplicate checking.
     *
     * @param from $FROM
     */
   protected class NonCheckingBuilder[A, B](from: ArraySet[A])
-      extends GrowingBuilder[B, SimpleArraySet[B]](emptyWithPropagatedHints[A, B](from)) {
-    override def +=(x: B): this.type = { elems +=! x; this }
+      extends GrowableBuilder[B, SimpleArraySet[B]](emptyWithPropagatedHints[A, B](from)) {
+    override def addOne(x: B): this.type = { elems +=! x; this }
   }
+
+  override def from[A](source: IterableOnce[A]) = empty ++= source
+  override def newBuilder[A] = new GrowableBuilder[A, SimpleArraySet[A]](empty)
 }

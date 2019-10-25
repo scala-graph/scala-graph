@@ -8,22 +8,19 @@ import scalax.collection.generic.GraphCoreCompanion
 
 import org.scalatest._
 
-import org.scalatest.junit.JUnitRunner
 import org.scalatest.refspec.RefSpec
-import org.junit.runner.RunWith
 
 import Flight.ImplicitEdge, Helper._
 
 import scalax.collection.visualization.Visualizer
 
-@RunWith(classOf[JUnitRunner])
 class TFlightRootTest
     extends Suites(
       new TFlight[scalax.collection.immutable.Graph](scalax.collection.immutable.Graph),
       new TFlight[scalax.collection.mutable.Graph](scalax.collection.mutable.Graph)
     )
 
-class TFlight[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
+class TFlight[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers
     with Visualizer[CC] {

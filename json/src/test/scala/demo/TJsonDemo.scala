@@ -8,10 +8,6 @@ import scalax.collection.io.json.descriptor.predefined.{Di, DiHyper}
 
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
-@RunWith(classOf[JUnitRunner])
 class TJsonDemoTest extends RefSpec with Matchers {
   val (programming, inDepth) = (
     Book("Programming in Scala", "978-0-9815316-2-5"),

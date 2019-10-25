@@ -9,10 +9,6 @@ import scalax.collection.GraphEdge._
 import generic.GraphConstrainedCompanion
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
-@RunWith(classOf[JUnitRunner])
 class TConstrainedRootTest
     extends Suites(
       new TConstrained[immutable.Graph](immutable.Graph),

@@ -3,15 +3,12 @@ package scalax.collection
 import scala.language.higherKinds
 
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
 import org.scalatest.refspec.RefSpec
-import org.junit.runner.RunWith
 
 import GraphPredef._, GraphEdge._, edge._, edge.LBase._, edge.Implicits._
 
 import custom.flight._, custom.flight.Helper._
 
-@RunWith(classOf[JUnitRunner])
 class TEdgeTest extends RefSpec with Matchers {
 
   object `WDiEdge ` {
@@ -38,7 +35,7 @@ class TEdgeTest extends RefSpec with Matchers {
     }
   }
 
-  trait OrderedEndpointsTest[E[X] <: EdgeLike[X]] {
+  trait OrderedEndpointsTest[E[+X] <: EdgeLike[X]] {
 
     def ordered(edges: Traversable[_]): Boolean =
       edges forall (_.isInstanceOf[OrderedEndpoints])
@@ -192,11 +189,13 @@ class TEdgeTest extends RefSpec with Matchers {
     }
 
     def `LkDiHyperEdge equality` {
-      val e  = LkDiHyperEdge(1, 2, 3)("a")
-      val g  = Graph[Int, LHyperEdge](e)
-      val eo = g.edges.head.toOuter
+      val e1 = LkDiHyperEdge(1, 2, 3)("a")
+      val e2 = LkDiHyperEdge(10, 11, 12, 13, 14, 15, 16)("b")
+      val g  = Graph[Int, LHyperEdge](e1, e2)
+      val List(eo1, eo2) = g.edges.toOuter.toList
 
-      g find eo should be('defined)
+      g find eo1 should be('defined)
+      g find eo2 should be('defined)
     }
   }
 }

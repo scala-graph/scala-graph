@@ -8,27 +8,24 @@ import generic.GraphCompanion
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 
 /** This wrapper trait enables to transparently pass `GraphCompanion` objects with
   *  non-default configuration parameters to tests in a type-safe way. */
-trait ConfigWrapper[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] {
+trait ConfigWrapper[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] {
   val companion: GraphCompanion[CC]
   implicit val config: companion.Config
-  def empty[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: companion.Config): CC[N, E] =
+  def empty[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: companion.Config): CC[N, E] =
     companion.empty
-  def apply[N, E[X] <: EdgeLikeIn[X]](elems: Param[N, E]*)(implicit edgeT: ClassTag[E[N]], config: companion.Config) =
+  def apply[N, E[+X] <: EdgeLikeIn[X]](elems: Param[N, E]*)(implicit edgeT: ClassTag[E[N]], config: companion.Config) =
     companion(elems: _*)
-  def from[N, E[X] <: EdgeLikeIn[X]](edges: collection.Iterable[E[N]])(implicit edgeT: ClassTag[E[N]],
+  def from[N, E[+X] <: EdgeLikeIn[X]](edges: collection.Iterable[E[N]])(implicit edgeT: ClassTag[E[N]],
                                                                        config: companion.Config) =
     companion.from(edges = edges)
-  def from[N, E[X] <: EdgeLikeIn[X]](nodes: collection.Iterable[N], edges: collection.Iterable[E[N]])(
+  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: collection.Iterable[N], edges: collection.Iterable[E[N]])(
       implicit edgeT: ClassTag[E[N]],
       config: companion.Config) = companion.from(nodes, edges)
 }
 
-@RunWith(classOf[JUnitRunner])
 class TEditRootTest
     extends Suites(
       new TEdit[Graph](new ConfigWrapper[Graph] {
@@ -47,7 +44,6 @@ class TEditRootTest
       new TEditMutable
     )
 
-@RunWith(classOf[JUnitRunner])
 class TEditImmutable extends RefSpec with Matchers {
   object `graphs ` {
     def `are immutable by default` {
@@ -56,13 +52,12 @@ class TEditImmutable extends RefSpec with Matchers {
     }
     def `yield another graph when mapped` {
       val g                                 = immutable.Graph(1 ~ 2)
-      val m: immutable.Graph[Int, UnDiEdge] = g map Helper.icrementNode
+      val m: immutable.Graph[Int, UnDiEdge] = g map Helper.incrementNode
       m.edges.head should be(UnDiEdge(2, 3))
     }
   }
 }
 
-@RunWith(classOf[JUnitRunner])
 class TEditMutable extends RefSpec with Matchers {
   object `mutable graphs` {
     def `serve += properly` {
@@ -98,6 +93,53 @@ class TEditMutable extends RefSpec with Matchers {
       g += di; directed(true)
       g += unDi; directed(false)
       g.clear; directed(true)
+    }
+    def `serve size` {
+      val g0 = mutable.Graph.empty
+      (g0.size, g0.graphSize) should be (0, 0)
+
+      val g1 = mutable.Graph(1)
+      (g1.size, g1.graphSize) should be (1, 0)
+
+      val g2 = mutable.Graph(1, 2)
+      (g2.size, g2.graphSize) should be (2, 0)
+
+      val g3 = mutable.Graph(1 ~> 2)
+      (g3.size, g3.graphSize) should be (3, 1)
+
+      val g4 = mutable.Graph(1 ~> 2, 3)
+      (g4.size, g4.graphSize) should be (4, 1)
+
+      val g5 = mutable.Graph(1 ~> 2, 2 ~ 3)
+      (g5.size, g5.graphSize) should be (5, 2)
+    }
+    def `serve clear` {
+      type G = mutable.Graph[Int, UnDiEdge]
+      def checkSizeAroundClear(g: G, beforeSize: Int) = {
+        g.size should be (beforeSize)
+        g.clear()
+        g.nodes.size should be (0)
+        g.edges.size should be (0)
+        g.size should be (0)
+        g should be (empty)
+      }
+      val g0: G = mutable.Graph.empty
+      checkSizeAroundClear(g0, 0)
+
+      val g1: G = mutable.Graph(1)
+      checkSizeAroundClear(g1, 1)
+
+      val g2: G = mutable.Graph(1, 2)
+      checkSizeAroundClear(g2, 2)
+
+      val g3: G = mutable.Graph(1 ~> 2)
+      checkSizeAroundClear(g3, 3)
+
+      val g4: G = mutable.Graph(1 ~> 2, 3)
+      checkSizeAroundClear(g4, 4)
+
+      val g5: G = mutable.Graph(1 ~> 2, 2 ~ 3)
+      checkSizeAroundClear(g5, 5)
     }
     def `serve 'diSuccessors' when directed` {
       val (one, two, oneOne, oneTwo) = (1, 2, 1 ~> 1, 1 ~> 2)
@@ -165,6 +207,8 @@ class TEditMutable extends RefSpec with Matchers {
       h should have('order (2), 'graphSize (1))
       h +~= (0, 1, 2, 3)
       h should have('order (4), 'graphSize (2))
+      h +~= (11, 12, 13, 14, 15, 16) // edge with at least 6 endpoints will trigger use of NodeProduct
+      h should have('order (10), 'graphSize (3))
     }
     def `serve +~%= for weighted edeges` {
       val g          = mutable.Graph(2 ~ 3)
@@ -260,13 +304,13 @@ class TEditMutable extends RefSpec with Matchers {
     def `yield another graph when mapped` {
       import mutable.Graph
       val g                       = Graph(1 ~ 2)
-      val m: Graph[Int, UnDiEdge] = g map Helper.icrementNode
+      val m: Graph[Int, UnDiEdge] = g map Helper.incrementNode
       m.edges.head should be(UnDiEdge(2, 3))
     }
   }
 }
 
-class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: ConfigWrapper[CC])
+class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: ConfigWrapper[CC])
     extends RefSpec
     with Matchers {
 
@@ -326,6 +370,7 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
 
       factory(1 ~ 2).isHyper should be(false)
       hyper(factory(1 ~> 2, 1 ~ 2 ~ 3), true)
+      hyper(factory(1 ~> 2 ~> 3 ~> 4 ~> 5 ~> 6), true)
       hyper(factory(1 ~> 2), false)
     }
     def `isMulti ` {
@@ -420,7 +465,7 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
     }
     def `CanBuildFrom UnDi` {
       val g                       = factory(0, 1 ~ 2)
-      val m: Graph[Int, UnDiEdge] = g map Helper.icrementNode
+      val m: Graph[Int, UnDiEdge] = g map Helper.incrementNode
       m find 1 should be('defined)
       m.edges.head should be(UnDiEdge(2, 3))
     }
@@ -430,7 +475,7 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
       m.edges.head should be("1" ~ "2")
     }
     def `NodeSet ` {
-      val o = Array.range(0, 4)
+      val o = Range(0, 4)
       val g = factory(o(1) ~ o(2), o(2) ~ o(3))
       val n = o map (g.nodes find _ getOrElse g.nodes.head)
 
@@ -501,10 +546,12 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
         (g get 3 diSuccessors) should be(Set(4))
       }
       def `for DiHyper` {
-        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9)
+        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9, 11 ~> 12 ~> 13 ~> 14 ~> 15 ~> 16)
         (h get 1 diSuccessors) should be(Set(2, 3, 4, 5, 9))
         (h get 2 diSuccessors) should be(Set.empty)
         (h get 5 diSuccessors) should be(Set.empty)
+        (h get 11 diSuccessors) should be(Set(12, 13, 14, 15, 16))
+        (h get 12 diSuccessors) should be(Set.empty)
       }
     }
     object `diPredecessors ` {
@@ -524,10 +571,12 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
         (g get 3 diSuccessors) should be(Set(4))
       }
       def `for DiHyper` {
-        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9)
+        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9, 11 ~> 12 ~> 13 ~> 14 ~> 15 ~> 16)
         (h get 1 diPredecessors) should be(Set.empty)
         (h get 2 diPredecessors) should be(Set(1))
         (h get 5 diPredecessors) should be(Set(1))
+        (h get 12 diPredecessors) should be(Set(11))
+        (h get 16 diPredecessors) should be(Set(11))
       }
     }
     object `neighbors ` {
@@ -542,10 +591,12 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
         (g get 2 neighbors) should be(Set(1))
       }
       def `for DiHyper` {
-        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9)
+        val h = factory(1 ~> 1 ~> 5, 1 ~> 2 ~> 5, 1 ~> 3 ~> 5, 1 ~> 4 ~> 9, 11 ~> 12 ~> 13 ~> 14 ~> 15 ~> 16)
         (h get 1 neighbors) should be(Set(2, 3, 4, 5, 9))
         (h get 2 neighbors) should be(Set(1, 5))
         (h get 5 neighbors) should be(Set(1, 2, 3))
+        (h get 11 neighbors) should be(Set(12, 13, 14, 15, 16))
+        (h get 15 neighbors) should be(Set(11, 12, 13, 14, 16))
       }
     }
     def `findOutgoingTo Di` {
@@ -604,7 +655,7 @@ class TEdit[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
   }
 }
 private object Helper {
-  def icrementNode(p: Param[Int, UnDiEdge]): Param[Int, UnDiEdge] = p match {
+  def incrementNode(p: Param[Int, UnDiEdge]): Param[Int, UnDiEdge] = p match {
     case out: OutParam[_, _] =>
       out match {
         case InnerNodeParam(n) => OuterNode(n + 1)
@@ -625,3 +676,4 @@ private object Helper {
       }
   }
 }
+

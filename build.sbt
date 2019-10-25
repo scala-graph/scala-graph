@@ -10,7 +10,7 @@ lazy val all = project
       publishTo := None
     )
   )
-  .aggregate(core, constrained, dot, json)
+  .aggregate(core/*, constrained, dot, json*/)
 
 lazy val core = project
   .in(file("core"))
@@ -22,15 +22,25 @@ lazy val core = project
         "org.scalacheck" %% "scalacheck"   % "1.14.0" % "optional;provided",
         "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all"
       ),
-      dependencyOverrides ++= Seq(
-        "org.netbeans.modules" % "org-netbeans-core"              % "RELEASE90" % "test",
-        "org.netbeans.modules" % "org-netbeans-core-startup-base" % "RELEASE90" % "test",
-        "org.netbeans.modules" % "org-netbeans-modules-masterfs"  % "RELEASE90" % "test",
-        "org.netbeans.api"     % "org-openide-util-lookup"        % "RELEASE90" % "test",
-      )
+      dependencyOverrides ++= {
+        val release                        = "RELEASE90"
+        def netbeansModule(module: String) = "org.netbeans.modules" % module % release
+        def netbeansApi(module: String)    = "org.netbeans.api" % module % release
+        Seq(
+          netbeansModule("org-netbeans-core"),
+          netbeansModule("org-netbeans-core-startup-base"),
+          netbeansModule("org-netbeans-modules-masterfs"),
+          netbeansApi("org-openide-util-lookup"),
+          netbeansApi("org-openide-filesystems"),
+          netbeansApi("org-openide-util-ui"),
+          netbeansApi("org-openide-dialogs"),
+          netbeansApi("org-openide-nodes"),
+          netbeansApi("org-netbeans-api-annotations-common")
+        )
+      }
     )
   )
-
+/*
 lazy val constrained = project
   .in(file("constrained"))
   .dependsOn(core % "compile->compile;test->test")
@@ -72,39 +82,35 @@ lazy val misc = project
       version := Version.misc
     )
   )
-
+*/
 ThisBuild / resolvers ++= Seq(
-  "NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/",
+  ("NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/").withAllowInsecureProtocol(true),
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
 )
 
 ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
 
+val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
-  scalaVersion := Version.compiler_2_12,
+  scalaVersion := Version.compiler_2_13,
   crossScalaVersions := Seq(Version.compiler_2_12, Version.compiler_2_13),
   organization := "org.scala-graph",
   scalacOptions ++= Seq(
-    "-Ywarn-unused:imports",
-    "-Yrangepos"
+    unusedImports,
+    "-Yrangepos",
+    "-Ywarn-unused:privates"
   ),
-  Compile / scalacOptions in compile += "-Ywarn-unused:privates",
-  addCompilerPlugin(scalafixSemanticdb("4.2.0")),
+  Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports),
+  //addCompilerPlugin(scalafixSemanticdb),
   Test / parallelExecution := false,
   Compile / doc / scalacOptions ++=
     Opts.doc.title(name.value) ++
       Opts.doc.version(version.value),
-  // prevents sbteclipse from including java source directories
-  Compile / unmanagedSourceDirectories := (Compile / scalaSource)(Seq(_)).value,
-  Test / unmanagedSourceDirectories := (Test / scalaSource)(Seq(_)).value,
   Compile / doc / scalacOptions ++= List("-diagrams", "-implicits"),
   Compile / doc / scalacOptions ++= (baseDirectory map { d =>
     Seq("-doc-root-content", (d / "rootdoc.txt").getPath)
   }).value,
   autoAPIMappings := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Test"))),
-  libraryDependencies ++= Seq(
-    "junit"         % "junit"      % "4.12"  % "test",
-    "org.scalatest" %% "scalatest" % "3.0.8" % "test"
-  )
+  libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % "test"
 ) ++ GraphSonatype.settings

@@ -1,7 +1,11 @@
 language: scala
 scala:
-   - 2.12.8
+   - 2.13.1
 jdk:
-  - oraclejdk8
+  - oraclejdk11
 script:
-  - sbt test scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
+  - sbt +test
+#scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
+cache:
+  directories:
+    - $HOME/.ivy2/cache

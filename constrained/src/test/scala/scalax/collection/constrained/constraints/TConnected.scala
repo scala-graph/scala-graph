@@ -5,15 +5,11 @@ import scala.language.higherKinds
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import generic.GraphConstrainedCompanion
 import scalax.collection.mutable.{Graph => SimpleGraph}
 
-@RunWith(classOf[JUnitRunner])
 class TConnectedRootTest
     extends Suites(
       new TConnected[immutable.Graph](immutable.Graph),

@@ -5,7 +5,7 @@ import language.higherKinds
 import GraphPredef.{EdgeLikeIn, _}
 import edge.Implicits._
 
-abstract class TGraph[N, E[X] <: EdgeLikeIn[X], G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+abstract class TGraph[N, E[+X] <: EdgeLikeIn[X], G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
     val g: G[N, E]) {
   def node(outer: N): g.NodeT    = g get outer
   def n(outer: N): g.NodeT       = node(outer)

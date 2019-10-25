@@ -4,10 +4,6 @@ import org.scalatest.Suites
 
 import scalax.collection.{ConfigWrapper, TEdit}
 
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
-@RunWith(classOf[JUnitRunner])
 class TEditRootTest
     extends Suites(
       new TEdit[Graph](new ConfigWrapper[Graph] {

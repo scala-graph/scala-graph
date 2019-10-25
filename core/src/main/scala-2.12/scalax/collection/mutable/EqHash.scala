@@ -4,7 +4,6 @@ import scala.collection.Util.nextPositivePowerOfTwo
 import scala.collection.mutable.Builder
 
 trait EqHash[A <: AnyRef, This <: EqHash[A, This]] {
-
   this: TraversableOnce[A] with Builder[A, This] with Equals =>
 
   protected def sizeHint: Int
@@ -67,7 +66,7 @@ trait EqHash[A <: AnyRef, This <: EqHash[A, This]] {
     index(maskedKey, hash(maskedKey, len, step - 1), len)
   }
 
-  override def clear {
+  override def clear() {
     java.util.Arrays.fill(table, null)
     _size = 0
   }

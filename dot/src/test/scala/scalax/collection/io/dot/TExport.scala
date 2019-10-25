@@ -9,11 +9,7 @@ import Indent._
 
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 /** Tests [[Export]]. */
-@RunWith(classOf[JUnitRunner])
 class TExportTest extends RefSpec with Matchers {
 
   def `Example at http://en.wikipedia.org/wiki/DOT_language will be produced` {

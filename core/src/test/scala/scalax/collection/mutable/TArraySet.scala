@@ -3,15 +3,12 @@ package mutable
 
 import collection.mutable.{Set => MutableSet}
 
-import edge.LkDiEdge, edge.WUnDiEdge, edge.Implicits._
+import edge.LkDiEdge, edge.WUnDiEdge
 import immutable.SortedArraySet
 
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 
-@RunWith(classOf[JUnitRunner])
 class TArraySetTest extends RefSpec with Matchers {
 
   implicit val hints = ArraySet.Hints(4, 4, 12, 100)
@@ -56,8 +53,8 @@ class TArraySetTest extends RefSpec with Matchers {
         (for (i <- 1 to toAdd) yield edges.draw)
       arr.compact
       arr.capacity should be(toAdd)
-
     }
+
     def `may be configured to be represented solely by a HashSet` {
       val edges = new LkDiEdgeGenerator
       val arr   = ArraySet.emptyWithHints[LkDiEdge[Int]](ArraySet.Hints.HashOnly)
@@ -101,7 +98,7 @@ class TArraySetTest extends RefSpec with Matchers {
       filtered0.hints.initialCapacity should equal(arr.size)
 
       for (i <- 1 to hints.capacityIncrement) arr += edges.draw
-      val filteredEven = arr filter (_ % 2 == 0)
+      val filteredEven = arr filter (_.label.asInstanceOf[Int] % 2 == 0)
       filteredEven.hints.initialCapacity should equal(arr.size)
     }
 
@@ -130,26 +127,29 @@ class TArraySetTest extends RefSpec with Matchers {
     }
 
     object `supports upsert` {
-      def upsert(toAdd: Int) {
+      def upsert(setSize: Int) {
         val edges = new WUnDiEdgeGenerator
         val pos   = 1
-        pos < toAdd should be(true)
+        pos < setSize should be(true)
 
         val arr = ArraySet.emptyWithHints[WUnDiEdge[Int]] ++=
-          (for (i <- 1 to toAdd) yield edges.draw)
-        arr.size should be(toAdd)
+          (for (i <- 1 to setSize) yield edges.draw)
+        arr.size should be(setSize)
 
         def edge = arr.drop(pos).head
         edge match {
           case WUnDiEdge(n1, n2, w) =>
             val newWeight = w + 1
-            val res       = arr.upsert(WUnDiEdge(n1, n2)(newWeight))
-            res should be(false) // updated
+            val toUpsert = WUnDiEdge(n1, n2)(newWeight)
+            toUpsert should be(edge)
+
+            val inserted  = arr.upsert(toUpsert)
+            inserted should === (false)
             edge.weight should be(newWeight)
         }
-        arr.size should be(toAdd)
-        (arr upsert edges.draw) should be(true) // inserted
-        arr.size should be(toAdd + 1)
+        arr.size should be(setSize)
+        (arr upsert edges.draw) should === (true)
+        arr.size should be(setSize + 1)
       }
       def `when represented by an Array` {
         upsert(hints.hashTableThreshold - 3)

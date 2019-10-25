@@ -2,11 +2,11 @@ package scala.collection
 
 import scala.util.Random
 
-trait ExtSetMethods[A] {
+trait ExtSetMethods[A] extends FilterableSet[A] {
   this: Set[A] =>
 
-  /** Returns a random element of the set if it is `nonEmpty` otherwise throws
-    *  `IllegalArgumentException`.
+  /** Returns a random element of the set if it is `nonEmpty` otherwise throws `IllegalArgumentException`.
+    * Note that currently a near- but no true-uniform distribution is granted to allow for O(1) implementation.
     *
     *  @param random a random generator; it is essential that `random` be instantiated
     *                by the caller just once for any sequence of calls
@@ -23,5 +23,6 @@ trait ExtSetMethods[A] {
     *  @param correspond function returning whether  a given entry corresponds to `other`
     *  @return the entry corresponding to `toMatch` or null if not contained
     */
-  protected def findElem[B](toMatch: B, correspond: (A, B) => Boolean): A
+  // TODO can this become protected?
+  def findElem[B](toMatch: B, correspond: (A, B) => Boolean): A
 }

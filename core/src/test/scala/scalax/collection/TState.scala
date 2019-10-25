@@ -7,17 +7,15 @@ import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.util.Random
 
-import GraphPredef._, GraphEdge._
+import GraphEdge._
 import generator.{NodeDegreeRange, RandomGraph}
 
+import org.scalatest.Inspectors._
 import org.scalatest.refspec.RefSpec
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 
 /** Ensure that stateful data handling used for traversals is thread-safe.
   */
-@RunWith(classOf[JUnitRunner])
 class TStateTest extends RefSpec with Matchers {
   val g = Graph(Data.elementsOfUnDi_2: _*)
 
@@ -104,12 +102,9 @@ class TStateTest extends RefSpec with Matchers {
       val (n1, n2)      = (n(2), n(5))
 
       val times = 200000
-      def run: Boolean =
-        (1 to times).par forall { i =>
-          (n1 pathTo n2).nonEmpty
-        }
-      for (i <- 1 to 3)
-        run should be(true)
+      def run: Future[Seq[Boolean]] = Future.sequence((1 to times) map (_ => Future(n1 pathTo n2) map (_.nonEmpty)))
+      val bulks: Future[Seq[Boolean]] = Future.sequence((1 to 3) map (_ => run)) map (_.flatten)
+      forAll (Await.result(bulks, 50.seconds)) (_ should be(true))
     }
   }
 }

@@ -16,10 +16,6 @@ import descriptor._
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
-@RunWith(classOf[JUnitRunner])
 class TCustomEdgeRootTest
     extends Suites(new TCustomEdge[immutable.Graph](immutable.Graph), new TCustomEdge[mutable.Graph](mutable.Graph))
 

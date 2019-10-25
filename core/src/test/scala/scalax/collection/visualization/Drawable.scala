@@ -45,7 +45,7 @@ trait Drawable {
     * @tparam N type of node
     * @tparam E type of edge
     */
-  def makeImage[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E], path: String, name: String): Try[File] = {
+  def makeImage[N, E[+X] <: EdgeLikeIn[X]](g: Graph[N, E], path: String, name: String): Try[File] = {
 
     def initWorkspace: Workspace = {
       val pc: ProjectController = assertedLookup(classOf[ProjectController])
@@ -130,7 +130,7 @@ trait Drawable {
     * @tparam E type of edge
     * @return container
     */
-  def toContainer[N, E[X] <: EdgeLikeIn[X]](g: Graph[N, E]): Try[Container] = Try {
+  def toContainer[N, E[+X] <: EdgeLikeIn[X]](g: Graph[N, E]): Try[Container] = Try {
 
     val container: Container    = assertedLookup(classOf[Container.Factory]).newContainer
     val loader: ContainerLoader = container.getLoader
@@ -151,8 +151,8 @@ trait Drawable {
       loader.addEdge(e)
     }
 
-    val isWeighted                          = g.edges.exists(_.weight != 1.0)
-    val nodeDrafts: Map[g.NodeT, NodeDraft] = g.nodes.map(n => n -> addNode(lbl = n.toString))(collection.breakOut)
+    val isWeighted = g.edges.exists(_.weight != 1.0)
+    val nodeDrafts = g.nodes.map(n => n -> addNode(lbl = n.toString)).toMap
 
     implicit final class EdgeG(edge: g.EdgeT) {
 

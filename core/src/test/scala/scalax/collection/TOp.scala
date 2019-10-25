@@ -7,16 +7,13 @@ import generic.GraphCoreCompanion
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 
 import scalax.collection.visualization.Visualizer
 
-@RunWith(classOf[JUnitRunner])
 class TOpRootTest
     extends Suites(new TOp[immutable.Graph](immutable.Graph), new TOp[mutable.Graph](mutable.Graph), new TMutableOp)
 
-class TOp[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
+class TOp[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers
     with Visualizer[CC] {

@@ -14,10 +14,6 @@ import scalax.collection.io.json.descriptor.StringNodeDescriptor
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
-@RunWith(classOf[JUnitRunner])
 class TGraphSerializerRootTest
     extends Suites(
       new TGraphSerializer[immutable.Graph](immutable.Graph),
