@@ -1,11 +1,10 @@
 language: scala
 scala:
-   - 2.13.0
-#  - 2.12.8
+   - 2.13.1
 jdk:
   - oraclejdk11
 script:
-  - sbt test 
+  - sbt +test
 #scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
 cache:
   directories:

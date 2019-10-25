@@ -1,5 +1,8 @@
 package scalax.collection.immutable
 
+import scala.collection.immutable.Set
+
+import scalax.collection.Compat.InclExcl
 import scalax.collection.mutable.EqHashMap
 
 /** Wrapper class mimicking a `scala.collection.immutable.Set`
@@ -7,7 +10,7 @@ import scalax.collection.mutable.EqHashMap
   *
   *  @define ON Creates a new `Set` as an O(N) operation
   */
-final class EqSet[K <: AnyRef](map: EqHashMap[K, _]) extends Set[K] {
+final class EqSet[K <: AnyRef](map: EqHashMap[K, _]) extends Set[K] with InclExcl[K, Set[K]] {
 
   def contains(key: K) = map contains key
   def iterator         = map.keysIterator

@@ -4,7 +4,7 @@ import language.higherKinds
 
 import scala.annotation.{switch, tailrec}
 import scala.collection.{Seq, AbstractIterable, EqSetFacade, IndexedSeq}
-import scala.collection.mutable.{ArrayBuffer, Buffer, Stack, Map => MMap}
+import scala.collection.mutable.{ArrayBuffer, Buffer, ArrayStack => Stack, Map => MMap}
 import GraphPredef.{EdgeLikeIn, OuterEdge, OuterElem}
 import mutable.{EqHashMap, EqHashSet}
 
@@ -110,7 +110,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
 
     final protected def resultEdges = lastEdge.fold[IndexedSeq[EdgeT]](
       ifEmpty = edges
-    )(_ => edges.view(0, edges.size - 1).to(IndexedSeq))
+    )(_ => edges.view(0, edges.size - 1).toIndexedSeq)
 
     def result: Walk = new Walk {
       val nodes     = self.nodes
@@ -584,7 +584,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
 
     override def iterator = source.map(_.node).iterator
 
-    override def className = "Nodes"
+    override def stringPrefix = "Nodes"
 
     private[this] var _size: Option[Int] = None
     @inline override val size: Int       = _size getOrElse super.size
@@ -634,7 +634,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
     */
   final protected class MapPathTraversable[T](map: MMap[T, T], to: T, start: T) extends Iterable[T] {
 
-    override def className = "Nodes"
+    override def stringPrefix = "Nodes"
 
     private lazy val s: Seq[T] = {
       val stack: Stack[T] = Stack.empty[T]
@@ -677,7 +677,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
 
     final lazy val edges = {
       val buf = new ArrayBuffer[EdgeT](nodes.size) {
-        override def className = "Edges"
+        override def stringPrefix = "Edges"
       }
       nodes.tail.foldLeft(nodes.head) { (prev: NodeT, n: NodeT) =>
         buf += selectEdge(prev, n)
@@ -724,7 +724,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
 
     final lazy val edges = {
       val buf = new ArrayBuffer[EdgeT](nodes.size) {
-        override def className = "Edges"
+        override def stringPrefix = "Edges"
       }
       val isDiGraph = thisGraph.isDirected
       nodes.source.tail.foldLeft(nodes.head) { (prev: NodeT, elem: CycleStackElem) =>

@@ -257,7 +257,7 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
 
         val path = n(from) shortestPathTo n(to)
         path shouldBe defined
-        path.get.nodes.to(Stream)
+        path.get.nodes.toStream
       }
       shortestPathNodes(2, 5) should contain theSameElementsInOrderAs Array(2, 3, 4, 5)
       shortestPathNodes(4, 5) should contain theSameElementsInOrderAs Array(4, 5)

@@ -38,7 +38,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     * @param nodes $INNODES
     * @param edges $INEDGES
     */
-  protected def initialize(nodes: Iterable[N], edges: Iterable[E[N]]) {
+  protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]) {
     this.nodes.initialize(nodes, edges)
     this.edges.initialize(edges)
   }
@@ -400,8 +400,8 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       * @param nodes $INNODES
       * @param edges $INEDGES
       */
-    protected[collection] def initialize(nodes: Iterable[N], edges: Iterable[E[N]]): Unit
-    override def className: String = "NodeSet"
+    protected[collection] def initialize(nodes: Traversable[N], edges: Traversable[E[N]]): Unit
+    override def stringPrefix: String = "NodeSet"
 
     /** Sorts all nodes according to `ord` and concatenates them using `separator`.
       *
@@ -457,7 +457,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
 
     def draw(random: Random): NodeT
 
-    override def diff(that: AnySet[NodeT]) = this -- that
+    def diff(that: AnySet[NodeT]) = this -- that
   }
 
   /** The node (vertex) set of this `Graph` commonly referred to as V(G).
@@ -518,8 +518,8 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     }
 
     // TODO do we want to keep this? Iterable no longer extends trait Equals (previously through IterableLike)
-    def canEqual(that: Any) = that.isInstanceOf[GraphBase[N, E]#InnerEdge] ||
-      that.isInstanceOf[EdgeLike[_]]
+//    def canEqual(that: Any) = that.isInstanceOf[GraphBase[N, E]#InnerEdge] ||
+//      that.isInstanceOf[EdgeLike[_]]
     override def equals(other: Any) = other match {
       case that: GraphBase[N, E]#InnerEdge =>
         (this eq that) ||
@@ -628,9 +628,9 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       *
       * @param edges $INEDGES
       */
-    protected[collection] def initialize(edges: Iterable[E[N]]): Unit
+    protected[collection] def initialize(edges: Traversable[E[N]]): Unit
     def contains(node: NodeT): Boolean
-    override def className: String = "EdgeSet"
+    override def stringPrefix: String = "EdgeSet"
 
     /** Sorts all edges according to `ord` and concatenates them using `separator`.
       *
@@ -684,7 +684,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       }
     }
 
-    override def diff(that: AnySet[EdgeT]) = this -- that
+    def diff(that: AnySet[EdgeT]) = this -- that
   }
 
   /** The edge set of this `Graph` commonly referred to as E(G).
@@ -692,7 +692,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     * @return Set of all contained edges.
     */
   def edges: EdgeSetT
-  def totalWeight = (0d /: edges)(_ + _.weight)
+  def totalWeight = edges.foldLeft(0d)(_ + _.weight)
 }
 
 object GraphBase {

@@ -2,7 +2,6 @@ package scalax.collection
 package immutable
 
 import language.higherKinds
-
 import GraphPredef.EdgeLikeIn
 import GraphEdge.OrderedEndpoints
 import mutable.ArraySet
@@ -54,7 +53,7 @@ trait AdjacencyListGraph[
     else new EdgeT(innerEdge)
 
   type EdgeSetT = EdgeSet
-  class EdgeSet extends super.EdgeSet {
+  class EdgeSet extends super.EdgeSet with Compat.InclExcl[EdgeT, Set[EdgeT]] {
     override protected[collection] def initialize(edges: Traversable[E[N]]): Unit =
       if (edges ne null)
         edges foreach (this += Edge(_))
@@ -65,8 +64,8 @@ trait AdjacencyListGraph[
     }
 
     @inline final protected[immutable] def addEdge(edge: EdgeT) { +=(edge) }
-    @inline final def addOne(edge: EdgeT): Set[EdgeT] = toSet + edge
-    @inline final def minusOne(edge: EdgeT): Set[EdgeT] = toSet - edge
+    @inline final def incl(edge: EdgeT) = toSet + edge
+    @inline final def excl(edge: EdgeT) = toSet - edge
 
     @inline final override lazy val maxArity        = super.maxArity
     @inline final override lazy val hasAnyMultiEdge = super.hasAnyMultiEdge

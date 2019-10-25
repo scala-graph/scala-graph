@@ -30,12 +30,12 @@ object MicroBenchmark {
     def times(x: NanoSecond, y: NanoSecond)             = num.times(x, y)
     def negate(x: NanoSecond)                           = num.negate(x)
     def fromInt(x: Int)                                 = x.toLong
-    def parseString(str: String)                        = num.parseString(str) map NanoSecond
     def toInt(x: NanoSecond)                            = x.value.toInt
     def toLong(x: NanoSecond)                           = x.value.toLong
     def toFloat(x: NanoSecond)                          = x.value.toFloat
     def toDouble(x: NanoSecond)                         = x.value.toDouble
     def compare(x: NanoSecond, y: NanoSecond)           = num.compare(x, y)
+    def parseString(str: String)                        = throw new UnsupportedOperationException()
   }
 
   sealed abstract class MeasurementResult[A](result: A) {

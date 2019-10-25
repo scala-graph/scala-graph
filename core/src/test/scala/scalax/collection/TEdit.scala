@@ -114,7 +114,8 @@ class TEditMutable extends RefSpec with Matchers {
       (g5.size, g5.graphSize) should be (5, 2)
     }
     def `serve clear` {
-      def checkSizeAroundClear[N, E[+X] <: EdgeLikeIn[X]](g: mutable.Graph[N,E], beforeSize: Int) = {
+      type G = mutable.Graph[Int, UnDiEdge]
+      def checkSizeAroundClear(g: G, beforeSize: Int) = {
         g.size should be (beforeSize)
         g.clear()
         g.nodes.size should be (0)
@@ -122,22 +123,22 @@ class TEditMutable extends RefSpec with Matchers {
         g.size should be (0)
         g should be (empty)
       }
-      val g0 = mutable.Graph.empty
+      val g0: G = mutable.Graph.empty
       checkSizeAroundClear(g0, 0)
 
-      val g1 = mutable.Graph(1)
+      val g1: G = mutable.Graph(1)
       checkSizeAroundClear(g1, 1)
 
-      val g2 = mutable.Graph(1, 2)
+      val g2: G = mutable.Graph(1, 2)
       checkSizeAroundClear(g2, 2)
 
-      val g3 = mutable.Graph(1 ~> 2)
+      val g3: G = mutable.Graph(1 ~> 2)
       checkSizeAroundClear(g3, 3)
 
-      val g4 = mutable.Graph(1 ~> 2, 3)
+      val g4: G = mutable.Graph(1 ~> 2, 3)
       checkSizeAroundClear(g4, 4)
 
-      val g5 = mutable.Graph(1 ~> 2, 2 ~ 3)
+      val g5: G = mutable.Graph(1 ~> 2, 2 ~ 3)
       checkSizeAroundClear(g5, 5)
     }
     def `serve 'diSuccessors' when directed` {

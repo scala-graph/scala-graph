@@ -84,7 +84,7 @@ lazy val misc = project
   )
 */
 ThisBuild / resolvers ++= Seq(
-  "NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/",
+  ("NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/").withAllowInsecureProtocol(true),
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
 )
 
@@ -93,7 +93,7 @@ ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
 val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion := Version.compiler_2_13,
-  crossScalaVersions := Seq(/*Version.compiler_2_12, */Version.compiler_2_13),
+  crossScalaVersions := Seq(Version.compiler_2_12, Version.compiler_2_13),
   organization := "org.scala-graph",
   scalacOptions ++= Seq(
     unusedImports,
@@ -106,9 +106,6 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   Compile / doc / scalacOptions ++=
     Opts.doc.title(name.value) ++
       Opts.doc.version(version.value),
-  // prevents sbteclipse from including java source directories
-  Compile / unmanagedSourceDirectories := (Compile / scalaSource)(Seq(_)).value,
-  Test / unmanagedSourceDirectories := (Test / scalaSource)(Seq(_)).value,
   Compile / doc / scalacOptions ++= List("-diagrams", "-implicits"),
   Compile / doc / scalacOptions ++= (baseDirectory map { d =>
     Seq("-doc-root-content", (d / "rootdoc.txt").getPath)

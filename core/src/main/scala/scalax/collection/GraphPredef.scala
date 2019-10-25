@@ -3,6 +3,7 @@ package scalax.collection
 import language.{higherKinds, implicitConversions}
 
 import scala.collection.{AbstractIterable, AbstractIterator, SeqFacade}
+
 import GraphEdge.{DiEdgeLike, DiHyperEdgeLike, EdgeCopy, EdgeLike}
 
 /** This object serves as a container for several `Graph`-related definitions like
@@ -212,7 +213,7 @@ object GraphPredef {
 
   implicit class TraversableEnrichments[N, T[X] <: Traversable[X]](val t: T[N]) extends AnyVal {
     def toOuterNodes[E[+X] <: EdgeLike[X]]: Seq[InParam[N, E]] =
-      t.view.map(toOuterNode[N, E]).to(Seq)
+      t.view.map(toOuterNode[N, E]).toSeq
   }
 
   private def toOuterNode[N, E[+X] <: EdgeLike[X]](node: N): InParam[N, E] =

@@ -1,5 +1,7 @@
 package scala.collection
 
+import scalax.collection.Compat.InclExcl
+
 /** Wraps the [[scala.collection.Iterable Iterable]] `i` to a
   *  [[scala.collection.Seq Seq]].
   *  It helps to avoid the creation of a copy of the elements of `i`
@@ -20,32 +22,20 @@ final class SeqFacade[+A](i: Iterable[A]) extends immutable.Seq[A] {
 }
 
 /** Wraps the [[scala.collection.Iterable Iterable]] `i` to a
-  *  [[scala.collection.immutable.Set Set]].
+  *  [[scala.collection.immutable.Set Set]] utilizing reference equality.
   *  It aims at efficiently creating a set in case the caller ensures that
   *  all elements in `i` are unique.
   *  `+` and `-` are O(N) returning [[scala.collection.immutable.Set]].
   *
   * @param i the underlying `Iterable` with unique elements.
   */
-class SetFacade[A](i: Iterable[A]) extends immutable.Set[A] {
-  def contains(elem: A)           = i exists (_ == elem)
-  final def iterator: Iterator[A] = i.iterator
-  final def incl(elem: A)         = i.toSet - elem
-  final def excl(elem: A)         = i.toSet + elem
+final class EqSetFacade[A <: AnyRef](i: Iterable[A]) extends immutable.Set[A] with InclExcl[A, immutable.Set[A]] {
+  def iterator: Iterator[A] = i.iterator
+  def incl(elem: A)         = i.toSet - elem
+  def excl(elem: A)         = i.toSet + elem
 
-  final override def size: Int = i.size
-}
-
-/** Wraps the [[scala.collection.Iterable Iterable]] `i` to a
-  *  [[scala.collection.immutable.Set Set]] utilizing reference equality.
-  *  It aims at efficiently creating a set in case the caller ensures that
-  *  all elements in `i` are unique.
-  *  `+` and `-` are O(N) returning [[scala.collection.immutable.Set]].
-  *
-  * @param t the underlying `Iterable` with unique elements.
-  */
-final class EqSetFacade[A <: AnyRef](t: Iterable[A]) extends SetFacade[A](t) {
-  override def contains(elem: A) = t exists (_ eq elem)
+  override def size: Int = i.size
+  override def contains(elem: A) = i exists (_ eq elem)
 }
 
 /** Template for sets having a `withFilter` that keeps `Set` semantics.
@@ -61,7 +51,7 @@ trait FilterableSet[A] {
 
 /** A `Set` implementation extended by `FilterableSet`.
   */
-final class FilteredSet[A](val set: Set[A], val p: (A) => Boolean) extends immutable.Set[A] with FilterableSet[A] {
+final class FilteredSet[A](val set: Set[A], val p: (A) => Boolean) extends immutable.Set[A] with FilterableSet[A] with InclExcl[A, immutable.Set[A]] {
   def contains(elem: A)     = p(elem) && (set contains elem)
   def iterator: Iterator[A] = set.iterator withFilter p
   def excl(elem: A)         = if (contains(elem)) iterator.toSet - elem else this

@@ -1,12 +1,12 @@
 package scalax.collection
 
-import language.higherKinds
-import collection.{IterableOnce, SetOps}
+import scala.language.higherKinds
+import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
 import GraphPredef.{EdgeLikeIn, InnerEdgeParam, InnerNodeParam, OuterEdge, OuterNode, Param}
-import GraphEdge.{DiHyperEdgeLike, Keyed, UnDiEdge}
-import generic.{GraphCompanion, GraphCoreCompanion}
+import GraphEdge.{DiEdge, DiHyperEdgeLike, Keyed, UnDiEdge}
+import generic.GraphCoreCompanion
 import config.GraphConfig
 
 /** A template trait for graphs.
@@ -28,8 +28,7 @@ import config.GraphConfig
 trait GraphLike[N,
                 E[+X] <: EdgeLikeIn[X],
                 +This[NN, EE[+XX] <: EdgeLikeIn[XX]] <: GraphLike[NN, EE, This] with AnySet[Param[NN, EE]] with Graph[NN, EE]]
-    extends AnySet[Param[N, E]]
-    with SetOps[Param[N, E], AnySet, This[N, E]]
+    extends GraphLikeBase[N, E, This]
     with GraphTraversal[N, E]
     with GraphBase[N, E]
     with GraphDegree[N, E] {
@@ -50,14 +49,8 @@ trait GraphLike[N,
   def isMulti: Boolean         = isMultiT || edges.hasAnyMultiEdge
   final protected val isMultiT = classOf[Keyed].isAssignableFrom(edgeT.runtimeClass)
 
-  /** The companion object of `This`. */
-  val graphCompanion: GraphCompanion[This]
   protected type Config <: GraphConfig
   implicit def config: graphCompanion.Config with Config
-
-  override def empty = graphCompanion.empty[N, E]
-  override protected def fromSpecific(coll: IterableOnce[Param[N, E]]): This[N, E] = graphCompanion.from(coll)
-  override protected def newSpecificBuilder = graphCompanion.newBuilder
 
   override def stringPrefix: String = "Graph"
 
@@ -327,9 +320,6 @@ trait GraphLike[N,
     case n: InnerNodeParam[N] => this + n.value
     case e: InnerEdgeParam[N, E, _, E] => this +# e.asEdgeT[N, E, ThisGraph](thisGraph).toOuter
   }
-  override def concat(elems: IterableOnce[Param[N, E]]): This[N, E] = bulkOp(elems, isPlusPlus = true)
-  override def diff(that: AnySet[Param[N, E]]): This[N, E] = this -- that // TODO is this correct?
-  override def --(elems: IterableOnce[Param[N, E]]): This[N, E] = bulkOp(elems, isPlusPlus = false)
 
   /** Prepares and calls `plusPlus` or `minusMinus`. */
   final protected def bulkOp(elems: IterableOnce[Param[N, E]], isPlusPlus: Boolean): This[N, E] = {
@@ -341,18 +331,18 @@ trait GraphLike[N,
   final protected def partition(elems: IterableOnce[Param[N, E]]) =
     new Param.Partitions[N, E](elems match {
       case t: Iterable[Param[N, E]]     => t
-      case g: IterableOnce[Param[N, E]] => g.iterator.to(Iterable)
+      case g: IterableOnce[Param[N, E]] => g.toIterable
       case _                            => throw new MatchError("Iterable expected.")
     })
 
   /** Implements the heart of `++` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */
-  protected def plusPlus(newNodes: Iterable[N], newEdges: Iterable[E[N]]): This[N, E] =
+  protected def plusPlus(newNodes: Traversable[N], newEdges: Traversable[E[N]]): This[N, E] =
     graphCompanion.from[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
 
   /** Implements the heart of `--` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */
-  protected def minusMinus(delNodes: Iterable[N], delEdges: Iterable[E[N]]): This[N, E] = {
+  protected def minusMinus(delNodes: Traversable[N], delEdges: Traversable[E[N]]): This[N, E] = {
     val delNodesEdges = minusMinusNodesEdges(delNodes, delEdges)
     graphCompanion.from[N, E](delNodesEdges._1, delNodesEdges._2)
   }
@@ -360,7 +350,7 @@ trait GraphLike[N,
   /** Calculates the `nodes` and `edges` arguments to be passed to a factory method
     *  when delNodes and delEdges are to be deleted by `--`.
     */
-  protected def minusMinusNodesEdges(delNodes: Iterable[N], delEdges: Iterable[E[N]]): (Set[N], Set[E[N]]) =
+  protected def minusMinusNodesEdges(delNodes: Traversable[N], delEdges: Traversable[E[N]]): (Set[N], Set[E[N]]) =
     (nodes.toOuter -- delNodes, {
       val delNodeSet = delNodes.toSet
       val restEdges =
@@ -494,10 +484,6 @@ trait GraphLike[N,
       }
     nodePred orElse edgePred
   }
-
-  def map[NN, EE[+X] <: EdgeLikeIn[X]](f: Param[N, E] => Param[NN, EE])(implicit edgeT: ClassTag[EE[NN]]): This[NN, EE] = {
-    graphCompanion.from(view.map(f))(edgeT, config)
-  }
 }
 
 // ----------------------------------------------------------------------------
@@ -512,6 +498,7 @@ trait GraphLike[N,
   */
 trait Graph[N, E[+X] <: EdgeLikeIn[X]] extends AnySet[Param[N, E]] with GraphLike[N, E, Graph] {
   override def empty: Graph[N, E] = Graph.empty[N, E]
+  override def knownSize = nodes.size + edges.size
 }
 
 /** The main companion object for immutable graphs.
@@ -523,19 +510,16 @@ object Graph extends GraphCoreCompanion[Graph] {
     immutable.Graph.newBuilder[N, E](edgeT, config)
   def empty[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.empty[N, E](edgeT, config)
-  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Nil, edges: Iterable[E[N]])(
+  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil, edges: Traversable[E[N]])(
       implicit edgeT: ClassTag[E[N]],
       config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(edgeT, config)
-  /*
-  // TODO build from... still needed?
-  implicit def cbfUnDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
+
+  implicit def cbfUnDi[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
     new GraphCanBuildFrom[N, E]()(edgeT, config)
       .asInstanceOf[GraphCanBuildFrom[N, E] with CanBuildFrom[Graph[_, UnDiEdge], Param[N, E], Graph[N, E]]]
 
-  implicit def cbfDi[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
+  implicit def cbfDi[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
     new GraphCanBuildFrom[N, E]()(edgeT, config)
       .asInstanceOf[GraphCanBuildFrom[N, E] with CanBuildFrom[Graph[_, DiEdge], Param[N, E], Graph[N, E]]]
-  */
 }
-

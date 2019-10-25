@@ -51,7 +51,7 @@ class TArraySetTest extends RefSpec with Matchers {
       val toAdd = hints.initialCapacity + 1
       val arr = ArraySet.emptyWithHints[LkDiEdge[Int]] ++=
         (for (i <- 1 to toAdd) yield edges.draw)
-      arr.compact()
+      arr.compact
       arr.capacity should be(toAdd)
     }
 
@@ -67,7 +67,7 @@ class TArraySetTest extends RefSpec with Matchers {
       arr += edges.draw
       check
 
-      arr.compact()
+      arr.compact
       check
     }
 

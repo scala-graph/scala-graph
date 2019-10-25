@@ -5,10 +5,9 @@ import java.io.{ObjectInputStream, ObjectOutputStream}
 
 import scala.language.higherKinds
 import scala.collection.generic.{CanBuildFrom, Growable, Shrinkable}
-import scala.collection.mutable.{Builder, Cloneable, ArrayBuffer, Set => MutableSet}
+import scala.collection.mutable.{ArrayBuffer, Builder, Cloneable, Set => MutableSet}
 import scala.reflect.ClassTag
 import scala.math.max
-
 import scalax.collection.{Graph => CommonGraph, GraphLike => CommonGraphLike}
 import GraphPredef.{EdgeLikeIn, InnerEdgeParam, InnerNodeParam, OuterEdge, OuterNode, Param}
 import generic.{GraphCompanion, MutableGraphCompanion}
@@ -20,7 +19,7 @@ abstract protected[collection] class BuilderImpl[
     E[+X] <: EdgeLikeIn[X],
     CC[N, E[+X] <: EdgeLikeIn[X]] <: CommonGraph[N, E] with CommonGraphLike[N, E, CC]](implicit edgeT: ClassTag[E[N]],
                                                                                       config: GraphConfig)
-    extends Builder[Param[N, E], CC[N, E]] {
+    extends Builder[Param[N, E], CC[N, E]] with Compat.Growable[Param[N, E]] {
 
   protected type This = CC[N, E]
   protected val nodes = new ArrayBuffer[N](config.orderHint)
@@ -40,14 +39,8 @@ abstract protected[collection] class BuilderImpl[
     }
   }
 
-  override def addOne(elem: Param[N, E]): this.type = {
+  def addOne(elem: Param[N, E]): this.type = {
     add(elem)
-    this
-  }
-
-  /* overridden for increased performance */
-  override def addAll(elems: TraversableOnce[Param[N, E]]): this.type = {
-    elems foreach add
     this
   }
 
@@ -86,7 +79,6 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
 
   type NodeSetT <: NodeSet
   trait NodeSet extends MutableSet[NodeT] with super.NodeSet {
-    @inline final override def subtractOne(node: NodeT): this.type = { remove(node); this }
     @inline final def -?=(node: NodeT): this.type = { removeGently(node); this }
 
     override def remove(node: NodeT): Boolean = subtract(node, rippleDelete = true, minus, minusEdges)
@@ -103,19 +95,17 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
   }
 
   type EdgeSetT <: EdgeSet
-  trait EdgeSet extends MutableSet[EdgeT] with super.EdgeSet {
-    @inline final def addOne(edge: EdgeT): this.type = { add(edge); this }
+  trait EdgeSet extends MutableSet[EdgeT] with super.EdgeSet with Compat.AddSubtract[EdgeT, EdgeSet] {
+    @inline final def addOne(edge: EdgeT) = { add(edge); this }
+    @inline final def subtractOne(edge: EdgeT) = { remove(edge); this }
 
     /** Same as `upsert` at graph level. */
     def upsert(edge: EdgeT): Boolean
-    @inline final def subtractOne(edge: EdgeT): this.type = { remove(edge); this }
     def removeWithNodes(edge: EdgeT): Boolean
 
     override def diff(that: AnySet[EdgeT]) = this -- that
     override def clear(): Unit = this.toList.foreach(elem => this -= elem)
   }
-
-  override def addAll(xs: TraversableOnce[Param[N, E]]): this.type = { xs foreach +=; this }
 
   /** Adds a node to this graph.
     *
@@ -235,12 +225,10 @@ object Graph extends MutableGraphCompanion[Graph] {
       implicit edgeT: ClassTag[E[N]],
       config: Config = defaultConfig): Graph[N, E] =
     DefaultGraphImpl.from[N, E](nodes, edges)(edgeT, config)
-  /*
-  TODO build from... still needed?
+
   implicit def cbfUnDi[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
     new GraphCanBuildFrom[N, E]()(edgeT, config)
       .asInstanceOf[GraphCanBuildFrom[N, E] with CanBuildFrom[Graph[_, UnDiEdge], Param[N, E], Graph[N, E]]]
-  */
 }
 
 @SerialVersionUID(74L)

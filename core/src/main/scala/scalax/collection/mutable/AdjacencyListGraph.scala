@@ -2,10 +2,10 @@ package scalax.collection
 package mutable
 
 import language.higherKinds
-
-import GraphPredef.EdgeLikeIn
+import GraphPredef.{EdgeLikeIn, Param}
 import GraphEdge.OrderedEndpoints
 import immutable.AdjacencyListBase
+import scalax.collection.Compat.AddSubtract
 
 /** Implements an incident list based mutable graph representation.
   *
@@ -14,6 +14,7 @@ import immutable.AdjacencyListBase
 trait AdjacencyListGraph[
     N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
+    with AddSubtract[Param[N, E], This[N, E]]
     with AdjacencyListBase[N, E, This] {
   selfGraph: This[N, E] =>
 
@@ -71,7 +72,7 @@ trait AdjacencyListGraph[
   }
 
   type NodeSetT <: NodeSet
-  class NodeSet extends super[GraphLike].NodeSet with super.NodeSet {
+  class NodeSet extends super[GraphLike].NodeSet with super.NodeSet with AddSubtract[NodeT, NodeSet] {
     @inline override def add(node: NodeT): Boolean               = collection add node
     final protected[collection] def add(edge: EdgeT): Boolean    = fold(edge, (_: NodeT).add)
     final protected[collection] def upsert(edge: EdgeT): Boolean = fold(edge, (_: NodeT).upsert)
@@ -86,9 +87,10 @@ trait AdjacencyListGraph[
       edge.nodes.toSet forall (n => (collection findElem n) exists (_ remove edge))
 
     @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
-    @inline final def addOne(node: NodeT): this.type                   = { add(node); this }
-
     @inline final protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }
+
+    @inline final def addOne(node: NodeT)                  = { add(node); this }
+    @inline final def subtractOne(node: NodeT)             = { remove(node); this }
 
     final protected def minus(node: NodeT): Unit = collection -= node
     final protected def minusEdges(node: NodeT): Unit =

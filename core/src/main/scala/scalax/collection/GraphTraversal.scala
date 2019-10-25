@@ -144,7 +144,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       case _ => false
     }
 
-    override def className = getClass.getSimpleName
+    override def stringPrefix = getClass.getSimpleName
   }
 
   /** A traversable topological order of nodes of a graph or of an isolated graph component.
@@ -196,7 +196,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
         def hasNext: Boolean = it.hasNext
         def next(): A        = toA(it.next)
       }
-      override def className = "Nodes"
+      override def stringPrefix = "Nodes"
     }
   }
 
@@ -223,7 +223,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     * @define CUMWEIGHT The cumulated weight of all edges on this path/walk.
     */
   trait Walk extends Iterable[InnerElem] {
-    override def className = "Walk"
+    override def stringPrefix = "Walk"
 
     /** All nodes on this path/walk in proper order. */
     def nodes: Iterable[NodeT]
@@ -337,7 +337,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     * @define ADDEDGE Tries to add `edge` to the tail of the path/walk.
     * @define ADDSUCCESS Whether the addition was successful.
     */
-  trait WalkBuilder extends Builder[InnerElem, Walk] {
+  trait WalkBuilder extends Builder[InnerElem, Walk] with Compat.Growable[InnerElem] {
 
     /** The node this walk starts at. */
     def start: NodeT
@@ -383,7 +383,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     * Nodes and edges on the path are distinct. $WALKPATH
     */
   trait Path extends Walk {
-    override def className = "Path"
+    override def stringPrefix = "Path"
 
     /** Returns whether the nodes and edges on this path are valid with respect
       *  to this graph. $SANECHECK
@@ -441,7 +441,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     * being the start node and its head being the third element etc.
     */
   trait Cycle extends Path {
-    override def className = "Cycle"
+    override def stringPrefix = "Cycle"
 
     override def endNode: NodeT = startNode
 
@@ -449,12 +449,12 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       */
     final def sameElements(that: Iterable[_]): Boolean =
       this.size == that.size && {
-        val thisList = to(List)
+        val thisList = this.toList
         // thisList.indexOf(that.head) may fail due to asymmetric equality
         val idx = thisList.indexWhere(_ == that.head)
         if (idx >= 0) {
           val thisDoubled = thisList ++ thisList.tail
-          val thatList    = that.to(List)
+          val thatList    = that.toList
           (thisDoubled startsWith (thatList, idx)) ||
           (thisDoubled startsWith (thatList.reverse, idx))
         } else false
