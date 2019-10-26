@@ -260,11 +260,10 @@ abstract class RandomGraph[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z
 
     final def isDefined = !degrees.isEmpty
 
-    final protected def _1: N = degrees(0).node
-    final protected def _2: N = degrees(1).node
-    private def _n            = degrees.view.drop(2).map(_.node).toSeq
-
-    def draw: E[N] = draw(_1, _2, _n: _*)
+    def draw: E[N] = {
+      val it = degrees.iterator
+      draw(it.next.node, it.next.node, it.map(_.node).toArray: _*)
+    }
 
     def draw(n1: N, n2: N): E[N] =
       (c match {
