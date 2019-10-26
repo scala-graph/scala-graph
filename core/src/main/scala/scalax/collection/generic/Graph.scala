@@ -1,12 +1,12 @@
 package scalax.collection
 package generic
 
-import language.higherKinds
 import collection.mutable.Builder
+import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.ClassTag
 
 import GraphPredef.{EdgeLikeIn, Param}
-import config.CoreConfig
+import config.{CoreConfig, GraphConfig}
 import mutable.GraphBuilder
 
 /** Methods common to `Graph` companion objects in the core module.
@@ -30,10 +30,15 @@ import mutable.GraphBuilder
   *         This parameter is meant be used as an alternative or in addition to `edgeStreams`.
   * @author Peter Empen
   */
-trait GraphCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] extends GraphCompanionBase[CC] {
+trait GraphCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] extends GraphCompanionCanBuildFrom[CC] {
+
+  /** Type of configuration required for a specific `Graph` companion. */
+  type Config <: GraphConfig
 
   /** The default configuration to be used in absence of a user-supplied configuration. */
   def defaultConfig: Config
+
+  protected type Coll = CC[Nothing, Nothing] @uncheckedVariance
 
   /** Creates an empty `Graph` instance. */
   def empty[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config): CC[N, E]
