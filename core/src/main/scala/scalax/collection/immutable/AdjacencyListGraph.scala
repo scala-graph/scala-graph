@@ -28,15 +28,15 @@ trait AdjacencyListGraph[
 
   type NodeSetT = NodeSet
   class NodeSet extends super.NodeSet {
-    @inline final override protected def minus(node: NodeT) { coll -= node }
+    @inline final override protected def minus(node: NodeT) { collection -= node }
     override def +(node: NodeT) =
-      if (coll contains node) this
-      else { val c = copy; c.coll += node; c }
+      if (collection contains node) this
+      else { val c = copy; c.collection += node; c }
 
     protected[AdjacencyListGraph] def add(edge: EdgeT): Boolean = {
       var added = false
       edge foreach { n =>
-        val inColl = coll findElem n getOrElse { coll += n; n }
+        val inColl = collection findElem n getOrElse { collection += n; n }
         added = (inColl add edge) || added
       }
       added

@@ -186,13 +186,13 @@ trait AdjacencyListBase[
 
   type NodeSetT <: NodeSet
   trait NodeSet extends super.NodeSet {
-    protected val coll = ExtHashSet.empty[NodeT]
+    protected val collection = ExtHashSet.empty[NodeT]
     override protected[collection] def initialize(nodes: Traversable[N], edges: Traversable[E[N]]) =
       if (nodes ne null)
-        coll ++= nodes map (Node(_))
+        collection ++= nodes map (Node(_))
     override protected def copy = {
       val nodeSet = newNodeSet
-      nodeSet.coll ++= this.coll
+      nodeSet.collection ++= this.collection
       nodeSet
     }
     @inline final override def find(elem: N): Option[NodeT] = Option(lookup(elem))
@@ -203,14 +203,14 @@ trait AdjacencyListBase[
     }
     final override def lookup(elem: N): NodeT = {
       def eq(inner: NodeT, outer: N) = inner.value == outer
-      coll.findElem[N](elem, eq)
+      collection.findElem[N](elem, eq)
     }
-    @inline final def contains(node: NodeT): Boolean = coll contains node
-    @inline final def iterator: Iterator[NodeT]      = coll.iterator
-    @inline final override def size: Int             = coll.size
-    @inline final def draw(random: Random): NodeT    = coll draw random
+    @inline final def contains(node: NodeT): Boolean = collection contains node
+    @inline final def iterator: Iterator[NodeT]      = collection.iterator
+    @inline final override def size: Int             = collection.size
+    @inline final def draw(random: Random): NodeT    = collection draw random
     @inline final def findElem[B](toMatch: B, correspond: (NodeT, B) => Boolean): NodeT =
-      coll findElem (toMatch, correspond)
+      collection findElem (toMatch, correspond)
     protected[collection] def +=(edge: EdgeT): this.type
   }
   protected def newNodeSet: NodeSetT
