@@ -4,7 +4,7 @@ package immutable
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
 import scala.language.higherKinds
-import scala.collection.{Set => AnySet, AbstractIterable, EqSetFacade}
+import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade, Set => AnySet}
 import scala.collection.mutable.{ArrayBuffer, Buffer, ExtHashSet}
 import scala.util.Random
 
@@ -277,9 +277,16 @@ trait AdjacencyListBase[
     in.defaultReadObject()
 
     def iterable[A] = new AbstractIterable[A] {
-      override def iterator = {
-        val count = in.readInt()
-        (0 until count).map(_ => in.readObject.asInstanceOf[A]).iterator
+      override def iterator: Iterator[A] = new AbstractIterator[A] {
+        private[this] val count = in.readInt()
+        private[this] var read = 0
+
+        def hasNext: Boolean = read < count
+
+        def next(): A = {
+          read += 1
+          in.readObject.asInstanceOf[A]
+        }
       }
     }
 
