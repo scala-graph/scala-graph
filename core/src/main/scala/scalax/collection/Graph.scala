@@ -28,7 +28,7 @@ import config.GraphConfig
 trait GraphLike[N,
                 E[+X] <: EdgeLikeIn[X],
                 +This[NN, EE[+XX] <: EdgeLikeIn[XX]] <: GraphLike[NN, EE, This] with AnySet[Param[NN, EE]] with Graph[NN, EE]]
-    extends GraphLikeBase[N, E, This]
+    extends GraphAsSet[N, E, This]
     with GraphTraversal[N, E]
     with GraphBase[N, E]
     with GraphDegree[N, E] {
