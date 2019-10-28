@@ -56,8 +56,6 @@ class DefaultGraphImpl[N, E[+X] <: EdgeLikeIn[X]](iniNodes: Traversable[N] = Set
 
   initialize(iniNodes, iniEdges)
 
-  // TODO what to do with newBuilder & empty? should we override iterableFactory instead? see scala.collection.IterableFactoryDefaults
-  //override protected[this] def newBuilder                                   = new GraphBuilder[N, E, DefaultGraphImpl](DefaultGraphImpl)
   final override def empty: DefaultGraphImpl[N, E]                          = DefaultGraphImpl.empty[N, E]
   final protected def copy(nodes: Traversable[N], edges: Traversable[E[N]]) = DefaultGraphImpl.from[N, E](nodes, edges)
 
@@ -96,9 +94,4 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl] {
       implicit edgeT: ClassTag[E[N]],
       config: Config = defaultConfig) =
     new DefaultGraphImpl[N, E](nodes, edges)(edgeT, config)
-
-  // TODO BuildFrom
-//  implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
-//                                                      config: Config = defaultConfig): GraphCanBuildFrom[N, E] =
-//    new GraphCanBuildFrom[N, E]()(edgeT, config)
 }

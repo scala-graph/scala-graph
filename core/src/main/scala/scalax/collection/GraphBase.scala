@@ -510,16 +510,11 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
 
     /** The head (target node) of a directed edge or `_2` otherwise.
       */
-    /* With 2.10, 'edge.to' can no more be called implicitly because of the addition of
-     * 'to' to GenTraversableOnce in the standard library. So we must delegate the call. */
     def to: NodeT = edge match {
       case di: DiHyperEdgeLike[NodeT] => di.to
       case unDi                       => unDi.edge._2
     }
 
-    // TODO do we want to keep this? Iterable no longer extends trait Equals (previously through IterableLike)
-//    def canEqual(that: Any) = that.isInstanceOf[GraphBase[N, E]#InnerEdge] ||
-//      that.isInstanceOf[EdgeLike[_]]
     override def equals(other: Any) = other match {
       case that: GraphBase[N, E]#InnerEdge =>
         (this eq that) ||

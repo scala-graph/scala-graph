@@ -140,7 +140,7 @@ trait AdjacencyListGraph[
   }
   override def edges: EdgeSetT
 
-  @inline final def clear(): Unit                        = { nodes.clear() }
+  @inline final def clear(): Unit                        = nodes.clear()
   @inline final def add(node: N): Boolean                = nodes add Node(node)
   @inline final def add(edge: E[N]): Boolean             = edges add Edge(edge)
   @inline final protected def +=#(edge: E[N]): this.type = { add(edge); this }
