@@ -495,7 +495,7 @@ object GraphEdge {
     override def withTargets[U](f: N => U) = targets foreach f
 
     override def sources = List(from)
-    override def targets = mkIterable(iterator.drop(1))
+    override def targets = mkIterable(iterator.tap(_.next))
 
     override def matches[M >: N](n1: M, n2: M): Boolean =
       source == n1 && (targets exists (_ == n2))
@@ -626,8 +626,8 @@ object GraphEdge {
       case p: Product => p.productIterator.asInstanceOf[Iterator[N]]
     }
 
-    override def sources = mkIterable(iterator)
-    override def targets = mkIterable(iterator)
+    override def sources: Iterable[N] = this
+    override def targets: Iterable[N] = this
 
     override def isAt[M >: N](node: M)    = iterator contains node
     override def isAt(pred: N => Boolean) = iterator exists pred

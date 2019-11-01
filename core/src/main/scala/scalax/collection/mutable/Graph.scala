@@ -14,7 +14,6 @@ import generic.{GraphCompanion, MutableGraphCompanion}
 import config._
 import GraphEdge.UnDiEdge
 
-// TODO addAll was previously overridden ("for increased performance"). is that still useful?
 abstract protected[collection] class BuilderImpl[
     N,
     E[+X] <: EdgeLikeIn[X],
@@ -63,7 +62,6 @@ class GraphBuilder[N,
   *
   * @author Peter Empen
   */
-// TODO addAll was previously overridden ("for increased performance"). is that still useful?
 trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
     extends CommonGraphLike[N, E, This]
     with Growable[Param[N, E]]

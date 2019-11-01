@@ -1,8 +1,8 @@
 package scalax.collection
 package generic
 
-import collection.mutable.Builder
 import scala.annotation.unchecked.uncheckedVariance
+import scala.collection.mutable.Builder
 import scala.reflect.ClassTag
 
 import GraphPredef.{EdgeLikeIn, Param}

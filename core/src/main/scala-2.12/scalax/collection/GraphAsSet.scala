@@ -16,8 +16,5 @@ private[collection] trait GraphAsSet[N,
   /** The companion object of `This`. */
   val graphCompanion: GraphCompanion[This]
 
-  // TODO BuildFrom
-  //  implicit def canBuildFrom[N, E[X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
-  //                                                      config: Config = defaultConfig): GraphCanBuildFrom[N, E] =
-  //    new GraphCanBuildFrom[N, E]()(edgeT, config)
+  def knownSize: Int
 }

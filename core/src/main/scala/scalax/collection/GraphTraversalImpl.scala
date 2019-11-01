@@ -110,11 +110,11 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
 
     final protected def resultEdges = lastEdge.fold[IndexedSeq[EdgeT]](
       ifEmpty = edges
-    )(_ => edges.view(0, edges.size - 1).toIndexedSeq)
+    )(_ => edges.slice(0, edges.size - 1))
 
     def result: Walk = new Walk {
       val nodes     = self.nodes
-      val edges     = resultEdges
+      def edges     = resultEdges
       val startNode = start
       val endNode   = nodes(nodes.size - 1)
     }
