@@ -1,7 +1,7 @@
 package scalax.collection
 package io
 
-import language.{higherKinds, implicitConversions}
+import language.implicitConversions
 import mutable.{Graph => MGraph}
 
 import GraphPredef.EdgeLikeIn

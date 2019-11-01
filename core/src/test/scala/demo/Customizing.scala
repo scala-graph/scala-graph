@@ -1,7 +1,5 @@
 package demo
 
-import scala.language.higherKinds
-
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.Graph

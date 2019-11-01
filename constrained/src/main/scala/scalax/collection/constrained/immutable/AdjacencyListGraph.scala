@@ -1,8 +1,6 @@
 package scalax.collection.constrained
 package immutable
 
-import scala.language.higherKinds
-
 import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.immutable.{AdjacencyListGraph => SimpleAdjacencyListGraph}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}

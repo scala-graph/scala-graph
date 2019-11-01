@@ -3,7 +3,6 @@ package immutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.language.higherKinds
 import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade, Set => AnySet}
 import scala.collection.mutable.{ArrayBuffer, Buffer, ExtHashSet}
 import scala.util.Random
@@ -11,7 +10,6 @@ import scala.util.Random
 import scalax.collection.GraphPredef._
 import scalax.collection.{Graph => SimpleGraph}
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
-import scalax.collection.generic.GroupIterator
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 
 /** Implementation of an incident list based graph representation. This trait is common to
@@ -279,7 +277,7 @@ trait AdjacencyListBase[
     def iterable[A] = new AbstractIterable[A] {
       override def iterator: Iterator[A] = new AbstractIterator[A] {
         private[this] val count = in.readInt()
-        private[this] var read = 0
+        private[this] var read  = 0
 
         def hasNext: Boolean = read < count
 

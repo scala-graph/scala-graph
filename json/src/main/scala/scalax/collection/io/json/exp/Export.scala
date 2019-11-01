@@ -1,7 +1,6 @@
 package scalax.collection.io.json
 package exp
 
-import scala.language.higherKinds
 import scala.collection.Set
 import scala.collection.immutable.Iterable
 

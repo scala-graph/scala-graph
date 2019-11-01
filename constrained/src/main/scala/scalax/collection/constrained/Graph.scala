@@ -1,17 +1,14 @@
 package scalax.collection.constrained
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.language.{higherKinds, postfixOps}
 import scala.collection.{GenTraversableOnce, Set}
+import scala.language.postfixOps
 import scala.reflect.ClassTag
 
-import scalax.collection.GraphPredef.{
-  EdgeLikeIn, InParam, InnerEdgeParam, InnerNodeParam, OutParam, OuterEdge, OuterNode, Param
-}
+import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, InnerEdgeParam, InnerNodeParam, OutParam, OuterEdge, OuterNode, Param}
 import scalax.collection.{Graph => SimpleGraph, GraphLike => SimpleGraphLike}
-import scalax.collection.config.GraphConfig
-import generic.GraphConstrainedCompanion
-import config._
+import scalax.collection.generic.GraphConstrainedCompanion
+import scalax.collection.config._
 
 /** A template trait for graphs.
   *

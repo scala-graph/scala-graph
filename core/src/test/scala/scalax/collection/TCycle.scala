@@ -1,6 +1,6 @@
 package scalax.collection
 
-import language.{higherKinds, postfixOps}
+import language.postfixOps
 
 import GraphPredef._
 import GraphEdge._
@@ -167,7 +167,7 @@ class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
 
     def `the cycle returned by 'findCycle' contains the expected edges` {
       given(acyclic_1) { _.findCycle should be(None) }
-      given(cyclic_1)  { _.findCycle.get.edges should contain(cyclicEdge_1) }
+      given(cyclic_1) { _.findCycle.get.edges should contain(cyclicEdge_1) }
       given(acyclic_2) { _.findCycle should be(None) }
       given(cyclic_21) { _.findCycle.get.edges should contain(cyclicEdge_21) }
       given(cyclic_22) { _.findCycle.get.edges should contain(cyclicEdge_22) }

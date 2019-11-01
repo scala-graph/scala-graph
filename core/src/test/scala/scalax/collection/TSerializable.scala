@@ -2,7 +2,6 @@ package scalax.collection
 
 import java.io._
 
-import scala.language.higherKinds
 import scala.util.{Failure, Success, Try}
 
 import GraphPredef._, GraphEdge._

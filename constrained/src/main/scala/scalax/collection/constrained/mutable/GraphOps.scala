@@ -2,7 +2,6 @@ package scalax.collection.constrained
 package mutable
 
 import scala.collection.Set
-import scala.language.higherKinds
 
 import scalax.collection.GraphPredef.{EdgeLikeIn, InnerEdgeParam, InnerNodeParam, OuterEdge, OuterNode, Param}
 import scalax.collection.mutable.{GraphLike => SimpleGraphLike}

@@ -1,7 +1,6 @@
 package scalax.collection
 package generator
 
-import scala.language.higherKinds
 import scala.collection.mutable.{ArrayBuffer, Set => MSet}
 import scala.util.Random
 import scala.reflect.ClassTag
@@ -28,7 +27,9 @@ import edge.WLBase.{WLEdgeCompanion, WLHyperEdgeCompanion}
   *
   * @author Peter Empen
   */
-abstract class RandomGraph[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+abstract class RandomGraph[N,
+                           E[+X] <: EdgeLikeIn[X],
+                           G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
     val graphCompanion: GraphCompanion[G],
     val order: Int,
     nodeFactory: => N,

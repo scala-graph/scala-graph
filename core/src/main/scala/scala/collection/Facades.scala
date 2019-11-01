@@ -34,7 +34,7 @@ final class EqSetFacade[A <: AnyRef](i: Iterable[A]) extends immutable.Set[A] wi
   def incl(elem: A)         = i.toSet - elem
   def excl(elem: A)         = i.toSet + elem
 
-  override def size: Int = i.size
+  override def size: Int         = i.size
   override def contains(elem: A) = i exists (_ eq elem)
 }
 
@@ -51,7 +51,10 @@ trait FilterableSet[A] {
 
 /** A `Set` implementation extended by `FilterableSet`.
   */
-final class FilteredSet[A](val set: Set[A], val p: (A) => Boolean) extends immutable.Set[A] with FilterableSet[A] with InclExcl[A, immutable.Set[A]] {
+final class FilteredSet[A](val set: Set[A], val p: (A) => Boolean)
+    extends immutable.Set[A]
+    with FilterableSet[A]
+    with InclExcl[A, immutable.Set[A]] {
   def contains(elem: A)     = p(elem) && (set contains elem)
   def iterator: Iterator[A] = set.iterator withFilter p
   def excl(elem: A)         = if (contains(elem)) iterator.toSet - elem else this

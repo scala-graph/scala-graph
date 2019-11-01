@@ -1,7 +1,5 @@
 package scalax.collection.constrained
 
-import scala.language.higherKinds
-
 /** Mutable constrained graph templates.
   *
   * @author Peter Empen

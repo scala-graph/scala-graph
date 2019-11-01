@@ -2,7 +2,7 @@ package scalax.collection
 package mutable
 
 import scala.collection.{IterableFactory, IterableFactoryDefaults, SortedSet, StrictOptimizedIterableOps}
-import scala.collection.mutable.{ExtHashSet,GrowableBuilder}
+import scala.collection.mutable.{ExtHashSet, GrowableBuilder}
 import scala.compat.Platform.arraycopy
 import scala.util.Random
 import immutable.SortedArraySet
@@ -24,11 +24,11 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
 
   override def iterableFactory = SimpleArraySet
 
-  protected[collection] def newNonCheckingBuilder[B]       = new SimpleArraySet.NonCheckingBuilder[A, B](this)
-  override def clone                                       = (newNonCheckingBuilder ++= this).result
-  private var nextFree: Int                                = 0
-  private var arr: Array[A]                                = _
-  private var hashSet: ExtHashSet[A]                       = _
+  protected[collection] def newNonCheckingBuilder[B] = new SimpleArraySet.NonCheckingBuilder[A, B](this)
+  override def clone                                 = (newNonCheckingBuilder ++= this).result
+  private var nextFree: Int                          = 0
+  private var arr: Array[A]                          = _
+  private var hashSet: ExtHashSet[A]                 = _
 
   private def initialize() {
     val capacity = hints.nextCapacity(0)
@@ -282,5 +282,5 @@ object SimpleArraySet extends IterableFactory[SimpleArraySet] {
   }
 
   override def from[A](source: IterableOnce[A]) = empty ++= source
-  override def newBuilder[A] = new GrowableBuilder[A, SimpleArraySet[A]](empty)
+  override def newBuilder[A]                    = new GrowableBuilder[A, SimpleArraySet[A]](empty)
 }

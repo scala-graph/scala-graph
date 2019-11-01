@@ -3,7 +3,6 @@ package immutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.language.higherKinds
 import scala.collection.Set
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag

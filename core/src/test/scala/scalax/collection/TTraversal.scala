@@ -1,8 +1,9 @@
 package scalax.collection
 
-import scala.language.{higherKinds, postfixOps}
+import scala.language.postfixOps
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
+
 import GraphPredef._
 import GraphEdge._
 import GraphTraversal._
@@ -347,20 +348,17 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
     }
   }
 
-  def `traverser to graph`: Unit = {
-    given (Di_1.g) { g =>
+  def `traverser to graph`: Unit =
+    given(Di_1.g) { g =>
       def innerNode(outer: Int) = g get outer
 
-      innerNode(1).outerNodeTraverser.toGraph should equal (
-        factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
+      innerNode(1).outerNodeTraverser.toGraph should equal(factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
 
-      innerNode(2).outerNodeTraverser(anyConnected).toGraph should equal (
+      innerNode(2).outerNodeTraverser(anyConnected).toGraph should equal(
         factory(1 ~> 2, 2 ~> 3, 4 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
 
-      innerNode(3).outerNodeTraverser(predecessors).toGraph should equal (
-        factory(4 ~> 3, 1 ~> 3, 2 ~> 3, 1 ~> 2))
+      innerNode(3).outerNodeTraverser(predecessors).toGraph should equal(factory(4 ~> 3, 1 ~> 3, 2 ~> 3, 1 ~> 2))
     }
-  }
 
   def `traverser with a visitor` {
     given(gUnDi_2) { g =>
@@ -574,7 +572,7 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
     {
       import DDi_1._
       given(DDi_1.g) { _ =>
-        val maxDepth_1   = Parameters(maxDepth = 1)
+        val maxDepth_1 = Parameters(maxDepth = 1)
 
         node(4).outerNodeTraverser.sum should be(expectedSumSuccessorsOf_4)
         node(4).outerNodeTraverser(predecessors).sum should be(expectedSumPredecessorsOf_4)

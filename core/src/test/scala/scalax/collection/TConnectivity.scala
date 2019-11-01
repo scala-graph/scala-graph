@@ -1,6 +1,6 @@
 package scalax.collection
 
-import scala.language.{higherKinds, postfixOps}
+import scala.language.postfixOps
 import scala.util.Random
 
 import GraphPredef._, GraphEdge._

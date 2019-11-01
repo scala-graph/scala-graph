@@ -1,6 +1,6 @@
 package scalax.collection
 
-import scala.language.{higherKinds, implicitConversions}
+import scala.language.implicitConversions
 import scala.util.Random
 import scala.collection.{ExtSetMethods, FilterableSet}
 

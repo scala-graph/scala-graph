@@ -1,7 +1,6 @@
 package scalax.collection.constrained
 
 import scala.collection.{GenTraversableOnce, Set}
-import scala.language.higherKinds
 
 import scalax.collection.GraphPredef.{EdgeLikeIn, Param}
 import scalax.collection.{GraphLike => SimpleGraphLike}

@@ -1,7 +1,5 @@
 package scalax.collection
 
-import scala.language.higherKinds
-
 import scalax.collection.Compat.InclExcl
 import scalax.collection.GraphPredef.{EdgeLikeIn, Param}
 import scalax.collection.generic.GraphCompanion

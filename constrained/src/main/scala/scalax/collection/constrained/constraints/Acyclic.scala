@@ -2,14 +2,14 @@ package scalax.collection.constrained
 package constraints
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.language.{higherKinds, postfixOps}
+import scala.language.postfixOps
 import scala.collection.Set
 import scala.collection.mutable.{Set => MutableSet}
 
 import scalax.collection.GraphPredef._
 import scalax.collection.{Graph => SimpleGraph}
-import PreCheckFollowUp._
 import scalax.collection.config.CoreConfig
+import PreCheckFollowUp._
 
 /** Ensures that the underlying `Graph` is acyclic at any time. */
 class Acyclic[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) extends Constraint[N, E, G](self) {

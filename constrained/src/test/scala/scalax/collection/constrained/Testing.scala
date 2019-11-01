@@ -2,7 +2,6 @@ package scalax.collection.constrained
 
 import org.scalatest.matchers.{MatchResult, Matcher}
 
-import scala.language.higherKinds
 import org.scalatest.Matchers
 
 import scalax.collection.{Graph => SimpleGraph}

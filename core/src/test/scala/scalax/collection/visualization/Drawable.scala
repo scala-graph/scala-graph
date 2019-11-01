@@ -5,7 +5,6 @@ import java.io.File
 import java.nio.file.{Files, Path, Paths}
 import java.util.logging.{Level, LogManager}
 
-import scala.language.higherKinds
 import scala.reflect.ClassTag
 import scala.util.Try
 

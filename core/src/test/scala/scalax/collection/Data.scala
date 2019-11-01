@@ -1,7 +1,5 @@
 package scalax.collection
 
-import language.higherKinds
-
 import GraphPredef.{EdgeLikeIn, _}
 import edge.Implicits._
 

@@ -1,6 +1,5 @@
 package scalax.collection.generic
 
-import scala.language.higherKinds
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag

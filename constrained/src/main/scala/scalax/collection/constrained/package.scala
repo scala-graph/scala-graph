@@ -1,6 +1,6 @@
 package scalax.collection
 
-import language.{higherKinds, implicitConversions}
+import language.implicitConversions
 
 import GraphPredef._
 import GraphEdge._

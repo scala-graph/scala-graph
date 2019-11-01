@@ -1,8 +1,8 @@
 package scalax.collection
 
-import language.{higherKinds, postfixOps}
-import collection.{SortedMap, SortedSet}
-import collection.mutable.{Map => MutableMap}
+import scala.language.postfixOps
+import scala.collection.{SortedMap, SortedSet}
+import scala.collection.mutable.{Map => MutableMap}
 
 import GraphPredef.EdgeLikeIn
 

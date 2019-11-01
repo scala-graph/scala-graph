@@ -1,8 +1,6 @@
 package scalax.collection.constrained
 package constraints
 
-import scala.language.higherKinds
-
 import scalax.collection.GraphPredef._
 
 /** The empty constraint treating any addition or subtraction as valid.

@@ -1,7 +1,5 @@
 package custom.flight
 
-import language.higherKinds
-
 import scalax.collection.{Graph, GraphLike}
 import scalax.collection.GraphPredef._
 import scalax.collection.generic.GraphCoreCompanion
@@ -20,7 +18,8 @@ class TFlightRootTest
       new TFlight[scalax.collection.mutable.Graph](scalax.collection.mutable.Graph)
     )
 
-class TFlight[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
+class TFlight[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+    val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers
     with Visualizer[CC] {

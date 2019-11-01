@@ -1,7 +1,6 @@
 package scalax.collection.io.json
 package imp
 
-import language.higherKinds
 import scala.collection.mutable.ArrayBuffer
 
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._

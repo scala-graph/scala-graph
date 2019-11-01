@@ -3,11 +3,11 @@ package scalax.collection
 import scala.annotation.{switch, tailrec}
 import scala.collection.{FilterableSet, FilteredSet}
 import scala.collection.mutable.{ArrayBuffer, PriorityQueue, Queue, ArrayStack => Stack, Map => MMap}
-import scala.language.higherKinds
-import scalax.collection.GraphPredef.EdgeLikeIn
+
 import scalax.collection.Compat._
-import immutable.SortedArraySet
-import mutable.{ArraySet, EqHashMap, EqHashSet}
+import scalax.collection.GraphPredef.EdgeLikeIn
+import scalax.collection.immutable.SortedArraySet
+import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
 
 /** Default implementation of the graph algorithms to maintain the functionality
   *  defined by [[GraphTraversal]].
@@ -253,7 +253,8 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
           w => w.edgeWeight(directionEdges(n)(neighbor) withSetFilter edgeFilter(cumWeight) min w.ordering)
         )
 
-      private[this] def filteredEdges(edges: AnySet[EdgeT] with FilterableSet[EdgeT], cumWeight: Double): AnySet[EdgeT] =
+      private[this] def filteredEdges(edges: AnySet[EdgeT] with FilterableSet[EdgeT],
+                                      cumWeight: Double): AnySet[EdgeT] =
         if (doEdgeFilter) edges withSetFilter edgeFilter(cumWeight)
         else edges
 

@@ -1,6 +1,5 @@
 package scalax.collection.visualization
 
-import scala.language.higherKinds
 import scala.util.{Failure, Success}
 
 import org.scalatest.exceptions.TestFailedException

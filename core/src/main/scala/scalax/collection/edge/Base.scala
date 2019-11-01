@@ -1,6 +1,6 @@
 package scalax.collection.edge
 
-import language.{higherKinds, implicitConversions}
+import language.implicitConversions
 import scala.reflect.ClassTag
 
 import scalax.collection.GraphEdge._, scalax.collection.GraphPredef._

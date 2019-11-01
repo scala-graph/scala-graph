@@ -1,8 +1,8 @@
 package scalax.collection
 
-import language.higherKinds
 import scala.annotation.{switch, tailrec}
 import scala.collection.AbstractIterator
+
 import GraphPredef.OuterEdge
 import edge.LBase.LEdge
 
@@ -314,8 +314,8 @@ object GraphEdge {
     }
   }
   final private class NodeProduct[N] private (elems: IndexedSeq[N]) extends Product {
-    @inline override def productArity: Int            = elems.length
-    @inline override def productElement(n: Int): N    = elems(n)
+    @inline override def productArity: Int         = elems.length
+    @inline override def productElement(n: Int): N = elems(n)
 
     override def canEqual(that: Any) = that.isInstanceOf[NodeProduct[N]]
     override def equals(obj: Any) = obj match {

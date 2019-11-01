@@ -1,6 +1,6 @@
 package scalax.collection
 
-import language.{higherKinds, implicitConversions}
+import language.implicitConversions
 
 import scala.collection.{AbstractIterable, AbstractIterator, SeqFacade}
 
@@ -85,8 +85,10 @@ object GraphPredef {
       }
     }
 
-  implicit def nodeSetToSeq[N, E[+X] <: EdgeLikeIn[X]](nodes: Graph[N, E]#NodeSetT): Seq[OutParam[N, E]] = new SeqFacade(nodes)
-  implicit def edgeSetToSeq[N, E[+X] <: EdgeLikeIn[X]](edges: Graph[N, E]#EdgeSetT): Seq[OutParam[N, E]] = new SeqFacade(edges)
+  implicit def nodeSetToSeq[N, E[+X] <: EdgeLikeIn[X]](nodes: Graph[N, E]#NodeSetT): Seq[OutParam[N, E]] =
+    new SeqFacade(nodes)
+  implicit def edgeSetToSeq[N, E[+X] <: EdgeLikeIn[X]](edges: Graph[N, E]#EdgeSetT): Seq[OutParam[N, E]] =
+    new SeqFacade(edges)
 
   implicit def edgeSetToOuter[N, E[+X] <: EdgeLikeIn[X]](edges: Graph[N, E]#EdgeSetT): Iterable[E[N]] =
     new AbstractIterable[E[N]] {
@@ -128,14 +130,14 @@ object GraphPredef {
   trait InnerNodeParam[NI] extends OutParam[NI, Nothing] with NodeParam[NI] {
     def isContaining[N, E[+X] <: EdgeLikeIn[X]](g: GraphBase[N, E]): Boolean
 
-    final protected[collection] def asNodeT[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E]](
-        g: G): g.NodeT = this.asInstanceOf[g.NodeT]
+    final protected[collection] def asNodeT[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E]](g: G): g.NodeT =
+      this.asInstanceOf[g.NodeT]
 
     final protected[collection] def asNodeTProjection[N <: NI, E[+X] <: EdgeLikeIn[X]]: GraphBase[N, E]#NodeT =
       this.asInstanceOf[Graph[N, E]#NodeT]
 
-    final def fold[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E], T](
-        g: G)(fa: g.NodeT => T, fb: GraphBase[N, E]#NodeT => T): T =
+    final def fold[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E], T](g: G)(fa: g.NodeT => T,
+                                                                                   fb: GraphBase[N, E]#NodeT => T): T =
       if (isContaining[N, E](g)) fa(asNodeT[N, E, G](g))
       else fb(asNodeTProjection[N, E])
 
@@ -175,14 +177,14 @@ object GraphPredef {
     final def isContaining[N <: NI, E[+X] <: EdgeLikeIn[X]](g: GraphBase[N, E]): Boolean =
       edge._1.isContaining[N, E](g)
 
-    final protected[collection] def asEdgeT[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E]](
-        g: G): g.EdgeT = this.asInstanceOf[g.EdgeT]
+    final protected[collection] def asEdgeT[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E]](g: G): g.EdgeT =
+      this.asInstanceOf[g.EdgeT]
 
     final protected[collection] def asEdgeTProjection[N <: NI, E[+X] <: EdgeLikeIn[X]]: GraphBase[N, E]#EdgeT =
       this.asInstanceOf[Graph[N, E]#EdgeT]
 
-    final def fold[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E], T](
-        g: G)(fa: g.EdgeT => T, fb: GraphBase[N, E]#EdgeT => T): T =
+    final def fold[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E], T](g: G)(fa: g.EdgeT => T,
+                                                                                   fb: GraphBase[N, E]#EdgeT => T): T =
       if (isContaining[N, E](g)) fa(asEdgeT[N, E, G](g))
       else fb(asEdgeTProjection[N, E])
 
@@ -222,8 +224,7 @@ object GraphPredef {
       case n                 => OuterNode(n)
     }
 
-  def nodePredicate[NI, EI[+X] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[+X] <: EdgeLike[X]](
-      pred: NI => Boolean) =
+  def nodePredicate[NI, EI[+X] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[+X] <: EdgeLike[X]](pred: NI => Boolean) =
     (out: Param[NI, EI]) =>
       out match {
         case n: InnerNodeParam[NI] => pred(n.value)

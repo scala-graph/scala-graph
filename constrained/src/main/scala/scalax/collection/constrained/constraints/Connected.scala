@@ -2,7 +2,7 @@ package scalax.collection.constrained
 package constraints
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.language.{higherKinds, postfixOps}
+import scala.language.postfixOps
 import scala.collection.Set
 
 import scalax.collection.GraphPredef._

@@ -3,7 +3,7 @@ package mutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.language.{higherKinds, postfixOps}
+import scala.language.postfixOps
 import scala.collection.Set
 import scala.collection.generic.{Growable, Shrinkable}
 import scala.collection.mutable.Cloneable

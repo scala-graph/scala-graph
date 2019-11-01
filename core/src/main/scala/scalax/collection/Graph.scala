@@ -1,6 +1,5 @@
 package scalax.collection
 
-import scala.language.higherKinds
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
@@ -25,9 +24,10 @@ import config.GraphConfig
   * @define CONTGRAPH The `Graph` instance that contains `this`
   * @author Peter Empen
   */
-trait GraphLike[N,
-                E[+X] <: EdgeLikeIn[X],
-                +This[NN, EE[+XX] <: EdgeLikeIn[XX]] <: GraphLike[NN, EE, This] with AnySet[Param[NN, EE]] with Graph[NN, EE]]
+trait GraphLike[
+    N,
+    E[+X] <: EdgeLikeIn[X],
+    +This[NN, EE[+XX] <: EdgeLikeIn[XX]] <: GraphLike[NN, EE, This] with AnySet[Param[NN, EE]] with Graph[NN, EE]]
     extends GraphAsSet[N, E, This]
     with GraphTraversal[N, E]
     with GraphBase[N, E]
@@ -315,9 +315,9 @@ trait GraphLike[N,
     *          plus `elem`.
     */
   def incl(elem: Param[N, E]): This[N, E] = elem match {
-    case n: OuterNode[N]    => this + n.value
-    case e: OuterEdge[N, E] => this +# e.edge
-    case n: InnerNodeParam[N] => this + n.value
+    case n: OuterNode[N]               => this + n.value
+    case e: OuterEdge[N, E]            => this +# e.edge
+    case n: InnerNodeParam[N]          => this + n.value
     case e: InnerEdgeParam[N, E, _, E] => this +# e.asEdgeT[N, E, ThisGraph](thisGraph).toOuter
   }
 

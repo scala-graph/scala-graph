@@ -1,7 +1,6 @@
 package scalax.collection.constrained
 
 import scala.collection.Set
-import scala.language.higherKinds
 import scala.util.Try
 
 import scalax.collection.GraphPredef._

@@ -1,7 +1,6 @@
 package scalax.collection
 package io.dot
 
-import scala.language.higherKinds
 import scala.collection.mutable.{Set => MSet, StringBuilder}
 
 import GraphPredef.EdgeLikeIn

@@ -1,7 +1,5 @@
 package scalax.collection.io.json
 
-import language.higherKinds
-
 import net.liftweb.json._
 
 import scalax.collection._

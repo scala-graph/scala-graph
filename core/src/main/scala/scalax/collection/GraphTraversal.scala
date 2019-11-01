@@ -3,7 +3,7 @@ package scalax.collection
 import scala.annotation.tailrec
 import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade, IndexedSeq}
 import scala.collection.mutable.{ArrayBuffer, Builder}
-import scala.language.{higherKinds, implicitConversions}
+import scala.language.implicitConversions
 import scala.math.{max, min}
 
 import scalax.collection.GraphPredef.{EdgeLikeIn, OuterElem}

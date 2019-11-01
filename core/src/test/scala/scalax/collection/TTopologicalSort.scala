@@ -1,7 +1,5 @@
 package scalax.collection
 
-import scala.language.higherKinds
-
 import GraphPredef._, GraphEdge._
 import GraphTraversal._, GraphTraversal.Parameters._
 import generic.GraphCoreCompanion

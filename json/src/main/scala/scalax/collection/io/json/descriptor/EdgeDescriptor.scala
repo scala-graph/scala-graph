@@ -1,7 +1,6 @@
 package scalax.collection.io.json
 package descriptor
 
-import language.higherKinds
 import reflect.ClassTag
 
 import net.liftweb.json._

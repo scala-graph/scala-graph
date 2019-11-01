@@ -13,7 +13,6 @@ import scalax.collection.io.json.imp.Parser.parse
 import scalax.collection.io.json.imp.Stream.createOuterElems
 import scalax.collection.{Graph, GraphLike}
 
-import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 /** Facilitates populating graphs with nodes/edges from JSON text

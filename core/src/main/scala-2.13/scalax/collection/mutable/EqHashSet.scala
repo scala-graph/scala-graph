@@ -3,9 +3,7 @@ package scalax.collection.mutable
 import scala.annotation.switch
 import scala.collection.mutable.Set
 
-class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity)
-    extends Set[A]
-    with EqHash[A, EqHashSet[A]] {
+class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity) extends Set[A] with EqHash[A, EqHashSet[A]] {
 
   import EqHash.{anyHash, defCapacity}
 

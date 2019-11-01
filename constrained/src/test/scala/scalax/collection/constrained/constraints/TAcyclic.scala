@@ -1,8 +1,6 @@
 package scalax.collection.constrained
 package constraints
 
-import scala.language.higherKinds
-
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 import scalax.collection.GraphPredef._

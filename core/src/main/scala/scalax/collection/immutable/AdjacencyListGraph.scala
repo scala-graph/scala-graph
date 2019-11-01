@@ -1,7 +1,6 @@
 package scalax.collection
 package immutable
 
-import language.higherKinds
 import GraphPredef.EdgeLikeIn
 import GraphEdge.OrderedEndpoints
 import mutable.ArraySet

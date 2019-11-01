@@ -2,7 +2,6 @@ package scalax.collection.constrained
 package generic
 
 import scala.annotation.unchecked.uncheckedVariance
-import scala.language.higherKinds
 import scala.collection.mutable.Builder
 import scala.reflect.ClassTag
 

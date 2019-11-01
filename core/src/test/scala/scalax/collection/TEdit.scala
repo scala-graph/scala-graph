@@ -1,6 +1,6 @@
 package scalax.collection
 
-import language.{higherKinds, postfixOps}
+import language.postfixOps
 import scala.reflect.ClassTag
 
 import GraphPredef._, GraphEdge._
@@ -19,7 +19,7 @@ trait ConfigWrapper[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[
   def apply[N, E[+X] <: EdgeLikeIn[X]](elems: Param[N, E]*)(implicit edgeT: ClassTag[E[N]], config: companion.Config) =
     companion(elems: _*)
   def from[N, E[+X] <: EdgeLikeIn[X]](edges: collection.Iterable[E[N]])(implicit edgeT: ClassTag[E[N]],
-                                                                       config: companion.Config) =
+                                                                        config: companion.Config) =
     companion.from(edges = edges)
   def from[N, E[+X] <: EdgeLikeIn[X]](nodes: collection.Iterable[N], edges: collection.Iterable[E[N]])(
       implicit edgeT: ClassTag[E[N]],
@@ -96,32 +96,32 @@ class TEditMutable extends RefSpec with Matchers {
     }
     def `serve size` {
       val g0 = mutable.Graph.empty
-      (g0.size, g0.graphSize) should be (0, 0)
+      (g0.size, g0.graphSize) should be(0, 0)
 
       val g1 = mutable.Graph(1)
-      (g1.size, g1.graphSize) should be (1, 0)
+      (g1.size, g1.graphSize) should be(1, 0)
 
       val g2 = mutable.Graph(1, 2)
-      (g2.size, g2.graphSize) should be (2, 0)
+      (g2.size, g2.graphSize) should be(2, 0)
 
       val g3 = mutable.Graph(1 ~> 2)
-      (g3.size, g3.graphSize) should be (3, 1)
+      (g3.size, g3.graphSize) should be(3, 1)
 
       val g4 = mutable.Graph(1 ~> 2, 3)
-      (g4.size, g4.graphSize) should be (4, 1)
+      (g4.size, g4.graphSize) should be(4, 1)
 
       val g5 = mutable.Graph(1 ~> 2, 2 ~ 3)
-      (g5.size, g5.graphSize) should be (5, 2)
+      (g5.size, g5.graphSize) should be(5, 2)
     }
     def `serve clear` {
       type G = mutable.Graph[Int, UnDiEdge]
       def checkSizeAroundClear(g: G, beforeSize: Int) = {
-        g.size should be (beforeSize)
+        g.size should be(beforeSize)
         g.clear()
-        g.nodes.size should be (0)
-        g.edges.size should be (0)
-        g.size should be (0)
-        g should be (empty)
+        g.nodes.size should be(0)
+        g.edges.size should be(0)
+        g.size should be(0)
+        g should be(empty)
       }
       val g0: G = mutable.Graph.empty
       checkSizeAroundClear(g0, 0)
@@ -676,4 +676,3 @@ private object Helper {
       }
   }
 }
-

@@ -9,8 +9,8 @@ trait EqHash[A, This <: EqHash[A, This]] {
   protected def sizeHint: Int
   protected def step: Int
 
-  protected var _size                  = 0
-  final override def knownSize         = _size
+  protected var _size          = 0
+  final override def knownSize = _size
 
   protected var (threshold: Int, table: Array[AnyRef]) = {
     val cap    = capacity(sizeHint)

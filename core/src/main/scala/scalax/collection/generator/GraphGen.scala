@@ -1,7 +1,6 @@
 package scalax.collection
 package generator
 
-import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 import org.scalacheck.{Arbitrary, Gen}

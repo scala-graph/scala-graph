@@ -1,10 +1,9 @@
 package scalax.collection
 
-import language.higherKinds
-
 import scala.annotation.{switch, tailrec}
-import scala.collection.{Seq, AbstractIterable, EqSetFacade, IndexedSeq}
+import scala.collection.{AbstractIterable, EqSetFacade, IndexedSeq, Seq}
 import scala.collection.mutable.{ArrayBuffer, Buffer, ArrayStack => Stack, Map => MMap}
+
 import GraphPredef.{EdgeLikeIn, OuterEdge, OuterElem}
 import mutable.{EqHashMap, EqHashSet}
 
@@ -278,8 +277,9 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
         withHandles(2) { handles =>
           implicit val visitedHandle: State.Handle = handles(0)
           for (node <- nodes if !node.visited && subgraphNodes(node)) {
-            val nodeTraverser: InnerElemTraverser = traverser.withRoot(node) // TODO not sure why this declaration is needed
-            val res = nodeTraverser.Runner(noNode, visitor).dfsWGB(handles)
+            val nodeTraverser
+              : InnerElemTraverser = traverser.withRoot(node) // TODO not sure why this declaration is needed
+            val res                = nodeTraverser.Runner(noNode, visitor).dfsWGB(handles)
             if (res.isDefined)
               return cycle(res, subgraphEdges)
           }
@@ -579,7 +579,8 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
   // TODO is this still needed? Stack now _does_ override `reverseIterator`.
   final protected class ReverseStackTraversable[S <: NodeElement](s: IndexedSeq[S],
                                                                   takeWhile: Option[S => Boolean] = None,
-                                                                  enclosed: Array[Option[S]] = Array[Option[S]](None, None))
+                                                                  enclosed: Array[Option[S]] =
+                                                                    Array[Option[S]](None, None))
       extends Iterable[NodeT] {
 
     override def iterator = source.map(_.node).iterator
@@ -602,7 +603,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
         s foreach fT
         end(0)
       }
-      */
+     */
     }
 
     private lazy val upper: Int = takeWhile.fold(ifEmpty = s.size) { pred =>
@@ -619,7 +620,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
       }
       override def foreach[U](f: S => U): Unit = {
         enclosed(0) foreach f
-        var i    = upper
+        var i = upper
         while (i > 0) {
           i -= 1
           f(s(i))

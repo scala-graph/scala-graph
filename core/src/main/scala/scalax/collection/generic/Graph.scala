@@ -30,7 +30,8 @@ import mutable.GraphBuilder
   *         This parameter is meant be used as an alternative or in addition to `edgeStreams`.
   * @author Peter Empen
   */
-trait GraphCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] extends GraphCompanionCanBuildFrom[CC] {
+trait GraphCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]]
+    extends GraphCompanionCanBuildFrom[CC] {
 
   /** Type of configuration required for a specific `Graph` companion. */
   type Config <: GraphConfig
@@ -54,13 +55,14 @@ trait GraphCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
     from(elems)
 
   /** Creates a `Graph` with a node set built from all nodes in `elems` including
-   * edge ends and with an edge set containing all edges in `elems`.
-   * $DUPLEXCL
-   *
-   * @param   elems sequence of nodes and/or edges in an arbitrary order
-   * @return  A new graph instance containing the nodes and edges derived from `elems`.
-   */
-  def from[N, E[+X] <: EdgeLikeIn[X]](elems: IterableOnce[Param[N, E]])(implicit edgeT: ClassTag[E[N]], config: Config): CC[N, E] =
+    * edge ends and with an edge set containing all edges in `elems`.
+    * $DUPLEXCL
+    *
+    * @param   elems sequence of nodes and/or edges in an arbitrary order
+    * @return  A new graph instance containing the nodes and edges derived from `elems`.
+    */
+  def from[N, E[+X] <: EdgeLikeIn[X]](elems: IterableOnce[Param[N, E]])(implicit edgeT: ClassTag[E[N]],
+                                                                        config: Config): CC[N, E] =
     (newBuilder[N, E] ++= elems).result
 
   /** Produces a graph with a node set containing all `nodes` and edge ends in `edges`
@@ -73,8 +75,9 @@ trait GraphCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
     * @return  A new graph instance containing `nodes` and all edge ends
     *          and `edges`.
     */
-  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil,
-                                      edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]], config: Config): CC[N, E]
+  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil, edges: Traversable[E[N]])(
+      implicit edgeT: ClassTag[E[N]],
+      config: Config): CC[N, E]
 
   /** Produces a graph containing the results of some element computation a number of times.
     * $DUPLEXCL
@@ -95,7 +98,7 @@ trait GraphCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
     gB.result
   }
   def newBuilder[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
-                                           config: Config): Builder[Param[N, E], CC[N, E]] =
+                                            config: Config): Builder[Param[N, E], CC[N, E]] =
     new GraphBuilder[N, E, CC](this)
 }
 
@@ -111,8 +114,8 @@ trait GraphCoreCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
   def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil, edges: Traversable[E[N]])(
       implicit edgeT: ClassTag[E[N]],
       config: Config = defaultConfig): CC[N, E]
-  override def fill[N, E[+X] <: EdgeLikeIn[X]](nr: Int)(elem: => Param[N, E])(implicit edgeT: ClassTag[E[N]],
-                                                                              config: Config = defaultConfig): CC[N, E] =
+  override def fill[N, E[+X] <: EdgeLikeIn[X]](nr: Int)(
+      elem: => Param[N, E])(implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): CC[N, E] =
     super.fill(nr)(elem)(edgeT, config)
 }
 

@@ -140,15 +140,15 @@ class TArraySetTest extends RefSpec with Matchers {
         edge match {
           case WUnDiEdge(n1, n2, w) =>
             val newWeight = w + 1
-            val toUpsert = WUnDiEdge(n1, n2)(newWeight)
+            val toUpsert  = WUnDiEdge(n1, n2)(newWeight)
             toUpsert should be(edge)
 
-            val inserted  = arr.upsert(toUpsert)
-            inserted should === (false)
+            val inserted = arr.upsert(toUpsert)
+            inserted should ===(false)
             edge.weight should be(newWeight)
         }
         arr.size should be(setSize)
-        (arr upsert edges.draw) should === (true)
+        (arr upsert edges.draw) should ===(true)
         arr.size should be(setSize + 1)
       }
       def `when represented by an Array` {

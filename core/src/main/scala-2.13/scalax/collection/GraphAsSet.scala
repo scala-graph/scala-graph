@@ -1,11 +1,10 @@
 package scalax.collection
 
-import language.higherKinds
+import scala.collection.{mutable, SetOps}
+import scala.reflect.ClassTag
 
 import scalax.collection.GraphPredef.{EdgeLikeIn, Param}
 import scalax.collection.generic.GraphCompanion
-import scala.collection.{SetOps, mutable}
-import scala.reflect.ClassTag
 
 private[collection] trait GraphAsSet[N,
                                      E[+X] <: EdgeLikeIn[X],

@@ -1,7 +1,6 @@
 package scalax.collection
 package mutable
 
-import language.higherKinds
 import GraphPredef.{EdgeLikeIn, Param}
 import GraphEdge.OrderedEndpoints
 import immutable.AdjacencyListBase
@@ -89,8 +88,8 @@ trait AdjacencyListGraph[
     @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
     @inline final protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }
 
-    @inline final def addOne(node: NodeT)                  = { add(node); this }
-    @inline final def subtractOne(node: NodeT)             = { remove(node); this }
+    @inline final def addOne(node: NodeT)      = { add(node); this }
+    @inline final def subtractOne(node: NodeT) = { remove(node); this }
 
     final protected def minus(node: NodeT): Unit = collection -= node
     final protected def minusEdges(node: NodeT): Unit =

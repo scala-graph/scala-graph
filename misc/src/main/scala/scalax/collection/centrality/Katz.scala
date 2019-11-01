@@ -1,6 +1,5 @@
 package scalax.collection.centrality
 
-import language.higherKinds
 import math.{ceil, min}
 
 import scalax.collection.GraphPredef._
