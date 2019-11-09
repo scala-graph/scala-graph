@@ -8,13 +8,14 @@ import descriptor.predefined._
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
+
 class TDefaultSerializationRootTest
     extends Suites(
       new TDefaultSerialization[immutable.Graph](immutable.Graph),
       new TDefaultSerialization[mutable.Graph](mutable.Graph))
 
-class TDefaultSerialization[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
+class TDefaultSerialization[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+    val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers {
 
@@ -42,7 +43,7 @@ class TDefaultSerialization[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with Gra
     }
     def `when importing` {
       import Fixture._
-      factory.fromJson[Node, DiEdge](jsonText, descriptor(extClasses)) should be(graph)
+      JsonGraphCoreCompanion(factory).fromJson[Node, DiEdge](jsonText, descriptor(extClasses)) should be(graph)
     }
     def `when reimporting` {
       import Fixture._

@@ -36,7 +36,7 @@ sealed abstract class GenEdgeDescriptor[N](val edgeManifest: ClassTag[_], overri
   *
   * @author Peter Empen
   */
-sealed abstract class EdgeDescriptorBase[N, E[X] <: EdgeLikeIn[X], +C <: EdgeCompanionBase[E]](
+sealed abstract class EdgeDescriptorBase[N, E[+X] <: EdgeLikeIn[X], +C <: EdgeCompanionBase[E]](
     val edgeCompanion: C,
     val customSerializer: Option[Serializer[_ <: Parameters]] = None,
     val extraClasses: List[Class[_]] = Nil,
@@ -62,7 +62,7 @@ sealed abstract class EdgeDescriptorBase[N, E[X] <: EdgeLikeIn[X], +C <: EdgeCom
   * @param extraClasses $EXTRACL
   * @param typeId $TYPEID
   */
-class EdgeDescriptor[N, E[X] <: UnDiEdge[X], +C <: EdgeCompanion[E]](
+class EdgeDescriptor[N, E[+X] <: UnDiEdge[X], +C <: EdgeCompanion[E]](
     edgeCompanion: C,
     customSerializer: Option[Serializer[_ <: EdgeParameters]] = None,
     extraClasses: List[Class[_]] = Nil,
@@ -84,7 +84,7 @@ class EdgeDescriptor[N, E[X] <: UnDiEdge[X], +C <: EdgeCompanion[E]](
   * @param extraClasses $EXTRACL
   * @param typeId $TYPEID
   */
-class WEdgeDescriptor[N, E[X] <: UnDiEdge[X] with WEdge[X], +C <: WEdgeCompanion[E]](
+class WEdgeDescriptor[N, E[+X] <: UnDiEdge[X] with WEdge[X], +C <: WEdgeCompanion[E]](
     edgeCompanion: C,
     customSerializer: Option[Serializer[_ <: WEdgeParameters]] = None,
     extraClasses: List[Class[_]] = Nil,
@@ -110,7 +110,7 @@ class WEdgeDescriptor[N, E[X] <: UnDiEdge[X] with WEdge[X], +C <: WEdgeCompanion
   * @param extraClasses $EXTRACL
   * @param typeId $TYPEID
   */
-class LEdgeDescriptor[N, E[X] <: UnDiEdge[X] with LEdge[X], +C <: LEdgeCompanion[E], L <: AnyRef](
+class LEdgeDescriptor[N, E[+X] <: UnDiEdge[X] with LEdge[X], +C <: LEdgeCompanion[E], L <: AnyRef](
     edgeCompanion: C,
     val aLabel: L,
     customSerializer: Option[Serializer[_ <: LEdgeParameters[L]]] = None,
@@ -137,7 +137,7 @@ class LEdgeDescriptor[N, E[X] <: UnDiEdge[X] with LEdge[X], +C <: LEdgeCompanion
   * @param extraClasses $EXTRACL
   * @param typeId $TYPEID
   */
-class WLEdgeDescriptor[N, E[X] <: UnDiEdge[X] with WLEdge[X], +C <: WLEdgeCompanion[E], L <: AnyRef](
+class WLEdgeDescriptor[N, E[+X] <: UnDiEdge[X] with WLEdge[X], +C <: WLEdgeCompanion[E], L <: AnyRef](
     edgeCompanion: C,
     val aLabel: L,
     customSerializer: Option[Serializer[_ <: WLEdgeParameters[L]]] = None,
@@ -165,7 +165,7 @@ class WLEdgeDescriptor[N, E[X] <: UnDiEdge[X] with WLEdge[X], +C <: WLEdgeCompan
   * @param extraClasses $EXTRACL
   * @param typeId $TYPEID
   */
-class CEdgeDescriptor[N, E[X] <: CEdge[X], +C <: CEdgeCompanion[E], P <: Product with AnyRef](
+class CEdgeDescriptor[N, E[+X] <: CEdge[X], +C <: CEdgeCompanion[E], P <: Product with AnyRef](
     edgeCompanion: C,
     val sampleAttributes: P,
     customSerializer: Option[Serializer[_ <: CEdgeParameters[P]]] = None,
@@ -192,7 +192,7 @@ class CEdgeDescriptor[N, E[X] <: CEdge[X], +C <: CEdgeCompanion[E], P <: Product
   * @param extraClasses $EXTRACL
   * @param typeId $TYPEID
   */
-class HyperEdgeDescriptor[N, E[X] <: HyperEdge[X], +C <: HyperEdgeCompanion[E]](
+class HyperEdgeDescriptor[N, E[+X] <: HyperEdge[X], +C <: HyperEdgeCompanion[E]](
     edgeCompanion: C,
     customSerializer: Option[Serializer[_ <: HyperEdgeParameters]] = None,
     extraClasses: List[Class[_]] = Nil,
@@ -212,7 +212,7 @@ class HyperEdgeDescriptor[N, E[X] <: HyperEdge[X], +C <: HyperEdgeCompanion[E]](
   * @param extraClasses $EXTRACL
   * @param typeId $TYPEID
   */
-class WHyperEdgeDescriptor[N, E[X] <: WHyperEdge[X], +C <: WHyperEdgeCompanion[E]](
+class WHyperEdgeDescriptor[N, E[+X] <: WHyperEdge[X], +C <: WHyperEdgeCompanion[E]](
     edgeCompanion: C,
     customSerializer: Option[Serializer[_ <: WHyperEdgeParameters]] = None,
     extraClasses: List[Class[_]] = Nil,
@@ -233,7 +233,7 @@ class WHyperEdgeDescriptor[N, E[X] <: WHyperEdge[X], +C <: WHyperEdgeCompanion[E
   * @param extraClasses $EXTRACL
   * @param typeId $TYPEID
   */
-class LHyperEdgeDescriptor[N, E[X] <: LHyperEdge[X], +C <: LHyperEdgeCompanion[E], L <: AnyRef](
+class LHyperEdgeDescriptor[N, E[+X] <: LHyperEdge[X], +C <: LHyperEdgeCompanion[E], L <: AnyRef](
     edgeCompanion: C,
     val aLabel: L,
     customSerializer: Option[Serializer[_ <: LHyperEdgeParameters[L]]] = None,
@@ -256,7 +256,7 @@ class LHyperEdgeDescriptor[N, E[X] <: LHyperEdge[X], +C <: LHyperEdgeCompanion[E
   * @param extraClasses $EXTRACL
   * @param typeId $TYPEID
   */
-class WLHyperEdgeDescriptor[N, E[X] <: WLHyperEdge[X], +C <: WLHyperEdgeCompanion[E], L <: AnyRef](
+class WLHyperEdgeDescriptor[N, E[+X] <: WLHyperEdge[X], +C <: WLHyperEdgeCompanion[E], L <: AnyRef](
     edgeCompanion: C,
     val aLabel: L,
     customSerializer: Option[Serializer[_ <: WLHyperEdgeParameters[L]]] = None,
@@ -281,7 +281,7 @@ class WLHyperEdgeDescriptor[N, E[X] <: WLHyperEdge[X], +C <: WLHyperEdgeCompanio
   * @param extraClasses $EXTRACL
   * @param typeId $TYPEID
   */
-class CHyperEdgeDescriptor[N, E[X] <: CHyperEdge[X], +C <: CHyperEdgeCompanion[E], P <: Product with AnyRef](
+class CHyperEdgeDescriptor[N, E[+X] <: CHyperEdge[X], +C <: CHyperEdgeCompanion[E], P <: Product with AnyRef](
     edgeCompanion: C,
     val sampleAttributes: P,
     customSerializer: Option[Serializer[_ <: CEdgeParameters[P]]] = None,

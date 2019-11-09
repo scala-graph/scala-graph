@@ -50,7 +50,7 @@ object DemoLDiEdge extends App {
   }
   
   import scalax.collection.Graph
-  type E[X] = LDiEdge[X,Option[List[Int]]]
+  type E[+X] = LDiEdge[X,Option[List[Int]]]
 
   val g = Graph[Int,E](outer)
   val inner = g.edges.head

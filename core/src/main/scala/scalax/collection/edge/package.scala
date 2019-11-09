@@ -23,6 +23,6 @@ package object edge {
   import GraphEdge._
   import edge.CBase.Attributes
 
-  type CEdge[X]      = UnDiEdge[X] with Attributes[X]
-  type CHyperEdge[X] = HyperEdge[X] with Attributes[X]
+  type CEdge[+X]      = UnDiEdge[X] with Attributes[X]
+  type CHyperEdge[+X] = HyperEdge[X] with Attributes[X]
 }

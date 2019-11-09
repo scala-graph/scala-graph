@@ -10,7 +10,7 @@ lazy val all = project
       publishTo := None
     )
   )
-  .aggregate(core/*, constrained, dot, json*/)
+  .aggregate(core, /*constrained,*/ dot, json)
 
 lazy val core = project
   .in(file("core"))
@@ -50,7 +50,7 @@ lazy val constrained = project
       version := Version.constrained
     )
   )
-
+*/
 lazy val dot = project
   .in(file("dot"))
   .dependsOn(core)
@@ -69,10 +69,10 @@ lazy val json = project
       name := "Graph JSON",
       version := Version.json,
       crossScalaVersions := Seq(Version.compiler_2_12),
-      libraryDependencies += "net.liftweb" %% "lift-json" % "3.1.1"
+      libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.0"
     )
   )
-
+/*
 lazy val misc = project
   .in(file("misc"))
   .dependsOn(core)
