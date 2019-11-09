@@ -33,6 +33,31 @@ class TEdgeTest extends RefSpec with Matchers {
     }
   }
 
+  object `Inner edges` {
+    type IntDiGraph = Graph[Int, DiEdge]
+    val g: IntDiGraph = Graph(1 ~> 2, 2 ~> 3)
+
+    private def endpoints2(edge: g.EdgeT): (g.NodeT, g.NodeT) = (edge.source, edge.target)
+    private def endpoints3(edge: IntDiGraph#EdgeT): (IntDiGraph#NodeT, IntDiGraph#NodeT) = (edge.source, edge.target)
+    private def endpoints4(edge: Graph[Int, DiEdge]#EdgeT): (Graph[Int, DiEdge]#NodeT, Graph[Int, DiEdge]#NodeT) = (edge.source, edge.target)
+
+    def `are implicitly converted to outer edges` {
+      for (edge <- g.edges) {
+        // access source and target directly
+        val pair1 = (edge.source, edge.target)
+        // using dependent type
+        val pair2 = endpoints2(edge)
+        pair2 should equal(pair1)
+        // using type projection and type alias
+        val pair3 = endpoints3(edge)
+        pair3 should equal(pair1)
+        // using type projection and full type
+        val pair4 = endpoints4(edge)
+        pair4 should equal(pair1)
+      }
+    }
+  }
+
   trait OrderedEndpointsTest[E[+X] <: EdgeLike[X]] {
 
     def ordered(edges: Traversable[_]): Boolean =
