@@ -43,7 +43,7 @@ class TDefaultSerialization[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Gr
     }
     def `when importing` {
       import Fixture._
-      JsonGraphCoreCompanion(factory).fromJson[Node, DiEdge](jsonText, descriptor(extClasses)) should be(graph)
+      factory.fromJson[Node, DiEdge](jsonText, descriptor(extClasses)) should be(graph)
     }
     def `when reimporting` {
       import Fixture._
