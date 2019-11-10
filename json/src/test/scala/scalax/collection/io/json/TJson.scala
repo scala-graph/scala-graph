@@ -7,15 +7,15 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scalax.collection.generic.GraphCoreCompanion
 import scalax.collection.edge._, scalax.collection.edge.Implicits._
 
-import serializer._, imp._, imp.Parser.{parse => graphParse}, descriptor._, descriptor.predefined._,
-descriptor.Defaults._, exp.Export
+import serializer._, imp._, imp.Parser.{parse => graphParse}, descriptor._, descriptor.predefined._, descriptor.Defaults._, exp.Export
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
+
 class TJsonRootTest
     extends Suites(new TJsonTest[immutable.Graph](immutable.Graph), new TJsonTest[mutable.Graph](mutable.Graph))
 
-class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class TJsonTest[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers {
@@ -61,14 +61,12 @@ class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
             val nodes = _nodes.toList
             nodes(0) match {
               case JArray(fields) =>
-                fields.toString should be
-                ("List(JString(A))")
+                fields.toString should be ("List(JString(A))")
               case _ => fail
             }
             nodes(4) match {
               case JArray(fields) =>
-                fields.toString should be
-                ("List(JString(A))")
+                fields.toString should be ("List(JString(Y))")
               case _ => fail
             }
           case _ => fail
@@ -80,14 +78,12 @@ class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
             val edges = _edges.toList
             edges(0) match {
               case JArray(fields) =>
-                fields.toString should be
-                ("List(JString(A), JString(B))")
+                fields.toString should be ("List(JString(A), JString(B))")
               case _ => fail
             }
             edges(1) match {
               case JArray(fields) =>
-                fields.toString should be
-                ("List(JString(B), JString(C))")
+                fields.toString should be ("List(JString(B), JString(C))")
               case _ => fail
             }
           case _ => fail
@@ -99,14 +95,12 @@ class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
             val edges = _edges.toList
             edges(0) match {
               case JArray(fields) =>
-                fields.toString should be
-                ("List(JString(A), JString(B), JDouble(3))")
+                fields.toString should be ("List(JString(A), JString(B), JDouble(3.0))")
               case _ => fail
             }
             edges(1) match {
               case JArray(fields) =>
-                fields.toString should be
-                ("List(JString(B), JString(C), JDouble(4))")
+                fields.toString should be ("List(JString(B), JString(C), JDouble(4.0))")
               case _ => fail
             }
           case _ => fail
@@ -118,17 +112,15 @@ class TJsonTest[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E,
             val edges = _edges.toList
             edges(0) match {
               case JObject(fields) =>
-                fields.toString should be
-                ("List(JField(v1,JString(X)), JField(v2,JString(Y)))")
+                fields.toString should be ("List(JField(n1,JString(X)), JField(n2,JString(Y)))")
               case _ => fail
             }
             edges(1) match {
               case JObject(fields) =>
-                fields.toString should be
-                ("List(JField(v1,JString(Y)), JField(v2,JString(A)))")
+                fields.toString should be ("List(JField(n1,JString(Y)), JField(n2,JString(A)))")
               case _ => fail
             }
-            Unit
+            ()
           case _ => fail
         }
       }

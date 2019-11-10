@@ -169,7 +169,7 @@ object GraphPredef {
     * @tparam NO  the type of the nodes created internally.
     * @tparam EO  the kind of the edges created internally.
     */
-  trait InnerEdgeParam[NI, EI[+X] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[+X] <: EdgeLike[X]]
+  trait InnerEdgeParam[NI, EI[+X] <: EdgeLike[X], +NO <: InnerNodeParam[NI], EO[+X] <: EdgeLike[X]]
       extends OutParam[NI, EI]
       with EdgeParam {
     def edge: EO[NO]

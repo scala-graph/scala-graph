@@ -139,7 +139,7 @@ object LBase {
       As this conversion is not type safe, the user has to ensure that `label`
       is of the type `UL`.
       */
-    implicit def toUserLabel[N, E[X] <: LEdge[X]](label: E[N]#L1): UL =
+    implicit def toUserLabel[N, E[+X] <: LEdge[X]](label: E[N]#L1): UL =
       try label.asInstanceOf[UL]
       catch {
         case e: ClassCastException => handle(label)
