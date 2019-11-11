@@ -7,11 +7,11 @@ import scalax.collection.GraphPredef._
 
 /** Base trait for ordinary `Constraint` companion objects.
   */
-trait ConstraintCompanion[+CC[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]] <: Constraint[N, E, G]] {
+trait ConstraintCompanion[+CC[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]] <: Constraint[N, E, G]] {
   thisCompanion =>
 
   /** Instantiates a user constraint. */
-  def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G): CC[N, E, G]
+  def apply[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G): CC[N, E, G]
 
   /** Creates a new constraint companion of the type `ConstraintCompanionBinaryOp`
     * the `apply` of which returns `ConstraintBinaryOp` with the `And` operator.
@@ -25,7 +25,7 @@ trait ConstraintCompanion[+CC[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]] <: Con
 
   protected[constrained] class PrefixedConstraintCompanion(prefix: Option[String]) extends ConstraintCompanion[CC] {
     override val stringPrefix: Option[String]                                   = prefix
-    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G): CC[N, E, G] = thisCompanion[N, E, G](self)
+    def apply[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G): CC[N, E, G] = thisCompanion[N, E, G](self)
   }
 
   /** The `stringPrefix` of constrained `Graph`s using `this` constraint will be replaced
@@ -124,7 +124,7 @@ case class PostCheckFailure(cause: Any) extends ConstraintViolation
   *         post-check. To add computation results `PreCheckResult` must be extended.
   * @author Peter Empen
   */
-trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
+trait ConstraintMethods[N, E[+X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
 
   /** When extending `Constraint`, `self` will denote the attached constrained graph.
     * The factory methods of the companion object `scalax.collection.constrained.Graph`
@@ -297,7 +297,7 @@ trait ConstraintMethods[N, E[X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
   * @see ConstraintMethods
   * @author Peter Empen
   */
-trait Constrained[N, E[X] <: EdgeLikeIn[X], +G <: Graph[N, E]] extends ConstraintMethods[N, E, G]
+trait Constrained[N, E[+X] <: EdgeLikeIn[X], +G <: Graph[N, E]] extends ConstraintMethods[N, E, G]
 
 /** Template to be implemented and passed to a dynamically constrained graph class
   * by the user. Note that mutable state will be lost on any operation yielding a
@@ -308,7 +308,7 @@ trait Constrained[N, E[X] <: EdgeLikeIn[X], +G <: Graph[N, E]] extends Constrain
   * @see ConstraintMethods
   * @author Peter Empen
   */
-abstract class Constraint[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+abstract class Constraint[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
     extends ConstraintMethods[N, E, G] {
 
   /** Creates a new constraint of the type `ConstraintBinaryOp` with pre- and post-check methods

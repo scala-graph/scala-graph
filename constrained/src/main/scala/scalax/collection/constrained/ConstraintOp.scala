@@ -12,10 +12,10 @@ sealed trait BinaryOp extends Op
 case object And       extends BinaryOp
 case object Or        extends BinaryOp
 
-abstract class ConstraintOp[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G, val operator: Op)
+abstract class ConstraintOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G, val operator: Op)
     extends Constraint[N, E, G](self)
 
-class ConstraintBinaryOp[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G,
+class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G,
                                                                      operator: BinaryOp,
                                                                      left: Constraint[N, E, G],
                                                                      right: Constraint[N, E, G])
@@ -134,12 +134,12 @@ abstract class ConstraintCompanionOp(val operator: Op) extends ConstraintCompani
 
 /** Facilitates binary operations on `ConstraintCompanion`s.
   */
-class ConstraintCompanionBinaryOp[CC[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]] <: Constraint[N, E, G]](
+class ConstraintCompanionBinaryOp[CC[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]] <: Constraint[N, E, G]](
     operator: BinaryOp,
     left: ConstraintCompanion[CC],
     right: ConstraintCompanion[CC]
 ) extends ConstraintCompanionOp(operator) {
 
-  def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) =
+  def apply[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) =
     new ConstraintBinaryOp[N, E, G](self, operator, left(self), right(self))
 }

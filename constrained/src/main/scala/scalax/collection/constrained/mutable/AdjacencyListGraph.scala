@@ -18,7 +18,7 @@ import config.GenConstrainedConfig
   * @author Peter Empen
   */
 trait AdjacencyListGraph[
-    N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends SimpleAdjacencyListGraph[N, E, This]
     with GraphLike[N, E, This] {
   selfGraph: This[N, E] =>

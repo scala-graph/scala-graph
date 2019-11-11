@@ -12,7 +12,7 @@ import scalax.collection.config.CoreConfig
 import PreCheckFollowUp._
 
 /** Ensures that the underlying `Graph` is acyclic at any time. */
-class Acyclic[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) extends Constraint[N, E, G](self) {
+class Acyclic[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) extends Constraint[N, E, G](self) {
   override def preCreate(nodes: Traversable[N], edges: Traversable[E[N]]): PreCheckResult =
     PreCheckResult.postCheck(edges forall (_.nonLooping))
 
@@ -104,5 +104,5 @@ class Acyclic[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) 
     PreCheckResult(Complete)
 }
 object Acyclic extends ConstraintCompanion[Acyclic] {
-  def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new Acyclic[N, E, G](self)
+  def apply[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new Acyclic[N, E, G](self)
 }

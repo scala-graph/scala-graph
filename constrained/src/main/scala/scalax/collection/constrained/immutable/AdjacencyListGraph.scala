@@ -7,7 +7,7 @@ import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 import config.GenConstrainedConfig
 
 trait AdjacencyListGraph[
-    N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends SimpleAdjacencyListGraph[N, E, This]
     with GraphLike[N, E, This] { this: This[N, E] =>
 

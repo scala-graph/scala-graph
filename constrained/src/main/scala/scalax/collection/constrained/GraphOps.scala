@@ -13,8 +13,8 @@ import scalax.collection.{GraphLike => SimpleGraphLike}
  */
 trait GraphOps[
     N,
-    E[X] <: EdgeLikeIn[X],
-    +This[X, Y[X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[Param[X, Y]] with Graph[X, Y]
+    E[+X] <: EdgeLikeIn[X],
+    +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[Param[X, Y]] with Graph[X, Y]
 ] { _: This[N, E] with SimpleGraphLike[N, E, This] with GraphOps[N, E, This] =>
 
   /** Same as `+` but $Info. */

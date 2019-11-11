@@ -85,7 +85,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
   }
 }
 
-class TConstrained[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class TConstrained[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphConstrainedCompanion[CC])
     extends RefSpec
     with Matchers
@@ -179,7 +179,7 @@ private object UserConstraints {
   val checkComplete = PreCheckResult(Complete)
 
   /* Constrains nodes to even numbers of type Int relying solely on pre-checks. */
-  class EvenNode[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) extends Constraint[N, E, G](self) {
+  class EvenNode[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) extends Constraint[N, E, G](self) {
     def preAdd(node: N) = PreCheckResult.complete(node match {
       case i: Int => i % 2 == 0
       case _      => false
@@ -192,10 +192,10 @@ private object UserConstraints {
   }
 
   object EvenNode extends ConstraintCompanion[EvenNode] {
-    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new EvenNode[N, E, G](self)
+    def apply[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new EvenNode[N, E, G](self)
   }
 
-  abstract class NoPreCheck[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+  abstract class NoPreCheck[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
       extends Constraint[N, E, G](self) {
     def preAdd(node: N)                                = postCheck
     def preAdd(edge: E[N])                             = postCheck
@@ -203,7 +203,7 @@ private object UserConstraints {
     def preSubtract(edge: self.EdgeT, simple: Boolean) = postCheck
   }
 
-  class AlwaysFailingPostSubtract[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+  class AlwaysFailingPostSubtract[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
       extends NoPreCheck[N, E, G](self) {
 
     override def postSubtract(newGraph: G,
@@ -214,19 +214,19 @@ private object UserConstraints {
   }
 
   object AlwaysFailingPostSubtract extends ConstraintCompanion[AlwaysFailingPostSubtract] {
-    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new AlwaysFailingPostSubtract[N, E, G](self)
+    def apply[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new AlwaysFailingPostSubtract[N, E, G](self)
   }
 
-  class ThrowingExceptionPreAdd[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+  class ThrowingExceptionPreAdd[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
       extends AlwaysFailingPostSubtract[N, E, G](self: G) {
     override def preAdd(node: N): PreCheckResult = throw new NoSuchElementException
   }
 
   object ThrowingExceptionPreAdd extends ConstraintCompanion[ThrowingExceptionPreAdd] {
-    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new ThrowingExceptionPreAdd[N, E, G](self)
+    def apply[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new ThrowingExceptionPreAdd[N, E, G](self)
   }
 
-  class FailingPostAdd[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+  class FailingPostAdd[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
       extends NoPreCheck[N, E, G](self) {
 
     override def postAdd(newGraph: G,
@@ -238,13 +238,13 @@ private object UserConstraints {
   }
 
   object FailingPostAdd extends ConstraintCompanion[FailingPostAdd] {
-    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new FailingPostAdd[N, E, G](self)
+    def apply[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new FailingPostAdd[N, E, G](self)
     val leftWarning                                                = "warning"
   }
 
   /* Constrains the graph to nodes having a minimal degree of `min` by utilizing pre- and post-checks.
    */
-  abstract class MinDegree[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
+  abstract class MinDegree[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
       extends Constraint[N, E, G](self) {
     // the required minimal degree
     val min: Int
@@ -316,7 +316,7 @@ private object UserConstraints {
   }
 
   object MinDegree_2 extends ConstraintCompanion[MinDegree] {
-    def apply[N, E[X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) =
+    def apply[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) =
       new MinDegree[N, E, G](self) {
         val min = 2
       }
