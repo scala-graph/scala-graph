@@ -8,7 +8,7 @@ object Version {
   val highest            = s"$major.1$snapshot"
   val core               = s"$major.1$snapshot"
   val constrained        = s"$major.0$snapshot"
-  val dot                = s"1.12.1$snapshot"
-  val json               = s"1.12.1$snapshot"
+  val dot                = s"$major.0$snapshot"
+  val json               = s"$major.0$snapshot"
   val misc               = s"$major.0$snapshot"
 }
