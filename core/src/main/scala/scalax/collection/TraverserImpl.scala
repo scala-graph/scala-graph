@@ -4,6 +4,7 @@ import scala.annotation.{switch, tailrec}
 import scala.collection.{FilterableSet, FilteredSet}
 import scala.collection.mutable.{ArrayBuffer, PriorityQueue, Queue, ArrayStack => Stack, Map => MMap}
 
+import scalax.collection.Compat._
 import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.immutable.SortedArraySet
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
@@ -54,7 +55,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
         implicit visitor: InnerElem => U = Visitor.empty): CycleNodeOrTopologicalOrder = {
       val predecessors: MSet[NodeT] =
         if (ignorePredecessors)
-          innerNodeTraverser(root, Parameters.Dfs(Predecessors)).to(MSet) -= root
+          innerNodeTraverser(root, Parameters.Dfs(Predecessors)).toMSet -= root
         else MSet.empty
       def ignore(n: NodeT): Boolean = if (ignorePredecessors) predecessors contains n else false
       val inDegrees =
@@ -80,7 +81,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
         subgraphNodes,
         subgraphEdges,
         ordering,
-        root.innerNodeTraverser.withDirection(AnyConnected).to(Set))
+        root.innerNodeTraverser.withDirection(AnyConnected).toSet)
 
     final def strongComponents[U](implicit visitor: A => U = Visitor.empty): Iterable[Component] = requireSuccessors {
       Runner(StopCondition.None, visitor).dfsTarjan()

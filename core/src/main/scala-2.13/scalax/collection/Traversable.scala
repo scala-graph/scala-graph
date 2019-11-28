@@ -31,7 +31,7 @@ trait Traversable[+A] {
   def foreach[U](f: A => U): Unit
 
   /** The expected maximum size. You should override this whenever known. */
-  protected def sizeHint: Int = 32
+  protected def sizeHint: Int
 
   /** The factory that will be used by default to compute standard library collection results. */
   final def defaultFactory = Vector
