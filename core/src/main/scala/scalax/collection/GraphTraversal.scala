@@ -630,10 +630,10 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   }
   protected object SubgraphProperties {
     def apply[A](t: Iterable[A], nodeFilter: NodeFilter, edgeFilter: EdgeFilter) =
-      new AbstractIterable[A] with SubgraphProperties {
-        def iterator      = t.iterator
-        def subgraphNodes = nodeFilter
-        def subgraphEdges = edgeFilter
+      new AbstractTraversable[A] with SubgraphProperties {
+        def foreach[U](f: A => U): Unit = t foreach f
+        def subgraphNodes               = nodeFilter
+        def subgraphEdges               = edgeFilter
       }
   }
 
@@ -1034,16 +1034,13 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     *  Provides methods to refine the properties and to invoke traversals.
     *  Instances will be created by [[innerNodeTraverser]] etc.
     */
-  trait Traverser[A, +This <: Traverser[A, This]] extends TraverserMethods[A, This] with Properties with Iterable[A] {
+  trait Traverser[A, +This <: Traverser[A, This]]
+      extends TraverserMethods[A, This]
+      with Properties
+      with Traversable[A] {
     this: This =>
 
-    override def iterator = {
-      val buffer = ArrayBuffer[A]()
-      foreach(buffer += _)
-      buffer.iterator
-    }
-
-    override def foreach[U](f: A => U): Unit =
+    def foreach[U](f: A => U): Unit =
       if (subgraphNodes(root))
         apply(noNode, f)
 
@@ -1063,11 +1060,16 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
         }
         b.result
     }
+
+    final protected def nonOverflowingOrderMultipliedBy_2(): Int =
+      if (order > (Int.MaxValue >> 1)) order else order << 1
   }
 
   /** Controls the properties of inner-node graph traversals. $TOSTART
     */
-  abstract class InnerNodeTraverser extends Traverser[NodeT, InnerNodeTraverser]
+  abstract class InnerNodeTraverser extends Traverser[NodeT, InnerNodeTraverser] {
+    final override protected def sizeHint: Int = order
+  }
 
   /** Creates a [[InnerNodeTraverser]] based on `scala.collection.Iterable[NodeT]`.
     *
@@ -1087,7 +1089,9 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of outer-node graph traversals. $TOSTART
     */
-  abstract class OuterNodeTraverser extends Traverser[N, OuterNodeTraverser]
+  abstract class OuterNodeTraverser extends Traverser[N, OuterNodeTraverser] {
+    final override protected def sizeHint: Int = order
+  }
 
   /** Creates a [[OuterNodeTraverser]] based on `scala.collection.Iterable[N]`.
     *
@@ -1107,7 +1111,9 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of inner-edge graph traversals. $TOSTART
     */
-  abstract class InnerEdgeTraverser extends Traverser[EdgeT, InnerEdgeTraverser]
+  abstract class InnerEdgeTraverser extends Traverser[EdgeT, InnerEdgeTraverser] {
+    final override protected def sizeHint: Int = graphSize
+  }
 
   /** Creates a [[InnerEdgeTraverser]] based on `scala.collection.Iterable[EdgeT]`.
     *
@@ -1126,7 +1132,9 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of outer-edge graph traversals. $TOSTART
     */
-  abstract class OuterEdgeTraverser extends Traverser[E[N], OuterEdgeTraverser]
+  abstract class OuterEdgeTraverser extends Traverser[E[N], OuterEdgeTraverser] {
+    final override protected def sizeHint: Int = graphSize
+  }
 
   /** Creates a [[OuterEdgeTraverser]] based on `scala.collection.Iterable[E[N]]`.
     *
@@ -1146,7 +1154,9 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of inner-element graph traversals. $TOSTART
     */
-  abstract protected class InnerElemTraverser extends Traverser[InnerElem, InnerElemTraverser]
+  abstract protected class InnerElemTraverser extends Traverser[InnerElem, InnerElemTraverser] {
+    final override protected def sizeHint: Int = order + graphSize
+  }
 
   /** Creates a [[InnerElemTraverser]] based on `scala.collection.Iterable[InnerElem]`.
     *
@@ -1166,7 +1176,9 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of outer-element graph traversals. $TOSTART
     */
-  trait OuterElemTraverser extends Traverser[OuterElem[N, E], OuterElemTraverser]
+  trait OuterElemTraverser extends Traverser[OuterElem[N, E], OuterElemTraverser] {
+    final override protected def sizeHint: Int = order + graphSize
+  }
 
   /** Creates a [[OuterElemTraverser]] based on `scala.collection.Iterable[OuterElem]`.
     *
@@ -1186,7 +1198,9 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of inner-node down-up graph traversals. $TOSTART
     */
-  abstract class InnerNodeDownUpTraverser extends Traverser[(Boolean, NodeT), InnerNodeDownUpTraverser]
+  abstract class InnerNodeDownUpTraverser extends Traverser[(Boolean, NodeT), InnerNodeDownUpTraverser] {
+    final override protected def sizeHint: Int = nonOverflowingOrderMultipliedBy_2
+  }
 
   /** Creates a [[InnerNodeDownUpTraverser]] based on `scala.collection.Iterable[(Boolean, NodeT)]`
     *  $DOWNUPBOOLEAN
@@ -1207,7 +1221,9 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of outer-node down-up graph traversals. $TOSTART
     */
-  abstract class OuterNodeDownUpTraverser extends Traverser[(Boolean, N), OuterNodeDownUpTraverser]
+  abstract class OuterNodeDownUpTraverser extends Traverser[(Boolean, N), OuterNodeDownUpTraverser] {
+    final override protected def sizeHint: Int = nonOverflowingOrderMultipliedBy_2
+  }
 
   /** Creates a [[OuterNodeDownUpTraverser]] based on `scala.collection.Iterable[(Boolean, N)]`
     *  $DOWNUPBOOLEAN

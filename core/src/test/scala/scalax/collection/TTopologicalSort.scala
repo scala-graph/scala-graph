@@ -29,10 +29,10 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
 
     class Checker[N, E[+X] <: EdgeLikeIn[X]](val graph: G[N, E]) {
 
-      def checkOuterNodes(seq: Traversable[N]): Unit =
+      def checkOuterNodes(seq: Iterable[N]): Unit =
         checkInnerNodes(seq map (graph get _))
 
-      type OrderedInnerNodes = Traversable[graph.NodeT]
+      type OrderedInnerNodes = Iterable[graph.NodeT]
 
       def checkInnerNodes(seq: OrderedInnerNodes,
                           root: Option[graph.NodeT] = None,
@@ -44,7 +44,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
       private def predecessors(maybeRoot: Option[graph.NodeT]): Set[graph.NodeT] = maybeRoot.fold(
         ifEmpty = Set.empty[graph.NodeT]
       ) { root =>
-        root.innerNodeTraverser().withParameters(Dfs(Predecessors)).toSet - root
+        root.innerNodeTraverser().withParameters(Dfs(Predecessors)).to(Set) - root
       }
 
       def checkOrder(seq: OrderedInnerNodes, ignorePredecessorsOf: Option[graph.NodeT]): Unit =
@@ -60,7 +60,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
         val expected = maybeRoot.fold(
           ifEmpty = graph.nodes.toSet
         ) { root =>
-          root.innerNodeTraverser().withParameters(Dfs(AnyConnected)).toSet --
+          root.innerNodeTraverser().withParameters(Dfs(AnyConnected)).to(Set) --
             (if (ignorePredecessors) predecessors(maybeRoot) else Nil)
         }
         val set = seq.toSet

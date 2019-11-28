@@ -4,7 +4,6 @@ import scala.annotation.{switch, tailrec}
 import scala.collection.{FilterableSet, FilteredSet}
 import scala.collection.mutable.{ArrayBuffer, PriorityQueue, Queue, ArrayStack => Stack, Map => MMap}
 
-import scalax.collection.Compat._
 import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.immutable.SortedArraySet
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
@@ -55,7 +54,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
         implicit visitor: InnerElem => U = Visitor.empty): CycleNodeOrTopologicalOrder = {
       val predecessors: MSet[NodeT] =
         if (ignorePredecessors)
-          innerNodeTraverser(root, Parameters.Dfs(Predecessors)).toMSet -= root
+          innerNodeTraverser(root, Parameters.Dfs(Predecessors)).to(MSet) -= root
         else MSet.empty
       def ignore(n: NodeT): Boolean = if (ignorePredecessors) predecessors contains n else false
       val inDegrees =
@@ -81,7 +80,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
         subgraphNodes,
         subgraphEdges,
         ordering,
-        root.innerNodeTraverser.withDirection(AnyConnected).toSet)
+        root.innerNodeTraverser.withDirection(AnyConnected).to(Set))
 
     final def strongComponents[U](implicit visitor: A => U = Visitor.empty): Iterable[Component] = requireSuccessors {
       Runner(StopCondition.None, visitor).dfsTarjan()
@@ -190,7 +189,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
       private[this] def filtered(node: NodeT,
                                  nodeFilter: NodeFilter,
                                  _edges: AnySet[EdgeT], // already filtered if adequate
-                                 reverse: Boolean): Traversable[NodeT] = {
+                                 reverse: Boolean): Iterable[NodeT] = {
 
         val edges = {
           if (doEdgeSort) {
@@ -261,7 +260,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
       private[this] def filteredSuccessors(node: NodeT,
                                            nodeFilter: NodeFilter,
                                            cumWeight: Double,
-                                           reverse: Boolean): Traversable[NodeT] =
+                                           reverse: Boolean): Iterable[NodeT] =
         if (withEdgeFiltering)
           filtered(node, nodeFilter, filteredEdges(node.outgoing, cumWeight), reverse)
         else {
@@ -272,7 +271,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
       private[this] def filteredPredecessors(node: NodeT,
                                              nodeFilter: NodeFilter,
                                              cumWeight: Double,
-                                             reverse: Boolean): Traversable[NodeT] =
+                                             reverse: Boolean): Iterable[NodeT] =
         if (withEdgeFiltering)
           filtered(node, nodeFilter, filteredEdges(node.incoming, cumWeight), reverse)
         else
@@ -281,7 +280,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
       private[this] def filteredNeighbors(node: NodeT,
                                           nodeFilter: NodeFilter,
                                           cumWeight: Double,
-                                          reverse: Boolean): Traversable[NodeT] =
+                                          reverse: Boolean): Iterable[NodeT] =
         if (withEdgeFiltering)
           filtered(node, nodeFilter, filteredEdges(node.edges, cumWeight), reverse)
         else
@@ -639,7 +638,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
                   })
                 }
 
-              def mixedCycle(blackSuccessors: Traversable[NodeT]): Option[(NodeT, Stack[CycleStackElem])] =
+              def mixedCycle(blackSuccessors: Iterable[NodeT]): Option[(NodeT, Stack[CycleStackElem])] =
                 withHandle() { handle =>
                   val visitedBlackHandle = Some(handle)
                   for (n <- blackSuccessors) {
@@ -677,7 +676,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
                   None
                 }
 
-              def cycle(graySuccessors: Traversable[NodeT]): Option[(NodeT, Stack[CycleStackElem])] =
+              def cycle(graySuccessors: Iterable[NodeT]): Option[(NodeT, Stack[CycleStackElem])] =
                 graySuccessors find { n =>
                   val relevantPathContainsRequiredNode: Boolean = mustContain forall { req =>
                     (n eq req) || path.iterator.takeWhile { case CycleStackElem(sn, _) => sn ne n }.exists {
@@ -696,7 +695,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
                   else if (isGray(n)) gray
                   else white
 
-                val successorsByColor: Map[Wgb, Traversable[NodeT]] = filteredSuccessors(
+                val successorsByColor: Map[Wgb, Iterable[NodeT]] = filteredSuccessors(
                   current,
                   if (isMixedGraph) anyNode else nonBlack,
                   cumWeight,
@@ -742,14 +741,14 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
       protected[collection] def topologicalSort(setup: TopoSortSetup,
                                                 maybeHandle: Option[Handle] = None): CycleNodeOrTopologicalOrder =
         withHandle(maybeHandle) { implicit handle =>
-          def nonVisited(node: NodeT)                                                                       = !node.visited
-          val (layer_0: Traversable[NodeT], inDegrees: MMap[NodeT, Int], maybeInspectedNode: Option[NodeT]) = setup
-          val untilDepth: Int                                                                               = maxDepth
-          val estimatedLayers: Int                                                                          = expectedMaxNodes(4)
-          val estimatedNodesPerLayer: Int                                                                   = order / estimatedLayers
-          val layers                                                                                        = new ArrayBuffer[Layer](estimatedLayers)
-          val maybeCycleNodes                                                                               = MSet.empty[NodeT]
-          def emptyBuffer: ArrayBuffer[NodeT]                                                               = new ArrayBuffer[NodeT](estimatedNodesPerLayer)
+          def nonVisited(node: NodeT)                                                                    = !node.visited
+          val (layer_0: Iterable[NodeT], inDegrees: MMap[NodeT, Int], maybeInspectedNode: Option[NodeT]) = setup
+          val untilDepth: Int                                                                            = maxDepth
+          val estimatedLayers: Int                                                                       = expectedMaxNodes(4)
+          val estimatedNodesPerLayer: Int                                                                = order / estimatedLayers
+          val layers                                                                                     = new ArrayBuffer[Layer](estimatedLayers)
+          val maybeCycleNodes                                                                            = MSet.empty[NodeT]
+          def emptyBuffer: ArrayBuffer[NodeT]                                                            = new ArrayBuffer[NodeT](estimatedNodesPerLayer)
 
           @tailrec def loop(layer: Int, layerNodes: ArrayBuffer[NodeT]): CycleNodeOrTopologicalOrder = {
             layers += Layer(layer, layerNodes)

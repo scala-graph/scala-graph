@@ -50,28 +50,28 @@ object GraphPredef {
 
     /** Enables to query partitions of a collection of `Param`.
       */
-    final class Partitions[N, E[+X] <: EdgeLikeIn[X]](val elems: Traversable[Param[N, E]]) {
+    final class Partitions[N, E[+X] <: EdgeLikeIn[X]](val elems: Iterable[Param[N, E]]) {
       lazy val partitioned = elems match {
         case g: Graph[N, E] => (g.nodes, g.edges)
         case x              => x partition (_.isNode)
       }
-      def nodeParams = partitioned._1.asInstanceOf[Traversable[NodeParam[N]]]
-      def edgeParams = partitioned._2.asInstanceOf[Traversable[EdgeParam]]
+      def nodeParams = partitioned._1.asInstanceOf[Iterable[NodeParam[N]]]
+      def edgeParams = partitioned._2.asInstanceOf[Iterable[EdgeParam]]
 
-      def toOuterNodes: Traversable[N] = nodeParams map (_.value)
-      def toOuterEdges: Traversable[E[N]] = edgeParams map {
+      def toOuterNodes: Iterable[N] = nodeParams map (_.value)
+      def toOuterEdges: Iterable[E[N]] = edgeParams map {
         case e: OuterEdge[N, E]            => e.edge
         case e: InnerEdgeParam[N, E, _, E] => e.asEdgeTProjection[N, E].toOuter
       }
 
-      def toInParams: Traversable[InParam[N, E]] = elems map {
+      def toInParams: Iterable[InParam[N, E]] = elems map {
         case in: InParam[N, E]             => in
         case n: InnerNodeParam[N]          => OuterNode(n.value)
         case e: InnerEdgeParam[N, E, _, E] => e.asEdgeTProjection[N, E].toOuter.asInstanceOf[OuterEdge[N, E]]
       }
     }
     object Partitions {
-      def apply[N, E[+X] <: EdgeLikeIn[X]](elems: Traversable[Param[N, E]]): Param.Partitions[N, E] =
+      def apply[N, E[+X] <: EdgeLikeIn[X]](elems: Iterable[Param[N, E]]): Param.Partitions[N, E] =
         new Param.Partitions(elems)
     }
   }
@@ -213,7 +213,7 @@ object GraphPredef {
     case n => toOuterNode[N, E](n)
   }
 
-  implicit class TraversableEnrichments[N, T[X] <: Traversable[X]](val t: T[N]) extends AnyVal {
+  implicit class TraversableEnrichments[N, T[X] <: Iterable[X]](val t: T[N]) extends AnyVal {
     def toOuterNodes[E[+X] <: EdgeLike[X]]: Seq[InParam[N, E]] =
       t.view.map(toOuterNode[N, E]).toSeq
   }

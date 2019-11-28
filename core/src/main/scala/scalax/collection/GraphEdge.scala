@@ -388,9 +388,9 @@ object GraphEdge {
       nr
     }
     def equalTargets(left: EdgeLike[_],
-                     leftEnds: Traversable[_],
+                     leftEnds: Iterable[_],
                      right: EdgeLike[_],
-                     rightEnds: Traversable[_],
+                     rightEnds: Iterable[_],
                      arity: Int): Boolean = {
       val thisOrdered = left.isInstanceOf[OrderedEndpoints]
       val thatOrdered = right.isInstanceOf[OrderedEndpoints]

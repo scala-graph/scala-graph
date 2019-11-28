@@ -80,11 +80,11 @@ final class TraversingTest extends RefSpec with Matchers {
                                    fc2.get.sameElements(List(
                                    4, 4~>2, 2, 2~>3, 3, 3~>4, 4)) should be (true)
       for {
-c1 <- fc1
- c2 <- fc2} yield c1 == c2          should be (false)
+        c1 <- fc1
+        c2 <- fc2} yield c1 == c2 should be(false)
       for {
-c1 <- fc1
- c2 <- fc2} yield c1 sameAs c2      should be (true)
+        c1 <- fc1
+        c2 <- fc2} yield c1 sameAs c2 should be(true)
     }
     
     def `ordered traversal` {
@@ -95,7 +95,7 @@ c1 <- fc1
       def edgeOrdering = g.EdgeOrdering(g.Edge.WeightOrdering.reverse.compare)
       val traverser = (g get root).outerNodeTraverser.withOrdering(edgeOrdering)
        
-      traverser.toList             should be (List(1,2,3,4,5,6,7))
+      traverser.to(List)           should be (List(1,2,3,4,5,6,7))
     }
     
     def `traversers with fluent properties` {
@@ -124,15 +124,15 @@ c1 <- fc1
       val root = "A"
       val g = Graph(root~>"B1", root~>"B2")
       val innerRoot = g get root
-      val result = (ArrayBuffer.empty[String] /: innerRoot.innerNodeDownUpTraverser) {
+      val result = innerRoot.innerNodeDownUpTraverser.foldLeft(ArrayBuffer.empty[String]) {
           (buf, param) => param match {
             case (down, node) => 
               if (down) buf += (if (node eq innerRoot) "(" else "[") += node.toString
               else      buf += (if (node eq innerRoot) ")" else "]")
           }
       }
-      ("" /: result)(_+_) should (be ("(A[B1][B2])") or
-                                  be ("(A[B2][B1])"))
+      result.fold("")(_+_) should (be ("(A[B1][B2])") or
+                                   be ("(A[B2][B1])"))
     }
   
     def `extended traverser` {

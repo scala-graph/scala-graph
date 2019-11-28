@@ -37,9 +37,10 @@ class TEdgeTest extends RefSpec with Matchers {
     type IntDiGraph = Graph[Int, DiEdge]
     val g: IntDiGraph = Graph(1 ~> 2, 2 ~> 3)
 
-    private def endpoints2(edge: g.EdgeT): (g.NodeT, g.NodeT) = (edge.source, edge.target)
+    private def endpoints2(edge: g.EdgeT): (g.NodeT, g.NodeT)                            = (edge.source, edge.target)
     private def endpoints3(edge: IntDiGraph#EdgeT): (IntDiGraph#NodeT, IntDiGraph#NodeT) = (edge.source, edge.target)
-    private def endpoints4(edge: Graph[Int, DiEdge]#EdgeT): (Graph[Int, DiEdge]#NodeT, Graph[Int, DiEdge]#NodeT) = (edge.source, edge.target)
+    private def endpoints4(edge: Graph[Int, DiEdge]#EdgeT): (Graph[Int, DiEdge]#NodeT, Graph[Int, DiEdge]#NodeT) =
+      (edge.source, edge.target)
 
     def `are implicitly converted to outer edges` {
       for (edge <- g.edges) {
@@ -60,7 +61,7 @@ class TEdgeTest extends RefSpec with Matchers {
 
   trait OrderedEndpointsTest[E[+X] <: EdgeLike[X]] {
 
-    def ordered(edges: Traversable[_]): Boolean =
+    def ordered(edges: Iterable[_]): Boolean =
       edges forall (_.isInstanceOf[OrderedEndpoints])
 
     def outerEdges(implicit kind: CollectionKind = Bag): List[E[_]]
