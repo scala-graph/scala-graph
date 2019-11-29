@@ -4,6 +4,12 @@ import scala.language.postfixOps
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
+import org.scalacheck._
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest._
+import org.scalatest.refspec.RefSpec
+import org.scalatest.prop.PropertyChecks
+
 import GraphPredef._
 import GraphEdge._
 import GraphTraversal._
@@ -12,12 +18,8 @@ import edge.WDiEdge
 import edge.WUnDiEdge
 import edge.Implicits._
 import generator.GraphGen
-import org.scalacheck._
-import Arbitrary.arbitrary
-import org.scalatest._
-import org.scalatest.refspec.RefSpec
-import org.scalatest.prop.PropertyChecks
 import scalax.collection.visualization.Visualizer
+import scalax.collection.Compat.TraversableEnrichments // for 2.13 only
 
 class TTraversalRootTest
     extends Suites(
@@ -619,12 +621,12 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
       val nodeOrdering = g.NodeOrdering(Ordering.Int.compare(_, _))
 
       val orderedTraverser = root.outerNodeTraverser.withOrdering(nodeOrdering)
-      orderedTraverser.to(List) should be(
+      orderedTraverser.toList should be(
         List(0 to 4: _*) ++
           List(11 to 13: _*) ++ List(21 to 23: _*) ++
           List(31 to 33: _*) ++ List(41 to 43: _*))
 
-      orderedTraverser.withKind(DepthFirst).to(List) should be(
+      orderedTraverser.withKind(DepthFirst).toList should be(
         (0 ::
           List(1) ::: List(11 to 13: _*) ::: List(2) ::: List(21 to 23: _*) :::
           List(3) ::: List(31 to 33: _*) ::: List(4) ::: List(41 to 43: _*)))
@@ -639,15 +641,15 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
       def edgeOrdering = g EdgeOrdering (g.Edge.WeightOrdering.reverse.compare)
 
       val orderedTraverser = root.outerNodeTraverser.withOrdering(edgeOrdering)
-      orderedTraverser.to(List) should be(List(1 to 7: _*))
-      orderedTraverser.withKind(DepthFirst).to(List) should be(List(1, 2, 3, 5, 6, 7, 4))
+      orderedTraverser.toList should be(List(1 to 7: _*))
+      orderedTraverser.withKind(DepthFirst).toList should be(List(1, 2, 3, 5, 6, 7, 4))
     }
   }
 
   def `map Traverser result` {
     given(Di_1.g) { _ =>
       val t = Di_1.g.nodes.head.outerNodeTraverser
-      t map (_ + 1) should be(t.to(List) map (_ + 1))
+      t map (_ + 1) should be(t.toList map (_ + 1))
     }
   }
 

@@ -11,6 +11,7 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.edge.WkDiEdge
 import scalax.collection.visualization.Visualizer
+import scalax.collection.Compat.TraversableEnrichments // for 2.13 only
 
 class TTopologicalSortRootTest
     extends Suites(
@@ -44,7 +45,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
       private def predecessors(maybeRoot: Option[graph.NodeT]): Set[graph.NodeT] = maybeRoot.fold(
         ifEmpty = Set.empty[graph.NodeT]
       ) { root =>
-        root.innerNodeTraverser().withParameters(Dfs(Predecessors)).to(Set) - root
+        root.innerNodeTraverser().withParameters(Dfs(Predecessors)).toSet - root
       }
 
       def checkOrder(seq: OrderedInnerNodes, ignorePredecessorsOf: Option[graph.NodeT]): Unit =
@@ -60,7 +61,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
         val expected = maybeRoot.fold(
           ifEmpty = graph.nodes.toSet
         ) { root =>
-          root.innerNodeTraverser().withParameters(Dfs(AnyConnected)).to(Set) --
+          root.innerNodeTraverser().withParameters(Dfs(AnyConnected)).toSet --
             (if (ignorePredecessors) predecessors(maybeRoot) else Nil)
         }
         val set = seq.toSet

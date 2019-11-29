@@ -4,6 +4,7 @@ object Compat {
   type AbstractTraversable[+A] = scalax.collection.AbstractTraversable[A]
 
   implicit final class TraversableEnrichments[A](val self: Traversable[A]) extends AnyVal {
+    def toList: List[A] = self.to(List)
     def toMSet: MSet[A] = self.to(MSet)
     def toSet: Set[A]   = self.to(Set)
   }
