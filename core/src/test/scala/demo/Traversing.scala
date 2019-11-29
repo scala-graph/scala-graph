@@ -1,11 +1,12 @@
 package demo
 
+import org.scalatest.refspec.RefSpec
+import org.scalatest.Matchers
+
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.Graph
-
-import org.scalatest.refspec.RefSpec
-import org.scalatest.Matchers
+import scalax.collection.Compat.TraversableEnrichments // for 2.13 only
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-traversing.html
   * Traversing Graphs]].
@@ -94,8 +95,8 @@ final class TraversingTest extends RefSpec with Matchers {
       
       def edgeOrdering = g.EdgeOrdering(g.Edge.WeightOrdering.reverse.compare)
       val traverser = (g get root).outerNodeTraverser.withOrdering(edgeOrdering)
-       
-      traverser.to(List)           should be (List(1,2,3,4,5,6,7))
+
+      traverser.toList should equal(List(1 to 7: _*))
     }
     
     def `traversers with fluent properties` {

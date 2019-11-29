@@ -107,7 +107,11 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     innerNodeTraverser(node).partOfCycle()
 
   /** Represents a topological sort layer. */
-  case class Layer protected[collection] (index: Int, nodes: IndexedSeq[NodeT])
+  case class Layer protected[collection] (index: Int, _nodes: IndexedSeq[NodeT]) {
+    def nodes(implicit ordering: NodeOrdering): IndexedSeq[NodeT] =
+      if (ordering.isDefined) _nodes sorted ordering
+      else _nodes
+  }
 
   /** The result of a topological sort in the layered view. */
   type Layers = Iterable[Layer]
@@ -122,9 +126,6 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     protected def toA: NodeT => A
 
     def layerOrdering: NodeOrdering
-    protected def ordered(nodes: IndexedSeq[NodeT]): IndexedSeq[NodeT] =
-      if (layerOrdering.isDefined) nodes.sorted(layerOrdering)
-      else nodes
 
     /** The number of layers of this topological order. */
     def nrOfLayers = layers.size
@@ -155,7 +156,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       override protected val toA: NodeT => A)(implicit override val layerOrdering: NodeOrdering = NodeOrdering.None)
       extends AbstractTopologicalOrder[A, A] {
 
-    override def iterator = layers.flatMap(layer => ordered(layer.nodes)).map(toA).iterator
+    override def iterator: Iterator[A] =
+      layers.view.flatMap(layer => layer.nodes).map(toA).iterator // 'view' with respect to Scala 2.12
 
     def withLayerOrdering(newOrdering: NodeOrdering): TopologicalOrder[A] =
       new TopologicalOrder(layers, toA)(newOrdering)
@@ -170,7 +172,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   /** Layers of a topological order of a graph or of an isolated graph component.
     *  The layers of a topological sort can roughly be defined as follows:
     *      a. layer 0 contains all nodes having no predecessors,
-    *      a. layer n contains those nodes that have only predecessors in anchestor layers
+    *      a. layer n contains those nodes that have only predecessors in ancestor layers
     *         with at least one of them contained in layer n - 1
     *  @tparam A one of `NodeT`, `N` */
   final class LayeredTopologicalOrder[+A] protected[collection] (
@@ -178,7 +180,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       override protected val toA: NodeT => A)(implicit override val layerOrdering: NodeOrdering = NodeOrdering.None)
       extends AbstractTopologicalOrder[A, (Int, Iterable[A])] {
 
-    override def iterator = layers.map(layer => layer.index -> toIterable2(layer.nodes)).iterator
+    override def iterator: Iterator[(Int, Iterable[A])] =
+      layers.view.map(layer => layer.index -> layer.nodes.map(toA)).iterator // 'view' with respect to Scala 2.12
 
     def withLayerOrdering(newOrdering: NodeOrdering): LayeredTopologicalOrder[A] =
       new LayeredTopologicalOrder(layers, toA)(newOrdering)
@@ -187,18 +190,6 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       new LayeredTopologicalOrder(layers, _.value)(layerOrdering)
 
     def toLayered: LayeredTopologicalOrder[A] = this
-
-    // TODO simpler alternative? will not expose `layers`
-    private def toIterable2(iSeq: IndexedSeq[NodeT]): Iterable[A] = ordered(iSeq).map(toA)
-    // O(1) view to avoid exposure of the possibly mutable `layers`
-    private def toIterable(iSeq: IndexedSeq[NodeT]): Iterable[A] = new AbstractIterable[A] {
-      def iterator: Iterator[A] = new AbstractIterator[A] {
-        private val it       = ordered(iSeq).iterator
-        def hasNext: Boolean = it.hasNext
-        def next(): A        = toA(it.next)
-      }
-      override def stringPrefix = "Nodes"
-    }
   }
 
   /** Either a `Right` containing a valid topological order or a `Left` containing a node on a cycle. */

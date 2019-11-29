@@ -742,14 +742,18 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
       protected[collection] def topologicalSort(setup: TopoSortSetup,
                                                 maybeHandle: Option[Handle] = None): CycleNodeOrTopologicalOrder =
         withHandle(maybeHandle) { implicit handle =>
-          def nonVisited(node: NodeT)                                                                    = !node.visited
-          val (layer_0: Iterable[NodeT], inDegrees: MMap[NodeT, Int], maybeInspectedNode: Option[NodeT]) = setup
-          val untilDepth: Int                                                                            = maxDepth
-          val estimatedLayers: Int                                                                       = expectedMaxNodes(4)
-          val estimatedNodesPerLayer: Int                                                                = order / estimatedLayers
-          val layers                                                                                     = new ArrayBuffer[Layer](estimatedLayers)
-          val maybeCycleNodes                                                                            = MSet.empty[NodeT]
-          def emptyBuffer: ArrayBuffer[NodeT]                                                            = new ArrayBuffer[NodeT](estimatedNodesPerLayer)
+          def nonVisited(node: NodeT) = !node.visited
+          val (
+            layer_0: Iterable[NodeT],
+            inDegrees: MMap[NodeT, Int],
+            maybeInspectedNode: Option[NodeT]
+          )                                   = setup
+          val untilDepth: Int                 = maxDepth
+          val estimatedLayers: Int            = expectedMaxNodes(4)
+          val estimatedNodesPerLayer: Int     = order / estimatedLayers
+          val layers                          = new ArrayBuffer[Layer](estimatedLayers)
+          val maybeCycleNodes                 = MSet.empty[NodeT]
+          def emptyBuffer: ArrayBuffer[NodeT] = new ArrayBuffer[NodeT](estimatedNodesPerLayer)
 
           @tailrec def loop(layer: Int, layerNodes: ArrayBuffer[NodeT]): CycleNodeOrTopologicalOrder = {
             layers += Layer(layer, layerNodes)
