@@ -134,7 +134,7 @@ class TExportTest extends RefSpec with Matchers {
       edgeTransformer = e => None,
       hEdgeTransformer = Some(h => {
         val source = h.edge.source.toString
-        h.edge.targets.toTraversable map (target => (root, DotEdgeStmt(NodeId(source), NodeId(target.toString))))
+        h.edge.targets map (target => (root, DotEdgeStmt(NodeId(source), NodeId(target.toString))))
       }),
       spacing = multilineCompatibleSpacing
     )

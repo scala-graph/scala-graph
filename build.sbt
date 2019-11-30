@@ -68,7 +68,6 @@ lazy val json = project
     defaultSettings ++ Seq(
       name := "Graph JSON",
       version := Version.json,
-      crossScalaVersions := Seq(Version.compiler_2_12),
       libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.0"
     )
   )
