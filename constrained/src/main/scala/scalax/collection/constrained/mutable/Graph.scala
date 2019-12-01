@@ -93,10 +93,10 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
       nodes = Set.empty,
       edges = Set(e))
 
-  override def ++=(elems: TraversableOnce[Param[N, E]]): this.type = ++=?(elems) getOrElse this
+  override def addAll(elems: TraversableOnce[Param[N, E]]): this.type = ++=?(elems) getOrElse this
 
   def ++=?(elems: TraversableOnce[Param[N, E]]): Either[ConstraintViolation, this.type] = {
-    def add: this.type = withoutChecks { super.++=(elems) }
+    def add: this.type = withoutChecks { super.addAll(elems) }
     if (checkSuspended) Right(add)
     else {
       def process(elems: Traversable[Param[N, E]]): Option[ConstraintViolation] = {

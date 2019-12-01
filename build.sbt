@@ -7,10 +7,11 @@ lazy val all = project
     Seq(
       name := "Graph for Scala",
       version := Version.highest,
+      crossScalaVersions := Seq(Version.compiler_2_13),
       publishTo := None
     )
   )
-  .aggregate(core, /*constrained,*/ dot, json)
+  .aggregate(core, constrained, dot, json)
 
 lazy val core = project
   .in(file("core"))
@@ -40,7 +41,7 @@ lazy val core = project
       }
     )
   )
-/*
+
 lazy val constrained = project
   .in(file("constrained"))
   .dependsOn(core % "compile->compile;test->test")
@@ -50,7 +51,7 @@ lazy val constrained = project
       version := Version.constrained
     )
   )
-*/
+
 lazy val dot = project
   .in(file("dot"))
   .dependsOn(core)
@@ -68,7 +69,6 @@ lazy val json = project
     defaultSettings ++ Seq(
       name := "Graph JSON",
       version := Version.json,
-      crossScalaVersions := Seq(Version.compiler_2_12),
       libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.0"
     )
   )

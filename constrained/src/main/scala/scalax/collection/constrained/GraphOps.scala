@@ -25,7 +25,7 @@ trait GraphOps[
   /** Same as `+` but $Info. */
   def +?(elem: Param[N, E]): Either[ConstraintViolation, This[N, E]]
 
-  final override def ++(elems: GenTraversableOnce[Param[N, E]]): This[N, E] = ++?(elems) getOrElse this
+  final override def concat(elems: GenTraversableOnce[Param[N, E]]): This[N, E] = ++?(elems) getOrElse this
 
   /** Same as `++` but $Info. */
   def ++?(elems: GenTraversableOnce[Param[N, E]]): Either[ConstraintViolation, This[N, E]]
