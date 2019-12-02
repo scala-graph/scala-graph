@@ -13,9 +13,9 @@ object Compat {
     def toMSet: MSet[A] = self.to(MSet)
   }
 
-  trait ExtBitSet
-
   trait Growable[-A]
   trait AddSubtract[A, +This]
   trait InclExcl[A, +This]
+
+  trait ExtBitSet
 }
