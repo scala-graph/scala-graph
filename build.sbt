@@ -7,7 +7,6 @@ lazy val all = project
     Seq(
       name := "Graph for Scala",
       version := Version.highest,
-      crossScalaVersions := Seq(Version.compiler_2_13),
       publishTo := None
     )
   )
@@ -48,7 +47,8 @@ lazy val constrained = project
   .settings(
     defaultSettings ++ Seq(
       name := "Graph Constrained",
-      version := Version.constrained
+      version := Version.constrained,
+      crossScalaVersions := Seq(Version.compiler_2_13),
     )
   )
 
