@@ -25,7 +25,7 @@ trait AdjacencyListGraph[
 
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
 
-  override protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]): Unit = withoutChecks {
+  override protected def initialize(nodes: Iterable[N], edges: Iterable[E[N]]): Unit = withoutChecks {
     super.initialize(nodes, edges)
   }
 

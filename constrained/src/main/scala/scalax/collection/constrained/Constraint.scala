@@ -145,7 +145,7 @@ trait ConstraintMethods[N, E[+X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
     *  @param edges the outer edges the graph is to be populated with.
     *  @return $PRECHECKRET
     */
-  def preCreate(nodes: collection.Traversable[N], edges: collection.Traversable[E[N]]): PreCheckResult =
+  def preCreate(nodes: Iterable[N], edges: Iterable[E[N]]): PreCheckResult =
     PreCheckResult.postCheck(
       (nodes forall ((n: N) => !preAdd(n).abort)) &&
         (edges forall ((e: E[N]) => !preAdd(e).abort)))
@@ -252,8 +252,8 @@ trait ConstraintMethods[N, E[+X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
     * @return `None` to accept `newGraph` or `Some` reason for constraint violation resp. rejection
     */
   def postAdd(newGraph: G @uV,
-              passedNodes: Traversable[N],
-              passedEdges: Traversable[E[N]],
+              passedNodes: Iterable[N],
+              passedEdges: Iterable[E[N]],
               preCheck: PreCheckResult): Either[PostCheckFailure, G] = Right(newGraph)
 
   /** This post-check must return whether `newGraph` should be committed or the subtraction
@@ -268,19 +268,19 @@ trait ConstraintMethods[N, E[+X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
     * @return `None` to accept `newGraph` or `Some` reason for constraint violation resp. rejection
     */
   def postSubtract(newGraph: G @uV,
-                   passedNodes: Traversable[N],
-                   passedEdges: Traversable[E[N]],
+                   passedNodes: Iterable[N],
+                   passedEdges: Iterable[E[N]],
                    preCheck: PreCheckResult): Either[PostCheckFailure, G] = Right(newGraph)
 
   /** Consolidates all outer nodes of the arguments by adding the edge ends
     *  of `passedEdges` to `passedNodes`. */
-  protected def allNodes(passedNodes: Traversable[N], passedEdges: Traversable[E[N]]): Set[N] = {
+  protected def allNodes(passedNodes: Iterable[N], passedEdges: Iterable[E[N]]): Set[N] = {
     val nodes = collection.mutable.Set[N]() ++ passedNodes
     passedEdges foreach (nodes ++= _)
     nodes
   }
 
-  protected def nodesToAdd(passedNodes: Traversable[N], passedEdges: Traversable[E[N]]): Set[N] =
+  protected def nodesToAdd(passedNodes: Iterable[N], passedEdges: Iterable[E[N]]): Set[N] =
     allNodes(passedNodes, passedEdges).filter(self.find(_).isEmpty)
 }
 

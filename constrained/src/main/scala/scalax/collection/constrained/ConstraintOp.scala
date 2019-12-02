@@ -77,7 +77,7 @@ class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override v
   private type LEdgeT = left.self.EdgeT
   private type REdgeT = right.self.EdgeT
 
-  final override def preCreate(nodes: collection.Traversable[N], edges: collection.Traversable[E[N]]): PreCheckResult =
+  final override def preCreate(nodes: Iterable[N], edges: Iterable[E[N]]): PreCheckResult =
     eval(left, left preCreate (nodes, edges), right, right preCreate (nodes, edges))
 
   final override def preAdd(node: N): PreCheckResult    = eval(left, left preAdd node, right, right preAdd node)
@@ -111,8 +111,8 @@ class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override v
     )
 
   final override def postAdd(newGraph: G @uV,
-                             passedNodes: Traversable[N],
-                             passedEdges: Traversable[E[N]],
+                             passedNodes: Iterable[N],
+                             passedEdges: Iterable[E[N]],
                              preCheck: PreCheckResult): Either[PostCheckFailure, G] =
     eval(
       left postAdd (newGraph, passedNodes, passedEdges, preCheck),
@@ -120,8 +120,8 @@ class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override v
     )
 
   final override def postSubtract(newGraph: G @uV,
-                                  passedNodes: Traversable[N],
-                                  passedEdges: Traversable[E[N]],
+                                  passedNodes: Iterable[N],
+                                  passedEdges: Iterable[E[N]],
                                   preCheck: PreCheckResult): Either[PostCheckFailure, G] =
     eval(
       left postSubtract (newGraph, passedNodes, passedEdges, preCheck),

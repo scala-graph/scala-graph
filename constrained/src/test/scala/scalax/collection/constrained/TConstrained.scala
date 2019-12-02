@@ -207,8 +207,8 @@ private object UserConstraints {
       extends NoPreCheck[N, E, G](self) {
 
     override def postSubtract(newGraph: G,
-                              passedNodes: Traversable[N],
-                              passedEdges: Traversable[E[N]],
+                              passedNodes: Iterable[N],
+                              passedEdges: Iterable[E[N]],
                               preCheck: PreCheckResult) = Left(PostCheckFailure(()))
 
   }
@@ -230,8 +230,8 @@ private object UserConstraints {
       extends NoPreCheck[N, E, G](self) {
 
     override def postAdd(newGraph: G,
-                         passedNodes: Traversable[N],
-                         passedEdges: Traversable[E[N]],
+                         passedNodes: Iterable[N],
+                         passedEdges: Iterable[E[N]],
                          preCheck: PreCheckResult) =
       if (passedEdges.size == 4) Right(newGraph) else Left(PostCheckFailure(FailingPostAdd.leftWarning))
 
@@ -250,7 +250,7 @@ private object UserConstraints {
     val min: Int
 
     // difficult to say so postpone it until post-check
-    override def preCreate(nodes: collection.Traversable[N], edges: collection.Traversable[E[N]]) = postCheck
+    override def preCreate(nodes: collection.Iterable[N], edges: collection.Iterable[E[N]]) = postCheck
     // this would become an unconnected node with a degree of 0
     def preAdd(node: N) = checkAbort
     // edge ends not yet contained in the graph would have a degree of 1
@@ -262,8 +262,8 @@ private object UserConstraints {
 
     // inspecting the would-be graph is much easier
     override def postAdd(newGraph: G,
-                         passedNodes: Traversable[N],
-                         passedEdges: Traversable[E[N]],
+                         passedNodes: Iterable[N],
+                         passedEdges: Iterable[E[N]],
                          preCheck: PreCheckResult) =
       if (allNodes(passedNodes, passedEdges) forall (n => (newGraph get n).degree >= min)) Right(newGraph)
       else Left(PostCheckFailure(()))
@@ -303,8 +303,8 @@ private object UserConstraints {
       )
 
     override def postSubtract(newGraph: G,
-                              passedNodes: Traversable[N],
-                              passedEdges: Traversable[E[N]],
+                              passedNodes: Iterable[N],
+                              passedEdges: Iterable[E[N]],
                               preCheck: PreCheckResult) = preCheck match {
       case Result(nodesToCheck) =>
         if (nodesToCheck forall { n =>

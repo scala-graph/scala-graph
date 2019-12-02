@@ -13,7 +13,7 @@ import PreCheckFollowUp._
 
 /** Ensures that the underlying `Graph` is acyclic at any time. */
 class Acyclic[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G) extends Constraint[N, E, G](self) {
-  override def preCreate(nodes: Traversable[N], edges: Traversable[E[N]]): PreCheckResult =
+  override def preCreate(nodes: Iterable[N], edges: Iterable[E[N]]): PreCheckResult =
     PreCheckResult.postCheck(edges forall (_.nonLooping))
 
   /** Adding a single node cannot produce a cycle. */
@@ -81,8 +81,8 @@ class Acyclic[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
     } else PreCheckResult(PostCheck)
 
   override def postAdd(newGraph: G @uV,
-                       passedNodes: Traversable[N],
-                       passedEdges: Traversable[E[N]],
+                       passedNodes: Iterable[N],
+                       passedEdges: Iterable[E[N]],
                        preCheck: PreCheckResult): Either[PostCheckFailure, G] = {
     def msg(at: Option[self.NodeT]) =
       s"Unexpected cycle ${at.fold("")("at " + _)}when adding $passedNodes, $passedEdges."

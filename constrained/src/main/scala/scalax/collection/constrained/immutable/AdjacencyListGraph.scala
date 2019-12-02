@@ -13,11 +13,11 @@ trait AdjacencyListGraph[
 
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
 
-  final override protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]) {
+  final override protected def initialize(nodes: Iterable[N], edges: Iterable[E[N]]) {
     withoutChecks { super.initialize(nodes, edges) }
   }
 
-  def copy_?(nodes: Traversable[N], edges: Traversable[E[N]]): Either[ConstraintViolation, This[N, E]]
+  def copy_?(nodes: Iterable[N], edges: Iterable[E[N]]): Either[ConstraintViolation, This[N, E]]
 
   final override def +(node: N): This[N, E] = +?(node) getOrElse this
 
