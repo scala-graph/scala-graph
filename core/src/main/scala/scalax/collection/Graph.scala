@@ -337,12 +337,12 @@ trait GraphLike[
 
   /** Implements the heart of `++` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */
-  protected def plusPlus(newNodes: Traversable[N], newEdges: Traversable[E[N]]): This[N, E] =
+  protected def plusPlus(newNodes: Iterable[N], newEdges: Iterable[E[N]]): This[N, E] =
     graphCompanion.from[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
 
   /** Implements the heart of `--` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */
-  protected def minusMinus(delNodes: Traversable[N], delEdges: Traversable[E[N]]): This[N, E] = {
+  protected def minusMinus(delNodes: Iterable[N], delEdges: Iterable[E[N]]): This[N, E] = {
     val delNodesEdges = minusMinusNodesEdges(delNodes, delEdges)
     graphCompanion.from[N, E](delNodesEdges._1, delNodesEdges._2)
   }
@@ -350,7 +350,7 @@ trait GraphLike[
   /** Calculates the `nodes` and `edges` arguments to be passed to a factory method
     *  when delNodes and delEdges are to be deleted by `--`.
     */
-  protected def minusMinusNodesEdges(delNodes: Traversable[N], delEdges: Traversable[E[N]]): (Set[N], Set[E[N]]) =
+  protected def minusMinusNodesEdges(delNodes: Iterable[N], delEdges: Iterable[E[N]]): (Set[N], Set[E[N]]) =
     (nodes.toOuter -- delNodes, {
       val delNodeSet = delNodes.toSet
       val restEdges =
@@ -510,7 +510,7 @@ object Graph extends GraphCoreCompanion[Graph] {
     immutable.Graph.newBuilder[N, E](edgeT, config)
   def empty[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.empty[N, E](edgeT, config)
-  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil, edges: Traversable[E[N]])(
+  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Nil, edges: Iterable[E[N]])(
       implicit edgeT: ClassTag[E[N]],
       config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(edgeT, config)

@@ -75,9 +75,8 @@ trait GraphCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
     * @return  A new graph instance containing `nodes` and all edge ends
     *          and `edges`.
     */
-  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil, edges: Traversable[E[N]])(
-      implicit edgeT: ClassTag[E[N]],
-      config: Config): CC[N, E]
+  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Nil, edges: Iterable[E[N]])(implicit edgeT: ClassTag[E[N]],
+                                                                                       config: Config): CC[N, E]
 
   /** Produces a graph containing the results of some element computation a number of times.
     * $DUPLEXCL
@@ -111,7 +110,7 @@ trait GraphCoreCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
   override def apply[N, E[+X] <: EdgeLikeIn[X]](elems: Param[N, E]*)(implicit edgeT: ClassTag[E[N]],
                                                                      config: Config = defaultConfig): CC[N, E] =
     from(elems)(edgeT, config)
-  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Traversable[N] = Nil, edges: Traversable[E[N]])(
+  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Nil, edges: Iterable[E[N]])(
       implicit edgeT: ClassTag[E[N]],
       config: Config = defaultConfig): CC[N, E]
   override def fill[N, E[+X] <: EdgeLikeIn[X]](nr: Int)(

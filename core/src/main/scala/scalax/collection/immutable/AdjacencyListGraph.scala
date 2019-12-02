@@ -53,7 +53,7 @@ trait AdjacencyListGraph[
 
   type EdgeSetT = EdgeSet
   class EdgeSet extends super.EdgeSet with Compat.InclExcl[EdgeT, Set[EdgeT]] {
-    override protected[collection] def initialize(edges: Traversable[E[N]]): Unit =
+    override protected[collection] def initialize(edges: Iterable[E[N]]): Unit =
       if (edges ne null)
         edges foreach (this += Edge(_))
 
@@ -71,7 +71,7 @@ trait AdjacencyListGraph[
   }
   override def edges: EdgeSetT
 
-  protected def copy(nodes: Traversable[N], edges: Traversable[E[N]]): This[N, E]
+  protected def copy(nodes: Iterable[N], edges: Iterable[E[N]]): This[N, E]
 
   def +(n: N) =
     if (nodes contains Node(n)) this

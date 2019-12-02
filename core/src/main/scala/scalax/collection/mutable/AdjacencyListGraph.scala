@@ -119,7 +119,7 @@ trait AdjacencyListGraph[
   class EdgeSet extends super[GraphLike].EdgeSet with super.EdgeSet {
     final protected[AdjacencyListGraph] var initialized = false
 
-    final override protected[collection] def initialize(edges: Traversable[E[N]]): Unit = {
+    final override protected[collection] def initialize(edges: Iterable[E[N]]): Unit = {
       if (edges ne null)
         edges foreach (this add Edge(_))
       initialized = true

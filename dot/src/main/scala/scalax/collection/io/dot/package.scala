@@ -34,7 +34,7 @@ package object dot {
     Graph[N, E]#EdgeT => Option[(DotGraph, DotEdgeStmt)]
 
   type HyperEdgeTransformer[N, E[+X] <: EdgeLikeIn[X]] =
-    Graph[N, E]#EdgeT => Traversable[(DotGraph, DotEdgeStmt)]
+    Graph[N, E]#EdgeT => Iterable[(DotGraph, DotEdgeStmt)]
 
   object implicits {
     implicit def toId(s: String): Id = Id(s)

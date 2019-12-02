@@ -82,7 +82,7 @@ final class TConnectivity[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
       }
       connectors foreach { connector =>
         val connected = union + connector
-        def check(scc: Traversable[connected.Component], expectedSize: Int): Unit = {
+        def check(scc: Iterable[connected.Component], expectedSize: Int): Unit = {
           scc should have size (expectedSize)
           scc foreach { sc =>
             given(sc.to(factory)) { g =>

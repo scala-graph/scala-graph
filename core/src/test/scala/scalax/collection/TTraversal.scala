@@ -4,6 +4,12 @@ import scala.language.postfixOps
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
+import org.scalacheck._
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest._
+import org.scalatest.refspec.RefSpec
+import org.scalatest.prop.PropertyChecks
+
 import GraphPredef._
 import GraphEdge._
 import GraphTraversal._
@@ -12,12 +18,8 @@ import edge.WDiEdge
 import edge.WUnDiEdge
 import edge.Implicits._
 import generator.GraphGen
-import org.scalacheck._
-import Arbitrary.arbitrary
-import org.scalatest._
-import org.scalatest.refspec.RefSpec
-import org.scalatest.prop.PropertyChecks
 import scalax.collection.visualization.Visualizer
+import scalax.collection.Compat.TraversableEnrichments // for 2.13 only
 
 class TTraversalRootTest
     extends Suites(
@@ -501,14 +503,14 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
     val root = "A"
     given(factory(root ~> "B1", root ~> "B2")) { g =>
       val innerRoot = g get root
-      val result = (ListBuffer.empty[String] /: innerRoot.innerNodeDownUpTraverser) { (buf, param) =>
+      val result = innerRoot.innerNodeDownUpTraverser.foldLeft(ListBuffer.empty[String]) { (buf, param) =>
         param match {
           case (down, node) =>
             if (down) buf += (if (node eq innerRoot) "(" else "[") += node.toString
             else buf += (if (node eq innerRoot) ")" else "]")
         }
       }
-      ("" /: result)(_ + _) should (be("(A[B1][B2])") or
+      result.foldLeft("")(_ + _) should (be("(A[B1][B2])") or
         be("(A[B2][B1])"))
     }
   }

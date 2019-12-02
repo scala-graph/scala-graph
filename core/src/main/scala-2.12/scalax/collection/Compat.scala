@@ -1,7 +1,14 @@
 package scalax.collection
 
 object Compat {
-  implicit final class ToExts[A](val self: Iterable[A]) extends AnyVal {
+  type AbstractTraversable[+A] = scala.collection.AbstractTraversable[A]
+
+  implicit final class TraversableEnrichments[A](val self: Traversable[A]) extends AnyVal {
+    def toMSet: MSet[A] = self.to[MSet]
+    def toSet: Set[A]   = self.to[Set]
+  }
+
+  implicit final class IterableEnrichments[A](val self: Iterable[A]) extends AnyVal {
     def toMSet: MSet[A] = self.to[MSet]
   }
 

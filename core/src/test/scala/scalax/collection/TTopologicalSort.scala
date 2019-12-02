@@ -11,6 +11,7 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.edge.WkDiEdge
 import scalax.collection.visualization.Visualizer
+import scalax.collection.Compat.TraversableEnrichments // for 2.13 only
 
 class TTopologicalSortRootTest
     extends Suites(
@@ -29,10 +30,10 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
 
     class Checker[N, E[+X] <: EdgeLikeIn[X]](val graph: G[N, E]) {
 
-      def checkOuterNodes(seq: Traversable[N]): Unit =
+      def checkOuterNodes(seq: Iterable[N]): Unit =
         checkInnerNodes(seq map (graph get _))
 
-      type OrderedInnerNodes = Traversable[graph.NodeT]
+      type OrderedInnerNodes = Iterable[graph.NodeT]
 
       def checkInnerNodes(seq: OrderedInnerNodes,
                           root: Option[graph.NodeT] = None,

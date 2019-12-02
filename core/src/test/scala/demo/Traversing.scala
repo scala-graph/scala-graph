@@ -1,11 +1,12 @@
 package demo
 
+import org.scalatest.refspec.RefSpec
+import org.scalatest.Matchers
+
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.Graph
-
-import org.scalatest.refspec.RefSpec
-import org.scalatest.Matchers
+import scalax.collection.Compat.TraversableEnrichments // for 2.13 only
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-traversing.html
   * Traversing Graphs]].
@@ -80,11 +81,11 @@ final class TraversingTest extends RefSpec with Matchers {
                                    fc2.get.sameElements(List(
                                    4, 4~>2, 2, 2~>3, 3, 3~>4, 4)) should be (true)
       for {
-c1 <- fc1
- c2 <- fc2} yield c1 == c2          should be (false)
+        c1 <- fc1
+        c2 <- fc2} yield c1 == c2 should be(false)
       for {
-c1 <- fc1
- c2 <- fc2} yield c1 sameAs c2      should be (true)
+        c1 <- fc1
+        c2 <- fc2} yield c1 sameAs c2 should be(true)
     }
     
     def `ordered traversal` {
@@ -94,8 +95,8 @@ c1 <- fc1
       
       def edgeOrdering = g.EdgeOrdering(g.Edge.WeightOrdering.reverse.compare)
       val traverser = (g get root).outerNodeTraverser.withOrdering(edgeOrdering)
-       
-      traverser.toList             should be (List(1,2,3,4,5,6,7))
+
+      traverser.toList should equal(List(1 to 7: _*))
     }
     
     def `traversers with fluent properties` {
@@ -124,15 +125,15 @@ c1 <- fc1
       val root = "A"
       val g = Graph(root~>"B1", root~>"B2")
       val innerRoot = g get root
-      val result = (ArrayBuffer.empty[String] /: innerRoot.innerNodeDownUpTraverser) {
+      val result = innerRoot.innerNodeDownUpTraverser.foldLeft(ArrayBuffer.empty[String]) {
           (buf, param) => param match {
             case (down, node) => 
               if (down) buf += (if (node eq innerRoot) "(" else "[") += node.toString
               else      buf += (if (node eq innerRoot) ")" else "]")
           }
       }
-      ("" /: result)(_+_) should (be ("(A[B1][B2])") or
-                                  be ("(A[B2][B1])"))
+      result.fold("")(_+_) should (be ("(A[B1][B2])") or
+                                   be ("(A[B2][B1])"))
     }
   
     def `extended traverser` {
