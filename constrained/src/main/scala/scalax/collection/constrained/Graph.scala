@@ -1,11 +1,11 @@
 package scalax.collection.constrained
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.collection.{GenTraversableOnce, Set}
+import scala.collection.Set
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, InnerEdgeParam, InnerNodeParam, OutParam, OuterEdge, OuterNode, Param}
-import scalax.collection.{Graph => SimpleGraph, GraphLike => SimpleGraphLike}
+import scalax.collection.{IterableOnce, Graph => SimpleGraph, GraphLike => SimpleGraphLike}
 import scalax.collection.config._
 import scalax.collection.constrained.config.GenConstrainedConfig
 import scalax.collection.constrained.generic.GraphConstrainedCompanion
@@ -72,7 +72,7 @@ trait GraphLike[N,
 
   protected def +#?(e: E[N]): Either[ConstraintViolation, This[N, E]]
 
-  def ++?(elems: GenTraversableOnce[Param[N, E]]): Either[ConstraintViolation, This[N, E]] = {
+  def ++?(elems: IterableOnce[Param[N, E]]): Either[ConstraintViolation, This[N, E]] = {
     val (outerNodes, outerEdges, preCheckResult) = {
       val it = elems match {
         case x: Iterable[Param[N, E]]        => x
@@ -104,7 +104,7 @@ trait GraphLike[N,
 
   protected def -#?(e: E[N]): Either[ConstraintViolation, This[N, E]]
 
-  def --?(elems: GenTraversableOnce[Param[N, E]]): Either[ConstraintViolation, This[N, E]] = {
+  def --?(elems: IterableOnce[Param[N, E]]): Either[ConstraintViolation, This[N, E]] = {
     lazy val p                        = partition(elems)
     lazy val (outerNodes, outerEdges) = (p.toOuterNodes.toSet, p.toOuterEdges.toSet)
     def innerNodes =

@@ -1,6 +1,6 @@
 package scalax.collection.constrained
 
-import scala.collection.{GenTraversableOnce, Set}
+import scala.collection.{IterableOnce, Set}
 
 import scalax.collection.GraphPredef.{EdgeLikeIn, Param}
 import scalax.collection.{GraphLike => SimpleGraphLike}
@@ -25,10 +25,10 @@ trait GraphOps[
   /** Same as `+` but $Info. */
   def +?(elem: Param[N, E]): Either[ConstraintViolation, This[N, E]]
 
-  final override def concat(elems: GenTraversableOnce[Param[N, E]]): This[N, E] = ++?(elems) getOrElse this
+  final override def concat(elems: IterableOnce[Param[N, E]]): This[N, E] = ++?(elems) getOrElse this
 
   /** Same as `++` but $Info. */
-  def ++?(elems: GenTraversableOnce[Param[N, E]]): Either[ConstraintViolation, This[N, E]]
+  def ++?(elems: IterableOnce[Param[N, E]]): Either[ConstraintViolation, This[N, E]]
 
   /** Same as `-` but $Info. */
   def -?(node: N): Either[ConstraintViolation, This[N, E]]
@@ -38,8 +38,8 @@ trait GraphOps[
   /** Same as `-` but $Info. */
   def -?(elem: Param[N, E]): Either[ConstraintViolation, This[N, E]]
 
-  final override def --(elems: GenTraversableOnce[Param[N, E]]): This[N, E] = --?(elems) getOrElse this
+  final override def --(elems: IterableOnce[Param[N, E]]): This[N, E] = --?(elems) getOrElse this
 
   /** Same as `--` but $Info. */
-  def --?(elems: GenTraversableOnce[Param[N, E]]): Either[ConstraintViolation, This[N, E]]
+  def --?(elems: IterableOnce[Param[N, E]]): Either[ConstraintViolation, This[N, E]]
 }
