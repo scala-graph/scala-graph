@@ -24,7 +24,7 @@ trait GraphConstrainedCompanion[+GC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] wi
       implicit edgeT: ClassTag[E[N]],
       config: Config): GC[N, E]
   override def newBuilder[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
-                                                    config: Config): Builder[Param[N, E], GC[N, E]] =
+                                                     config: Config): Builder[Param[N, E], GC[N, E]] =
     new GraphBuilder[N, E, GC](this)(edgeT, config)
 }
 
@@ -41,14 +41,15 @@ abstract class GraphConstrainedCompanionAlias[GC[N, E[+X] <: EdgeLikeIn[X]] <: G
     companion(elems: _*)(edgeT, constraintCompanion)
 
   def from[N](nodes: Iterable[N], edges: Iterable[E[N]])(implicit edgeT: ClassTag[E[N]],
-                                                               config: GraphConfig): Graph[N, E] =
+                                                         config: GraphConfig): Graph[N, E] =
     companion.from(nodes, edges)(edgeT, constraintCompanion)
 }
 
 trait MutableGraphCompanion[+GC[N, E[+X] <: EdgeLikeIn[X]] <: mutable.Graph[N, E] with mutable.GraphLike[N, E, GC]]
     extends GraphConstrainedCompanion[GC] {
-  override def newBuilder[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
-                                                    config: Config): Builder[Param[N, E], GC[N, E] @uncheckedVariance] =
+  override def newBuilder[N, E[+X] <: EdgeLikeIn[X]](
+      implicit edgeT: ClassTag[E[N]],
+      config: Config): Builder[Param[N, E], GC[N, E] @uncheckedVariance] =
     new GraphBuilder[N, E, GC](this)(edgeT, config)
 }
 

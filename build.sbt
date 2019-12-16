@@ -81,7 +81,7 @@ lazy val misc = project
       version := Version.misc
     )
   )
-*/
+ */
 ThisBuild / resolvers ++= Seq(
   ("NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/").withAllowInsecureProtocol(true),
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"

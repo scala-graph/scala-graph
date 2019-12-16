@@ -87,7 +87,8 @@ abstract class DefaultGraphImpl[N, E[+X] <: EdgeLikeIn[X]](iniNodes: Iterable[N]
 }
 
 object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
-  override def empty[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config): DefaultGraphImpl[N, E] =
+  override def empty[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]],
+                                                config: Config): DefaultGraphImpl[N, E] =
     fromWithoutCheck(Set.empty, Set.empty)(edgeT, config)
 
   override protected[collection] def fromWithoutCheck[N, E[+X] <: EdgeLikeIn[X]](
@@ -122,9 +123,9 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
 }
 
 @SerialVersionUID(7701L)
-class UserConstrainedGraphImpl[N, E[+X] <: EdgeLikeIn[X]](
-    iniNodes: Iterable[N] = Nil,
-    iniEdges: Iterable[E[N]] = Nil)(implicit override val edgeT: ClassTag[E[N]], _config: DefaultGraphImpl.Config)
+class UserConstrainedGraphImpl[N, E[+X] <: EdgeLikeIn[X]](iniNodes: Iterable[N] = Nil, iniEdges: Iterable[E[N]] = Nil)(
+    implicit override val edgeT: ClassTag[E[N]],
+    _config: DefaultGraphImpl.Config)
     extends DefaultGraphImpl[N, E](iniNodes, iniEdges)(edgeT, _config)
     with UserConstrainedGraph[N, E, DefaultGraphImpl[N, E]] {
 

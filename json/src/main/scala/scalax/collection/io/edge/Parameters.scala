@@ -34,7 +34,8 @@ object CEdgeParameters {
     Some((p.n1, p.n2), p.attributes)
 }
 
-class HyperEdgeParameters(val nodeIds: HyperEdgeNodeIds, val endpointsKind: String) extends Parameters(NodeProduct(nodeIds))
+class HyperEdgeParameters(val nodeIds: HyperEdgeNodeIds, val endpointsKind: String)
+    extends Parameters(NodeProduct(nodeIds))
 object HyperEdgeParameters {
   def unapply(p: HyperEdgeParameters): Option[(HyperEdgeNodeIds, String)] =
     Some((p.nodeIds, p.endpointsKind.toString))

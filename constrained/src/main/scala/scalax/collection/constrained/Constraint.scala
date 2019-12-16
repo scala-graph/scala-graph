@@ -24,7 +24,7 @@ trait ConstraintCompanion[+CC[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]] <: Co
   def ||(that: ConstraintCompanion[Constraint]) = new ConstraintCompanionBinaryOp(Or, this, that)
 
   protected[constrained] class PrefixedConstraintCompanion(prefix: Option[String]) extends ConstraintCompanion[CC] {
-    override val stringPrefix: Option[String]                                   = prefix
+    override val stringPrefix: Option[String]                                    = prefix
     def apply[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G): CC[N, E, G] = thisCompanion[N, E, G](self)
   }
 

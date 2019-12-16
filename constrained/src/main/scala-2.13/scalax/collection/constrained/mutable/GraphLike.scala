@@ -113,7 +113,7 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
       }
       (elems match {
         case elems: Iterable[Param[N, E]] => process(elems)
-        case traversableOnce                 => process(traversableOnce.toSet)
+        case traversableOnce              => process(traversableOnce.toSet)
       }).fold[Either[ConstraintViolation, this.type]](Right(this))(Left(_))
     }
   }

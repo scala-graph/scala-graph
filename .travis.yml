@@ -4,8 +4,7 @@ scala:
 jdk:
   - oraclejdk11
 script:
-  - sbt +test
-#scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
+  - sbt +test scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
 cache:
   directories:
     - $HOME/.ivy2/cache

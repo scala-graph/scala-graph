@@ -16,9 +16,9 @@ abstract class ConstraintOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G
     extends Constraint[N, E, G](self)
 
 class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G,
-                                                                     operator: BinaryOp,
-                                                                     left: Constraint[N, E, G],
-                                                                     right: Constraint[N, E, G])
+                                                                      operator: BinaryOp,
+                                                                      left: Constraint[N, E, G],
+                                                                      right: Constraint[N, E, G])
     extends ConstraintOp[N, E, G](self, operator) {
 
   assert((self eq left.self) && (left.self eq right.self))

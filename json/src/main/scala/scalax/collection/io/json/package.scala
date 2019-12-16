@@ -25,10 +25,11 @@ import scala.reflect.ClassTag
   * @author Peter Empen
   */
 package object json {
-  type Descriptor[N]                                                            = descriptor.Descriptor[N]
-  type NodeDescriptor[N]                                                        = descriptor.NodeDescriptor[N]
-  type EdgeDescriptorBase[N, E[+X] <: EdgeLikeIn[X], +C <: EdgeCompanionBase[E]] = descriptor.EdgeDescriptorBase[N, E, C]
-  type EdgeDescriptor[N, E[+X] <: UnDiEdge[X], +C <: EdgeCompanion[E]]           = descriptor.EdgeDescriptor[N, E, C]
+  type Descriptor[N]     = descriptor.Descriptor[N]
+  type NodeDescriptor[N] = descriptor.NodeDescriptor[N]
+  type EdgeDescriptorBase[N, E[+X] <: EdgeLikeIn[X], +C <: EdgeCompanionBase[E]] =
+    descriptor.EdgeDescriptorBase[N, E, C]
+  type EdgeDescriptor[N, E[+X] <: UnDiEdge[X], +C <: EdgeCompanion[E]] = descriptor.EdgeDescriptor[N, E, C]
   type WEdgeDescriptor[N, E[+X] <: UnDiEdge[X] with WEdge[X], +C <: WEdgeCompanion[E]] =
     descriptor.WEdgeDescriptor[N, E, C]
   type LEdgeDescriptor[N, E[+X] <: UnDiEdge[X] with LEdge[X], +C <: LEdgeCompanion[E], L <: AnyRef] =

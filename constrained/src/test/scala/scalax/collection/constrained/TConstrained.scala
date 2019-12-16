@@ -229,17 +229,14 @@ private object UserConstraints {
   class FailingPostAdd[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
       extends NoPreCheck[N, E, G](self) {
 
-    override def postAdd(newGraph: G,
-                         passedNodes: Iterable[N],
-                         passedEdges: Iterable[E[N]],
-                         preCheck: PreCheckResult) =
+    override def postAdd(newGraph: G, passedNodes: Iterable[N], passedEdges: Iterable[E[N]], preCheck: PreCheckResult) =
       if (passedEdges.size == 4) Right(newGraph) else Left(PostCheckFailure(FailingPostAdd.leftWarning))
 
   }
 
   object FailingPostAdd extends ConstraintCompanion[FailingPostAdd] {
     def apply[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](self: G) = new FailingPostAdd[N, E, G](self)
-    val leftWarning                                                = "warning"
+    val leftWarning                                                 = "warning"
   }
 
   /* Constrains the graph to nodes having a minimal degree of `min` by utilizing pre- and post-checks.
@@ -261,10 +258,7 @@ private object UserConstraints {
     override def preAdd(elems: InParam[N, E]*) = postCheck
 
     // inspecting the would-be graph is much easier
-    override def postAdd(newGraph: G,
-                         passedNodes: Iterable[N],
-                         passedEdges: Iterable[E[N]],
-                         preCheck: PreCheckResult) =
+    override def postAdd(newGraph: G, passedNodes: Iterable[N], passedEdges: Iterable[E[N]], preCheck: PreCheckResult) =
       if (allNodes(passedNodes, passedEdges) forall (n => (newGraph get n).degree >= min)) Right(newGraph)
       else Left(PostCheckFailure(()))
 

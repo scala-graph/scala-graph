@@ -1,6 +1,8 @@
 package scalax.collection.constrained
 
-import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, InnerEdgeParam, InnerNodeParam, OutParam, OuterEdge, OuterNode, Param}
+import scalax.collection.GraphPredef.{
+  EdgeLikeIn, InParam, InnerEdgeParam, InnerNodeParam, OutParam, OuterEdge, OuterNode, Param
+}
 import scalax.collection.config._
 import scalax.collection.constrained.config.GenConstrainedConfig
 import scalax.collection.constrained.generic.GraphConstrainedCompanion
@@ -11,17 +13,17 @@ import scala.collection.Set
 import scala.language.postfixOps
 
 /** A template trait for graphs.
- *
- * This trait provides the common structure and operations of immutable graphs independently
- * of its representation.
- *
- * If `E` inherits `DirectedEdgeLike` the graph is directed, otherwise it is undirected or mixed.
- *
- * @tparam N    the user type of the nodes (vertices) in this graph.
- * @tparam E    the higher kinded type of the edges (links) in this graph.
- * @tparam This the higher kinded type of the graph itself.
- * @author Peter Empen
- */
+  *
+  * This trait provides the common structure and operations of immutable graphs independently
+  * of its representation.
+  *
+  * If `E` inherits `DirectedEdgeLike` the graph is directed, otherwise it is undirected or mixed.
+  *
+  * @tparam N    the user type of the nodes (vertices) in this graph.
+  * @tparam E    the higher kinded type of the edges (links) in this graph.
+  * @tparam This the higher kinded type of the graph itself.
+  * @author Peter Empen
+  */
 trait GraphLike[N,
                 E[+X] <: EdgeLikeIn[X],
                 +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[Param[X, Y]] with Graph[X, Y]]
