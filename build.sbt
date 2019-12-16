@@ -100,7 +100,7 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
     "-Ywarn-unused:privates"
   ),
   Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports),
-  //addCompilerPlugin(scalafixSemanticdb),
+  addCompilerPlugin(scalafixSemanticdb),
   Test / parallelExecution := false,
   Compile / doc / scalacOptions ++=
     Opts.doc.title(name.value) ++
