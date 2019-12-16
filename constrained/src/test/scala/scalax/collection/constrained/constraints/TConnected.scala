@@ -63,7 +63,7 @@ class TConnectedMutable extends RefSpec with Matchers with Testing[mutable.Graph
   }
 }
 
-class TConnected[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class TConnected[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphConstrainedCompanion[CC])
     extends RefSpec
     with Matchers

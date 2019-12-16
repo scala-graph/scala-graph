@@ -18,14 +18,14 @@ import config.GenConstrainedConfig
   * @author Peter Empen
   */
 trait AdjacencyListGraph[
-    N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends SimpleAdjacencyListGraph[N, E, This]
     with GraphLike[N, E, This] {
   selfGraph: This[N, E] =>
 
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
 
-  override protected def initialize(nodes: Traversable[N], edges: Traversable[E[N]]): Unit = withoutChecks {
+  override protected def initialize(nodes: Iterable[N], edges: Iterable[E[N]]): Unit = withoutChecks {
     super.initialize(nodes, edges)
   }
 
@@ -36,8 +36,8 @@ trait AdjacencyListGraph[
     override def add(node: NodeT): Boolean = add_?(node) getOrElse false
 
     def add_?(node: NodeT): Either[ConstraintViolation, Boolean] = {
-      def doAdd = { coll += node; true }
-      if (coll.contains(node)) Right(false)
+      def doAdd = { collection += node; true }
+      if (collection.contains(node)) Right(false)
       else if (checkSuspended) Right(doAdd)
       else {
         val preCheckResult = preAdd(node)
@@ -47,7 +47,7 @@ trait AdjacencyListGraph[
             doAdd
             postAdd(AdjacencyListGraph.this, Set(node.value), Set.empty, preCheckResult).fold(
               { failure =>
-                withoutChecks(coll -= node)
+                withoutChecks(collection -= node)
                 Left(failure)
               },
               _ => Right(true)

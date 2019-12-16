@@ -12,10 +12,6 @@ object Compat {
     def toMSet: MSet[A] = self.to[MSet]
   }
 
-  trait ExtBitSet {
-    protected def writeReplace(): Any = throw new UnsupportedOperationException()
-  }
-
   trait Growable[A] {
     def addOne(elem: A): this.type
     @inline def +=(elem: A): this.type = addOne(elem)
@@ -34,5 +30,8 @@ object Compat {
     @inline def +(elem: A): This = incl(elem)
     @inline def -(elem: A): This = excl(elem)
   }
-}
 
+  trait ExtBitSet {
+    protected def writeReplace(): Any = throw new UnsupportedOperationException()
+  }
+}

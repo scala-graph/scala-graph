@@ -10,7 +10,7 @@ lazy val all = project
       publishTo := None
     )
   )
-  .aggregate(core, /*constrained,*/ dot, json)
+  .aggregate(core, constrained, dot, json)
 
 lazy val core = project
   .in(file("core"))
@@ -40,7 +40,7 @@ lazy val core = project
       }
     )
   )
-/*
+
 lazy val constrained = project
   .in(file("constrained"))
   .dependsOn(core % "compile->compile;test->test")
@@ -50,7 +50,7 @@ lazy val constrained = project
       version := Version.constrained
     )
   )
-*/
+
 lazy val dot = project
   .in(file("dot"))
   .dependsOn(core)
@@ -81,7 +81,7 @@ lazy val misc = project
       version := Version.misc
     )
   )
-*/
+ */
 ThisBuild / resolvers ++= Seq(
   ("NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/").withAllowInsecureProtocol(true),
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
@@ -100,7 +100,7 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
     "-Ywarn-unused:privates"
   ),
   Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports),
-  //addCompilerPlugin(scalafixSemanticdb),
+  addCompilerPlugin(scalafixSemanticdb),
   Test / parallelExecution := false,
   Compile / doc / scalacOptions ++=
     Opts.doc.title(name.value) ++
