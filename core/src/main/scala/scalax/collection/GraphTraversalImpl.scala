@@ -203,7 +203,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
 
   /** Calculates in-degrees of nodes spanned by `traversable`.
     *
-    *  @param traversable supplies the nodes for which the degree is to be calculated
+    *  @param nodes supplies the nodes for which the degree is to be calculated
     *  @param maybeHandle to be used to mark visited nodes
     *  @param includeAnyway include this node in the resulting list of nodes without predecessors
     *         irrespective of its in degree
@@ -213,7 +213,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
     *          a. map of visited nodes to their in degrees
     *          a. size of `traversable`
     */
-  final protected def forInDegrees(traversable: Traversable[NodeT] with SubgraphProperties,
+  final protected def forInDegrees(nodes: Traversable[NodeT] with SubgraphProperties,
                                    maybeHandle: Option[Handle] = None,
                                    includeAnyway: Option[NodeT] = None,
                                    includeInDegree: NodeFilter = anyNode,
@@ -222,10 +222,10 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
     val nodesWithoutPredecessor       = new ArrayBuffer[NodeT](expectedMaxNodes(1000))
     val nodeInDegrees                 = new EqHashMap[NodeT, Int](if (fillInDegrees) order else 0)
     var inspectedNode: Option[NodeT]  = None
-    def nodeFilter(n: NodeT): Boolean = traversable.subgraphNodes(n) && includeInDegree(n)
-    traversable foreach { n =>
+    def nodeFilter(n: NodeT): Boolean = nodes.subgraphNodes(n) && includeInDegree(n)
+    nodes foreach { n =>
       maybeHandle foreach (implicit h => n.visited = true)
-      val inDegree = n.inDegree(nodeFilter, traversable.subgraphEdges)
+      val inDegree = n.inDegree(nodeFilter, nodes.subgraphEdges)
       if (fillInDegrees) nodeInDegrees put (n, inDegree)
       if (inDegree == 0 || (n eq includeAnyway.orNull)) nodesWithoutPredecessor += n
       else inspectedNode = inspectedNode orElse Some(n)
@@ -528,7 +528,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
     final protected def newTraverser
       : (NodeT, Parameters, NodeFilter, EdgeFilter, ElemOrdering, Option[Weight]) => InnerNodeDownUpTraverser = copy
 
-    final override def foreach[U](f: ((Boolean, NodeT)) => U): Unit = downUpForeach(
+    final override protected def autarkicForeach[U](f: ((Boolean, NodeT)) => U): Unit = downUpForeach(
       fUnit(f),
       (n: NodeT) => f(false, n)
     )
@@ -557,7 +557,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
     final protected def newTraverser
       : (NodeT, Parameters, NodeFilter, EdgeFilter, ElemOrdering, Option[Weight]) => OuterNodeDownUpTraverser = copy
 
-    final override def foreach[U](f: ((Boolean, N)) => U): Unit = downUpForeach(
+    final override protected def autarkicForeach[U](f: ((Boolean, N)) => U): Unit = downUpForeach(
       fUnit(f),
       (n: NodeT) => f(false, n)
     )
