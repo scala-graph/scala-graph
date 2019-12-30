@@ -6,7 +6,6 @@ import org.scalatest.Matchers
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.Graph
-import scalax.collection.Compat.TraversableEnrichments // for 2.13 only
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-traversing.html
   * Traversing Graphs]].

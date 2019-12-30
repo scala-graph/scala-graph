@@ -1,7 +1,10 @@
 package scalax.collection
 
 object Compat {
-  type AbstractTraversable[+A] = scala.collection.AbstractTraversable[A]
+  trait CompatTraversable[+A] extends scala.collection.Traversable[A] {
+    final override def foreach[U](f: A => U): Unit = autarkicForeach(f)
+    protected def autarkicForeach[U](f: A => U): Unit
+  }
 
   implicit final class TraversableEnrichments[A](val self: Traversable[A]) extends AnyVal {
     def toMSet: MSet[A] = self.to[MSet]

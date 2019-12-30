@@ -6,7 +6,7 @@ import scala.collection.mutable.{ArrayBuffer, Builder}
 import scala.language.implicitConversions
 import scala.math.{max, min}
 
-import scalax.collection.Compat.AbstractTraversable
+import scalax.collection.Compat.CompatTraversable
 import scalax.collection.GraphPredef.{EdgeLikeIn, OuterElem}
 import scalax.collection.mutable.{EqHashMap, EqHashSet}
 import scalax.collection.generic.GraphCoreCompanion
@@ -622,11 +622,12 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   }
   protected object SubgraphProperties {
     def apply[A](t: Iterable[A], nodeFilter: NodeFilter, edgeFilter: EdgeFilter) =
-      new AbstractTraversable[A] with SubgraphProperties {
+      new CompatTraversable[A] with SubgraphProperties {
+        protected def autarkicForeach[U](f: A => U): Unit = t foreach f
+
         final protected def sizeHint: Int = 64
-        def foreach[U](f: A => U): Unit   = t foreach f
-        def subgraphNodes                 = nodeFilter
-        def subgraphEdges                 = edgeFilter
+        final def subgraphNodes           = nodeFilter
+        final def subgraphEdges           = edgeFilter
       }
   }
 
@@ -1030,10 +1031,10 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   trait Traverser[A, +This <: Traverser[A, This]]
       extends TraverserMethods[A, This]
       with Properties
-      with Traversable[A] {
+      with CompatTraversable[A] {
     this: This =>
 
-    def foreach[U](f: A => U): Unit =
+    protected def autarkicForeach[U](f: A => U): Unit =
       if (subgraphNodes(root))
         apply(noNode, f)
 

@@ -11,7 +11,6 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.edge.WkDiEdge
 import scalax.collection.visualization.Visualizer
-import scalax.collection.Compat.TraversableEnrichments // for 2.13 only
 
 class TTopologicalSortRootTest
     extends Suites(

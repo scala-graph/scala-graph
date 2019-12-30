@@ -19,7 +19,6 @@ import edge.WUnDiEdge
 import edge.Implicits._
 import generator.GraphGen
 import scalax.collection.visualization.Visualizer
-import scalax.collection.Compat.TraversableEnrichments // for 2.13 only
 
 class TTraversalRootTest
     extends Suites(
