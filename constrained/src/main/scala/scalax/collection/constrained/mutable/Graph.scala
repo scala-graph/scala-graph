@@ -3,12 +3,11 @@ package mutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.language.postfixOps
 import scala.collection.Set
 import scala.reflect.ClassTag
 
 import scalax.collection.GraphTraversalImpl
-import scalax.collection.GraphPredef.{EdgeLikeIn, Param}
+import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.mutable.{ArraySet, BuilderImpl}
 import scalax.collection.config.AdjacencyListArrayConfig
 import scalax.collection.constrained.{Graph => CGraph, GraphLike => CGraphLike}

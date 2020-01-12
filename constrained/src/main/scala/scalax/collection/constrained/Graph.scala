@@ -2,8 +2,8 @@ package scalax.collection.constrained
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.Set
-import scala.language.postfixOps
 import scala.reflect.ClassTag
+
 import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, Param}
 import scalax.collection.{Graph => SimpleGraph}
 import scalax.collection.constrained.generic.GraphConstrainedCompanion
