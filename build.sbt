@@ -71,17 +71,17 @@ lazy val json = project
       libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.0"
     )
   )
-/*
+
 lazy val misc = project
   .in(file("misc"))
   .dependsOn(core)
   .settings(
     defaultSettings ++ Seq(
       name := "Graph Miscellaneous",
-      version := Version.misc
+      version := "unpublished"
     )
   )
- */
+
 ThisBuild / resolvers ++= Seq(
   ("NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/").withAllowInsecureProtocol(true),
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
@@ -92,7 +92,7 @@ ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
 val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion := Version.compiler_2_13,
-  crossScalaVersions := Seq(Version.compiler_2_12, Version.compiler_2_13),
+  crossScalaVersions := Seq(Version.compiler_2_12, scalaVersion.value),
   organization := "org.scala-graph",
   scalacOptions ++= Seq(
     unusedImports,
