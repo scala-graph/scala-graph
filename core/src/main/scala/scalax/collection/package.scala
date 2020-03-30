@@ -1,5 +1,9 @@
 package scalax
 
+import java.util.NoSuchElementException
+
+import scala.collection.AbstractIterator
+
 /** Contains the base traits and objects needed to use '''Graph for Scala'''.
   *
   * See also the
@@ -30,10 +34,30 @@ package object collection {
   protected[scalax] type MMap[K, V] = scala.collection.mutable.Map[K, V]
   @inline final protected[scalax] def MMap = scala.collection.mutable.Map
 
-  /** Adds chaining methods `tap` and `pipe` to every type.
+  /** Adds chaining methods `tap` and `pipe` to `Any`. "Back-ported" from Scala 2.13.
     */
   implicit final class ChainingOps[A](val self: A) extends AnyVal {
     def tap[U](f: A => U): A  = { f(self); self }
     def pipe[B](f: A => B): B = f(self)
+  }
+
+  implicit final class Iterable$Enrichments(val it: Iterator.type) extends AnyVal {
+
+    /** Optimized Iterator for two elements.
+      */
+    def double[A](_1: A, _2: A): Iterator[A] = new AbstractIterator[A] {
+      private[this] var i = 0
+
+      def hasNext: Boolean = i < 2
+
+      def next: A = {
+        i += 1
+        if (i == 1) _1
+        else if (i == 2) _2
+        else throw new NoSuchElementException
+      }
+
+      override val size: Int = 2
+    }
   }
 }

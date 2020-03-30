@@ -4,7 +4,7 @@ import java.util.NoSuchElementException
 
 import scala.annotation.{switch, tailrec}
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.collection.{AbstractIterable, Iterator_2}
+import scala.collection.AbstractIterable
 import scala.language.higherKinds
 
 import scalax.collection.GraphEdge.EdgeLike.ValidationException
@@ -622,7 +622,7 @@ object GraphEdge {
     }
 
     def ends: Iterable[N] = new AbstractIterable[N] {
-      def iterator: Iterator[N] = new Iterator_2(_1, _2)
+      def iterator: Iterator[N] = Iterator.double(_1, _2)
     }
 
     override def isAt[M >: N](node: M): Boolean    = this._1 == node || this._2 == node
