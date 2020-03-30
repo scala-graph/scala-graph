@@ -64,7 +64,9 @@ trait GraphLike[N,
 
   import PreCheckFollowUp._
 
-  override def ++(elems: GenTraversableOnce[Param[N, E]]): this.type = {
+  override def ++(elems: GenTraversableOnce[Param[N, E]]): this.type = ???
+
+  override def ++?(elems: GenTraversableOnce[Param[N, E]]): this.type = {
     var graph = this
     val it = elems match {
       case x: Iterable[Param[N, E]]        => x

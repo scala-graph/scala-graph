@@ -60,7 +60,7 @@ protected trait ConstraintHandlerMethods[N, E <: EdgeLike[N]] {
     false
 
   /** This handler is called whenever a subtraction violates the constraints.
-    *  The provided default implementation is empty.
+    * The provided default implementation is empty.
     *
     * @param refusedNodes the nodes passed to `preSubtract`.
     * @param refusedEdges the edges passed to `preSubtract`.
@@ -114,6 +114,7 @@ class PreCheckResult(val followUp: PreCheckFollowUp) {
   /** Returns a tuple of `this` and `this.followUp`. */
   final def tupled = this match { case PreCheckResult(r, f) => (r, f) }
 }
+
 trait PreCheckResultCompanion {
   def apply(followUp: PreCheckFollowUp): PreCheckResult
 
@@ -233,16 +234,15 @@ trait ConstraintMethods[N, E <: EdgeLike[N]] {
     * $SELFCOMMIT
     *
     * @param newGraph the after-addition would-be graph waiting for commit.
-    * @param passedNodes nodes passed to the running add operation except those
-    *        coming from node/edge input streams.
-    * @param passedEdges edges passed to the running add operation except those
-    *        coming from edge input streams.
-    * @param wasEmpty `true` if `self` was empty before the addition.
+    * @param passedNodes the normalized nodes passed to the add operation.
+    * @param passedEdges the normalized edges passed to the add operation.
+    * @param preCheck the result of `preAdd`.
+    * @return `None` to accept `newGraph` or `Some` reason for rejection
     */
   def postAdd(newGraph: Graph[N, E],
               passedNodes: Traversable[N],
               passedEdges: Traversable[E],
-              preCheck: PreCheckResult): Boolean = true
+              preCheck: PreCheckResult): Option[_] = None
 
   /** This pre-check must return `Abort` if the subtraction of `node` is to be canceled,
     * `PostCheck` if `postSubtract` is to be called to decide or
@@ -293,11 +293,15 @@ trait ConstraintMethods[N, E <: EdgeLike[N]] {
     * $SELFCOMMIT
     *
     * @param newGraph the after-subtraction would-be graph waiting for commit.
+    * @param passedNodes the normalized nodes passed to the subtraction operation.
+    * @param passedEdges the normalized edges passed to the subtraction operation.
+    * @param preCheck the result of `preSubtract`.
+    * @return `None` to accept `newGraph` or `Some` reason for rejection
     */
   def postSubtract(newGraph: Graph[N, E],
                    passedNodes: Traversable[N],
                    passedEdges: Traversable[E],
-                   preCheck: PreCheckResult): Boolean = true
+                   preCheck: PreCheckResult): Option[_] = None
 
   /** Consolidates all outer nodes of the arguments by adding the edge ends
     *  of `passedEdges` to `passedNodes`. */
