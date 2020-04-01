@@ -1,8 +1,9 @@
 package scalax.collection
 
-import language.{higherKinds, implicitConversions}
+import language.implicitConversions
 
-import GraphPredef._, GraphEdge._
+import GraphPredef._
+import GraphEdge._
 import config.GraphConfig
 
 /** Traits enabling to implement constraints and use constrained graphs.
@@ -33,18 +34,18 @@ package object constrained {
   import config.ConstrainedConfig
 
   /** Aims defining a constraint valid for `Graph` instances in the scope:
-      {{{
-      implicit val config: Config = Acyclic
-      val g = Graph(0 ~> 3) // g is constrained to Acyclic
-      }}}
+    *{{{
+    *implicit val config: Config = Acyclic
+    *val g = Graph(0 ~> 3) // g is constrained to Acyclic
+    *}}}
     */
   type Config = ConstrainedConfig
 
   /** Companion object to configure `Graph` instances in the scope including `ArraySet.Hints`:
-      {{{
-      implicit val config = Config(Acyclic)(ArraySet.Hints(64, 0, 64, 75))
-      val g = Graph(0 ~> 3) // g is constrained to Acyclic using the above optimization hints
-      }}}
+    *{{{
+    *implicit val config = Config(Acyclic)(ArraySet.Hints(64, 0, 64, 75))
+    *val g = Graph(0 ~> 3) // g is constrained to Acyclic using the above optimization hints
+    *}}}
     */
   def Config = ConstrainedConfig
 

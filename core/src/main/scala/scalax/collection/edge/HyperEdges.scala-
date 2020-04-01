@@ -1,7 +1,6 @@
 package scalax.collection.edge
 
 import scalax.collection.GraphEdge._, scalax.collection.GraphPredef._
-import scalax.collection.Graph
 import WBase._, LBase._
 
 // ------------------------------------------------------------------------- W*

@@ -1,7 +1,5 @@
 package scalax.collection.constrained
 
-import scala.language.{higherKinds, postfixOps}
-
 /** Mutable constrained graph templates.
   *
   * @author Peter Empen
@@ -9,7 +7,6 @@ import scala.language.{higherKinds, postfixOps}
 package object mutable {
   import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
   import scalax.collection.mutable.ArraySet
-  import constraints._
   import generic._
 
   /** Enables to quickly assemble mutable constrained graph companion modules. Example:

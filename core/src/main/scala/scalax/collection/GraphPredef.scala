@@ -1,8 +1,7 @@
 package scalax.collection
 
-import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.language.{higherKinds, implicitConversions}
-import scala.collection.{AbstractIterable, SeqFacade}
+import scala.language.implicitConversions
+import scala.collection.{AbstractIterable, AbstractIterator, SeqFacade}
 
 import GraphEdge._
 
@@ -21,6 +20,7 @@ object GraphPredef {
 
   /** Wraps any type to be accepted when calling `Graph(...)`. */
   sealed case class OuterNode[+N](node: N) extends OuterElem[N, Nothing]
+      }
 
   /** To be mixed in by edge classes to allow passing them to `Graph(...)`. */
   sealed case class OuterEdge[N, E <: EdgeLike[N]](edge: E) extends OuterElem[N, E]

@@ -1,7 +1,5 @@
 package demo
 
-import scala.language.higherKinds
-
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.Graph
@@ -11,13 +9,9 @@ import scalax.collection.mutable
 import org.scalatest.refspec.RefSpec
 import org.scalatest.Matchers
 
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-operations.html
   *  Graph Operations]].
   */
-@RunWith(classOf[JUnitRunner])
 final class EditingTest extends RefSpec with Matchers {
 
   object `demonstraiting ` {
@@ -63,6 +57,7 @@ final class EditingTest extends RefSpec with Matchers {
       g - 0 shouldBe g
       g - 1 shouldBe Graph(2, 3, 2 ~ 3)
       g - 2 shouldBe Graph(1, 3)
+      g minusIsolated 2 shouldBe g
       g - 2 ~ 3 shouldBe Graph(1, 2, 3)
       g -- (nodes = List(2), edges = List(3 ~ 3)) shouldBe Graph(1, 3)
 
@@ -110,7 +105,6 @@ final class EditingTest extends RefSpec with Matchers {
 
       import scalax.collection.edge.LBase._
       object StringLabel extends LEdgeImplicits[String]
-      import StringLabel._
 
       (0 /: g.edges)((sum, e) =>
         e.edge match {
@@ -155,8 +149,8 @@ final class EditingTest extends RefSpec with Matchers {
       g.totalDegree shouldBe 16
       g.degreeSet shouldBe SortedSet(4, 3, 2)
       g.degreeNodeSeq(g.InDegree) shouldBe List((4, 3), (3, 5), (2, 1), (2, 2), (2, 4))
-      g.degreeNodesMap shouldBe Map(2                       -> Set(2), 3 -> Set(5, 1), 4 -> Set(3, 4))
-      g.degreeNodesMap(degreeFilter = _ > 3) shouldBe Map(4 -> Set(3, 4))
+      g.degreeNodesMap should contain only (2                       -> Set(2), 3 -> Set(5, 1), 4 -> Set(3, 4))
+      g.degreeNodesMap(degreeFilter = _ > 3) should contain only (4 -> Set(3, 4))
     }
     def `classifying ` : Unit = {
       val g = Graph(1, 2 ~> 3)

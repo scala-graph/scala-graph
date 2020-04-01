@@ -1,22 +1,16 @@
 package custom.flight
 
-import language.{higherKinds, postfixOps}
+import org.scalatest._
+import org.scalatest.refspec.RefSpec
 
 import scalax.collection.{Graph, GraphLike}
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
+import scalax.collection.GraphEdge._
 import scalax.collection.generic.GraphCoreCompanion
 
-import org.scalatest._
-
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.refspec.RefSpec
-import org.junit.runner.RunWith
-
+import scalax.collection.visualization.Visualizer
 import Flight.ImplicitEdge, Helper._
 
-import scalax.collection.visualization.Visualizer
-
-@RunWith(classOf[JUnitRunner])
 class TFlightRootTest
     extends Suites(
       new TFlight[scalax.collection.immutable.Graph](scalax.collection.immutable.Graph),

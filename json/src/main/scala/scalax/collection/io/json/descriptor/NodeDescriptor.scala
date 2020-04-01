@@ -1,12 +1,9 @@
 package scalax.collection.io.json
 package descriptor
 
-import language.existentials
-import reflect.ClassTag
-
 import net.liftweb.json._
 
-import error.JsonGraphError._, error.JsonGraphWarning._
+import error.JsonGraphError._
 
 /** Provides information on how to extract node data from a JValue and how to
   * decompose the node to a JValue.
@@ -22,7 +19,7 @@ import error.JsonGraphError._, error.JsonGraphWarning._
   *        processed, defaulting to an empty list.
   */
 abstract class NodeDescriptor[+N](override val typeId: String = Defaults.defaultId,
-                                  customSerializers: Traversable[Serializer[_]] = Nil,
+                                  customSerializers: Iterable[Serializer[_]] = Nil,
                                   extraClasses: List[Class[_]] = Nil,
                                   furtherManifests: List[Manifest[_]] = Nil)(implicit nodeManifest: Manifest[N])
     extends TypeId(typeId) {
@@ -50,7 +47,7 @@ abstract class NodeDescriptor[+N](override val typeId: String = Defaults.default
   */
 object StringNodeDescriptor extends NodeDescriptor[String] {
   override def extract(jsonNode: JValue) = {
-    def mkString(jValues: Traversable[JValue]): String =
+    def mkString(jValues: Iterable[JValue]): String =
       (for (fld <- jValues) yield {
         fld match {
           case JString(s)           => s

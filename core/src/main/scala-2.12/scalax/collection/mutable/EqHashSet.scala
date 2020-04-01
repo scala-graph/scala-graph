@@ -9,7 +9,6 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity)
     with EqHash[A, EqHashSet[A]] {
 
   import EqHash.{anyHash, defCapacity}
-  import EqHashSet._
 
   final protected def sizeHint: Int = _sizeHint
   final protected def step          = 1
@@ -60,7 +59,6 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity)
   override def remove(elem: A): Boolean = (index(elem): @switch) match {
     case i if i < 0 => false
     case i =>
-      val item = table(i)
       _size -= 1
       table(i) = null
       closeDeletion(i)

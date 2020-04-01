@@ -11,10 +11,10 @@ object TGraphTest extends App {
   import scalax.collection.generator._
 
   object PersonData {
-    val firstNames     = Set("Alen", "Alice", "Bob", "Jack", "Jim", "Joe", "Kate", "Leo", "Tim", "Tom").to[Vector]
+    val firstNames     = Vector("Alen", "Alice", "Bob", "Jack", "Jim", "Joe", "Kate", "Leo", "Tim", "Tom")
     val firstNamesSize = firstNames.size
 
-    val surnames     = Vector("Bell", "Brown", "Clark", "Cox", "King", "Lee", "Moore", "Ross", "Smith", "Wong").to[Vector]
+    val surnames     = Vector("Bell", "Brown", "Clark", "Cox", "King", "Lee", "Moore", "Ross", "Smith", "Wong")
     val surnamesSize = surnames.size
 
     def order          = firstNamesSize * surnamesSize / 10
@@ -154,7 +154,6 @@ object TGraphTest extends App {
     // Integrating with ScalaTest, limiting the minimum # of successful test
     import org.scalatest.Matchers
     import org.scalatest.prop.PropertyChecks
-    import org.scalatest.prop.Configuration.PropertyCheckConfiguration
     import org.scalatest.refspec.RefSpec
 
     class TGraphGenTest extends RefSpec with Matchers with PropertyChecks {

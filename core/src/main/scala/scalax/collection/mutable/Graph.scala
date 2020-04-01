@@ -4,7 +4,6 @@ package mutable
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
 import scala.collection.mutable.{ArrayBuffer, Set => MutableSet}
-import scala.language.higherKinds
 import scala.reflect.ClassTag
 import scala.math.max
 
@@ -92,16 +91,18 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
       * @param node the node the incident edges of which are to be removed from the edge set.
       */
     protected def minusEdges(node: NodeT): Unit
+
+    override def diff(that: AnySet[NodeT]) = this -- that
+    override def clear(): Unit             = this foreach -=
   }
 
   type EdgeSetT <: EdgeSet
-  trait EdgeSet extends MutableSet[EdgeT] with super.EdgeSet {
-    @inline final def +=(edge: EdgeT): this.type = { add(edge); this }
+  trait EdgeSet extends MutableSet[EdgeT] with super.EdgeSet with Compat.AddSubtract[EdgeT, EdgeSet] {
+    @inline final def addOne(edge: EdgeT)      = { add(edge); this }
+    @inline final def subtractOne(edge: EdgeT) = { remove(edge); this }
 
-    /** Same as `upsert` at graph level.
-      */
+    /** Same as `upsert` at graph level. */
     def upsert(edge: EdgeT): Boolean
-    @inline final def -=(edge: EdgeT): this.type = { remove(edge); this }
     def removeWithNodes(edge: EdgeT): Boolean
   }
 
@@ -170,6 +171,7 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = Set[N](),
   final override val companion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
+  type NodeSetT = NodeSet
   @inline final protected def newNodeSet: NodeSetT = new NodeSet
   @transient private[this] var _nodes: NodeSetT    = newNodeSet
   @inline final override def nodes                 = _nodes

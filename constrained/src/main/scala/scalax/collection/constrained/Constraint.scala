@@ -1,15 +1,17 @@
 package scalax.collection.constrained
 
-import scala.language.{higherKinds, postfixOps}
+import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.Set
 
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
 
-/** Base trait for ordinary `Constraint` companion objects. */
-trait ConstraintCompanion[+CC[N, E <: EdgeLike[N]] <: Constraint[N, E]] { thisCompanion =>
+/** Base trait for ordinary `Constraint` companion objects.
+  */
+trait ConstraintCompanion[+CC[N, E <: EdgeLike[N], G <: Graph[N, E]] <: Constraint[N, E, G]] {
+  thisCompanion =>
 
   /** Instantiates a user constraint. */
-  def apply[N, E <: EdgeLike[N]](self: Graph[N, E]): CC[N, E]
+  def apply[N, E <: EdgeLike[N], G <: Graph[N, E]](self: G): CC[N, E, G]
 
   /** Creates a new constraint companion of the type `ConstraintCompanionBinaryOp`
     * the `apply` of which returns `ConstraintBinaryOp` with the `And` operator.
@@ -22,8 +24,8 @@ trait ConstraintCompanion[+CC[N, E <: EdgeLike[N]] <: Constraint[N, E]] { thisCo
   def ||(that: ConstraintCompanion[Constraint]) = new ConstraintCompanionBinaryOp(Or, this, that)
 
   protected[constrained] class PrefixedConstraintCompanion(prefix: Option[String]) extends ConstraintCompanion[CC] {
-    override val stringPrefix: Option[String]              = prefix
-    def apply[N, E <: EdgeLike[N]](self: Graph[N, E]) = thisCompanion.apply(self)
+    override val stringPrefix: Option[String]                                    = prefix
+    def apply[N, E <: EdgeLike[N], G <: Graph[N, E]](self: G): CC[N, E, G] = thisCompanion[N, E, G](self)
   }
 
   /** The `stringPrefix` of constrained `Graph`s using `this` constraint will be replaced
@@ -32,43 +34,10 @@ trait ConstraintCompanion[+CC[N, E <: EdgeLike[N]] <: Constraint[N, E]] { thisCo
 
   /** Sets `stringPrefix` of constrained `Graph`s using `this` combined constraint companion
     *  to `graphStringPrefix`. */
-  def withStringPrefix(stringPrefix: String) = {
+  def withStringPrefix(stringPrefix: String): PrefixedConstraintCompanion = {
     val printable = stringPrefix.trim filter (_.isLetterOrDigit)
     new PrefixedConstraintCompanion(if (printable.length > 0) Some(printable) else None)
   }
-}
-
-/** This template contains handler methods that are called by constrained graphs
-  * whenever a constraint has been violated.
-  *
-  * These methods must be overridden to get the handlers become active.
-  *
-  * @define HANDLERRET must be true if the handler has been overridden
-  *         but it doesn't throw an exception.
-  * @author Peter Empen
-  */
-protected trait ConstraintHandlerMethods[N, E <: EdgeLike[N]] {
-
-  /** This handler is called whenever an addition violates the constraints.
-    *  The provided default implementation is empty.
-    *
-    * @param refusedNodes the nodes passed to `preAdd`.
-    * @param refusedEdges the edges passed to `preAdd`.
-    * @return $HANDLERRET
-    */
-  def onAdditionRefused(refusedNodes: Traversable[N], refusedEdges: Traversable[E], graph: Graph[N, E]): Boolean =
-    false
-
-  /** This handler is called whenever a subtraction violates the constraints.
-    * The provided default implementation is empty.
-    *
-    * @param refusedNodes the nodes passed to `preSubtract`.
-    * @param refusedEdges the edges passed to `preSubtract`.
-    * @return $HANDLERRET
-    */
-  def onSubtractionRefused(refusedNodes: Traversable[Graph[N, E]#NodeT],
-                           refusedEdges: Traversable[Graph[N, E]#EdgeT],
-                           graph: Graph[N, E]): Boolean = false
 }
 
 /** Enumerates the possible return statuses (also: follow-up activity) of a pre-check:
@@ -81,38 +50,31 @@ object PreCheckFollowUp extends Enumeration {
   val Abort, PostCheck, Complete = Value
 
   /** The minimum of `a` and `b` treating `Abort` < `PostCheck` < `Complete`. */
-  final def min(a: PreCheckFollowUp, b: PreCheckFollowUp) = if (a.id < b.id) a else b
+  final def min(a: PreCheckFollowUp, b: PreCheckFollowUp): PreCheckFollowUp = if (a.id < b.id) a else b
 }
 import PreCheckFollowUp._
+
+sealed trait ConstraintViolation
 
 /** The return type of any pre-check. `followUp` contains the return status (follow-up
   *  activity). `Constraint` implementations are encouraged to extend this class to contain
   *  further data calculated in course of the pre-check and reusable in the following post-check.
   */
-class PreCheckResult(val followUp: PreCheckFollowUp) {
-  def get[N, E <: EdgeLike[N]](op: Constraint[N, E]): Option[PreCheckResult] = Some(this)
-  final def apply()                                                               = followUp
+class PreCheckResult(val followUp: PreCheckFollowUp) extends ConstraintViolation {
+
+  final def apply(): PreCheckFollowUp = followUp
 
   /** Whether `this.followUp` equals to `Abort`. */
-  final def abort = followUp == Abort
-
-  /** Whether `this.followUp` does not equal to `Abort`. */
-  final def noAbort = !abort
+  final def abort: Boolean = followUp == Abort
 
   /** Whether `this.followUp` equals to `PostCheck`. */
-  final def postCheck = followUp == PostCheck
-
-  /** Whether `this.followUp` does not equal to `PostCheck`. */
-  final def noPostCheck = !postCheck
+  final def postCheck: Boolean = followUp == PostCheck
 
   /** Whether `this.followUp` equals to `Complete`. */
-  final def complete = followUp == Complete
-
-  /** Whether `this.followUp` does not equal to `Complete`. */
-  final def noComplete = !complete
+  final def complete: Boolean = followUp == Complete
 
   /** Returns a tuple of `this` and `this.followUp`. */
-  final def tupled = this match { case PreCheckResult(r, f) => (r, f) }
+  final def tupled: (PreCheckResult, PreCheckFollowUp) = this match { case PreCheckResult(r, f) => (r, f) }
 }
 
 trait PreCheckResultCompanion {
@@ -126,11 +88,14 @@ trait PreCheckResultCompanion {
     *  otherwise to `Abort`. */
   def complete(ok: Boolean): PreCheckResult = apply(if (ok) Complete else Abort)
 }
+
 object PreCheckResult extends PreCheckResultCompanion {
   def apply(followUp: PreCheckFollowUp) = new PreCheckResult(followUp)
   def unapply(preCheck: PreCheckResult): Option[(PreCheckResult, PreCheckFollowUp)] =
     if (preCheck eq null) None else Some(preCheck, preCheck.followUp)
 }
+
+case class PostCheckFailure(cause: Any) extends ConstraintViolation
 
 /** This template contains all methods that constrained graphs call
   * to decide whether operations altering a mutable graph or operations
@@ -155,19 +120,18 @@ object PreCheckResult extends PreCheckResultCompanion {
   * @define SELFCOMMIT For immutable graphs, `self` maintains the state before the
   *         addition but for mutable graphs, it is already mutated to the required state.
   * @define PRECHECKRET The results of the pre-check containing the follow-up activity
-  *         and possible any intermediate computation results to be used during the
+  *         and possibly any intermediate computation result to be used during the
   *         post-check. To add computation results `PreCheckResult` must be extended.
-  *
   * @author Peter Empen
   */
-trait ConstraintMethods[N, E <: EdgeLike[N]] {
+trait ConstraintMethods[N, E <: EdgeLike[N], +G <: Graph[N, E]] {
 
   /** When extending `Constraint`, `self` will denote the attached constrained graph.
     * The factory methods of the companion object `scalax.collection.constrained.Graph`
     * initialize `self` to the correct graph instance.
     * When extending `Constrained`, `self` will denote `this` graph.
     */
-  val self: Graph[N, E]
+  val self: G
 
   /** This pre-check is called on constructing a graph through its companion object.
     * It must return whether the graph is allowed to be populated with `nodes` and `edges`.
@@ -181,7 +145,7 @@ trait ConstraintMethods[N, E <: EdgeLike[N]] {
     *  @param edges the outer edges the graph is to be populated with.
     *  @return $PRECHECKRET
     */
-  def preCreate(nodes: collection.Traversable[N], edges: collection.Traversable[E]): PreCheckResult =
+  def preCreate(nodes: Iterable[N], edges: Iterable[E]): PreCheckResult =
     PreCheckResult.postCheck(
       (nodes forall ((n: N) => !preAdd(n).abort)) &&
         (edges forall ((e: E) => !preAdd(e).abort)))
@@ -228,22 +192,6 @@ trait ConstraintMethods[N, E <: EdgeLike[N]] {
       }
     })
 
-  /** This post-check must return whether `newGraph` should be committed or the add
-    * operation is to be rolled back.
-    * $SELFGRAPH
-    * $SELFCOMMIT
-    *
-    * @param newGraph the after-addition would-be graph waiting for commit.
-    * @param passedNodes the normalized nodes passed to the add operation.
-    * @param passedEdges the normalized edges passed to the add operation.
-    * @param preCheck the result of `preAdd`.
-    * @return `None` to accept `newGraph` or `Some` reason for rejection
-    */
-  def postAdd(newGraph: Graph[N, E],
-              passedNodes: Traversable[N],
-              passedEdges: Traversable[E],
-              preCheck: PreCheckResult): Option[_] = None
-
   /** This pre-check must return `Abort` if the subtraction of `node` is to be canceled,
     * `PostCheck` if `postSubtract` is to be called to decide or
     * `Complete` if the the `node` is allowed to be subtracted.
@@ -287,6 +235,22 @@ trait ConstraintMethods[N, E <: EdgeLike[N]] {
       (nodes forall (n => !preSubtract(n).abort)) &&
         (edges forall (e => !preSubtract(e).abort)))
 
+  /** This post-check must return whether `newGraph` should be committed or the add
+    * operation is to be rolled back.
+    * $SELFGRAPH
+    * $SELFCOMMIT
+    *
+    * @param newGraph the after-addition would-be graph waiting for commit.
+    * @param passedNodes the normalized nodes passed to the add operation.
+    * @param passedEdges the normalized edges passed to the add operation.
+    * @param preCheck the result of `preAdd`.
+    * @return `None` to accept `newGraph` or `Some` reason for constraint violation resp. rejection
+    */
+  def postAdd(newGraph: G @uV,
+              passedNodes: Iterable[N],
+              passedEdges: Iterable[E],
+              preCheck: PreCheckResult): Either[PostCheckFailure, G] = Right(newGraph)
+
   /** This post-check must return whether `newGraph` should be committed or the subtraction
     * is to be rolled back.
     * $SELFGRAPH
@@ -296,31 +260,23 @@ trait ConstraintMethods[N, E <: EdgeLike[N]] {
     * @param passedNodes the normalized nodes passed to the subtraction operation.
     * @param passedEdges the normalized edges passed to the subtraction operation.
     * @param preCheck the result of `preSubtract`.
-    * @return `None` to accept `newGraph` or `Some` reason for rejection
+    * @return `None` to accept `newGraph` or `Some` reason for constraint violation resp. rejection
     */
-  def postSubtract(newGraph: Graph[N, E],
-                   passedNodes: Traversable[N],
-                   passedEdges: Traversable[E],
-                   preCheck: PreCheckResult): Option[_] = None
+  def postSubtract(newGraph: G @uV,
+                   passedNodes: Iterable[N],
+                   passedEdges: Iterable[E],
+                   preCheck: PreCheckResult): Either[PostCheckFailure, G] = Right(newGraph)
 
   /** Consolidates all outer nodes of the arguments by adding the edge ends
     *  of `passedEdges` to `passedNodes`. */
-  protected def allNodes(passedNodes: Traversable[N], passedEdges: Traversable[E]): Set[N] = {
+  protected def allNodes(passedNodes: Iterable[N], passedEdges: Iterable[E]): Set[N] = {
     val nodes = collection.mutable.Set[N]() ++ passedNodes
     passedEdges foreach (nodes ++= _)
     nodes
   }
 
-  /** Consolidates all inner nodes of the arguments by adding the edge ends
-    *  of `passedEdges` to `passedNodes`. */
-  protected def allNodes(
-      innerNodes: Set[self.NodeT],
-      innerEdges: Set[self.EdgeT]
-  ): Set[self.NodeT] = {
-    val nodes = collection.mutable.Set[self.NodeT]() ++ innerNodes
-    innerEdges foreach (nodes ++= _)
-    nodes
-  }
+  protected def nodesToAdd(passedNodes: Iterable[N], passedEdges: Iterable[E]): Set[N] =
+    allNodes(passedNodes, passedEdges).filter(self.find(_).isEmpty)
 }
 
 /** Template to be mixed in by any constrained graph class.
@@ -336,7 +292,7 @@ trait ConstraintMethods[N, E <: EdgeLike[N]] {
   * @see ConstraintMethods
   * @author Peter Empen
   */
-trait Constrained[N, E <: EdgeLike[N]] extends ConstraintMethods[N, E] with ConstraintHandlerMethods[N, E]
+trait Constrained[N, E <: EdgeLike[N], +G <: Graph[N, E]] extends ConstraintMethods[N, E, G]
 
 /** Template to be implemented and passed to a dynamically constrained graph class
   * by the user. Note that mutable state will be lost on any operation yielding a
@@ -347,19 +303,18 @@ trait Constrained[N, E <: EdgeLike[N]] extends ConstraintMethods[N, E] with Cons
   * @see ConstraintMethods
   * @author Peter Empen
   */
-abstract class Constraint[N, E <: EdgeLike[N]](override val self: Graph[N, E])
-    extends ConstraintMethods[N, E]
-    with ConstraintHandlerMethods[N, E] {
+abstract class Constraint[N, E <: EdgeLike[N], G <: Graph[N, E]](override val self: G)
+    extends ConstraintMethods[N, E, G] {
 
   /** Creates a new constraint of the type `ConstraintBinaryOp` with pre- and post-check methods
     * each of which returning `true` if both `this`' ''and'' `that`'s corresponding
     * pre- and post-checks return `true`.
     */
-  def &&(that: Constraint[N, E]) = new ConstraintBinaryOp[N, E](self, And, this, that)
+  def &&(that: Constraint[N, E, G]) = new ConstraintBinaryOp[N, E, G](self, And, this, that)
 
   /** Creates a new constraint of the type `ConstraintBinaryOp` with pre- and post-check methods
     * each of which returning `true` if either `this`' ''or'' `other`'s corresponding
     * pre- and post-checks returns `true`.
     */
-  def ||(that: Constraint[N, E]) = new ConstraintBinaryOp[N, E](self, Or, this, that)
+  def ||(that: Constraint[N, E, G]) = new ConstraintBinaryOp[N, E, G](self, Or, this, that)
 }

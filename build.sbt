@@ -19,9 +19,25 @@ lazy val core = project
       name := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck"   % "1.13.4" % "optional;provided",
+        "org.scalacheck" %% "scalacheck"   % "1.14.0" % "optional;provided",
         "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all"
-      )
+      ),
+      dependencyOverrides ++= {
+        val release                        = "RELEASE90"
+        def netbeansModule(module: String) = "org.netbeans.modules" % module % release
+        def netbeansApi(module: String)    = "org.netbeans.api" % module % release
+        Seq(
+          netbeansModule("org-netbeans-core"),
+          netbeansModule("org-netbeans-core-startup-base"),
+          netbeansModule("org-netbeans-modules-masterfs"),
+          netbeansApi("org-openide-util-lookup"),
+          netbeansApi("org-openide-filesystems"),
+          netbeansApi("org-openide-util-ui"),
+          netbeansApi("org-openide-dialogs"),
+          netbeansApi("org-openide-nodes"),
+          netbeansApi("org-netbeans-api-annotations-common")
+        )
+      }
     )
   )
 
@@ -39,7 +55,10 @@ lazy val dot = project
   .in(file("dot"))
   .dependsOn(core)
   .settings(
-    defaultSettings ++ Seq(name := "Graph DOT", version := Version.dot)
+    defaultSettings ++ Seq(
+      name := "Graph DOT",
+      version := Version.dot
+    )
   )
 
 lazy val json = project
@@ -49,7 +68,7 @@ lazy val json = project
     defaultSettings ++ Seq(
       name := "Graph JSON",
       version := Version.json,
-      libraryDependencies += "net.liftweb" %% "lift-json" % "3.0.1"
+      libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.0"
     )
   )
 
@@ -59,37 +78,38 @@ lazy val misc = project
   .settings(
     defaultSettings ++ Seq(
       name := "Graph Miscellaneous",
-      version := Version.misc
+      version := "unpublished"
     )
   )
 
-ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
-
 ThisBuild / resolvers ++= Seq(
-  "NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/",
+  ("NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/").withAllowInsecureProtocol(true),
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
 )
 
+ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
+
+val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
-  scalaVersion := Version.compiler_2_12,
-  crossScalaVersions := Seq(scalaVersion.value, Version.compiler_2_11),
+  scalaVersion := Version.compiler_2_13,
+  crossScalaVersions := Seq(Version.compiler_2_12, scalaVersion.value),
   organization := "org.scala-graph",
+  scalacOptions ++= Seq(
+    unusedImports,
+    "-Yrangepos",
+    "-Ywarn-unused:privates"
+  ),
+  Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports),
+  addCompilerPlugin(scalafixSemanticdb),
   Test / parallelExecution := false,
   Compile / doc / scalacOptions ++=
     Opts.doc.title(name.value) ++
       Opts.doc.version(version.value),
-  // prevents sbteclipse from including java source directories
-  Compile / unmanagedSourceDirectories := (Compile / scalaSource)(Seq(_)).value,
-  Test / unmanagedSourceDirectories := (Test / scalaSource)(Seq(_)).value,
   Compile / doc / scalacOptions ++= List("-diagrams", "-implicits"),
   Compile / doc / scalacOptions ++= (baseDirectory map { d =>
     Seq("-doc-root-content", (d / "rootdoc.txt").getPath)
   }).value,
   autoAPIMappings := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Test"))),
-  libraryDependencies ++= Seq(
-    "junit"                  % "junit"      % "4.12"  % "test",
-    "org.scalatest"          %% "scalatest" % "3.0.1" % "test",
-    "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % "test"
-  )
+  libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % "test"
 ) ++ GraphSonatype.settings

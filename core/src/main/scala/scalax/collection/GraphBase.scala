@@ -1,12 +1,11 @@
 package scalax.collection
 
-import scala.language.{higherKinds, implicitConversions}
+import scala.language.implicitConversions
 import scala.util.Random
-import scala.collection.FilterableSet
+import scala.collection.{ExtSetMethods, FilterableSet}
 
 import GraphEdge._
 import generic.AnyOrdering
-import interfaces.ExtSetMethods
 
 /** Base template trait for graphs.
   *
@@ -40,19 +39,23 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     * @param nodes $INNODES
     * @param edges $INEDGES
     */
-  protected def initialize(nodes: Traversable[N], edges: Traversable[E]) {
+  protected def initialize(nodes: Iterable[N], edges: Iterable[E]) {
     this.nodes.initialize(nodes, edges)
     this.edges.initialize(edges)
   }
 
+  /** The order - commonly referred to as |G| - of this graph
+    * equaling to the number of nodes.
+    */
+  def order: Int = nodes.size
   final def order: Int = nodes.size
   final def size: Int  = edges.size
 
-  // Need be `val` to work with `eq`
-  final val anyNode: NodePredicate = _ => true
-  final val noNode: NodePredicate  = _ => false
-  final val anyEdge: EdgePredicate = _ => true
-  final val noEdge: EdgePredicate  = _ => false
+  // The following predicates must be val because eq does not work for def.
+  /** Default node filter letting traverse all nodes (non-filter). */ final val anyNode: NodePredicate = _ => true
+  /** Node predicate always returning `false`. */                     final val noNode: NodePredicate  = _ => false
+  /** Default edge filter letting path all edges (non-filter). */     final val anyEdge: EdgePredicate = _ => true
+  /** Edge predicate always returning `false`. */                     final val noEdge: EdgePredicate  = _ => false
 
   /** `true` if `f` is not equivalent to `anyNode`. */
   @inline final def isCustomNodeFilter(f: NodePredicate) = f ne anyNode
@@ -66,14 +69,13 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
 
     /** Synonym for `outer`. */
     @deprecated("Use 'outer' instead", "2.0.0")
-    def value: N = outer
+    @inline final def value: N = outer
 
     /** Synonym for `outer`. */
     @deprecated("Use 'outer' instead", "2.0.0")
     @inline final def toOuter: N = outer
 
     /** All edges at this node - commonly denoted as E(v).
-      *
       * @return all edges connecting to this node.
       */
     def edges: ExtSet[EdgeT]
@@ -93,7 +95,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     def connectionsWith(other: NodeT): Set[EdgeT] with FilterableSet[EdgeT]
 
     /** Checks whether this node has only hooks or no edges at all.
-      *
       *  @return `true` if this node has only hooks or it isolated.
       */
     def hasOnlyHooks: Boolean
@@ -235,7 +236,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     @inline final def <~?(from: NodeT) = findIncomingFrom(from)
 
     /** The degree of this node.
-      *
       * @return the number of edges that connect to this node. An edge that connects
       *         to this node at more than one ends (loop) is counted as much times as
       *         it is connected to this node. */
@@ -248,7 +248,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     @inline final def isLeaf = degree == 1
 
     /** The outgoing degree of this node.
-      *
       * @return the number of edges that go out from this node including undirected edges.
       *         Loops count once each. */
     def outDegree: Int
@@ -261,7 +260,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
                   ignoreMultiEdges: Boolean = true): Int
 
     /** The incoming degree of this node.
-      *
       * @return the number of edges that come in to this node including undirected edges.
       *         Loops count once each. */
     def inDegree: Int
@@ -284,7 +282,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       case thatV => this.outer == thatV
     }
 
-    override def hashCode         = outer.##
+    override def hashCode: Int    = outer.##
     override def toString: String = outer.toString
   }
   object InnerNode {
@@ -352,9 +350,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
   final lazy val defaultNodeOrdering = NodeOrdering(
     (a: NodeT, b: NodeT) => anyOrdering.compare(a.outer, b.outer)
   )
-
   type NodeSetT <: NodeSet
-
   trait NodeSet extends AnySet[NodeT] with ExtSetMethods[NodeT] {
 
     /** This method is called by the primary constructor. It must be defined by the trait
@@ -363,7 +359,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       * @param nodes $INNODES
       * @param edges $INEDGES
       */
-    protected[collection] def initialize(nodes: Traversable[N], edges: Traversable[E]): Unit
+    protected[collection] def initialize(nodes: Iterable[N], edges: Iterable[E]): Unit
     override def stringPrefix: String = "NodeSet"
 
     /** Sorts all nodes according to `ord` and concatenates them using `separator`.
@@ -418,6 +414,8 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
         yield n.outer.toString + ": " + ((for (a <- n.diSuccessors) yield a.outer) mkString ",")) mkString "\n"
 
     def draw(random: Random): NodeT
+
+    def diff(that: AnySet[NodeT]) = this -- that
   }
 
   /** The node (vertex) set of this `Graph` commonly referred to as V(G).
@@ -441,8 +439,8 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
 
     /** All connecting edges, that is all edges with ends incident with this edge including possible loops. */
     def adjacents: Set[EdgeT] = {
-      var a = new mutable.EqHashMap[EdgeT, Null]
-      ends foreach (n => n.edges foreach (e => a put (e, null)))
+      val a = new mutable.EqHashMap[EdgeT, Null]
+      this foreach (n => n.edges foreach (e => a put (e, null)))
       a -= this
       new immutable.EqSet(a)
     }
@@ -537,8 +535,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       *
       * @param edges $INEDGES
       */
-    protected[collection] def initialize(edges: Traversable[E]): Unit
-
+    protected[collection] def initialize(edges: Iterable[E]): Unit
     def contains(node: NodeT): Boolean
 
     override def stringPrefix: String = "EdgeSet"
@@ -594,6 +591,8 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
         case _            => null.asInstanceOf[EdgeT]
       }
     }
+
+    def diff(that: AnySet[EdgeT]) = this -- that
   }
 
   /** The edge set of this `Graph` commonly referred to as E(G).
@@ -601,8 +600,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     * @return Set of all contained edges.
     */
   def edges: EdgeSetT
-
-  def totalWeight: Double = (0d /: edges)(_ + _.weight)
+  def totalWeight: Double = edges.foldLeft(0d)(_ + _.weight)
 }
 
 object GraphBase {

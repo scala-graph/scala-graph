@@ -2,7 +2,7 @@ package scalax.collection
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.AbstractIterable
-import scala.language.higherKinds
+import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
 import scalax.collection.GraphEdge._
@@ -15,7 +15,7 @@ import scalax.collection.mutable.Builder
   * This trait provides the common structure and operations of immutable graphs independently
   * of their representation.
   *
-  * If `E` inherits `DirectedEdgeLike` the graph is directed, otherwise it is undirected or mixed.
+  * If `E` inherits `DiHyperEdgeLike` the graph is directed, otherwise it is undirected or mixed.
   *
   * @tparam N    the user type of the nodes (vertices) in this graph.
   * @tparam E    the higher kinded type of the edges (links) in this graph.
@@ -156,6 +156,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   type NodeSetT <: NodeSet
   trait NodeSet extends super.NodeSet {
     protected def copy: NodeSetT
+
     final override def -(node: NodeT): NodeSetT =
       if (this contains node) { val c = copy; c minus node; c } else this.asInstanceOf[NodeSetT]
 
@@ -379,6 +380,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   */
 trait Graph[N, E <: EdgeLike[N]] extends GraphLike[N, E, Graph] {
   override def empty: Graph[N, E] = Graph.empty[N, E]
+  override def knownSize: Int     = nodes.size + edges.size
 }
 
 /** The main companion object for immutable graphs.

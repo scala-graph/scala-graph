@@ -9,7 +9,6 @@ import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.mutable.ArraySet
 
 /** Implements an incident list based immutable graph representation.
-  *
   * @author Peter Empen
   */
 trait AdjacencyListGraph[
@@ -31,15 +30,15 @@ trait AdjacencyListGraph[
 
   type NodeSetT = NodeSet
   class NodeSet extends super.NodeSet {
-    @inline final override protected def minus(node: NodeT) { coll -= node }
-    def +(node: NodeT) =
-      if (coll contains node) this
-      else { val c = copy; c.coll += node; c }
+    @inline final override protected def minus(node: NodeT) { collection -= node }
+    override def +(node: NodeT) =
+      if (collection contains node) this
+      else { val c = copy; c.collection += node; c }
 
     protected[AdjacencyListGraph] def add(edge: EdgeT): Boolean = {
       var added = false
       edge.ends foreach { n =>
-        val inColl = coll findElem n getOrElse { coll += n; n }
+        val inColl = collection findElem n getOrElse { collection += n; n }
         added = (inColl add edge) || added
       }
       added
@@ -52,8 +51,8 @@ trait AdjacencyListGraph[
   @inline final protected def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
 
   type EdgeSetT = EdgeSet
-  class EdgeSet extends super.EdgeSet {
-    override protected[collection] def initialize(edges: Traversable[E]): Unit =
+  class EdgeSet extends super.EdgeSet with Compat.InclExcl[EdgeT, Set[EdgeT]] {
+    override protected[collection] def initialize(edges: Iterable[E]): Unit =
       if (edges ne null)
         edges foreach (this += InnerEdge(_))
 
@@ -63,15 +62,15 @@ trait AdjacencyListGraph[
     }
 
     @inline final protected[immutable] def addEdge(edge: EdgeT) { +=(edge) }
-    @inline final def +(edge: EdgeT): Set[EdgeT] = toSet + edge
-    @inline final def -(edge: EdgeT): Set[EdgeT] = toSet - edge
+    @inline final def incl(edge: EdgeT) = toSet + edge
+    @inline final def excl(edge: EdgeT) = toSet - edge
 
     @inline final override lazy val maxArity        = super.maxArity
     @inline final override lazy val hasAnyMultiEdge = super.hasAnyMultiEdge
   }
   override def edges: EdgeSetT
 
-  def copy(nodes: Traversable[N], edges: Traversable[E]): This[N, E]
+  protected def copy(nodes: Iterable[N], edges: Iterable[E]): This[N, E]
 
   def +(node: N): This[N, E] =
     if (this contains node) this

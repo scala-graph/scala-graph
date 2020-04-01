@@ -17,13 +17,13 @@ class AnyOrdering[N] extends Ordering[N] {
   sealed protected case class StringType(value: WrappedString) extends Type
   sealed protected case class RefType(value: AnyRef)           extends Type
   protected def typeOf(x: Any) = x match {
-    case b: Byte                                    => IntegerType(b)
-    case s: Short                                   => IntegerType(s)
-    case i: Int                                     => IntegerType(i)
-    case l: Long                                    => IntegerType(l)
-    case f: Float                                   => FloatType(f)
-    case d: Double                                  => FloatType(d)
-    case _: Char | _: Unit | _: Boolean | _: String => StringType(x.toString)
+    case b: Byte                                    => IntegerType(new RichLong(b))
+    case s: Short                                   => IntegerType(new RichLong(s))
+    case i: Int                                     => IntegerType(new RichLong(i))
+    case l: Long                                    => IntegerType(new RichLong(l))
+    case f: Float                                   => FloatType(new RichDouble(f))
+    case d: Double                                  => FloatType(new RichDouble(d))
+    case _: Char | _: Unit | _: Boolean | _: String => StringType(new WrappedString(x.toString))
     case r: AnyRef                                  => RefType(r)
   }
   def compare(a: N, b: N): Int = (typeOf(a), typeOf(b)) match {
@@ -35,7 +35,7 @@ class AnyOrdering[N] extends Ordering[N] {
     case (FloatType(a), IntegerType(b))                             => a.compare(b.self)
     case (FloatType(_), StringType(_)) | (FloatType(_), RefType(_)) => -1
 
-    case (StringType(a), StringType(b))                                  => a.compare(b.self)
+    case (StringType(a), StringType(b))                                  => a.toString.compare(b.toString)
     case (StringType(_), IntegerType(_)) | (StringType(_), FloatType(_)) => 1
     case (StringType(_), RefType(_))                                     => -1
 

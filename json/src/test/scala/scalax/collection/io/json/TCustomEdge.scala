@@ -1,7 +1,5 @@
 package scalax.collection.io.json
 
-import language.higherKinds
-
 import net.liftweb.json._
 
 import scalax.collection._
@@ -12,15 +10,11 @@ import scalax.collection.edge.CBase._
 import scalax.collection.io.edge.CEdgeParameters
 import scalax.collection.io.json.descriptor.CEdgeDescriptor
 
-import serializer._, imp._, imp.Parser.{parse => graphParse}, descriptor._, descriptor.predefined._,
-descriptor.Defaults._, exp.Export
+import descriptor._
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 
-@RunWith(classOf[JUnitRunner])
 class TCustomEdgeRootTest
     extends Suites(new TCustomEdge[immutable.Graph](immutable.Graph), new TCustomEdge[mutable.Graph](mutable.Graph))
 

@@ -1,7 +1,6 @@
 package scalax.collection.io.json
 package serializer
 
-import language.higherKinds
 import scala.reflect.classTag
 
 import net.liftweb.json._

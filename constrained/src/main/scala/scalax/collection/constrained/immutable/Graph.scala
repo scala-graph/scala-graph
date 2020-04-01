@@ -3,21 +3,14 @@ package immutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.language.{higherKinds, postfixOps}
 import scala.collection.Set
-import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
-import scalax.collection.{Graph => CommonGraph}
-import scalax.collection.GraphEdge.{EdgeCompanionBase, EdgeLike}
-import scalax.collection.GraphPredef.{EdgeLike, InParam, Param}
+import scalax.collection.GraphPredef.EdgeLike
 import scalax.collection.GraphTraversalImpl
 import scalax.collection.mutable.ArraySet
-import scalax.collection.generic.GraphCompanion
-import scalax.collection.config.AdjacencyListArrayConfig
 
-import generic.{GraphConstrainedCompanion, ImmutableGraphCompanion}
-import config.ConstrainedConfig
+import generic.ImmutableGraphCompanion
 import PreCheckFollowUp._
 
 trait Graph[N, E <: EdgeLike[N]]
@@ -34,11 +27,11 @@ object Graph extends ImmutableGraphCompanion[Graph] {
     DefaultGraphImpl.empty[N, E](edgeT, config)
 
   override protected[collection] def fromWithoutCheck[N, E <: EdgeLike[N]](
-      nodes: Traversable[N],
-      edges: Traversable[E])(implicit edgeT: ClassTag[E], config: Config): DefaultGraphImpl[N, E] =
+      nodes: Iterable[N],
+      edges: Iterable[E])(implicit edgeT: ClassTag[E], config: Config): Graph[N, E] =
     DefaultGraphImpl.fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
 
-  override def from[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(
+  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
       implicit edgeT: ClassTag[E],
       config: Config): Graph[N, E] =
     DefaultGraphImpl.from[N, E](nodes, edges)(edgeT, config)
@@ -46,8 +39,7 @@ object Graph extends ImmutableGraphCompanion[Graph] {
   // TODO: canBuildFrom
 }
 
-abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = Nil,
-                                                          iniEdges: Traversable[E] = Nil)(
+abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Nil, iniEdges: Iterable[E] = Nil)(
     implicit override val edgeT: ClassTag[E],
     override val config: DefaultGraphImpl.Config)
     extends Graph[N, E]
@@ -59,10 +51,10 @@ abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = 
 
   @inline final protected def newNodeSet: NodeSetT = new NodeSet
   @transient protected[this] var _nodes: NodeSetT  = newNodeSet
-  @inline final override def nodes                 = _nodes
+  @inline final override def nodes: NodeSet        = _nodes
 
   @transient protected[this] var _edges: EdgeSetT = new EdgeSet
-  @inline final override def edges                = _edges
+  @inline final override def edges: EdgeSet       = _edges
 
   initialize(iniNodes, iniEdges)
 
@@ -79,63 +71,56 @@ abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = 
 
 object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl] {
 
-  override def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config) =
-    from(Set.empty[N], Set.empty[E])(edgeT, config)
+  override def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E],
+                                                config: Config): DefaultGraphImpl[N, E] =
+    fromWithoutCheck(Set.empty, Set.empty)(edgeT, config)
 
-  override protected[collection] def fromWithoutCheck[N, E <: EdgeLike[N]](
-      nodes: Traversable[N],
-      edges: Traversable[E])(implicit edgeT: ClassTag[E], config: Config): DefaultGraphImpl[N, E] =
+  override protected[collection] def fromWithoutCheck[N, E[+X] <: EdgeLikeIn[X]](
+      nodes: Iterable[N],
+      edges: Iterable[E])(implicit edgeT: ClassTag[E], config: Config): DefaultGraphImpl[N, E] =
     new UserConstrainedGraphImpl[N, E](nodes, edges)(edgeT, config)
 
-  override def from[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(
+  final override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
       implicit edgeT: ClassTag[E],
-      config: Config): DefaultGraphImpl[N, E] = {
-    val existElems     = nodes.nonEmpty || edges.nonEmpty
-    var preCheckResult = PreCheckResult(Abort)
-    if (existElems) {
-      val emptyGraph = empty[N, E](edgeT, config)
-      val constraint = config.constraintCompanion(emptyGraph)
-      preCheckResult = constraint.preCreate(nodes, edges)
-      if (preCheckResult.abort) {
-        constraint onAdditionRefused (nodes, edges, emptyGraph)
-        return emptyGraph
+      config: Config): DefaultGraphImpl[N, E] = from_?(nodes, edges) getOrElse empty[N, E](edgeT, config)
+
+  def from_?[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
+      implicit edgeT: ClassTag[E],
+      config: Config): Either[ConstraintViolation, DefaultGraphImpl[N, E]] = {
+    def emptyGraph = empty[N, E](edgeT, config)
+    if (nodes.isEmpty && edges.isEmpty) Right(emptyGraph)
+    else {
+      val constraint     = config.constraintCompanion[N, E, DefaultGraphImpl[N, E]](emptyGraph)
+      val preCheckResult = constraint.preCreate(nodes, edges)
+      if (preCheckResult.abort) Left(preCheckResult)
+      else {
+        val newGraph = fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
+        preCheckResult.followUp match {
+          case Complete  => Right(newGraph)
+          case PostCheck => constraint.postAdd(newGraph, nodes, edges, preCheckResult)
+          case Abort     => Left(preCheckResult)
+        }
       }
     }
-    val newGraph = fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
-    if (existElems) {
-      val emptyGraph = empty[N, E](edgeT, config)
-      val constraint = config.constraintCompanion(emptyGraph)
-      var handle     = false
-      preCheckResult.followUp match {
-        case Complete  =>
-        case PostCheck => handle = !constraint.postAdd(newGraph, nodes, edges, preCheckResult)
-        case Abort     => handle = true
-      }
-      if (handle) {
-        constraint.onAdditionRefused(nodes, edges, newGraph)
-        emptyGraph
-      } else
-        newGraph
-    } else
-      newGraph
   }
-  // TODO: canBuildFrom
 }
 
 @SerialVersionUID(7700L)
-class UserConstrainedGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = Nil,
-                                                         iniEdges: Traversable[E] = Nil)(
+class UserConstrainedGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Nil, iniEdges: Iterable[E[N]] = Nil)(
     implicit override val edgeT: ClassTag[E],
     override val config: DefaultGraphImpl.Config)
     extends DefaultGraphImpl[N, E](iniNodes, iniEdges)(edgeT, config)
-    with UserConstrainedGraph[N, E] {
+    with UserConstrainedGraph[N, E, DefaultGraphImpl[N, E]] {
 
   final override val self              = this
   final override val constraintFactory = config.constraintCompanion
   final override val constraint        = constraintFactory(this)
 
-  final override def copy(nodes: Traversable[N], edges: Traversable[E[N]]) =
-    DefaultGraphImpl.from(nodes, edges)(edgeT, config)
+  final protected def copy(nodes: Iterable[N], edges: Iterable[E]): DefaultGraphImpl[N, E] =
+    copy_?(nodes, edges) getOrElse empty
+
+  def copy_?(nodes: Iterable[N], edges: Iterable[E]): Either[ConstraintViolation, DefaultGraphImpl[N, E]] =
+    DefaultGraphImpl.from_?(nodes, edges)(edgeT, config)
 
   private def writeObject(out: ObjectOutputStream): Unit = serializeTo(out)
 

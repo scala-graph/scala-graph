@@ -1,13 +1,12 @@
 package scalax.collection.constrained
 package constraints
 
-import scala.language.{higherKinds, postfixOps}
-
 import scalax.collection.GraphPredef._
 
 /** The empty constraint treating any addition or subtraction as valid.
   */
-class NoneConstraint[N, E <: EdgeLike[N]](override val self: Graph[N, E]) extends Constraint[N, E](self) {
+class NoneConstraint[N, E <: EdgeLike[N], G <: Graph[N, E]](override val self: G)
+    extends Constraint[N, E, G](self) {
   import PreCheckFollowUp.Complete
   override def preAdd(node: N)                                = PreCheckResult(Complete)
   override def preAdd(edge: E)                             = PreCheckResult(Complete)
@@ -15,5 +14,5 @@ class NoneConstraint[N, E <: EdgeLike[N]](override val self: Graph[N, E]) extend
   override def preSubtract(edge: self.EdgeT, forced: Boolean) = PreCheckResult(Complete)
 }
 object NoneConstraint extends ConstraintCompanion[NoneConstraint] {
-  def apply[N, E <: EdgeLike[N]](self: Graph[N, E]) = new NoneConstraint[N, E](self)
+  def apply[N, E <: EdgeLike[N], G <: Graph[N, E]](self: G) = new NoneConstraint[N, E, G](self)
 }

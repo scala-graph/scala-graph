@@ -1,8 +1,6 @@
 package scalax
 
-import java.util.NoSuchElementException
-
-import scala.collection.AbstractIterator
+import scala.collection.{AbstractIterable, ExtSetMethods}
 
 /** Contains the base traits and objects needed to use '''Graph for Scala'''.
   *
@@ -20,11 +18,7 @@ package object collection {
 
   /** [[scala.collection.Set]] extended by some useful methods in the context of Graph.
     */
-  type ExtSet[A] = scala.collection.Set[A] with interfaces.ExtSetMethods[A]
-
-  /** Same as `private[scala] scala.collection.AbstractIterator`.
-    */
-  abstract private[scalax] class AbstractIterator[+A] extends Iterator[A]
+  type ExtSet[A] = scala.collection.Set[A] with ExtSetMethods[A]
 
   protected[scalax] type AnySet[A] = scala.collection.Set[A]
 
@@ -33,6 +27,12 @@ package object collection {
 
   protected[scalax] type MMap[K, V] = scala.collection.mutable.Map[K, V]
   @inline final protected[scalax] def MMap = scala.collection.mutable.Map
+
+  protected[scalax] type IterableOnce[A] = scala.collection.TraversableOnce[A]
+
+  @inline final protected[scalax] def mkIterable[A](it: => Iterator[A]): Iterable[A] = new AbstractIterable[A] {
+    override def iterator = it
+  }
 
   /** Adds chaining methods `tap` and `pipe` to `Any`. "Back-ported" from Scala 2.13.
     */

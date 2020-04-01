@@ -5,7 +5,6 @@ import java.io.File
 import java.nio.file.{Files, Path, Paths}
 import java.util.logging.{Level, LogManager}
 
-import scala.language.higherKinds
 import scala.reflect.ClassTag
 import scala.util.Try
 
@@ -150,8 +149,8 @@ trait Drawable {
       loader.addEdge(e)
     }
 
-    val isWeighted                          = g.edges.exists(_.weight != 1.0)
-    val nodeDrafts: Map[g.NodeT, NodeDraft] = g.nodes.map(n => n -> addNode(lbl = n.toString))(collection.breakOut)
+    val isWeighted = g.edges.exists(_.weight != 1.0)
+    val nodeDrafts = g.nodes.map(n => n -> addNode(lbl = n.toString)).toMap
 
     implicit final class EdgeG(edge: g.EdgeT) {
 
@@ -217,7 +216,7 @@ trait Drawable {
           }
         }
       } else {
-        val realNodes = edge.ends.toIterator
+        val realNodes = edge.ends
         val fake      = fakeNode
         addEdge(
           src = realNodes.next.asNodeDraft,

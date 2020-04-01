@@ -1,7 +1,7 @@
 package scalax.collection
 package io.dot
 
-import language.{existentials, implicitConversions}
+import language.implicitConversions
 import scala.collection.SortedMap
 
 import GraphPredef._, GraphEdge._, edge.LDiEdge, edge.Implicits._
@@ -9,11 +9,8 @@ import Indent._
 
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 
 /** Tests [[Export]]. */
-@RunWith(classOf[JUnitRunner])
 class TExportTest extends RefSpec with Matchers {
 
   def `Example at http://en.wikipedia.org/wiki/DOT_language will be produced` {
@@ -138,7 +135,7 @@ class TExportTest extends RefSpec with Matchers {
       edgeTransformer = e => None,
       hEdgeTransformer = Some(h => {
         val source = h.edge.source.toString
-        h.edge.targets.toTraversable map (target => (root, DotEdgeStmt(NodeId(source), NodeId(target.toString))))
+        h.edge.targets map (target => (root, DotEdgeStmt(NodeId(source), NodeId(target.toString))))
       }),
       spacing = multilineCompatibleSpacing
     )

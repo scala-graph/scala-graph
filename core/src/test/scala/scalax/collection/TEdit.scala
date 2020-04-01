@@ -1,12 +1,10 @@
 package scalax.collection
 
-import scala.language.{higherKinds, postfixOps}
 import scala.reflect.ClassTag
 
-import org.junit.runner.RunWith
 import org.scalatest._
-import org.scalatest.junit.JUnitRunner
 import org.scalatest.refspec.RefSpec
+
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.generic.GraphCompanion
@@ -32,7 +30,6 @@ trait ConfigWrapper[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, 
     companion.from[N, E](edges)
 }
 
-@RunWith(classOf[JUnitRunner])
 class TEditRootTest
     extends Suites(
       new TEdit[Graph](new ConfigWrapper[Graph] {
@@ -51,7 +48,6 @@ class TEditRootTest
       new TEditMutable
     )
 
-@RunWith(classOf[JUnitRunner])
 class TEditImmutable extends RefSpec with Matchers {
   private val Graph = immutable.Graph
 
@@ -119,7 +115,6 @@ class TEditImmutable extends RefSpec with Matchers {
   }
 }
 
-@RunWith(classOf[JUnitRunner])
 class TEditMutable extends RefSpec with Matchers {
   private val Graph                = mutable.Graph
   private def UnDiGraph[N](ns: N*) = Graph.from[N, UnDiEdge[N]](ns, Nil)

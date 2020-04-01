@@ -1,15 +1,10 @@
-package scalax.collection
+package scala.collection
 package mutable
 
 import scala.util.Random
-import scala.collection.AbstractIterator
-import scala.collection.mutable.{GrowingBuilder, HashSet, Set, SetLike}
 import scala.collection.generic.{GenericSetTemplate, MutableSetFactory}
 
-import interfaces.ExtSetMethods
-
-/* Alternatively we could use `hashTableContents` as suggested by Rüdiger Klaehn.
-   Consider private[collection] def hashTableContents, though.
+/* Alternatively we could use `hashTableContents` as suggested by Rüdiger Klaehn like
 
 package scala.collection.mutable
 object HashSetExt {
@@ -18,7 +13,6 @@ object HashSetExt {
       val table = value.hashTableContents.table
       ...
  */
-
 class ExtHashSet[A]
     extends HashSet[A]
     with SetLike[A, ExtHashSet[A]]
@@ -43,7 +37,7 @@ class ExtHashSet[A]
     search(drawn, 1, (i: Int) => i < len) getOrElse search(drawn - 1, -1, (i: Int) => i > 0).get
   }
 
-  def findElem(elem: A): Option[A] = findEntry(elem)
+  override def findElem(elem: A): Option[A] = findEntry(elem)
 
   def findElem[B](other: B, correspond: (A, B) => Boolean): A = {
     var entry: AnyRef = null
@@ -76,7 +70,7 @@ class ExtHashSet[A]
   /** Updates or inserts `elem`.
     *  @return `true` if an update took place.
     */
-  protected[collection] def upsert(elem: A with AnyRef): Boolean = {
+  def upsert(elem: A with AnyRef): Boolean = {
     var h     = index(elem.##)
     var entry = table(h)
     while (null != entry) {
@@ -94,4 +88,11 @@ class ExtHashSet[A]
 object ExtHashSet extends MutableSetFactory[ExtHashSet] {
   override def empty[A]      = new ExtHashSet[A]
   override def newBuilder[A] = new GrowingBuilder[A, ExtHashSet[A]](empty[A])
+
+  def fill[A](n: Int)(elem: => A): ExtHashSet[A] = {
+    val b = newBuilder[A]
+    for (i <- 0 to n)
+      b += elem
+    b.result()
+  }
 }

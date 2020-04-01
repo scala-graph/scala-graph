@@ -3,20 +3,13 @@ package mutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.language.{higherKinds, postfixOps}
 import scala.collection.Set
-import scala.collection.generic.{CanBuildFrom, Growable, Shrinkable}
-import scala.collection.mutable.{Builder, Cloneable, ListBuffer, Set => MutableSet}
 import scala.reflect.ClassTag
 
-import scalax.collection.{Graph => CommonGraph, GraphTraversalImpl}
-import scalax.collection.GraphEdge.{EdgeCompanionBase, EdgeLike}
-import scalax.collection.GraphPredef.{
-  EdgeLike, InParam, InnerEdgeParam, InnerNodeParam, NodeParam, OutParam, OuterEdge, OuterNode, Param
-}
+import scalax.collection.GraphTraversalImpl
+import scalax.collection.GraphPredef.EdgeLike
 import scalax.collection.mutable.{ArraySet, BuilderImpl}
 import scalax.collection.config.AdjacencyListArrayConfig
-
 import scalax.collection.constrained.{Graph => CGraph, GraphLike => CGraphLike}
 import PreCheckFollowUp._
 import generic.GraphConstrainedCompanion
@@ -28,137 +21,8 @@ class GraphBuilder[N, E <: EdgeLike[N], GC[N, E <: EdgeLike[N]] <: CGraph[N, E] 
   def result: This =
     companion.from(nodes, edges)(edgeT, config.asInstanceOf[companion.Config])
 }
-trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
-    extends scalax.collection.mutable.GraphLike[N, E, This]
-    with scalax.collection.constrained.GraphLike[N, E, This]
-    with Growable[Param[N, E]]
-    with Shrinkable[Param[N, E]]
-    with Cloneable[Graph[N, E]]
-    with Mutable {
-  selfGraph: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
-  This[N, E] with GraphLike[N, E, This] with Graph[N, E] =>
 
-  trait NodeSet extends super.NodeSet {
-
-    /** generic constrained subtraction */
-    protected def checkedRemove(node: NodeT, ripple: Boolean): Boolean = {
-      var removed, handle = false
-      def remove          = withoutChecks { subtract(node, ripple, minus, minusEdges) }
-      if (checkSuspended) removed = remove
-      else {
-        val preCheckResult = preSubtract(node.asInstanceOf[self.NodeT], ripple)
-        preCheckResult.followUp match {
-          case Complete => removed = remove
-          case PostCheck =>
-            val edges = node.edges.toBuffer
-            removed = remove
-            if (removed &&
-                !postSubtract(selfGraph, Set(node), Set.empty[E], preCheckResult)) {
-              handle = true
-              withoutChecks {
-                selfGraph += node.value
-                selfGraph ++= edges
-              }
-            }
-          case Abort => handle = true
-        }
-      }
-      if (handle) onSubtractionRefused(Set(node.asInstanceOf[self.NodeT]), Set.empty[self.EdgeT], selfGraph)
-      removed && !handle
-    }
-    override def remove(node: NodeT)       = checkedRemove(node, true)
-  }
-
-  /** generic checked addition */
-  protected def checkedAdd[G >: This[N, E]](contained: => Boolean,
-                                            preAdd: => PreCheckResult,
-                                            copy: => G,
-                                            nodes: => Traversable[N],
-                                            edges: => Traversable[E]): This[N, E] =
-    if (contained) this
-    else if (checkSuspended) copy.asInstanceOf[This[N, E]]
-    else {
-      var graph          = this
-      var handle         = false
-      val preCheckResult = preAdd
-      preCheckResult.followUp match {
-        case Complete => graph = copy.asInstanceOf[This[N, E]]
-        case PostCheck =>
-          graph = copy.asInstanceOf[This[N, E]]
-          if (!postAdd(graph, nodes, edges, preCheckResult)) {
-            handle = true
-            graph = this
-          }
-        case Abort => handle = true
-      }
-      if (handle) onAdditionRefused(nodes, edges, this)
-      graph
-    }
-
-  override def +(node: N) =
-    checkedAdd(
-      contained = nodes contains Node(node),
-      preAdd = preAdd(node),
-      copy = clone += node,
-      nodes = Set(node),
-      edges = Set.empty[E])
-
-  override def ++=(elems: TraversableOnce[Param[N, E]]): this.type = {
-    def add = withoutChecks { super.++=(elems) }
-    if (checkSuspended) add
-    else
-      elems match {
-        case elems: Traversable[Param[N, E]] =>
-          val p              = new Param.Partitions[N, E](elems)
-          val inFiltered     = p.toInParams.toSet.filter(elem => !(this contains elem)).toSeq
-          var handle         = false
-          val preCheckResult = preAdd(inFiltered: _*)
-          if (preCheckResult.abort)
-            handle = true
-          else {
-            add
-            if (preCheckResult.postCheck) {
-              val (outerNodes, outerEdges) = (p.toOuterNodes, p.toOuterEdges)
-              if (!postAdd(this, outerNodes, outerEdges, preCheckResult)) {
-                handle = true
-                withoutChecks(super.--=(allNodes(outerNodes, outerEdges) map (n => OuterNode(n))))
-              }
-            }
-          }
-          if (handle) onAdditionRefused(p.toOuterNodes, p.toOuterEdges, this)
-
-        case _ => throw new IllegalArgumentException("Traversable expected")
-      }
-    this
-  }
-
-  override def --=(elems: TraversableOnce[Param[N, E]]): this.type = {
-    val p                        = partition(elems)
-    val (outerNodes, outerEdges) = (p.toOuterNodes.toSet, p.toOuterEdges.toSet)
-    val (innerNodes, innerEdges) = (outerNodes map find flatten, outerEdges map find flatten)
-
-    type C_NodeT = self.NodeT
-    type C_EdgeT = self.EdgeT
-
-    var handle         = false
-    val preCheckResult = preSubtract(innerNodes.asInstanceOf[Set[C_NodeT]], innerEdges.asInstanceOf[Set[C_EdgeT]], true)
-    preCheckResult.followUp match {
-      case Complete => withoutChecks { super.--=(elems) }
-      case PostCheck =>
-        val subtractables = (elems filter this.contains).toArray ++ innerNodes.flatMap(_.edges).toBuffer
-        withoutChecks { super.--=(subtractables) }
-        if (!postSubtract(this, outerNodes, outerEdges, preCheckResult)) {
-          handle = true
-          withoutChecks { super.++=(subtractables) }
-        }
-      case Abort => handle = true
-    }
-    if (handle) onSubtractionRefused(innerNodes.asInstanceOf[Set[C_NodeT]], innerEdges.asInstanceOf[Set[C_EdgeT]], this)
-    this
-  }
-}
-
-import scalax.collection.constrained.generic.{MutableGraphCompanion}
+import scalax.collection.constrained.generic.MutableGraphCompanion
 
 trait Graph[N, E <: EdgeLike[N]]
     extends scalax.collection.mutable.Graph[N, E]
@@ -168,15 +32,15 @@ trait Graph[N, E <: EdgeLike[N]]
 }
 
 object Graph extends MutableGraphCompanion[Graph] {
-  override def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config): Graph[N, E] =
+  override def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E[N]], config: Config): Graph[N, E] =
     DefaultGraphImpl.empty[N, E](edgeT, config)
 
   override protected[collection] def fromWithoutCheck[N, E <: EdgeLike[N]](
-      nodes: Traversable[N],
-      edges: Traversable[E])(implicit edgeT: ClassTag[E], config: Config): DefaultGraphImpl[N, E] =
+      nodes: Iterable[N],
+      edges: Iterable[E])(implicit edgeT: ClassTag[E], config: Config): Graph[N, E] =
     DefaultGraphImpl.fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
 
-  override def from[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(
+  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E[N]])(
       implicit edgeT: ClassTag[E],
       config: Config): Graph[N, E] =
     DefaultGraphImpl.from[N, E](nodes, edges)(edgeT, config)
@@ -184,8 +48,8 @@ object Graph extends MutableGraphCompanion[Graph] {
   // TODO: canBuildFrom
 }
 
-abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = Set[N](),
-                                                          iniEdges: Traversable[E] = Set[E]())(
+abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](),
+                                                           iniEdges: Iterable[E] = Set[E]())(
     implicit override val edgeT: ClassTag[E],
     _config: DefaultGraphImpl.Config with GenConstrainedConfig with AdjacencyListArrayConfig)
     extends Graph[N, E]
@@ -196,8 +60,6 @@ abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = 
 
   protected type Config = DefaultGraphImpl.Config
   final override def config = _config.asInstanceOf[graphCompanion.Config with Config]
-
-  class NodeSet extends super[AdjacencyListGraph].NodeSet with super[Graph].NodeSet
 
   @inline final protected def newNodeSet: NodeSetT = new NodeSet
   @transient protected[this] var _nodes: NodeSetT  = newNodeSet
@@ -224,55 +86,47 @@ abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = 
 }
 
 object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
-  override def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config) =
-    from(Set.empty[N], Set.empty[E])(edgeT, config)
+  override def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E],
+                                                config: Config): DefaultGraphImpl[N, E] =
+    fromWithoutCheck(Set.empty, Set.empty)(edgeT, config)
 
   override protected[collection] def fromWithoutCheck[N, E <: EdgeLike[N]](
-      nodes: Traversable[N],
-      edges: Traversable[E])(implicit edgeT: ClassTag[E], config: Config): DefaultGraphImpl[N, E] =
+      nodes: Iterable[N],
+      edges: Iterable[E])(implicit edgeT: ClassTag[E[N]], config: Config): DefaultGraphImpl[N, E] =
     new UserConstrainedGraphImpl[N, E](nodes, edges)(edgeT, config)
 
-  override def from[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(
+  final override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
       implicit edgeT: ClassTag[E],
-      config: Config): DefaultGraphImpl[N, E] = {
-    val existElems     = nodes.nonEmpty || edges.nonEmpty
-    var preCheckResult = PreCheckResult(Abort)
-    if (existElems) {
-      val emptyGraph = empty[N, E](edgeT, config)
-      val constraint = config.constraintCompanion(emptyGraph)
-      preCheckResult = constraint.preCreate(nodes, edges)
-      if (preCheckResult.abort) {
-        constraint onAdditionRefused (nodes, edges, emptyGraph)
-        return emptyGraph
+      config: Config): DefaultGraphImpl[N, E] = from_?(nodes, edges) getOrElse empty[N, E](edgeT, config)
+
+  def from_?[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
+      implicit edgeT: ClassTag[E],
+      config: Config): Either[ConstraintViolation, DefaultGraphImpl[N, E]] = {
+    def emptyGraph = empty[N, E](edgeT, config)
+
+    if (nodes.isEmpty && edges.isEmpty) Right(empty[N, E](edgeT, config))
+    else {
+      val constraint     = config.constraintCompanion[N, E, DefaultGraphImpl[N, E]](emptyGraph)
+      val preCheckResult = constraint.preCreate(nodes, edges)
+      if (preCheckResult.abort) Left(preCheckResult)
+      else {
+        val newGraph = fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
+        preCheckResult.followUp match {
+          case Complete  => Right(newGraph)
+          case PostCheck => constraint.postAdd(newGraph, nodes, edges, preCheckResult)
+          case Abort     => Left(preCheckResult)
+        }
       }
     }
-    val newGraph = fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
-    if (existElems) {
-      val emptyGraph = empty[N, E](edgeT, config)
-      val constraint = config.constraintCompanion(emptyGraph)
-      var handle     = false
-      preCheckResult.followUp match {
-        case Complete  =>
-        case PostCheck => handle = !constraint.postAdd(newGraph, nodes, edges, preCheckResult)
-        case Abort     => handle = true
-      }
-      if (handle) {
-        constraint.onAdditionRefused(nodes, edges, newGraph)
-        emptyGraph
-      } else
-        newGraph
-    } else
-      newGraph
   }
-  // TODO canBuildFrom
 }
 
 @SerialVersionUID(7701L)
-class UserConstrainedGraphImpl[N, E <: EdgeLike[N]](
-    iniNodes: Traversable[N] = Nil,
-    iniEdges: Traversable[E] = Nil)(implicit override val edgeT: ClassTag[E], _config: DefaultGraphImpl.Config)
+class UserConstrainedGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Nil, iniEdges: Iterable[E[N]] = Nil)(
+    implicit override val edgeT: ClassTag[E],
+    _config: DefaultGraphImpl.Config)
     extends DefaultGraphImpl[N, E](iniNodes, iniEdges)(edgeT, _config)
-    with UserConstrainedGraph[N, E] {
+    with UserConstrainedGraph[N, E, DefaultGraphImpl[N, E]] {
 
   final override val self              = this
   final override val constraintFactory = config.constraintCompanion
@@ -281,6 +135,7 @@ class UserConstrainedGraphImpl[N, E <: EdgeLike[N]](
   private def writeObject(out: ObjectOutputStream): Unit = serializeTo(out)
 
   private def readObject(in: ObjectInputStream): Unit = {
+    this.++?(Nil)
     _nodes = newNodeSet
     _edges = new EdgeSet
     initializeFrom(in, _nodes, _edges)

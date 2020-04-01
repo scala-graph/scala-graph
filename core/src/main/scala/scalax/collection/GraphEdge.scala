@@ -1,20 +1,17 @@
 package scalax.collection
 
-import java.util.NoSuchElementException
-
 import scala.annotation.{switch, tailrec}
-import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.collection.AbstractIterable
-import scala.language.higherKinds
+import scala.collection.AbstractIterator
 
 import scalax.collection.GraphEdge.EdgeLike.ValidationException
+import GraphPredef.OuterEdge
+import edge.LBase.LEdge
 
 /** Container for basic edge types to be used in the context of `Graph`.
   * You will usually simply import all its members along with the members of Param:
   * {{{
   * import scalax.collection.GraphPredef._, scalax.collection.GraphEdge,_
   * }}}
-  *
   * @define SHORTCUT Allows to replace the edge object with it's shortcut like
   * @define ORDIHYPER or the source/target ends of a directed hyperedge
   * @define BAG bag that is an unordered collection of nodes with duplicates allowed
@@ -139,11 +136,17 @@ object GraphEdge {
     /** `true` if any target end of this edge fulfills `pred`. */
     def hasTarget(pred: N => Boolean): Boolean
 
+    /** Applies `f` to all source ends of this edge without any memory allocation. */
+    def withSources[U](f: N => U): Unit
+
     /** All source ends of this edge. */
-    def sources: Iterable[N @uV]
+    def sources: Iterable[N]
+
+    /** Applies `f` to the target ends of this edge without any memory allocation. */
+    def withTargets[U](f: N => U): Unit
 
     /** All target ends of this edge. */
-    def targets: Iterable[N @uV]
+    def targets: Iterable[N]
 
     /** `true` if
       *  a. being an undirected edge, both `n1` and `n2` are at this edge
@@ -176,11 +179,10 @@ object GraphEdge {
 
     override def hashCode: Int = baseHashCode
 
-    // TODO simplify toString
-    final protected def thisSimpleClassName: String = try {
+    final protected def thisSimpleClassName = try {
       this.getClass.getSimpleName
     } catch { // Malformed class name
-      case e: java.lang.InternalError => this.getClass.getName
+      case _: java.lang.InternalError => this.getClass.getName
     }
     def stringPrefix                           = "Nodes"
     protected def nodesToStringWithParenthesis = false
@@ -279,9 +281,9 @@ object GraphEdge {
       nr
     }
     def equalTargets(left: EdgeLike[_],
-                     leftEnds: Traversable[_],
+                     leftEnds: Iterable[_],
                      right: EdgeLike[_],
-                     rightEnds: Traversable[_],
+                     rightEnds: Iterable[_],
                      arity: Int): Boolean = {
       val thisOrdered = left.isInstanceOf[OrderedEndpoints]
       val thatOrdered = right.isInstanceOf[OrderedEndpoints]
@@ -300,7 +302,7 @@ object GraphEdge {
         Eq.equalTargets(this, this.sources, other, other.sources, thisArity)
       else false
     }
-    override protected def baseHashCode: Int = (0 /: ends)(_ ^ _.hashCode)
+    override protected def baseHashCode: Int = ends.foldLeft(0)(_ ^ _.hashCode)
   }
 
   /** Equality for targets handled as a $BAG.
@@ -327,7 +329,7 @@ object GraphEdge {
     override protected def baseHashCode: Int = {
       var m                = 4
       def mul(i: Int): Int = { m += 3; m * i }
-      (0 /: ends)((s: Int, n: Any) => s ^ mul(n.hashCode))
+      ends.foldLeft(0)((s: Int, n: Any) => s ^ mul(n.hashCode))
     }
   }
 

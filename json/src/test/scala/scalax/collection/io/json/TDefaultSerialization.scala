@@ -1,28 +1,20 @@
 package scalax.collection.io.json
 
-import language.higherKinds
-
-import net.liftweb.json._
-
 import scalax.collection._
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scalax.collection.generic.GraphCoreCompanion
 
-import serializer._, imp._, descriptor._, descriptor.predefined._, descriptor.Defaults._, exp.Export
+import descriptor.predefined._
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 
-@RunWith(classOf[JUnitRunner])
 class TDefaultSerializationRootTest
     extends Suites(
       new TDefaultSerialization[immutable.Graph](immutable.Graph),
       new TDefaultSerialization[mutable.Graph](mutable.Graph))
 
-class TDefaultSerialization[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
+class TDefaultSerialization[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers {
 

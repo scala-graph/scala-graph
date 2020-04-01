@@ -1,7 +1,7 @@
 package scalax.collection
 package io
 
-import language.{higherKinds, implicitConversions}
+import language.implicitConversions
 import mutable.{Graph => MGraph}
 
 import GraphPredef.EdgeLike
@@ -27,14 +27,9 @@ package object dot {
   implicit def graph2DotExport[N, E <: EdgeLike[N]](graph: Graph[N, E]): Export[N, E] =
     new Export[N, E](graph)
 
-  type NodeTransformer[N, E <: EdgeLike[N]] =
-    Graph[N, E]#NodeT => Option[(DotGraph, DotNodeStmt)]
-
-  type EdgeTransformer[N, E <: EdgeLike[N]] =
-    Graph[N, E]#EdgeT => Option[(DotGraph, DotEdgeStmt)]
-
-  type HyperEdgeTransformer[N, E <: EdgeLike[N]] =
-    Graph[N, E]#EdgeT => Traversable[(DotGraph, DotEdgeStmt)]
+  type NodeTransformer[N, E <: EdgeLike[N]]      = Graph[N, E]#NodeT => Option[(DotGraph, DotNodeStmt)]
+  type EdgeTransformer[N, E <: EdgeLike[N]]      = Graph[N, E]#EdgeT => Option[(DotGraph, DotEdgeStmt)]
+  type HyperEdgeTransformer[N, E <: EdgeLike[N]] = Graph[N, E]#EdgeT => Iterable[(DotGraph, DotEdgeStmt)]
 
   object implicits {
     implicit def toId(s: String): Id = Id(s)

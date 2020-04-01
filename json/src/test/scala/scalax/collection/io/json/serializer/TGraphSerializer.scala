@@ -1,8 +1,6 @@
 package scalax.collection.io.json
 package serializer
 
-import language.higherKinds
-
 import net.liftweb.json._
 
 import scalax.collection.GraphPredef._
@@ -14,17 +12,14 @@ import scalax.collection.io.json.descriptor.StringNodeDescriptor
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 
-@RunWith(classOf[JUnitRunner])
 class TGraphSerializerRootTest
     extends Suites(
       new TGraphSerializer[immutable.Graph](immutable.Graph),
       new TGraphSerializer[mutable.Graph](mutable.Graph))
 
 class TGraphSerializer[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
+    val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers {
 
