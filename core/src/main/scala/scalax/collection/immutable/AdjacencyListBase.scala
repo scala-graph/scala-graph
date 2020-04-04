@@ -3,7 +3,7 @@ package immutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade, Set => AnySet}
+import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, Buffer, ExtHashSet}
 import scala.util.Random
 
@@ -29,13 +29,6 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
     thisNode: NodeT =>
 
     def edges: ArraySet[EdgeT]
-
-    final private def sizeHint(edgesSize: Int): Int =
-      if (isHyper) elementCount * 2
-      else if (isDirected)
-        if (elementCount < 8) elementCount
-        else (elementCount / 4) * 3
-      else elementCount
 
     @inline final protected def nodeEqThis = (n: NodeT) => n eq this
     protected[collection] object Adj extends Serializable { // lazy adjacents
@@ -267,7 +260,7 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
     }
   }
 
-  def edgeIterator: Iterator[EdgeT] = nodes.iterator.flatMap(node => node.edges.iterator.filter(_.edge._1 == node))
+  def edgeIterator: Iterator[EdgeT] = nodes.iterator.flatMap(node => node.edges.iterator.filter(_.ends.head == node))
 
   final protected def serializeTo(out: ObjectOutputStream): Unit = {
     out.defaultWriteObject()

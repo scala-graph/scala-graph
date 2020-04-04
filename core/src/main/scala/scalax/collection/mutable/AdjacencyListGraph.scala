@@ -2,6 +2,7 @@ package scalax.collection
 package mutable
 
 import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.Compat.AddSubtract
 import scalax.collection.immutable.AdjacencyListBase
 
 /** Implements an incident list based mutable graph representation.
@@ -14,8 +15,8 @@ trait AdjacencyListGraph[
   selfGraph: This[N, E] =>
 
   type NodeT <: InnerNodeImpl
-  abstract class InnerNodeImpl(outer: N, hints: ArraySet.Hints)
-      extends NodeBase(outer)
+  abstract class InnerNodeImpl(val outer: N, hints: ArraySet.Hints)
+      extends NodeBase
       with super[GraphLike].InnerNode
       with InnerNode { this: NodeT =>
 
@@ -84,19 +85,21 @@ trait AdjacencyListGraph[
     @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
     @inline final protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }
 
-    @inline final def addOne(node: NodeT)      = { add(node); this }
-    @inline final def subtractOne(node: NodeT) = { remove(node); this }
+    @inline final def addOne(node: NodeT): this.type      = { add(node); this }
+    @inline final def subtractOne(node: NodeT): this.type = { remove(node); this }
 
     final protected def minus(node: NodeT): Unit = collection -= node
     final protected def minusEdges(node: NodeT): Unit =
       edges --= node.edges.toList // toList is necessary to avoid failure of -=(node) like in TEdit.test_MinusEq_2
+
+    final override def diff(that: AnySet[NodeT]): MSet[NodeT] = this -- that
   }
   override def nodes: NodeSetT
 
   @inline final protected def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
 
   type EdgeSetT = EdgeSet
-  class EdgeSet extends super[GraphLike].EdgeSet with super.EdgeSet {
+  class EdgeSet extends super[GraphLike].EdgeSet with super.EdgeSet with AddSubtract[EdgeT, EdgeSet] {
     final protected[AdjacencyListGraph] var initialized = false
 
     final override protected[collection] def initialize(edges: Iterable[E]): Unit = {
@@ -115,7 +118,8 @@ trait AdjacencyListGraph[
         true
       } else false
 
-    @inline final override def maxArity: Int = super.maxArity
+    @inline final override def maxArity: Int            = super.maxArity
+    override def diff(that: AnySet[EdgeT]): MSet[EdgeT] = this -- that
   }
   override def edges: EdgeSetT
 

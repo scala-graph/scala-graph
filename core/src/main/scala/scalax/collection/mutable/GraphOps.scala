@@ -1,7 +1,6 @@
 package scalax.collection.mutable
 
 import scala.collection.mutable.Cloneable
-import scala.language.higherKinds
 
 import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.GraphEdge.EdgeLike

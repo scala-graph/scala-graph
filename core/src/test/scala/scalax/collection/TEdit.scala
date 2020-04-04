@@ -64,7 +64,6 @@ class TEditImmutable extends RefSpec with Matchers {
       g + 1 should be(g)
       g + 0 should be(Graph(0, 1, 2, 3, 2 ~ 3))
       g + 0 ~ 1 should be(Graph(0, 1, 2, 3, 0 ~ 1, 2 ~ 3))
-      """g + "A"""" shouldNot compile
     }
 
     val gString_A = Graph("A")
@@ -86,7 +85,7 @@ class TEditImmutable extends RefSpec with Matchers {
       g = gString_A - "A"
       g.contains("A") should be(false) //gMinus shouldNot contain ("A")
       g should have size 0
-      g should be('isEmpty)
+      g shouldBe empty
 
       val h = Graph(1, 2, 2 ~ 3)
       h - 0 should be(h)
@@ -116,8 +115,7 @@ class TEditImmutable extends RefSpec with Matchers {
 }
 
 class TEditMutable extends RefSpec with Matchers {
-  private val Graph                = mutable.Graph
-  private def UnDiGraph[N](ns: N*) = Graph.from[N, UnDiEdge[N]](ns, Nil)
+  private val Graph = mutable.Graph
 
   object `mutable graphs` {
     def `serve += properly` {
@@ -176,20 +174,20 @@ class TEditMutable extends RefSpec with Matchers {
       val e11                        = g get oneOne
 
       g -= 1 ~> 4 // Graph(oneOne, oneTwo, one~>3)
-      (n2 diSuccessors) should be('isEmpty)
-      (n1 diSuccessors) should be(Set(two, 3))
+      n2.diSuccessors shouldBe empty
+      n1.diSuccessors shouldBe (Set(two, 3))
       (n1 ~>? n1) should be(Some(e11))
 
       g -= oneTwo // Graph(oneOne, one~>3)
-      (n1 diSuccessors) should be(Set(3))
+      n1.diSuccessors should be(Set(3))
       (n1 ~>? n1) should be(Some(e11))
 
       g -= oneOne // Graph(one~>3)
-      (n1 diSuccessors) should be(Set(3))
+      n1.diSuccessors should be(Set(3))
       (n1 ~>? n1) should be(None)
 
       g ++= (edges = List(oneOne, oneTwo)) // Graph(oneOne, oneTwo, one~>3)
-      (n1 diSuccessors) should be(Set(two, 3))
+      n1.diSuccessors should be(Set(two, 3))
       (n1 ~>? n1) should be(Some(e11))
     }
 
@@ -200,20 +198,20 @@ class TEditMutable extends RefSpec with Matchers {
       val (n1, n2)                                  = (g get one, g get two)
       val e112                                      = g get oneOneTwo
 
-      (n2 diSuccessors) should be('isEmpty)
-      (n1 diSuccessors) should be(Set(two, three))
+      n2.diSuccessors shouldBe empty
+      n1.diSuccessors should be(Set(two, three))
       (n1 ~>? n1) should be(Some(oneOneTwo))
 
       g -= oneTwoThree // Graph(oneOneTwo)
-      (n1 diSuccessors) should be(Set(two))
+      n1.diSuccessors should be(Set(two))
       (n1 ~>? n1) should be(Some(oneOneTwo))
 
       g -= two // Graph(one)
-      (n1 diSuccessors) should be('isEmpty)
+      n1.diSuccessors shouldBe empty
       (n1 ~>? n1) should be(None)
 
       g += oneOneTwo // Graph(oneOneTwo)
-      (n1 diSuccessors) should be(Set(2))
+      n1.diSuccessors should be(Set(2))
       (n1 ~>? n1) should be(Some(oneOneTwo))
     }
 
@@ -245,7 +243,7 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
   object `graph editing` {
     def `empty ` {
       val eg = factory.empty[Nothing, Nothing]
-      eg should be('isEmpty)
+      eg shouldBe empty
       eg should have size 0
     }
 
@@ -329,21 +327,21 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
     }
 
     def `NodeSet ` {
-      val o = Array.range(0, 4)
+      val o = Vector.range(0, 4)
       val g = factory(o(1) ~ o(2), o(2) ~ o(3))
       val n = o map (g.nodes find _ getOrElse g.nodes.head)
 
       val less = g.nodes - n(3)
-      less should have size (2)
+      less should have size 2
       less should contain(n(1))
-      less.find(_ == n(1)).get.edges should have size (1)
+      less.find(_ == n(1)).get.edges should have size 1
       less should contain(n(2))
-      less.find(_ == n(2)).get.edges should have size (2)
+      less.find(_ == n(2)).get.edges should have size 2
 
       val restored = less + n(3)
-      restored should have size (3)
+      restored should have size 3
       restored should contain(n(3))
-      restored.find(_ == n(1)).get.edges should have size (1)
+      restored.find(_ == n(1)).get.edges should have size 1
     }
 
     def `Eq ` {
@@ -407,57 +405,57 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
 
     object `diSuccessors ` {
       def `for UnDi` {
-        (gUnDi get 1 diSuccessors) should be(Set(2, 3, 4))
-        (gUnDi get 2 diSuccessors) should be(Set(1))
+        (gUnDi get 1).diSuccessors should be(Set(2, 3, 4))
+        (gUnDi get 2).diSuccessors should be(Set(1))
       }
       def `for Di` {
-        (gDi get 1 diSuccessors) should be(Set(2, 3, 4))
-        (gDi get 2 diSuccessors) should be(Set.empty)
+        (gDi get 1).diSuccessors should be(Set(2, 3, 4))
+        (gDi get 2).diSuccessors should be(Set.empty)
       }
       def `for mixed` {
-        (gMixed get 2 diSuccessors) should be(Set(3))
-        (gMixed get 3 diSuccessors) should be(Set(4))
+        (gMixed get 2).diSuccessors should be(Set(3))
+        (gMixed get 3).diSuccessors should be(Set(4))
       }
       def `for DiHyper` {
-        (hDi get 1 diSuccessors) should be(Set(2, 3, 4, 5, 9))
-        (hDi get 2 diSuccessors) should be(Set.empty)
-        (hDi get 5 diSuccessors) should be(Set.empty)
+        (hDi get 1).diSuccessors should be(Set(2, 3, 4, 5, 9))
+        (hDi get 2).diSuccessors should be(Set.empty)
+        (hDi get 5).diSuccessors should be(Set.empty)
       }
     }
 
     object `diPredecessors ` {
       def `for UnDi` {
-        (gUnDi get 1 diPredecessors) should be(Set(2, 3, 4))
-        (gUnDi get 2 diPredecessors) should be(Set(1))
+        (gUnDi get 1).diPredecessors should be(Set(2, 3, 4))
+        (gUnDi get 2).diSuccessors should be(Set(1))
       }
       def `for Di` {
-        (gDi get 1 diPredecessors) should be(Set.empty)
-        (gDi get 2 diPredecessors) should be(Set(1))
+        (gDi get 1).diPredecessors should be(Set.empty)
+        (gDi get 2).diPredecessors should be(Set(1))
       }
       def `for mixed` {
-        (gMixed get 2 diPredecessors) should be(Set(1))
-        (gMixed get 3 diSuccessors) should be(Set(4))
+        (gMixed get 2).diPredecessors should be(Set(1))
+        (gMixed get 3).diSuccessors should be(Set(4))
       }
       def `for DiHyper` {
-        (hDi get 1 diPredecessors) should be(Set.empty)
-        (hDi get 2 diPredecessors) should be(Set(1))
-        (hDi get 5 diPredecessors) should be(Set(1))
+        (hDi get 1).diPredecessors should be(Set.empty)
+        (hDi get 2).diPredecessors should be(Set(1))
+        (hDi get 5).diPredecessors should be(Set(1))
       }
     }
 
     object `neighbors ` {
       def `for UnDi` {
-        (gUnDi get 1 neighbors) should be(Set(2, 3, 4))
-        (gUnDi get 2 neighbors) should be(Set(1))
+        (gUnDi get 1).neighbors should be(Set(2, 3, 4))
+        (gUnDi get 2).neighbors should be(Set(1))
       }
       def `for Di` {
-        (gDi get 1 neighbors) should be(Set(2, 3, 4))
-        (gDi get 2 neighbors) should be(Set(1))
+        (gDi get 1).neighbors should be(Set(2, 3, 4))
+        (gDi get 2).neighbors should be(Set(1))
       }
       def `for DiHyper` {
-        (hDi get 1 neighbors) should be(Set(2, 3, 4, 5, 9))
-        (hDi get 2 neighbors) should be(Set(1, 5))
-        (hDi get 5 neighbors) should be(Set(1, 2, 3))
+        (hDi get 1).neighbors should be(Set(2, 3, 4, 5, 9))
+        (hDi get 2).neighbors should be(Set(1, 5))
+        (hDi get 5).neighbors should be(Set(1, 2, 3))
       }
     }
 
@@ -470,26 +468,26 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
 
     def `degree ` {
       val g = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
-      (g get 1 degree) should be(5)
-      (g get 2 degree) should be(1)
+      (g get 1).degree should be(5)
+      (g get 2).degree should be(1)
     }
 
     def `incoming ` {
       val uEdges = Seq[UnDiEdge[Int]](1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4) // bug if no type param given
       val g      = factory(uEdges(0), uEdges(1), uEdges(2), uEdges(3))
-      (g get 1 incoming) should be(uEdges.toSet)
-      (g get 2 incoming) should be(Set(uEdges(1)))
+      (g get 1).incoming should be(uEdges.toSet)
+      (g get 2).incoming should be(Set(uEdges(1)))
 
       val dEdges = Seq[DiEdge[Int]](1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
       val h      = factory(dEdges(0), dEdges(1), dEdges(2), dEdges(3))
-      (h get 1 incoming) should be(Set(dEdges(0)))
-      (h get 2 incoming) should be(Set(dEdges(1)))
+      (h get 1).incoming should be(Set(dEdges(0)))
+      (h get 2).incoming should be(Set(dEdges(1)))
     }
 
     def `edgeAdjacents UnDi` {
       val g = factory[Int, AnyEdge](1 ~ 2, 2 ~ 3, 1 ~> 3, 1 ~ 5, 3 ~ 5, 3 ~ 4, 4 ~> 4, 4 ~> 5)
-      ((g get 4 ~> 4) adjacents) should be(Set[AnyEdge[Int]](3 ~ 4, 4 ~> 5))
-      ((g get 1 ~ 2) adjacents) should be(Set[AnyEdge[Int]](1 ~> 3, 1 ~ 5, 2 ~ 3))
+      (g get 4 ~> 4).adjacents should be(Set[AnyEdge[Int]](3 ~ 4, 4 ~> 5))
+      (g get 1 ~ 2).adjacents should be(Set[AnyEdge[Int]](1 ~> 3, 1 ~ 5, 2 ~ 3))
     }
 
     def `filter ` {

@@ -47,15 +47,21 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
   /** The order - commonly referred to as |G| - of this graph
     * equaling to the number of nodes.
     */
-  def order: Int = nodes.size
   final def order: Int = nodes.size
   final def size: Int  = edges.size
 
   // The following predicates must be val because eq does not work for def.
-  /** Default node filter letting traverse all nodes (non-filter). */ final val anyNode: NodePredicate = _ => true
-  /** Node predicate always returning `false`. */                     final val noNode: NodePredicate  = _ => false
-  /** Default edge filter letting path all edges (non-filter). */     final val anyEdge: EdgePredicate = _ => true
-  /** Edge predicate always returning `false`. */                     final val noEdge: EdgePredicate  = _ => false
+  /** Default node filter letting traverse all nodes (non-filter). */
+  final val anyNode: NodePredicate = _ => true
+
+  /** Node predicate always returning `false`. */
+  final val noNode: NodePredicate = _ => false
+
+  /** Default edge filter letting path all edges (non-filter). */
+  final val anyEdge: EdgePredicate = _ => true
+
+  /** Edge predicate always returning `false`. */
+  final val noEdge: EdgePredicate = _ => false
 
   /** `true` if `f` is not equivalent to `anyNode`. */
   @inline final def isCustomNodeFilter(f: NodePredicate) = f ne anyNode
@@ -415,7 +421,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
 
     def draw(random: Random): NodeT
 
-    def diff(that: AnySet[NodeT]) = this -- that
+    def diff(that: AnySet[NodeT]): AnySet[NodeT] = this -- that
   }
 
   /** The node (vertex) set of this `Graph` commonly referred to as V(G).
@@ -440,7 +446,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     /** All connecting edges, that is all edges with ends incident with this edge including possible loops. */
     def adjacents: Set[EdgeT] = {
       val a = new mutable.EqHashMap[EdgeT, Null]
-      this foreach (n => n.edges foreach (e => a put (e, null)))
+      ends foreach (n => n.edges foreach (e => a put (e, null)))
       a -= this
       new immutable.EqSet(a)
     }
@@ -592,7 +598,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       }
     }
 
-    def diff(that: AnySet[EdgeT]) = this -- that
+    def diff(that: AnySet[EdgeT]): AnySet[EdgeT] = this -- that
   }
 
   /** The edge set of this `Graph` commonly referred to as E(G).

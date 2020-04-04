@@ -69,8 +69,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     with GraphOps[N, E, This]
     /* TODO
     with EdgeOps[N, E, This]
-     */
-    with Mutable {
+     */ {
   this: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
   This[N, E] with GraphLike[N, E, This] with Graph[N, E] =>
 
@@ -83,8 +82,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
 
   type NodeSetT <: NodeSet
   trait NodeSet extends MutableSet[NodeT] with super.NodeSet {
-    @inline final override def -=(node: NodeT): this.type = { remove(node); this }
-    override def remove(node: NodeT): Boolean             = subtract(node, true, minus, minusEdges)
+    override def remove(node: NodeT): Boolean = subtract(node, true, minus, minusEdges)
 
     /** removes all incident edges of `node` from the edge set leaving the node set unchanged.
       *
@@ -92,8 +90,8 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
       */
     protected def minusEdges(node: NodeT): Unit
 
-    override def diff(that: AnySet[NodeT]) = this -- that
-    override def clear(): Unit             = this foreach -=
+    override def clear(): Unit                          = this foreach -=
+    override def diff(that: AnySet[NodeT]): MSet[NodeT] = this -- that
   }
 
   type EdgeSetT <: EdgeSet
@@ -104,6 +102,9 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     /** Same as `upsert` at graph level. */
     def upsert(edge: EdgeT): Boolean
     def removeWithNodes(edge: EdgeT): Boolean
+
+    def clear(): Unit                                   = this foreach -=
+    override def diff(that: AnySet[EdgeT]): MSet[EdgeT] = this -- that
   }
 
   /** Adds the given node if not yet present and returns it as an inner node.
@@ -171,7 +172,6 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = Set[N](),
   final override val companion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
-  type NodeSetT = NodeSet
   @inline final protected def newNodeSet: NodeSetT = new NodeSet
   @transient private[this] var _nodes: NodeSetT    = newNodeSet
   @inline final override def nodes                 = _nodes
@@ -186,7 +186,7 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = Set[N](),
   final override def clone: this.type              = super.clone.asInstanceOf[this.type]
 
   @SerialVersionUID(7370L)
-  final protected class NodeBase(val outer: N, hints: ArraySet.Hints) extends InnerNodeImpl(outer, hints)
+  final protected class NodeBase(override val outer: N, hints: ArraySet.Hints) extends InnerNodeImpl(outer, hints)
 // TODO      with    InnerNodeTraversalImpl
 
   type NodeT = NodeBase

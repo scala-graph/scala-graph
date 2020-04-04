@@ -1,11 +1,8 @@
 package scalax.collection
 
 import scala.annotation.{switch, tailrec}
-import scala.collection.AbstractIterator
-
-import scalax.collection.GraphEdge.EdgeLike.ValidationException
-import GraphPredef.OuterEdge
-import edge.LBase.LEdge
+import scala.annotation.unchecked.{uncheckedVariance => uV}
+import scala.collection.AbstractIterable
 
 /** Container for basic edge types to be used in the context of `Graph`.
   * You will usually simply import all its members along with the members of Param:
@@ -31,6 +28,7 @@ object GraphEdge {
     * @author Peter Empen
     */
   sealed trait EdgeLike[+N] extends Eq { this: Mapper =>
+    import EdgeLike.ValidationException
 
     /** The endpoints of this edge, in other words the nodes this edge joins. */
     def ends: Iterable[N]
@@ -63,7 +61,7 @@ object GraphEdge {
     protected def customMsgPrefix: String = "Custom validation failed"
 
     final protected def handleFailure(msgPrefix: String): Unit =
-      throw new EdgeLike.ValidationException(s"$msgPrefix at $toString.")
+      throw new ValidationException(s"$msgPrefix at $toString.")
 
     /** Performs basic edge validation by calling `isValidArity` and `noNullEnd`.
       * `isValidCustom` is also called but you need to override this member to perform additional validation.
@@ -118,6 +116,12 @@ object GraphEdge {
     /** Same as `isAt`. */
     @inline final def contains[M >: N](node: M): Boolean = isAt(node)
 
+    /** All source ends of this edge. */
+    def sources: Iterable[N]
+
+    /** All target ends of this edge. */
+    def targets: Iterable[N]
+
     /** `true` if `node` is incident with this edge. */
     def isAt[M >: N](node: M): Boolean
 
@@ -139,14 +143,8 @@ object GraphEdge {
     /** Applies `f` to all source ends of this edge without any memory allocation. */
     def withSources[U](f: N => U): Unit
 
-    /** All source ends of this edge. */
-    def sources: Iterable[N]
-
     /** Applies `f` to the target ends of this edge without any memory allocation. */
     def withTargets[U](f: N => U): Unit
-
-    /** All target ends of this edge. */
-    def targets: Iterable[N]
 
     /** `true` if
       *  a. being an undirected edge, both `n1` and `n2` are at this edge
@@ -487,6 +485,9 @@ object GraphEdge {
     override def hasTarget[M >: N](node: M): Boolean    = isAt(node)
     override def hasTarget(pred: N => Boolean): Boolean = isAt(pred)
 
+    def withSources[U](f: N => U): Unit = sources foreach f
+    def withTargets[U](f: N => U): Unit = targets foreach f
+
     final protected def matches(fList: List[N => Boolean]): Boolean = {
       val it = ends.iterator
       @tailrec def loop(checks: List[N => Boolean]): Boolean =
@@ -552,13 +553,13 @@ object GraphEdge {
     def ends: Iterable[N]      = sources ++ targets
 
     override def arity: Int                      = sources.size + targets.size
-    override protected def isValidArity: Boolean = sources.toIterator.hasNext && targets.toIterator.hasNext
+    override protected def isValidArity: Boolean = sources.iterator.hasNext && targets.iterator.hasNext
     override protected def noNullEnd: Boolean    = noNullEnd(sources) && noNullEnd(targets)
 
     @inline final override def isDirected = true
 
-    override def hasSource[M >: N](node: M): Boolean    = this._1 == node
-    override def hasSource(pred: N => Boolean): Boolean = pred(this._1)
+    override def hasSource[M >: N](node: M): Boolean    = sources exists (_ == node)
+    override def hasSource(pred: N => Boolean): Boolean = sources exists pred
 
     override def hasTarget[M >: N](node: M): Boolean    = targets exists (_ == node)
     override def hasTarget(pred: N => Boolean): Boolean = targets exists pred
@@ -646,6 +647,15 @@ object GraphEdge {
     @inline final override def _1: N = node_1
     @inline final override def _2: N = node_2
 
+    final override def hasSource[M >: N](node: M): Boolean    = node_1 == node || node_2 == node
+    final override def hasSource(pred: N => Boolean): Boolean = pred(node_1) || pred(node_2)
+
+    final override def hasTarget[M >: N](node: M): Boolean    = hasSource(node)
+    final override def hasTarget(pred: N => Boolean): Boolean = hasSource(pred)
+
+    final override def withSources[U](f: N => U): Unit = { f(node_1); f(node_2) }
+    final override def withTargets[U](f: N => U): Unit = withSources(f)
+
     override def _n(n: Int): N = (n: @switch) match {
       case 0 => node_1
       case 1 => node_2
@@ -707,6 +717,9 @@ object GraphEdge {
 
     final override def hasTarget[M >: N](node: M): Boolean    = target == node
     final override def hasTarget(pred: N => Boolean): Boolean = pred(target)
+
+    final override def withSources[U](f: N => U): Unit = f(source)
+    final override def withTargets[U](f: N => U): Unit = f(target)
 
     final override def matches[M >: N](n1: M, n2: M): Boolean               = diBaseEquals(n1, n2)
     final override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = p1(source) && p2(target)

@@ -1,6 +1,5 @@
 package scalax.collection
 
-import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 import scalax.collection.GraphEdge._

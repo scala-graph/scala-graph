@@ -2,7 +2,6 @@ package scalax.collection
 package immutable
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.language.higherKinds
 
 import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.GraphEdge.EdgeLike
@@ -18,7 +17,7 @@ trait AdjacencyListGraph[
     with AdjacencyListBase[N, E, This] { selfGraph: This[N, E] =>
 
   type NodeT <: InnerNodeImpl
-  abstract class InnerNodeImpl(value: N, hints: ArraySet.Hints) extends NodeBase(value) with InnerNode { this: NodeT =>
+  abstract class InnerNodeImpl(val outer: N, hints: ArraySet.Hints) extends NodeBase with InnerNode { this: NodeT =>
 
     final override val edges: ArraySet[EdgeT]                      = ArraySet.emptyWithHints[EdgeT](hints)
     @transient protected var _diSuccessors: immutable.EqSet[NodeT] = _
@@ -110,7 +109,7 @@ trait AdjacencyListGraph[
   /** Implements the heart of `--` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */
   final protected def minusMinus(delNodes: Iterator[N], delEdges: Iterator[E]): This[N, E] = {
-    val delNodesEdges = remaining(delNodes.to[Set], delEdges)
+    val delNodesEdges = remaining(delNodes.toSet, delEdges)
     companion.from[N, E](delNodesEdges._1, delNodesEdges._2)
   }
 

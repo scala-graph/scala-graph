@@ -2,7 +2,6 @@ package scalax.collection
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.AbstractIterable
-import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
 import scalax.collection.GraphEdge._
@@ -147,7 +146,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     final def containingGraph: ThisGraph = thisGraph
   }
 
-  abstract protected class NodeBase(override val value: N) extends super.NodeBase with InnerNode {
+  protected trait NodeBase extends super.NodeBase with InnerNode {
     this: NodeT =>
     final def isContaining[N, E <: EdgeLike[N]](g: GraphBase[N, E, This] @uV): Boolean =
       g eq containingGraph
@@ -380,7 +379,6 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   */
 trait Graph[N, E <: EdgeLike[N]] extends GraphLike[N, E, Graph] {
   override def empty: Graph[N, E] = Graph.empty[N, E]
-  override def knownSize: Int     = nodes.size + edges.size
 }
 
 /** The main companion object for immutable graphs.

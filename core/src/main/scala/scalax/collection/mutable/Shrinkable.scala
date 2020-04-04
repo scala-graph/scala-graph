@@ -2,7 +2,6 @@ package scalax.collection
 package mutable
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.language.higherKinds
 
 import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.GraphEdge.EdgeLike

@@ -1,16 +1,13 @@
 package scalax.collection
 
-import language.{higherKinds, implicitConversions}
+import language.implicitConversions
 
 import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
 
-@RunWith(classOf[JUnitRunner])
 class TMapRootTest
     extends Suites(
       new TMap[immutable.Graph](immutable.Graph),

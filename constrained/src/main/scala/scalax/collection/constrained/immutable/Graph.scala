@@ -61,8 +61,8 @@ abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Nil
   @inline final override def empty: DefaultGraphImpl[N, E] = DefaultGraphImpl.empty(edgeT, config)
 
   @SerialVersionUID(8081L)
-  final protected class NodeBase(value: N, hints: ArraySet.Hints)
-      extends InnerNodeImpl(value, hints)
+  final protected class NodeBase(override val outer: N, hints: ArraySet.Hints)
+      extends InnerNodeImpl(outer, hints)
       with InnerNodeTraversalImpl
 
   type NodeT = NodeBase

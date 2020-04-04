@@ -20,7 +20,6 @@ object GraphPredef {
 
   /** Wraps any type to be accepted when calling `Graph(...)`. */
   sealed case class OuterNode[+N](node: N) extends OuterElem[N, Nothing]
-      }
 
   /** To be mixed in by edge classes to allow passing them to `Graph(...)`. */
   sealed case class OuterEdge[N, E <: EdgeLike[N]](edge: E) extends OuterElem[N, E]

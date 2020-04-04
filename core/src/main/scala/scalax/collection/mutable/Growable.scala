@@ -1,7 +1,6 @@
 package scalax.collection.mutable
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.language.higherKinds
 
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.GraphPredef.{OuterEdge, OuterElem, OuterNode}

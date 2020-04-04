@@ -1,6 +1,6 @@
 package scalax
 
-import scala.collection.{AbstractIterable, ExtSetMethods}
+import scala.collection.{AbstractIterable, AbstractIterator, ExtSetMethods}
 
 /** Contains the base traits and objects needed to use '''Graph for Scala'''.
   *

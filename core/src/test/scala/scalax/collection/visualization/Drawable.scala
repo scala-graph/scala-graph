@@ -21,7 +21,7 @@ import org.gephi.preview.types.{DependantColor, EdgeColor}
 import org.gephi.project.api.{ProjectController, Workspace}
 import org.openide.util.Lookup
 import scalax.collection.Graph
-import scalax.collection.GraphEdge.{AnyEdge, EdgeLike, LEdge, Label}
+import scalax.collection.GraphEdge.{AnyEdge, EdgeLike, LEdge}
 
 /** Facilitates drawing any graph as an image.
   */
@@ -216,7 +216,7 @@ trait Drawable {
           }
         }
       } else {
-        val realNodes = edge.ends
+        val realNodes = edge.ends.iterator
         val fake      = fakeNode
         addEdge(
           src = realNodes.next.asNodeDraft,

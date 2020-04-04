@@ -76,8 +76,8 @@ abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set
     graphCompanion.fromWithoutCheck[N, E](nodes.toOuter, edges.toOuter)(edgeT, config).asInstanceOf[this.type]
 
   @SerialVersionUID(8082L)
-  protected class NodeBase(value: N, hints: ArraySet.Hints)
-      extends InnerNodeImpl(value, hints)
+  protected class NodeBase(override val outer: N, hints: ArraySet.Hints)
+      extends InnerNodeImpl(outer, hints)
       with InnerNodeTraversalImpl
 
   type NodeT = NodeBase

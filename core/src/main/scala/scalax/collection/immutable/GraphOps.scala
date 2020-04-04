@@ -1,7 +1,5 @@
 package scalax.collection.immutable
 
-import scala.language.higherKinds
-
 import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.GraphLike
