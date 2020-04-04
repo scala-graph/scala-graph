@@ -469,7 +469,7 @@ object GraphEdge {
     override def targets: Iterable[N] = sources
 
     protected def isValidArity: Boolean = ends.size >= 2
-    protected def noNullEnd(coll: Traversable[N @uV]): Boolean = coll forall {
+    protected def noNullEnd(coll: Iterable[N @uV]): Boolean = coll forall {
       case n: AnyRef => n ne null
       case _         => true
     }

@@ -1,12 +1,13 @@
 package scalax.collection
 package mutable
 
-import util.Random
 import scala.collection.{AbstractIterator, SortedSet}
 import scala.collection.mutable.{GrowingBuilder, SetLike => MutableSetLike, ExtHashSet}
 import scala.collection.generic.{CanBuildFrom, GenericCompanion, GenericSetTemplate, MutableSetFactory}
 import scala.compat.Platform.arraycopy
-import immutable.SortedArraySet
+import scala.util.Random
+
+import scalax.collection.immutable.SortedArraySet
 
 /** A basic [[ArraySet]] implementation suitable for efficient add operations.
   * Element removal could be optimized by another implementation.

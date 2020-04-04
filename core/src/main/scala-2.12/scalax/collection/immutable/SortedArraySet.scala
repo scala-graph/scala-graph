@@ -7,8 +7,8 @@ import compat.Platform.arraycopy
 
 @SerialVersionUID(1L)
 class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Array[A]])(
-  implicit val ordering: Ordering[A])
-  extends SortedSet[A]
+    implicit val ordering: Ordering[A])
+    extends SortedSet[A]
     with SortedSetLike[A, SortedArraySet[A]]
     with Serializable { self =>
   java.util.Arrays.sort(array.asInstanceOf[Array[AnyRef]], ordering.asInstanceOf[Ordering[Object]])
@@ -66,7 +66,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
       search(e, ordering.lt) orElse (
         if (ordering.gt(e, array(size - 1))) Some(size)
         else Some(-1)
-        )) getOrElse size) - 1
+      )) getOrElse size) - 1
     if (idxFrom > idxTill) empty
     else {
       val newSize               = idxTill - idxFrom + 1

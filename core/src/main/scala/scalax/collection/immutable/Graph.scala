@@ -21,17 +21,17 @@ object Graph extends ImmutableGraphCompanion[Graph] {
   def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config = defaultConfig): Graph[N, E] =
     DefaultGraphImpl.empty[N, E](edgeT, config)
 
-  override def from[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(
+  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
       implicit edgeT: ClassTag[E],
       config: Config = defaultConfig): Graph[N, E] =
     DefaultGraphImpl.from[N, E](nodes, edges)(edgeT, config)
 
-  override def from[N, E[X] <: EdgeLike[X]](edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]]) =
+  override def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]])(implicit edgeT: ClassTag[E[N]]) =
     DefaultGraphImpl.from[N, E[N]](Nil, edges)(edgeT, defaultConfig)
 }
 
 @SerialVersionUID(72L)
-class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = Set[N](), iniEdges: Traversable[E] = Set[E]())(
+class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), iniEdges: Iterable[E] = Set[E]())(
     implicit override val edgeT: ClassTag[E],
     override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
     extends Graph[N, E]
@@ -50,9 +50,9 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Traversable[N] = Set[N](),
 
   initialize(iniNodes, iniEdges)
 
-  override protected[this] def newBuilder                               = new Builder[N, E, DefaultGraphImpl](DefaultGraphImpl)
-  final override def empty: DefaultGraphImpl[N, E]                      = DefaultGraphImpl.empty[N, E]
-  final override def copy(nodes: Traversable[N], edges: Traversable[E]) = DefaultGraphImpl.from[N, E](nodes, edges)
+  override protected[this] def newBuilder                         = new Builder[N, E, DefaultGraphImpl](DefaultGraphImpl)
+  final override def empty: DefaultGraphImpl[N, E]                = DefaultGraphImpl.empty[N, E]
+  final override def copy(nodes: Iterable[N], edges: Iterable[E]) = DefaultGraphImpl.from[N, E](nodes, edges)
 
   @SerialVersionUID(7170L)
   final protected class NodeBase(override val outer: N, hints: ArraySet.Hints) extends InnerNodeImpl(outer, hints)
@@ -78,10 +78,10 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl] {
   override def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config = defaultConfig) =
     new DefaultGraphImpl[N, E]()(edgeT, config)
 
-  override def from[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(implicit edgeT: ClassTag[E],
-                                                                                       config: Config = defaultConfig) =
+  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit edgeT: ClassTag[E],
+                                                                                 config: Config = defaultConfig) =
     new DefaultGraphImpl[N, E](nodes, edges)(edgeT, config)
 
-  override def from[N, E[X] <: EdgeLike[X]](edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]]) =
+  override def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]])(implicit edgeT: ClassTag[E[N]]) =
     new DefaultGraphImpl[N, E[N]](Nil, edges)(edgeT, defaultConfig)
 }

@@ -39,7 +39,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     * @param nodes $INNODES
     * @param edges $INEDGES
     */
-  protected def initialize(nodes: Iterable[N], edges: Iterable[E]) {
+  protected def initialize(nodes: Iterable[N], edges: Iterable[E]): Unit = {
     this.nodes.initialize(nodes, edges)
     this.edges.initialize(edges)
   }

@@ -6,11 +6,6 @@ object Compat {
     protected def autarkicForeach[U](f: A => U): Unit
   }
 
-  implicit final class TraversableEnrichments[A](val self: Traversable[A]) extends AnyVal {
-    def toMSet: MSet[A] = self.to[MSet]
-    def toSet: Set[A]   = self.to[Set]
-  }
-
   implicit final class IterableEnrichments[A](val self: Iterable[A]) extends AnyVal {
     def toMSet: MSet[A] = self.to[MSet]
   }

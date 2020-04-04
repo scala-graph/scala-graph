@@ -47,8 +47,8 @@ class Connected[N, E <: EdgeLike[N], G <: Graph[N, E]](override val self: G) ext
 
   /** Check the whole `newGraph`. */
   override def postAdd(newGraph: Graph[N, E],
-                       passedNodes: Traversable[N],
-                       passedEdges: Traversable[E],
+                       passedNodes: Iterable[N],
+                       passedEdges: Iterable[E],
                        preCheck: PreCheckResult) = newGraph.isConnected
   override def postAdd(newGraph: G @uV,
                        passedNodes: Iterable[N],

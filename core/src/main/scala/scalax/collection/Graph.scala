@@ -393,11 +393,10 @@ object Graph extends GraphCoreCompanion[Graph] {
   def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.empty[N, E](edgeT, config)
 
-  def from[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(
-      implicit edgeT: ClassTag[E],
-      config: Config = defaultConfig): Graph[N, E] =
+  def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit edgeT: ClassTag[E],
+                                                                        config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(edgeT, config)
 
-  def from[N, E[X] <: EdgeLike[X]](edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]]) =
+  def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]])(implicit edgeT: ClassTag[E[N]]) =
     immutable.Graph.from[N, E[N]](Nil, edges)(edgeT, defaultConfig)
 }

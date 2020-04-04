@@ -63,10 +63,10 @@ trait GraphCompanion[+CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
     * @return  A new graph instance containing `nodes` and all edge ends
     *          and `edges`.
     */
-  def from[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(implicit edgeT: ClassTag[E],
-                                                                              config: Config): CC[N, E]
+  def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit edgeT: ClassTag[E],
+                                                                        config: Config): CC[N, E]
 
-  def from[N, E[X] <: EdgeLike[X]](edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]]): CC[N, E[N]]
+  def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]])(implicit edgeT: ClassTag[E[N]]): CC[N, E[N]]
 
   /** Produces a graph containing the results of some element computation a number of times.
     * $DUPLEXCL
@@ -103,10 +103,10 @@ trait GraphCoreCompanion[+CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[
                                                                          config: Config = defaultConfig): CC[N, E[N]] =
     super.apply(elems: _*)(edgeT, config)
 
-  def from[N, E <: EdgeLike[N]](nodes: Traversable[N], edges: Traversable[E])(implicit edgeT: ClassTag[E],
-                                                                              config: Config = defaultConfig): CC[N, E]
+  def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit edgeT: ClassTag[E],
+                                                                        config: Config = defaultConfig): CC[N, E]
 
-  def from[N, E[X] <: EdgeLike[X]](edges: Traversable[E[N]])(implicit edgeT: ClassTag[E[N]]): CC[N, E[N]]
+  def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]])(implicit edgeT: ClassTag[E[N]]): CC[N, E[N]]
 
   override def fill[N, E <: EdgeLike[N]](nr: Int)(elem: => OuterElem[N, E])(implicit edgeT: ClassTag[E],
                                                                             config: Config = defaultConfig): CC[N, E] =

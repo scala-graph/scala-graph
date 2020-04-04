@@ -83,7 +83,7 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
     def add: this.type = withoutChecks { super.++=(elems) }
     if (checkSuspended) Right(add)
     else {
-      def process(elems: Traversable[Param[N, E]]): Option[ConstraintViolation] = {
+      def process(elems: Iterable[Param[N, E]]): Option[ConstraintViolation] = {
         val (filteredElems, newNodes, newEdges) = {
           val p     = new Param.Partitions[N, E]((elems filterNot contains).toSet)
           val edges = p.toOuterEdges
@@ -112,7 +112,7 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
         }
       }
       (elems match {
-        case elems: Traversable[Param[N, E]] => process(elems)
+        case elems: Iterable[Param[N, E]] => process(elems)
         case traversableOnce                 => process(traversableOnce.toSet)
       }).fold[Either[ConstraintViolation, this.type]](Right(this))(Left(_))
     }

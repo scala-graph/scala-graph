@@ -213,7 +213,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
     *          a. map of visited nodes to their in degrees
     *          a. size of `traversable`
     */
-  final protected def forInDegrees(nodes: Traversable[NodeT] with SubgraphProperties,
+  final protected def forInDegrees(nodes: Iterable[NodeT] with SubgraphProperties,
                                    maybeHandle: Option[Handle] = None,
                                    includeAnyway: Option[NodeT] = None,
                                    includeInDegree: NodeFilter = anyNode,

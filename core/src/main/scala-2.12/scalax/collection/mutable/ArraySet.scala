@@ -81,28 +81,32 @@ object ArraySet extends MutableSetFactory[ArraySet] {
     * representation is preferable over a hash table up to a node degree of about 200.
     */
   sealed trait Hints {
+
     /** The initial length of the internal `Array` representation. It
-     * should be chosen such that it's greater than the final `size` in a significant
-     * percentage of cases. The less heap space is a concern, the higher `initialCapacity`
-     * may be set. */
+      * should be chosen such that it's greater than the final `size` in a significant
+      * percentage of cases. The less heap space is a concern, the higher `initialCapacity`
+      * may be set. */
     def initialCapacity: Int
+
     /** The size of free space to add to the `initialCapacity` whenever
-     * the size of this `Set` becomes greater than the `initialCapacity`.
-     * It should be chosen such that incrementing need not take place too often. */
+      * the size of this `Set` becomes greater than the `initialCapacity`.
+      * It should be chosen such that incrementing need not take place too often. */
     def capacityIncrement: Int
+
     /** The internal representation of the adjacency list switches
-     * to a hash table when the number of edges at a given node exceeds this value.
-     * If both `initialCapacity` and `capacityIncrement` and this value are set to `0`
-     * a solely hash table representation will be used irrespective of the set `size`.
-     * This value should be close to the `size` limit an `Array` representation is more
-     * efficient on the JVM with regard to looking up a given element based on `==`
-     * as opposite to `hashCode`. Varying with JVM implementations/configurations this
-     * limit may come in somewhere between 10 and 30. */
+      * to a hash table when the number of edges at a given node exceeds this value.
+      * If both `initialCapacity` and `capacityIncrement` and this value are set to `0`
+      * a solely hash table representation will be used irrespective of the set `size`.
+      * This value should be close to the `size` limit an `Array` representation is more
+      * efficient on the JVM with regard to looking up a given element based on `==`
+      * as opposite to `hashCode`. Varying with JVM implementations/configurations this
+      * limit may come in somewhere between 10 and 30. */
     def hashTableThreshold: Int
+
     /** Compact the underlying `Array` only if it has at most used
-     * space of this percentage. Compression takes place only user-triggered by a call to
-     * `compact`. The higher this value the more often `compact` leads to a compression.
-     * `0` means never, `100` means always compact. */
+      * space of this percentage. Compression takes place only user-triggered by a call to
+      * `compact`. The higher this value the more often `compact` leads to a compression.
+      * `0` means never, `100` means always compact. */
     def compactUpToUsed: Int
 
     /** Returns a positive number > currentCapacity for an array or 0 for a hash table.
