@@ -8,7 +8,7 @@ import scala.reflect.ClassTag
 import scala.math.max
 
 import scalax.collection.{Graph => CommonGraph, GraphLike => CommonGraphLike}
-import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.GraphEdge.{AnyEdge, EdgeLike}
 import scalax.collection.generic.{GraphCompanion, MutableGraphCompanion}
 import scalax.collection.config._
 
@@ -70,7 +70,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     /* TODO
     with EdgeOps[N, E, This]
      */ {
-  this: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
+  selfGraph: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
   This[N, E] with GraphLike[N, E, This] with Graph[N, E] =>
 
   override def clone: This[N, E] = companion.from[N, E](nodes.toOuter, edges.toOuter)
@@ -78,11 +78,28 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   type NodeT <: InnerNode
   trait InnerNode extends super.InnerNode { // TODO with InnerNodeOps {
     this: NodeT =>
+
+    /** Adds new non-hyper edges connecting `this` inner node with `those` inner nodes.
+      */
+    final def connectWith[AE <: E with AnyEdge[N]](n_1: NodeT, ns: NodeT*)(
+        implicit edgeFactory: (N, N) => AE): this.type = {
+      def add(n: NodeT) = selfGraph.edges addOne newEdge(edgeFactory(this.outer, n.outer), this, n)
+      add(n_1)
+      ns foreach add
+      this
+    }
+
+    /** Adds new non-hyper edges connecting `this` inner node with `those` outer nodes.
+      */
+    final def connectWith[AE <: E with AnyEdge[N]](n_1: N, ns: N*)(implicit factory: (N, N) => AE): this.type = {
+      def inner(n: N) = selfGraph addAndGet n
+      connectWith(inner(n_1), ns map inner: _*)
+    }
   }
 
   type NodeSetT <: NodeSet
   trait NodeSet extends MutableSet[NodeT] with super.NodeSet {
-    override def remove(node: NodeT): Boolean = subtract(node, true, minus, minusEdges)
+    override def remove(node: NodeT): Boolean = subtract(node, rippleDelete = true, minus, minusEdges)
 
     /** removes all incident edges of `node` from the edge set leaving the node set unchanged.
       *
@@ -106,6 +123,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     override def clear(): Unit                          = this foreach -=
     override def diff(that: AnySet[EdgeT]): MSet[EdgeT] = this -- that
   }
+  def edges: EdgeSetT
 
   /** Adds the given node if not yet present and returns it as an inner node.
     *

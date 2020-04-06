@@ -1,10 +1,10 @@
 package scalax.collection
 package io.dot
 
+import scala.annotation.tailrec
 import scala.collection.mutable.{Set => MSet, StringBuilder}
 
-import GraphPredef.EdgeLike
-import GraphEdge.DiEdge
+import GraphEdge.{DiEdge, EdgeLike}
 
 /** Contains methods to transform `graph` to the DOT language.
   *
@@ -51,14 +51,14 @@ class Export[N, E <: EdgeLike[N]](graph: Graph[N, E]) {
             iNodeTransformer: Option[NodeTransformer[N, E]] = None): (DotAST, DotCluster) = {
     val root           = DotCluster(dotRoot)
     val dotAST: DotAST = DotAST(root)
-    def connectClusters(node: dotAST.NodeT): Unit = {
+    @tailrec def connectClusters(node: dotAST.NodeT): Unit = {
       def conn(ancestor: DotGraph): dotAST.NodeT = {
         val ancestorNode      = dotAST addAndGet DotCluster(ancestor)
-        implicit def edgeType = DiEdge
+        implicit def factory: (DotCluster, DotCluster) => DiEdge[DotCluster] = DiEdge(_, _)
         ancestorNode connectWith node
         ancestorNode
       }
-      node.value.dotGraph match {
+      node.outer.dotGraph match {
         case DotSubGraph(ancestor: DotRootGraph, _, _, _) => conn(ancestor)
         case DotSubGraph(ancestor: DotSubGraph, _, _, _) =>
           conn(ancestor)
@@ -78,7 +78,7 @@ class Export[N, E <: EdgeLike[N]](graph: Graph[N, E]) {
 
         if (clusterNode.dotStmts add edgeStmt)
           cNodeTransformer map { visitor =>
-            edge foreach { node =>
+            edge.ends foreach { node =>
               if (visitedCNodes add node)
                 visitor(node) foreach {
                   case (dotGraph, nodeStmt) =>
@@ -90,7 +90,7 @@ class Export[N, E <: EdgeLike[N]](graph: Graph[N, E]) {
             }
           }
       }
-      if (edge.edge.isHyperEdge && hEdgeTransformer.isDefined)
+      if (edge.isHyperEdge && hEdgeTransformer.isDefined)
         hEdgeTransformer.get(edge) foreach {
           case (dotGraph, edgeStmt) => dotEdge(edge, dotGraph, edgeStmt)
         } else
@@ -102,7 +102,7 @@ class Export[N, E <: EdgeLike[N]](graph: Graph[N, E]) {
     visitedCNodes.clear
     /* Second we process all isolated nodes.
      */
-    iNodeTransformer map { visitor =>
+    iNodeTransformer foreach { visitor =>
       graph.nodes foreach { node =>
         if (node.isIsolated)
           visitor(node) map {

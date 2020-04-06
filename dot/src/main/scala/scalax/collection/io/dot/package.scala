@@ -4,8 +4,7 @@ package io
 import language.implicitConversions
 import mutable.{Graph => MGraph}
 
-import GraphPredef.EdgeLike
-import GraphEdge.DiEdge
+import GraphEdge.{DiEdge, EdgeLike}
 
 /** Enables to export `Graph` instances to the DOT language by means of user-defined
   * edge and node transformers. Transformers may enrich the DOT structure with arbitrary
@@ -20,7 +19,7 @@ import GraphEdge.DiEdge
   * @author Peter Empen
   */
 package object dot {
-  protected[dot] type DotAST = MGraph[DotCluster, DiEdge]
+  protected[dot] type DotAST = MGraph[DotCluster, DiEdge[DotCluster]]
   protected[dot] def DotAST = MGraph
 
   /** Enables to call `<g>.toDot` with `<g>` being a `Graph` instance. */
