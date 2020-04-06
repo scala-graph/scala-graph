@@ -63,7 +63,7 @@ class TMap[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     private object edges {
       type Connector[+N] = AnyDiEdge[N] with Edge[N, _]
 
-      abstract protected class Edge[+N, +This <: AnyEdge[N]](override val source: N, override val target: N)
+      sealed abstract protected class Edge[+N, +This <: AnyEdge[N]](override val source: N, override val target: N)
           extends AbstractDiEdge[N](source, target)
           with PartialEdgeMapper[N, This]
 
@@ -87,8 +87,7 @@ class TMap[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
 
     import edges._
 
-    private val a_1 = A(1)
-
+    private val a_1   = A(1)
     private val b_0_0 = B(0, 0)
 
     def `downcast nodes` {

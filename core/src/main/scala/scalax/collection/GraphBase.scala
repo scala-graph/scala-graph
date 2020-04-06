@@ -472,36 +472,36 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
   @transient object InnerEdge {
     def unapply(edge: InnerEdge): Option[E] = Some(edge.outer)
 
-    def apply(outer: E): EdgeT = {
+    protected[collection] def apply(outer: E): EdgeT = {
       @inline def lookup(n: N) = nodes lookup n
 
-      if (outer.isHyperEdge) {
-        val freshNodes = MMap.empty[N, NodeT]
-        def inner(ends: Iterable[N]): Iterable[NodeT] = {
-          def mkNode(n: N): NodeT =
-            Option(lookup(n)) getOrElse (
-              freshNodes getOrElse (n, {
-                val newN = newNode(n)
-                freshNodes += (n -> newN)
-                newN
-              })
-            )
-          ends map mkNode
-        }
-        outer match {
-          case diHyper: AnyDiHyperEdge[N] => newDiHyperEdge(outer, inner(diHyper.sources), inner(diHyper.targets))
-          case hyper: AnyHyperEdge[N]     => newHyperEdge(outer, inner(hyper.ends))
-        }
-      } else {
-        val (n_1, n_2) = (outer._n(0), outer._n(1))
-        @inline def inner(n: N): NodeT = {
-          val found = lookup(n)
-          if (null eq found) newNode(n) else found
-        }
-        val inner_1 = inner(n_1)
-        val inner_2 = if (n_1 == n_2) inner_1 else inner(n_2)
+      val freshNodes = MMap.empty[N, NodeT]
 
-        newEdge(outer, inner_1, inner_2)
+      def inner(ends: Iterable[N]): Iterable[NodeT] = {
+        def mkNode(n: N): NodeT =
+          Option(lookup(n)) getOrElse (
+            freshNodes getOrElse (n, {
+              val newN = newNode(n)
+              freshNodes += (n -> newN)
+              newN
+            })
+          )
+        ends map mkNode
+      }
+
+      outer match {
+        case edge: AnyEdge[N] =>
+          val (n_1, n_2) = (edge._n(0), edge._n(1))
+          @inline def inner(n: N): NodeT = {
+            val found = lookup(n)
+            if (null eq found) newNode(n) else found
+          }
+          val inner_1 = inner(n_1)
+          val inner_2 = if (n_1 == n_2) inner_1 else inner(n_2)
+
+          newEdge(outer, inner_1, inner_2)
+        case diHyper: AnyDiHyperEdge[N] => newDiHyperEdge(outer, inner(diHyper.sources), inner(diHyper.targets))
+        case hyper: AnyHyperEdge[N]     => newHyperEdge(outer, inner(hyper.ends))
       }
     }
 

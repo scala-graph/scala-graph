@@ -200,7 +200,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
 
   type EdgeT = InnerEdge
 
-  @transient object Inner {
+  @transient protected[collection] object Inner {
     import scala.{SerialVersionUID => S}
 
     // format: off
@@ -243,7 +243,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   final def contains(node: N): Boolean = nodes contains newNode(node)
   final def contains(edge: E): Boolean = edges contains newHyperEdge(edge, Nil)
 
-  def iterator: Iterator[InnerElem] = nodes.toIterator ++ edges.toIterator
+  def iterator: Iterator[InnerElem] = nodes.iterator ++ edges.iterator
 
   def toIterable: Iterable[InnerElem] = new AbstractIterable[InnerElem] {
     def iterator: Iterator[InnerElem] = thisGraph.iterator

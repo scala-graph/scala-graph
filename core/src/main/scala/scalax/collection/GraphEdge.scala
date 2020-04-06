@@ -610,6 +610,12 @@ object GraphEdge {
     def _1: N
     def _2: N
 
+    final override def _n(n: Int): N = (n: @switch) match {
+      case 0 => _1
+      case 1 => _2
+      case _ => throw new NoSuchElementException
+    }
+
     // the following five methods should be made final as soon as DiEdge no more extends UnDiEdge
     @inline override def arity: Int             = 2
     @inline override protected def isValidArity = true
@@ -655,12 +661,6 @@ object GraphEdge {
 
     final override def withSources[U](f: N => U): Unit = { f(node_1); f(node_2) }
     final override def withTargets[U](f: N => U): Unit = withSources(f)
-
-    override def _n(n: Int): N = (n: @switch) match {
-      case 0 => node_1
-      case 1 => node_2
-      case _ => throw new NoSuchElementException
-    }
 
     override def isDirected = false
 
