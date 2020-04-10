@@ -17,7 +17,7 @@ import scalax.collection.GraphEdge._
   * @param departure The departure airport
   * @param destination The destination airport
   * @param flightNo The flight Id as a key attribute consisting of the airline short and a flight number of that airline.
-  * @param departure daytime of departure
+  * @param departureAt daytime of departure
   * @param duration of flight
   */
 case class Flight(departure: Airport,
