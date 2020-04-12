@@ -52,8 +52,8 @@ final class EditingTest extends RefSpec with Matchers {
       g + 0 shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
 //    g + 1.2                          // error: overloaded method...
       g + 0 ~ 1 shouldBe Graph(0, 1, 2, 3, 0 ~ 1, 2 ~ 3)
-      g.++(edges = List(1 ~ 2, 2 ~ 3)) shouldBe Graph(1, 2, 3, 1 ~ 2, 2 ~ 3)
-      g ++ (edges = List(1 ~ 2, 2 ~ 3), nodes = List(0)) shouldBe Graph(0, 1, 2, 3, 1 ~ 2, 2 ~ 3)
+      g ++ (edges = List(1 ~ 2, 2 ~ 3)) shouldBe Graph(1, 2, 3, 1 ~ 2, 2 ~ 3)
+      g ++ (edges = List(1 ~ 2, 2 ~ 3), isolatedNodes = List(0)) shouldBe Graph(0, 1, 2, 3, 1 ~ 2, 2 ~ 3)
       g - 0 shouldBe g
       g - 1 shouldBe Graph(2, 3, 2 ~ 3)
       g - 2 shouldBe Graph(1, 3)
@@ -65,7 +65,7 @@ final class EditingTest extends RefSpec with Matchers {
       (h += 3 ~> 1) shouldBe Graph[Int, AnyEdge](1, 2, 3, 2 ~ 3, 3 ~> 1)
     }
 
-    def `union ` : Unit = {
+    def `union, diff, intersect ` : Unit = {
       val g = immutable.Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
       val h = immutable.Graph(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
 

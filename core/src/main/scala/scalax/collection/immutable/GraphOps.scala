@@ -12,12 +12,6 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y
   /** Creates a new supergraph with an additional edge unless this graph contains `edge`. */
   def +(edge: E): This[N, E]
 
-  /** Creates a new graph with the elements of this graph plus the passed elements. */
-  def ++(nodes: Iterable[N] = Nil, edges: Iterable[E] = Nil): This[N, E]
-
-  /** Creates a new graph with the elements of this graph plus the elements of the passed graph. */
-  def ++(that: AnyGraph[N, E]): This[N, E]
-
   /** Creates a new graph with the elements of this graph minus `node` and its incident edges. */
   def -(node: N): This[N, E]
 

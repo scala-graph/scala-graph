@@ -26,7 +26,7 @@ trait Growable[-N, -E <: EdgeLike[N @uV]] {
   def +=(edge: E): this.type
 
   /** Adds a single outer element to this graph. */
-  def addOuter(elem: OuterElem[N, E]): this.type = {
+  final protected[collection] def addOuter(elem: OuterElem[N, E]): this.type = {
     elem match {
       case n: OuterNode[N]    => +=(n.node)
       case e: OuterEdge[N, E] => +=(e.edge)

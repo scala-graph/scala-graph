@@ -1,5 +1,6 @@
 package scalax.collection
 
+import scalax.collection.Compat.IterableOnce
 import scalax.collection.GraphEdge._
 
 /*
@@ -52,13 +53,13 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
   sealed trait InnerElem
   trait InnerNode extends InnerElem {
 
-    /** The outer node as supplied at instantiation or addition to this graph. */
+    /** The outer node as supplied by instantiation or addition. */
     def outer: N
   }
 
   trait InnerEdge extends InnerElem {
 
-    /** The outer edge as supplied at instantiation or addition to this graph. */
+    /** The outer edge as supplied by instantiation or addition. */
     def outer: E
   }
 
@@ -76,6 +77,26 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
 
   /** Iterable over all nodes and edges. */
   def toOuterIterable: Iterable[OuterElem]
+
+  /** Creates a new graph by adding all `edges` and `nodes` ommitting duplicates.
+    * The new graph is upcasted if any of the arguments is an upcast of `N` or `E`.
+    * Use `union` to concatenate all nodes and edges of another graph.
+    *
+    * @param edges to be concatenated.
+    * @param isolatedNodes to be concatenated. Nodes that are implicitly defined by any edge in `edges` will be ignored.
+    */
+  def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](edges: IterableOnce[E2], isolatedNodes: IterableOnce[N2] = Nil)(
+      implicit e: E2 <:< EdgeLike[N2]): This[N2, E2]
+
+  /** Alias for `concat`. */
+  @inline final def ++[N2 >: N, E2 >: E <: EdgeLike[N2]](
+      edges: IterableOnce[E2],
+      isolatedNodes: IterableOnce[N2] = Nil)(implicit e: E2 <:< EdgeLike[N2]): This[N2, E2] =
+    concat(edges, isolatedNodes)(e)
+
+  /** Computes the union between this graph and `that` graph. */
+  @inline final def union[N2 >: N, E2 >: E <: EdgeLike[N2]](that: Graph[N2, E2]): This[N2, E2] =
+    concat(that.edges.toOuter, that.nodes.toOuter)
 
   /** Whether the given outer node is contained in this graph. */
   def contains(node: N): Boolean
@@ -137,9 +158,6 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
 
   /** Alias for `intersect`. */
   @inline final def &(that: Graph[N, E]): This[N, E] = this intersect that
-
-  /** Computes the union between this graph and `that` graph. */
-  def union(that: Graph[N, E]): This[N, E] = ???
 
   /** Alias for `union`. */
   @inline final def |(that: Graph[N, E]): This[N, E] = this union that

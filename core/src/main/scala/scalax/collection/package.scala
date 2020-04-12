@@ -14,7 +14,7 @@ package object collection {
   /** The default filter function for degrees to be included in
     * degree calculation always returning true.
     */
-  val AnyDegree = (degree: Int) => true
+  val AnyDegree = (_: Int) => true
 
   /** [[scala.collection.Set]] extended by some useful methods in the context of Graph.
     */
@@ -27,8 +27,6 @@ package object collection {
 
   protected[scalax] type MMap[K, V] = scala.collection.mutable.Map[K, V]
   @inline final protected[scalax] def MMap = scala.collection.mutable.Map
-
-  protected[scalax] type IterableOnce[A] = scala.collection.TraversableOnce[A]
 
   @inline final protected[scalax] def mkIterable[A](it: => Iterator[A]): Iterable[A] = new AbstractIterable[A] {
     override def iterator = it

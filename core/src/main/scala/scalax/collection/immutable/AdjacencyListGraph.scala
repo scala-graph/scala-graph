@@ -1,8 +1,6 @@
 package scalax.collection
 package immutable
 
-import scala.annotation.unchecked.{uncheckedVariance => uV}
-
 import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.mutable.ArraySet
@@ -79,10 +77,6 @@ trait AdjacencyListGraph[
     if (this contains edge) this
     else copy(nodes.toOuter, edges.toOuter.toBuffer += edge)
 
-  final def ++(nodes: Iterable[N], edges: Iterable[E]): This[N, E] = bulkOp(nodes, edges, plusPlus)
-
-  final def ++(that: AnyGraph[N, E]): This[N, E] = this ++ (that.nodes.toOuter, that.edges.toOuter)
-
   def -(node: N): This[N, E] = nodes find (nf => nf.value == node) match {
     case Some(nf) => copy(nodes.toOuter.toBuffer -= node, edges.toOuter.toBuffer --= (nf.edges map (_.toOuter)))
     case None     => this
@@ -95,16 +89,6 @@ trait AdjacencyListGraph[
   final def --(nodes: Iterable[N], edges: Iterable[E]): This[N, E] = bulkOp(nodes, edges, minusMinus)
 
   final def --(that: AnyGraph[N, E]): This[N, E] = this -- (that.nodes.toOuter, that.edges.toOuter)
-
-  final protected def bulkOp(nodes: Iterable[N],
-                             edges: Iterable[E],
-                             op: (Iterator[N @uV], Iterator[E]) => This[N, E] @uV): This[N, E] =
-    op(nodes.iterator, edges.iterator)
-
-  /** Implements the heart of `++` calling the `from` factory method of the companion object.
-    *  $REIMPLFACTORY */
-  final protected def plusPlus(newNodes: Iterator[N], newEdges: Iterator[E]): This[N, E] =
-    companion.from[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
 
   /** Implements the heart of `--` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */

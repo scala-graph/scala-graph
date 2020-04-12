@@ -14,10 +14,10 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y
   /** Adds all elements in `other` to this `Growable`. */
   def ++=(other: AnyGraph[N, E]): this.type = ???
 
-  /** Shrinks this graph to its intersection with the `outer` elements. */
-  def &=(nodes: Iterable[N] = Nil, edges: Iterable[E] = Nil): this.type = {
-    nodes foreach -=
-    edges foreach -=
+  /** Shrinks this graph to its intersection with `that` graph. */
+  final def &=(that: AnyGraph[N, E]): this.type = {
+    that.nodes foreach (this -= _.outer)
+    that.edges foreach (this -= _.outer)
     this
   }
 }

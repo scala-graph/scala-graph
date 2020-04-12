@@ -63,16 +63,6 @@ class TEditImmutable extends RefSpec with Matchers {
 
     val gString_A = Graph("A")
 
-    def `++ ` {
-      val g = gString_A + "B" + "C"
-      g.elementCount should be(3)
-      ('A' to 'C') map (_.toString) foreach (g.contains(_) should be(true))
-
-      val (gBefore, gAfter) = (Graph(1, 2 ~ 3), Graph(0, 1 ~ 2, 2 ~ 3))
-      gBefore ++ (nodes = List(0), edges = List(1 ~ 2, 2 ~ 3)) should equal(gAfter)
-      gBefore ++ Graph(0, 1 ~ 2) should equal(gAfter)
-      gBefore ++ Graph[Int, UnDiEdge](0) ++ Graph(1 ~ 2) should equal(gAfter)
-    }
     def `- ` {
       var g = gString_A - "B"
       g.order should be(1)
@@ -388,6 +378,18 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
         dhe.sources.last should be(sources.last)
         dhe.targets.head should be(target)
       }
+    }
+
+    def `concat, ++, union` {
+      val g = gString_A.concat[String, AnyEdge[String]](Nil, isolatedNodes = List("B", "C"))
+      g.elementCount shouldEqual 3
+      ('A' to 'C') map (_.toString) foreach (g.contains(_) shouldEqual true)
+
+      val (gBefore, gAfter) = (Graph(1, 2 ~ 3), Graph(0, 1 ~ 2, 2 ~ 3))
+      gBefore ++ (edges = List(1 ~ 2, 2 ~ 3), isolatedNodes = List(0)) shouldEqual gAfter
+
+      gBefore union Graph(0, 1 ~ 2) shouldEqual gAfter
+      gBefore union Graph[Int, UnDiEdge](0) union Graph(1 ~ 2) shouldEqual gAfter
     }
 
     private val gUnDi  = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)

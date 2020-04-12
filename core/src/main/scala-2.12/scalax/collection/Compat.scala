@@ -1,6 +1,8 @@
 package scalax.collection
 
 object Compat {
+  type IterableOnce[A] = Iterable[A]
+
   trait CompatTraversable[+A] extends scala.collection.Traversable[A] {
     final override def foreach[U](f: A => U): Unit = autarkicForeach(f)
     protected def autarkicForeach[U](f: A => U): Unit

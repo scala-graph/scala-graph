@@ -41,6 +41,18 @@ class TOp[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val f
     with Examples[CC]
     with Visualizer[CC] {
 
+  def `concat ` : Unit = {
+    // TODO
+    factory(1 ~ 2) concat List(1 ~ 2): Graph[Int, UnDiEdge[Int]]
+    factory(1 ~ 2) concat List(1 ~> 2): Graph[Int, AnyEdge[Int]]
+    factory(1 ~ 2) ++ List(1 ~ 2): Graph[Int, UnDiEdge[Int]]
+
+    factory(1 ~ 2) concat List("a" ~ "b"): Graph[Any, UnDiEdge[Any]]
+    factory(1 ~ 2) concat (List("a" ~ "b"), List('x')): Graph[Any, UnDiEdge[Any]]
+    factory(1 ~ 2) concat (List('a' ~ 'b'), List('x')): Graph[AnyVal, UnDiEdge[AnyVal]]
+    factory(1 ~ 2) ++ (List('a' ~ 'b'), List('x')): Graph[AnyVal, UnDiEdge[AnyVal]]
+  }
+
   def `union ` {
     g union h shouldEqual Expected.g_union_h
   }
@@ -59,12 +71,6 @@ class TOp[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val f
 class TImmutableOp extends RefSpec with Matchers with Examples[immutable.Graph] {
   protected val factory = immutable.Graph
 
-  def `++ ` {
-    g ++ h shouldEqual Expected.g_union_h
-  }
-  def `-- ` {
-    g -- h shouldEqual Expected.g_diff_h
-  }
 }
 
 class TMutableOp extends RefSpec with Matchers with Examples[mutable.Graph] {
@@ -72,24 +78,20 @@ class TMutableOp extends RefSpec with Matchers with Examples[mutable.Graph] {
 
   private val iH = immutable.Graph.from(hEdges)
 
-  def ` union` {
+  def `++= ` {
     (g ++= h) shouldEqual Expected.g_union_h
     (g ++= iH) shouldEqual Expected.g_union_h
   }
 
-  def `difference ` {
+  def `--= ` {
     (g --= h) shouldEqual Expected.g_diff_h
     (g --= iH) shouldEqual Expected.g_diff_h
   }
 
-  /*
-  def `intersection ` {
-    val (_, mG)  = initG
-    val (iH, mH) = initH
-    val expected = mFactory(3 ~ 5, 4)
+  def `&= ` {
+    val expected = factory(3 ~ 5, 4)
 
-    (mG &= mH) shouldEqual expected
-    (mG &= iH) shouldEqual expected
+    (g &= h) shouldEqual expected
+    (g &= iH) shouldEqual expected
   }
- */
 }

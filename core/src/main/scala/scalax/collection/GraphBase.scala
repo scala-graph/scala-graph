@@ -436,6 +436,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     this: EdgeT with Mapper =>
 
     /** Synonym for `outer`. */
+    @deprecated("Use 'outer' instead", "2.0.0")
     @inline final def toOuter: E = outer
 
     @inline final override def weight: Double = outer.weight

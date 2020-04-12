@@ -3,10 +3,12 @@ package immutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
+import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, Buffer, ExtHashSet}
 import scala.util.Random
 
+import scalax.collection.Compat.IterableOnce
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.{Graph => SimpleGraph}
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
@@ -261,6 +263,21 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
   }
 
   def edgeIterator: Iterator[EdgeT] = nodes.iterator.flatMap(node => node.edges.iterator.filter(_.ends.head == node))
+
+  final def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](edges: IterableOnce[E2], isolatedNodes: IterableOnce[N2] = Nil)(
+      implicit e: E2 <:< EdgeLike[N2]): This[N2, E2] = bulkOp[N2, E2](isolatedNodes, edges, plusPlus)
+
+  final protected def bulkOp[N2 >: N, E2 >: E <: EdgeLike[N2]](
+      nodes: IterableOnce[N2],
+      edges: IterableOnce[E2],
+      op: (Iterator[N2], Iterator[E2]) => This[N2, E2] @uV): This[N2, E2] =
+    op(nodes.iterator, edges.iterator)
+
+  /** Implements the heart of `++` calling the `from` factory method of the companion object.
+    *  $REIMPLFACTORY */
+  final protected def plusPlus[N2 >: N, E2 >: E <: EdgeLike[N2]](newNodes: Iterator[N2],
+                                                                 newEdges: Iterator[E2]): This[N2, E2] =
+    companion.from[N2, E2](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
 
   final protected def serializeTo(out: ObjectOutputStream): Unit = {
     out.defaultWriteObject()
