@@ -1,7 +1,5 @@
 package scalax.collection
 
-import scala.reflect.ClassTag
-
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 
@@ -15,19 +13,16 @@ trait ConfigWrapper[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, 
   val companion: GraphCompanion[CC]
   implicit val config: companion.Config
 
-  def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: companion.Config): CC[N, E] =
-    companion.empty[N, E]
+  def empty[N, E <: EdgeLike[N]](implicit config: companion.Config): CC[N, E] = companion.empty[N, E]
 
-  def apply[N, E[X] <: EdgeLike[X]](elems: OuterElem[N, E[N]]*)(implicit edgeT: ClassTag[E[N]],
-                                                                config: companion.Config) =
+  def apply[N, E[X] <: EdgeLike[X]](elems: OuterElem[N, E[N]]*)(implicit config: companion.Config) =
     companion(elems: _*)
 
-  def from[N, E <: EdgeLike[N]](nodes: collection.Iterable[N],
-                                edges: collection.Iterable[E])(implicit edgeT: ClassTag[E], config: companion.Config) =
+  def from[N, E <: EdgeLike[N]](nodes: collection.Iterable[N], edges: collection.Iterable[E])(
+      implicit config: companion.Config) =
     companion.from[N, E](nodes, edges)
 
-  def from[N, E[X] <: EdgeLike[X]](edges: collection.Iterable[E[N]])(implicit edgeT: ClassTag[E[N]]) =
-    companion.from[N, E](edges)
+  def from[N, E[X] <: EdgeLike[X]](edges: collection.Iterable[E[N]]) = companion.from[N, E](edges)
 }
 
 class TEditRootTest
@@ -161,10 +156,10 @@ class TEditMutable extends RefSpec with Matchers {
       def directed(expected: Boolean): Unit = g.isDirected should be(expected)
 
       directed(false)
-      g.clear(); directed(true)
+      g.clear(); directed(false)
       g += di; directed(true)
       g += unDi; directed(false)
-      g.clear(); directed(true)
+      g.clear(); directed(false)
     }
 
     def `serve 'diSuccessors' when directed` {

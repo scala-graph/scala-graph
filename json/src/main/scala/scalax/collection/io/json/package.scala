@@ -88,13 +88,13 @@ package object json {
       */
 <<<<<<< HEAD
     def fromJson[N, E <: EdgeLike[N]](jsonAST: JValue, descriptor: Descriptor[N])(
-        implicit edgeT: ClassTag[E],
+
 ||||||| merged common ancestors
     def fromJson[N, E[X] <: EdgeLikeIn[X]](jsonAST: JValue, descriptor: Descriptor[N])(
-        implicit edgeT: ClassTag[E[N]],
+
 =======
     def fromJson[N, E[+X] <: EdgeLikeIn[X]](jsonAST: JValue, descriptor: Descriptor[N])(
-        implicit edgeT: ClassTag[E[N]],
+
 >>>>>>> 1.x
         config: companion.Config): G[N, E] =
       fromJson[N, E](parse(jsonAST, descriptor), descriptor)
@@ -108,13 +108,13 @@ package object json {
       */
 <<<<<<< HEAD
     def fromJson[N, E <: EdgeLike[N]](jsonText: String, descriptor: Descriptor[N])(
-        implicit edgeT: ClassTag[E],
+
 ||||||| merged common ancestors
     def fromJson[N, E[X] <: EdgeLikeIn[X]](jsonText: String, descriptor: Descriptor[N])(
-        implicit edgeT: ClassTag[E[N]],
+
 =======
     def fromJson[N, E[+X] <: EdgeLikeIn[X]](jsonText: String, descriptor: Descriptor[N])(
-        implicit edgeT: ClassTag[E[N]],
+
 >>>>>>> 1.x
         config: companion.Config = companion.defaultConfig): G[N, E] =
       fromJson[N, E](parse(jsonText, descriptor), descriptor)
@@ -128,17 +128,17 @@ package object json {
       */
 <<<<<<< HEAD
     def fromJson[N, E <: EdgeLike[N]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N])(
-        implicit edgeT: ClassTag[E],
+
 ||||||| merged common ancestors
     def fromJson[N, E[X] <: EdgeLikeIn[X]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N])(
-        implicit edgeT: ClassTag[E[N]],
+
 =======
     def fromJson[N, E[+X] <: EdgeLikeIn[X]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N])(
-        implicit edgeT: ClassTag[E[N]],
+
 >>>>>>> 1.x
         config: companion.Config): G[N, E] = {
       val target = createOuterElems[N, E](jsonLists, descriptor)
-      companion.from[N, E](nodes = target._1, edges = target._2)(edgeT, config)
+      companion.from[N, E](nodes = target._1, edges = target._2)(config)
     }
   }
 

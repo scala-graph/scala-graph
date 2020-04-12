@@ -229,13 +229,13 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
 
     private[this] var nrEdges = 0
 
-    private[this] var nrDi              = if (selfGraph.isDirectedT) -1 else 0
-    final def hasOnlyDiEdges: Boolean   = nrDi == -1 || nrDi == nrEdges
-    final def hasOnlyUnDiEdges: Boolean = nrDi == 0
-    final def hasMixedEdges: Boolean    = nrDi > 0 && nrEdges > 1
+    private[this] var nrDi              = 0
+    final def hasOnlyDiEdges: Boolean   = nrEdges > 0 && nrDi == nrEdges
+    final def hasOnlyUnDiEdges: Boolean = nrEdges > 0 && nrDi == 0
+    final def hasMixedEdges: Boolean    = nrEdges > 0 && nrDi > 0 && nrEdges > 1
 
-    private[this] var nrHyper = if (selfGraph.isHyperT) 0 else -1
-    final def hasAnyHyperEdge = nrHyper > 0
+    private[this] var nrHyper = 0
+    final def hasAnyHyperEdge = nrEdges > 0 && nrHyper > 0
 
     final protected def statistics(edge: EdgeT, plus: Boolean): Boolean = {
       val add = if (plus) 1 else -1

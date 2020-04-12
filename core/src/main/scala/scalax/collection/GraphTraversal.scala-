@@ -734,7 +734,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
         G[NN, EE[+X] <: EdgeLikeIn[X]] <: Graph[NN, EE] with GraphLike[NN, EE, G]
     ](factory: GraphCoreCompanion[G]): G[N, E] = thisGraph match {
       case g: Graph[N, E] =>
-        factory.from(edges = edges.map(_.toOuter))(g.edgeT, factory.defaultConfig)
+        factory.from(edges = edges.map(_.toOuter))(g. factory.defaultConfig)
     }
 
     protected def mayHaveFrontierEdges: Boolean
@@ -1043,7 +1043,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       */
     final def toGraph: Graph[N, E] = thisGraph match {
       case g: Graph[N, E] =>
-        val b = Graph.newBuilder(g.edgeT, Graph.defaultConfig)
+        val b = Graph.newBuilder(g. Graph.defaultConfig)
         b += root
         val edgeTraverser = this match {
           case e: InnerEdgeTraverser => e

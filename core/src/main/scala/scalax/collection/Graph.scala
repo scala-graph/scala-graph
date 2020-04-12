@@ -2,7 +2,6 @@ package scalax.collection
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.AbstractIterable
-import scala.reflect.ClassTag
 
 import scalax.collection.GraphEdge._
 import scalax.collection.generic.{GraphCompanion, GraphCoreCompanion}
@@ -34,21 +33,14 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   This[N, E] with GraphLike[N, E, This] with Graph[N, E] =>
 
   protected type ThisGraph = thisGraph.type
-  implicit val edgeT: ClassTag[E]
 
   def empty: This[N, E]
   protected[this] def newBuilder: mutable.Builder[N, E, This]
 
-  def isDirected: Boolean         = isDirectedT || edges.hasOnlyDiEdges
-  final protected val isDirectedT = classOf[AnyDiHyperEdge[_]].isAssignableFrom(edgeT.runtimeClass)
-
-  def isHyper: Boolean         = isHyperT && edges.hasAnyHyperEdge
-  final protected val isHyperT = !classOf[UnDiEdge[_]].isAssignableFrom(edgeT.runtimeClass)
-
-  def isMixed: Boolean = !isDirectedT && edges.hasMixedEdges
-
-  def isMulti: Boolean         = isMultiT || edges.hasAnyMultiEdge
-  final protected val isMultiT = classOf[Keyed].isAssignableFrom(edgeT.runtimeClass)
+  def isDirected: Boolean = edges.size > 0 && edges.hasOnlyDiEdges
+  def isHyper: Boolean    = edges.size > 0 && edges.hasAnyHyperEdge
+  def isMixed: Boolean    = edges.size > 0 && edges.hasMixedEdges
+  def isMulti: Boolean    = edges.size > 0 && edges.hasAnyMultiEdge
 
   /** The companion object of `This`. */
   val companion: GraphCompanion[This]
@@ -308,7 +300,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
       mapTypedDiHyper: (PartialDiHyperEdgeMapper[N, _], Iterable[NN], Iterable[NN]) => EC[NN],
       mapTypedHyper: (PartialHyperEdgeMapper[N, _], Iterable[NN]) => EC[NN],
   ): This[NN, EC[NN]] =
-    mapNodesInBuilder(fNode)(edgeT.asInstanceOf[ClassTag[EC[NN]]]) pipe {
+    mapNodesInBuilder[NN, EC[NN]](fNode) pipe {
       case (nMap, builder) =>
         edges foreach {
           case InnerEdge(outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
@@ -324,10 +316,9 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
         builder.result
     }
 
-  private def mapNodesInBuilder[NN, EE <: EdgeLike[NN]](fNode: NodeT => NN)(
-      implicit edgeT: ClassTag[EE]): (MMap[N, NN], Builder[NN, EE, This]) = {
+  private def mapNodesInBuilder[NN, EE <: EdgeLike[NN]](fNode: NodeT => NN): (MMap[N, NN], Builder[NN, EE, This]) = {
     val nMap = MMap.empty[N, NN]
-    val b    = companion.newBuilder[NN, EE](edgeT, config)
+    val b    = companion.newBuilder[NN, EE](config)
     nodes foreach { n =>
       val nn = fNode(n)
       nMap put (n.outer, nn)
@@ -336,13 +327,11 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     (nMap, b)
   }
 
-  final def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC[NN])(
-      implicit edgeT: ClassTag[EC[NN]]): This[NN, EC[NN]] =
-    mapBounded(fNode, edgeMapper)(edgeT)
+  final def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC[NN]): This[NN, EC[NN]] =
+    mapBounded(fNode, edgeMapper)
 
-  final def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC)(
-      implicit edgeT: ClassTag[EC]): This[NN, EC] =
-    mapNodesInBuilder(fNode)(edgeT) pipe {
+  final def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC): This[NN, EC] =
+    mapNodesInBuilder[NN, EC](fNode) pipe {
       case (nMap, builder) =>
         edges foreach {
           case InnerEdge(outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
@@ -387,16 +376,15 @@ trait Graph[N, E <: EdgeLike[N]] extends GraphLike[N, E, Graph] {
   */
 object Graph extends GraphCoreCompanion[Graph] {
 
-  override def newBuilder[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config) =
-    immutable.Graph.newBuilder[N, E](edgeT, config)
+  override def newBuilder[N, E <: EdgeLike[N]](implicit config: Config) =
+    immutable.Graph.newBuilder[N, E](config)
 
-  def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config = defaultConfig): Graph[N, E] =
-    immutable.Graph.empty[N, E](edgeT, config)
+  def empty[N, E <: EdgeLike[N]](implicit config: Config = defaultConfig): Graph[N, E] =
+    immutable.Graph.empty[N, E](config)
 
-  def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit edgeT: ClassTag[E],
+  def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
                                                                         config: Config = defaultConfig): Graph[N, E] =
-    immutable.Graph.from[N, E](nodes, edges)(edgeT, config)
+    immutable.Graph.from[N, E](nodes, edges)(config)
 
-  def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]])(implicit edgeT: ClassTag[E[N]]) =
-    immutable.Graph.from[N, E[N]](Nil, edges)(edgeT, defaultConfig)
+  def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]) = immutable.Graph.from[N, E[N]](Nil, edges)(defaultConfig)
 }

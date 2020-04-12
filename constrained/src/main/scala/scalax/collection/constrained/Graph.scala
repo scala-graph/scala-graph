@@ -25,19 +25,19 @@ trait Graph[N, E <: EdgeLikeIn[N]] extends Set[Param[N, E]] with SimpleGraph[N, 
   * @author Peter Empen
   */
 object Graph extends GraphConstrainedCompanion[Graph] {
-  override def newBuilder[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config) =
-    immutable.Graph.newBuilder[N, E](edgeT, config)
+  override def newBuilder[N, E <: EdgeLike[N]]( config: Config) =
+    immutable.Graph.newBuilder[N, E](config)
 
-  def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config = defaultConfig): Graph[N, E] =
-    immutable.Graph.empty[N, E](edgeT, config)
+  def empty[N, E <: EdgeLike[N]]( config: Config = defaultConfig): Graph[N, E] =
+    immutable.Graph.empty[N, E](config)
   def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
-      implicit edgeT: ClassTag[E],
+
       config: Config = defaultConfig): Graph[N, E] =
-    immutable.Graph.from[N, E](nodes, edges)(edgeT, config)
+    immutable.Graph.from[N, E](nodes, edges)(config)
   override protected[collection] def fromWithoutCheck[N, E[+X] <: EdgeLikeIn[X]](
       nodes: Iterable[N],
-      edges: Iterable[E])(implicit edgeT: ClassTag[E], config: Config = defaultConfig): Graph[N, E] =
-    immutable.Graph.fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
+      edges: Iterable[E])( config: Config = defaultConfig): Graph[N, E] =
+    immutable.Graph.fromWithoutCheck[N, E](nodes, edges)(config)
 }
 
 trait UserConstrainedGraph[N, E <: EdgeLike[N], +G <: Graph[N, E]] { _: Graph[N, E] with Constrained[N, E, G] =>

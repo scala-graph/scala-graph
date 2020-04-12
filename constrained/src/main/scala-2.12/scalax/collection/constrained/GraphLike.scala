@@ -38,11 +38,11 @@ trait GraphLike[N,
   override def stringPrefix: String = constraintFactory.stringPrefix getOrElse super.stringPrefix
 
   override protected def plusPlus(newNodes: Iterable[N], newEdges: Iterable[E[N]]): This[N, E] =
-    graphCompanion.fromWithoutCheck[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)(edgeT, config)
+    graphCompanion.fromWithoutCheck[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)(config)
 
   override protected def minusMinus(delNodes: Iterable[N], delEdges: Iterable[E[N]]): This[N, E] = {
     val delNodesEdges = minusMinusNodesEdges(delNodes, delEdges)
-    graphCompanion.fromWithoutCheck[N, E](delNodesEdges._1, delNodesEdges._2)(edgeT, config)
+    graphCompanion.fromWithoutCheck[N, E](delNodesEdges._1, delNodesEdges._2)(config)
   }
 
   @transient private var suspended      = false

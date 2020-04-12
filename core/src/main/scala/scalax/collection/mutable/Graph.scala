@@ -4,7 +4,6 @@ package mutable
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
 import scala.collection.mutable.{ArrayBuffer, Set => MutableSet}
-import scala.reflect.ClassTag
 import scala.math.max
 
 import scalax.collection.{Graph => CommonGraph, GraphLike => CommonGraphLike}
@@ -24,7 +23,7 @@ trait AbstractBuilder[N, E <: EdgeLike[N]] extends Growable[N, E] {
   def clear(): Unit
 }
 
-abstract protected[collection] class BuilderImpl[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: GraphConfig)
+abstract protected[collection] class BuilderImpl[N, E <: EdgeLike[N]](implicit config: GraphConfig)
     extends AbstractBuilder[N, E] {
 
   protected val nodes = new ArrayBuffer[N](config.orderHint)
@@ -54,10 +53,10 @@ abstract protected[collection] class BuilderImpl[N, E <: EdgeLike[N]](implicit e
 }
 
 class Builder[N, E <: EdgeLike[N], +CC[N, E <: EdgeLike[N]] <: CommonGraphLike[N, E, CC] with CommonGraph[N, E]](
-    companion: GraphCompanion[CC])(implicit edgeT: ClassTag[E], config: GraphConfig)
+    companion: GraphCompanion[CC])(implicit config: GraphConfig)
     extends BuilderImpl[N, E] {
 
-  def result: CC[N, E] = companion.from(nodes, edges)(edgeT, config.asInstanceOf[companion.Config])
+  def result: CC[N, E] = companion.from(nodes, edges)(config.asInstanceOf[companion.Config])
 }
 
 /** Trait with common mutable Graph methods.
@@ -166,22 +165,20 @@ trait Graph[N, E <: EdgeLike[N]] extends CommonGraph[N, E] with GraphLike[N, E, 
   */
 object Graph extends MutableGraphCompanion[Graph] {
 
-  def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config = defaultConfig): Graph[N, E] =
-    new DefaultGraphImpl[N, E]()(edgeT, config)
+  def empty[N, E <: EdgeLike[N]](implicit config: Config = defaultConfig): Graph[N, E] =
+    new DefaultGraphImpl[N, E]()(config)
 
-  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N] = Nil, edges: Iterable[E])(
-      implicit edgeT: ClassTag[E],
-      config: Config = defaultConfig): Graph[N, E] =
-    DefaultGraphImpl.from[N, E](nodes, edges)(edgeT, config)
+  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N] = Nil, edges: Iterable[E])(implicit config: Config =
+                                                                                         defaultConfig): Graph[N, E] =
+    DefaultGraphImpl.from[N, E](nodes, edges)(config)
 
-  override def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]])(implicit edgeT: ClassTag[E[N]]) =
-    DefaultGraphImpl.from[N, E[N]](Nil, edges)(edgeT, defaultConfig)
+  override def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]) =
+    DefaultGraphImpl.from[N, E[N]](Nil, edges)(defaultConfig)
 }
 
 @SerialVersionUID(74L)
 class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), iniEdges: Iterable[E] = Set[E]())(
-    implicit override val edgeT: ClassTag[E],
-    override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
+    implicit override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
     extends Graph[N, E]
     with AdjacencyListGraph[N, E, DefaultGraphImpl]
     /* TODO
@@ -222,13 +219,13 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
 
 object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
 
-  def empty[N, E <: EdgeLike[N]](implicit edgeT: ClassTag[E], config: Config = defaultConfig) =
-    new DefaultGraphImpl[N, E]()(edgeT, config)
+  def empty[N, E <: EdgeLike[N]](implicit config: Config = defaultConfig) =
+    new DefaultGraphImpl[N, E]()(config)
 
-  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit edgeT: ClassTag[E],
+  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
                                                                                  config: Config = defaultConfig) =
-    new DefaultGraphImpl[N, E](nodes, edges)(edgeT, config)
+    new DefaultGraphImpl[N, E](nodes, edges)(config)
 
-  override def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]])(implicit edgeT: ClassTag[E[N]]) =
-    new DefaultGraphImpl[N, E[N]](Nil, edges)(edgeT, defaultConfig)
+  override def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]) =
+    new DefaultGraphImpl[N, E[N]](Nil, edges)(defaultConfig)
 }

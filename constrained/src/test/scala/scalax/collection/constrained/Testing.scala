@@ -79,7 +79,7 @@ trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
 
   private def isolated[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): CC[N, E] =
     g match {
-      case mG: mutable.Graph[N, E] => factory.from(mG.nodes.toOuter, mG.edges.toOuter)(mG.edgeT, mG.config)
+      case mG: mutable.Graph[N, E] => factory.from(mG.nodes.toOuter, mG.edges.toOuter)(mG. mG.config)
       case iG                      => iG
     }
 }

@@ -1,7 +1,5 @@
 package scalax.collection
 
-import scala.reflect.ClassTag
-
 import scalax.collection.GraphEdge._
 
 /*
@@ -167,14 +165,11 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
   /** $mapEdges
     * $fEdge
     */
-  def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC[NN])(
-      implicit edgeT: ClassTag[EC[NN]]): This[NN, EC[NN]]
+  def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC[NN]): This[NN, EC[NN]]
 
   /** $mapEdges
-    *
     * This method accepts a typed edge mapper.
     * $fEdge
     */
-  def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC)(
-      implicit edgeT: ClassTag[EC]): This[NN, EC]
+  def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC): This[NN, EC]
 }

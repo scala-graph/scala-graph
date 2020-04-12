@@ -39,7 +39,7 @@ class Connected[N, E <: EdgeLike[N], G <: Graph[N, E]](override val self: G) ext
     *  is already contained; otherwise `Abort`. */
   override def preAdd(elems: InParam[N, E]*): PreCheckResult = PreCheckResult.complete {
     val p        = Param.Partitions(elems)
-    val graphAdd = SimpleGraph.from(p.toOuterNodes, p.toOuterEdges)(self.edgeT)
+    val graphAdd = SimpleGraph.from(p.toOuterNodes, p.toOuterEdges)
     graphAdd.isConnected &&
     (self.isEmpty ||
     (graphAdd.nodes exists (self find _ isDefined)))
