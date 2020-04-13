@@ -5,6 +5,10 @@ import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.GraphLike
 
+/** Immutable graph only operations.
+
+    $define edgesOnlyUseCase Provided for the use case when you don't need to pass any isolated node.
+  */
 trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y, This] with Graph[X, Y]] {
 
   /** Creates a new supergraph with an additional node unless this graph contains `node`. */
@@ -26,11 +30,18 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y
     * @param edges to be removed.
     * @param isolatedNodes to be removed. Nodes that are implicitly defined by any edge in `edges` will be ignored.
     */
-  def removedAll(edges: IterableOnce[E], isolatedNodes: IterableOnce[N] = Nil): This[N, E]
+  def removedAll(isolatedNodes: IterableOnce[N], edges: IterableOnce[E]): This[N, E]
 
-  /** Alias for `removedAll`. */
-  @inline final def --(edges: IterableOnce[E], isolatedNodes: IterableOnce[N] = Nil): This[N, E] =
-    removedAll(edges, isolatedNodes)
+  /** Same as `removedAll(isolatedNodes, edges)` but with empty `isolatedNodes`.
+    * $edgesOnlyUseCase */
+  @inline final def removedAll(edges: IterableOnce[E]): This[N, E] = removedAll(Nil, edges)
+
+  /** Alias for `removedAll(isolatedNodes, edges)`. */
+  @inline final def --(edges: IterableOnce[E], isolatedNodes: IterableOnce[N]): This[N, E] =
+    removedAll(isolatedNodes, edges)
+
+  /** Alias for `removedAll(edges)`. */
+  @inline final def --(edges: IterableOnce[E]): This[N, E] = removedAll(Nil, edges)
 
   /** Creates a new graph with the elements of this graph minus the elements of `that`
     * and edges that are incident with any node in `that`. */

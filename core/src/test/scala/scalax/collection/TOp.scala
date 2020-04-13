@@ -48,9 +48,10 @@ class TOp[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val f
     factory(1 ~ 2) ++ List(1 ~ 2): Graph[Int, UnDiEdge[Int]]
 
     factory(1 ~ 2) concat List("a" ~ "b"): Graph[Any, UnDiEdge[Any]]
-    factory(1 ~ 2) concat (List("a" ~ "b"), List('x')): Graph[Any, UnDiEdge[Any]]
-    factory(1 ~ 2) concat (List('a' ~ 'b'), List('x')): Graph[AnyVal, UnDiEdge[AnyVal]]
-    factory(1 ~ 2) ++ (List('a' ~ 'b'), List('x')): Graph[AnyVal, UnDiEdge[AnyVal]]
+    factory(1 ~ 2) concat (List('x'), List("a" ~ "b")): Graph[Any, UnDiEdge[Any]]
+
+    factory(1 ~ 2) concat (List('x'), List('a' ~ 'b')): Graph[AnyVal, UnDiEdge[AnyVal]]
+    factory(1 ~ 2) ++ (List('x'), List('a' ~ 'b')): Graph[AnyVal, UnDiEdge[AnyVal]]
   }
 
   def `union ` {

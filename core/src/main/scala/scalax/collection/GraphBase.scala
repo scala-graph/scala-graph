@@ -32,10 +32,8 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     with Serializable { selfGraph =>
 
   /** Populates this graph with `nodes` and `edges`.
-    *
     * The implementing class will typically have a constructor with the same parameters
     * which is invoked by `from` of the companion object.
-    *
     * @param nodes $INNODES
     * @param edges $INEDGES
     */
@@ -44,11 +42,11 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     this.edges.initialize(edges)
   }
 
-  /** The order - commonly referred to as |G| - of this graph
-    * equaling to the number of nodes.
-    */
+  /** The order - commonly referred to as |G| - of this graph equaling to the number of nodes. */
   final def order: Int = nodes.size
-  final def size: Int  = edges.size
+
+  /** The size - commonly referred to as |E| - of this graph equaling to the number of edges. */
+  final def size: Int = edges.size
 
   // The following predicates must be val because eq does not work for def.
   /** Default node filter letting traverse all nodes (non-filter). */
@@ -86,13 +84,11 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       */
     def edges: ExtSet[EdgeT]
 
-    /** Synonym for `edges`.
-      */
+    /** Synonym for `edges`. */
     @inline final def ~ : ExtSet[EdgeT] = edges
 
     /** All edges connecting this node with `other` including outgoing and incoming edges.
       * This method is useful in case of multigraphs.
-      *
       * @param other A node which is possibly connected with this node.
       * @return All edges connecting this node with `other`.
       *         If `other` equals this node all hooks are returned.
@@ -109,7 +105,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     def hook: Option[EdgeT]
 
     /** Whether `that` is an adjacent (direct successor) to this node.
-      *
       * @param that The node to check for adjacency.
       * @return `true` if `that` is adjacent to this node.
       */
@@ -117,7 +112,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
 
     /** Whether `that` is independent of this node meaning that
       * there exists no edge connecting this node with `that`.
-      *
       * @param that The node to check for independency.
       * @return `true` if `that` node is independent of this node.
       */
@@ -126,7 +120,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     /** All direct successors of this node, also called ''successor set'' or
       * ''open out-neighborhood'': target nodes of directed incident edges and / or
       * adjacent nodes of undirected incident edges excluding this node.
-      *
       * @return set of all direct successors of this node.
       */
     def diSuccessors: Set[NodeT]
@@ -145,7 +138,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     /** All direct predecessors of this node, also called ''predecessor set'' or
       * ''open in-neighborhood'': source nodes of directed incident edges and / or
       * adjacent nodes of undirected incident edges excluding this node.
-      *
       * @return set of all direct predecessors of this node.
       */
     def diPredecessors: Set[NodeT]
@@ -163,7 +155,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
 
     /** All adjacent nodes (direct successors and predecessors) of this node,
       * also called ''open neighborhood'' excluding this node.
-      *
       * @return set of all neighbors.
       */
     def neighbors: Set[NodeT]
@@ -173,7 +164,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     @inline final def ~| : Set[NodeT] = neighbors
 
     /** All edges outgoing from this node.
-      *
       * @return set of all edges outgoing from this node
       *         including undirected edges and hooks.
       */
@@ -183,7 +173,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     @inline final def ~> : Set[EdgeT] with FilterableSet[EdgeT] = outgoing
 
     /** All outgoing edges connecting this node with `to`.
-      *
       * @param to The node which is the end point of zero, one or more edges starting at this node.
       * @return All edges connecting this node with `to`.
       *         If `to` equals this node all hooks are returned.
@@ -195,7 +184,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     @inline final def ~>(to: NodeT) = outgoingTo(to)
 
     /** An outgoing edge connecting this node with `to`.
-      *
       * @param to The node which is the end point of an edge starting at this node.
       * @return One of possibly several edges connecting this node with `to`.
       *         If `to` equals this node a hook may be returned.
@@ -207,7 +195,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     @inline final def ~>?(to: NodeT) = findOutgoingTo(to)
 
     /** Incoming edges of this node.
-      *
       * @return set of all edges incoming to of this including undirected edges.
       */
     def incoming: Set[EdgeT] with FilterableSet[EdgeT]
@@ -216,7 +203,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     @inline final def <~ = incoming
 
     /** All incoming edges connecting `from` with this node.
-      *
       * @param from The node with zero, one or more edges
       *             having this node as a direct successor.
       * @return All edges at `from` having this node as a direct successor.
@@ -229,7 +215,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     @inline final def <~(from: NodeT) = incomingFrom(from)
 
     /** An edge at `from` having this node as a successor.
-      *
       * @param from The node being at an edge which has
       *           this node as a successor.
       * @return An edges at `from` having this node as a successor.
@@ -270,8 +255,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       *         Loops count once each. */
     def inDegree: Int
 
-    /** The incoming degree of this node after applying some filters to the incoming edges and predecessors.
-      */
+    /** The incoming degree of this node after applying some filters to the incoming edges and predecessors. */
     def inDegree(nodeFilter: NodePredicate,
                  edgeFilter: EdgePredicate = anyEdge,
                  includeHooks: Boolean = false,
@@ -389,8 +373,10 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
         implicit ord: NodeOrdering = defaultNodeOrdering): String =
       stringPrefix + "(" + asSortedString(separator)(ord) + ")"
 
-    /** Converts this node set to a set of outer nodes.
-      */
+    /** Iterator over the node set mapping inner nodes to outer nodes. */
+    @inline final def outerIterator: Iterator[N] = iterator map (_.outer)
+
+    /** Converts this node set to a set of outer nodes. */
     def toOuter: Set[N] = {
       val b = Set.newBuilder[N]
       this foreach (b += _)
@@ -398,19 +384,16 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     }
 
     /** Finds the inner node corresponding to `outerNode`.
-      *
       * @return the inner node wrapped by `Some` if found, otherwise None.
       */
     def find(outerNode: N): Option[NodeT]
 
     /** Finds the inner node corresponding to `outerNode`.
-      *
       * @return the inner node if found, otherwise `NoSuchElementException` is thrown.
       */
     def get(outerNode: N): NodeT
 
     /** Finds the inner node corresponding to `outerNode`.
-      *
       * @return the inner node if found, otherwise `null`.
       */
     def lookup(outerNode: N): NodeT
@@ -421,11 +404,10 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
 
     def draw(random: Random): NodeT
 
-    def diff(that: AnySet[NodeT]): AnySet[NodeT] = this -- that
+    def diff(that: AnySet[NodeT]): AnySet[NodeT] = this diff that
   }
 
   /** The node (vertex) set of this `Graph` commonly referred to as V(G).
-    *
     * @return Set of all contained nodes.
     */
   def nodes: NodeSetT
@@ -577,8 +559,10 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     /** The maximum arity of all edges in this edge set. */
     def maxArity: Int = if (size == 0) 0 else max(InnerEdge.ArityOrdering).arity
 
-    /** Converts this edge set to a set of outer edges.
-      */
+    /** Iterator over the node set mapping inner nodes to outer nodes. */
+    @inline final def outerIterator: Iterator[E] = iterator map (_.outer)
+
+    /** Converts this edge set to a set of outer edges. */
     def toOuter: Set[E] = {
       val b = Set.newBuilder[E]
       this foreach (b += _.toOuter)

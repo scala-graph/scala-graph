@@ -381,7 +381,7 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
     }
 
     def `concat, ++, union` {
-      val g = gString_A.concat[String, AnyEdge[String]](Nil, isolatedNodes = List("B", "C"))
+      val g = gString_A.concat[String, AnyEdge[String]](List("B", "C"), Nil)
       g.elementCount shouldEqual 3
       ('A' to 'C') map (_.toString) foreach (g.contains(_) shouldEqual true)
 

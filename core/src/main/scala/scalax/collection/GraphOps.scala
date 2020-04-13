@@ -3,11 +3,13 @@ package scalax.collection
 import scalax.collection.Compat.IterableOnce
 import scalax.collection.GraphEdge._
 
-/*
-  $define mapNodes       Computes a new graph by applying `fNode` to all nodes of this graph.
-  $define mapEdges       Computes a new graph by applying `fNode` to all nodes and `fEdge` to all edges of this graph.
-  $define fEdge         `fEdge` is expected to set the passed nodes.
-                         In case it produces duplicates, the resulting graph's size will decrease.
+/* Operations common to mutable and immutable graphs.
+
+  $define mapNodes Computes a new graph by applying `fNode` to all nodes of this graph.
+  $define mapEdges Computes a new graph by applying `fNode` to all nodes and `fEdge` to all edges of this graph.
+  $define fEdge    `fEdge` is expected to set the passed nodes.
+                   In case it produces duplicates, the resulting graph's size will decrease.
+  $define edgesOnlyUseCase Provided for the use case when you don't need to pass any isolated node.
  */
 trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterElems[N, E] {
 
@@ -78,25 +80,34 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
   /** Iterable over all nodes and edges. */
   def toOuterIterable: Iterable[OuterElem]
 
-  /** Creates a new graph by adding all `edges` and `nodes` ommitting duplicates.
-    * The new graph is upcasted if any of the arguments is an upcast of `N` or `E`.
+  /** Creates a new graph by adding all `edges` and `isolatedNodes` omitting duplicates.
+    * The new graph is upcasted if any of the arguments is an upcast of `N` respectively `E`.
     * Use `union` to concatenate all nodes and edges of another graph.
     *
-    * @param edges to be concatenated.
     * @param isolatedNodes to be concatenated. Nodes that are implicitly defined by any edge in `edges` will be ignored.
+    * @param edges to be concatenated.
     */
-  def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](edges: IterableOnce[E2], isolatedNodes: IterableOnce[N2] = Nil)(
+  def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(
       implicit e: E2 <:< EdgeLike[N2]): This[N2, E2]
 
-  /** Alias for `concat`. */
-  @inline final def ++[N2 >: N, E2 >: E <: EdgeLike[N2]](
-      edges: IterableOnce[E2],
-      isolatedNodes: IterableOnce[N2] = Nil)(implicit e: E2 <:< EdgeLike[N2]): This[N2, E2] =
-    concat(edges, isolatedNodes)(e)
+  /** Same as `concat(isolatedNodes, edges)` but with empty `isolatedNodes`.
+    * $edgesOnlyUseCase */
+  def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](edges: IterableOnce[E2])(implicit e: E2 <:< EdgeLike[N2]): This[N2, E2] =
+    concat[N2, E2](Nil, edges)(e)
+
+  /** Alias for `concat(isolatedNodes, edges)`. */
+  @inline final def ++[N2 >: N, E2 >: E <: EdgeLike[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(
+      implicit e: E2 <:< EdgeLike[N2]): This[N2, E2] =
+    concat(isolatedNodes, edges)(e)
+
+  /** Alias for `concat(edges)`. */
+  @inline final def ++[N2 >: N, E2 >: E <: EdgeLike[N2]](edges: IterableOnce[E2])(
+      implicit e: E2 <:< EdgeLike[N2]): This[N2, E2] =
+    concat[N2, E2](edges)(e)
 
   /** Computes the union between this graph and `that` graph. */
   @inline final def union[N2 >: N, E2 >: E <: EdgeLike[N2]](that: Graph[N2, E2]): This[N2, E2] =
-    concat(that.edges.toOuter, that.nodes.toOuter)
+    concat(that.nodes.outerIterator, that.edges.outerIterator)
 
   /** Whether the given outer node is contained in this graph. */
   def contains(node: N): Boolean
@@ -148,10 +159,10 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
     */
   def get(edge: E): EdgeT
 
-  protected def removedAll(edges: IterableOnce[E], isolatedNodes: IterableOnce[N] = Nil): This[N, E]
+  protected def removedAll(isolatedNodes: IterableOnce[N], edges: IterableOnce[E]): This[N, E]
 
   /** Computes a new graph that is the difference of this graph and `that` graph. */
-  final def diff(that: Graph[N, E]): This[N, E] = removedAll(that.edges.toOuter, that.nodes.toOuter)
+  final def diff(that: Graph[N, E]): This[N, E] = removedAll(that.nodes.outerIterator, that.edges.outerIterator)
 
   /** Alias for `diff`. */
   @inline final def &~(that: Graph[N, E]): This[N, E] = this diff that
