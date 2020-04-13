@@ -120,12 +120,13 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
   def noEdge: EdgePredicate
 
   /** Whether the given node is contained in this graph. */
+  // TODO make implementation allocation-free
   @inline final def apply(node: N): Boolean = find(node).isDefined
 
   /** Whether the given edge is contained in this graph. */
   @inline final def apply(edge: E): Boolean = find(edge).isDefined
 
-  /** Computes a new graph with nodes satisfying `fNode` and edges staisfying `fEdge`.
+  /** Computes a new graph with nodes satisfying `fNode` and edges satisfying `fEdge`.
     * If both `fNode` and `fEdge` have default values the original graph is retained. */
   def filter(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): This[N, E]
 
@@ -156,7 +157,7 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
   @inline final def &~(that: Graph[N, E]): This[N, E] = this diff that
 
   /** Computes the intersection between this graph and `that` graph. */
-  def intersect(that: Graph[N, E]): This[N, E] = ???
+  final def intersect(that: Graph[N, E]): This[N, E] = this filter (n => that(n.outer), e => that(e.outer))
 
   /** Alias for `intersect`. */
   @inline final def &(that: Graph[N, E]): This[N, E] = this intersect that
