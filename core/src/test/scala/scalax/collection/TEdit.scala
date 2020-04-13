@@ -80,8 +80,8 @@ class TEditImmutable extends RefSpec with Matchers {
 
     def `-- ` {
       val g = Graph(1, 2 ~ 3, 3 ~ 4)
-      g -- (nodes = List(2), edges = List(3 ~ 3)) should be(Graph(1, 3 ~ 4))
-      g -- (nodes = List(2), edges = List(3 ~ 4)) should be(Graph(1, 3, 4))
+      g -- (List(3 ~ 3), List(2)) should be(Graph(1, 3 ~ 4))
+      g -- (List(3 ~ 4), List(2)) should be(Graph(1, 3, 4))
     }
 
     def `+ String ` {

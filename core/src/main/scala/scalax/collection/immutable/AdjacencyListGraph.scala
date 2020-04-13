@@ -88,23 +88,5 @@ trait AdjacencyListGraph[
 
   final def --(nodes: Iterable[N], edges: Iterable[E]): This[N, E] = bulkOp(nodes, edges, minusMinus)
 
-  final def --(that: AnyGraph[N, E]): This[N, E] = this -- (that.nodes.toOuter, that.edges.toOuter)
-
-  /** Implements the heart of `--` calling the `from` factory method of the companion object.
-    *  $REIMPLFACTORY */
-  final protected def minusMinus(delNodes: Iterator[N], delEdges: Iterator[E]): This[N, E] = {
-    val delNodesEdges = remaining(delNodes.toSet, delEdges)
-    companion.from[N, E](delNodesEdges._1, delNodesEdges._2)
-  }
-
-  /** Calculates the remaining nodes and edges of this graph after subtracting `delNodes` and `delEdges`.
-    */
-  final protected def remaining(nodesToDelete: Set[N], edgesToDelete: Iterator[E]): (Set[N], Set[E]) =
-    nodesToDelete pipe { delNodeSet =>
-      (nodes.toOuter -- delNodeSet, {
-        val restEdges =
-          for (e <- edges.toOuter if e.ends forall (n => !(delNodeSet contains n))) yield e
-        restEdges -- edgesToDelete
-      })
-    }
+  @inline final def --(that: AnyGraph[N, E]): This[N, E] = this diff that
 }

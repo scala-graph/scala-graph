@@ -10,7 +10,7 @@ import scala.util.Random
 
 import scalax.collection.Compat.IterableOnce
 import scalax.collection.GraphEdge.EdgeLike
-import scalax.collection.{Graph => SimpleGraph}
+import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 
@@ -20,7 +20,7 @@ import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
   *
   * @author Peter Empen
   */
-trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y, This] with SimpleGraph[X, Y]]
+trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y, This] with AnyGraph[X, Y]]
     extends GraphLike[N, E, This] {
   selfGraph: This[N, E] =>
 
@@ -278,6 +278,27 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
   final protected def plusPlus[N2 >: N, E2 >: E <: EdgeLike[N2]](newNodes: Iterator[N2],
                                                                  newEdges: Iterator[E2]): This[N2, E2] =
     companion.from[N2, E2](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
+
+  def removedAll(edges: IterableOnce[E], isolatedNodes: IterableOnce[N] = Nil): This[N, E] =
+    bulkOp[N, E](isolatedNodes, edges, minusMinus)
+
+  /** Implements the heart of `--` calling the `from` factory method of the companion object.
+    *  $REIMPLFACTORY */
+  final protected def minusMinus(delNodes: Iterator[N], delEdges: Iterator[E]): This[N, E] = {
+    val delNodesEdges = remaining(delNodes.toSet, delEdges)
+    companion.from[N, E](delNodesEdges._1, delNodesEdges._2)
+  }
+
+  /** Calculates the remaining nodes and edges of this graph after subtracting `delNodes` and `delEdges`.
+    */
+  final protected def remaining(nodesToDelete: Set[N], edgesToDelete: Iterator[E]): (Set[N], Set[E]) =
+    nodesToDelete pipe { delNodeSet =>
+      (nodes.toOuter -- delNodeSet, {
+        val restEdges =
+          for (e <- edges.toOuter if e.ends forall (n => !(delNodeSet contains n))) yield e
+        restEdges -- edgesToDelete
+      })
+    }
 
   final protected def serializeTo(out: ObjectOutputStream): Unit = {
     out.defaultWriteObject()

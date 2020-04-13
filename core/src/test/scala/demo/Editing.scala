@@ -58,7 +58,7 @@ final class EditingTest extends RefSpec with Matchers {
       g - 1 shouldBe Graph(2, 3, 2 ~ 3)
       g - 2 shouldBe Graph(1, 3)
       g - 2 ~ 3 shouldBe Graph(1, 2, 3)
-      g -- (nodes = List(2), edges = List(3 ~ 3)) shouldBe Graph(1, 3)
+      g -- (List(3 ~ 3), List(2)) shouldBe Graph(1, 3)
 
       def h = mutable.Graph.from[Int, AnyEdge[Int]](nodes = g.nodes.toOuter, edges = g.edges.toOuter)
       (h += 0) shouldBe Graph(0, 1, 2, 3, 2 ~ 3)

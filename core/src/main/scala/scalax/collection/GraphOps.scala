@@ -147,8 +147,10 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
     */
   def get(edge: E): EdgeT
 
+  protected def removedAll(edges: IterableOnce[E], isolatedNodes: IterableOnce[N] = Nil): This[N, E]
+
   /** Computes a new graph that is the difference of this graph and `that` graph. */
-  def diff(that: Graph[N, E]): This[N, E] = ???
+  final def diff(that: Graph[N, E]): This[N, E] = removedAll(that.edges.toOuter, that.nodes.toOuter)
 
   /** Alias for `diff`. */
   @inline final def &~(that: Graph[N, E]): This[N, E] = this diff that
