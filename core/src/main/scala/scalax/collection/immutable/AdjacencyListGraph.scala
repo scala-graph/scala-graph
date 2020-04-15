@@ -69,20 +69,20 @@ trait AdjacencyListGraph[
 
   protected def copy(nodes: Iterable[N], edges: Iterable[E]): This[N, E]
 
-  def +(node: N): This[N, E] =
+  def incl(node: N): This[N, E] =
     if (this contains node) this
     else copy(nodes.toOuter.toBuffer += node, edges.toOuter)
 
-  def +(edge: E): This[N, E] =
+  def incl(edge: E): This[N, E] =
     if (this contains edge) this
     else copy(nodes.toOuter, edges.toOuter.toBuffer += edge)
 
-  def -(node: N): This[N, E] = nodes find (nf => nf.value == node) match {
-    case Some(nf) => copy(nodes.toOuter.toBuffer -= node, edges.toOuter.toBuffer --= (nf.edges map (_.toOuter)))
+  def excl(node: N): This[N, E] = nodes find (nf => nf.value == node) match {
+    case Some(nf) => copy(nodes.toOuter.toBuffer -= node, edges.toOuter.toBuffer --= (nf.edges map (_.outer)))
     case None     => this
   }
 
-  def -(edge: E): This[N, E] =
+  def excl(edge: E): This[N, E] =
     if (this contains edge) copy(nodes.toOuter, edges.toOuter.toBuffer -= edge)
     else this
 

@@ -12,6 +12,24 @@ object Compat {
     def toMSet: MSet[A] = self.to[MSet]
   }
 
+  implicit final class MSetEnrichments[A](val self: MSet[A]) extends AnyVal {
+    def filterInPlace(p: A => Boolean): self.type = {
+      if (self.nonEmpty) {
+        val array       = self.toArray[Any]
+        val arrayLength = array.length
+        var i           = 0
+        while (i < arrayLength) {
+          val elem = array(i).asInstanceOf[A]
+          if (!p(elem)) {
+            self -= elem
+          }
+          i += 1
+        }
+      }
+      self
+    }
+  }
+
   trait Growable[A] {
     def addOne(elem: A): this.type
     @inline def +=(elem: A): this.type = addOne(elem)

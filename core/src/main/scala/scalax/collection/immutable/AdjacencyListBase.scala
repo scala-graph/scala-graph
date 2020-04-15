@@ -289,22 +289,20 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
     companion.from[N, E](delNodesEdges._1, delNodesEdges._2)
   }
 
-  /** Calculates the remaining nodes and edges of this graph after subtracting `delNodes` and `delEdges`.
+  /** Calculates the remaining nodes and edges of this graph after subtracting the passed elements.
     */
   final protected def remaining(nodesToDelete: Set[N], edgesToDelete: IterableOnce[E]): (Set[N], Set[E]) =
-    nodesToDelete pipe { delNodeSet =>
-      (nodes.toOuter -- delNodeSet, {
-        val restEdges =
-          for (e <- edges.toOuter if e.ends forall (n => !(delNodeSet contains n))) yield e
-        restEdges -- edgesToDelete
-      })
-    }
+    (
+      nodes.toOuter -- nodesToDelete,
+      (for (e <- edges.outerIterator if e.ends forall (n => !(nodesToDelete contains n)))
+        yield e).toSet -- edgesToDelete
+    )
 
   final protected def serializeTo(out: ObjectOutputStream): Unit = {
     out.defaultWriteObject()
 
     out.writeInt(edges.size)
-    edges foreach (innerEdge => out.writeObject(innerEdge.toOuter))
+    edges foreach (innerEdge => out.writeObject(innerEdge.outer))
 
     val nodesBuf = new ArrayBuffer(1024) ++ nodes.iterator.filter(_.isIsolated)
     out.writeInt(nodesBuf.size)

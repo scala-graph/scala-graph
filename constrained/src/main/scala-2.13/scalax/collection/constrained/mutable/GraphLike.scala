@@ -37,7 +37,7 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
                 postSubtract(selfGraph, Set(node), Set.empty[E[N]], preCheckResult).fold(
                   failure => {
                     withoutChecks {
-                      selfGraph += node.value
+                      selfGraph addOne node.value
                       selfGraph ++= incidentEdges
                     }
                     Left(failure)

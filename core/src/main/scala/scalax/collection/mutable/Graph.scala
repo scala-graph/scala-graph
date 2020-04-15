@@ -3,10 +3,10 @@ package mutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.collection.mutable.{ArrayBuffer, Set => MutableSet}
+import scala.collection.mutable.ArrayBuffer
 import scala.math.max
 
-import scalax.collection.{Graph => CommonGraph, GraphLike => CommonGraphLike}
+import scalax.collection.{Graph => AnyGraph, GraphLike => AnyGraphLike}
 import scalax.collection.GraphEdge.{AnyEdge, EdgeLike}
 import scalax.collection.generic.{GraphCompanion, MutableGraphCompanion}
 import scalax.collection.config._
@@ -34,8 +34,11 @@ abstract protected[collection] class BuilderImpl[N, E <: EdgeLike[N]](implicit c
     }
   )
 
-  def add(node: N): Boolean = (nodes contains node) tap (_ => this += node)
-  def add(edge: E): Boolean = (edges contains edge) tap (_ => this += edge)
+  protected def add(node: N): Boolean           = NeverUsed
+  final override def addOne(node: N): this.type = { nodes += node; this }
+
+  def add(edge: E): Boolean                     = NeverUsed
+  final override def addOne(edge: E): this.type = { edges += edge; this }
 
   def upsert(edge: E): Boolean = (edges contains edge) pipe { found =>
     if (found) edges -= edge
@@ -43,16 +46,13 @@ abstract protected[collection] class BuilderImpl[N, E <: EdgeLike[N]](implicit c
     !found
   }
 
-  def +=(node: N): this.type = { nodes += node; this }
-  def +=(edge: E): this.type = { edges += edge; this }
-
   def clear(): Unit = {
     nodes.clear
     edges.clear
   }
 }
 
-class Builder[N, E <: EdgeLike[N], +CC[N, E <: EdgeLike[N]] <: CommonGraphLike[N, E, CC] with CommonGraph[N, E]](
+class Builder[N, E <: EdgeLike[N], +CC[N, E <: EdgeLike[N]] <: AnyGraphLike[N, E, CC] with AnyGraph[N, E]](
     companion: GraphCompanion[CC])(implicit config: GraphConfig)
     extends BuilderImpl[N, E] {
 
@@ -64,7 +64,7 @@ class Builder[N, E <: EdgeLike[N], +CC[N, E <: EdgeLike[N]] <: CommonGraphLike[N
   * @author Peter Empen
   */
 trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
-    extends CommonGraphLike[N, E, This]
+    extends AnyGraphLike[N, E, This]
     with GraphOps[N, E, This]
     /* TODO
     with EdgeOps[N, E, This]
@@ -97,7 +97,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   }
 
   type NodeSetT <: NodeSet
-  trait NodeSet extends MutableSet[NodeT] with super.NodeSet {
+  trait NodeSet extends MSet[NodeT] with super.NodeSet {
     override def remove(node: NodeT): Boolean = subtract(node, rippleDelete = true, minus, minusEdges)
 
     /** removes all incident edges of `node` from the edge set leaving the node set unchanged.
@@ -111,7 +111,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   }
 
   type EdgeSetT <: EdgeSet
-  trait EdgeSet extends MutableSet[EdgeT] with super.EdgeSet with Compat.AddSubtract[EdgeT, EdgeSet] {
+  trait EdgeSet extends MSet[EdgeT] with super.EdgeSet with Compat.AddSubtract[EdgeT, EdgeSet] {
     @inline final def addOne(edge: EdgeT)      = { add(edge); this }
     @inline final def subtractOne(edge: EdgeT) = { remove(edge); this }
 
@@ -131,9 +131,6 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     */
   @inline final def addAndGet(node: N): NodeT = { add(node); find(node).get }
 
-  @inline final def +=(node: N): this.type = { add(node); this }
-  @inline final def +=(edge: E): this.type = { this add edge; this }
-
   /** Adds the given edge if not yet present and returns it as an inner edge.
     *
     * @param edge the edge to add.
@@ -141,11 +138,19 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     */
   @inline final def addAndGet(edge: E): EdgeT = { add(edge); find(edge).get }
 
-  @inline final def remove(node: N): Boolean = nodes find node exists (nodes remove _)
-  @inline final def -=(node: N): this.type   = { remove(node); this }
+  @inline final def remove(node: N): Boolean        = nodes find node exists (nodes remove _)
+  @inline final def subtractOne(node: N): this.type = { remove(node); this }
 
-  @inline final def remove(edge: E): Boolean = edges remove InnerEdge(edge)
-  @inline final def -=(edge: E): this.type   = { remove(edge); this }
+  @inline final def remove(edge: E): Boolean        = edges remove InnerEdge(edge)
+  @inline final def subtractOne(edge: E): this.type = { remove(edge); this }
+
+  def filterInPlace(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): this.type = {
+    import scalax.collection.Compat.MSetEnrichments
+    MSetEnrichments // prevents unused import warning in 2.13
+    if (fNode ne anyNode) nodes filterInPlace fNode
+    if (fEdge ne anyEdge) edges filterInPlace fEdge
+    this
+  }
 }
 
 /** The main trait for mutable graphs bundling the functionality of traits concerned with
@@ -155,7 +160,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   * @tparam E the kind of the edges in this graph.
   * @author Peter Empen
   */
-trait Graph[N, E <: EdgeLike[N]] extends CommonGraph[N, E] with GraphLike[N, E, Graph] {
+trait Graph[N, E <: EdgeLike[N]] extends AnyGraph[N, E] with GraphLike[N, E, Graph] {
   override def empty: Graph[N, E] = Graph.empty[N, E]
 }
 
@@ -189,10 +194,10 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
 
   @inline final protected def newNodeSet: NodeSetT = new NodeSet
   @transient private[this] var _nodes: NodeSetT    = newNodeSet
-  @inline final override def nodes                 = _nodes
+  @inline final override def nodes: NodeSet        = _nodes
 
   @transient private[this] var _edges: EdgeSetT = new EdgeSet
-  @inline final override def edges              = _edges
+  @inline final override def edges: EdgeSet     = _edges
 
   initialize(iniNodes, iniEdges)
 

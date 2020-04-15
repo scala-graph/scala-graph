@@ -11,6 +11,8 @@ import scala.collection.{AbstractIterable, AbstractIterator, ExtSetMethods}
   */
 package object collection {
 
+  protected[collection] def NeverUsed = ???
+
   /** The default filter function for degrees to be included in
     * degree calculation always returning true.
     */

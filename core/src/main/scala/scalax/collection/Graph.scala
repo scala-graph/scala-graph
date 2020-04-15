@@ -242,9 +242,12 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   }
 
   def outerIterator: Iterator[OuterElem] =
-    ??? //nodes.iterator.map(n => OuterNode(n.outer)) ++ edges.iterator.map(_.outer)
+    nodes.iterator.map[OuterElem](n => OuterNode(n.outer)) ++
+      edges.iterator.map[OuterElem](e => OuterEdge(e.outer))
 
-  def toOuterIterable: Iterable[OuterElem] = ???
+  def toOuterIterable: Iterable[OuterElem] = new AbstractIterable[OuterElem] {
+    def iterator: Iterator[OuterElem] = outerIterator
+  }
 
   @inline final def find(node: N): Option[NodeT] = nodes find node
   @inline final def find(edge: E): Option[EdgeT] = edges find edge
@@ -259,7 +262,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
       val b = companion.newBuilder[N, E]
       nodes foreach {
         case innerN @ InnerNode(outerN) =>
-          b += outerN
+          b addOne outerN
           innerN.edges foreach {
             case innerE @ InnerEdge(outerE) =>
               if (fEdge(innerE) && (innerE.ends forall nodes.contains)) b += outerE
@@ -311,7 +314,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
                   case m: PartialEdgeMapper[N, EC[NN] @unchecked] => builder += mapTypedEdge(m, nns)
                 }
             }
-          case _ => ???
+          case _ => ??? // TODO
         }
         builder.result
     }
@@ -322,7 +325,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     nodes foreach { n =>
       val nn = fNode(n)
       nMap put (n.outer, nn)
-      b += nn
+      b addOne nn
     }
     (nMap, b)
   }
@@ -338,7 +341,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
             (nMap(n1), nMap(n2)) pipe {
               case nns @ (nn1, nn2) => builder += edgeMapper(nn1, nn2)
             }
-          case _ => ???
+          case _ => ??? // TODO
         }
         builder.result
     }

@@ -34,7 +34,7 @@ final class EditingTest extends RefSpec with Matchers {
       g find 1 ~ 2 shouldBe Some(1 ~ 2) // Option[g.EdgeT]
       g find 1 shouldBe Some(1)         // Option[Param[Int,UnDiEdge]]
 
-      val h = mutable.Graph.empty[Int, UnDiEdge[Int]] ++= g
+      val h = mutable.Graph.empty[Int, UnDiEdge[Int]] |= g
       h addAndGet 5 shouldBe 5 // g.NodeT
     }
 
@@ -50,7 +50,6 @@ final class EditingTest extends RefSpec with Matchers {
       val g = immutable.Graph(1, 2 ~ 3)
       g + 1 shouldBe g
       g + 0 shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
-//    g + 1.2                          // error: overloaded method...
       g + 0 ~ 1 shouldBe Graph(0, 1, 2, 3, 0 ~ 1, 2 ~ 3)
       g ++ (edges = List(1 ~ 2, 2 ~ 3)) shouldBe Graph(1, 2, 3, 1 ~ 2, 2 ~ 3)
       g ++ (edges = List(1 ~ 2, 2 ~ 3), isolatedNodes = List(0)) shouldBe Graph(0, 1, 2, 3, 1 ~ 2, 2 ~ 3)
@@ -58,10 +57,10 @@ final class EditingTest extends RefSpec with Matchers {
       g - 1 shouldBe Graph(2, 3, 2 ~ 3)
       g - 2 shouldBe Graph(1, 3)
       g - 2 ~ 3 shouldBe Graph(1, 2, 3)
-      g -- (List(3 ~ 3), List(2)) shouldBe Graph(1, 3)
+      g -- (List(2), List(3 ~ 3)) shouldBe Graph(1, 3)
 
       def h = mutable.Graph.from[Int, AnyEdge[Int]](nodes = g.nodes.toOuter, edges = g.edges.toOuter)
-      (h += 0) shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
+      (h addOne 0) shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
       (h += 3 ~> 1) shouldBe Graph[Int, AnyEdge](1, 2, 3, 2 ~ 3, 3 ~> 1)
     }
 

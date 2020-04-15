@@ -9,6 +9,8 @@ object Compat {
     def toMSet: MSet[A] = self.to(MSet)
   }
 
+  object MSetEnrichments
+
   trait Growable[-A]
   trait AddSubtract[A, +This]
   trait InclExcl[A, +This]

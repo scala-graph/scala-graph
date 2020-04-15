@@ -80,8 +80,8 @@ class TEditImmutable extends RefSpec with Matchers {
 
     def `-- ` {
       val g = Graph(1, 2 ~ 3, 3 ~ 4)
-      g -- (List(3 ~ 3), List(2)) should be(Graph(1, 3 ~ 4))
-      g -- (List(3 ~ 4), List(2)) should be(Graph(1, 3, 4))
+      g -- (List(2), List(3 ~ 3)) should be(Graph(1, 3 ~ 4))
+      g -- (List(2), List(3 ~ 4)) should be(Graph(1, 3, 4))
     }
 
     def `+ String ` {
@@ -105,7 +105,7 @@ class TEditMutable extends RefSpec with Matchers {
   object `mutable graphs` {
     def `serve += properly` {
       val g = Graph[Int, Nothing](1, 3)
-      g += 2
+      g addOne 2
       g.order should be(3)
       for (i <- 1 to 3)
         g.contains(i) should be(true) //g should contain (i)
@@ -116,13 +116,13 @@ class TEditMutable extends RefSpec with Matchers {
       g remove 1 should be(true)
       g should be(Graph(2 ~ 3, 4))
       g remove 5 should be(false)
-      (g -= 2) should be(Graph(3, 4))
+      (g subtractOne 2) should be(Graph(3, 4))
       g.clear()
       g should be('empty)
     }
 
     def `+ String ` {
-      val g = Graph("A") += "B"
+      val g = Graph("A") addOne "B"
       g.elementCount should be(2)
       g.contains("A") should be(true)
       g.contains("B") should be(true) //g should contain ("B")
@@ -136,7 +136,7 @@ class TEditMutable extends RefSpec with Matchers {
 
     def `serve -= properly (2)` {
       val g = Graph(1 ~ 2, 2 ~ 3)
-      (g -= 2) should be(Graph(1, 3))
+      (g subtractOne 2) should be(Graph(1, 3))
       g.size should be(0)
     }
 
@@ -158,16 +158,16 @@ class TEditMutable extends RefSpec with Matchers {
       val (n1, n2)                   = (g get one, g get two)
       val e11                        = g get oneOne
 
-      g -= 1 ~> 4 // Graph(oneOne, oneTwo, one~>3)
+      g subtractOne 1 ~> 4 // Graph(oneOne, oneTwo, one~>3)
       n2.diSuccessors shouldBe empty
       n1.diSuccessors shouldBe (Set(two, 3))
       (n1 ~>? n1) should be(Some(e11))
 
-      g -= oneTwo // Graph(oneOne, one~>3)
+      g subtractOne oneTwo // Graph(oneOne, one~>3)
       n1.diSuccessors should be(Set(3))
       (n1 ~>? n1) should be(Some(e11))
 
-      g -= oneOne // Graph(one~>3)
+      g subtractOne oneOne // Graph(one~>3)
       n1.diSuccessors should be(Set(3))
       (n1 ~>? n1) should be(None)
 
@@ -187,11 +187,11 @@ class TEditMutable extends RefSpec with Matchers {
       n1.diSuccessors should be(Set(two, three))
       (n1 ~>? n1) should be(Some(oneOneTwo))
 
-      g -= oneTwoThree // Graph(oneOneTwo)
+      g subtractOne oneTwoThree // Graph(oneOneTwo)
       n1.diSuccessors should be(Set(two))
       (n1 ~>? n1) should be(Some(oneOneTwo))
 
-      g -= two // Graph(one)
+      g subtractOne two // Graph(one)
       n1.diSuccessors shouldBe empty
       (n1 ~>? n1) should be(None)
 
@@ -202,11 +202,11 @@ class TEditMutable extends RefSpec with Matchers {
 
     /* TODO missing examples... */
 
-    def `serve ++=` {
+    def `serve ++=, unionInPlace` {
       val (gBefore, gAfter) = (Graph(1, 2 ~ 3), Graph(0, 1 ~ 2, 2 ~ 3))
       (gBefore ++= (0 :: Nil, List(1 ~ 2, 2 ~ 3))) should equal(gAfter)
-      (gBefore ++= Graph(0, 1 ~ 2)) should equal(gAfter)
-      (gBefore ++= Graph[Int, UnDiEdge](0) ++= Graph(1 ~ 2)) should equal(gAfter)
+      (gBefore |= Graph(0, 1 ~ 2)) should equal(gAfter)
+      (gBefore |= Graph[Int, UnDiEdge](0) |= Graph(1 ~ 2)) should equal(gAfter)
     }
 
     /* TODO missing examples... */

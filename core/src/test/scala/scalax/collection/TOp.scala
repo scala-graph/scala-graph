@@ -23,8 +23,8 @@ protected trait Examples[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N
   protected val gEdges = Set(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
   protected val hEdges = Set(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
 
-  protected lazy val g = factory.from(gEdges)
-  protected lazy val h = factory.from(hEdges)
+  protected def g = factory.from(gEdges)
+  protected def h = factory.from(hEdges)
 
   protected object Expected {
     val g_union_h = factory.from(gEdges ++ hEdges)
@@ -79,9 +79,9 @@ class TMutableOp extends RefSpec with Matchers with Examples[mutable.Graph] {
 
   private val iH = immutable.Graph.from(hEdges)
 
-  def `++= ` {
-    (g ++= h) shouldEqual Expected.g_union_h
-    (g ++= iH) shouldEqual Expected.g_union_h
+  def `unionInPlace ` {
+    (g |= h) shouldEqual Expected.g_union_h
+    (g |= iH) shouldEqual Expected.g_union_h
   }
 
   def `--= ` {
