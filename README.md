@@ -13,7 +13,7 @@ Peter
 
 ###### Branches:
 
-**1.x** started in 2011 and was evolved by paying high attention to version compatibility to allow little migration effort.
+**1.x** started in 2011 and has evolved by paying high attention to version compatibility to allow little migration effort.
 
 **2.x** started in 2019 to make some significant improvements that also need new, simplified signatures. Added features include
 
