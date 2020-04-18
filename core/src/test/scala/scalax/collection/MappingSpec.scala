@@ -8,13 +8,13 @@ import generic.GraphCoreCompanion
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 
-class TMapRootTest
+class MappingSpec
     extends Suites(
-      new TMap[immutable.Graph](immutable.Graph),
-      new TMap[mutable.Graph](mutable.Graph)
+      new Mapping[immutable.Graph](immutable.Graph),
+      new Mapping[mutable.Graph](mutable.Graph)
     )
 
-class TMap[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class Mapping[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {

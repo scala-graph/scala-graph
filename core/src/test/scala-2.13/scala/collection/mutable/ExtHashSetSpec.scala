@@ -1,16 +1,16 @@
 package scala.collection.mutable
 
 import scala.math.abs
+import scala.util.Random
 import scala.util.chaining._
 
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
-import scala.util.Random
 
-class ExtHashSetTest extends RefSpec with Matchers {
+class ExtHashSetSpec extends RefSpec with Matchers {
 
   object `ExtHashSet works properly in that it` {
-    import ExtHashSetTest._
+    import ExtHashSetSpec._
 
     def `draws random elements with uniform distribution if buckets are of equal length` {
       val size = 16
@@ -110,7 +110,7 @@ class ExtHashSetTest extends RefSpec with Matchers {
   }
 }
 
-object ExtHashSetTest extends App {
+object ExtHashSetSpec extends App {
 
   private def nonEmptyBuckets(set: ExtHashSet[Int]) = set.dump filter (_.nonEmpty)
 

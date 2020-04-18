@@ -5,45 +5,28 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
-import scalax.collection.generic.GraphCompanion
 
-/** This wrapper trait enables to transparently pass `GraphCompanion` objects with non-default configuration parameters to tests.
+/** Editing any kind of non-hypergraph with unlabeled edges including mixed and multigraphs.
   */
-trait ConfigWrapper[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]] {
-  val companion: GraphCompanion[CC]
-  implicit val config: companion.Config
-
-  def empty[N, E <: EdgeLike[N]](implicit config: companion.Config): CC[N, E] = companion.empty[N, E]
-
-  def apply[N, E[X] <: EdgeLike[X]](elems: OuterElem[N, E[N]]*)(implicit config: companion.Config) =
-    companion(elems: _*)
-
-  def from[N, E <: EdgeLike[N]](nodes: collection.Iterable[N], edges: collection.Iterable[E])(
-      implicit config: companion.Config) =
-    companion.from[N, E](nodes, edges)
-
-  def from[N, E[X] <: EdgeLike[X]](edges: collection.Iterable[E[N]]) = companion.from[N, E](edges)
-}
-
-class TEditRootTest
+class EditingSpec
     extends Suites(
-      new TEdit[Graph](new ConfigWrapper[Graph] {
+      new Editing[Graph](new ConfigWrapper[Graph] {
         val companion = Graph
         val config    = Graph.defaultConfig
       }),
-      new TEdit[immutable.Graph](new ConfigWrapper[immutable.Graph] {
+      new Editing[immutable.Graph](new ConfigWrapper[immutable.Graph] {
         val companion = immutable.Graph
         val config    = immutable.Graph.defaultConfig
       }),
-      new TEdit[mutable.Graph](new ConfigWrapper[mutable.Graph] {
+      new Editing[mutable.Graph](new ConfigWrapper[mutable.Graph] {
         val companion = mutable.Graph
         val config    = mutable.Graph.defaultConfig
       }),
-      new TEditImmutable,
-      new TEditMutable
+      new EditingImmutable,
+      new EditingMutable
     )
 
-class TEditImmutable extends RefSpec with Matchers {
+class EditingImmutable extends RefSpec with Matchers {
   private val Graph = immutable.Graph
 
   Graph.from(1 ~ 2 :: Nil)
@@ -61,14 +44,14 @@ class TEditImmutable extends RefSpec with Matchers {
       g + 0 ~ 1 should be(Graph(0, 1, 2, 3, 0 ~ 1, 2 ~ 3))
     }
 
-    val gString_A = Graph("A")
+    val gString_A = Graph[String, AnyEdge]("A")
 
     def `- ` {
       var g = gString_A - "B"
       g.order should be(1)
 
       g = gString_A - "A"
-      g.contains("A") should be(false) //gMinus shouldNot contain ("A")
+      g.contains("A") should be(false) // not compiling: gMinus shouldNot contain ("A")
       g should have size 0
       g shouldBe empty
 
@@ -88,7 +71,7 @@ class TEditImmutable extends RefSpec with Matchers {
       val g = gString_A + "B"
       g.elementCount should be(2)
       g.contains("A") should be(true)
-      g.contains("B") should be(true) //g should contain ("B")
+      g.contains("B") should be(true) // not compiling: g should contain ("B")
 
       val hString_A = Graph[String, UnDiEdge]("A")
       val h         = hString_A + ("A" ~ "C")
@@ -99,7 +82,7 @@ class TEditImmutable extends RefSpec with Matchers {
   }
 }
 
-class TEditMutable extends RefSpec with Matchers {
+private class EditingMutable extends RefSpec with Matchers {
   private val Graph = mutable.Graph
 
   object `mutable graphs` {
@@ -176,44 +159,16 @@ class TEditMutable extends RefSpec with Matchers {
       (n1 ~>? n1) should be(Some(e11))
     }
 
-    def `'diSuccessors' when directed hypergraph` {
-      import DiHyperEdgeImplicits._
-      val (one, two, three, oneOneTwo, oneTwoThree) = (1, 2, 3, 1 ~~> List(1, 2), 1 ~~> List(2, 3))
-      val g                                         = Graph(oneOneTwo, oneTwoThree)
-      val (n1, n2)                                  = (g get one, g get two)
-      val e112                                      = g get oneOneTwo
-
-      n2.diSuccessors shouldBe empty
-      n1.diSuccessors should be(Set(two, three))
-      (n1 ~>? n1) should be(Some(oneOneTwo))
-
-      g subtractOne oneTwoThree // Graph(oneOneTwo)
-      n1.diSuccessors should be(Set(two))
-      (n1 ~>? n1) should be(Some(oneOneTwo))
-
-      g subtractOne two // Graph(one)
-      n1.diSuccessors shouldBe empty
-      (n1 ~>? n1) should be(None)
-
-      g += oneOneTwo // Graph(oneOneTwo)
-      n1.diSuccessors should be(Set(2))
-      (n1 ~>? n1) should be(Some(oneOneTwo))
-    }
-
-    /* TODO missing examples... */
-
     def `serve ++=, unionInPlace` {
       val (gBefore, gAfter) = (Graph(1, 2 ~ 3), Graph(0, 1 ~ 2, 2 ~ 3))
       (gBefore ++= (0 :: Nil, List(1 ~ 2, 2 ~ 3))) should equal(gAfter)
       (gBefore |= Graph(0, 1 ~ 2)) should equal(gAfter)
       (gBefore |= Graph[Int, UnDiEdge](0) |= Graph(1 ~ 2)) should equal(gAfter)
     }
-
-    /* TODO missing examples... */
   }
 }
 
-class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: ConfigWrapper[CC])
+private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: ConfigWrapper[CC])
     extends RefSpec
     with Matchers {
 
@@ -254,34 +209,18 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
     }
 
     def `nodes of ADT fixes #40` {
-      trait Node
+      sealed trait Node
       case class N1() extends Node
       case class N2() extends Node
-      factory(N1() ~> N2(), N1() ~> N1())
+      factory(N1() ~> N2(), N1() ~> N1()): CC[Node, DiEdge[Node]] // should typeCheck
     }
 
-    /* TODO
     def `isDirected ` {
-      def directed(g: CC[Int, UnDiEdge], expected: Boolean): Unit = g.isDirected should be(expected)
-      val wDi                                                     = edge.WDiEdge(1, 2)(0)
+      def directed(g: CC[Int, AnyEdge[Int]], expected: Boolean): Unit = g.isDirected should be(expected)
 
-      factory(wDi).isDirected should be(true)
       directed(factory(1 ~ 2), false)
       directed(factory(1 ~> 2), true)
-      directed(factory(wDi), true)
-      directed(factory(0 ~> 1, wDi), true)
     }
-     */
-    def `isHyper ` {
-      def test(g: CC[Int, AnyHyperEdge[Int]], expected: Boolean): Unit = g.isHyper should be(expected)
-
-      import HyperEdgeImplicits._
-      test(factory.from[Int, AnyHyperEdge](List(1 ~> 2, 1 ~~ 2 ~~ 3)), true)
-      test(factory.from[Int, AnyHyperEdge](1 ~ 2 :: Nil), false)
-      test(factory.from[Int, AnyHyperEdge](1 ~> 2 :: Nil), false)
-    }
-
-    /* TODO missing examples... */
 
     def `from ` {
       val (n_start, n_end) = (11, 20)
@@ -329,18 +268,6 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
       restored.find(_ == n(1)).get.edges should have size 1
     }
 
-    def `Eq ` {
-      factory[Int, Nothing]() shouldEqual factory[Int, DiEdge]()
-      gInt_1_3 shouldEqual factory(1, 3)
-      gString_A shouldEqual factory("A")
-
-      factory() shouldNot be(factory(1))
-      gInt_1_3 shouldNot be(factory(2, 3))
-      gString_A shouldNot be(factory("B"))
-
-      gInt_1_3 should be(immutable.Graph(1) + 3)
-    }
-
     def `EdgeAssoc ` {
       val e = 1 ~ 2
       e shouldBe an[UnDiEdge[_]]
@@ -353,31 +280,6 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
       d.source should be(1)
       d.target should be(2)
       factory[Int, AnyEdge](1, d, 1 ~ 4).nodes should have size (3)
-
-      {
-        val heNodes = List("A", "B", "C")
-        val he      = HyperEdge(heNodes)
-
-        he shouldBe a[HyperEdge[_]]
-        he.arity should be(heNodes.size)
-        he._1 should be(heNodes(0))
-        he._2 should be(heNodes(1))
-        for (i <- heNodes.indices) he._n(i) should be(heNodes(i))
-      }
-
-      {
-        import DiHyperEdgeImplicits._
-        val sources = List('A', 'B', 'C')
-        val target  = 'D'
-        val dhe     = sources ~~> target
-
-        dhe shouldBe a[DiHyperEdge[_]]
-        dhe.ends should contain theSameElementsAs (target +: sources)
-        dhe.arity should be(4)
-        dhe.sources.head should be(sources.head)
-        dhe.sources.last should be(sources.last)
-        dhe.targets.head should be(target)
-      }
     }
 
     def `concat, ++, union` {
@@ -395,10 +297,6 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
     private val gUnDi  = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
     private val gDi    = factory(1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
     private val gMixed = factory[Int, AnyEdge](1 ~> 2, 2 ~> 3, 4 ~ 3)
-    private val hDi = {
-      import DiHyperEdgeImplicits._
-      factory(1 ~~> List(1, 5), 1 ~~> List(2, 5), 1 ~~> List(3, 5), 1 ~~> List(4, 9))
-    }
 
     object `diSuccessors ` {
       def `for UnDi` {
@@ -412,11 +310,6 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
       def `for mixed` {
         (gMixed get 2).diSuccessors should be(Set(3))
         (gMixed get 3).diSuccessors should be(Set(4))
-      }
-      def `for DiHyper` {
-        (hDi get 1).diSuccessors should be(Set(2, 3, 4, 5, 9))
-        (hDi get 2).diSuccessors should be(Set.empty)
-        (hDi get 5).diSuccessors should be(Set.empty)
       }
     }
 
@@ -433,11 +326,6 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
         (gMixed get 2).diPredecessors should be(Set(1))
         (gMixed get 3).diSuccessors should be(Set(4))
       }
-      def `for DiHyper` {
-        (hDi get 1).diPredecessors should be(Set.empty)
-        (hDi get 2).diPredecessors should be(Set(1))
-        (hDi get 5).diPredecessors should be(Set(1))
-      }
     }
 
     object `neighbors ` {
@@ -448,11 +336,6 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
       def `for Di` {
         (gDi get 1).neighbors should be(Set(2, 3, 4))
         (gDi get 2).neighbors should be(Set(1))
-      }
-      def `for DiHyper` {
-        (hDi get 1).neighbors should be(Set(2, 3, 4, 5, 9))
-        (hDi get 2).neighbors should be(Set(1, 5))
-        (hDi get 5).neighbors should be(Set(1, 2, 3))
       }
     }
 
@@ -505,23 +388,6 @@ class TEdit[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
       val unDi = 1 ~ 2
       (unDi match { case UnDiEdge(n1, _) => n1 }) should be(1)
       (unDi match { case n1 ~ n2         => n1 + n2 }) should be(3)
-
-      {
-        import HyperEdgeImplicits._
-        val hyper = 1 ~~ 2 ~~ 3
-        (hyper match { case HyperEdge(Seq(n1, n2, n3, _ @_*)) => n1 + n2 + n3 }) should be(6)
-// TODO (hyper match { case HyperEdge(n1 ~~ (n2, n3)            => n1 + n2 + n3 }) should be(6)
-      }
-
-      {
-        import DiHyperEdgeImplicits._
-        val count   = 3
-        val sources = List.tabulate(count - 1)(_ + 1)
-        val target  = count
-        val diHyper = sources ~~> target
-        (diHyper match { case DiHyperEdge(Seq(s1, _*), _) => s1 }) should be(sources.head)
-        (diHyper match { case _ ~~> targets               => targets.head }) should be(target)
-      }
     }
   }
 }

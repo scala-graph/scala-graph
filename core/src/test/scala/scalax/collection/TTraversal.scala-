@@ -406,7 +406,7 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
   }
 
   def `shortestPathTo in the flight example graph` {
-    import custom.flight._, Helper._, Flight.ImplicitEdge
+    import scalax.collection.edges.flight._, Helper._, Flight.ImplicitEdge
     val (jfc, lhr, dme, svx, fra, prg) =
       (Airport("JFC"), Airport("LHR"), Airport("DME"), Airport("SVX"), Airport("FRA"), Airport("PRG"))
     val flights: List[Flight[Airport]] =

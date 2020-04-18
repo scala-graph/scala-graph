@@ -110,6 +110,6 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
     Seq("-doc-root-content", (d / "rootdoc.txt").getPath)
   }).value,
   autoAPIMappings := true,
-  Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Test"))),
+  Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
   libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % "test"
 ) ++ GraphSonatype.settings

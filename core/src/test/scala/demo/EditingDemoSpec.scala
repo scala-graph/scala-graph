@@ -12,7 +12,7 @@ import org.scalatest.Matchers
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-operations.html
   *  Graph Operations]].
   */
-final class EditingTest extends RefSpec with Matchers {
+final class EditingDemoSpec extends RefSpec with Matchers {
 
   object `demonstraiting ` {
 

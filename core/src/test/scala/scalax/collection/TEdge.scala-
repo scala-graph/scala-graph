@@ -5,7 +5,7 @@ import org.scalatest.refspec.RefSpec
 
 import GraphPredef._, GraphEdge._, edge._, edge.LBase._, edge.Implicits._
 
-import custom.flight._, custom.flight.Helper._
+import scalax.collection.edges.flight._, scalax.collection.edges.flight.Helper._
 
 class TEdgeTest extends RefSpec with Matchers {
 

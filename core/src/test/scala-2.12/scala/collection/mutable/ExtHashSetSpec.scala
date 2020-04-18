@@ -5,7 +5,7 @@ import org.scalatest.refspec.RefSpec
 
 import scala.util.Random
 
-class ExtHashSetTest extends RefSpec with Matchers {
+class ExtHashSetSpec extends RefSpec with Matchers {
 
   object `Hash set extensions work properly` {
 

@@ -4,7 +4,9 @@ import org.scalactic.Equality
 import org.scalatest.refspec.RefSpec
 import org.scalatest.Matchers
 
-class TMicroBenchmark extends RefSpec with Matchers {
+/* Intentionally excluded from SBT tests by means of a class name suffix different from "Spec".
+ */
+class MicroBenchmarkTest extends RefSpec with Matchers {
 
   import MicroBenchmark._
 
@@ -16,10 +18,10 @@ class TMicroBenchmark extends RefSpec with Matchers {
         r.toList.sorted.toArray.toList.sorted,
         r.toList.sorted.toSet.toArray.toList.sorted
       )
-      relTimes sliding 2 foreach (_ match {
+      relTimes sliding 2 foreach {
         case a :: b :: _ => a should be < b
         case x           => throw new MatchError(x)
-      })
+      }
     }
   }
   class FloatTolerance(maxDeviation: Float) extends Equality[Float] {

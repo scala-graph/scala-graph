@@ -2,19 +2,19 @@ package scalax.collection.constrained
 
 import org.scalatest.Suites
 
-import scalax.collection.{ConfigWrapper, TEdit}
+import scalax.collection.{ConfigWrapper, Editing}
 
 class TEditRootTest
     extends Suites(
-      new TEdit[Graph](new ConfigWrapper[Graph] {
+      new Editing[Graph](new ConfigWrapper[Graph] {
         val companion = Graph
         val config    = Graph.defaultConfig
       }),
-      new TEdit[immutable.Graph](new ConfigWrapper[immutable.Graph] {
+      new Editing[immutable.Graph](new ConfigWrapper[immutable.Graph] {
         val companion = immutable.Graph
         val config    = Graph.defaultConfig
       }),
-      new TEdit[mutable.Graph](new ConfigWrapper[mutable.Graph] {
+      new Editing[mutable.Graph](new ConfigWrapper[mutable.Graph] {
         val companion = mutable.Graph
         val config    = Graph.defaultConfig
       })

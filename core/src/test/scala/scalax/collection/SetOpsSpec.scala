@@ -8,15 +8,15 @@ import generic.GraphCoreCompanion
 
 import scalax.collection.visualization.Visualizer
 
-class TOpRootTest
+class SetOpsSpec
     extends Suites(
-      new TOp[immutable.Graph](immutable.Graph),
-      new TOp[mutable.Graph](mutable.Graph),
-      new TImmutableOp,
-      new TMutableOp
+      new SetOps[immutable.Graph](immutable.Graph),
+      new SetOps[mutable.Graph](mutable.Graph),
+      new SetOpsImmutable,
+      new SetOpsMutable
     )
 
-protected trait Examples[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]] {
+protected trait SetOpExamples[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]] {
 
   protected def factory: GraphCoreCompanion[CC]
 
@@ -35,10 +35,11 @@ protected trait Examples[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N
   }
 }
 
-class TOp[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
+private class SetOps[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+    val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers
-    with Examples[CC]
+    with SetOpExamples[CC]
     with Visualizer[CC] {
 
   def `concat ` : Unit = {
@@ -69,12 +70,12 @@ class TOp[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val f
   }
 }
 
-class TImmutableOp extends RefSpec with Matchers with Examples[immutable.Graph] {
+private class SetOpsImmutable extends RefSpec with Matchers with SetOpExamples[immutable.Graph] {
   protected val factory = immutable.Graph
 
 }
 
-class TMutableOp extends RefSpec with Matchers with Examples[mutable.Graph] {
+private class SetOpsMutable extends RefSpec with Matchers with SetOpExamples[mutable.Graph] {
   protected val factory = mutable.Graph
 
   private val iH = immutable.Graph.from(hEdges)
