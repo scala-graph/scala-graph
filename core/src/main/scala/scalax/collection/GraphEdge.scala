@@ -446,7 +446,7 @@ object GraphEdge {
     def map[NN](node_1: NN, node_2: NN): This[NN]
   }
 
-  trait PartialHyperEdgeMapper[+N, +This <: AnyHyperEdge[N]]     extends PartialMapper with HyperEdgeMapper {
+  trait PartialHyperEdgeMapper[+N, +This <: AnyHyperEdge[N]] extends PartialMapper with HyperEdgeMapper {
     def map[NN]: PartialFunction[Iterable[NN], This]
   }
   trait PartialDiHyperEdgeMapper[+N, +This <: AnyDiHyperEdge[N]] extends PartialMapper with DiHyperEdgeMapper {

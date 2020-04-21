@@ -14,6 +14,4 @@ class MappingTypedHyperSpec
 private class MappingTypedHyper[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
-    with Matchers {
-
-}
+    with Matchers {}
