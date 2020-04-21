@@ -10,7 +10,7 @@ lazy val all = project
       publishTo := None
     )
   )
-  .aggregate(core, constrained, dot, json)
+  .aggregate(core/*, constrained, dot, json*/)
 
 lazy val core = project
   .in(file("core"))
@@ -41,6 +41,7 @@ lazy val core = project
     )
   )
 
+/*
 lazy val constrained = project
   .in(file("constrained"))
   .dependsOn(core % "compile->compile;test->test")
@@ -81,6 +82,7 @@ lazy val misc = project
       version := "unpublished"
     )
   )
+*/
 
 ThisBuild / resolvers ++= Seq(
   ("NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/").withAllowInsecureProtocol(true),

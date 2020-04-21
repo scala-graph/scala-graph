@@ -5,11 +5,13 @@ import scalax.collection.GraphEdge._
 
 /* Operations common to mutable and immutable graphs.
 
-  $define mapNodes Computes a new graph by applying `fNode` to all nodes of this graph.
-  $define mapEdges Computes a new graph by applying `fNode` to all nodes and `fEdge` to all edges of this graph.
-  $define fEdge    `fEdge` is expected to set the passed nodes.
-                   In case it produces duplicates, the resulting graph's size will decrease.
-  $define edgesOnlyUseCase Provided for the use case when you don't need to pass any isolated node.
+  $define mapNodes  computes a new graph by applying `fNode` to all nodes of this graph
+  $define mapEdges  computes a new graph by applying `fNode` to all nodes and `fEdge` to all edges of this graph
+  $define mapNN     the node type of the resulting graph. It may be unchanged or different from this graphs node type
+  $define mapEC     the higher kind of the edge type parameter of this graph
+  $define mapFNode  function to map the inner nodes of this graph to any type that becomes the node type of the resulting graph
+  $define $mapFEdge function to map edges based on the mapped nodes. It is expected to set the node ends to the passed nodes.
+                    If this expectation is not met the resulting graph may become deteriorated.
  */
 trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterElems[N, E] {
 
@@ -91,7 +93,8 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
       implicit e: E2 <:< EdgeLike[N2]): This[N2, E2]
 
   /** Same as `concat(isolatedNodes, edges)` but with empty `isolatedNodes`.
-    * $edgesOnlyUseCase */
+    * This method is useful if you don't need to pass any isolated node.
+    */
   def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](edges: IterableOnce[E2])(implicit e: E2 <:< EdgeLike[N2]): This[N2, E2] =
     concat[N2, E2](Nil, edges)(e)
 
@@ -177,31 +180,65 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
   @inline final def |(that: Graph[N, E]): This[N, E] = this union that
 
   /** $mapNodes
+    * The type parameter `E` of this graph is required to be generic meaning that `E` accepts ends of `Any` type.
+    * Nonetheless, the type parameter `N` may be of any type.
+    * Being `E` a generic edge type, you can map nodes to any type.
     *
-    * The edge type `E` of this graph is required to be generic meaning that it accepts ends of `Any` type.
-    * Edge types will be preserved and edge ends will reflect the mapped nodes.
+    * @tparam NN            $mapNN
+    * @tparam EC            $mapEC for use by `w2`
+    * @param fNode          $mapFNode
+    * @param w1             ensures that `E` of this graph is of type `GenericMapper`
+    * @param w2             catches the current higher kind of `E` for use by `fallbackMapper`
+    * @param fallbackMapper in case this graph contains generic and typed edges,
+    *                       this mapper is used to replace typed edges by generic ones if necessary
+    * @return               the mapped graph with a possibly changed node type parameter.
+    *                       Edge ends reflect the mapped nodes while edge types will be preserved as far as possible.
     */
   def map[NN, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(implicit w1: E <:< GenericMapper,
                                                         w2: EC[N] =:= E,
                                                         fallbackMapper: EdgeCompanion[EC]): This[NN, EC[NN]]
 
   /** $mapNodes
+    * Use this method to map a typed graph to a resulting typed graph bounded to the same edge type.
+    * The target node type needs be of type `N` or a subtype of it
+    * because a supertype requires to replace not just edge ends but also edge types.
     *
-    * The target node type needs be of the type `N` or a subtype of `N` because, in case of typed edges,
-    * a supertype potentially requires to replace not just edge ends but also edge types.
-    * To map to a super type of `N` use `map` with a second parameter for the edge transformation.
+    * @see #map(NodeT => NN, (NN, NN) => EC[NN])
+    * @see #mapBounded(NodeT => NN, (NN, NN) => EC)
+    *
+    * @tparam NN   $mapNN
+    * @tparam EC   $mapEC for use by `w2`
+    * @param fNode $mapFNode
+    * @param w1    ensures that `E` of this graph is of type `PartialMapper`
+    * @param w2    catches the current higher kind of `E` to determine the return type
+    * @return      the mapped graph with a possibly downcasted node type parameter
     */
-  def mapBounded[NN <: N, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(implicit w: E <:< PartialMapper,
+  def mapBounded[NN <: N, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(implicit w1: E <:< PartialMapper,
                                                                     w2: EC[N] =:= E): This[NN, EC[NN]]
 
   /** $mapEdges
-    * $fEdge
+    * Use this method to map nodes and edges to a graph with an edge type having one type parameter like `DiEdge[N]`.
+    *
+    * @see #mapBounded(NodeT => NN, (NN, NN) => EC)
+    *
+    * @tparam NN   $mapNN
+    * @tparam EC   $mapEC for use by `w2`
+    * @param fNode $mapFNode
+    * @param fEdge $mapFEdge
+    * @return      the mapped graph with a possibly changed node type and edge type parameter
     */
-  def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC[NN]): This[NN, EC[NN]]
+  def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, fEdge: (NN, NN) => EC[NN]): This[NN, EC[NN]]
 
   /** $mapEdges
-    * This method accepts a typed edge mapper.
-    * $fEdge
+    * Use this method to map nodes and edges to a graph with an edge type having no type parameter as typed edges usually do.
+    *
+    * @see #map(NodeT => NN, (NN, NN) => EC)
+    *
+    * @tparam NN   $mapNN
+    * @tparam EC   $mapEC for use by `w2`
+    * @param fNode $mapFNode
+    * @param fEdge $mapFEdge
+    * @return      the mapped graph with a possibly changed node type and edge type parameter
     */
-  def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC): This[NN, EC]
+  def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, fEdge: (NN, NN) => EC): This[NN, EC]
 }

@@ -27,7 +27,7 @@ object GraphEdge {
     * @define ISAT In case this edge is undirected this method maps to `isAt`
     * @author Peter Empen
     */
-  sealed trait EdgeLike[+N] extends Eq { this: Mapper =>
+  sealed trait EdgeLike[+N] extends Eq {
     import EdgeLike.ValidationException
 
     /** The endpoints of this edge, in other words the nodes this edge joins. */
@@ -214,8 +214,7 @@ object GraphEdge {
     class ValidationException(val msg: String) extends Exception
   }
 
-  private[collection] trait InnerEdgeLike[N] extends EdgeLike[N] { this: Mapper =>
-  }
+  private[collection] trait InnerEdgeLike[N] extends EdgeLike[N]
 
   protected[collection] trait Keyed
 
@@ -447,15 +446,17 @@ object GraphEdge {
     def map[NN](node_1: NN, node_2: NN): This[NN]
   }
 
-  trait PartialHyperEdgeMapper[+N, +This <: AnyHyperEdge[N]]     extends PartialMapper with HyperEdgeMapper
-  trait PartialDiHyperEdgeMapper[+N, +This <: AnyDiHyperEdge[N]] extends PartialMapper with DiHyperEdgeMapper
-
+  trait PartialHyperEdgeMapper[+N, +This <: AnyHyperEdge[N]]     extends PartialMapper with HyperEdgeMapper {
+    def map[NN]: PartialFunction[Iterable[NN], This]
+  }
+  trait PartialDiHyperEdgeMapper[+N, +This <: AnyDiHyperEdge[N]] extends PartialMapper with DiHyperEdgeMapper {
+    def map[NN]: PartialFunction[(Iterable[NN], Iterable[NN]), This]
+  }
   trait PartialEdgeMapper[+N, +This <: AnyEdge[N]] extends PartialMapper with EdgeMapper {
     def map[NN]: PartialFunction[(NN, NN), This]
-    // TODO def label: Option[Any] = None
   }
 
-  trait AnyHyperEdge[+N] extends EdgeLike[N] with EqHyper with GenericHyperEdgeMapper {
+  trait AnyHyperEdge[+N] extends EdgeLike[N] with EqHyper {
 
     def _1: N         = ends.head
     def _2: N         = ends.drop(1).head
@@ -522,6 +523,7 @@ object GraphEdge {
     def unapply[N](edge: E[N] @uV): Option[Seq[N]]          = Some(edge.ends.toSeq)
 
     protected def from[N](ends: Iterable[N]): E[N]
+    implicit def thisCompanion: this.type = this
   }
 
   /** Represents an undirected hyperedge (hyperlink) with ends of bag semantic. */
@@ -547,7 +549,7 @@ object GraphEdge {
   /** $SHORTCUT `hyperedge match { case ~~#(ends) => f(ends) }`. */
   val ~~# = OrderedHyperEdge
 
-  trait AnyDiHyperEdge[+N] extends AnyHyperEdge[N] with EqDiHyper with GenericDiHyperEdgeMapper {
+  trait AnyDiHyperEdge[+N] extends AnyHyperEdge[N] with EqDiHyper {
 
     override def _n(n: Int): N = ends.drop(n).head
     def ends: Iterable[N]      = sources ++ targets
@@ -605,7 +607,7 @@ object GraphEdge {
   /** $SHORTCUT `diHyperedge match { case sources ~~> targets => f(sources, targets) }`. */
   val ~~> = DiHyperEdge
 
-  trait AnyEdge[+N] extends EdgeLike[N] with EdgeMapper {
+  trait AnyEdge[+N] extends EdgeLike[N] {
 
     def _1: N
     def _2: N
@@ -692,7 +694,7 @@ object GraphEdge {
   }
 
   /** Factory for undirected edges.
-    *  `GraphPredef` also supports implicit conversion from `node_1 ~ node_2` to `UnDiEdge`.
+    * `GraphPredef` also supports implicit conversion from `node_1 ~ node_2` to `UnDiEdge`.
     */
   object UnDiEdge extends EdgeCompanion[UnDiEdge]
 

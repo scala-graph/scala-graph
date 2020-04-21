@@ -184,7 +184,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   }
 
   trait InnerEdge extends super.InnerEdge {
-    this: EdgeT with Mapper =>
+    this: EdgeT =>
 
     /** $CONTGRAPH inner edge. */
     final def containingGraph: ThisGraph = thisGraph
@@ -290,7 +290,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
       (m: PartialHyperEdgeMapper[N, _], ns: Iterable[NN]) => null.asInstanceOf[EC[NN]] // TODO
     )
 
-  def mapBounded[NN <: N, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(implicit w: E <:< PartialMapper,
+  def mapBounded[NN <: N, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(implicit w1: E <:< PartialMapper,
                                                                     w2: EC[N] =:= E): This[NN, EC[NN]] =
     mapNodes(fNode)(
       (m: PartialEdgeMapper[N, _], ns: (NN, NN)) => m.map(ns).asInstanceOf[EC[NN]],
@@ -330,16 +330,16 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     (nMap, b)
   }
 
-  final def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC[NN]): This[NN, EC[NN]] =
-    mapBounded(fNode, edgeMapper)
+  final def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, fEdge: (NN, NN) => EC[NN]): This[NN, EC[NN]] =
+    mapBounded(fNode, fEdge)
 
-  final def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, edgeMapper: (NN, NN) => EC): This[NN, EC] =
+  final def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, fEdge: (NN, NN) => EC): This[NN, EC] =
     mapNodesInBuilder[NN, EC](fNode) pipe {
       case (nMap, builder) =>
         edges foreach {
           case InnerEdge(outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
             (nMap(n1), nMap(n2)) pipe {
-              case nns @ (nn1, nn2) => builder += edgeMapper(nn1, nn2)
+              case nns @ (nn1, nn2) => builder += fEdge(nn1, nn2)
             }
           case _ => ??? // TODO
         }

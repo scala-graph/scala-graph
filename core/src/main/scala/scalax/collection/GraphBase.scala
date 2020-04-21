@@ -415,7 +415,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
   type EdgeT <: InnerEdgeLike[NodeT] with InnerEdge
 
   trait InnerEdge extends InnerEdgeLike[NodeT] with super.InnerEdge with Equals {
-    this: EdgeT with Mapper =>
+    this: EdgeT =>
 
     /** Synonym for `outer`. */
     @deprecated("Use 'outer' instead", "2.0.0")

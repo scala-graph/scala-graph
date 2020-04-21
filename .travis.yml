@@ -5,7 +5,7 @@ scala:
 jdk:
   - oraclejdk11
 script:
-  - sbt "project core" compile test scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
+  - sbt compile test scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
 cache:
   directories:
     - $HOME/.ivy2/cache
