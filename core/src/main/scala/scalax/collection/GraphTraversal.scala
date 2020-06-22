@@ -1,11 +1,12 @@
 package scalax.collection
 
 import scala.annotation.tailrec
-import scala.collection.{AbstractIterable, AbstractTraversable, EqSetFacade}
+import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade, IndexedSeq}
 import scala.collection.mutable.{ArrayBuffer, Builder}
-import scala.language.{higherKinds, implicitConversions}
+import scala.language.implicitConversions
 import scala.math.{max, min}
 
+import scalax.collection.Compat.CompatTraversable
 import scalax.collection.GraphPredef.{EdgeLikeIn, OuterElem}
 import scalax.collection.mutable.{EqHashMap, EqHashSet}
 import scalax.collection.generic.GraphCoreCompanion
@@ -17,7 +18,7 @@ import scalax.collection.generic.GraphCoreCompanion
   * Before starting a traversal a `Traverser` such as [[scalax.collection.GraphTraversal#InnerNodeTraverser]]
   * is instantiated explicitly or implicitly. It holds settings like `maxDepth`, `subgraph` or `ordering`
   * providing a fine-grained control of the traversal. `Traverser`s also extend
-  * `scala.collection.Traversable` meaning that you can process the visited nodes and edges
+  * `scala.collection.Iterable` meaning that you can process the visited nodes and edges
   * in a functional way.
   *
   * @see [[http://www.scala-graph.org/guides/core-traversing]]
@@ -38,10 +39,10 @@ import scalax.collection.generic.GraphCoreCompanion
   *         or altered by any `with*` method.
   * @define OPTVISITOR An optional function that is applied for its side-effect to
   *         every element visited during graph traversal.
-  * @define EXTENDSTYPE which extends `scala.collection.Traversable` with elements of type
+  * @define EXTENDSTYPE which extends `scala.collection.Iterable` with elements of type
   * @define SETROOT and sets its `root` to this node
   * @define TOSTART To start a traversal call one of the graph traversal methods or
-  *         any appropriate method inherited from [[scala.collection.Traversable]] on this
+  *         any appropriate method inherited from [[scala.collection.Iterable]] on this
   *         instance.
   * @define ROOT The node where subsequent graph traversals start.
   * @define PARAMETERS The properties controlling subsequent traversals.
@@ -71,7 +72,7 @@ import scalax.collection.generic.GraphCoreCompanion
   *
   * @author Peter Empen
   */
-trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
+trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   thisGraph =>
 
   import GraphTraversal._
@@ -106,24 +107,25 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     innerNodeTraverser(node).partOfCycle()
 
   /** Represents a topological sort layer. */
-  case class Layer protected[collection] (index: Int, nodes: IndexedSeq[NodeT])
+  case class Layer protected[collection] (index: Int, _nodes: IndexedSeq[NodeT]) {
+    def nodes(implicit ordering: NodeOrdering): IndexedSeq[NodeT] =
+      if (ordering.isDefined) _nodes sorted ordering
+      else _nodes
+  }
 
   /** The result of a topological sort in the layered view. */
-  type Layers = Traversable[Layer]
+  type Layers = Iterable[Layer]
 
   /** Topologically ordered nodes or layers of a topological order of a graph or of an isolated graph component.
     *  @tparam A one of `NodeT`, `N`
     *  @tparam T one of `A` or `(Int, Iterable[A])`
     *  @define NEWFLAVOR Creates a new flavor of this `TopologicalOrder` or `LayeredTopologicalOrder` */
-  sealed abstract class AbstractTopologicalOrder[+A, +T] extends AbstractTraversable[T] {
+  sealed abstract class AbstractTopologicalOrder[+A, +T] extends AbstractIterable[T] {
 
     protected val layers: Layers
     protected def toA: NodeT => A
 
     def layerOrdering: NodeOrdering
-    protected def ordered(nodes: IndexedSeq[NodeT]): IndexedSeq[NodeT] =
-      if (layerOrdering.isDefined) nodes.sorted(layerOrdering)
-      else nodes
 
     /** The number of layers of this topological order. */
     def nrOfLayers = layers.size
@@ -154,11 +156,8 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       override protected val toA: NodeT => A)(implicit override val layerOrdering: NodeOrdering = NodeOrdering.None)
       extends AbstractTopologicalOrder[A, A] {
 
-    def foreach[U](f: A => U): Unit =
-      for {
-        layer <- layers
-        node  <- ordered(layer.nodes)
-      } f(toA(node))
+    override def iterator: Iterator[A] =
+      layers.view.flatMap(layer => layer.nodes).map(toA).iterator // 'view' with respect to Scala 2.12
 
     def withLayerOrdering(newOrdering: NodeOrdering): TopologicalOrder[A] =
       new TopologicalOrder(layers, toA)(newOrdering)
@@ -173,7 +172,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   /** Layers of a topological order of a graph or of an isolated graph component.
     *  The layers of a topological sort can roughly be defined as follows:
     *      a. layer 0 contains all nodes having no predecessors,
-    *      a. layer n contains those nodes that have only predecessors in anchestor layers
+    *      a. layer n contains those nodes that have only predecessors in ancestor layers
     *         with at least one of them contained in layer n - 1
     *  @tparam A one of `NodeT`, `N` */
   final class LayeredTopologicalOrder[+A] protected[collection] (
@@ -181,8 +180,8 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       override protected val toA: NodeT => A)(implicit override val layerOrdering: NodeOrdering = NodeOrdering.None)
       extends AbstractTopologicalOrder[A, (Int, Iterable[A])] {
 
-    def foreach[U](f: Tuple2[Int, Iterable[A]] => U): Unit =
-      for (layer <- layers) f(layer.index -> toIterable(layer.nodes))
+    override def iterator: Iterator[(Int, Iterable[A])] =
+      layers.view.map(layer => layer.index -> layer.nodes.map(toA)).iterator // 'view' with respect to Scala 2.12
 
     def withLayerOrdering(newOrdering: NodeOrdering): LayeredTopologicalOrder[A] =
       new LayeredTopologicalOrder(layers, toA)(newOrdering)
@@ -191,16 +190,6 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       new LayeredTopologicalOrder(layers, _.value)(layerOrdering)
 
     def toLayered: LayeredTopologicalOrder[A] = this
-
-    // O(1) view to avoid exposure of the possibly mutable `layers`
-    private def toIterable(iSeq: IndexedSeq[NodeT]): Iterable[A] = new AbstractIterable[A] {
-      def iterator: Iterator[A] = new AbstractIterator[A] {
-        private val it       = ordered(iSeq).toIterator
-        def hasNext: Boolean = it.hasNext
-        def next(): A        = toA(it.next)
-      }
-      override def stringPrefix = "Nodes"
-    }
   }
 
   /** Either a `Right` containing a valid topological order or a `Left` containing a node on a cycle. */
@@ -216,7 +205,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     *  @param visitor $SORTVISITOR
     *  $SEEFLUENT */
   final def topologicalSortByComponent[U](
-      implicit visitor: InnerElem => U = empty): Traversable[CycleNodeOrTopologicalOrder] =
+      implicit visitor: InnerElem => U = empty): Iterable[CycleNodeOrTopologicalOrder] =
     componentTraverser().topologicalSortByComponent(visitor)
 
   @inline final protected def defaultPathSize: Int = min(256, nodes.size * 2)
@@ -225,24 +214,25 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     * $WALKPATH
     * @define CUMWEIGHT The cumulated weight of all edges on this path/walk.
     */
-  trait Walk extends Traversable[InnerElem] {
+  trait Walk extends Iterable[InnerElem] {
     override def stringPrefix = "Walk"
 
     /** All nodes on this path/walk in proper order. */
-    def nodes: Traversable[NodeT]
+    def nodes: Iterable[NodeT]
 
     /** All edges of this path/walk in proper order. */
-    def edges: Traversable[EdgeT]
+    def edges: Iterable[EdgeT]
 
     /** $CUMWEIGHT */
-    final def weight: Double = (0d /: edges)((sum, edge) => sum + edge.weight)
+    final def weight: Double = edges.foldLeft(0d)((sum, edge) => sum + edge.weight)
 
     /** $CUMWEIGHT
-      *  @param f The weight function overriding edge weights. */
+      *
+      * @param f The weight function overriding edge weights. */
     final def weight[T: Numeric](f: EdgeT => T): T = {
       val num = implicitly[Numeric[T]]
       import num._
-      (num.zero /: edges)((sum, edge) => sum + f(edge))
+      edges.foldLeft(num.zero)((sum, edge) => sum + f(edge))
     }
 
     /** The number of edges on this path/walk. */
@@ -254,14 +244,24 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     def startNode: NodeT
     def endNode: NodeT
 
-    def foreach[U](f: InnerElem => U): Unit = {
-      f(nodes.head)
-      val edges = this.edges.toIterator
-      for (n <- nodes.tail;
-           e = edges.next) {
-        f(e)
-        f(n)
-      }
+    override def iterator: Iterator[InnerElem] = new AbstractIterator[InnerElem] {
+      private[this] var start, edgeToFollow = true
+      private[this] val nodeIt              = nodes.iterator
+      private[this] val firstNode           = nodeIt.next
+      private[this] val edgeIt              = edges.iterator
+
+      def hasNext: Boolean = start || !edgeToFollow || edgeIt.hasNext
+      def next(): InnerElem =
+        if (start) {
+          start = false
+          firstNode
+        } else if (edgeToFollow) {
+          edgeToFollow = false
+          edgeIt.next
+        } else {
+          edgeToFollow = true
+          nodeIt.next
+        }
     }
 
     /** Returns whether the nodes and edges of this walk are valid with respect
@@ -269,7 +269,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     def isValid: Boolean = {
       val valid = nodeValidator
       nodes.headOption exists { startNode =>
-        val (nodesIt, edgesIt) = (nodes.tail.toIterator, edges.toIterator)
+        val (nodesIt, edgesIt) = (nodes.tail.iterator, edges.iterator)
 
         @tailrec def ok(prev: NodeT, count: Int): Boolean =
           if (nodesIt.hasNext && edgesIt.hasNext) {
@@ -288,14 +288,12 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
     protected trait NodeValidator extends (NodeT => Boolean)
 
-    protected def nodeValidator: NodeValidator =
-      new NodeValidator {
-        def apply(node: NodeT): Boolean = true
-      }
+    protected def nodeValidator: NodeValidator = _ => true
 
     /** The `Graph` instance that contains `this` walk. */
     final def containingGraph: thisGraph.type = thisGraph
   }
+
   object Walk {
     protected[GraphTraversal] trait Zero {
       this: Walk =>
@@ -330,7 +328,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     * @define ADDEDGE Tries to add `edge` to the tail of the path/walk.
     * @define ADDSUCCESS Whether the addition was successful.
     */
-  trait WalkBuilder extends Builder[InnerElem, Walk] {
+  trait WalkBuilder extends Builder[InnerElem, Walk] with Compat.Growable[InnerElem] {
 
     /** The node this walk starts at. */
     def start: NodeT
@@ -351,7 +349,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     def add(edge: EdgeT): Boolean
 
     /** $ADDELEM */
-    def +=(elem: InnerElem): this.type = { add(elem); this }
+    def addOne(elem: InnerElem): this.type = { add(elem); this }
 
     /** $ADDNODE */
     @inline final def +=(node: NodeT): this.type = { add(node); this }
@@ -438,16 +436,16 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
     override def endNode: NodeT = startNode
 
-    /** Same as `sameAs` but also comparing this cycle with any `Traversable`.
+    /** Same as `sameAs` but also comparing this cycle with any `Iterable`.
       */
-    final def sameElements(that: Traversable[_]): Boolean =
+    final def sameElements(that: Iterable[_]): Boolean =
       this.size == that.size && {
-        val thisList = to[List]
+        val thisList = this.toList
         // thisList.indexOf(that.head) may fail due to asymmetric equality
         val idx = thisList.indexWhere(_ == that.head)
         if (idx >= 0) {
           val thisDoubled = thisList ++ thisList.tail
-          val thatList    = that.to[List]
+          val thatList    = that.toList
           (thisDoubled startsWith (thatList, idx)) ||
           (thisDoubled startsWith (thatList.reverse, idx))
         } else false
@@ -475,15 +473,15 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     def findLoop(node: NodeT): Option[Cycle] =
       node.hook map { hook =>
         new Cycle {
-          def nodes: Traversable[NodeT] = List(startNode, endNode)
-          def edges: Traversable[EdgeT] = List(hook)
-          def startNode: NodeT          = node
+          def nodes: Iterable[NodeT] = List(startNode, endNode)
+          def edges: Iterable[EdgeT] = List(hook)
+          def startNode: NodeT       = node
         }
       }
     protected[collection] def of(start: NodeT, mid: NodeT): Cycle =
       new Cycle {
-        def nodes: Traversable[NodeT] = List(startNode, mid, endNode)
-        def edges: Traversable[EdgeT] = {
+        def nodes: Iterable[NodeT] = List(startNode, mid, endNode)
+        def edges: Iterable[EdgeT] = {
           val out = {
             val outSet = start outgoingTo mid
             outSet find (_.directed) getOrElse outSet.head
@@ -545,7 +543,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
     /** Instantiates an extended node visitor based on 'visitor'.
       */
-    def apply[N, E[X] <: EdgeLikeIn[X], U](visitor: (NodeT, Int, Int, => NodeInformer) => U) =
+    def apply[N, E[+X] <: EdgeLikeIn[X], U](visitor: (NodeT, Int, Int, => NodeInformer) => U) =
       new ExtendedNodeVisitor[U] {
         def apply(n: NodeT, cnt: Int, depth: Int, inf: => NodeInformer) =
           visitor(n, cnt, depth, inf)
@@ -623,11 +621,13 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     def subgraphEdges: EdgeFilter
   }
   protected object SubgraphProperties {
-    def apply[A](t: Traversable[A], nodeFilter: NodeFilter, edgeFilter: EdgeFilter) =
-      new AbstractTraversable[A] with SubgraphProperties {
-        def foreach[U](f: A => U): Unit = t foreach f
-        def subgraphNodes               = nodeFilter
-        def subgraphEdges               = edgeFilter
+    def apply[A](t: Iterable[A], nodeFilter: NodeFilter, edgeFilter: EdgeFilter) =
+      new CompatTraversable[A] with SubgraphProperties {
+        protected def autarkicForeach[U](f: A => U): Unit = t foreach f
+
+        final protected def sizeHint: Int = 64
+        final def subgraphNodes           = nodeFilter
+        final def subgraphEdges           = edgeFilter
       }
   }
 
@@ -731,7 +731,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       } else Set.empty
 
     final def to[
-        G[X, Y[X] <: EdgeLikeIn[X]] <: Graph[X, Y] with GraphLike[X, Y, G]
+        G[NN, EE[+X] <: EdgeLikeIn[X]] <: Graph[NN, EE] with GraphLike[NN, EE, G]
     ](factory: GraphCoreCompanion[G]): G[N, E] = thisGraph match {
       case g: Graph[N, E] =>
         factory.from(edges = edges.map(_.toOuter))(g.edgeT, factory.defaultConfig)
@@ -751,16 +751,16 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   abstract class ComponentTraverser protected
       extends FluentProperties[ComponentTraverser]
       with Properties
-      with Traversable[Component] {
+      with Iterable[Component] {
 
-    def findCycle[U](implicit visitor: InnerElem => U = empty): Option[Cycle]
+    def findCycle[U](implicit visitor: InnerElem => U = Visitor.empty): Option[Cycle]
 
     /** See [[GraphTraversal#topologicalSort]]. */
-    def topologicalSort[U](implicit visitor: InnerElem => U = empty): CycleNodeOrTopologicalOrder
+    def topologicalSort[U](implicit visitor: InnerElem => U = Visitor.empty): CycleNodeOrTopologicalOrder
 
     /** See [[GraphTraversal#topologicalSortByComponent]]. */
     def topologicalSortByComponent[U](
-        implicit visitor: InnerElem => U = empty): Traversable[CycleNodeOrTopologicalOrder]
+        implicit visitor: InnerElem => U = Visitor.empty): Iterable[CycleNodeOrTopologicalOrder]
   }
 
   /** Creates a [[ComponentTraverser]] responsible for invoking graph traversal methods in all
@@ -784,7 +784,7 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   abstract class StrongComponentTraverser protected
       extends FluentProperties[StrongComponentTraverser]
       with Properties
-      with Traversable[Component]
+      with Iterable[Component]
 
   /** Creates a [[StrongComponentTraverser]].
     *
@@ -1031,10 +1031,10 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   trait Traverser[A, +This <: Traverser[A, This]]
       extends TraverserMethods[A, This]
       with Properties
-      with Traversable[A] {
+      with CompatTraversable[A] {
     this: This =>
 
-    def foreach[U](f: A => U): Unit =
+    protected def autarkicForeach[U](f: A => U): Unit =
       if (subgraphNodes(root))
         apply(noNode, f)
 
@@ -1054,13 +1054,18 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
         }
         b.result
     }
+
+    final protected def nonOverflowingOrderMultipliedBy_2(): Int =
+      if (order > (Int.MaxValue >> 1)) order else order << 1
   }
 
   /** Controls the properties of inner-node graph traversals. $TOSTART
     */
-  abstract class InnerNodeTraverser extends Traverser[NodeT, InnerNodeTraverser]
+  abstract class InnerNodeTraverser extends Traverser[NodeT, InnerNodeTraverser] {
+    final protected def sizeHint: Int = order
+  }
 
-  /** Creates a [[InnerNodeTraverser]] based on `scala.collection.Traversable[NodeT]`.
+  /** Creates a [[InnerNodeTraverser]] based on `scala.collection.Iterable[NodeT]`.
     *
     * @param root $ROOT
     * @param parameters $PARAMETERS
@@ -1078,9 +1083,11 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of outer-node graph traversals. $TOSTART
     */
-  abstract class OuterNodeTraverser extends Traverser[N, OuterNodeTraverser]
+  abstract class OuterNodeTraverser extends Traverser[N, OuterNodeTraverser] {
+    final protected def sizeHint: Int = order
+  }
 
-  /** Creates a [[OuterNodeTraverser]] based on `scala.collection.Traversable[N]`.
+  /** Creates a [[OuterNodeTraverser]] based on `scala.collection.Iterable[N]`.
     *
     * @param root $ROOT
     * @param parameters $PARAMETERS
@@ -1098,9 +1105,11 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of inner-edge graph traversals. $TOSTART
     */
-  abstract class InnerEdgeTraverser extends Traverser[EdgeT, InnerEdgeTraverser]
+  abstract class InnerEdgeTraverser extends Traverser[EdgeT, InnerEdgeTraverser] {
+    final protected def sizeHint: Int = graphSize
+  }
 
-  /** Creates a [[InnerEdgeTraverser]] based on `scala.collection.Traversable[EdgeT]`.
+  /** Creates a [[InnerEdgeTraverser]] based on `scala.collection.Iterable[EdgeT]`.
     *
     * @param root $ROOT
     * @param parameters $PARAMETERS
@@ -1117,9 +1126,11 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of outer-edge graph traversals. $TOSTART
     */
-  abstract class OuterEdgeTraverser extends Traverser[E[N], OuterEdgeTraverser]
+  abstract class OuterEdgeTraverser extends Traverser[E[N], OuterEdgeTraverser] {
+    final protected def sizeHint: Int = graphSize
+  }
 
-  /** Creates a [[OuterEdgeTraverser]] based on `scala.collection.Traversable[E[N]]`.
+  /** Creates a [[OuterEdgeTraverser]] based on `scala.collection.Iterable[E[N]]`.
     *
     * @param root $ROOT
     * @param parameters $PARAMETERS
@@ -1137,9 +1148,11 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of inner-element graph traversals. $TOSTART
     */
-  abstract protected class InnerElemTraverser extends Traverser[InnerElem, InnerElemTraverser]
+  abstract protected class InnerElemTraverser extends Traverser[InnerElem, InnerElemTraverser] {
+    final protected def sizeHint: Int = order + graphSize
+  }
 
-  /** Creates a [[InnerElemTraverser]] based on `scala.collection.Traversable[InnerElem]`.
+  /** Creates a [[InnerElemTraverser]] based on `scala.collection.Iterable[InnerElem]`.
     *
     * @param root $ROOT
     * @param parameters $PARAMETERS
@@ -1157,9 +1170,11 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of outer-element graph traversals. $TOSTART
     */
-  trait OuterElemTraverser extends Traverser[OuterElem[N, E], OuterElemTraverser]
+  trait OuterElemTraverser extends Traverser[OuterElem[N, E], OuterElemTraverser] {
+    final protected def sizeHint: Int = order + graphSize
+  }
 
-  /** Creates a [[OuterElemTraverser]] based on `scala.collection.Traversable[OuterElem]`.
+  /** Creates a [[OuterElemTraverser]] based on `scala.collection.Iterable[OuterElem]`.
     *
     * @param root $ROOT
     * @param parameters $PARAMETERS
@@ -1177,9 +1192,11 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of inner-node down-up graph traversals. $TOSTART
     */
-  abstract class InnerNodeDownUpTraverser extends Traverser[(Boolean, NodeT), InnerNodeDownUpTraverser]
+  abstract class InnerNodeDownUpTraverser extends Traverser[(Boolean, NodeT), InnerNodeDownUpTraverser] {
+    final protected def sizeHint: Int = nonOverflowingOrderMultipliedBy_2
+  }
 
-  /** Creates a [[InnerNodeDownUpTraverser]] based on `scala.collection.Traversable[(Boolean, NodeT)]`
+  /** Creates a [[InnerNodeDownUpTraverser]] based on `scala.collection.Iterable[(Boolean, NodeT)]`
     *  $DOWNUPBOOLEAN
     *
     * @param root $ROOT
@@ -1198,9 +1215,11 @@ trait GraphTraversal[N, E[X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Controls the properties of outer-node down-up graph traversals. $TOSTART
     */
-  abstract class OuterNodeDownUpTraverser extends Traverser[(Boolean, N), OuterNodeDownUpTraverser]
+  abstract class OuterNodeDownUpTraverser extends Traverser[(Boolean, N), OuterNodeDownUpTraverser] {
+    final protected def sizeHint: Int = nonOverflowingOrderMultipliedBy_2
+  }
 
-  /** Creates a [[OuterNodeDownUpTraverser]] based on `scala.collection.Traversable[(Boolean, N)]`
+  /** Creates a [[OuterNodeDownUpTraverser]] based on `scala.collection.Iterable[(Boolean, N)]`
     *  $DOWNUPBOOLEAN
     *
     * @param root $ROOT

@@ -1,6 +1,6 @@
 package scalax.collection
 
-import scala.language.{higherKinds, postfixOps}
+import scala.language.postfixOps
 import scala.util.Random
 
 import GraphPredef._, GraphEdge._
@@ -11,6 +11,7 @@ import generator._, RandomGraph._
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 import org.scalatest.prop.PropertyChecks
+
 import scalax.collection.visualization.Visualizer
 
 class TConnectivityRootTest
@@ -19,7 +20,7 @@ class TConnectivityRootTest
       new TConnectivity[mutable.Graph](mutable.Graph)
     )
 
-final class TConnectivity[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+final class TConnectivity[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G])
     extends RefSpec
     with Matchers
@@ -81,7 +82,7 @@ final class TConnectivity[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphL
       }
       connectors foreach { connector =>
         val connected = union + connector
-        def check(scc: Traversable[connected.Component], expectedSize: Int): Unit = {
+        def check(scc: Iterable[connected.Component], expectedSize: Int): Unit = {
           scc should have size (expectedSize)
           scc foreach { sc =>
             given(sc.to(factory)) { g =>

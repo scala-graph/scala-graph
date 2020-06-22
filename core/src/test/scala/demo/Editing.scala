@@ -132,9 +132,8 @@ final class EditingTest extends RefSpec with Matchers {
       g.totalDegree shouldBe 16
       g.degreeSet shouldBe SortedSet(4, 3, 2)
       g.degreeNodeSeq(g.InDegree) shouldBe List((4, 3), (3, 5), (2, 1), (2, 2), (2, 4))
-      g.degreeNodesMap shouldBe Map(2                       -> Set(2), 3 -> Set(5, 1), 4 -> Set(3, 4))
-      g.degreeNodesMap(degreeFilter = _ > 3) shouldBe Map(4 -> Set(3, 4))
-      ()
+      g.degreeNodesMap should contain only (2                       -> Set(2), 3 -> Set(5, 1), 4 -> Set(3, 4))
+      g.degreeNodesMap(degreeFilter = _ > 3) should contain only (4 -> Set(3, 4))
     }
     def `classifying ` : Unit = {
       val g = Graph(1, 2 ~> 3)

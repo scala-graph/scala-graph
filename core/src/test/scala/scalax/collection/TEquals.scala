@@ -4,6 +4,7 @@ import GraphPredef._, GraphEdge._
 
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
+
 class TEqualsTest extends RefSpec with Matchers {
 
   val oEdgesG              = List[UnDiEdge[Int]](1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)

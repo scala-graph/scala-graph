@@ -1,7 +1,5 @@
 package scalax.collection
 
-import scala.language.higherKinds
-
 import GraphPredef._, GraphEdge._
 import GraphTraversal._, GraphTraversal.Parameters._
 import generic.GraphCoreCompanion
@@ -20,7 +18,7 @@ class TTopologicalSortRootTest
       new TTopologicalSort[mutable.Graph](mutable.Graph)
     )
 
-private class TTopologicalSort[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G])
     extends RefSpec
     with Matchers
@@ -29,12 +27,12 @@ private class TTopologicalSort[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with G
 
   private object Topo {
 
-    class Checker[N, E[X] <: EdgeLikeIn[X]](val graph: G[N, E]) {
+    class Checker[N, E[+X] <: EdgeLikeIn[X]](val graph: G[N, E]) {
 
-      def checkOuterNodes(seq: Traversable[N]): Unit =
+      def checkOuterNodes(seq: Iterable[N]): Unit =
         checkInnerNodes(seq map (graph get _))
 
-      type OrderedInnerNodes = Traversable[graph.NodeT]
+      type OrderedInnerNodes = Iterable[graph.NodeT]
 
       def checkInnerNodes(seq: OrderedInnerNodes,
                           root: Option[graph.NodeT] = None,
@@ -72,10 +70,10 @@ private class TTopologicalSort[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with G
       }
     }
 
-    def unexpectedCycle[N, E[X] <: EdgeLikeIn[X]](cycleNode: Graph[N, E]#NodeT) =
+    def unexpectedCycle[N, E[+X] <: EdgeLikeIn[X]](cycleNode: Graph[N, E]#NodeT) =
       fail(s"Unexpected cycle starting at ${cycleNode.value}")
 
-    def unexpectedRight[N, E[X] <: EdgeLikeIn[X]](order: Graph[N, E]#TopologicalOrder[_]) =
+    def unexpectedRight[N, E[+X] <: EdgeLikeIn[X]](order: Graph[N, E]#TopologicalOrder[_]) =
       fail(s"Cycle expected but topological order ${order.toLayered} found")
   }
 

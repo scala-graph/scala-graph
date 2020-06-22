@@ -1,8 +1,6 @@
 package scalax.collection.io.json
 package serializer
 
-import language.higherKinds
-
 import net.liftweb.json._
 
 import scalax.collection.GraphPredef._
@@ -19,8 +17,8 @@ class TGraphSerializerRootTest
       new TGraphSerializer[immutable.Graph](immutable.Graph),
       new TGraphSerializer[mutable.Graph](mutable.Graph))
 
-class TGraphSerializer[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
+class TGraphSerializer[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+    val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers {
 

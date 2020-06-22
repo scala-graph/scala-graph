@@ -3,6 +3,7 @@ package scalax.collection
 import GraphEdge._, GraphPredef._
 
 import org.scalatest._
+
 // The single graph used for this test
 object AGraph {
   import Data._

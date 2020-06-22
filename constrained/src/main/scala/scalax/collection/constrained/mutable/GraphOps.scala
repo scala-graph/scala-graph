@@ -2,7 +2,6 @@ package scalax.collection.constrained
 package mutable
 
 import scala.collection.Set
-import scala.language.higherKinds
 
 import scalax.collection.GraphPredef.{EdgeLikeIn, InnerEdgeParam, InnerNodeParam, OuterEdge, OuterNode, Param}
 import scalax.collection.mutable.{GraphLike => SimpleGraphLike}
@@ -15,8 +14,8 @@ import scalax.collection.mutable.{GraphLike => SimpleGraphLike}
  */
 trait GraphOps[
     N,
-    E[X] <: EdgeLikeIn[X],
-    +This[X, Y[X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[Param[X, Y]] with Graph[X, Y]
+    E[+X] <: EdgeLikeIn[X],
+    +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[Param[X, Y]] with Graph[X, Y]
 ] { _: This[N, E] with SimpleGraphLike[N, E, This] with GraphOps[N, E, This] =>
 
   /** Same as `add` but $Info. */

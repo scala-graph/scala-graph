@@ -1,9 +1,8 @@
 package scalax.collection
 
-import scala.language.higherKinds
-
 import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
+
 import GraphPredef._, GraphEdge._, edge._, edge.LBase._, edge.Implicits._
 
 import custom.flight._, custom.flight.Helper._
@@ -34,9 +33,35 @@ class TEdgeTest extends RefSpec with Matchers {
     }
   }
 
-  trait OrderedEndpointsTest[E[X] <: EdgeLike[X]] {
+  object `Inner edges` {
+    type IntDiGraph = Graph[Int, DiEdge]
+    val g: IntDiGraph = Graph(1 ~> 2, 2 ~> 3)
 
-    def ordered(edges: Traversable[_]): Boolean =
+    private def endpoints2(edge: g.EdgeT): (g.NodeT, g.NodeT)                            = (edge.source, edge.target)
+    private def endpoints3(edge: IntDiGraph#EdgeT): (IntDiGraph#NodeT, IntDiGraph#NodeT) = (edge.source, edge.target)
+    private def endpoints4(edge: Graph[Int, DiEdge]#EdgeT): (Graph[Int, DiEdge]#NodeT, Graph[Int, DiEdge]#NodeT) =
+      (edge.source, edge.target)
+
+    def `are implicitly converted to outer edges` {
+      for (edge <- g.edges) {
+        // access source and target directly
+        val pair1 = (edge.source, edge.target)
+        // using dependent type
+        val pair2 = endpoints2(edge)
+        pair2 should equal(pair1)
+        // using type projection and type alias
+        val pair3 = endpoints3(edge)
+        pair3 should equal(pair1)
+        // using type projection and full type
+        val pair4 = endpoints4(edge)
+        pair4 should equal(pair1)
+      }
+    }
+  }
+
+  trait OrderedEndpointsTest[E[+X] <: EdgeLike[X]] {
+
+    def ordered(edges: Iterable[_]): Boolean =
       edges forall (_.isInstanceOf[OrderedEndpoints])
 
     def outerEdges(implicit kind: CollectionKind = Bag): List[E[_]]
@@ -188,11 +213,13 @@ class TEdgeTest extends RefSpec with Matchers {
     }
 
     def `LkDiHyperEdge equality` {
-      val e  = LkDiHyperEdge(1, 2, 3)("a")
-      val g  = Graph[Int, LHyperEdge](e)
-      val eo = g.edges.head.toOuter
+      val e1             = LkDiHyperEdge(1, 2, 3)("a")
+      val e2             = LkDiHyperEdge(10, 11, 12, 13, 14, 15, 16)("b")
+      val g              = Graph[Int, LHyperEdge](e1, e2)
+      val List(eo1, eo2) = g.edges.toOuter.toList
 
-      g find eo should be('defined)
+      g find eo1 should be('defined)
+      g find eo2 should be('defined)
     }
   }
 }

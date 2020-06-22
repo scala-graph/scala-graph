@@ -1,7 +1,5 @@
 package scalax.collection.io.json
 
-import language.higherKinds
-
 import net.liftweb.json._
 
 import scalax.collection._
@@ -19,7 +17,7 @@ import org.scalatest.refspec.RefSpec
 class TCustomEdgeRootTest
     extends Suites(new TCustomEdge[immutable.Graph](immutable.Graph), new TCustomEdge[mutable.Graph](mutable.Graph))
 
-class TCustomEdge[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class TCustomEdge[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers {

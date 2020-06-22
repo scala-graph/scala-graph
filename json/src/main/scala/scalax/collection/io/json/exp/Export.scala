@@ -1,7 +1,6 @@
 package scalax.collection.io.json
 package exp
 
-import scala.language.higherKinds
 import scala.collection.Set
 import scala.collection.immutable.Iterable
 
@@ -11,7 +10,7 @@ import scalax.collection.GraphPredef._, scalax.collection.Graph
 
 import descriptor._
 
-class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N, E], descriptor: Descriptor[N])(
+class Export[N, E[+X] <: EdgeLikeIn[X]](graph: Graph[N, E], descriptor: Descriptor[N])(
     implicit simpleClassNames: Boolean = true) {
   def jsonASTNodes: JField = {
     def className(a: Any) = {

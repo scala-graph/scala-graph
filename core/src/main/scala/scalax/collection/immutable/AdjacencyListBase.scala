@@ -3,15 +3,13 @@ package immutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 
-import scala.language.higherKinds
-import scala.collection.{Set => AnySet, AbstractTraversable, EqSetFacade}
-import scala.collection.mutable.{ArrayBuffer, Buffer}
+import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade, Set => AnySet}
+import scala.collection.mutable.{ArrayBuffer, Buffer, ExtHashSet}
 import scala.util.Random
 
 import scalax.collection.GraphPredef._
 import scalax.collection.{Graph => SimpleGraph}
-import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet, ExtHashSet}
-import scalax.collection.generic.GroupIterator
+import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 
 /** Implementation of an incident list based graph representation. This trait is common to
@@ -22,8 +20,8 @@ import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
   */
 trait AdjacencyListBase[
     N,
-    E[X] <: EdgeLikeIn[X],
-    +This[X, Y[X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with AnySet[Param[X, Y]] with SimpleGraph[X, Y]]
+    E[+X] <: EdgeLikeIn[X],
+    +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with AnySet[Param[X, Y]] with SimpleGraph[X, Y]]
     extends GraphLike[N, E, This] {
   selfGraph: This[N, E] =>
 
@@ -186,13 +184,13 @@ trait AdjacencyListBase[
 
   type NodeSetT <: NodeSet
   trait NodeSet extends super.NodeSet {
-    protected val coll = ExtHashSet.empty[NodeT]
-    override protected[collection] def initialize(nodes: Traversable[N], edges: Traversable[E[N]]) =
+    protected val collection = ExtHashSet.empty[NodeT]
+    override protected[collection] def initialize(nodes: Iterable[N], edges: Iterable[E[N]]) =
       if (nodes ne null)
-        coll ++= nodes map (Node(_))
+        collection ++= nodes map (Node(_))
     override protected def copy = {
       val nodeSet = newNodeSet
-      nodeSet.coll ++= this.coll
+      nodeSet.collection ++= this.collection
       nodeSet
     }
     @inline final override def find(elem: N): Option[NodeT] = Option(lookup(elem))
@@ -203,14 +201,14 @@ trait AdjacencyListBase[
     }
     final override def lookup(elem: N): NodeT = {
       def eq(inner: NodeT, outer: N) = inner.value == outer
-      coll.findElem[N](elem, eq)
+      collection.findElem[N](elem, eq)
     }
-    @inline final def contains(node: NodeT): Boolean = coll contains node
-    @inline final def iterator: Iterator[NodeT]      = coll.iterator
-    @inline final override def size: Int             = coll.size
-    @inline final def draw(random: Random): NodeT    = coll draw random
+    @inline final def contains(node: NodeT): Boolean = collection contains node
+    @inline final def iterator: Iterator[NodeT]      = collection.iterator
+    @inline final override def size: Int             = collection.size
+    @inline final def draw(random: Random): NodeT    = collection draw random
     @inline final def findElem[B](toMatch: B, correspond: (NodeT, B) => Boolean): NodeT =
-      coll findElem (toMatch, correspond)
+      collection findElem (toMatch, correspond)
     protected[collection] def +=(edge: EdgeT): this.type
   }
   protected def newNodeSet: NodeSetT
@@ -260,29 +258,7 @@ trait AdjacencyListBase[
     }
   }
 
-  def edgeIterator = new GroupIterator[EdgeT] {
-    object Outer extends OutermostIterator[NodeT] {
-      protected type I = NodeT
-      protected val iterator                 = nodes.iterator
-      protected def elmToCurrent(elm: NodeT) = elm
-
-      protected type InnerElm = EdgeT
-      protected lazy val inner = Inner
-    }
-    object Inner extends InnermostIterator[EdgeT] {
-      protected type I = EdgeT
-      protected var iterator: Iterator[I] = _
-      protected def onOuterChange(newOuter: OuterElm) {
-        iterator = newOuter.edges.filter(_.edge._1 == newOuter).iterator
-      }
-      protected def elmToCurrent(elm: EdgeT) = elm
-
-      protected type OuterElm = NodeT
-      protected lazy val outer = Outer
-    }
-    def hasNext = Inner.hasNext
-    def next    = Inner.next
-  }
+  def edgeIterator: Iterator[EdgeT] = nodes.iterator.flatMap(node => node.edges.iterator.filter(_.edge._1 == node))
 
   final protected def serializeTo(out: ObjectOutputStream): Unit = {
     out.defaultWriteObject()
@@ -298,16 +274,21 @@ trait AdjacencyListBase[
   protected def initializeFrom(in: ObjectInputStream, nodes: NodeSetT, edges: EdgeSetT): Unit = {
     in.defaultReadObject()
 
-    def traversable[A]: Traversable[A] =
-      new AbstractTraversable[A] {
-        var i = in.readInt
-        override def foreach[U](f: A => U): Unit =
-          while (i > 0) {
-            f(in.readObject.asInstanceOf[A])
-            i -= 1
-          }
+    def iterable[A] = new AbstractIterable[A] {
+      override def iterator: Iterator[A] = new AbstractIterator[A] {
+        private[this] val count = in.readInt()
+        private[this] var read  = 0
+
+        def hasNext: Boolean = read < count
+
+        def next(): A = {
+          read += 1
+          in.readObject.asInstanceOf[A]
+        }
       }
-    edges initialize (traversable[E[N]])
-    nodes initialize (traversable[N], null)
+    }
+
+    edges initialize (iterable[E[N]])
+    nodes initialize (iterable[N], null)
   }
 }

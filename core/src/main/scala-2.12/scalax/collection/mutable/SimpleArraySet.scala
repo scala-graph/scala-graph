@@ -3,10 +3,9 @@ package mutable
 
 import util.Random
 import scala.collection.{AbstractIterator, SortedSet}
-import scala.collection.mutable.{SetLike => MutableSetLike, GrowingBuilder}
+import scala.collection.mutable.{GrowingBuilder, SetLike => MutableSetLike, ExtHashSet}
 import scala.collection.generic.{CanBuildFrom, GenericCompanion, GenericSetTemplate, MutableSetFactory}
 import scala.compat.Platform.arraycopy
-
 import immutable.SortedArraySet
 
 /** A basic [[ArraySet]] implementation suitable for efficient add operations.

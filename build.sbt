@@ -2,6 +2,8 @@ import sbt._
 import Keys._
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
+// project coreJS, fastOptJS, package, publishSigned
+
 lazy val all = project
   .in(file("."))
   .dependsOn(coreJVM, coreJS, constrainedJVM, constrainedJS, dotJVM, dotJS, jsonJVM, jsonJS)
@@ -26,7 +28,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       version := Version.core,
       crossPaths := true,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck"   % "1.13.4" % "optional;provided",
+        "org.scalacheck" %% "scalacheck"   % "1.14.0" % "optional;provided",
         "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all",
       ),
       dependencyOverrides ++= {
@@ -58,7 +60,7 @@ lazy val constrained = crossProject(JSPlatform, JVMPlatform)
     defaultSettings ++ Seq(
       name := "Graph Constrained",
       version := Version.constrained
-    )
+  )
   )
 
 lazy val dotJVM = dot.jvm
@@ -81,7 +83,7 @@ lazy val json = crossProject(JSPlatform, JVMPlatform)
     defaultSettings ++ Seq(
       name := "Graph JSON",
       version := Version.json,
-      libraryDependencies += "net.liftweb" %% "lift-json" % "3.1.1"
+      libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.0"
     )
   )
 
@@ -94,7 +96,7 @@ lazy val misc = crossProject(JSPlatform, JVMPlatform)
   .settings(
     defaultSettings ++ Seq(
       name := "Graph Miscellaneous",
-      version := Version.misc
+      version := "unpublished"
     )
   )
 
@@ -105,21 +107,22 @@ ThisBuild / resolvers ++= Seq(
 
 ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
 
+val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
-  scalaVersion := Version.compiler_2_12,
-  crossScalaVersions := Seq(scalaVersion.value, Version.compiler_2_11),
+  scalaVersion := Version.compiler_2_13,
+  crossScalaVersions := Seq(Version.compiler_2_12, scalaVersion.value),
   organization := "org.scala-graph",
   scalacOptions ++= Seq(
-    "-Ywarn-unused:imports",
-    "-Yrangepos"
+    unusedImports,
+    "-Yrangepos",
+    "-Ywarn-unused:privates",
   ),
-  Compile / scalacOptions in compile += "-Ywarn-unused:privates",
+  Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports),
   addCompilerPlugin(scalafixSemanticdb),
   Test / parallelExecution := false,
   Compile / doc / scalacOptions ++=
     Opts.doc.title(name.value) ++
       Opts.doc.version(version.value),
-  // prevents sbteclipse from including java source directories
   Compile / doc / scalacOptions ++= List("-diagrams", "-implicits"),
   Compile / doc / scalacOptions ++= (baseDirectory map { d =>
     Seq("-doc-root-content", (d / "rootdoc.txt").getPath)

@@ -1,8 +1,6 @@
 package scalax.collection
 package immutable
 
-import language.higherKinds
-
 import GraphPredef.EdgeLikeIn
 import GraphEdge.OrderedEndpoints
 import mutable.ArraySet
@@ -12,7 +10,7 @@ import mutable.ArraySet
   * @author Peter Empen
   */
 trait AdjacencyListGraph[
-    N, E[X] <: EdgeLikeIn[X], +This[X, Y[X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with AdjacencyListBase[N, E, This] { selfGraph: This[N, E] =>
 
@@ -29,15 +27,15 @@ trait AdjacencyListGraph[
 
   type NodeSetT = NodeSet
   class NodeSet extends super.NodeSet {
-    @inline final override protected def minus(node: NodeT) { coll -= node }
-    def +(node: NodeT) =
-      if (coll contains node) this
-      else { val c = copy; c.coll += node; c }
+    @inline final override protected def minus(node: NodeT) { collection -= node }
+    override def +(node: NodeT) =
+      if (collection contains node) this
+      else { val c = copy; c.collection += node; c }
 
     protected[AdjacencyListGraph] def add(edge: EdgeT): Boolean = {
       var added = false
       edge foreach { n =>
-        val inColl = coll findElem n getOrElse { coll += n; n }
+        val inColl = collection findElem n getOrElse { collection += n; n }
         added = (inColl add edge) || added
       }
       added
@@ -54,8 +52,8 @@ trait AdjacencyListGraph[
     else new EdgeT(innerEdge)
 
   type EdgeSetT = EdgeSet
-  class EdgeSet extends super.EdgeSet {
-    override protected[collection] def initialize(edges: Traversable[E[N]]): Unit =
+  class EdgeSet extends super.EdgeSet with Compat.InclExcl[EdgeT, Set[EdgeT]] {
+    override protected[collection] def initialize(edges: Iterable[E[N]]): Unit =
       if (edges ne null)
         edges foreach (this += Edge(_))
 
@@ -65,15 +63,15 @@ trait AdjacencyListGraph[
     }
 
     @inline final protected[immutable] def addEdge(edge: EdgeT) { +=(edge) }
-    @inline final def +(edge: EdgeT): Set[EdgeT] = toSet + edge
-    @inline final def -(edge: EdgeT): Set[EdgeT] = toSet - edge
+    @inline final def incl(edge: EdgeT) = toSet + edge
+    @inline final def excl(edge: EdgeT) = toSet - edge
 
     @inline final override lazy val maxArity        = super.maxArity
     @inline final override lazy val hasAnyMultiEdge = super.hasAnyMultiEdge
   }
   override def edges: EdgeSetT
 
-  protected def copy(nodes: Traversable[N], edges: Traversable[E[N]]): This[N, E]
+  protected def copy(nodes: Iterable[N], edges: Iterable[E[N]]): This[N, E]
 
   def +(n: N) =
     if (nodes contains Node(n)) this

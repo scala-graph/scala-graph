@@ -1,8 +1,15 @@
 package scalax.collection
 
-import scala.language.{higherKinds, postfixOps}
+import scala.language.postfixOps
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
+
+import org.scalacheck._
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest._
+import org.scalatest.refspec.RefSpec
+import org.scalatest.prop.PropertyChecks
+
 import GraphPredef._
 import GraphEdge._
 import GraphTraversal._
@@ -11,11 +18,6 @@ import edge.WDiEdge
 import edge.WUnDiEdge
 import edge.Implicits._
 import generator.GraphGen
-import org.scalacheck._
-import Arbitrary.arbitrary
-import org.scalatest._
-import org.scalatest.refspec.RefSpec
-import org.scalatest.prop.PropertyChecks
 import scalax.collection.visualization.Visualizer
 
 class TTraversalRootTest
@@ -28,7 +30,7 @@ class TTraversalRootTest
   *	by the Graph factory and passed to the constructor. For instance,
   *	this allows the same tests to be run for mutable and immutable Graphs.
   */
-final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G])
     extends RefSpec
     with Matchers
@@ -36,6 +38,9 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     with Visualizer[G] {
 
   implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
+
+  val predecessors = Parameters(direction = Predecessors)
+  val anyConnected = Parameters(direction = AnyConnected)
 
   def `find successors in a tiny graph` {
     given(factory(1 ~> 2)) { g =>
@@ -254,7 +259,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
 
         val path = n(from) shortestPathTo n(to)
         path shouldBe defined
-        path.get.nodes.to[Stream]
+        path.get.nodes.toStream
       }
       shortestPathNodes(2, 5) should contain theSameElementsInOrderAs Array(2, 3, 4, 5)
       shortestPathNodes(4, 5) should contain theSameElementsInOrderAs Array(4, 5)
@@ -343,6 +348,18 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
       check(BreadthFirst)
     }
   }
+
+  def `traverser to graph`: Unit =
+    given(Di_1.g) { g =>
+      def innerNode(outer: Int) = g get outer
+
+      innerNode(1).outerNodeTraverser.toGraph should equal(factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
+
+      innerNode(2).outerNodeTraverser(anyConnected).toGraph should equal(
+        factory(1 ~> 2, 2 ~> 3, 4 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
+
+      innerNode(3).outerNodeTraverser(predecessors).toGraph should equal(factory(4 ~> 3, 1 ~> 3, 2 ~> 3, 1 ~> 2))
+    }
 
   def `traverser with a visitor` {
     given(gUnDi_2) { g =>
@@ -469,14 +486,14 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
       def innerNode(outer: Int) = g get outer
       var stack                 = List.empty[Int]
 
-      innerNode(4).innerNodeDownUpTraverser foreach (_ match {
+      innerNode(4).innerNodeDownUpTraverser foreach {
         case (down, node) =>
           if (down) stack = node.value +: stack
           else {
             stack.head should be(node.value)
             stack = stack.tail
           }
-      })
+      }
       stack should be('empty)
     }
   }
@@ -485,14 +502,14 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     val root = "A"
     given(factory(root ~> "B1", root ~> "B2")) { g =>
       val innerRoot = g get root
-      val result = (ListBuffer.empty[String] /: innerRoot.innerNodeDownUpTraverser) { (buf, param) =>
+      val result = innerRoot.innerNodeDownUpTraverser.foldLeft(ListBuffer.empty[String]) { (buf, param) =>
         param match {
           case (down, node) =>
             if (down) buf += (if (node eq innerRoot) "(" else "[") += node.toString
             else buf += (if (node eq innerRoot) ")" else "]")
         }
       }
-      ("" /: result)(_ + _) should (be("(A[B1][B2])") or
+      result.foldLeft("")(_ + _) should (be("(A[B1][B2])") or
         be("(A[B2][B1])"))
     }
   }
@@ -522,14 +539,14 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
         nBA ~> Leaf("BA2", 11),
         nBA ~> Leaf("BA3", 12)
       )) { g =>
-      (g get root).innerNodeDownUpTraverser foreach (_ match {
+      (g get root).innerNodeDownUpTraverser foreach {
         case (down, node) =>
           if (!down)
             node.value match {
               case n: Node => n.sum = (0 /: node.diSuccessors)(_ + _.balance)
               case _       =>
             }
-      })
+      }
       val expected = Map(root -> 39, nA -> 3, nB -> 36, nBA -> 33)
       g.nodes foreach {
         _.value match {
@@ -556,9 +573,7 @@ final class TTraversal[G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike
     {
       import DDi_1._
       given(DDi_1.g) { _ =>
-        val predecessors = Parameters(direction = Predecessors)
-        val anyConnected = Parameters(direction = AnyConnected)
-        val maxDepth_1   = Parameters(maxDepth = 1)
+        val maxDepth_1 = Parameters(maxDepth = 1)
 
         node(4).outerNodeTraverser.sum should be(expectedSumSuccessorsOf_4)
         node(4).outerNodeTraverser(predecessors).sum should be(expectedSumPredecessorsOf_4)

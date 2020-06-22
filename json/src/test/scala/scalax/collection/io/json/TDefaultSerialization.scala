@@ -1,7 +1,5 @@
 package scalax.collection.io.json
 
-import language.higherKinds
-
 import scalax.collection._
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scalax.collection.generic.GraphCoreCompanion
@@ -10,13 +8,14 @@ import descriptor.predefined._
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
+
 class TDefaultSerializationRootTest
     extends Suites(
       new TDefaultSerialization[immutable.Graph](immutable.Graph),
       new TDefaultSerialization[mutable.Graph](mutable.Graph))
 
-class TDefaultSerialization[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
+class TDefaultSerialization[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+    val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers {
 

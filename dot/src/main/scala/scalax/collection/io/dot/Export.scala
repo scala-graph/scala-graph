@@ -1,7 +1,6 @@
 package scalax.collection
 package io.dot
 
-import scala.language.higherKinds
 import scala.collection.mutable.{Set => MSet, StringBuilder}
 
 import GraphPredef.EdgeLikeIn
@@ -14,7 +13,7 @@ import GraphEdge.DiEdge
   * @define NORMALLY Normally, this method will be called internally by `toDot`
   *         but it may also be used for test purposes.
   */
-class Export[N, E[X] <: EdgeLikeIn[X]](graph: Graph[N, E]) {
+class Export[N, E[+X] <: EdgeLikeIn[X]](graph: Graph[N, E]) {
 
   /** Creates a DOT string by calling the node and edge transformers for the elements
     * of `graph`.

@@ -1,25 +1,27 @@
 package scalax.collection
 
-import language.{higherKinds, postfixOps}
-import collection.{SortedMap, SortedSet}
+import scala.language.postfixOps
+import scala.collection.{SortedMap, SortedSet}
 
 import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion
 
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
+
 import scalax.collection.visualization.Visualizer
 
 class TDegreeRootTest
     extends Suites(new TDegree[immutable.Graph](immutable.Graph), new TDegree[mutable.Graph](mutable.Graph))
 
-class TDegree[CC[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
+class TDegree[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
+    val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers
     with Visualizer[CC] {
 
   val emptyG = factory.empty[Int, DiEdge]
-  abstract class TGraphDegree[N, E[X] <: EdgeLikeIn[X]](override val g: CC[N, E]) extends TGraph(g) {
+  abstract class TGraphDegree[N, E[+X] <: EdgeLikeIn[X]](override val g: CC[N, E]) extends TGraph(g) {
     def degree(outer: N)                  = node(outer) degree
     val nodeDegrees: List[(g.NodeT, Int)] = g.nodes.toList map (n => (n, n.degree))
     val degrees: List[Int]                = nodeDegrees map (_._2)
