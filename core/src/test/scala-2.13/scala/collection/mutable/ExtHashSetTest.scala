@@ -3,11 +3,11 @@ package scala.collection.mutable
 import scala.math.abs
 import scala.util.chaining._
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 import scala.util.Random
 
-class ExtHashSetTest extends RefSpec with Matchers {
+class ExtHashSetTest extends RefSpec with should.Matchers {
 
   object `ExtHashSet works properly in that it` {
     import ExtHashSetTest._

@@ -5,7 +5,7 @@ import scalax.collection.GraphPredef._
 import scalax.collection.generic.GraphCoreCompanion
 
 import org.scalatest._
-
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
 import Flight.ImplicitEdge, Helper._
@@ -21,7 +21,7 @@ class TFlightRootTest
 class TFlight[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC])
     extends RefSpec
-    with Matchers
+    with should.Matchers
     with Visualizer[CC] {
 
   val (ham, gig) = (Airport("HAM"), Airport("GIG"))

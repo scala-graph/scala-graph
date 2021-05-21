@@ -18,15 +18,19 @@ lazy val core = project
     defaultSettings ++ Seq(
       name := "Graph Core",
       version := Version.core,
-      libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck"   % "1.14.0" % "optional;provided",
-        "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all"
-      ),
-      dependencyOverrides ++= {
-        val release                        = "RELEASE90"
-        def netbeansModule(module: String) = "org.netbeans.modules" % module % release
-        def netbeansApi(module: String)    = "org.netbeans.api" % module % release
+      libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.15.4" % "optional;provided",
+      libraryDependencies ++= {
+        val netbeansModulesOrg = "org.netbeans.modules"
+        val netbeansApiOrg     = "org.netbeans.api"
+        val release            = "RELEASE123"
+
+        def netbeansModule(module: String) = netbeansModulesOrg % module % release
+        def netbeansApi(module: String)    = netbeansApiOrg     % module % release
         Seq(
+          "org.gephi" % "gephi-toolkit" % "0.9.2" % "test" classifier "all" excludeAll (
+            ExclusionRule(organization = netbeansModulesOrg),
+            ExclusionRule(organization = netbeansApiOrg)
+          ),
           netbeansModule("org-netbeans-core"),
           netbeansModule("org-netbeans-core-startup-base"),
           netbeansModule("org-netbeans-modules-masterfs"),
@@ -68,7 +72,7 @@ lazy val json = project
     defaultSettings ++ Seq(
       name := "Graph JSON",
       version := Version.json,
-      libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.0"
+      libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.3"
     )
   )
 
@@ -87,7 +91,7 @@ ThisBuild / resolvers ++= Seq(
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
 )
 
-ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
+ThisBuild / scalafmtConfig := file(".scalafmt.conf")
 
 val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
@@ -111,5 +115,8 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   }).value,
   autoAPIMappings := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Test"))),
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % "test"
+  libraryDependencies ++= Seq(
+    "org.scalatest"     %% "scalatest"       % "3.2.9"   % "test",
+    "org.scalatestplus" %% "scalacheck-1-15" % "3.2.9.0" % "test"
+  )
 ) ++ GraphSonatype.settings

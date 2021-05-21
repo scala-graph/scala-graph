@@ -6,15 +6,18 @@ import scala.util.Try
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import generic.GraphConstrainedCompanion
+
 import org.scalatest._
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
+
 class TConstrainedRootTest
     extends Suites(
       new TConstrained[immutable.Graph](immutable.Graph),
       new TConstrained[mutable.Graph](mutable.Graph),
       new TConstrainedMutable)
 
-class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Graph] {
+class TConstrainedMutable extends RefSpec with should.Matchers with Testing[mutable.Graph] {
   val factory = mutable.Graph
 
   object `constrains work as expected using mutable operations` {
@@ -88,7 +91,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
 class TConstrained[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphConstrainedCompanion[CC])
     extends RefSpec
-    with Matchers
+    with should.Matchers
     with Testing[CC] {
 
   info("factory = " + factory.getClass)

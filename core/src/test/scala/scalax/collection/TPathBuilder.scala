@@ -2,7 +2,8 @@ package scalax.collection
 
 import GraphEdge._, GraphPredef._
 
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should
 
 // The single graph used for this test
 object AGraph {
@@ -12,7 +13,7 @@ object AGraph {
 
 // Common to WalkBuilder and PathBuilder
 trait WalkBehaviors {
-  this: FlatSpec with Matchers =>
+  this: AnyFlatSpec with should.Matchers =>
 
   import AGraph.UnDi_1._
 
@@ -24,7 +25,7 @@ trait WalkBehaviors {
   }
 }
 
-class TPathBuilderTest extends FlatSpec with WalkBehaviors with Matchers {
+class TPathBuilderTest extends AnyFlatSpec with WalkBehaviors with should.Matchers {
 
   import AGraph.UnDi_1._
 

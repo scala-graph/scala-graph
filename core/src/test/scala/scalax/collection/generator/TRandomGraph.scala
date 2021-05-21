@@ -4,7 +4,7 @@ package generator
 import scala.collection.mutable.{Set => MSet}
 import scala.reflect.ClassTag
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
 import GraphPredef._, GraphEdge._
@@ -12,7 +12,7 @@ import mutable.{Graph => MGraph}
 import generic.GraphCompanion
 import edge.{LDiEdge, WDiEdge}
 
-class TRandomGraphTest extends RefSpec with Matchers {
+class TRandomGraphTest extends RefSpec with should.Matchers {
 
   import RandomGraph._
   val normal = new IntFactory {

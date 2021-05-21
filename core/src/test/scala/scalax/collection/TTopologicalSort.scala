@@ -1,12 +1,15 @@
 package scalax.collection
 
-import GraphPredef._, GraphEdge._
-import GraphTraversal._, GraphTraversal.Parameters._
+import GraphPredef._
+import GraphEdge._
+import GraphTraversal._
+import GraphTraversal.Parameters._
 import generic.GraphCoreCompanion
 import edge.Implicits._
 
 import org.scalatest._
-import org.scalatest.prop.PropertyChecks
+import org.scalatest.matchers.should
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalatest.refspec.RefSpec
 
 import scalax.collection.edge.WkDiEdge
@@ -21,8 +24,8 @@ class TTopologicalSortRootTest
 private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G])
     extends RefSpec
-    with Matchers
-    with PropertyChecks
+    with should.Matchers
+    with ScalaCheckPropertyChecks
     with Visualizer[G] {
 
   private object Topo {

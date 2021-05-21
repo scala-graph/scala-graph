@@ -7,6 +7,7 @@ import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion
 
 import org.scalatest._
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
 import scalax.collection.visualization.Visualizer
@@ -17,7 +18,7 @@ class TDegreeRootTest
 class TDegree[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC])
     extends RefSpec
-    with Matchers
+    with should.Matchers
     with Visualizer[CC] {
 
   val emptyG = factory.empty[Int, DiEdge]

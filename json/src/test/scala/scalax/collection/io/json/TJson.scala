@@ -11,6 +11,7 @@ import serializer._, imp._, imp.Parser.{parse => graphParse}, descriptor._, desc
 descriptor.Defaults._, exp.Export
 
 import org.scalatest._
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
 class TJsonRootTest
@@ -19,7 +20,7 @@ class TJsonRootTest
 class TJsonTest[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
     extends RefSpec
-    with Matchers {
+    with should.Matchers {
 
   object `JSON import/export works fine with` {
     object `mixed graphs` {

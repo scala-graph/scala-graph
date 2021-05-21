@@ -9,8 +9,9 @@ import edge.Implicits._
 import generator._, RandomGraph._
 
 import org.scalatest._
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
-import org.scalatest.prop.PropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scalax.collection.visualization.Visualizer
 
@@ -23,8 +24,8 @@ class TConnectivityRootTest
 final class TConnectivity[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G])
     extends RefSpec
-    with Matchers
-    with PropertyChecks
+    with should.Matchers
+    with ScalaCheckPropertyChecks
     with Visualizer[G] {
 
   implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)

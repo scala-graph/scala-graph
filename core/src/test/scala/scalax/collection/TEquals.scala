@@ -2,10 +2,10 @@ package scalax.collection
 
 import GraphPredef._, GraphEdge._
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
-class TEqualsTest extends RefSpec with Matchers {
+class TEqualsTest extends RefSpec with should.Matchers {
 
   val oEdgesG              = List[UnDiEdge[Int]](1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
   val oEdgesH              = List[UnDiEdge[Int]](3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)

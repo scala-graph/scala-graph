@@ -1,13 +1,13 @@
 package scalax.collection
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
 import GraphPredef._, GraphEdge._, edge._, edge.LBase._, edge.Implicits._
 
 import custom.flight._, custom.flight.Helper._
 
-class TEdgeTest extends RefSpec with Matchers {
+class TEdgeTest extends RefSpec with should.Matchers {
 
   object `WDiEdge ` {
     def `can have weight overridden`: Unit = {

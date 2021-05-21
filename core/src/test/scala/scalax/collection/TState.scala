@@ -12,11 +12,11 @@ import generator.{NodeDegreeRange, RandomGraph}
 
 import org.scalatest.Inspectors._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 
 /** Ensure that stateful data handling used for traversals is thread-safe.
   */
-class TStateTest extends RefSpec with Matchers {
+class TStateTest extends RefSpec with should.Matchers {
   val g = Graph(Data.elementsOfUnDi_2: _*)
 
   // a sample traversal with recursive calls in its node visitor

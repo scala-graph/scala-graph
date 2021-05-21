@@ -8,6 +8,8 @@ import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion
 
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should
 
 import scalax.collection.visualization.Visualizer
 
@@ -18,8 +20,8 @@ class TSerializableRootTest
   */
 final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC])
-    extends FlatSpec
-    with Matchers
+    extends AnyFlatSpec
+    with should.Matchers
     with BeforeAndAfterEach
     with Visualizer[CC] {
   private val factoryName     = factory.getClass.getName

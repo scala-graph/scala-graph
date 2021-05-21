@@ -2,7 +2,9 @@ package scalax.collection.constrained
 package constraints
 
 import org.scalatest._
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
+
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import generic.GraphConstrainedCompanion
@@ -14,7 +16,7 @@ class TConnectedRootTest
       new TConnected[mutable.Graph](mutable.Graph),
       new TConnectedMutable)
 
-class TConnectedMutable extends RefSpec with Matchers with Testing[mutable.Graph] {
+class TConnectedMutable extends RefSpec with should.Matchers with Testing[mutable.Graph] {
   val factory = mutable.Graph
 
   implicit val config: Config = Connected
@@ -66,7 +68,7 @@ class TConnectedMutable extends RefSpec with Matchers with Testing[mutable.Graph
 class TConnected[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphConstrainedCompanion[CC])
     extends RefSpec
-    with Matchers
+    with should.Matchers
     with Testing[CC] {
 
   implicit val config: Config = Connected

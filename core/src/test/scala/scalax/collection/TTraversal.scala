@@ -7,8 +7,9 @@ import scala.util.Random
 import org.scalacheck._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest._
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
-import org.scalatest.prop.PropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import GraphPredef._
 import GraphEdge._
@@ -33,8 +34,8 @@ class TTraversalRootTest
 final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G])
     extends RefSpec
-    with Matchers
-    with PropertyChecks
+    with should.Matchers
+    with ScalaCheckPropertyChecks
     with Visualizer[G] {
 
   implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)

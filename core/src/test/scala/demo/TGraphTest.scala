@@ -152,11 +152,11 @@ object TGraphTest extends App {
     println(arbitraryMixedGraph.arbitrary.sample)
 
     // Integrating with ScalaTest, limiting the minimum # of successful test
-    import org.scalatest.Matchers
-    import org.scalatest.prop.PropertyChecks
+    import org.scalatest.matchers.should
+    import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
     import org.scalatest.refspec.RefSpec
 
-    class TGraphGenTest extends RefSpec with Matchers with PropertyChecks {
+    class TGraphGenTest extends RefSpec with should.Matchers with ScalaCheckPropertyChecks {
 
       implicit val config =
         PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)

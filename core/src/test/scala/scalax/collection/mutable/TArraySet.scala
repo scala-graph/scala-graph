@@ -6,10 +6,10 @@ import collection.mutable.{Set => MutableSet}
 import edge.LkDiEdge, edge.WUnDiEdge
 import immutable.SortedArraySet
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
-class TArraySetTest extends RefSpec with Matchers {
+class TArraySetTest extends RefSpec with should.Matchers {
 
   implicit val hints = ArraySet.Hints(4, 4, 12, 100)
 

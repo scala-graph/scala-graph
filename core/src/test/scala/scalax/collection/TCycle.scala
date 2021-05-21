@@ -1,15 +1,13 @@
 package scalax.collection
 
 import language.postfixOps
-
 import GraphPredef._
 import GraphEdge._
 import generic.GraphCoreCompanion
 import edge._
+import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
-import org.scalatest.{Matchers, Suites}
-import org.scalatest.matchers.{MatchResult, Matcher}
-
+import org.scalatest.matchers.{should, MatchResult, Matcher}
 import scalax.collection.visualization.Visualizer
 
 class TCycleRootTest
@@ -41,7 +39,7 @@ trait CycleMatcher[N, E[+X] <: EdgeLikeIn[X]] {
 
 class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
-    with Matchers
+    with should.Matchers
     with Visualizer[CC] {
 
   object `given some directed graphs` extends CycleMatcher[Int, DiEdge] {

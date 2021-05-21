@@ -7,6 +7,7 @@ import GraphPredef._, GraphEdge._
 import generic.GraphCompanion
 
 import org.scalatest._
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
 /** This wrapper trait enables to transparently pass `GraphCompanion` objects with
@@ -44,7 +45,7 @@ class TEditRootTest
       new TEditMutable
     )
 
-class TEditImmutable extends RefSpec with Matchers {
+class TEditImmutable extends RefSpec with should.Matchers {
   object `graphs ` {
     def `are immutable by default` {
       val g = Graph[Nothing, Nothing]()
@@ -58,7 +59,7 @@ class TEditImmutable extends RefSpec with Matchers {
   }
 }
 
-class TEditMutable extends RefSpec with Matchers {
+class TEditMutable extends RefSpec with should.Matchers {
   object `mutable graphs` {
     def `serve += properly` {
       val g = mutable.Graph[Int, Nothing](1, 3)
@@ -312,7 +313,7 @@ class TEditMutable extends RefSpec with Matchers {
 
 class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: ConfigWrapper[CC])
     extends RefSpec
-    with Matchers {
+    with should.Matchers {
 
   info("factory = " + factory.companion.getClass)
 

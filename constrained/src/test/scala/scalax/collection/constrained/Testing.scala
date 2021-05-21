@@ -1,14 +1,11 @@
 package scalax.collection.constrained
 
-import org.scalatest.matchers.{MatchResult, Matcher}
-
-import org.scalatest.Matchers
-
+import org.scalatest.matchers.{should, MatchResult, Matcher}
 import scalax.collection.{Graph => SimpleGraph}
 import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.constrained.generic.GraphConstrainedCompanion
 
-trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] { this: Matchers =>
+trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] { this: should.Matchers =>
 
   def factory: GraphConstrainedCompanion[CC]
 

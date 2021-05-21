@@ -2,9 +2,9 @@ package scalax.time
 
 import org.scalactic.Equality
 import org.scalatest.refspec.RefSpec
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 
-class TMicroBenchmark extends RefSpec with Matchers {
+class TMicroBenchmark extends RefSpec with should.Matchers {
 
   import MicroBenchmark._
 

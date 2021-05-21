@@ -3,13 +3,13 @@ package generator
 
 import org.scalacheck.{Arbitrary, Gen}
 import Arbitrary.arbitrary
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
-import org.scalatest.prop.PropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import GraphEdge._
 
-class TGraphGenTest extends RefSpec with Matchers with PropertyChecks {
+class TGraphGenTest extends RefSpec with should.Matchers with ScalaCheckPropertyChecks {
 
   final val minSuccessful = 5
   implicit val config     = PropertyCheckConfiguration(minSuccessful = minSuccessful, maxDiscardedFactor = 1.0)

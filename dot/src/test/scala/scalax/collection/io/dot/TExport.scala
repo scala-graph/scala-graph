@@ -7,11 +7,11 @@ import scala.collection.SortedMap
 import GraphPredef._, GraphEdge._, edge.LDiEdge, edge.Implicits._
 import Indent._
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
 /** Tests [[Export]]. */
-class TExportTest extends RefSpec with Matchers {
+class TExportTest extends RefSpec with should.Matchers {
 
   def `Example at http://en.wikipedia.org/wiki/DOT_language will be produced` {
 
