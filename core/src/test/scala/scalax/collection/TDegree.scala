@@ -16,8 +16,8 @@ class TDegreeRootTest
     extends Suites(new TDegree[immutable.Graph](immutable.Graph), new TDegree[mutable.Graph](mutable.Graph))
 
 class TDegree[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC])
-    extends RefSpec
+    val factory: GraphCoreCompanion[CC]
+) extends RefSpec
     with should.Matchers
     with Visualizer[CC] {
 
@@ -70,11 +70,11 @@ class TDegree[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
       emptyG.totalDegree should be(0);
       {
         import UnDi_1._
-        given(g) { _.totalDegree should be(degrees sum) }
+        given(g)(_.totalDegree should be(degrees sum))
       }
       {
         import UnDi_2._
-        given(g) { _.totalDegree should be(degrees sum) }
+        given(g)(_.totalDegree should be(degrees sum))
       }
     }
   }
@@ -84,44 +84,44 @@ class TDegree[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
       emptyG.minDegree should be(0);
       {
         import UnDi_1._
-        given(g) { _.minDegree should be(degrees min) }
+        given(g)(_.minDegree should be(degrees min))
       }
       {
         import UnDi_2._
-        given(g) { _.minDegree should be(degrees min) }
+        given(g)(_.minDegree should be(degrees min))
       }
     }
     def `maximum degree` {
       emptyG.maxDegree should be(0);
       {
         import UnDi_1._
-        given(g) { _.maxDegree should be(degrees max) }
+        given(g)(_.maxDegree should be(degrees max))
       }
       {
         import UnDi_2._
-        given(g) { _.maxDegree should be(degrees max) }
+        given(g)(_.maxDegree should be(degrees max))
       }
     }
     def `sequence of degrees` {
       emptyG.degreeSeq should be(Seq.empty);
       {
         import UnDi_1._
-        given(g) { _.degreeSeq should be(expectedDegreeSeq) }
+        given(g)(_.degreeSeq should be(expectedDegreeSeq))
       }
       {
         import UnDi_2._
-        given(g) { _.degreeSeq should be(expectedDegreeSeq) }
+        given(g)(_.degreeSeq should be(expectedDegreeSeq))
       }
     }
     def `set of degrees` {
       emptyG.degreeSet should be(Set.empty);
       {
         import UnDi_1._
-        given(g) { _.degreeSet should be(expectedDegreeSet) }
+        given(g)(_.degreeSet should be(expectedDegreeSet))
       }
       {
         import UnDi_2._
-        given(g) { _.degreeSet should be(expectedDegreeSet) }
+        given(g)(_.degreeSet should be(expectedDegreeSet))
       }
     }
     def `sequence of nodes sorted by degree` {
@@ -148,7 +148,7 @@ class TDegree[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
       }
       {
         import UnDi_2._
-        given(g) { _.degreeNodeSeq should be(expectedDegreeNodeSeq) }
+        given(g)(_.degreeNodeSeq should be(expectedDegreeNodeSeq))
       }
     }
     def `map of nodes by degree` {
@@ -171,11 +171,11 @@ class TDegree[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
       emptyG.degreeCount should be(Map.empty);
       {
         import UnDi_1._
-        given(g) { _.degreeCount should be(expectedDegreeCount) }
+        given(g)(_.degreeCount should be(expectedDegreeCount))
       }
       {
         import UnDi_2._
-        given(g) { _.degreeCount should be(expectedDegreeCount) }
+        given(g)(_.degreeCount should be(expectedDegreeCount))
       }
     }
   }

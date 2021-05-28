@@ -10,8 +10,11 @@ import scalax.collection.Compat.AddSubtract
   *
   * @author Peter Empen
   */
-trait AdjacencyListGraph[
-    N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[
+  X,
+  Y,
+  This
+] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with AddSubtract[Param[N, E], This[N, E]]
     with AdjacencyListBase[N, E, This] {
@@ -56,7 +59,8 @@ trait AdjacencyListGraph[
           def onNonLooping(): Unit = edge withTargets (t =>
             edges
               .find((e: EdgeT) => e.hasTarget((n: NodeT) => n eq t))
-              .fold[Unit](ifEmpty = diSucc remove t)((e: EdgeT) => if (e hasSource this) diSucc put (t, e)))
+              .fold[Unit](ifEmpty = diSucc remove t)((e: EdgeT) => if (e hasSource this) diSucc put (t, e))
+          )
 
           if (edge.isHyperEdge)
             if (edge.isLooping) {
@@ -88,7 +92,7 @@ trait AdjacencyListGraph[
     @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
     @inline final protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }
 
-    @inline final def addOne(node: NodeT)      = { add(node); this }
+    @inline final def addOne(node: NodeT) = { add(node); this }
     @inline final def subtractOne(node: NodeT) = { remove(node); this }
 
     final protected def minus(node: NodeT): Unit = collection -= node
@@ -139,9 +143,9 @@ trait AdjacencyListGraph[
   }
   override def edges: EdgeSetT
 
-  @inline final def clear(): Unit                        = nodes.clear()
-  @inline final def add(node: N): Boolean                = nodes add Node(node)
-  @inline final def add(edge: E[N]): Boolean             = edges add Edge(edge)
+  @inline final def clear(): Unit            = nodes.clear()
+  @inline final def add(node: N): Boolean    = nodes add Node(node)
+  @inline final def add(edge: E[N]): Boolean = edges add Edge(edge)
   @inline final protected def +=#(edge: E[N]): this.type = { add(edge); this }
-  @inline final def upsert(edge: E[N]): Boolean          = edges upsert Edge(edge)
+  @inline final def upsert(edge: E[N]): Boolean = edges upsert Edge(edge)
 }

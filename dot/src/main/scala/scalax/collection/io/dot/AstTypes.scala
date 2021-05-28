@@ -49,9 +49,9 @@ object Id {
 }
 
 /** Verified DOT node_id.
-
-    @param id The string representation of this `NodeId`.
-    @param parts The individual parts of this `NodeId` such as ID and port.
+  *
+  *    @param id The string representation of this `NodeId`.
+  *    @param parts The individual parts of this `NodeId` such as ID and port.
   */
 case class NodeId private[dot] (id: String, parts: Id*) extends DotId {
 
@@ -101,13 +101,15 @@ sealed trait DotGraph {
 }
 
 /** Represents ''graph'' of the DOT language grammar without embedded
-    ''node_stmt'', ''edge_stmt'' and ''subgraph''. */
-case class DotRootGraph(directed: Boolean,
-                        override val id: Option[Id],
-                        strict: Boolean = false,
-                        override val attrStmts: Seq[DotAttrStmt] = Nil,
-                        override val attrList: Seq[DotAttr] = Nil)
-    extends DotGraph {
+  *    ''node_stmt'', ''edge_stmt'' and ''subgraph''.
+  */
+case class DotRootGraph(
+    directed: Boolean,
+    override val id: Option[Id],
+    strict: Boolean = false,
+    override val attrStmts: Seq[DotAttrStmt] = Nil,
+    override val attrList: Seq[DotAttr] = Nil
+) extends DotGraph {
   def headToString = {
     val res = new StringBuilder(32)
     if (strict) res append "strict "
@@ -119,12 +121,14 @@ case class DotRootGraph(directed: Boolean,
 }
 
 /** Represents ''subgraph'' of the DOT language grammar without embedded
-    ''node_stmt'', ''edge_stmt'' and ''subgraph''. */
-case class DotSubGraph(ancestor: DotGraph,
-                       subgraphId: Id,
-                       override val attrStmts: Seq[DotAttrStmt] = Nil,
-                       override val attrList: Seq[DotAttr] = Nil)
-    extends DotGraph {
+  *    ''node_stmt'', ''edge_stmt'' and ''subgraph''.
+  */
+case class DotSubGraph(
+    ancestor: DotGraph,
+    subgraphId: Id,
+    override val attrStmts: Seq[DotAttrStmt] = Nil,
+    override val attrList: Seq[DotAttr] = Nil
+) extends DotGraph {
   val id           = Some(subgraphId)
   def headToString = "subgraph %s {".format(id get)
 }

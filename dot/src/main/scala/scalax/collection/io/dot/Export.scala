@@ -30,12 +30,14 @@ class Export[N, E[+X] <: EdgeLikeIn[X]](graph: Graph[N, E]) {
     * @param spacing separation and indentation rules to be followed when building
     *        the DOT language representation of graph.
     */
-  def toDot(dotRoot: DotRootGraph,
-            edgeTransformer: EdgeTransformer[N, E],
-            hEdgeTransformer: Option[HyperEdgeTransformer[N, E]] = None,
-            cNodeTransformer: Option[NodeTransformer[N, E]] = None,
-            iNodeTransformer: Option[NodeTransformer[N, E]] = None,
-            spacing: Spacing = DefaultSpacing): String = {
+  def toDot(
+      dotRoot: DotRootGraph,
+      edgeTransformer: EdgeTransformer[N, E],
+      hEdgeTransformer: Option[HyperEdgeTransformer[N, E]] = None,
+      cNodeTransformer: Option[NodeTransformer[N, E]] = None,
+      iNodeTransformer: Option[NodeTransformer[N, E]] = None,
+      spacing: Spacing = DefaultSpacing
+  ): String = {
     val (dotAST: DotAST, root: DotCluster) =
       toAST(dotRoot, edgeTransformer, hEdgeTransformer, cNodeTransformer, iNodeTransformer)
     format(dotRoot, dotAST, root, spacing)
@@ -44,11 +46,13 @@ class Export[N, E[+X] <: EdgeLikeIn[X]](graph: Graph[N, E]) {
   /** Builds the AST for `graph` employing `dotRoot` and the supplied transformers.
     *  $NORMALLY
     */
-  def toAST(dotRoot: DotRootGraph,
-            edgeTransformer: EdgeTransformer[N, E],
-            hEdgeTransformer: Option[HyperEdgeTransformer[N, E]] = None,
-            cNodeTransformer: Option[NodeTransformer[N, E]] = None,
-            iNodeTransformer: Option[NodeTransformer[N, E]] = None): (DotAST, DotCluster) = {
+  def toAST(
+      dotRoot: DotRootGraph,
+      edgeTransformer: EdgeTransformer[N, E],
+      hEdgeTransformer: Option[HyperEdgeTransformer[N, E]] = None,
+      cNodeTransformer: Option[NodeTransformer[N, E]] = None,
+      iNodeTransformer: Option[NodeTransformer[N, E]] = None
+  ): (DotAST, DotCluster) = {
     val root           = DotCluster(dotRoot)
     val dotAST: DotAST = DotAST(root)
     def connectClusters(node: dotAST.NodeT): Unit = {
@@ -93,7 +97,8 @@ class Export[N, E[+X] <: EdgeLikeIn[X]](graph: Graph[N, E]) {
       if (edge.edge.isHyperEdge && hEdgeTransformer.isDefined)
         hEdgeTransformer.get(edge) foreach {
           case (dotGraph, edgeStmt) => dotEdge(edge, dotGraph, edgeStmt)
-        } else
+        }
+      else
         edgeTransformer(edge) foreach {
           case (dotGraph, edgeStmt) =>
             dotEdge(edge, dotGraph, edgeStmt)
@@ -157,9 +162,8 @@ class Export[N, E[+X] <: EdgeLikeIn[X]](graph: Graph[N, E]) {
             res append " ["
             attrList foreach { attr =>
               res append attr.name
-              if (attr.value().nonEmpty) {
+              if (attr.value().nonEmpty)
                 res append s" = ${attr.value}"
-              }
               res append ", "
             }
             res delete (res.size - 2, res.size)

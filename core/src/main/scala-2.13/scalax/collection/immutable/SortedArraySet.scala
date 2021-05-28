@@ -7,9 +7,9 @@ import scala.collection.{SortedIterableFactory, SortedSetFactoryDefaults}
 import scala.compat.Platform.arraycopy
 
 @SerialVersionUID(1L)
-class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Array[A]])(
-    implicit val ordering: Ordering[A])
-    extends AbstractSet[A]
+class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Array[A]])(implicit
+    val ordering: Ordering[A]
+) extends AbstractSet[A]
     with SortedSet[A]
     with SortedSetOps[A, SortedArraySet, SortedArraySet[A]]
     with StrictOptimizedSortedSetOps[A, SortedArraySet, SortedArraySet[A]]
@@ -50,7 +50,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
     new scala.collection.AbstractIterator[A] {
       private[this] var i = from
       def hasNext         = i < self.size
-      def next            = { val elm = array(i); i += 1; elm }
+      def next = { val elm = array(i); i += 1; elm }
     }
 
   def iterator: Iterator[A] = iterator(0)
@@ -58,8 +58,9 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
   final protected def search(elem: A, cond: (A, A) => Boolean): Option[Int] = {
     var i     = 0
     var found = -1
-    while (found == -1 && i < size) if (cond(array(i), elem)) i += 1
-    else found = i
+    while (found == -1 && i < size)
+      if (cond(array(i), elem)) i += 1
+      else found = i
     if (found == -1) None else Some(found)
   }
 
@@ -70,7 +71,8 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
       search(e, ordering.lt) orElse (
         if (ordering.gt(e, array(size - 1))) Some(size)
         else Some(-1)
-      )) getOrElse size) - 1
+      )
+    ) getOrElse size) - 1
     if (idxFrom > idxTill) empty
     else {
       val newSize               = idxTill - idxFrom + 1
@@ -95,9 +97,9 @@ object SortedArraySet extends SortedIterableFactory[SortedArraySet] {
     newBuilder.addAll(it).result()
 
   override def newBuilder[A](implicit ordering: Ordering[A]) = new ReusableBuilder[A, SortedArraySet[A]] {
-    val buffer                   = new ArrayBuffer[AnyRef]()
-    override def clear(): Unit   = buffer.clear()
-    override def result()        = new SortedArraySet(buffer.toArray.asInstanceOf[Array[A]])
+    val buffer                 = new ArrayBuffer[AnyRef]()
+    override def clear(): Unit = buffer.clear()
+    override def result()      = new SortedArraySet(buffer.toArray.asInstanceOf[Array[A]])
     override def addOne(elem: A) = { buffer.addOne(elem.asInstanceOf[AnyRef]); this }
   }
 }

@@ -52,7 +52,7 @@ class TPathBuilderTest extends AnyFlatSpec with WalkBehaviors with should.Matche
   }
 
   "PathBuilder result" should "discard a terminating edge" in {
-    (pathBuilder += n(2) += e(2 ~ 3)).result.edges should have size (1)
+    (pathBuilder += n(2) += e(2 ~ 3)).result.edges should have size 1
   }
 
   it should "yield the expected Path" in {

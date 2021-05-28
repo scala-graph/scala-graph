@@ -91,9 +91,9 @@ class ExtHashSetTest extends RefSpec with should.Matchers {
         override def hashCode(): Int = value
       }
       val set = ExtHashSet(C(1), C(2))
-      set.hashCodeIterator(3).toList should have size (0)
+      set.hashCodeIterator(3).toList should have size 0
       val elems = set.hashCodeIterator(1).toList
-      elems should have size (1)
+      elems should have size 1
       elems.head should be(C(1))
     }
 
@@ -116,9 +116,11 @@ object ExtHashSetTest extends App {
 
   protected case class ProbeFrequency[A](probe: A, count: Int)
 
-  private def sortedProbeFrequencies(set: ExtHashSet[Int],
-                                     nrProbes: Int,
-                                     seed: Option[Long]): List[ProbeFrequency[Int]] = {
+  private def sortedProbeFrequencies(
+      set: ExtHashSet[Int],
+      nrProbes: Int,
+      seed: Option[Long]
+  ): List[ProbeFrequency[Int]] = {
     val r = new Random
     seed foreach r.setSeed
     Array
@@ -146,5 +148,5 @@ object ExtHashSetTest extends App {
   Range(10, 2000, 100) foreach { i =>
     println(sortedProbeFrequencies(set, i))
   }
- */
+   */
 }

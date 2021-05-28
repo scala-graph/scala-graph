@@ -99,7 +99,8 @@ final class EditingTest extends RefSpec with should.Matchers {
         e.edge match {
           case s :~> t + (l: String) if l contains 'A' =>
             sum + s.outDegree + t.outDegree
-      }) shouldBe 6
+        }
+      ) shouldBe 6
     }
     def `neighbors ` : Unit = {
       val g                                = Graph(0, 1 ~ 3, 3 ~> 2)

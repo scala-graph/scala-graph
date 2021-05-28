@@ -136,13 +136,15 @@ object GraphPredef {
     final protected[collection] def asNodeTProjection[N <: NI, E[+X] <: EdgeLikeIn[X]]: GraphBase[N, E]#NodeT =
       this.asInstanceOf[Graph[N, E]#NodeT]
 
-    final def fold[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E], T](g: G)(fa: g.NodeT => T,
-                                                                                   fb: GraphBase[N, E]#NodeT => T): T =
+    final def fold[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E], T](
+        g: G
+    )(fa: g.NodeT => T, fb: GraphBase[N, E]#NodeT => T): T =
       if (isContaining[N, E](g)) fa(asNodeT[N, E, G](g))
       else fb(asNodeTProjection[N, E])
 
-    final def toNodeT[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E]](g: G)(
-        f: GraphBase[N, E]#NodeT => g.NodeT): g.NodeT =
+    final def toNodeT[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E]](
+        g: G
+    )(f: GraphBase[N, E]#NodeT => g.NodeT): g.NodeT =
       fold[N, E, G, g.NodeT](g)(n => n, f)
   }
   object InnerNodeParam {
@@ -183,13 +185,15 @@ object GraphPredef {
     final protected[collection] def asEdgeTProjection[N <: NI, E[+X] <: EdgeLikeIn[X]]: GraphBase[N, E]#EdgeT =
       this.asInstanceOf[Graph[N, E]#EdgeT]
 
-    final def fold[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E], T](g: G)(fa: g.EdgeT => T,
-                                                                                   fb: GraphBase[N, E]#EdgeT => T): T =
+    final def fold[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E], T](
+        g: G
+    )(fa: g.EdgeT => T, fb: GraphBase[N, E]#EdgeT => T): T =
       if (isContaining[N, E](g)) fa(asEdgeT[N, E, G](g))
       else fb(asEdgeTProjection[N, E])
 
-    final def toEdgeT[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E]](g: G)(
-        f: GraphBase[N, E]#EdgeT => g.EdgeT): g.EdgeT =
+    final def toEdgeT[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E]](
+        g: G
+    )(f: GraphBase[N, E]#EdgeT => g.EdgeT): g.EdgeT =
       fold[N, E, G, g.EdgeT](g)(e => e, f)
 
     def stringPrefix = ""
@@ -198,7 +202,8 @@ object GraphPredef {
   }
   object InnerEdgeParam {
     @inline implicit def toEdge[NI, EI[+X] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[+X] <: EdgeLike[X]](
-        innerEdge: InnerEdgeParam[NI, EI, NO, EO]): EO[NO] = innerEdge.edge
+        innerEdge: InnerEdgeParam[NI, EI, NO, EO]
+    ): EO[NO] = innerEdge.edge
   }
   //-----------------------------------------------------------------------//
   import GraphEdge._
@@ -228,10 +233,15 @@ object GraphPredef {
     (out: Param[NI, EI]) =>
       out match {
         case n: InnerNodeParam[NI] => pred(n.value)
-        case e: InnerEdgeParam[NI, EI, _, _] => // TODO abstract type NI in type pattern is unchecked since it is eliminated by erasure
+        case e: InnerEdgeParam[
+              NI,
+              EI,
+              _,
+              _
+            ] => // TODO abstract type NI in type pattern is unchecked since it is eliminated by erasure
           e.asInstanceOf[InnerEdgeParam[NI, EI, NO, EO]].edge forall (n => pred(n.value))
         case _ => false
-    }
+      }
 
 //  def edgePredicate[NI, NO <: InnerNodeParam[NI], EC[+X] <: EdgeLike[X]] (pred: EC[NO] => Boolean) =
 //    (out: Param[NI,EC]) => out match {
@@ -240,10 +250,9 @@ object GraphPredef {
 //      case _ => false
 //    }
 
-  @inline implicit def predicateToNodePredicate[NI,
-                                                EI[+X] <: EdgeLike[X],
-                                                NO <: InnerNodeParam[NI],
-                                                EC[+X] <: EdgeLike[X]](p: NI => Boolean) =
+  @inline implicit def predicateToNodePredicate[NI, EI[+X] <: EdgeLike[X], NO <: InnerNodeParam[NI], EC[+X] <: EdgeLike[
+    X
+  ]](p: NI => Boolean) =
     nodePredicate[NI, EI, NO, EC](p)
 
 //  @inline implicit def predicateToEdgePredicate[NI, NO <: InnerNodeParam[NI], EC[+X] <: EdgeLike[X]]

@@ -30,13 +30,15 @@ object Graph extends GraphConstrainedCompanion[Graph] {
 
   def empty[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.empty[N, E](edgeT, config)
-  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N], edges: Iterable[E[N]])(
-      implicit edgeT: ClassTag[E[N]],
-      config: Config = defaultConfig): Graph[N, E] =
+  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N], edges: Iterable[E[N]])(implicit
+      edgeT: ClassTag[E[N]],
+      config: Config = defaultConfig
+  ): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(edgeT, config)
   override protected[collection] def fromWithoutCheck[N, E[+X] <: EdgeLikeIn[X]](
       nodes: Iterable[N],
-      edges: Iterable[E[N]])(implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
+      edges: Iterable[E[N]]
+  )(implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.fromWithoutCheck[N, E](nodes, edges)(edgeT, config)
 }
 
@@ -51,10 +53,12 @@ trait UserConstrainedGraph[N, E[+X] <: EdgeLikeIn[X], +G <: Graph[N, E]] { _: Gr
   override def preAdd(node: N)               = constraint preAdd node
   override def preAdd(edge: E[N])            = constraint preAdd edge
   override def preAdd(elems: InParam[N, E]*) = constraint preAdd (elems: _*)
-  override def postAdd(newGraph: G @uV,
-                       passedNodes: Iterable[N],
-                       passedEdges: Iterable[E[N]],
-                       preCheck: PreCheckResult) =
+  override def postAdd(
+      newGraph: G @uV,
+      passedNodes: Iterable[N],
+      passedEdges: Iterable[E[N]],
+      preCheck: PreCheckResult
+  ) =
     constraint postAdd (newGraph, passedNodes, passedEdges, preCheck)
 
   override def preSubtract(node: self.NodeT, forced: Boolean) =
@@ -67,9 +71,11 @@ trait UserConstrainedGraph[N, E[+X] <: EdgeLikeIn[X], +G <: Graph[N, E]] { _: Gr
     edges.asInstanceOf[Set[C_EdgeT]],
     simple)
 
-  override def postSubtract(newGraph: G @uV,
-                            passedNodes: Iterable[N],
-                            passedEdges: Iterable[E[N]],
-                            preCheck: PreCheckResult) =
+  override def postSubtract(
+      newGraph: G @uV,
+      passedNodes: Iterable[N],
+      passedEdges: Iterable[E[N]],
+      preCheck: PreCheckResult
+  ) =
     constraint postSubtract (newGraph, passedNodes, passedEdges, preCheck)
 }

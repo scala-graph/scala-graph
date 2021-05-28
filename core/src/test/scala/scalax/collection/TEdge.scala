@@ -121,7 +121,7 @@ class TEdgeTest extends RefSpec with should.Matchers {
       e should be(eqFlight)
       e.## should be(eqFlight.##)
       val neFlight = LkDiEdge(ham, gig)(Flight(flightNo + "x", 11 o 2))
-      e should not be (neFlight)
+      e should not be neFlight
       e.## should not be (neFlight.##)
     }
 
@@ -140,8 +140,8 @@ class TEdgeTest extends RefSpec with should.Matchers {
       }
       val wDi = (n1 ~%> n2)(w)
       wDi match { case WDiEdge(s, t, w) => check(s, t, w) }
-      wDi match { case s :~> %(t, w)    => check(s, t, w) }
-      wDi match { case s :~> t % w      => check(s, t, w) }
+      wDi match { case s :~> %(t, w) => check(s, t, w) }
+      wDi match { case s :~> t % w => check(s, t, w) }
       Graph(wDi).get(wDi).edge match {
         case s :~> t % w => check(s.value, t.value, w)
       }
@@ -162,8 +162,8 @@ class TEdgeTest extends RefSpec with should.Matchers {
       }
       val lDi = (n1 ~+> n2)(label)
       lDi match { case LDiEdge(s, t, l) => check(s, t, l) }
-      lDi match { case s :~> +(t, l)    => check(s, t, l) }
-      lDi match { case s :~> t + l      => check(s, t, l) }
+      lDi match { case s :~> +(t, l) => check(s, t, l) }
+      lDi match { case s :~> t + l => check(s, t, l) }
       Graph(lDi).get(lDi).edge match {
         case s :~> t + l => check(s.value, t.value, l)
       }
@@ -185,8 +185,8 @@ class TEdgeTest extends RefSpec with should.Matchers {
       }
       val wlDi = (n1 ~%+> n2)(weight, label)
       wlDi match { case WLDiEdge(s, t, w, l) => check(s, t, w, l) }
-      wlDi match { case s :~> %+(t, w, l)    => check(s, t, w, l) }
-      wlDi match { case s :~> t %+ (w, l)    => check(s, t, w, l) }
+      wlDi match { case s :~> %+(t, w, l) => check(s, t, w, l) }
+      wlDi match { case s :~> t %+ (w, l) => check(s, t, w, l) }
       Graph(wlDi).get(wlDi).edge match {
         case s :~> t %+ (w, l) => check(s.value, t.value, w, l)
       }
@@ -246,7 +246,7 @@ object Test {
   import scalax.collection.GraphPredef._
   val h = 2 ~ 4 ~ 6
   val d = 1 ~> 2
-  val u = 1 ~ (-1)
+  val u = 1 ~ -1
 
   val (lh1, lh2) = (LHyperEdge(1, 3, 5)(6), LHyperEdge(1, 3, 5)(7))
   val g_lh_h     = Graph(lh1, h)
@@ -274,7 +274,7 @@ object Test {
   val (lu1, lu2) = (LUnDiEdge(1, 3)(4), LUnDiEdge(1, 3)(5))
   val g_lu_u     = Graph(lu1, u)
   val g_lu_h     = Graph(lu1, h)
-  val g_lu_d     = Graph[Int, UnDiEdge](lu1, d) // not inferred
+  val g_lu_d     = Graph[Int, UnDiEdge](lu1, d)    // not inferred
   val g_lu_lu    = Graph(lu1, lu2)
   val g_lu_lh    = Graph[Int, HyperEdge](lu1, lh2) // not inferred
 }

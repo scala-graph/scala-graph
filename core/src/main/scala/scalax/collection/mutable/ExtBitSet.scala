@@ -26,7 +26,7 @@ final protected[collection] class ExtBitSet(words: Array[Long]) extends BitSet(w
 
   /** Summary of the words each of which formatted as <index>:<bitCount>. */
   def summary: String =
-    elems.zipWithIndex.map(zWord => "%2d:%2d" format (zWord._2, java.lang.Long.bitCount(zWord._1))) mkString (" ")
+    elems.zipWithIndex.map(zWord => "%2d:%2d" format (zWord._2, java.lang.Long.bitCount(zWord._1))) mkString " "
 
   @inline def apply(idx: Int, mask: Long): Boolean =
     (word(idx) & mask) != 0
@@ -36,7 +36,8 @@ final protected[collection] class ExtBitSet(words: Array[Long]) extends BitSet(w
   def update(idx: Int, mask: Long, isSet: Boolean) {
     if (isSet) {
       val word =
-        if (idx >= nwords) { expand(idx); 0L } else elems(idx)
+        if (idx >= nwords) { expand(idx); 0L }
+        else elems(idx)
       elems(idx) = word | mask
     } else if (idx < nwords)
       elems(idx) = elems(idx) & ~mask

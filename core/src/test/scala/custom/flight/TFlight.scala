@@ -19,8 +19,8 @@ class TFlightRootTest
     )
 
 class TFlight[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC])
-    extends RefSpec
+    val factory: GraphCoreCompanion[CC]
+) extends RefSpec
     with should.Matchers
     with Visualizer[CC] {
 
@@ -42,7 +42,7 @@ class TFlight[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
         e should be(eqFlight)
         e.## should be(eqFlight.##)
         val neFlight = Flight(ham, gig, flightNo + "x", 11 o 2)
-        e should not be (neFlight)
+        e should not be neFlight
         e.## should not be (neFlight.##)
       }
     }

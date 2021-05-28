@@ -14,7 +14,8 @@ class TConnectedRootTest
     extends Suites(
       new TConnected[immutable.Graph](immutable.Graph),
       new TConnected[mutable.Graph](mutable.Graph),
-      new TConnectedMutable)
+      new TConnectedMutable
+    )
 
 class TConnectedMutable extends RefSpec with should.Matchers with Testing[mutable.Graph] {
   val factory = mutable.Graph
@@ -66,8 +67,8 @@ class TConnectedMutable extends RefSpec with should.Matchers with Testing[mutabl
 }
 
 class TConnected[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphConstrainedCompanion[CC])
-    extends RefSpec
+    val factory: GraphConstrainedCompanion[CC]
+) extends RefSpec
     with should.Matchers
     with Testing[CC] {
 
@@ -78,9 +79,9 @@ class TConnected[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, 
   object `The 'Connected' constraint works fine with graphs on` {
     def `creation ` {
       val g1 = factory[Int, DiEdge](1 ~> 2, 2 ~> 3)
-      g1 should have size (5)
+      g1 should have size 5
       val g2 = factory[Int, DiEdge](1 ~> 2, 3 ~> 4)
-      g2 should have size (0)
+      g2 should have size 0
     }
     def `adding nodes or edges` {
       type Di = Graph[Int, DiEdge]
@@ -107,7 +108,7 @@ class TConnected[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, 
       val simpleG      = factory[Int, UnDiEdge](init: _*)
 
       val g = simpleG
-      g should have size (7)
+      g should have size 7
 
       given(g, e2) both (_ - _, _ -? _) should equal(g)
       given(g, e1) both (_ - _, _ -? _) should equal(g)

@@ -71,7 +71,8 @@ class Acyclic[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
       val graphAdd =
         SimpleGraph.from(p.toOuterNodes, p.toOuterEdges)(
           self.edgeT,
-          CoreConfig(self.config.orderHint, self.config.adjacencyListHints))
+          CoreConfig(self.config.orderHint, self.config.adjacencyListHints)
+        )
       if (graphAdd.isCyclic)
         PreCheckResult(Abort)
       else {
@@ -80,10 +81,12 @@ class Acyclic[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
       }
     } else PreCheckResult(PostCheck)
 
-  override def postAdd(newGraph: G @uV,
-                       passedNodes: Iterable[N],
-                       passedEdges: Iterable[E[N]],
-                       preCheck: PreCheckResult): Either[PostCheckFailure, G] = {
+  override def postAdd(
+      newGraph: G @uV,
+      passedNodes: Iterable[N],
+      passedEdges: Iterable[E[N]],
+      preCheck: PreCheckResult
+  ): Either[PostCheckFailure, G] = {
     def msg(at: Option[self.NodeT]) =
       s"Unexpected cycle ${at.fold("")("at " + _)}when adding $passedNodes, $passedEdges."
     preCheck match {

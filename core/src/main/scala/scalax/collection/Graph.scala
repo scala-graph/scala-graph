@@ -24,10 +24,9 @@ import config.GraphConfig
   * @define CONTGRAPH The `Graph` instance that contains `this`
   * @author Peter Empen
   */
-trait GraphLike[
-    N,
-    E[+X] <: EdgeLikeIn[X],
-    +This[NN, EE[+XX] <: EdgeLikeIn[XX]] <: GraphLike[NN, EE, This] with AnySet[Param[NN, EE]] with Graph[NN, EE]]
+trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] <: GraphLike[NN, EE, This] with AnySet[
+  Param[NN, EE]
+] with Graph[NN, EE]]
     extends GraphAsSet[N, E, This]
     with GraphTraversal[N, E]
     with GraphBase[N, E]
@@ -71,11 +70,12 @@ trait GraphLike[
     * @param ordNode the node ordering defaulting to `defaultNodeOrdering`.
     * @param ordEdge the edge ordering defaulting to `defaultEdgeOrdering`.
     */
-  def asSortedString(nodeSeparator: String = GraphBase.defaultSeparator,
-                     edgeSeparator: String = GraphBase.defaultSeparator,
-                     nodesEdgesSeparator: String = GraphBase.defaultSeparator,
-                     withNodesEdgesPrefix: Boolean = false)(implicit ordNode: NodeOrdering = defaultNodeOrdering,
-                                                            ordEdge: EdgeOrdering = defaultEdgeOrdering) = {
+  def asSortedString(
+      nodeSeparator: String = GraphBase.defaultSeparator,
+      edgeSeparator: String = GraphBase.defaultSeparator,
+      nodesEdgesSeparator: String = GraphBase.defaultSeparator,
+      withNodesEdgesPrefix: Boolean = false
+  )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering) = {
     val ns =
       if (withNodesEdgesPrefix) nodes.toSortedString(nodeSeparator)(ordNode)
       else nodes.asSortedString(nodeSeparator)(ordNode)
@@ -89,11 +89,12 @@ trait GraphLike[
 
   /** Same as `asSortedString` but additionally prefixed and parenthesized by `stringPrefix`.
     */
-  def toSortedString(nodeSeparator: String = GraphBase.defaultSeparator,
-                     edgeSeparator: String = GraphBase.defaultSeparator,
-                     nodesEdgesSeparator: String = GraphBase.defaultSeparator,
-                     withNodesEdgesPrefix: Boolean = false)(implicit ordNode: NodeOrdering = defaultNodeOrdering,
-                                                            ordEdge: EdgeOrdering = defaultEdgeOrdering) =
+  def toSortedString(
+      nodeSeparator: String = GraphBase.defaultSeparator,
+      edgeSeparator: String = GraphBase.defaultSeparator,
+      nodesEdgesSeparator: String = GraphBase.defaultSeparator,
+      withNodesEdgesPrefix: Boolean = false
+  )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering) =
     stringPrefix +
       "(" + asSortedString(nodeSeparator, edgeSeparator, nodesEdgesSeparator, withNodesEdgesPrefix)(ordNode, ordEdge) +
       ")"
@@ -159,7 +160,8 @@ trait GraphLike[
     protected def copy: NodeSetT
 
     final override def -(node: NodeT): NodeSetT =
-      if (this contains node) { val c = copy; c minus node; c } else this.asInstanceOf[NodeSetT]
+      if (this contains node) { val c = copy; c minus node; c }
+      else this.asInstanceOf[NodeSetT]
 
     /** removes `node` from this node set leaving the edge set unchanged.
       *
@@ -177,12 +179,14 @@ trait GraphLike[
       * @param minusEdges implementation of removal of all incident edges.
       * @return `true` if `node` has been removed.
       */
-    final protected[collection] def subtract(node: NodeT,
-                                             rippleDelete: Boolean,
-                                             minusNode: (NodeT) => Unit,
-                                             minusEdges: (NodeT) => Unit): Boolean = {
+    final protected[collection] def subtract(
+        node: NodeT,
+        rippleDelete: Boolean,
+        minusNode: (NodeT) => Unit,
+        minusEdges: (NodeT) => Unit
+    ): Boolean = {
       def minusNodeTrue = { minusNode(node); true }
-      def minusAllTrue  = { minusEdges(node); minusNodeTrue }
+      def minusAllTrue = { minusEdges(node); minusNodeTrue }
       if (contains(node))
         if (node.edges.isEmpty) minusNodeTrue
         else if (rippleDelete) minusAllTrue
@@ -336,12 +340,14 @@ trait GraphLike[
     })
 
   /** Implements the heart of `++` calling the `from` factory method of the companion object.
-    *  $REIMPLFACTORY */
+    *  $REIMPLFACTORY
+    */
   protected def plusPlus(newNodes: Iterable[N], newEdges: Iterable[E[N]]): This[N, E] =
     graphCompanion.from[N, E](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
 
   /** Implements the heart of `--` calling the `from` factory method of the companion object.
-    *  $REIMPLFACTORY */
+    *  $REIMPLFACTORY
+    */
   protected def minusMinus(delNodes: Iterable[N], delEdges: Iterable[E[N]]): This[N, E] = {
     val delNodesEdges = minusMinusNodesEdges(delNodes, delEdges)
     graphCompanion.from[N, E](delNodesEdges._1, delNodesEdges._2)
@@ -351,12 +357,14 @@ trait GraphLike[
     *  when delNodes and delEdges are to be deleted by `--`.
     */
   protected def minusMinusNodesEdges(delNodes: Iterable[N], delEdges: Iterable[E[N]]): (Set[N], Set[E[N]]) =
-    (nodes.toOuter -- delNodes, {
-      val delNodeSet = delNodes.toSet
-      val restEdges =
-        for (e <- edges.toOuter if e forall (n => !(delNodeSet contains n))) yield e
-      restEdges -- delEdges
-    })
+    (
+      nodes.toOuter -- delNodes, {
+        val delNodeSet = delNodes.toSet
+        val restEdges =
+          for (e <- edges.toOuter if e forall (n => !(delNodeSet contains n))) yield e
+        restEdges -- delEdges
+      }
+    )
 
   /** Creates a new subgraph consisting of all nodes and edges of this graph except `node`
     *  and those edges which `node` is incident with.
@@ -454,7 +462,8 @@ trait GraphLike[
     minusMinus(
       delNodes ++
         (unconnectedNodeCandidates filter (nc => this find nc exists (n => n.edges forall (delEdgeSet contains _)))),
-      delEdges)
+      delEdges
+    )
   }
 
   /** Provides a shortcut for predicates involving any graph element.
@@ -479,7 +488,8 @@ trait GraphLike[
     val edgePred: PartialFunction[Param[N, E], Boolean] =
       if (edge eq null) {
         case e: InnerEdgeParam[N, E, _, E] => e.asEdgeT[N, E, ThisGraph](thisGraph) forall (node(_))
-      } else {
+      }
+      else {
         case e: InnerEdgeParam[N, E, _, E] => edge(e.asEdgeT[N, E, ThisGraph](thisGraph))
       }
     nodePred orElse edgePred
@@ -510,9 +520,10 @@ object Graph extends GraphCoreCompanion[Graph] {
     immutable.Graph.newBuilder[N, E](edgeT, config)
   def empty[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.empty[N, E](edgeT, config)
-  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Nil, edges: Iterable[E[N]])(
-      implicit edgeT: ClassTag[E[N]],
-      config: Config = defaultConfig): Graph[N, E] =
+  def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Nil, edges: Iterable[E[N]])(implicit
+      edgeT: ClassTag[E[N]],
+      config: Config = defaultConfig
+  ): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(edgeT, config)
 
   implicit def cbfUnDi[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =

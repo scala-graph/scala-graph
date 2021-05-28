@@ -12,7 +12,8 @@ import scalax.collection.io.edge._
 
 /** Generic base trait for any `*EdgeDescriptor` excluding edge types
   * to be used as type argument to collections containing edge descriptors
-  * of different types. */
+  * of different types.
+  */
 sealed abstract class GenEdgeDescriptor[N](val edgeManifest: ClassTag[_], override val typeId: String)
     extends TypeId(typeId)
 
@@ -40,17 +41,19 @@ sealed abstract class EdgeDescriptorBase[N, E[+X] <: EdgeLikeIn[X], +C <: EdgeCo
     val edgeCompanion: C,
     val customSerializer: Option[Serializer[_ <: Parameters]] = None,
     val extraClasses: List[Class[_]] = Nil,
-    typeId: String)(implicit edgeManifest: ClassTag[E[N]])
+    typeId: String
+)(implicit edgeManifest: ClassTag[E[N]])
     extends GenEdgeDescriptor[N](edgeManifest, typeId) {
   implicit val formats = Serialization.formats(
     if (extraClasses.isEmpty) NoTypeHints
-    else new ShortTypeHints(extraClasses)) ++ customSerializer
+    else new ShortTypeHints(extraClasses)
+  ) ++ customSerializer
   def extract(jsonEdge: JValue): Parameters
   final def decompose(edge: E[N])(implicit descriptor: Descriptor[N]): JValue =
     Extraction.decompose(toParameters(edge))
   protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]): Parameters
   protected def nodeIds(edge: E[N], descriptor: Descriptor[N]) =
-    edge.iterator.toList map (n => descriptor.nodeDescriptor(n) id (n))
+    edge.iterator.toList map (n => descriptor.nodeDescriptor(n) id n)
 }
 
 /** Determines how to extract data relevant for non-weighted,
@@ -66,12 +69,13 @@ class EdgeDescriptor[N, E[+X] <: UnDiEdge[X], +C <: EdgeCompanion[E]](
     edgeCompanion: C,
     customSerializer: Option[Serializer[_ <: EdgeParameters]] = None,
     extraClasses: List[Class[_]] = Nil,
-    typeId: String = Defaults.defaultId)(implicit edgeManifest: ClassTag[E[N]])
+    typeId: String = Defaults.defaultId
+)(implicit edgeManifest: ClassTag[E[N]])
     extends EdgeDescriptorBase[N, E, C](edgeCompanion, customSerializer, extraClasses, typeId)(edgeManifest) {
   override def extract(jsonEdge: JValue) = jsonEdge.extract[EdgeParameters]
   override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]) = {
     val (n1, n2) = (edge._1, edge._2)
-    new EdgeParameters(descriptor.nodeDescriptor(n1) id (n1), descriptor.nodeDescriptor(n2) id (n2))
+    new EdgeParameters(descriptor.nodeDescriptor(n1) id n1, descriptor.nodeDescriptor(n2) id n2)
   }
 }
 
@@ -88,15 +92,13 @@ class WEdgeDescriptor[N, E[+X] <: UnDiEdge[X] with WEdge[X], +C <: WEdgeCompanio
     edgeCompanion: C,
     customSerializer: Option[Serializer[_ <: WEdgeParameters]] = None,
     extraClasses: List[Class[_]] = Nil,
-    typeId: String = Defaults.defaultId)(implicit edgeManifest: ClassTag[E[N]])
+    typeId: String = Defaults.defaultId
+)(implicit edgeManifest: ClassTag[E[N]])
     extends EdgeDescriptorBase[N, E, C](edgeCompanion, customSerializer, extraClasses, typeId)(edgeManifest) {
   override def extract(jsonEdge: JValue) = jsonEdge.extract[WEdgeParameters]
   override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]) = {
     val (n1, n2) = (edge._1, edge._2)
-    new WEdgeParameters(
-      descriptor.nodeDescriptor(edge._1) id (n1),
-      descriptor.nodeDescriptor(edge._2) id (n2),
-      edge.weight)
+    new WEdgeParameters(descriptor.nodeDescriptor(edge._1) id n1, descriptor.nodeDescriptor(edge._2) id n2, edge.weight)
   }
 }
 
@@ -115,15 +117,14 @@ class LEdgeDescriptor[N, E[+X] <: UnDiEdge[X] with LEdge[X], +C <: LEdgeCompanio
     val aLabel: L,
     customSerializer: Option[Serializer[_ <: LEdgeParameters[L]]] = None,
     extraClasses: List[Class[_]] = Nil,
-    typeId: String = Defaults.defaultId)(implicit edgeManifest: ClassTag[E[N]], implicit val labelManifest: Manifest[L])
+    typeId: String = Defaults.defaultId
+)(implicit edgeManifest: ClassTag[E[N]], implicit val labelManifest: Manifest[L])
     extends EdgeDescriptorBase[N, E, C](edgeCompanion, customSerializer, extraClasses, typeId)(edgeManifest) {
   override def extract(jsonEdge: JValue) = jsonEdge.extract[LEdgeParameters[L]]
   override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]) = {
     val (n1, n2) = (edge._1, edge._2)
-    new LEdgeParameters[edge.L1](
-      descriptor.nodeDescriptor(n1) id (n1),
-      descriptor.nodeDescriptor(n2) id (n2),
-      edge.label).asInstanceOf[LEdgeParameters[L]]
+    new LEdgeParameters[edge.L1](descriptor.nodeDescriptor(n1) id n1, descriptor.nodeDescriptor(n2) id n2, edge.label)
+      .asInstanceOf[LEdgeParameters[L]]
   }
 }
 
@@ -142,16 +143,18 @@ class WLEdgeDescriptor[N, E[+X] <: UnDiEdge[X] with WLEdge[X], +C <: WLEdgeCompa
     val aLabel: L,
     customSerializer: Option[Serializer[_ <: WLEdgeParameters[L]]] = None,
     extraClasses: List[Class[_]] = Nil,
-    typeId: String = Defaults.defaultId)(implicit edgeManifest: ClassTag[E[N]], implicit val labelManifest: Manifest[L])
+    typeId: String = Defaults.defaultId
+)(implicit edgeManifest: ClassTag[E[N]], implicit val labelManifest: Manifest[L])
     extends EdgeDescriptorBase[N, E, C](edgeCompanion, customSerializer, extraClasses, typeId)(edgeManifest) {
   override def extract(jsonEdge: JValue) = jsonEdge.extract[WLEdgeParameters[L]]
   override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]): WLEdgeParameters[L] = {
     val (n1, n2) = (edge._1, edge._2)
     new WLEdgeParameters[edge.L1](
-      descriptor.nodeDescriptor(n1) id (n1),
-      descriptor.nodeDescriptor(n2) id (n2),
+      descriptor.nodeDescriptor(n1) id n1,
+      descriptor.nodeDescriptor(n2) id n2,
       edge.weight,
-      edge.label).asInstanceOf[WLEdgeParameters[L]]
+      edge.label
+    ).asInstanceOf[WLEdgeParameters[L]]
   }
 }
 
@@ -170,16 +173,17 @@ class CEdgeDescriptor[N, E[+X] <: CEdge[X], +C <: CEdgeCompanion[E], P <: Produc
     val sampleAttributes: P,
     customSerializer: Option[Serializer[_ <: CEdgeParameters[P]]] = None,
     extraClasses: List[Class[_]] = Nil,
-    typeId: String = Defaults.defaultId)(implicit edgeManifest: ClassTag[E[N]],
-                                         implicit val attributeManifest: Manifest[P])
+    typeId: String = Defaults.defaultId
+)(implicit edgeManifest: ClassTag[E[N]], implicit val attributeManifest: Manifest[P])
     extends EdgeDescriptorBase[N, E, C](edgeCompanion, customSerializer, extraClasses, typeId)(edgeManifest) {
   override def extract(jsonEdge: JValue) = jsonEdge.extract[CEdgeParameters[P]]
   override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]) = {
     val (n1, n2) = (edge._1, edge._2)
     new CEdgeParameters[edge.P](
-      descriptor.nodeDescriptor(edge._1) id (n1),
-      descriptor.nodeDescriptor(edge._2) id (n2),
-      edge.attributes).asInstanceOf[CEdgeParameters[P]]
+      descriptor.nodeDescriptor(edge._1) id n1,
+      descriptor.nodeDescriptor(edge._2) id n2,
+      edge.attributes
+    ).asInstanceOf[CEdgeParameters[P]]
   }
 }
 
@@ -196,7 +200,8 @@ class HyperEdgeDescriptor[N, E[+X] <: HyperEdge[X], +C <: HyperEdgeCompanion[E]]
     edgeCompanion: C,
     customSerializer: Option[Serializer[_ <: HyperEdgeParameters]] = None,
     extraClasses: List[Class[_]] = Nil,
-    typeId: String = Defaults.defaultId)(implicit edgeManifest: ClassTag[E[N]])
+    typeId: String = Defaults.defaultId
+)(implicit edgeManifest: ClassTag[E[N]])
     extends EdgeDescriptorBase[N, E, C](edgeCompanion, customSerializer, extraClasses, typeId)(edgeManifest) {
   override def extract(jsonEdge: JValue) = jsonEdge.extract[HyperEdgeParameters]
   override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]) =
@@ -216,7 +221,8 @@ class WHyperEdgeDescriptor[N, E[+X] <: WHyperEdge[X], +C <: WHyperEdgeCompanion[
     edgeCompanion: C,
     customSerializer: Option[Serializer[_ <: WHyperEdgeParameters]] = None,
     extraClasses: List[Class[_]] = Nil,
-    typeId: String = Defaults.defaultId)(implicit edgeManifest: ClassTag[E[N]])
+    typeId: String = Defaults.defaultId
+)(implicit edgeManifest: ClassTag[E[N]])
     extends EdgeDescriptorBase[N, E, C](edgeCompanion, customSerializer, extraClasses, typeId)(edgeManifest) {
   override def extract(jsonEdge: JValue) = jsonEdge.extract[WHyperEdgeParameters]
   override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]) =
@@ -238,7 +244,8 @@ class LHyperEdgeDescriptor[N, E[+X] <: LHyperEdge[X], +C <: LHyperEdgeCompanion[
     val aLabel: L,
     customSerializer: Option[Serializer[_ <: LHyperEdgeParameters[L]]] = None,
     extraClasses: List[Class[_]] = Nil,
-    typeId: String = Defaults.defaultId)(implicit edgeManifest: ClassTag[E[N]], implicit val labelManifest: Manifest[L])
+    typeId: String = Defaults.defaultId
+)(implicit edgeManifest: ClassTag[E[N]], implicit val labelManifest: Manifest[L])
     extends EdgeDescriptorBase[N, E, C](edgeCompanion, customSerializer, extraClasses, typeId)(edgeManifest) {
   override def extract(jsonEdge: JValue) = jsonEdge.extract[LHyperEdgeParameters[L]]
   override protected def toParameters(edge: E[N])(implicit descriptor: Descriptor[N]): LHyperEdgeParameters[L] =
@@ -261,7 +268,8 @@ class WLHyperEdgeDescriptor[N, E[+X] <: WLHyperEdge[X], +C <: WLHyperEdgeCompani
     val aLabel: L,
     customSerializer: Option[Serializer[_ <: WLHyperEdgeParameters[L]]] = None,
     extraClasses: List[Class[_]] = Nil,
-    typeId: String = Defaults.defaultId)(implicit edgeManifest: ClassTag[E[N]], implicit val labelManifest: Manifest[L])
+    typeId: String = Defaults.defaultId
+)(implicit edgeManifest: ClassTag[E[N]], implicit val labelManifest: Manifest[L])
     extends EdgeDescriptorBase[N, E, C](edgeCompanion, customSerializer, extraClasses, typeId)(edgeManifest) {
 
   override def extract(jsonEdge: JValue) = jsonEdge.extract[WLHyperEdgeParameters[L]]
@@ -286,8 +294,8 @@ class CHyperEdgeDescriptor[N, E[+X] <: CHyperEdge[X], +C <: CHyperEdgeCompanion[
     val sampleAttributes: P,
     customSerializer: Option[Serializer[_ <: CEdgeParameters[P]]] = None,
     extraClasses: List[Class[_]] = Nil,
-    typeId: String = Defaults.defaultId)(implicit edgeManifest: ClassTag[E[N]],
-                                         implicit val attributeManifest: Manifest[P])
+    typeId: String = Defaults.defaultId
+)(implicit edgeManifest: ClassTag[E[N]], implicit val attributeManifest: Manifest[P])
     extends EdgeDescriptorBase[N, E, C](edgeCompanion, customSerializer, extraClasses, typeId)(edgeManifest) {
 
   override def extract(jsonEdge: JValue) = jsonEdge.extract[CEdgeParameters[P]]

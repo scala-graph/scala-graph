@@ -37,7 +37,7 @@ class TGraphGenTest extends RefSpec with should.Matchers with ScalaCheckProperty
 
     def `should conform to the passed size` {
       forAll(arbitrary[Set[Int]]) { (outerNodes: Set[Int]) =>
-        outerNodes should have size (order)
+        outerNodes should have size order
       }
     }
   }

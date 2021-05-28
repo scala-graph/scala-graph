@@ -79,7 +79,8 @@ class LEdgeSerializer[L: Manifest](labelSerializers: Serializer[L]*)
     case LEdgeParameters((nId_1, nId_2), label) =>
       JArray(
         JString(nId_1) :: JString(nId_2) ::
-          LabelSerialization.decompose(label.asInstanceOf[L]) :: Nil)
+          LabelSerialization.decompose(label.asInstanceOf[L]) :: Nil
+      )
   }
 }
 
@@ -105,7 +106,8 @@ class WLEdgeSerializer[L: Manifest](labelSerializers: Serializer[L]*)
     case WLEdgeParameters((nId_1, nId_2), weight, label) =>
       JArray(
         JString(nId_1) :: JString(nId_2) :: JDouble(weight) ::
-          LabelSerialization.decompose(label.asInstanceOf[L]) :: Nil)
+          LabelSerialization.decompose(label.asInstanceOf[L]) :: Nil
+      )
   }
 }
 trait HyperEdgeChecker {
@@ -183,9 +185,11 @@ class LHyperEdgeSerializer[L: Manifest](labelSerializers: Serializer[L]*)
     with Serializer[LHyperEdgeParameters[L]]
     with HyperEdgeChecker {
   final private val clazz = classOf[LHyperEdgeParameters[L]]
-  @inline final private def parameters(jsonIds: List[JValue],
-                                       kind: String,
-                                       jsonLabel: JValue): LHyperEdgeParameters[L] =
+  @inline final private def parameters(
+      jsonIds: List[JValue],
+      kind: String,
+      jsonLabel: JValue
+  ): LHyperEdgeParameters[L] =
     new LHyperEdgeParameters[L](prepareNodes(jsonIds), kind, LabelSerialization.extract(jsonLabel))
 
   override def deserialize(implicit format: Formats) = {
@@ -203,7 +207,8 @@ class LHyperEdgeSerializer[L: Manifest](labelSerializers: Serializer[L]*)
       JArray(
         Extraction.decompose(nodeIds) ::
           JString(kind) ::
-          LabelSerialization.decompose(label.asInstanceOf[L]) :: Nil)
+          LabelSerialization.decompose(label.asInstanceOf[L]) :: Nil
+      )
   }
 }
 
@@ -218,10 +223,12 @@ class WLHyperEdgeSerializer[L: Manifest](labelSerializers: Serializer[L]*)
     with Serializer[WLHyperEdgeParameters[L]]
     with HyperEdgeChecker {
   final private val clazz = classOf[WLHyperEdgeParameters[L]]
-  @inline final private def parameters(jsonIds: List[JValue],
-                                       kind: String,
-                                       weight: Double,
-                                       jsonLabel: JValue): WLHyperEdgeParameters[L] =
+  @inline final private def parameters(
+      jsonIds: List[JValue],
+      kind: String,
+      weight: Double,
+      jsonLabel: JValue
+  ): WLHyperEdgeParameters[L] =
     new WLHyperEdgeParameters[L](prepareNodes(jsonIds), kind, weight, LabelSerialization.extract(jsonLabel))
 
   override def deserialize(implicit format: Formats) = {
@@ -238,6 +245,7 @@ class WLHyperEdgeSerializer[L: Manifest](labelSerializers: Serializer[L]*)
     case WLHyperEdgeParameters(nodeIds, kind, weight, label) =>
       JArray(
         Extraction.decompose(nodeIds) :: JString(kind) :: JDouble(weight) ::
-          LabelSerialization.decompose(label.asInstanceOf[L]) :: Nil)
+          LabelSerialization.decompose(label.asInstanceOf[L]) :: Nil
+      )
   }
 }

@@ -199,12 +199,11 @@ trait ForeachBasedDetachingIterable[+A] extends Iterable[A] {
   final override def reduceLeft[B >: A](op: (B, A) => B): B = {
     var first  = true
     var acc: B = 0.asInstanceOf[B]
-    for (x <- this) {
+    for (x <- this)
       if (first) {
         acc = x
         first = false
       } else acc = op(acc, x)
-    }
     if (first) throw new UnsupportedOperationException("empty.reduceLeft")
     else acc
   }

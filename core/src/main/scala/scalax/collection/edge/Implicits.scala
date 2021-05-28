@@ -115,17 +115,17 @@ object Implicits {
 
   // ------------------------------------------------------------------ extractors
   /** Extractors for weighted and/or labeled undirected edges.
-      {{{
-      object StringLabel extends LEdgeImplicits[String]
-      import StringLabel._
-
-      val lE = (n1 ~+ n2)(label)
-      lE match { case LUnDiEdge(s, t, l) => f(s, t, l) } // constructor pattern
-      lE match { case s :~ t + l         => f(s, t, l) } // infix op pattern
-
-      val lkE = (n1 ~+# n2)(label)
-      lkE match { case s :~ t + l => f(s, t, l) }
-      }}}
+    *      {{{
+    *      object StringLabel extends LEdgeImplicits[String]
+    *      import StringLabel._
+    *
+    *      val lE = (n1 ~+ n2)(label)
+    *      lE match { case LUnDiEdge(s, t, l) => f(s, t, l) } // constructor pattern
+    *      lE match { case s :~ t + l         => f(s, t, l) } // infix op pattern
+    *
+    *      val lkE = (n1 ~+# n2)(label)
+    *      lkE match { case s :~ t + l => f(s, t, l) }
+    *      }}}
     */
   object :~ {
     def unapply[N](e: WUnDiEdge[N]): Option[(N, (N, Double))] =
@@ -147,17 +147,17 @@ object Implicits {
   }
 
   /** Extractors for weighted and/or labeled directed edges.
-      {{{
-      object StringLabel extends LEdgeImplicits[String]
-      import StringLabel._
-
-      val lDi = (n1 ~+> n2)(label)
-      lDi match { case LDiEdge(s, t, l) => f(s, t, l) } // constructor pattern
-      lDi match { case s :~> t + l      => f(s, t, l) } // infix op pattern
-
-      val lkDi = (n1 ~+#> n2)(label)
-      lkDi match { case s :~> t + l     => f(s, t, l) }
-      }}}
+    *      {{{
+    *      object StringLabel extends LEdgeImplicits[String]
+    *      import StringLabel._
+    *
+    *      val lDi = (n1 ~+> n2)(label)
+    *      lDi match { case LDiEdge(s, t, l) => f(s, t, l) } // constructor pattern
+    *      lDi match { case s :~> t + l      => f(s, t, l) } // infix op pattern
+    *
+    *      val lkDi = (n1 ~+#> n2)(label)
+    *      lkDi match { case s :~> t + l     => f(s, t, l) }
+    *      }}}
     */
   object :~> {
     def unapply[N](e: WDiEdge[N]): Option[(N, (N, Double))]  = :~ unapply e

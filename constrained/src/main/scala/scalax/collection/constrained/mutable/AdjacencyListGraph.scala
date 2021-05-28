@@ -17,8 +17,11 @@ import config.GenConstrainedConfig
   *
   * @author Peter Empen
   */
-trait AdjacencyListGraph[
-    N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[
+  X,
+  Y,
+  This
+] with Graph[X, Y]]
     extends SimpleAdjacencyListGraph[N, E, This]
     with GraphLike[N, E, This] {
   selfGraph: This[N, E] =>
@@ -87,9 +90,11 @@ trait AdjacencyListGraph[
       }
     }
 
-    protected def checkedRemove(edge: EdgeT,
-                                forced: Boolean,
-                                remove: EdgeT => Boolean): Either[ConstraintViolation, Boolean] =
+    protected def checkedRemove(
+        edge: EdgeT,
+        forced: Boolean,
+        remove: EdgeT => Boolean
+    ): Either[ConstraintViolation, Boolean] =
       if (checkSuspended) Right(remove(edge))
       else {
         val preCheckResult = preSubtract(edge.asInstanceOf[self.EdgeT], !forced)

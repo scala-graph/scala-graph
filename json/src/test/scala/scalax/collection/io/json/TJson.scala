@@ -18,8 +18,8 @@ class TJsonRootTest
     extends Suites(new TJsonTest[immutable.Graph](immutable.Graph), new TJsonTest[mutable.Graph](mutable.Graph))
 
 class TJsonTest[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
-    extends RefSpec
+    val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC]
+) extends RefSpec
     with should.Matchers {
 
   object `JSON import/export works fine with` {
@@ -47,7 +47,8 @@ class TJsonTest[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
             UnDi.descriptor[String](Some(new EdgeSerializer)),
             namedEdgeDescriptors = Seq[GenEdgeDescriptor[String]](
               UnDi.descriptor[String](),
-              WkDi.descriptor[String](Some(new WEdgeSerializer)))
+              WkDi.descriptor[String](Some(new WEdgeSerializer))
+            )
           )
         val graph = factory("A" ~ "B", "B" ~ "C", ("A" ~%#> "B")(3), ("B" ~%#> "C")(4), "X" ~ "Y", "Y" ~ "A")
       }
@@ -55,11 +56,11 @@ class TJsonTest[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
         import FixtureMixed._
         val lists = graphParse(jsonText, descriptor).toList
 
-        lists should have size (4)
+        lists should have size 4
         lists(0) match {
           case NodeList(nodeTypeId, _nodes) =>
             nodeTypeId should be(defaultId)
-            _nodes should have size (5)
+            _nodes should have size 5
             val nodes = _nodes.toList
             nodes(0) match {
               case JArray(fields) =>
@@ -76,7 +77,7 @@ class TJsonTest[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
         lists(1) match {
           case EdgeList(edgeTypeId, _edges) =>
             edgeTypeId should be(defaultId)
-            _edges should have size (2)
+            _edges should have size 2
             val edges = _edges.toList
             edges(0) match {
               case JArray(fields) =>
@@ -93,7 +94,7 @@ class TJsonTest[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
         lists(2) match {
           case EdgeList(edgeTypeId, _edges) =>
             edgeTypeId should be("WkDiEdge")
-            _edges should have size (2)
+            _edges should have size 2
             val edges = _edges.toList
             edges(0) match {
               case JArray(fields) =>
@@ -110,7 +111,7 @@ class TJsonTest[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
         lists(3) match {
           case EdgeList(edgeTypeId, _edges) =>
             edgeTypeId should be("UnDiEdge")
-            _edges should have size (2)
+            _edges should have size 2
             val edges = _edges.toList
             edges(0) match {
               case JObject(fields) =>
@@ -174,7 +175,8 @@ class TJsonTest[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
             }""".filterNot(_.isWhitespace)
           val descriptor = new Descriptor[String](
             StringNodeDescriptor,
-            LDi.descriptor[String, String]("", Some(new LEdgeSerializer[String](new StringSerializer))))
+            LDi.descriptor[String, String]("", Some(new LEdgeSerializer[String](new StringSerializer)))
+          )
         }
         def `on importing` {
           import FixtureLEdgeCustom._
@@ -203,7 +205,8 @@ class TJsonTest[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
           new WLEdgeDescriptor[String, WLDiEdge, WLDiEdge.type, String](
             WLDiEdge,
             "",
-            Some(new WLEdgeSerializer[String](new StringSerializer)))
+            Some(new WLEdgeSerializer[String](new StringSerializer))
+          )
         )
         val graph = factory(("A" ~%+> "B")(100, "CLabel-1"), ("B" ~%+> "A")(200, "CLabel-2"))
       }
@@ -238,7 +241,8 @@ class TJsonTest[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
               new WLHyperEdgeDescriptor[String, WLHyperEdge, WLHyperEdge.type, String](
                 WLHyperEdge,
                 "",
-                Some(new WLHyperEdgeSerializer[String](new StringSerializer)))
+                Some(new WLHyperEdgeSerializer[String](new StringSerializer))
+              )
             )
           )
           g.nodes.toSortedString() should be("NodeSet(A, B, C)")
@@ -298,6 +302,7 @@ class TJsonTest[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
 
 /** Turns a JString into a String thus allowing to omit parameter names.
   *  The standard lift.json serializer expects a JField;
-  *  Serializers must be defined at top level. */
+  *  Serializers must be defined at top level.
+  */
 final private class StringSerializer
     extends CustomSerializer[String](formats => ({ case JString(label) => label }, { case s: String => JString(s) }))

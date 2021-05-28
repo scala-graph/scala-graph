@@ -193,24 +193,22 @@ trait Drawable {
 
         if (!isMultiEdge)
           addSimple()
-        else {
-          if (!alreadyCounted.contains((node1, node2)) && !alreadyCounted.contains((node2, node1))) {
-            alreadyCounted = alreadyCounted + ((node1, node2))
-            addSimple()
-          } else {
-            val fake = fakeNode
-            addEdge(
-              src = (if (isInverted) node2 else node1).asNodeDraft,
-              trg = fake,
-              dir = EdgeDirection.UNDIRECTED
-            )
-            addEdge(
-              src = fake,
-              trg = (if (isInverted) node1 else node2).asNodeDraft,
-              dir = edge.getDirection,
-              lbl = edge.getLabel
-            )
-          }
+        else if (!alreadyCounted.contains((node1, node2)) && !alreadyCounted.contains((node2, node1))) {
+          alreadyCounted = alreadyCounted + ((node1, node2))
+          addSimple()
+        } else {
+          val fake = fakeNode
+          addEdge(
+            src = (if (isInverted) node2 else node1).asNodeDraft,
+            trg = fake,
+            dir = EdgeDirection.UNDIRECTED
+          )
+          addEdge(
+            src = fake,
+            trg = (if (isInverted) node1 else node2).asNodeDraft,
+            dir = edge.getDirection,
+            lbl = edge.getLabel
+          )
         }
       } else {
         val realNodes = edge.nodes.toIterator
@@ -220,13 +218,13 @@ trait Drawable {
           trg = fake,
           dir = EdgeDirection.UNDIRECTED
         )
-        realNodes.foreach(
-          node =>
-            addEdge(
-              src = fake,
-              trg = node.asNodeDraft,
-              dir = edge.getDirection
-          ))
+        realNodes.foreach(node =>
+          addEdge(
+            src = fake,
+            trg = node.asNodeDraft,
+            dir = edge.getDirection
+          )
+        )
       }
     }
 

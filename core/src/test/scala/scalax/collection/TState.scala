@@ -61,7 +61,8 @@ class TStateTest extends RefSpec with should.Matchers {
             if (recursion == 0) 0
             else if (n eq recurseAt) countNodesDeep(recursion - 1)
             else 1
-          ))
+          )
+        )
         nrNodes
       }
       for (i <- 1 to 2) countNodesDeep(aLotOfTimes)
@@ -85,7 +86,7 @@ class TStateTest extends RefSpec with should.Matchers {
     def `when traversing by futures` {
       val traversals = Future.sequence(
         for (i <- 1 to aLotOfTimes)
-          yield Future { countNodes() }
+          yield Future(countNodes())
       )
       // statistics map with key = nrOfNodesCounted, value = frequency
       val stat = MutableMap.empty[Int, Int]

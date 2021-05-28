@@ -22,8 +22,8 @@ class TConnectivityRootTest
     )
 
 final class TConnectivity[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
-    val factory: GraphCoreCompanion[G])
-    extends RefSpec
+    val factory: GraphCoreCompanion[G]
+) extends RefSpec
     with should.Matchers
     with ScalaCheckPropertyChecks
     with Visualizer[G] {
@@ -46,7 +46,7 @@ final class TConnectivity[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
       given(g) {
         _.nodes foreach { n =>
           val components = n.innerNodeTraverser.strongComponents
-          components foreach (_.nodes should have size (1))
+          components foreach (_.nodes should have size 1)
         }
       }
     }
@@ -70,8 +70,9 @@ final class TConnectivity[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
     def `each is detected as such` {
       sccExpected foreach (g =>
         given(g) {
-          _.strongComponentTraverser() should have size (1)
-        })
+          _.strongComponentTraverser() should have size 1
+        }
+      )
     }
 
     def `connected by a diEdge yields a graph with the very same two strong components` {
@@ -84,11 +85,11 @@ final class TConnectivity[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
       connectors foreach { connector =>
         val connected = union + connector
         def check(scc: Iterable[connected.Component], expectedSize: Int): Unit = {
-          scc should have size (expectedSize)
+          scc should have size expectedSize
           scc foreach { sc =>
             given(sc.to(factory)) { g =>
               sccExpected should contain(g)
-              sc.frontierEdges should have size (1)
+              sc.frontierEdges should have size 1
             }
           }
         }
@@ -107,17 +108,20 @@ final class TConnectivity[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
   object `Having two weak components` {
 
     def `weak components are detected, fix #57` {
-      given(factory(11 ~> 12, 13 ~> 14)) { _.componentTraverser() should have size 2 }
+      given(factory(11 ~> 12, 13 ~> 14))(_.componentTraverser() should have size 2)
     }
   }
 
   object `Having a bigger graph` {
     val g: G[Int, DiEdge] = {
       val gOrder = 1000
-      val random = RandomGraph.diGraph(factory, new IntFactory {
-        val order       = gOrder
-        val nodeDegrees = NodeDegreeRange(gOrder / 10, gOrder / 4)
-      })
+      val random = RandomGraph.diGraph(
+        factory,
+        new IntFactory {
+          val order       = gOrder
+          val nodeDegrees = NodeDegreeRange(gOrder / 10, gOrder / 4)
+        }
+      )
       random.draw
     }
     lazy val strongComponents = g.strongComponentTraverser().toVector
@@ -162,13 +166,12 @@ final class TConnectivity[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
         }
         arbitraryNodes.sliding(2) foreach { pairOrSingle =>
           def checkNonBiConnected(ns1: Set[g.NodeT], ns2: Set[g.NodeT]) =
-            if (ns1 ne ns2) {
+            if (ns1 ne ns2)
               ns1 zip ns2 foreach {
                 case (n1, n2) =>
                   (n1 pathTo n2).isDefined &&
                     (n2 pathTo n1).isDefined should be(false)
               }
-            }
 
           pairOrSingle.toList match {
             case List(ns1, ns2) => checkNonBiConnected(ns1, ns2)

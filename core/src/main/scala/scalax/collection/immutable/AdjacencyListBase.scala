@@ -18,10 +18,11 @@ import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
   *
   * @author Peter Empen
   */
-trait AdjacencyListBase[
-    N,
-    E[+X] <: EdgeLikeIn[X],
-    +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with AnySet[Param[X, Y]] with SimpleGraph[X, Y]]
+trait AdjacencyListBase[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[
+  X,
+  Y,
+  This
+] with AnySet[Param[X, Y]] with SimpleGraph[X, Y]]
     extends GraphLike[N, E, This] {
   selfGraph: This[N, E] =>
 
@@ -109,7 +110,8 @@ trait AdjacencyListBase[
 
     final def outgoing = edges withSetFilter (e =>
       if (e.isDirected) e.hasSource((_: NodeT) eq this)
-      else true)
+      else true
+    )
     @inline private[this] def isOutgoingTo(e: EdgeT, to: NodeT): Boolean =
       if (e.isDirected)
         e matches ((_: NodeT) eq this, (_: NodeT) eq to)
@@ -124,7 +126,8 @@ trait AdjacencyListBase[
 
     final def incoming = edges withSetFilter (e =>
       if (e.isDirected) e.hasTarget((_: NodeT) eq this)
-      else true)
+      else true
+    )
     @inline final private[this] def isIncomingFrom(e: EdgeT, from: NodeT): Boolean =
       if (e.isDirected)
         e matches ((_: NodeT) eq from, (_: NodeT) eq this)
@@ -141,10 +144,12 @@ trait AdjacencyListBase[
 
     final def outDegree: Int = edges count (_.hasSource((n: NodeT) => n eq this))
 
-    final def outDegree(nodeFilter: NodeFilter,
-                        edgeFilter: EdgeFilter = anyEdge,
-                        includeHooks: Boolean = false,
-                        ignoreMultiEdges: Boolean = true): Int = {
+    final def outDegree(
+        nodeFilter: NodeFilter,
+        edgeFilter: EdgeFilter = anyEdge,
+        includeHooks: Boolean = false,
+        ignoreMultiEdges: Boolean = true
+    ): Int = {
       val doEdgeFilter = isCustomEdgeFilter(edgeFilter)
       def edgePred(e: EdgeT): Boolean =
         (if (doEdgeFilter) edgeFilter(e) else true) &&
@@ -159,10 +164,12 @@ trait AdjacencyListBase[
 
     final def inDegree: Int = edges count (_.hasTarget((n: NodeT) => n eq this))
 
-    final def inDegree(nodeFilter: NodeFilter,
-                       edgeFilter: EdgeFilter = anyEdge,
-                       includeHooks: Boolean = false,
-                       ignoreMultiEdges: Boolean = true): Int = {
+    final def inDegree(
+        nodeFilter: NodeFilter,
+        edgeFilter: EdgeFilter = anyEdge,
+        includeHooks: Boolean = false,
+        ignoreMultiEdges: Boolean = true
+    ): Int = {
       val doEdgeFilter = isCustomEdgeFilter(edgeFilter)
       def edgePred(e: EdgeT): Boolean =
         (if (doEdgeFilter) edgeFilter(e) else true) &&

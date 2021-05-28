@@ -16,11 +16,11 @@ import scalax.collection.visualization.Visualizer
 class TSerializableRootTest
     extends Suites(new TSerializable[immutable.Graph](immutable.Graph), new TSerializable[mutable.Graph](mutable.Graph))
 
-/**	Tests for standard java serialization.
+/** Tests for standard java serialization.
   */
 final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC])
-    extends AnyFlatSpec
+    val factory: GraphCoreCompanion[CC]
+) extends AnyFlatSpec
     with should.Matchers
     with BeforeAndAfterEach
     with Visualizer[CC] {
@@ -39,7 +39,7 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
       val exec = newTest
       exec.save[N, E](g)
       val r = exec.restore[N, E]
-      given(r) { _ should be(g) }
+      given(r)(_ should be(g))
       r
     }
   }
@@ -61,7 +61,8 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
     protected def newTest: Exec = {
       cnt += 1
       new Exec( // include the name of the test method
-        s"$tmpDir${File.separator}${s"${this.getClass.getSimpleName.init}.${if (isImmutableTest) "i" else "m"}-${testNames.toArray.apply(cnt)}"}.ser")
+        s"$tmpDir${File.separator}${s"${this.getClass.getSimpleName.init}.${if (isImmutableTest) "i" else "m"}-${testNames.toArray.apply(cnt)}"}.ser"
+      )
     }
   }
 
@@ -134,8 +135,8 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
 
       back.graphSize should be(1)
 
-      val inner_1 = (back get n1)
-      inner_1.diSuccessors should have size (1)
+      val inner_1 = back get n1
+      inner_1.diSuccessors should have size 1
       inner_1.diSuccessors.head should be(n2)
 
       val backEdge = back.edges.head
@@ -211,7 +212,7 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
   "A graph of [Int,WUnDiEdge]" should work in {
     import edge.WUnDiEdge, Data.elementsOfWUnDi_2
     given(factory(elementsOfWUnDi_2: _*)) { _ =>
-      new EdgeByteArray test [Int, WUnDiEdge] (elementsOfWUnDi_2)
+      new EdgeByteArray test [Int, WUnDiEdge] elementsOfWUnDi_2
     }
   }
 }
@@ -252,9 +253,8 @@ object ByteArraySerialization {
   private val cl = classOf[TSerializableRootTest].getClassLoader
   private class CustomObjectInputStream(in: InputStream) extends ObjectInputStream(in) {
     override def resolveClass(cd: ObjectStreamClass): Class[_] =
-      try {
-        cl.loadClass(cd.getName())
-      } catch {
+      try cl.loadClass(cd.getName())
+      catch {
         case cnf: ClassNotFoundException =>
           super.resolveClass(cd)
       }

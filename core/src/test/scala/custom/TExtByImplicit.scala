@@ -22,7 +22,7 @@ class TExtByImplicitTest extends RefSpec with should.Matchers {
       /* Consume graph enrichment.
        */
       Graph(1 ~ 2, 2 ~ 3).diEdges should be(empty)
-      Graph(1 ~ 2, 2 ~> 3).diEdges should have size (1)
+      Graph(1 ~ 2, 2 ~> 3).diEdges should have size 1
     }
 
     def `at graph level restricted to directed graphs` {

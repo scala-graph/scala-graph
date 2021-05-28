@@ -50,7 +50,7 @@ class TMicroBenchmark extends RefSpec with should.Matchers {
     val imm   = Set(array: _*)
     val m     = mutable.Set(array: _*)
 
-    relativeTime(repetitions = 6)(m.sum == sum, imm.sum == sum) should be > (1.05f)
+    relativeTime(repetitions = 6)(m.sum == sum, imm.sum == sum) should be > 1.05f
   }
   def `traversing mutable.Set takes longer than mutable.BitSet` {
     import scala.collection.mutable
@@ -59,6 +59,6 @@ class TMicroBenchmark extends RefSpec with should.Matchers {
     val s     = Set(array: _*)
     val b     = mutable.BitSet(array: _*)
 
-    relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > (1.1f)
+    relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > 1.1f
   }
 }

@@ -15,7 +15,8 @@ class TConstrainedRootTest
     extends Suites(
       new TConstrained[immutable.Graph](immutable.Graph),
       new TConstrained[mutable.Graph](mutable.Graph),
-      new TConstrainedMutable)
+      new TConstrainedMutable
+    )
 
 class TConstrainedMutable extends RefSpec with should.Matchers with Testing[mutable.Graph] {
   val factory = mutable.Graph
@@ -89,8 +90,8 @@ class TConstrainedMutable extends RefSpec with should.Matchers with Testing[muta
 }
 
 class TConstrained[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphConstrainedCompanion[CC])
-    extends RefSpec
+    val factory: GraphConstrainedCompanion[CC]
+) extends RefSpec
     with should.Matchers
     with Testing[CC] {
 
@@ -209,10 +210,12 @@ private object UserConstraints {
   class AlwaysFailingPostSubtract[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G)
       extends NoPreCheck[N, E, G](self) {
 
-    override def postSubtract(newGraph: G,
-                              passedNodes: Iterable[N],
-                              passedEdges: Iterable[E[N]],
-                              preCheck: PreCheckResult) = Left(PostCheckFailure(()))
+    override def postSubtract(
+        newGraph: G,
+        passedNodes: Iterable[N],
+        passedEdges: Iterable[E[N]],
+        preCheck: PreCheckResult
+    ) = Left(PostCheckFailure(()))
 
   }
 
@@ -278,7 +281,8 @@ private object UserConstraints {
     )
 
     /** Sub-classed `PreCheckResult` to store `neighbors` which is calculated
-      * in the bulk-subtraction pre-check and to be forwarded to `postSubtract`. */
+      * in the bulk-subtraction pre-check and to be forwarded to `postSubtract`.
+      */
     protected class Result(followUp: PreCheckFollowUp, val nodesToCheck: Set[self.NodeT])
         extends PreCheckResult(followUp)
 
@@ -299,14 +303,18 @@ private object UserConstraints {
         }
       )
 
-    override def postSubtract(newGraph: G,
-                              passedNodes: Iterable[N],
-                              passedEdges: Iterable[E[N]],
-                              preCheck: PreCheckResult) = preCheck match {
+    override def postSubtract(
+        newGraph: G,
+        passedNodes: Iterable[N],
+        passedEdges: Iterable[E[N]],
+        preCheck: PreCheckResult
+    ) = preCheck match {
       case Result(nodesToCheck) =>
-        if (nodesToCheck forall { n =>
-              newGraph.get(n).degree >= min
-            }) Right(newGraph)
+        if (
+          nodesToCheck forall { n =>
+            newGraph.get(n).degree >= min
+          }
+        ) Right(newGraph)
         else Left(PostCheckFailure(()))
     }
 

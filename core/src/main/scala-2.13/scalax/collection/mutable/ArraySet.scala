@@ -40,20 +40,24 @@ trait ArraySet[A]
   protected[collection] def +=!(elem: A): this.type
 
   /** Updates or inserts `elem`.
-    *  @return `true` if an insertion took place. */
+    *  @return `true` if an insertion took place.
+    */
   protected[collection] def upsert(elem: A with AnyRef): Boolean
 
   /** Sorts this $COLL according to a comparison function in place.
-    *  @see scala.collection.SeqLike */
+    *  @see scala.collection.SeqLike
+    */
   def sortWith(lt: (A, A) => Boolean): SortedSet[A] = sorted(Ordering fromLessThan lt)
 
   /** Sorts this $COLL according to the Ordering which results from transforming
     *  an implicitly given Ordering with a transformation function in place.
-    *  @see scala.collection.SeqLike */
+    *  @see scala.collection.SeqLike
+    */
   def sortBy(f: A => A)(implicit ord: Ordering[A]): SortedSet[A] = sorted(ord on f)
 
   /** Sorts this $COLL according to an Ordering in place.
-    *  @see scala.collection.SeqLike */
+    *  @see scala.collection.SeqLike
+    */
   def sorted(implicit ord: Ordering[A]): SortedSet[A]
 }
 
@@ -91,12 +95,14 @@ object ArraySet extends IterableFactory[ArraySet] {
     /** The initial length of the internal `Array` representation. It
       * should be chosen such that it's greater than the final `size` in a significant
       * percentage of cases. The less heap space is a concern, the higher `initialCapacity`
-      * may be set. */
+      * may be set.
+      */
     def initialCapacity: Int
 
     /** The size of free space to add to the `initialCapacity` whenever
       * the size of this `Set` becomes greater than the `initialCapacity`.
-      * It should be chosen such that incrementing need not take place too often. */
+      * It should be chosen such that incrementing need not take place too often.
+      */
     def capacityIncrement: Int
 
     /** The internal representation of the adjacency list switches
@@ -106,13 +112,15 @@ object ArraySet extends IterableFactory[ArraySet] {
       * This value should be close to the `size` limit an `Array` representation is more
       * efficient on the JVM with regard to looking up a given element based on `==`
       * as opposite to `hashCode`. Varying with JVM implementations/configurations this
-      * limit may come in somewhere between 10 and 30. */
+      * limit may come in somewhere between 10 and 30.
+      */
     def hashTableThreshold: Int
 
     /** Compact the underlying `Array` only if it has at most used
       * space of this percentage. Compression takes place only user-triggered by a call to
       * `compact`. The higher this value the more often `compact` leads to a compression.
-      * `0` means never, `100` means always compact. */
+      * `0` means never, `100` means always compact.
+      */
     def compactUpToUsed: Int
 
     /** Returns a positive number > currentCapacity for an array or 0 for a hash table.
@@ -139,27 +147,32 @@ object ArraySet extends IterableFactory[ArraySet] {
   }
 
   @SerialVersionUID(1L)
-  case class CheckedHints private[ArraySet] (override val initialCapacity: Int,
-                                             override val capacityIncrement: Int,
-                                             override val hashTableThreshold: Int,
-                                             override val compactUpToUsed: Int)
-      extends Hints
+  case class CheckedHints private[ArraySet] (
+      override val initialCapacity: Int,
+      override val capacityIncrement: Int,
+      override val hashTableThreshold: Int,
+      override val compactUpToUsed: Int
+  ) extends Hints
 
   object Hints {
 
     /** Returns an instance of Hints with possibly corrected argument values.
-      *  If no argument is supplied same as `Default`. */
-    def apply(initialCapacity: Int = 16,
-              capacityIncrement: Int = 32,
-              hashTableThreshold: Int = 48,
-              compactUpToUsed: Int = 80): Hints = {
+      *  If no argument is supplied same as `Default`.
+      */
+    def apply(
+        initialCapacity: Int = 16,
+        capacityIncrement: Int = 32,
+        hashTableThreshold: Int = 48,
+        compactUpToUsed: Int = 80
+    ): Hints = {
 
       require(
         initialCapacity >= 0 &&
           capacityIncrement >= 0 &&
           hashTableThreshold >= initialCapacity &&
           hashTableThreshold >= 0 &&
-          compactUpToUsed >= 0 && compactUpToUsed <= 100)
+          compactUpToUsed >= 0 && compactUpToUsed <= 100
+      )
 
       val corr_HashTableThreshold = {
         val afterFirstIncr = initialCapacity + capacityIncrement
@@ -179,7 +192,8 @@ object ArraySet extends IterableFactory[ArraySet] {
 
     /** A special hint telling that the internal representation should always be
       * hash-based as opposite to `Array`. This is meaningful if the average `size` of the
-      * `ArraySet` is above the limit an `Array` representation is more efficient. */
+      * `ArraySet` is above the limit an `Array` representation is more efficient.
+      */
     case object HashOnly extends Hints {
       val initialCapacity    = 0
       val capacityIncrement  = 0
