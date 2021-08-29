@@ -31,8 +31,8 @@ final class SeqFacade[+A](i: Iterable[A]) extends immutable.Seq[A] {
   */
 final class EqSetFacade[A <: AnyRef](i: Iterable[A]) extends immutable.Set[A] with InclExcl[A, immutable.Set[A]] {
   def iterator: Iterator[A] = i.iterator
-  def incl(elem: A)         = i.toSet - elem
-  def excl(elem: A)         = i.toSet + elem
+  def incl(elem: A)         = i.toSet + elem
+  def excl(elem: A)         = i.toSet - elem
 
   override def size: Int         = i.size
   override def contains(elem: A) = i exists (_ eq elem)
