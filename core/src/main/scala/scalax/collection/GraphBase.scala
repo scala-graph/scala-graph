@@ -145,7 +145,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     /** Whether this node has any predecessors. */
     def hasPredecessors: Boolean
 
-    protected[collection] def addDiPredecessors(edge: EdgeT, add: NodeT => Unit)
+    protected[collection] def addDiPredecessors(edge: EdgeT, add: NodeT => Unit):Unit
 
     /** Synonym for `diPredecessors`. */
     @inline final def inNeighbors = diPredecessors
@@ -158,7 +158,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       * @return set of all neighbors.
       */
     def neighbors: Set[NodeT]
-    protected[collection] def addNeighbors(edge: EdgeT, add: NodeT => Unit)
+    protected[collection] def addNeighbors(edge: EdgeT, add: NodeT => Unit):Unit
 
     /** Synonym for `neighbors`. */
     @inline final def ~| : Set[NodeT] = neighbors
@@ -283,13 +283,13 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     def apply(node: N)    = newNode(node)
     def unapply(n: NodeT) = Some(n)
 
-    @inline final protected[collection] def addDiSuccessors(node: NodeT, edge: EdgeT, add: NodeT => Unit) {
+    @inline final protected[collection] def addDiSuccessors(node: NodeT, edge: EdgeT, add: NodeT => Unit):Unit = {
       node.addDiSuccessors(edge, add)
     }
-    @inline final protected[collection] def addDiPredecessors(node: NodeT, edge: EdgeT, add: NodeT => Unit) {
+    @inline final protected[collection] def addDiPredecessors(node: NodeT, edge: EdgeT, add: NodeT => Unit):Unit =  {
       node.addDiPredecessors(edge, add)
     }
-    @inline final protected[collection] def addNeighbors(node: NodeT, edge: EdgeT, add: NodeT => Unit) {
+    @inline final protected[collection] def addNeighbors(node: NodeT, edge: EdgeT, add: NodeT => Unit):Unit =  {
       node.addNeighbors(edge, add)
     }
 

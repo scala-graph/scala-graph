@@ -16,7 +16,7 @@ final class SeqFacade[+A](i: Iterable[A]) extends immutable.Seq[A] {
     val it = iterator
     var i  = 0
     while (i < idx) { it.next; i += 1 }
-    it.next
+    it.next()
   }
   def length: Int = i.size
 }

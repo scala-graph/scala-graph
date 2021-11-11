@@ -3,7 +3,6 @@ package mutable
 
 import scala.collection.{IterableFactory, IterableFactoryDefaults, SortedSet, StrictOptimizedIterableOps}
 import scala.collection.mutable.{ExtHashSet, GrowableBuilder}
-import scala.compat.Platform.arraycopy
 import scala.util.Random
 import immutable.SortedArraySet
 
@@ -25,12 +24,12 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   override def iterableFactory = SimpleArraySet
 
   protected[collection] def newNonCheckingBuilder[B] = new SimpleArraySet.NonCheckingBuilder[A, B](this)
-  override def clone                                 = (newNonCheckingBuilder ++= this).result
+  override def clone                                 = (newNonCheckingBuilder ++= this).result()
   private var nextFree: Int                          = 0
   private var arr: Array[A]                          = _
   private var hashSet: ExtHashSet[A]                 = _
 
-  private def initialize() {
+  private def initialize() :Unit={
     val capacity = hints.nextCapacity(0)
     if (capacity == 0) hashSet = ExtHashSet.empty[A]
     else arr = new Array[AnyRef](capacity).asInstanceOf[Array[A]]
@@ -51,10 +50,10 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     this
   }
 
-  protected def removeIndex(i: Int) {
+  protected def removeIndex(i: Int):Unit= {
     if (i != -1) {
       if (i + 1 < nextFree)
-        arraycopy(arr, i + 1, arr, i, nextFree - i - 1)
+        java.lang.System.arraycopy(arr, i + 1, arr, i, nextFree - i - 1)
       nextFree -= 1
     }
   }
@@ -82,7 +81,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
         private[this] var prevElm: A = _
         def hasNext =
           i < nextFree
-        def next = {
+        def next() = {
           if (i >= nextFree)
             throw new NoSuchElementException
           prevElm = arr(i)
@@ -91,7 +90,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
         }
       }
 
-  override def foreach[U](f: (A) => U) {
+  override def foreach[U](f: (A) => U) :Unit = {
     if (isHash) hashSet foreach f
     else {
       var i = 0
@@ -99,13 +98,13 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     }
   }
 
-  protected def resizeArray(fromCapacity: Int, toCapacity: Int) {
+  protected def resizeArray(fromCapacity: Int, toCapacity: Int):Unit = {
     val newArr: Array[AnyRef] = new Array(toCapacity)
-    arraycopy(arr, 0, newArr, 0, math.min(fromCapacity, toCapacity))
+    java.lang.System.arraycopy(arr, 0, newArr, 0, math.min(fromCapacity, toCapacity))
     arr = newArr.asInstanceOf[Array[A]]
   }
 
-  protected def setToArray(set: Iterable[A], size: Int) {
+  protected def setToArray(set: Iterable[A], size: Int) :Unit = {
     arr = new Array[AnyRef](size).asInstanceOf[Array[A]]
     nextFree = 0
     set foreach { elem =>
@@ -115,7 +114,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     hashSet = null
   }
 
-  def compact() {
+  def compact():Unit =  {
     if (isHash) {
       val _size = size
       if (_size < hints.hashTableThreshold)
@@ -203,7 +202,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       val b = newNonCheckingBuilder[A]
       for (x <- this)
         if (p(x)) b += x
-      b.result
+      b.result()
     }
 
   /** Faster mapping in case the caller ensures to insert no duplicates. */
@@ -212,7 +211,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     else {
       val b = newNonCheckingBuilder[B]
       for (x <- this) b += f(x)
-      b.result
+      b.result()
     }
 
   /** $OPT */
@@ -221,7 +220,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     else {
       val l, r = newNonCheckingBuilder[A]
       for (x <- this) (if (p(x)) l else r) += x
-      (l.result, r.result)
+      (l.result(), r.result())
     }
 
   def sorted(implicit ord: Ordering[A]): SortedSet[A] =
@@ -229,7 +228,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       SortedSet.from(hashSet)
     } else {
       val newArr: Array[AnyRef] = new Array(nextFree)
-      arraycopy(arr, 0, newArr, 0, nextFree)
+      java.lang.System.arraycopy(arr, 0, newArr, 0, nextFree)
       new SortedArraySet(newArr.asInstanceOf[Array[A]])
     }
 

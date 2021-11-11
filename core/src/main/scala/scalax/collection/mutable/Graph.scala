@@ -47,8 +47,8 @@ abstract protected[collection] class BuilderImpl[N, E <: EdgeLike[N]](implicit c
   }
 
   def clear(): Unit = {
-    nodes.clear
-    edges.clear
+    nodes.clear()
+    edges.clear()
   }
 }
 

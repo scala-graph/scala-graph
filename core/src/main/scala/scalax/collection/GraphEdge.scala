@@ -495,7 +495,7 @@ object GraphEdge {
         if (checks.isEmpty) true
         else if (!it.hasNext) false
         else {
-          val n = it.next
+          val n = it.next()
           val f = checks find (f => f(n))
           if (f.isDefined) loop(checks diff List(f.get))
           else loop(checks)
