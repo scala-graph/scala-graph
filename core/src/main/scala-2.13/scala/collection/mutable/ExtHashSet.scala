@@ -374,12 +374,12 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
   override def draw(random: Random): A = {
     val len = table.length
     if (size * 50L > len) {
-      val bucket = table(LazyList.continually(random.nextInt(len)).iterator.dropWhile(table(_) eq null).next())
+      val bucket = table(LazyList.continually(random.nextInt(len)).iterator.dropWhile(table(_) eq null).next)
       val keys = bucket.keys
       keys(random.nextInt(keys.knownSize))
     } else if (size > 0) {
       // since `table` is sparse forget about hitting an index randomly
-      iterator.drop(random.nextInt(size)).next()
+      iterator.drop(random.nextInt(size)).next
     } else
       throw new IllegalArgumentException(s"Cannot draw from empty set.")
   }
