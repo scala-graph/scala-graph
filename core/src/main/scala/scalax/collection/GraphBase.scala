@@ -352,7 +352,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       * @param node
       * @return the contained user Object
       */
-    @inline implicit final def toValue[N](node: NodeT) = node.value
+    @inline implicit final def toValue(node: NodeT): N = node.value
   }
   abstract protected class NodeBase extends InnerNode
   protected def newNode(n: N): NodeT
