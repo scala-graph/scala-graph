@@ -24,18 +24,30 @@ object MicroBenchmark {
   // allows to call functions requiring implicit Numeric such as sum
   implicit object NanoSecondNumeric extends Numeric[NanoSecond] {
     implicit def nanoSecondToLong(ns: NanoSecond): Long = ns.value
-    val num                                             = Numeric.LongIsIntegral
-    def plus(x: NanoSecond, y: NanoSecond)              = num.plus(x, y)
-    def minus(x: NanoSecond, y: NanoSecond)             = num.minus(x, y)
-    def times(x: NanoSecond, y: NanoSecond)             = num.times(x, y)
-    def negate(x: NanoSecond)                           = num.negate(x)
-    def fromInt(x: Int)                                 = x.toLong
-    def toInt(x: NanoSecond)                            = x.value.toInt
-    def toLong(x: NanoSecond)                           = x.value.toLong
-    def toFloat(x: NanoSecond)                          = x.value.toFloat
-    def toDouble(x: NanoSecond)                         = x.value.toDouble
-    def compare(x: NanoSecond, y: NanoSecond)           = num.compare(x, y)
-    def parseString(str: String)                        = throw new UnsupportedOperationException()
+
+    val num = Numeric.LongIsIntegral
+
+    def plus(x: NanoSecond, y: NanoSecond): NanoSecond = num.plus(x, y)
+
+    def minus(x: NanoSecond, y: NanoSecond): NanoSecond = num.minus(x, y)
+
+    def times(x: NanoSecond, y: NanoSecond): NanoSecond = num.times(x, y)
+
+    def negate(x: NanoSecond): NanoSecond = num.negate(x)
+
+    def fromInt(x: Int) = x.toLong
+
+    def toInt(x: NanoSecond) = x.value.toInt
+
+    def toLong(x: NanoSecond) = x.value.toLong
+
+    def toFloat(x: NanoSecond) = x.value.toFloat
+
+    def toDouble(x: NanoSecond) = x.value.toDouble
+
+    def compare(x: NanoSecond, y: NanoSecond): Int = num.compare(x, y)
+
+    def parseString(str: String): Option[NanoSecond] = throw new UnsupportedOperationException()
   }
 
   sealed abstract class MeasurementResult[A](result: A) {
@@ -43,8 +55,10 @@ object MicroBenchmark {
     def relativeTo(decimals: Int = 2)(that: MeasurementResult[A]) =
       this.mediumNanoSecs.relativeTo(decimals)(that.mediumNanoSecs)
     protected def toStringPrefix: String
+
     protected def optToStringParams = ""
-    override def toString           = s"$toStringPrefix($mediumNanoSecs ns, $result$optToStringParams)"
+
+    override def toString: String = s"$toStringPrefix($mediumNanoSecs ns, $result$optToStringParams)"
   }
 
   case class SingleResult[A](nanoSecs: Long, result: A) extends MeasurementResult(result) {
@@ -53,12 +67,21 @@ object MicroBenchmark {
   }
 
   case class Result[A](result: A, times: ArrayBuffer[Long] = ArrayBuffer.empty) extends MeasurementResult(result) {
-    def this(result: A, firstNanoSecs: Long) { this(result, ArrayBuffer(firstNanoSecs)) }
+    def this(result: A, firstNanoSecs: Long) = {
+      this(result, ArrayBuffer(firstNanoSecs))
+    }
+
     def mediumNanoSecs: Long = times.sum / times.size
-    def +=(nanoSecs: Long): this.type = { this.times += nanoSecs; this }
-    def nanoSecs                             = times.iterator
-    protected def toStringPrefix             = "Results"
-    override protected def optToStringParams = s""", {${nanoSecs mkString " "}}"""
+
+    def +=(nanoSecs: Long): this.type = {
+      this.times += nanoSecs; this
+    }
+
+    def nanoSecs = times.iterator
+
+    protected def toStringPrefix = "Results"
+
+    override protected def optToStringParams: String = s""", {${nanoSecs mkString " "}}"""
   }
 
   case class Results[A](list: List[Result[A]]) {

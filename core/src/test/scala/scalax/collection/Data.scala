@@ -2,6 +2,7 @@ package scalax.collection
 
 import GraphPredef.{EdgeLikeIn, _}
 import edge.Implicits._
+import scalax.collection.edge.{WDiEdge, WUnDiEdge}
 
 abstract class TGraph[N, E[+X] <: EdgeLikeIn[X], G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
     val g: G[N, E]
@@ -16,23 +17,24 @@ abstract class TGraph[N, E[+X] <: EdgeLikeIn[X], G[N, E[+X] <: EdgeLikeIn[X]] <:
   */
 object Data {
   // WDi-1.jpg without weights
-  val outerElemsOfDi_1 = List(1 ~> 2, 2 ~> 3, 4 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3)
-  val elementsOfDi_1   = List(outerElemsOfDi_1: _*)
+  val outerElemsOfDi_1: List[GraphEdge.DiEdge[Int]] = List(1 ~> 2, 2 ~> 3, 4 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3)
+  val elementsOfDi_1: List[GraphEdge.DiEdge[Int]]   = List(outerElemsOfDi_1: _*)
   // WDi-1.jpg
-  val elementsOfWDi_1 = List(1 ~> 2 % 4, 2 ~> 3 % 40, 4 ~> 3 % 7, 3 ~> 5 % 50, 1 ~> 5 % 40, 1 ~> 3 % 2)
+  val elementsOfWDi_1: List[WDiEdge[Int]] =
+    List(1 ~> 2 % 4, 2 ~> 3 % 40, 4 ~> 3 % 7, 3 ~> 5 % 50, 1 ~> 5 % 40, 1 ~> 3 % 2)
 
   // WUnDi-1.jpg without weights
-  val elementsOfUnDi_1 = List(1 ~ 2, 2 ~ 3, 1 ~> 3, 1 ~ 5, 3 ~ 5, 3 ~ 4, 4 ~> 4, 4 ~> 5)
+  val elementsOfUnDi_1: List[GraphEdge.UnDiEdge[Int]] = List(1 ~ 2, 2 ~ 3, 1 ~> 3, 1 ~ 5, 3 ~ 5, 3 ~ 4, 4 ~> 4, 4 ~> 5)
 
   // WUnDi-1.jpg
-  val elementsOfWUnDi_1 =
+  val elementsOfWUnDi_1: List[WUnDiEdge[Int]] =
     List(1 ~ 2 % 4, 2 ~ 3 % 2, 1 ~> 3 % 5, 1 ~ 5 % 3, 3 ~ 5 % 2, 3 ~ 4 % 1, 4 ~> 4 % 1, 4 ~> 5 % 0)
 
   // WUnDi-2.jpg without weights
-  val elementsOfUnDi_2 = List(1 ~ 2, 2 ~ 3, 1 ~> 3, 1 ~ 3, 1 ~> 2, 2 ~ 2)
+  val elementsOfUnDi_2: List[GraphEdge.UnDiEdge[Int]] = List(1 ~ 2, 2 ~ 3, 1 ~> 3, 1 ~ 3, 1 ~> 2, 2 ~ 2)
 
   // WUnDi-2.jpg
-  val elementsOfWUnDi_2 = List(
+  val elementsOfWUnDi_2: List[WUnDiEdge[Int]] = List(
     1 ~ 2  % 4,
     2 ~ 3  % -1,
     1 ~> 3 % 5,

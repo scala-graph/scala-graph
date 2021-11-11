@@ -51,14 +51,17 @@ object GraphPredef {
     /** Enables to query partitions of a collection of `Param`.
       */
     final class Partitions[N, E[+X] <: EdgeLikeIn[X]](val elems: Iterable[Param[N, E]]) {
-      lazy val partitioned = elems match {
+      lazy val partitioned: (Iterable[Param[N, E]], Iterable[Param[N, E]]) = elems match {
         case g: Graph[N, E] => (g.nodes, g.edges)
         case x              => x partition (_.isNode)
       }
-      def nodeParams = partitioned._1.asInstanceOf[Iterable[NodeParam[N]]]
-      def edgeParams = partitioned._2.asInstanceOf[Iterable[EdgeParam]]
+
+      def nodeParams: Iterable[NodeParam[N]] = partitioned._1.asInstanceOf[Iterable[NodeParam[N]]]
+
+      def edgeParams: Iterable[EdgeParam] = partitioned._2.asInstanceOf[Iterable[EdgeParam]]
 
       def toOuterNodes: Iterable[N] = nodeParams map (_.value)
+
       def toOuterEdges: Iterable[E[N]] = edgeParams map {
         case e: OuterEdge[N, E]            => e.edge
         case e: InnerEdgeParam[N, E, _, E] => e.asEdgeTProjection[N, E].toOuter
@@ -115,9 +118,11 @@ object GraphPredef {
 
   trait NodeParam[+N] {
     def value: N
-    def isNode       = true
+    def isNode = true
+
     def stringPrefix = ""
-    override def toString = if (stringPrefix.length > 0) stringPrefix + "(" + value + ")"
+
+    override def toString: String = if (stringPrefix.length > 0) stringPrefix + "(" + value + ")"
     else value.toString
   }
 
@@ -197,7 +202,8 @@ object GraphPredef {
       fold[N, E, G, g.EdgeT](g)(e => e, f)
 
     def stringPrefix = ""
-    override def toString = if (stringPrefix.length > 0) stringPrefix + "(" + edge + ")"
+
+    override def toString: String = if (stringPrefix.length > 0) stringPrefix + "(" + edge + ")"
     else edge.toString
   }
   object InnerEdgeParam {
@@ -208,7 +214,7 @@ object GraphPredef {
   //-----------------------------------------------------------------------//
   import GraphEdge._
 
-  @inline implicit def anyToNode[N](n: N) = OuterNode(n)
+  @inline implicit def anyToNode[N](n: N): OuterNode[N] = OuterNode(n)
 
   implicit def seqToGraphParam[N, E[+X] <: EdgeLike[X]](s: Seq[N]): Seq[Param[N, E]] = s map {
     case e: EdgeLike[_] with EdgeCopy[_] with OuterEdge[_, _] with InParam[_, _] => e.asInstanceOf[InParam[N, E]]
@@ -229,7 +235,9 @@ object GraphPredef {
       case n                 => OuterNode(n)
     }
 
-  def nodePredicate[NI, EI[+X] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[+X] <: EdgeLike[X]](pred: NI => Boolean) =
+  def nodePredicate[NI, EI[+X] <: EdgeLike[X], NO <: InnerNodeParam[NI], EO[+X] <: EdgeLike[X]](
+      pred: NI => Boolean
+  ): Param[NI, EI] => Boolean =
     (out: Param[NI, EI]) =>
       out match {
         case n: InnerNodeParam[NI] => pred(n.value)
@@ -243,23 +251,24 @@ object GraphPredef {
         case _ => false
       }
 
-//  def edgePredicate[NI, NO <: InnerNodeParam[NI], EC[+X] <: EdgeLike[X]] (pred: EC[NO] => Boolean) =
-//    (out: Param[NI,EC]) => out match {
-//      case n: InnerNodeParam[NI] => false
-//      case e: InnerEdgeParam[NI,EC,NO,EC] => pred(e.edge)
-//      case _ => false
-//    }
+  //  def edgePredicate[NI, NO <: InnerNodeParam[NI], EC[+X] <: EdgeLike[X]] (pred: EC[NO] => Boolean) =
+  //    (out: Param[NI,EC]) => out match {
+  //      case n: InnerNodeParam[NI] => false
+  //      case e: InnerEdgeParam[NI,EC,NO,EC] => pred(e.edge)
+  //      case _ => false
+  //    }
 
   @inline implicit def predicateToNodePredicate[NI, EI[+X] <: EdgeLike[X], NO <: InnerNodeParam[NI], EC[+X] <: EdgeLike[
     X
-  ]](p: NI => Boolean) =
+  ]](p: NI => Boolean): Param[NI, EI] => Boolean =
     nodePredicate[NI, EI, NO, EC](p)
 
-//  @inline implicit def predicateToEdgePredicate[NI, NO <: InnerNodeParam[NI], EC[+X] <: EdgeLike[X]]
-//                                               (p: EC[NO] => Boolean) = edgePredicate[NI,NO,EC](p)
+  //  @inline implicit def predicateToEdgePredicate[NI, NO <: InnerNodeParam[NI], EC[+X] <: EdgeLike[X]]
+  //                                               (p: EC[NO] => Boolean) = edgePredicate[NI,NO,EC](p)
 
   implicit final class EdgeAssoc[N1](val n1: N1) extends AnyVal {
-    @inline def ~[N >: N1](n2: N)  = new UnDiEdge[N](Tuple2(n1, n2))
+    @inline def ~[N >: N1](n2: N) = new UnDiEdge[N](Tuple2(n1, n2))
+
     @inline def ~>[N >: N1](n2: N) = new DiEdge[N](Tuple2(n1, n2))
   }
 

@@ -12,7 +12,7 @@ class ExtHashSetTest extends RefSpec with should.Matchers {
   object `ExtHashSet works properly in that it` {
     import ExtHashSetTest._
 
-    def `draws random elements with uniform distribution if buckets are of equal length` {
+    def `draws random elements with uniform distribution if buckets are of equal length`: Unit = {
       val size = 16
       val set  = ExtHashSet(1 to size: _*)
       nonEmptyBuckets(set).length should ===(size)
@@ -24,7 +24,7 @@ class ExtHashSetTest extends RefSpec with should.Matchers {
       range(frequencies) should be < (nrProbesPerElement * (2 * maxDeviation_%) / 100)
     }
 
-    def `draws random elements with near-uniform distribution if buckets are of different length` {
+    def `draws random elements with near-uniform distribution if buckets are of different length`: Unit = {
       val set = {
         val maxSize = 16
         val r       = new Random
@@ -54,7 +54,7 @@ class ExtHashSetTest extends RefSpec with should.Matchers {
       }
     }
 
-    def `finds elements by predicate` {
+    def `finds elements by predicate`: Unit = {
       case class C(value: Int) {
         override def hashCode(): Int = 0
       }
@@ -85,7 +85,7 @@ class ExtHashSetTest extends RefSpec with should.Matchers {
       set should have size 2
     }
 
-    def `iterates over hashCodes` {
+    def `iterates over hashCodes`: Unit = {
       case class C(value: Int) {
         override def hashCode(): Int = value
       }
@@ -96,7 +96,7 @@ class ExtHashSetTest extends RefSpec with should.Matchers {
       elems.head should be(C(1))
     }
 
-    def `iterates over duplicate hashCodes` {
+    def `iterates over duplicate hashCodes`: Unit = {
       case class C(i: Int, j: Int) {
         override def hashCode = i.##
       }

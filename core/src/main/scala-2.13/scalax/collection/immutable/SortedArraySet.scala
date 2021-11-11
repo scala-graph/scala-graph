@@ -5,6 +5,7 @@ import scala.collection.immutable.{AbstractSet, Set, SortedSet, SortedSetOps, St
 import scala.collection.mutable.{ArrayBuffer, ReusableBuilder}
 import scala.collection.{SortedIterableFactory, SortedSetFactoryDefaults}
 import scala.compat.Platform.arraycopy
+import scala.collection.mutable
 
 @SerialVersionUID(1L)
 class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Array[A]])(implicit
@@ -14,7 +15,8 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
     with SortedSetOps[A, SortedArraySet, SortedArraySet[A]]
     with StrictOptimizedSortedSetOps[A, SortedArraySet, SortedArraySet[A]]
     with SortedSetFactoryDefaults[A, SortedArraySet, Set]
-    with DefaultSerializable { self =>
+    with DefaultSerializable {
+  self =>
   java.util.Arrays.sort(array.asInstanceOf[Array[AnyRef]], ordering.asInstanceOf[Ordering[Object]])
 
   override def sortedIterableFactory = SortedArraySet
@@ -49,8 +51,12 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
   final protected def iterator(from: Int): Iterator[A] =
     new scala.collection.AbstractIterator[A] {
       private[this] var i = from
-      def hasNext         = i < self.size
-      def next = { val elm = array(i); i += 1; elm }
+
+      def hasNext = i < self.size
+
+      def next = {
+        val elm = array(i); i += 1; elm
+      }
     }
 
   def iterator: Iterator[A] = iterator(0)
@@ -96,10 +102,16 @@ object SortedArraySet extends SortedIterableFactory[SortedArraySet] {
   override def from[E](it: IterableOnce[E])(implicit ordering: Ordering[E]): SortedArraySet[E] =
     newBuilder.addAll(it).result()
 
-  override def newBuilder[A](implicit ordering: Ordering[A]) = new ReusableBuilder[A, SortedArraySet[A]] {
-    val buffer                 = new ArrayBuffer[AnyRef]()
-    override def clear(): Unit = buffer.clear()
-    override def result()      = new SortedArraySet(buffer.toArray.asInstanceOf[Array[A]])
-    override def addOne(elem: A) = { buffer.addOne(elem.asInstanceOf[AnyRef]); this }
-  }
+  override def newBuilder[A](implicit ordering: Ordering[A]): mutable.Builder[A, SortedArraySet[A]] =
+    new ReusableBuilder[A, SortedArraySet[A]] {
+      val buffer = new ArrayBuffer[AnyRef]()
+
+      override def clear(): Unit = buffer.clear()
+
+      override def result() = new SortedArraySet(buffer.toArray.asInstanceOf[Array[A]])
+
+      override def addOne(elem: A) = {
+        buffer.addOne(elem.asInstanceOf[AnyRef]); this
+      }
+    }
 }

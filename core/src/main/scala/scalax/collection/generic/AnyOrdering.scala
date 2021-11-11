@@ -16,7 +16,7 @@ class AnyOrdering[N] extends Ordering[N] {
   sealed protected case class FloatType(value: RichDouble)     extends Type
   sealed protected case class StringType(value: WrappedString) extends Type
   sealed protected case class RefType(value: AnyRef)           extends Type
-  protected def typeOf(x: Any) = x match {
+  protected def typeOf(x: Any): Type = x match {
     case b: Byte                                    => IntegerType(new RichLong(b))
     case s: Short                                   => IntegerType(new RichLong(s))
     case i: Int                                     => IntegerType(new RichLong(i))
@@ -26,6 +26,7 @@ class AnyOrdering[N] extends Ordering[N] {
     case _: Char | _: Unit | _: Boolean | _: String => StringType(new WrappedString(x.toString))
     case r: AnyRef                                  => RefType(r)
   }
+
   def compare(a: N, b: N): Int = (typeOf(a), typeOf(b)) match {
     case (IntegerType(a), IntegerType(b))                               => a.compare(b.self)
     case (IntegerType(a), FloatType(b))                                 => a.toDouble.compare(b.self)

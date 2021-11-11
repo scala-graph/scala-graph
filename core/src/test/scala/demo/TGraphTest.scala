@@ -2,6 +2,7 @@ package demo
 
 import scalax.collection.Graph
 import scalax.collection.GraphEdge._
+import org.scalacheck.Prop
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/test.html
   *  Test Utilities]].
@@ -11,14 +12,17 @@ object TGraphTest extends App {
   import scalax.collection.generator._
 
   object PersonData {
-    val firstNames     = Vector("Alen", "Alice", "Bob", "Jack", "Jim", "Joe", "Kate", "Leo", "Tim", "Tom")
-    val firstNamesSize = firstNames.size
+    val firstNames: Vector[String] = Vector("Alen", "Alice", "Bob", "Jack", "Jim", "Joe", "Kate", "Leo", "Tim", "Tom")
+    val firstNamesSize             = firstNames.size
 
-    val surnames     = Vector("Bell", "Brown", "Clark", "Cox", "King", "Lee", "Moore", "Ross", "Smith", "Wong")
+    val surnames: Vector[String] =
+      Vector("Bell", "Brown", "Clark", "Cox", "King", "Lee", "Moore", "Ross", "Smith", "Wong")
     val surnamesSize = surnames.size
 
-    def order          = firstNamesSize * surnamesSize / 10
-    def degrees        = new NodeDegreeRange(2, order - 2)
+    def order: Int = firstNamesSize * surnamesSize / 10
+
+    def degrees = new NodeDegreeRange(2, order - 2)
+
     val maxYearOfBirth = 2010
   }
 
@@ -26,24 +30,31 @@ object TGraphTest extends App {
     // working with random graph generators -----------------------------------------------
 
     // obtaining generators for graphs with predefined metrics
-    val predefined = RandomGraph.tinyConnectedIntDi(Graph)
-    val tinyGraph  = predefined.draw // Graph[Int,DiEdge]
+    val predefined: RandomGraph[Int, DiEdge, Graph] = RandomGraph.tinyConnectedIntDi(Graph)
+    val tinyGraph                                   = predefined.draw // Graph[Int,DiEdge]
 
     // setting individual graph metrics while keeping metrics constraints in mind
     object sparse_1000_Int extends RandomGraph.IntFactory {
-      val order              = 1000
-      val nodeDegrees        = NodeDegreeRange(1, 10)
+      val order                        = 1000
+      val nodeDegrees: NodeDegreeRange = NodeDegreeRange(1, 10)
+
       override def connected = false
     }
-    val randomSparse = RandomGraph[Int, UnDiEdge, Graph](Graph, sparse_1000_Int, Set(UnDiEdge))
-    val sparseGraph  = randomSparse.draw // Graph[Int,UnDiEdge]
+
+    val randomSparse: RandomGraph[Int, UnDiEdge, Graph] =
+      RandomGraph[Int, UnDiEdge, Graph](Graph, sparse_1000_Int, Set(UnDiEdge))
+    val sparseGraph = randomSparse.draw // Graph[Int,UnDiEdge]
 
     // obtaining generators for individual graph types
+
     import scalax.collection.edge.LDiEdge
 
     case class Person(name: String, yearOfBirth: Int)
+
     object Person {
+
       import PersonData._
+
       private val r = new scala.util.Random
 
       def drawFirstName: String = firstNames(r.nextInt(firstNamesSize))
@@ -51,15 +62,16 @@ object TGraphTest extends App {
 
       def drawName: String = s"$drawFirstName, $drawSurame"
 
-      def drawYearOfBirth = maxYearOfBirth - r.nextInt(100)
+      def drawYearOfBirth: Int = maxYearOfBirth - r.nextInt(100)
     }
 
-    val randomMixedGraph =
+    val randomMixedGraph: RandomGraph[Person, UnDiEdge, Graph] =
       RandomGraph[Person, UnDiEdge, Graph](
         Graph,
         new RandomGraph.Metrics[Person] {
-          val order           = PersonData.order
-          val nodeDegrees     = PersonData.degrees
+          val order       = PersonData.order
+          val nodeDegrees = PersonData.degrees
+
           def nodeGen: Person = Person(Person.drawName, Person.drawYearOfBirth)
         },
         Set(UnDiEdge, LDiEdge)
@@ -89,9 +101,9 @@ object TGraphTest extends App {
 
     // obtaining Arbitrary instances for graphs with predefined metrics
     type IntDiGraph = Graph[Int, DiEdge]
-    implicit val arbitraryTinyGraph = GraphGen.tinyConnectedIntDi[Graph](Graph)
+    implicit val arbitraryTinyGraph: Arbitrary[Graph[Int, DiEdge]] = GraphGen.tinyConnectedIntDi[Graph](Graph)
 
-    val properTiny = forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
+    val properTiny: Prop = forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
       g.order == GraphGen.TinyInt.order
     }
     properTiny.check
@@ -99,18 +111,20 @@ object TGraphTest extends App {
     // setting individual graph metrics for Arbitrary instances
     // while keeping metrics constraints in mind
     object Sparse_1000_Int extends GraphGen.Metrics[Int] {
-      val order              = 1000
-      val nodeDegrees        = NodeDegreeRange(1, 10)
-      def nodeGen: Gen[Int]  = Gen.choose(0, 10 * order)
+      val order                        = 1000
+      val nodeDegrees: NodeDegreeRange = NodeDegreeRange(1, 10)
+
+      def nodeGen: Gen[Int] = Gen.choose(0, 10 * order)
+
       override def connected = false
     }
 
     type IntUnDiGraph = Graph[Int, UnDiEdge]
-    implicit val arbitrarySparseGraph = Arbitrary {
+    implicit val arbitrarySparseGraph: Arbitrary[Graph[Int, UnDiEdge]] = Arbitrary {
       GraphGen[Int, UnDiEdge, Graph](Graph, Sparse_1000_Int, Set(UnDiEdge)).apply
     }
 
-    val properSparse = forAll(arbitrary[IntUnDiGraph]) { g: IntUnDiGraph =>
+    val properSparse: Prop = forAll(arbitrary[IntUnDiGraph]) { g: IntUnDiGraph =>
       g.order == Sparse_1000_Int.order
     }
     properSparse.check
@@ -143,11 +157,11 @@ object TGraphTest extends App {
     }
 
     type Mixed = Graph[Person, UnDiEdge]
-    implicit val arbitraryMixedGraph = Arbitrary {
+    implicit val arbitraryMixedGraph: Arbitrary[Graph[Person, UnDiEdge]] = Arbitrary {
       GraphGen[Person, UnDiEdge, Graph](Graph, MixedMetrics, Set(UnDiEdge, LDiEdge)).apply
     }
 
-    val properMixedGraph = forAll(arbitrary[Mixed]) { g: Mixed =>
+    val properMixedGraph: Prop = forAll(arbitrary[Mixed]) { g: Mixed =>
       g.order == MixedMetrics.order
     }
     properMixedGraph.check
@@ -160,18 +174,17 @@ object TGraphTest extends App {
 
     class TGraphGenTest extends RefSpec with should.Matchers with ScalaCheckPropertyChecks {
 
-      implicit val config =
+      implicit val config: PropertyCheckConfiguration =
         PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
 
       object `generated Tiny graph` {
         implicit val arbitraryTinyGraph =
           GraphGen.tinyConnectedIntDi[Graph](Graph)
 
-        def `should conform to tiny metrics` {
+        def `should conform to tiny metrics`: Unit =
           forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
             g.order should equal(GraphGen.TinyInt.order)
           }
-        }
       }
     }
   }

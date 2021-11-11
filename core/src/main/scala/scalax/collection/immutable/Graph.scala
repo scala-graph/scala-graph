@@ -13,6 +13,7 @@ import GraphPredef.{EdgeLikeIn, Param}
 import generic.ImmutableGraphCompanion
 import config.AdjacencyListArrayConfig
 import mutable.ArraySet
+import scala.collection.BuildFrom
 
 /** The main trait for immutable graphs bundling functionality that is not specific to graph representation.
   */
@@ -30,7 +31,10 @@ object Graph extends ImmutableGraphCompanion[Graph] {
   ): Graph[N, E] =
     DefaultGraphImpl.from[N, E](nodes, edges)(edgeT, config)
 
-  implicit def cbfUnDi[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
+  implicit def cbfUnDi[N, E[+X] <: EdgeLikeIn[X]](implicit
+      edgeT: ClassTag[E[N]],
+      config: Config = defaultConfig
+  ): GraphCanBuildFrom[N, E] with BuildFrom[Graph[_, UnDiEdge], Param[N, E], Graph[N, E]] =
     new GraphCanBuildFrom[N, E]()(edgeT, config)
       .asInstanceOf[GraphCanBuildFrom[N, E] with CanBuildFrom[Graph[_, UnDiEdge], Param[N, E], Graph[N, E]]]
 }
@@ -50,16 +54,20 @@ class DefaultGraphImpl[N, E[+X] <: EdgeLikeIn[X]](
   protected type Config = DefaultGraphImpl.Config
 
   @inline final protected def newNodeSet: NodeSetT = new NodeSet
-  @transient private[this] var _nodes: NodeSetT    = newNodeSet
-  @inline final override def nodes                 = _nodes
+
+  @transient private[this] var _nodes: NodeSetT = newNodeSet
+
+  @inline final override def nodes = _nodes
 
   @transient private[this] var _edges: EdgeSetT = new EdgeSet
   @inline final override def edges              = _edges
 
   initialize(iniNodes, iniEdges)
 
-  final override def empty: DefaultGraphImpl[N, E]                    = DefaultGraphImpl.empty[N, E]
-  final protected def copy(nodes: Iterable[N], edges: Iterable[E[N]]) = DefaultGraphImpl.from[N, E](nodes, edges)
+  final override def empty: DefaultGraphImpl[N, E] = DefaultGraphImpl.empty[N, E]
+
+  final protected def copy(nodes: Iterable[N], edges: Iterable[E[N]]): DefaultGraphImpl[N, E] =
+    DefaultGraphImpl.from[N, E](nodes, edges)
 
   final protected def +#(e: E[N]): DefaultGraphImpl[N, E] =
     if (edges contains Edge(e)) this

@@ -12,11 +12,12 @@ import scalax.collection.mutable.EqHashMap
   */
 final class EqSet[K <: AnyRef](map: EqHashMap[K, _]) extends Set[K] with InclExcl[K, Set[K]] {
 
-  def contains(key: K) = map contains key
-  def iterator         = map.keysIterator
+  def contains(key: K): Boolean = map contains key
+
+  def iterator = map.keysIterator
 
   /** $ON unless `elem` is already contained. */
-  def incl(elem: K) =
+  def incl(elem: K): Set[K] =
     if (map contains elem) this
     else {
       val newMap = map.clone
@@ -25,7 +26,7 @@ final class EqSet[K <: AnyRef](map: EqHashMap[K, _]) extends Set[K] with InclExc
     }
 
   /** $ON unless `elem` is not contained. */
-  def excl(elem: K) =
+  def excl(elem: K): Set[K] =
     if (map contains elem) {
       val newMap = map.clone
       newMap -= elem

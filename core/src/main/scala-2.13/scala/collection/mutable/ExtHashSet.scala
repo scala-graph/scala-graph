@@ -517,6 +517,6 @@ object ExtHashSet extends IterableFactory[ExtHashSet] {
     def nodes: ArrayBuffer[Node[K]] = toBuffer(identity)
     def keys: ArrayBuffer[K]        = toBuffer(_.key)
 
-    override def toString = s"Node($key, $hash) -> $next"
+    override def toString: String = s"Node($key, $hash) -> $next"
   }
 }

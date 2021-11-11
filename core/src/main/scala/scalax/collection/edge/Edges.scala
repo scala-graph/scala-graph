@@ -39,7 +39,10 @@ abstract class WkUnDiEdge[+N](nodes: Product, weight: Double)
     with WkEdge[N]
     with EqUnDi
 object WkUnDiEdge extends WkEdgeCompanion[WkUnDiEdge] {
-  @SerialVersionUID(975L) override protected def newEdge[N](nodes: Product, weight: Double) =
+  @SerialVersionUID(975L) override protected def newEdge[N](
+      nodes: Product,
+      weight: Double
+  ): WkUnDiEdge[N] with EdgeCopy[WkUnDiEdge] =
     new WkUnDiEdge[N](nodes, weight) with EdgeCopy[WkUnDiEdge] {
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN](newNodes, weight)
     }
@@ -52,7 +55,7 @@ abstract class WkDiEdge[+N](nodes: Product, weight: Double)
     with OuterEdge[N, WkDiEdge]
     with EqDi
 object WkDiEdge extends WkEdgeCompanion[WkDiEdge] {
-  override protected def newEdge[N](nodes: Product, weight: Double) =
+  override protected def newEdge[N](nodes: Product, weight: Double): WkDiEdge[N] with EdgeCopy[WkDiEdge] =
     new WkDiEdge[N](nodes, weight) with EdgeCopy[WkDiEdge] {
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN](newNodes, weight)
     }
@@ -61,10 +64,15 @@ object WkDiEdge extends WkEdgeCompanion[WkDiEdge] {
 /** labeled undirected edge. */
 abstract class LUnDiEdge[+N](nodes: Product) extends UnDiEdge[N](nodes) with OuterEdge[N, LUnDiEdge] with LEdge[N]
 object LUnDiEdge extends LEdgeCompanion[LUnDiEdge] {
-  override protected def newEdge[N, L](nodes: Product, pLabel: L) =
+  type Aux[+N, L] = LUnDiEdge[N] with EdgeCopy[LUnDiEdge] {
+    type L1 = L
+  }
+
+  override protected def newEdge[N, L](nodes: Product, pLabel: L): LUnDiEdge.Aux[N, L] with EdgeCopy[LUnDiEdge] =
     new LUnDiEdge[N](nodes) with EdgeCopy[LUnDiEdge] {
-      type L1 = L
-      override val label                                             = pLabel
+      override type L1 = L
+      override val label = pLabel
+
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN, L](newNodes, pLabel)
     }
 }
@@ -72,10 +80,15 @@ object LUnDiEdge extends LEdgeCompanion[LUnDiEdge] {
 /** labeled directed edge. */
 abstract class LDiEdge[+N](nodes: Product) extends LUnDiEdge[N](nodes) with DiEdgeLike[N] with OuterEdge[N, LDiEdge]
 object LDiEdge extends LEdgeCompanion[LDiEdge] {
-  override protected def newEdge[N, L](nodes: Product, pLabel: L) =
+  type Aux[+N, L] = LDiEdge[N] with EdgeCopy[LDiEdge] {
+    type L1 = L
+  }
+
+  override protected def newEdge[N, L](nodes: Product, pLabel: L): LDiEdge.Aux[N, L] with EdgeCopy[LDiEdge] =
     new LDiEdge[N](nodes) with EdgeCopy[LDiEdge] {
-      type L1 = L
-      override val label                                             = pLabel
+      override type L1 = L
+      override val label = pLabel
+
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN, L](newNodes, pLabel)
     }
 }
@@ -89,10 +102,15 @@ abstract class LkUnDiEdge[+N](nodes: Product)
     with LkEdge[N]
     with EqUnDi
 object LkUnDiEdge extends LkEdgeCompanion[LkUnDiEdge] {
-  override protected def newEdge[N, L](nodes: Product, pLabel: L) =
+  type Aux[+N, L] = LkUnDiEdge[N] with EdgeCopy[LkUnDiEdge] {
+    type L1 = L
+  }
+
+  override protected def newEdge[N, L](nodes: Product, pLabel: L): LkUnDiEdge.Aux[N, L] with EdgeCopy[LkUnDiEdge] =
     new LkUnDiEdge[N](nodes) with EdgeCopy[LkUnDiEdge] {
-      type L1 = L
-      override val label                                             = pLabel
+      override type L1 = L
+      override val label = pLabel
+
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN, L](newNodes, pLabel)
     }
 }
@@ -104,10 +122,15 @@ abstract class LkDiEdge[+N](nodes: Product)
     with LkEdge[N]
     with EqDi
 object LkDiEdge extends LkEdgeCompanion[LkDiEdge] {
-  override protected def newEdge[N, L](nodes: Product, pLabel: L) =
+  type Aux[+N, L] = LkDiEdge[N] with EdgeCopy[LkDiEdge] {
+    type L1 = L
+  }
+
+  override protected def newEdge[N, L](nodes: Product, pLabel: L): LkDiEdge.Aux[N, L] with EdgeCopy[LkDiEdge] =
     new LkDiEdge[N](nodes) with EdgeCopy[LkDiEdge] {
-      type L1 = L
-      override val label                                             = pLabel
+      override type L1 = L
+      override val label = pLabel
+
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN, L](newNodes, pLabel)
     }
 }
@@ -121,10 +144,15 @@ abstract class WLUnDiEdge[+N](nodes: Product, weight: Double)
     with LEdge[N]
     with WLEdge[N]
 object WLUnDiEdge extends WLEdgeCompanion[WLUnDiEdge] {
-  override protected def newEdge[N, L](nodes: Product, weight: Double, pLabel: L) =
+  override protected def newEdge[N, L](
+      nodes: Product,
+      weight: Double,
+      pLabel: L
+  ): WLUnDiEdge[N] with EdgeCopy[WLUnDiEdge] =
     new WLUnDiEdge[N](nodes, weight) with EdgeCopy[WLUnDiEdge] {
       type L1 = L
-      override val label                                             = pLabel
+      override val label = pLabel
+
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN, L](newNodes, weight, pLabel)
     }
 }
@@ -135,10 +163,11 @@ abstract class WLDiEdge[+N](nodes: Product, weight: Double)
     with DiEdgeLike[N]
     with OuterEdge[N, WLDiEdge]
 object WLDiEdge extends WLEdgeCompanion[WLDiEdge] {
-  override protected def newEdge[N, L](nodes: Product, weight: Double, pLabel: L) =
+  override protected def newEdge[N, L](nodes: Product, weight: Double, pLabel: L): WLDiEdge[N] with EdgeCopy[WLDiEdge] =
     new WLDiEdge[N](nodes, weight) with EdgeCopy[WLDiEdge] {
       type L1 = L
-      override val label                                             = pLabel
+      override val label = pLabel
+
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN, L](newNodes, weight, pLabel)
     }
 }
@@ -152,10 +181,15 @@ abstract class WkLUnDiEdge[+N](nodes: Product, weight: Double)
     with OuterEdge[N, WkLUnDiEdge]
     with EqUnDi
 object WkLUnDiEdge extends WkLEdgeCompanion[WkLUnDiEdge] {
-  override protected def newEdge[N, L](nodes: Product, weight: Double, pLabel: L) =
+  override protected def newEdge[N, L](
+      nodes: Product,
+      weight: Double,
+      pLabel: L
+  ): WkLUnDiEdge[N] with EdgeCopy[WkLUnDiEdge] =
     new WkLUnDiEdge[N](nodes, weight) with EdgeCopy[WkLUnDiEdge] {
       type L1 = L
-      override val label                                             = pLabel
+      override val label = pLabel
+
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN, L](newNodes, weight, pLabel)
     }
 }
@@ -167,10 +201,15 @@ abstract class WkLDiEdge[+N](nodes: Product, weight: Double)
     with OuterEdge[N, WkLDiEdge]
     with EqDi
 object WkLDiEdge extends WkLEdgeCompanion[WkLDiEdge] {
-  override protected def newEdge[N, L](nodes: Product, weight: Double, pLabel: L) =
+  override protected def newEdge[N, L](
+      nodes: Product,
+      weight: Double,
+      pLabel: L
+  ): WkLDiEdge[N] with EdgeCopy[WkLDiEdge] =
     new WkLDiEdge[N](nodes, weight) with EdgeCopy[WkLDiEdge] {
       type L1 = L
-      override val label                                             = pLabel
+      override val label = pLabel
+
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN, L](newNodes, weight, pLabel)
     }
 }
@@ -185,10 +224,15 @@ abstract class WLkUnDiEdge[+N](nodes: Product, weight: Double)
     with WLkEdge[N]
     with EqUnDi
 object WLkUnDiEdge extends WLkEdgeCompanion[WLkUnDiEdge] {
-  override protected def newEdge[N, L](nodes: Product, weight: Double, pLabel: L) =
+  override protected def newEdge[N, L](
+      nodes: Product,
+      weight: Double,
+      pLabel: L
+  ): WLkUnDiEdge[N] with EdgeCopy[WLkUnDiEdge] =
     new WLkUnDiEdge[N](nodes, weight) with EdgeCopy[WLkUnDiEdge] {
       type L1 = L
-      override val label                                             = pLabel
+      override val label = pLabel
+
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN, L](newNodes, weight, pLabel)
     }
 }
@@ -200,10 +244,15 @@ abstract class WLkDiEdge[+N](nodes: Product, weight: Double)
     with OuterEdge[N, WLkDiEdge]
     with EqDi
 object WLkDiEdge extends WLkEdgeCompanion[WLkDiEdge] {
-  override protected def newEdge[N, L](nodes: Product, weight: Double, pLabel: L) =
+  override protected def newEdge[N, L](
+      nodes: Product,
+      weight: Double,
+      pLabel: L
+  ): WLkDiEdge[N] with EdgeCopy[WLkDiEdge] =
     new WLkDiEdge[N](nodes, weight) with EdgeCopy[WLkDiEdge] {
       type L1 = L
-      override val label                                             = pLabel
+      override val label = pLabel
+
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN, L](newNodes, weight, pLabel)
     }
 }
@@ -217,10 +266,15 @@ abstract class WkLkUnDiEdge[+N](nodes: Product, weight: Double)
     with WkLkEdge[N]
     with EqUnDi
 object WkLkUnDiEdge extends WkLkEdgeCompanion[WkLkUnDiEdge] {
-  override protected def newEdge[N, L](nodes: Product, weight: Double, pLabel: L) =
+  override protected def newEdge[N, L](
+      nodes: Product,
+      weight: Double,
+      pLabel: L
+  ): WkLkUnDiEdge[N] with EdgeCopy[WkLkUnDiEdge] =
     new WkLkUnDiEdge[N](nodes, weight) with EdgeCopy[WkLkUnDiEdge] {
       type L1 = L
-      override val label                                             = pLabel
+      override val label = pLabel
+
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN, L](newNodes, weight, pLabel)
     }
 }
@@ -232,10 +286,15 @@ abstract class WkLkDiEdge[+N](nodes: Product, weight: Double)
     with OuterEdge[N, WkLkDiEdge]
     with EqDi
 object WkLkDiEdge extends WkLkEdgeCompanion[WkLkDiEdge] {
-  override protected def newEdge[N, L](nodes: Product, weight: Double, pLabel: L) =
+  override protected def newEdge[N, L](
+      nodes: Product,
+      weight: Double,
+      pLabel: L
+  ): WkLkDiEdge[N] with EdgeCopy[WkLkDiEdge] =
     new WkLkDiEdge[N](nodes, weight) with EdgeCopy[WkLkDiEdge] {
       type L1 = L
-      override val label                                             = pLabel
+      override val label = pLabel
+
       override protected[collection] def copy[NN](newNodes: Product) = newEdge[NN, L](newNodes, weight, pLabel)
     }
 }

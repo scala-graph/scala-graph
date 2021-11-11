@@ -21,10 +21,12 @@ trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn
   selfGraph: This[N, E] =>
 
   type NodeT <: InnerNodeImpl
+
   abstract class InnerNodeImpl(value: N, hints: ArraySet.Hints)
       extends NodeBase(value)
       with super[GraphLike].InnerNode
-      with InnerNode { this: NodeT =>
+      with InnerNode {
+    this: NodeT =>
 
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
     import Adj._
@@ -41,7 +43,7 @@ trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn
       inserted
     }
 
-    final protected def addDiSuccOrHook(edge: EdgeT) {
+    final protected def addDiSuccOrHook(edge: EdgeT): Unit = {
       if (edge.matches(nodeEqThis, nodeEqThis) && aHook.isEmpty)
         _aHook = Some(this -> edge)
       addDiSuccessors(edge, (n: NodeT) => diSucc put (n, edge))
@@ -88,13 +90,24 @@ trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn
     final protected[collection] def remove(edge: EdgeT): Boolean =
       edge.nodes.toSet forall (n => (collection findElem n) exists (_ remove edge))
 
-    @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
-    @inline final protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }
+    @inline final protected[collection] def +=(edge: EdgeT): this.type = {
+      add(edge); this
+    }
 
-    @inline final def addOne(node: NodeT) = { add(node); this }
-    @inline final def subtractOne(node: NodeT) = { remove(node); this }
+    @inline final protected[collection] def -=(edge: EdgeT): this.type = {
+      remove(edge); this
+    }
+
+    @inline final def addOne(node: NodeT): this.type = {
+      add(node); this
+    }
+
+    @inline final def subtractOne(node: NodeT): this.type = {
+      remove(node); this
+    }
 
     final protected def minus(node: NodeT): Unit = collection -= node
+
     final protected def minusEdges(node: NodeT): Unit =
       edges --= node.edges.toList // toList is necessary to avoid failure of -=(node) like in TEdit.test_MinusEq_2
   }
@@ -140,11 +153,18 @@ trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn
 
     @inline final override def maxArity: Int = super.maxArity
   }
+
   override def edges: EdgeSetT
 
-  @inline final def clear(): Unit            = nodes.clear()
-  @inline final def add(node: N): Boolean    = nodes add Node(node)
+  @inline final def clear(): Unit = nodes.clear()
+
+  @inline final def add(node: N): Boolean = nodes add Node(node)
+
   @inline final def add(edge: E[N]): Boolean = edges add Edge(edge)
-  @inline final protected def +=#(edge: E[N]): this.type = { add(edge); this }
+
+  @inline final protected def +=#(edge: E[N]): this.type = {
+    add(edge); this
+  }
+
   @inline final def upsert(edge: E[N]): Boolean = edges upsert Edge(edge)
 }

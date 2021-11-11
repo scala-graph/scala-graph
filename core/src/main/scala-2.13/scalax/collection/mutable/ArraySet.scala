@@ -3,6 +3,7 @@ package mutable
 
 import scala.collection.mutable.{AbstractSet, GrowableBuilder, SetOps}
 import scala.collection.{ExtSetMethods, IterableFactory, IterableFactoryDefaults, SortedSet}
+import scala.collection.mutable.Builder
 
 /** A growable and compactable `mutable.Set` implementation based on `Array` and `mutable.Set`.
   *  It switches to the latter representation as soon as a given threshold for the number of
@@ -63,7 +64,8 @@ trait ArraySet[A]
 
 object ArraySet extends IterableFactory[ArraySet] {
 
-  override def from[A](source: IterableOnce[A]) = empty[A] ++= source // TODO possible to use source.knownSize
+  override def from[A](source: IterableOnce[A]): ArraySet[A] =
+    empty[A] ++= source // TODO possible to use source.knownSize
 
   /** Returns an empty set with default hints that can grow as expected. */
   override def empty[A]: ArraySet[A] = SimpleArraySet.empty[A]
@@ -82,7 +84,7 @@ object ArraySet extends IterableFactory[ArraySet] {
   def apply[A](elem1: A, elem2: A, elems: A*)(implicit hints: Hints): ArraySet[A] =
     emptyWithHints[A](hints) += elem1 += elem2 ++= elems
 
-  override def newBuilder[A] =
+  override def newBuilder[A]: Builder[A, ArraySet[A]] =
     new GrowableBuilder[A, ArraySet[A]](SimpleArraySet.empty[A]) {
       override def sizeHint(size: Int) = elems.sizeHint(size)
     }

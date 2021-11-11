@@ -38,7 +38,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     * @param nodes $INNODES
     * @param edges $INEDGES
     */
-  protected def initialize(nodes: Iterable[N], edges: Iterable[E[N]]) {
+  protected def initialize(nodes: Iterable[N], edges: Iterable[E[N]]): Unit = {
     this.nodes.initialize(nodes, edges)
     this.edges.initialize(edges)
   }
@@ -49,10 +49,10 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   def order = nodes.size
 
   /** `true` if this graph has at most 1 node. */
-  @inline final def isTrivial = order <= 1
+  @inline final def isTrivial: Boolean = order <= 1
 
   /** `true` if this graph has at least 2 nodes. */
-  @inline final def nonTrivial = !isTrivial
+  @inline final def nonTrivial: Boolean = !isTrivial
 
   /** The size - commonly referred to as ||G|| - of this graph
     * equaling to the number of edges.
@@ -93,10 +93,10 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   final val anyEdge: EdgeFilter = _ => true
 
   /** `true` if `f` is not equivalent to `anyNode`. */
-  @inline final def isCustomNodeFilter(f: NodeFilter) = f ne anyNode
+  @inline final def isCustomNodeFilter(f: NodeFilter): Boolean = f ne anyNode
 
   /** `true` if `f` is not equivalent to `anyEdge`. */
-  @inline final def isCustomEdgeFilter(f: EdgeFilter) = f ne anyEdge
+  @inline final def isCustomEdgeFilter(f: EdgeFilter): Boolean = f ne anyEdge
 
   sealed trait InnerElem
   type NodeT <: InnerNode with Serializable
@@ -184,7 +184,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     /** Whether this node has any predecessors. */
     def hasPredecessors: Boolean
 
-    protected[collection] def addDiPredecessors(edge: EdgeT, add: (NodeT) => Unit)
+    protected[collection] def addDiPredecessors(edge: EdgeT, add: (NodeT) => Unit): Unit
 
     /** Synonym for `diPredecessors`. */
     @inline final def inNeighbors = diPredecessors
@@ -198,7 +198,8 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       * @return set of all neighbors.
       */
     def neighbors: Set[NodeT]
-    protected[collection] def addNeighbors(edge: EdgeT, add: (NodeT) => Unit)
+
+    protected[collection] def addNeighbors(edge: EdgeT, add: (NodeT) => Unit): Unit
 
     /** Synonym for `neighbors`. */
     @inline final def ~| = neighbors
@@ -280,10 +281,10 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     def degree: Int
 
     /** `true` if this node's degree equals to 0. */
-    @inline final def isIsolated = degree == 0
+    @inline final def isIsolated: Boolean = degree == 0
 
     /** `true` if this node's degree equals to 1. */
-    @inline final def isLeaf = degree == 1
+    @inline final def isLeaf: Boolean = degree == 1
 
     /** The outgoing degree of this node.
       * @return the number of edges that go out from this node including undirected edges.
@@ -317,7 +318,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
 
     def canEqual(that: Any) = true
 
-    override def equals(other: Any) = other match {
+    override def equals(other: Any): Boolean = other match {
       case that: GraphBase[N, E]#InnerNode =>
         (this eq that) || (that canEqual this) && (this.value == that.value)
       case thatR: AnyRef =>
@@ -334,18 +335,18 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       else None
   }
   @transient object Node {
-    def apply(node: N)    = newNode(node)
-    def unapply(n: NodeT) = Some(n)
+    def apply(node: N): NodeT = newNode(node)
 
-    @inline final protected[collection] def addDiSuccessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit) {
+    def unapply(n: NodeT): Some[NodeT] = Some(n)
+
+    @inline final protected[collection] def addDiSuccessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit): Unit =
       node.addDiSuccessors(edge, add)
-    }
-    @inline final protected[collection] def addDiPredecessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit) {
+
+    @inline final protected[collection] def addDiPredecessors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit): Unit =
       node.addDiPredecessors(edge, add)
-    }
-    @inline final protected[collection] def addNeighbors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit) {
+
+    @inline final protected[collection] def addNeighbors(node: NodeT, edge: EdgeT, add: (NodeT) => Unit): Unit =
       node.addNeighbors(edge, add)
-    }
 
     /** Allows to call methods of N directly on Node instances.
       *
@@ -371,7 +372,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   object NodeOrdering {
 
     /** Creates a new NodeOrdering with `compare` calling the supplied `cmp`. */
-    def apply(cmp: (NodeT, NodeT) => Int) = new NodeOrdering {
+    def apply(cmp: (NodeT, NodeT) => Int): NodeOrdering = new NodeOrdering {
       def compare(a: NodeT, b: NodeT): Int = cmp(a, b)
     }
     object None extends NodeOrdering {
@@ -385,18 +386,22 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   object EdgeOrdering extends Serializable {
 
     /** Creates a new EdgeOrdering with `compare` calling the supplied `cmp`. */
-    def apply(cmp: (EdgeT, EdgeT) => Int) = new EdgeOrdering {
+    def apply(cmp: (EdgeT, EdgeT) => Int): EdgeOrdering = new EdgeOrdering {
       def compare(a: EdgeT, b: EdgeT): Int = cmp(a, b)
     }
+
     object None extends EdgeOrdering {
       def compare(a: EdgeT, b: EdgeT): Int = noneCompare
-      override def isDefined               = false
+
+      override def isDefined = false
     }
   }
 
   final protected lazy val anyOrdering = new AnyOrdering[N]
-  final lazy val defaultNodeOrdering   = NodeOrdering((a: NodeT, b: NodeT) => anyOrdering.compare(a.value, b.value))
+  final lazy val defaultNodeOrdering: NodeOrdering =
+    NodeOrdering((a: NodeT, b: NodeT) => anyOrdering.compare(a.value, b.value))
   type NodeSetT <: NodeSet
+
   trait NodeSet extends AnySet[NodeT] with ExtSetMethods[NodeT] {
 
     /** This method is called by the primary constructor. It must be defined by the trait
@@ -411,24 +416,24 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     /** Sorts all nodes according to `ord` and concatenates them using `separator`.
       *
       * @param separator to separate nodes by.
-      * @param ord custom ordering.
+      * @param ord       custom ordering.
       * @return sorted and concatenated string representation of this node set.
       */
     def asSortedString(
         separator: String = GraphBase.defaultSeparator
-    )(implicit ord: NodeOrdering = defaultNodeOrdering) =
+    )(implicit ord: NodeOrdering = defaultNodeOrdering): String =
       toList.sorted(ord) mkString separator
 
     /** Sorts all nodes according to `ord`, concatenates them using `separator`
       * and prefixes and parenthesizes the result with `stringPrefix`.
       *
       * @param separator to separate nodes by.
-      * @param ord custom ordering.
+      * @param ord       custom ordering.
       * @return sorted, concatenated and prefixed string representation of this node set.
       */
     def toSortedString(
         separator: String = GraphBase.defaultSeparator
-    )(implicit ord: NodeOrdering = defaultNodeOrdering) =
+    )(implicit ord: NodeOrdering = defaultNodeOrdering): String =
       stringPrefix + "(" + asSortedString(separator)(ord) + ")"
 
     /** Converts this node set to a set of outer nodes.
@@ -464,7 +469,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
 
     def draw(random: Random): NodeT
 
-    def diff(that: AnySet[NodeT]) = this -- that
+    def diff(that: AnySet[NodeT]): scala.collection.Set[NodeT] = this -- that
   }
 
   /** The node (vertex) set of this `Graph` commonly referred to as V(G).
@@ -482,7 +487,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   trait InnerEdge extends Iterable[NodeT] with InnerEdgeParam[N, E, NodeT, E] with Edge with InnerElem {
     this: EdgeT =>
 
-    override def stringPrefix = super[InnerEdgeParam].stringPrefix
+    override def stringPrefix: String = super[InnerEdgeParam].stringPrefix
 
     /** The outer edge after transformation by means of the `copy` method.
       * This edge contains references to inner nodes while the original outer
@@ -522,7 +527,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       case unDi                       => unDi.edge._2
     }
 
-    override def equals(other: Any) = other match {
+    override def equals(other: Any): Boolean = other match {
       case that: GraphBase[N, E]#InnerEdge =>
         (this eq that) ||
           (this.edge eq that.edge) ||
@@ -532,6 +537,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
           (this.edge == that)
       case _ => false
     }
+
     override def hashCode = edge.##
     override def toString = edge.toString
 
@@ -555,10 +561,12 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       else None
   }
   @transient object Edge {
-    def apply(innerEdge: E[NodeT]) = newEdge(innerEdge)
-    def unapply(e: EdgeT)          = Some(e)
+    def apply(innerEdge: E[NodeT]): EdgeT = newEdge(innerEdge)
+
+    def unapply(e: EdgeT): Some[EdgeT] = Some(e)
 
     private[this] var freshNodes: Map[N, NodeT] = _
+
     private def mkNode(n: N): NodeT = {
       val existing = nodes lookup n
       if (null eq existing)
@@ -615,7 +623,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   protected def newEdge(innerEdge: E[NodeT]): EdgeT
   implicit final protected def edgeToEdgeCont(e: E[N]): E[NodeT] = Edge.edgeToEdgeCont(e)
 
-  final lazy val defaultEdgeOrdering = EdgeOrdering { (a: EdgeT, b: EdgeT) =>
+  final lazy val defaultEdgeOrdering: EdgeOrdering = EdgeOrdering { (a: EdgeT, b: EdgeT) =>
     val unequal: Option[(NodeT, NodeT)] = (a.edge zip b.edge) find (z => z._1 != z._2)
     unequal map (t => anyOrdering.compare(t._1.value, t._2.value)) getOrElse
       Ordering.Int.compare(a.arity, b.arity)
@@ -636,24 +644,24 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     /** Sorts all edges according to `ord` and concatenates them using `separator`.
       *
       * @param separator to separate edges by.
-      * @param ord custom ordering.
+      * @param ord       custom ordering.
       * @return sorted and concatenated string representation of this edge set.
       */
     def asSortedString(
         separator: String = GraphBase.defaultSeparator
-    )(implicit ord: EdgeOrdering = defaultEdgeOrdering) =
+    )(implicit ord: EdgeOrdering = defaultEdgeOrdering): String =
       toList.sorted(ord) mkString separator
 
     /** Sorts all edges according to `ord`, concatenates them using `separator`
       * and prefixes and parenthesizes the result with `stringPrefix`.
       *
       * @param separator to separate edges by.
-      * @param ord custom ordering.
+      * @param ord       custom ordering.
       * @return sorted, concatenated and prefixed string representation of this edge set.
       */
     def toSortedString(
         separator: String = GraphBase.defaultSeparator
-    )(implicit ord: EdgeOrdering = defaultEdgeOrdering) =
+    )(implicit ord: EdgeOrdering = defaultEdgeOrdering): String =
       stringPrefix + "(" + asSortedString(separator)(ord) + ")"
 
     /** Finds the inner edge corresponding to `outerEdge`.
@@ -674,12 +682,14 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     }
     @deprecated("Use toOuter instead", "1.8.0") def toEdgeInSet = toOuter
 
-    final def draw(random: Random) = (nodes draw random).edges draw random
+    final def draw(random: Random): EdgeT = (nodes draw random).edges draw random
+
     final def findElem[B](other: B, correspond: (EdgeT, B) => Boolean): EdgeT = {
       def find(edge: E[N]): EdgeT = correspond match {
         case c: ((EdgeT, E[N]) => Boolean) @unchecked => nodes.lookup(edge._1).edges findElem (edge, c)
         case _                                        => throw new IllegalArgumentException
       }
+
       other match {
         case e: OuterEdge[N, E]            => find(e.edge)
         case e: InnerEdgeParam[N, E, _, E] => find(e.asEdgeT[N, E, selfGraph.type](selfGraph).toOuter)
@@ -687,7 +697,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       }
     }
 
-    def diff(that: AnySet[EdgeT]) = this -- that
+    def diff(that: AnySet[EdgeT]): scala.collection.Set[EdgeT] = this -- that
   }
 
   /** The edge set of this `Graph` commonly referred to as E(G).
@@ -695,7 +705,8 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     * @return Set of all contained edges.
     */
   def edges: EdgeSetT
-  def totalWeight = edges.foldLeft(0d)(_ + _.weight)
+
+  def totalWeight: Double = edges.foldLeft(0d)(_ + _.weight)
 }
 
 object GraphBase {

@@ -9,7 +9,7 @@ class TMicroBenchmark extends RefSpec with should.Matchers {
   import MicroBenchmark._
 
   object `relativeTimes() reflects` {
-    def `relative execution times` {
+    def `relative execution times`: Unit = {
       val r = 1 to 20
       val relTimes = relativeTimes(warmUp = 2)(
         r.toList.sorted,
@@ -24,15 +24,17 @@ class TMicroBenchmark extends RefSpec with should.Matchers {
   }
   class FloatTolerance(maxDeviation: Float) extends Equality[Float] {
     private def eq(a: Float, b: Float): Boolean = if (a > b) a < b * maxDeviation else a > b / maxDeviation
-    def areEqual(a: Float, b: Any) = b match {
+
+    def areEqual(a: Float, b: Any): Boolean = b match {
       case f: Float => eq(a, f)
       case i: Int   => eq(a, i.toFloat)
     }
   }
   object `relativeTime() roughly reflects` {
-    def `O(N) complexity of List.size` {
+    def `O(N) complexity of List.size`: Unit = {
       def fill(size: Int): (Int, List[Int]) = (size, List.fill(size)(0))
-      val (small, big)                      = (fill(100), fill(1000))
+
+      val (small, big) = (fill(100), fill(1000))
 
       implicit val tolerance = new FloatTolerance(4f)
       val expected           = big._1.toFloat / small._1.toFloat
@@ -42,7 +44,8 @@ class TMicroBenchmark extends RefSpec with should.Matchers {
       actual should ===(expected)
     }
   }
-  def `traversing immutable.Set takes marginally longer than mutable.Set` {
+
+  def `traversing immutable.Set takes marginally longer than mutable.Set`: Unit = {
     import scala.collection.mutable
     val size  = 10000
     val array = Array.tabulate(size)(identity)
@@ -52,7 +55,8 @@ class TMicroBenchmark extends RefSpec with should.Matchers {
 
     relativeTime(repetitions = 6)(m.sum == sum, imm.sum == sum) should be > 1.05f
   }
-  def `traversing mutable.Set takes longer than mutable.BitSet` {
+
+  def `traversing mutable.Set takes longer than mutable.BitSet`: Unit = {
     import scala.collection.mutable
     val size  = 10000
     val array = Array.tabulate(size)(_ % (size / 10))

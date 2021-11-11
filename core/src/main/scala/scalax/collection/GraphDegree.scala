@@ -22,7 +22,7 @@ trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
   /** Decreasing ordering of nodes with respect to their degree.
     */
   final class DegreeOrdering(val f: DegreeFunction) extends Ordering[NodeT] {
-    def compare(n1: NodeT, n2: NodeT) = n1.degree compare n2.degree
+    def compare(n1: NodeT, n2: NodeT): Int = n1.degree compare n2.degree
   }
   object DegreeOrdering {
     @inline final def apply(f: DegreeFunction) = new DegreeOrdering(f)
@@ -31,24 +31,34 @@ trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
   /** Decreasing ordering of integers.
     */
   object IntReverseOrdering extends Ordering[Int] {
-    def compare(d1: Int, d2: Int) = d2 compare d1
+    def compare(d1: Int, d2: Int): Int = d2 compare d1
   }
 
   trait DegreeFunction extends Function1[NodeT, Int]
-  object Degree        extends DegreeFunction { def apply(n: NodeT) = n.degree    }
-  object InDegree      extends DegreeFunction { def apply(n: NodeT) = n.inDegree  }
-  object OutDegree     extends DegreeFunction { def apply(n: NodeT) = n.outDegree }
+
+  object Degree extends DegreeFunction {
+    def apply(n: NodeT) = n.degree
+  }
+
+  object InDegree extends DegreeFunction {
+    def apply(n: NodeT) = n.inDegree
+  }
+
+  object OutDegree extends DegreeFunction {
+    def apply(n: NodeT) = n.outDegree
+  }
 
   trait Filter[T] extends Function1[T, Boolean]
-//  trait NodeFilter extends Filter[NodeT]
-//  implicit object AnyNode extends NodeFilter { def apply = (n: NodeT) => true }
+  //  trait NodeFilter extends Filter[NodeT]
+  //  implicit object AnyNode extends NodeFilter { def apply = (n: NodeT) => true }
+
   /** The total degree of this graph equaling to the sum
     * of the degrees over all nodes or `0` if this graph is empty.
     *
-    * @param nodeDegree $DEGREEFUNCTION
+    * @param nodeDegree    $DEGREEFUNCTION
     * @param degreeFilter $DEGREEFILTER
     */
-  def totalDegree(implicit nodeDegree: DegreeFunction = Degree, degreeFilter: Int => Boolean = AnyDegree) =
+  def totalDegree(implicit nodeDegree: DegreeFunction = Degree, degreeFilter: Int => Boolean = AnyDegree): Int =
     if (edges.maxArity <= 2 && degreeFilter == AnyDegree) edges.size * 2
     else {
       var deg = 0

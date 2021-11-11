@@ -111,7 +111,7 @@ trait GraphCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
 trait GraphCoreCompanion[+CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]]
     extends GraphCompanion[CC] {
   type Config = CoreConfig
-  def defaultConfig = CoreConfig()
+  def defaultConfig: CoreConfig = CoreConfig()
   def empty[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): CC[N, E]
   override def apply[N, E[+X] <: EdgeLikeIn[X]](
       elems: Param[N, E]*

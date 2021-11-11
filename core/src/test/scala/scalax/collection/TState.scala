@@ -17,7 +17,7 @@ import org.scalatest.matchers.should
 /** Ensure that stateful data handling used for traversals is thread-safe.
   */
 class TStateTest extends RefSpec with should.Matchers {
-  val g = Graph(Data.elementsOfUnDi_2: _*)
+  val g: Graph[Int, UnDiEdge] = Graph(Data.elementsOfUnDi_2: _*)
 
   // a sample traversal with recursive calls in its node visitor
   def countNodes(recursion: Int = 0): Int = {
@@ -34,24 +34,25 @@ class TStateTest extends RefSpec with should.Matchers {
   val nrNodesExpected = g.order
   val aLotOfTimes     = 162 // at least 2 times State.nrOfFlagWordBits
 
-  def dump {
+  def dump: Unit =
     println(State.dump(g))
-  }
 
   object `Single-threaded shared state proves robust` {
-    def `when looping` {
+    def `when looping`: Unit =
       for (i <- 1 to aLotOfTimes)
         countNodes() should be(nrNodesExpected)
-    }
-    def `when looping at visited nodes` {
+
+    def `when looping at visited nodes`: Unit =
       g.nodes.head.innerNodeTraverser foreach (_ => `when looping`)
-    }
-    def `when called recursively` {
+
+    def `when called recursively`: Unit = {
       val depth = 5
       countNodes(depth) should be(math.pow(3, depth) * nrNodesExpected)
     }
-    def `when called deep-recursively` {
+
+    def `when called deep-recursively`: Unit = {
       val recurseAt = g.nodes.head
+
       def countNodesDeep(recursion: Int): Int = {
         assert(recursion >= 0)
         var nrNodes = 0
@@ -65,12 +66,16 @@ class TStateTest extends RefSpec with should.Matchers {
         )
         nrNodes
       }
+
       for (i <- 1 to 2) countNodesDeep(aLotOfTimes)
     }
-    def `when cleared up after lots of unconnected traversals` {
-      val order          = 5000
-      val r              = new Random(10 * order)
+
+    def `when cleared up after lots of unconnected traversals`: Unit = {
+      val order = 5000
+      val r     = new Random(10 * order)
+
       def intNodeFactory = r.nextInt
+
       val g =
         new RandomGraph[Int, DiEdge, Graph](Graph, order, intNodeFactory, NodeDegreeRange(0, 2), Set(DiEdge), false) {
           val graphConfig = graphCompanion.defaultConfig
@@ -83,7 +88,7 @@ class TStateTest extends RefSpec with should.Matchers {
     }
   }
   object `Multi-threaded shared state proves robust` {
-    def `when traversing by futures` {
+    def `when traversing by futures`: Unit = {
       val traversals = Future.sequence(
         for (i <- 1 to aLotOfTimes)
           yield Future(countNodes())
@@ -96,14 +101,19 @@ class TStateTest extends RefSpec with should.Matchers {
       // each traversal must yield the same result
       stat should be(Map(nrNodesExpected -> aLotOfTimes))
     }
-    def `when tested under stress fixing #34` {
+
+    def `when tested under stress fixing #34`: Unit = {
       import Data._
       object g extends TGraph[Int, DiEdge, Graph](Graph(elementsOfDi_1: _*))
-      def n(outer: Int) = g.node(outer)
-      val (n1, n2)      = (n(2), n(5))
 
-      val times                       = 200000
-      def run: Future[Seq[Boolean]]   = Future.sequence((1 to times) map (_ => Future(n1 pathTo n2) map (_.nonEmpty)))
+      def n(outer: Int) = g.node(outer)
+
+      val (n1, n2) = (n(2), n(5))
+
+      val times = 200000
+
+      def run: Future[Seq[Boolean]] = Future.sequence((1 to times) map (_ => Future(n1 pathTo n2) map (_.nonEmpty)))
+
       val bulks: Future[Seq[Boolean]] = Future.sequence((1 to 3) map (_ => run)) map (_.flatten)
       forAll(Await.result(bulks, 50.seconds))(_ should be(true))
     }
