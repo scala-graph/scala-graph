@@ -64,7 +64,8 @@ class EditingHyper[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, C
   def `match hyperedge`: Unit = {
     import HyperEdgeImplicits._
     val hyper = 1 ~~ 2 ~~ 3
-    (hyper match { case ~~(Seq(n1, n2, n3, _ @_*)) => n1 + n2 + n3 }) should be(6)
+    val ~~ (Seq(n1,n2,n3,_ @_*)) = hyper
+    (n1+n2+n3) should be(6)
     // TODO (hyper match { case HyperEdge(n1 ~~ (n2, n3)            => n1 + n2 + n3 }) should be(6)
   }
 
@@ -74,8 +75,10 @@ class EditingHyper[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, C
     val sources = List.tabulate(count - 1)(_ + 1)
     val target  = count
     val diHyper = sources ~~> target
-    (diHyper match { case ~~>(Seq(s1, _*), _) => s1 }) should be(sources.head)
-    (diHyper match { case _ ~~> targets       => targets.head }) should be(target)
+    val ~~>(Seq(s1,_*),_) = diHyper
+    s1 should be(sources.head)
+    val _ ~~> targets = diHyper
+    targets.head should be(target)
   }
 }
 

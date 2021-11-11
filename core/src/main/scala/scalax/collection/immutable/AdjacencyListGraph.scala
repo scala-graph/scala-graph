@@ -8,9 +8,10 @@ import scalax.collection.mutable.ArraySet
 /** Implements an incident list based immutable graph representation.
   * @author Peter Empen
   */
-trait AdjacencyListGraph[
-    N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
-    extends GraphLike[N, E, This]
+trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[
+  X,
+  Y
+]] extends GraphLike[N, E, This]
     with GraphOps[N, E, This]
     with AdjacencyListBase[N, E, This] { selfGraph: This[N, E] =>
 
@@ -27,7 +28,7 @@ trait AdjacencyListGraph[
 
   type NodeSetT = NodeSet
   class NodeSet extends super.NodeSet {
-    @inline final override protected def minus(node: NodeT) :Unit = { collection -= node }
+    @inline final override protected def minus(node: NodeT): Unit = collection -= node
     override def +(node: NodeT) =
       if (collection contains node) this
       else { val c = copy; c.collection += node; c }
@@ -58,9 +59,9 @@ trait AdjacencyListGraph[
       this
     }
 
-    @inline final protected[immutable] def addEdge(edge: EdgeT) :Unit = { +=(edge) }
-    @inline final def incl(edge: EdgeT) = toSet + edge
-    @inline final def excl(edge: EdgeT) = toSet - edge
+    @inline final protected[immutable] def addEdge(edge: EdgeT): Unit = +=(edge)
+    @inline final def incl(edge: EdgeT)                               = toSet + edge
+    @inline final def excl(edge: EdgeT)                               = toSet - edge
 
     @inline final override lazy val maxArity        = super.maxArity
     @inline final override lazy val hasAnyMultiEdge = super.hasAnyMultiEdge

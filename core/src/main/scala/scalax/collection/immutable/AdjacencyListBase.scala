@@ -92,23 +92,22 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
 
     final def hasPredecessors: Boolean = edges exists (_.hasSource((n: NodeT) => n ne this))
 
-    final protected[collection] def addDiPredecessors(edge: EdgeT, add: NodeT => Unit) :Unit = {
+    final protected[collection] def addDiPredecessors(edge: EdgeT, add: NodeT => Unit): Unit =
       edge.sources foreach (n => if (n ne this) add(n))
-    }
 
     final def neighbors: Set[NodeT] = {
       val m = new EqHashSet[NodeT](edges.size)
-      edges foreach { addNeighbors(_, (n: NodeT) => m += n) }
+      edges.foreach(edge=> addNeighbors(edge, (n: NodeT) => m += n))
       new EqSetFacade(m)
     }
 
-    final protected[collection] def addNeighbors(edge: EdgeT, add: NodeT => Unit) :Unit = {
+    final protected[collection] def addNeighbors(edge: EdgeT, add: NodeT => Unit): Unit =
       edge.ends foreach (n => if (n ne this) add(n))
-    }
 
     final def outgoing = edges withSetFilter (e =>
       if (e.isDirected) e.hasSource((_: NodeT) eq this)
-      else true)
+      else true
+    )
     @inline private[this] def isOutgoingTo(e: EdgeT, to: NodeT): Boolean =
       if (e.isDirected)
         e matches ((_: NodeT) eq this, (_: NodeT) eq to)
@@ -123,7 +122,8 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
 
     final def incoming = edges withSetFilter (e =>
       if (e.isDirected) e.hasTarget((_: NodeT) eq this)
-      else true)
+      else true
+    )
     @inline final private[this] def isIncomingFrom(e: EdgeT, from: NodeT): Boolean =
       if (e.isDirected)
         e matches ((_: NodeT) eq from, (_: NodeT) eq this)
@@ -140,10 +140,12 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
 
     final def outDegree: Int = edges count (_.hasSource((n: NodeT) => n eq this))
 
-    final def outDegree(nodeFilter: NodePredicate,
-                        edgeFilter: EdgePredicate = anyEdge,
-                        includeHooks: Boolean = false,
-                        ignoreMultiEdges: Boolean = true): Int = {
+    final def outDegree(
+        nodeFilter: NodePredicate,
+        edgeFilter: EdgePredicate = anyEdge,
+        includeHooks: Boolean = false,
+        ignoreMultiEdges: Boolean = true
+    ): Int = {
       val doEdgeFilter = isCustomEdgeFilter(edgeFilter)
       def edgePred(e: EdgeT): Boolean =
         (if (doEdgeFilter) edgeFilter(e) else true) &&
@@ -158,10 +160,12 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
 
     final def inDegree: Int = edges count (_.hasTarget((n: NodeT) => n eq this))
 
-    final def inDegree(nodeFilter: NodePredicate,
-                       edgeFilter: EdgePredicate = anyEdge,
-                       includeHooks: Boolean = false,
-                       ignoreMultiEdges: Boolean = true): Int = {
+    final def inDegree(
+        nodeFilter: NodePredicate,
+        edgeFilter: EdgePredicate = anyEdge,
+        includeHooks: Boolean = false,
+        ignoreMultiEdges: Boolean = true
+    ): Int = {
       val doEdgeFilter = isCustomEdgeFilter(edgeFilter)
       def edgePred(e: EdgeT): Boolean =
         (if (doEdgeFilter) edgeFilter(e) else true) &&
@@ -264,26 +268,32 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
 
   def edgeIterator: Iterator[EdgeT] = nodes.iterator.flatMap(node => node.edges.iterator.filter(_.ends.head == node))
 
-  final def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(
-      implicit e: E2 <:< EdgeLike[N2]): This[N2, E2] = bulkOp[N2, E2](isolatedNodes, edges, plusPlus)
+  final def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(implicit
+      e: E2 <:< EdgeLike[N2]
+  ): This[N2, E2] = bulkOp[N2, E2](isolatedNodes, edges, plusPlus)
 
   final protected def bulkOp[N2 >: N, E2 >: E <: EdgeLike[N2]](
       nodes: IterableOnce[N2],
       edges: IterableOnce[E2],
-      op: (IterableOnce[N2], IterableOnce[E2]) => This[N2, E2] @uV): This[N2, E2] =
+      op: (IterableOnce[N2], IterableOnce[E2]) => This[N2, E2] @uV
+  ): This[N2, E2] =
     op(nodes, edges)
 
   /** Implements the heart of `++` calling the `from` factory method of the companion object.
-    *  $REIMPLFACTORY */
-  final protected def plusPlus[N2 >: N, E2 >: E <: EdgeLike[N2]](newNodes: IterableOnce[N2],
-                                                                 newEdges: IterableOnce[E2]): This[N2, E2] =
+    *  $REIMPLFACTORY
+    */
+  final protected def plusPlus[N2 >: N, E2 >: E <: EdgeLike[N2]](
+      newNodes: IterableOnce[N2],
+      newEdges: IterableOnce[E2]
+  ): This[N2, E2] =
     companion.from[N2, E2](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
 
   def removedAll(isolatedNodes: IterableOnce[N], edges: IterableOnce[E]): This[N, E] =
     bulkOp[N, E](isolatedNodes, edges, minusMinus)
 
   /** Implements the heart of `--` calling the `from` factory method of the companion object.
-    *  $REIMPLFACTORY */
+    *  $REIMPLFACTORY
+    */
   final protected def minusMinus(delNodes: IterableOnce[N], delEdges: IterableOnce[E]): This[N, E] = {
     val delNodesEdges = remaining(delNodes.iterator.toSet, delEdges)
     companion.from[N, E](delNodesEdges._1, delNodesEdges._2)

@@ -46,20 +46,22 @@ class MicroBenchmarkTest extends RefSpec with Matchers {
   }
   def `traversing immutable.Set takes marginally longer than mutable.Set` :Unit ={
     import scala.collection.mutable
+    import scala.collection.compat.immutable.ArraySeq
     val size  = 10000
     val array = Array.tabulate(size)(identity)
     val sum   = array.sum
-    val imm   = Set(array: _*)
-    val m     = mutable.Set(array: _*)
+    val imm   = Set(ArraySeq.unsafeWrapArray(array): _*)
+    val m     = mutable.Set(ArraySeq.unsafeWrapArray(array): _*)
 
     relativeTime(repetitions = 6)(m.sum == sum, imm.sum == sum) should be > (1.05f)
   }
   def `traversing mutable.Set takes longer than mutable.BitSet`:Unit = {
     import scala.collection.mutable
+    import scala.collection.compat.immutable.ArraySeq
     val size  = 10000
     val array = Array.tabulate(size)(_ % (size / 10))
-    val s     = Set(array: _*)
-    val b     = mutable.BitSet(array: _*)
+    val s     = Set(ArraySeq.unsafeWrapArray(array): _*)
+    val b     = mutable.BitSet(ArraySeq.unsafeWrapArray(array): _*)
 
     relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > (1.1f)
   }

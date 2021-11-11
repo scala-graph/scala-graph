@@ -148,13 +148,15 @@ object GraphEdge {
 
     /** `true` if
       *  a. being an undirected edge, both `n1` and `n2` are at this edge
-      *  a. being a directed edge, `n1` is a source and `n2` a target of this edge. */
+      *  a. being a directed edge, `n1` is a source and `n2` a target of this edge.
+      */
     def matches[M >: N](n1: M, n2: M): Boolean
 
     /** `true` if<br />
       *  a) two distinct ends of this undirected edge exist
       *     for which `p1` and `p2` hold or<br />
-      *  b) `p1` holds for a source and `p2` for a target of this directed edge. */
+      *  b) `p1` holds for a source and `p2` for a target of this directed edge.
+      */
     def matches(p1: N => Boolean, p2: N => Boolean): Boolean
 
     override def canEqual(that: Any): Boolean = that.isInstanceOf[EdgeLike[_]]
@@ -163,9 +165,9 @@ object GraphEdge {
       case that: EdgeLike[_] =>
         (this eq that) ||
           (that canEqual this) &&
-            (this.isDirected == that.isDirected) &&
-            (this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]) &&
-            equals(that)
+          (this.isDirected == that.isDirected) &&
+          (this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]) &&
+          equals(that)
       case _ => false
     }
 
@@ -177,9 +179,8 @@ object GraphEdge {
 
     override def hashCode: Int = baseHashCode
 
-    final protected def thisSimpleClassName = try {
-      this.getClass.getSimpleName
-    } catch { // Malformed class name
+    final protected def thisSimpleClassName = try this.getClass.getSimpleName
+    catch { // Malformed class name
       case _: java.lang.InternalError => this.getClass.getName
     }
     def stringPrefix                           = "Nodes"
@@ -219,7 +220,8 @@ object GraphEdge {
   protected[collection] trait Keyed
 
   /** Defines how to handle the ends of hyperedges, or the source/target ends of directed hyperedges,
-    *  with respect to equality. */
+    *  with respect to equality.
+    */
   sealed abstract class CollectionKind(val duplicatesAllowed: Boolean, val orderSignificant: Boolean)
 
   object CollectionKind {
@@ -242,11 +244,13 @@ object GraphEdge {
   }
 
   /** Marks a hyperedge, $ORDIHYPER, to handle the endpoints
-    *  as an unordered collection of nodes with duplicates allowed. */
+    *  as an unordered collection of nodes with duplicates allowed.
+    */
   case object Bag extends CollectionKind(true, false)
 
   /** Marks a hyperedge, $ORDIHYPER, to handle the endpoints
-    *  as an ordered collection of nodes with duplicates allowed. */
+    *  as an ordered collection of nodes with duplicates allowed.
+    */
   case object Sequence extends CollectionKind(true, true)
 
   /** Marks (directed) hyperedge endpoints to have a significant order. */
@@ -277,16 +281,18 @@ object GraphEdge {
       }
       nr
     }
-    def equalTargets(left: EdgeLike[_],
-                     leftEnds: Iterable[_],
-                     right: EdgeLike[_],
-                     rightEnds: Iterable[_],
-                     arity: Int): Boolean = {
+    def equalTargets(
+        left: EdgeLike[_],
+        leftEnds: Iterable[_],
+        right: EdgeLike[_],
+        rightEnds: Iterable[_],
+        arity: Int
+    ): Boolean = {
       val thisOrdered = left.isInstanceOf[OrderedEndpoints]
       val thatOrdered = right.isInstanceOf[OrderedEndpoints]
       thisOrdered == thatOrdered && (
         if (thisOrdered) leftEnds.toSeq == rightEnds.toSeq
-        else Eq.nrEqualingNodes(leftEnds.toIterator, rightEnds.toIterable) == arity
+        else Eq.nrEqualingNodes(leftEnds.iterator, rightEnds.toIterable) == arity
       )
     }
   }
@@ -320,11 +326,12 @@ object GraphEdge {
               this.sources.head == diHyper.sources.head &&
                 Eq.equalTargets(this, this.targets, other, other.targets, arity - 1)
             case _ => false
-          } else false
+          }
+      else false
     }
 
     override protected def baseHashCode: Int = {
-      var m                = 4
+      var m = 4
       def mul(i: Int): Int = { m += 3; m * i }
       ends.foldLeft(0)((s: Int, n: Any) => s ^ mul(n.hashCode))
     }
@@ -586,7 +593,8 @@ object GraphEdge {
   }
 
   /** Represents a directed edge in a hypergraph with an unlimited number of source and of target nodes.
-    * Target nodes are handled as a $BAG. */
+    * Target nodes are handled as a $BAG.
+    */
   @SerialVersionUID(53)
   final case class DiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])
       extends AnyDiHyperEdge[N] {
@@ -595,7 +603,8 @@ object GraphEdge {
   object DiHyperEdge extends DiHyperEdgeCompanion[DiHyperEdge]
 
   /** Represents a directed edge in a hypergraph with an unlimited number of source and of target nodes
-    * where sources and targets are handled as an ordered sequence. */
+    * where sources and targets are handled as an ordered sequence.
+    */
   @SerialVersionUID(-53)
   final case class OrderedDiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])
       extends AnyDiHyperEdge[N]

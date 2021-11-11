@@ -40,7 +40,7 @@ trait Shrinkable[-N, -E <: EdgeLike[N @uV]] extends OuterElems[N @uV, E @uV] {
 
   /** Removes all `edges` from this graph. */
   final def removeAll(edges: IterableOnce[E @uV]): this.type = {
-    edges.iterator.foreach( -=)
+    edges.iterator.foreach(-=)
     this
   }
 

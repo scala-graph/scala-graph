@@ -20,8 +20,9 @@ object Graph extends ImmutableGraphCompanion[Graph] {
   def empty[N, E <: EdgeLike[N]](implicit config: Config = defaultConfig): Graph[N, E] =
     DefaultGraphImpl.empty[N, E](config)
 
-  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
-      implicit config: Config = defaultConfig): Graph[N, E] =
+  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
+      config: Config = defaultConfig
+  ): Graph[N, E] =
     DefaultGraphImpl.from[N, E](nodes, edges)(config)
 
   override def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]) =
@@ -29,10 +30,9 @@ object Graph extends ImmutableGraphCompanion[Graph] {
 }
 
 @SerialVersionUID(72L)
-class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), iniEdges: Iterable[E] = Set[E]())(
-    implicit
-    override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
-    extends Graph[N, E]
+class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), iniEdges: Iterable[E] = Set[E]())(implicit
+    override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig
+) extends Graph[N, E]
     with AdjacencyListGraph[N, E, DefaultGraphImpl]
 // TODO     with GraphTraversalImpl[N,E]
     {
@@ -76,8 +76,9 @@ object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl] {
   override def empty[N, E <: EdgeLike[N]](implicit config: Config = defaultConfig) =
     new DefaultGraphImpl[N, E]()(config)
 
-  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
-      implicit config: Config = defaultConfig) =
+  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
+      config: Config = defaultConfig
+  ) =
     new DefaultGraphImpl[N, E](nodes, edges)(config)
 
   override def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]) =

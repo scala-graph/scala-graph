@@ -94,17 +94,20 @@ trait GraphCoreCompanion[+CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[
 
   def empty[N, E <: EdgeLike[N]](implicit config: Config = defaultConfig): CC[N, E]
 
-  override def apply[N, E[X] <: EdgeLike[X]](elems: OuterElem[N, E[N]]*)(
-      implicit config: Config = defaultConfig): CC[N, E[N]] =
+  override def apply[N, E[X] <: EdgeLike[X]](elems: OuterElem[N, E[N]]*)(implicit
+      config: Config = defaultConfig
+  ): CC[N, E[N]] =
     super.apply(elems: _*)(config)
 
-  def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
-      implicit config: Config = defaultConfig): CC[N, E]
+  def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
+      config: Config = defaultConfig
+  ): CC[N, E]
 
   def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]): CC[N, E[N]]
 
-  override def fill[N, E <: EdgeLike[N]](nr: Int)(elem: => OuterElem[N, E])(
-      implicit config: Config = defaultConfig): CC[N, E] =
+  override def fill[N, E <: EdgeLike[N]](nr: Int)(elem: => OuterElem[N, E])(implicit
+      config: Config = defaultConfig
+  ): CC[N, E] =
     super.fill(nr)(elem)(config)
 }
 

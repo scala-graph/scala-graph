@@ -7,7 +7,7 @@ import scalax.collection.GraphEdge._
 import scalax.collection.generic.{GraphCompanion, GraphCoreCompanion}
 import scalax.collection.config.GraphConfig
 import scalax.collection.mutable.Builder
-
+import scala.collection.compat._
 /** A template trait for graphs.
   *
   * This trait provides the common structure and operations of immutable graphs independently
@@ -117,8 +117,8 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
           try this.edges forall (thisE => thatEdges(thisE.outer))
           catch { case _: ClassCastException => false }
         }
-    case that: TraversableOnce[_] =>
-      val thatSet = that.toSet
+    case that: IterableOnce[_] =>
+      val thatSet = that.iterator.to(Set)
       (this.elementCount == thatSet.size) && {
         val thatNodes = thatSet.asInstanceOf[Set[N]]
         try this.nodes forall (thisN => thatNodes(thisN.outer))
@@ -381,15 +381,15 @@ trait Graph[N, E <: EdgeLike[N]] extends GraphLike[N, E, Graph] {
 object Graph extends GraphCoreCompanion[Graph] {
 
   override def newBuilder[N, E <: EdgeLike[N]](implicit config: Config) =
-    immutable.Graph.newBuilder[N, E](config)
+    scalax.collection.immutable.Graph.newBuilder[N, E](config)
 
   def empty[N, E <: EdgeLike[N]](implicit config: Config = defaultConfig): Graph[N, E] =
-    immutable.Graph.empty[N, E](config)
+    scalax.collection.immutable.Graph.empty[N, E](config)
 
   def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
       config: Config = defaultConfig
   ): Graph[N, E] =
-    immutable.Graph.from[N, E](nodes, edges)(config)
+    scalax.collection.immutable.Graph.from[N, E](nodes, edges)(config)
 
-  def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]) = immutable.Graph.from[N, E[N]](Nil, edges)(defaultConfig)
+  def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]) = scalax.collection.immutable.Graph.from[N, E[N]](Nil, edges)(defaultConfig)
 }
