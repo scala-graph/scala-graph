@@ -145,7 +145,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     /** Whether this node has any predecessors. */
     def hasPredecessors: Boolean
 
-    protected[collection] def addDiPredecessors(edge: EdgeT, add: NodeT => Unit):Unit
+    protected[collection] def addDiPredecessors(edge: EdgeT, add: NodeT => Unit): Unit
 
     /** Synonym for `diPredecessors`. */
     @inline final def inNeighbors = diPredecessors
@@ -158,7 +158,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       * @return set of all neighbors.
       */
     def neighbors: Set[NodeT]
-    protected[collection] def addNeighbors(edge: EdgeT, add: NodeT => Unit):Unit
+    protected[collection] def addNeighbors(edge: EdgeT, add: NodeT => Unit): Unit
 
     /** Synonym for `neighbors`. */
     @inline final def ~| : Set[NodeT] = neighbors
@@ -229,7 +229,8 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     /** The degree of this node.
       * @return the number of edges that connect to this node. An edge that connects
       *         to this node at more than one ends (loop) is counted as much times as
-      *         it is connected to this node. */
+      *         it is connected to this node.
+      */
     def degree: Int
 
     /** `true` if this node's degree equals to 0. */
@@ -240,26 +241,32 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
 
     /** The outgoing degree of this node.
       * @return the number of edges that go out from this node including undirected edges.
-      *         Loops count once each. */
+      *         Loops count once each.
+      */
     def outDegree: Int
 
     /** The outgoing degree of this node after applying some filters to the outgoing edges and successors.
       */
-    def outDegree(nodeFilter: NodePredicate,
-                  edgeFilter: EdgePredicate = anyEdge,
-                  includeHooks: Boolean = false,
-                  ignoreMultiEdges: Boolean = true): Int
+    def outDegree(
+        nodeFilter: NodePredicate,
+        edgeFilter: EdgePredicate = anyEdge,
+        includeHooks: Boolean = false,
+        ignoreMultiEdges: Boolean = true
+    ): Int
 
     /** The incoming degree of this node.
       * @return the number of edges that come in to this node including undirected edges.
-      *         Loops count once each. */
+      *         Loops count once each.
+      */
     def inDegree: Int
 
     /** The incoming degree of this node after applying some filters to the incoming edges and predecessors. */
-    def inDegree(nodeFilter: NodePredicate,
-                 edgeFilter: EdgePredicate = anyEdge,
-                 includeHooks: Boolean = false,
-                 ignoreMultiEdges: Boolean = true): Int
+    def inDegree(
+        nodeFilter: NodePredicate,
+        edgeFilter: EdgePredicate = anyEdge,
+        includeHooks: Boolean = false,
+        ignoreMultiEdges: Boolean = true
+    ): Int
 
     def canEqual(that: Any) = true
 
@@ -283,15 +290,12 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     def apply(node: N)    = newNode(node)
     def unapply(n: NodeT) = Some(n)
 
-    @inline final protected[collection] def addDiSuccessors(node: NodeT, edge: EdgeT, add: NodeT => Unit):Unit = {
+    @inline final protected[collection] def addDiSuccessors(node: NodeT, edge: EdgeT, add: NodeT => Unit): Unit =
       node.addDiSuccessors(edge, add)
-    }
-    @inline final protected[collection] def addDiPredecessors(node: NodeT, edge: EdgeT, add: NodeT => Unit):Unit =  {
+    @inline final protected[collection] def addDiPredecessors(node: NodeT, edge: EdgeT, add: NodeT => Unit): Unit =
       node.addDiPredecessors(edge, add)
-    }
-    @inline final protected[collection] def addNeighbors(node: NodeT, edge: EdgeT, add: NodeT => Unit):Unit =  {
+    @inline final protected[collection] def addNeighbors(node: NodeT, edge: EdgeT, add: NodeT => Unit): Unit =
       node.addNeighbors(edge, add)
-    }
 
     /** Allows to call methods of N directly on Node instances. */
     @inline implicit final def toOuter(node: NodeT): N = node.outer
@@ -337,9 +341,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
   }
 
   final protected lazy val anyOrdering = new AnyOrdering[N]
-  final lazy val defaultNodeOrdering = NodeOrdering(
-    (a: NodeT, b: NodeT) => anyOrdering.compare(a.outer, b.outer)
-  )
+  final lazy val defaultNodeOrdering   = NodeOrdering((a: NodeT, b: NodeT) => anyOrdering.compare(a.outer, b.outer))
   type NodeSetT <: NodeSet
   trait NodeSet extends AnySet[NodeT] with ExtSetMethods[NodeT] {
 
@@ -358,8 +360,9 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       * @param ord custom ordering.
       * @return sorted and concatenated string representation of this node set.
       */
-    def asSortedString(separator: String = GraphBase.defaultSeparator)(
-        implicit ord: NodeOrdering = defaultNodeOrdering): String =
+    def asSortedString(separator: String = GraphBase.defaultSeparator)(implicit
+        ord: NodeOrdering = defaultNodeOrdering
+    ): String =
       toList.sorted(ord) mkString separator
 
     /** Sorts all nodes according to `ord`, concatenates them using `separator`
@@ -369,8 +372,9 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       * @param ord custom ordering.
       * @return sorted, concatenated and prefixed string representation of this node set.
       */
-    def toSortedString(separator: String = GraphBase.defaultSeparator)(
-        implicit ord: NodeOrdering = defaultNodeOrdering): String =
+    def toSortedString(separator: String = GraphBase.defaultSeparator)(implicit
+        ord: NodeOrdering = defaultNodeOrdering
+    ): String =
       stringPrefix + "(" + asSortedString(separator)(ord) + ")"
 
     /** Iterator over the node set mapping inner nodes to outer nodes. */
@@ -507,14 +511,12 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
   protected def newDiHyperEdge(outer: E, sources: Iterable[NodeT], targets: Iterable[NodeT]): EdgeT
   protected def newEdge(outer: E, node_1: NodeT, node_2: NodeT): EdgeT
 
-  final lazy val defaultEdgeOrdering = EdgeOrdering(
-    (a: EdgeT, b: EdgeT) => {
-      (a.ends zip b.ends)
-        .find(z => z._1 != z._2)
-        .map(t => anyOrdering.compare(t._1, t._2))
-        .getOrElse(Ordering.Int.compare(a.arity, b.arity))
-    }
-  )
+  final lazy val defaultEdgeOrdering = EdgeOrdering { (a: EdgeT, b: EdgeT) =>
+    (a.ends zip b.ends)
+      .find(z => z._1 != z._2)
+      .map(t => anyOrdering.compare(t._1, t._2))
+      .getOrElse(Ordering.Int.compare(a.arity, b.arity))
+  }
 
   type EdgeSetT <: EdgeSet
   trait EdgeSet extends AnySet[EdgeT] with ExtSetMethods[EdgeT] with Serializable {
@@ -535,8 +537,9 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       * @param ord custom ordering.
       * @return sorted and concatenated string representation of this edge set.
       */
-    def asSortedString(separator: String = GraphBase.defaultSeparator)(
-        implicit ord: EdgeOrdering = defaultEdgeOrdering) =
+    def asSortedString(separator: String = GraphBase.defaultSeparator)(implicit
+        ord: EdgeOrdering = defaultEdgeOrdering
+    ) =
       toList.sorted(ord) mkString separator
 
     /** Sorts all edges according to `ord`, concatenates them using `separator`
@@ -546,8 +549,9 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       * @param ord custom ordering.
       * @return sorted, concatenated and prefixed string representation of this edge set.
       */
-    def toSortedString(separator: String = GraphBase.defaultSeparator)(
-        implicit ord: EdgeOrdering = defaultEdgeOrdering): String =
+    def toSortedString(separator: String = GraphBase.defaultSeparator)(implicit
+        ord: EdgeOrdering = defaultEdgeOrdering
+    ): String =
       stringPrefix + "(" + asSortedString(separator)(ord) + ")"
 
     /** Finds the inner edge corresponding to `outerEdge`.

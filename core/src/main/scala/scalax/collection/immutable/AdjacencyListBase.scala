@@ -97,7 +97,7 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
 
     final def neighbors: Set[NodeT] = {
       val m = new EqHashSet[NodeT](edges.size)
-      edges.foreach(edge=> addNeighbors(edge, (n: NodeT) => m += n))
+      edges.foreach(edge => addNeighbors(edge, (n: NodeT) => m += n))
       new EqSetFacade(m)
     }
 

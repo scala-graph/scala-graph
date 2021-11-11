@@ -20,8 +20,8 @@ lazy val core = project
       version := Version.core,
       libraryDependencies ++= Seq(
         "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
-        "org.scalacheck" %% "scalacheck"    % "1.14.0" % "optional;provided",
-        "org.gephi"       % "gephi-toolkit" % "0.9.2"  % "test" classifier "all"
+        "org.scalacheck"         %% "scalacheck"              % "1.15.4" % "optional;provided",
+        "org.gephi"               % "gephi-toolkit"           % "0.9.2"  % "test" classifier "all"
       ),
       dependencyOverrides ++= {
         val release                        = "RELEASE90"

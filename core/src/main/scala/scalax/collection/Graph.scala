@@ -8,6 +8,7 @@ import scalax.collection.generic.{GraphCompanion, GraphCoreCompanion}
 import scalax.collection.config.GraphConfig
 import scalax.collection.mutable.Builder
 import scala.collection.compat._
+
 /** A template trait for graphs.
   *
   * This trait provides the common structure and operations of immutable graphs independently
@@ -391,5 +392,6 @@ object Graph extends GraphCoreCompanion[Graph] {
   ): Graph[N, E] =
     scalax.collection.immutable.Graph.from[N, E](nodes, edges)(config)
 
-  def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]) = scalax.collection.immutable.Graph.from[N, E[N]](Nil, edges)(defaultConfig)
+  def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]) =
+    scalax.collection.immutable.Graph.from[N, E[N]](Nil, edges)(defaultConfig)
 }
