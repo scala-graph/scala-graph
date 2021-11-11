@@ -92,7 +92,7 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
 
     final def hasPredecessors: Boolean = edges exists (_.hasSource((n: NodeT) => n ne this))
 
-    final protected[collection] def addDiPredecessors(edge: EdgeT, add: NodeT => Unit) {
+    final protected[collection] def addDiPredecessors(edge: EdgeT, add: NodeT => Unit) :Unit = {
       edge.sources foreach (n => if (n ne this) add(n))
     }
 
@@ -102,7 +102,7 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
       new EqSetFacade(m)
     }
 
-    final protected[collection] def addNeighbors(edge: EdgeT, add: NodeT => Unit) {
+    final protected[collection] def addNeighbors(edge: EdgeT, add: NodeT => Unit) :Unit = {
       edge.ends foreach (n => if (n ne this) add(n))
     }
 
@@ -136,7 +136,7 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
     final def findIncomingFrom(from: NodeT): Option[EdgeT] =
       edges find (isIncomingFrom(_, from))
 
-    final def degree: Int = (0 /: edges)((cum, e) => cum + e.ends.count(_ eq this))
+    final def degree: Int = edges.foldLeft(0)((cum, e) => cum + e.ends.count(_ eq this))
 
     final def outDegree: Int = edges count (_.hasSource((n: NodeT) => n eq this))
 

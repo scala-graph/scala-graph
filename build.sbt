@@ -100,7 +100,8 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
     "-Yrangepos",
     "-Ywarn-unused:privates",
     "-deprecation",
-    "-feature"
+    "-feature",
+    "-language:higherKinds"
   ),
   Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports),
   addCompilerPlugin(scalafixSemanticdb),
