@@ -19,13 +19,13 @@ lazy val core = project
       name := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck"   % "1.14.0" % "optional;provided",
-        "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all"
+        "org.scalacheck" %% "scalacheck"    % "1.14.0" % "optional;provided",
+        "org.gephi"       % "gephi-toolkit" % "0.9.2"  % "test" classifier "all"
       ),
       dependencyOverrides ++= {
         val release                        = "RELEASE90"
         def netbeansModule(module: String) = "org.netbeans.modules" % module % release
-        def netbeansApi(module: String)    = "org.netbeans.api" % module % release
+        def netbeansApi(module: String)    = "org.netbeans.api"     % module % release
         Seq(
           netbeansModule("org-netbeans-core"),
           netbeansModule("org-netbeans-core-startup-base"),
@@ -88,7 +88,6 @@ ThisBuild / resolvers ++= Seq(
   ("NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/").withAllowInsecureProtocol(true),
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
 )
-
 
 val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
