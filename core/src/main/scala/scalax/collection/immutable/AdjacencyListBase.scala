@@ -204,7 +204,7 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
     }
 
     final override def lookup(elem: N): NodeT = {
-      def eq(inner: NodeT, outer: N) = inner.value == outer
+      def eq(inner: NodeT, outer: N) = inner.outer == outer
       collection.findElem[N](elem, eq)
     }
     @inline final def contains(node: NodeT): Boolean = collection contains node

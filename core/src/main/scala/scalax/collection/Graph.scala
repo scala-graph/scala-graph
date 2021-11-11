@@ -63,11 +63,12 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     * @param ordNode the node ordering defaulting to `defaultNodeOrdering`.
     * @param ordEdge the edge ordering defaulting to `defaultEdgeOrdering`.
     */
-  def asSortedString(nodeSeparator: String = GraphBase.defaultSeparator,
-                     edgeSeparator: String = GraphBase.defaultSeparator,
-                     nodesEdgesSeparator: String = GraphBase.defaultSeparator,
-                     withNodesEdgesPrefix: Boolean = false)(implicit ordNode: NodeOrdering = defaultNodeOrdering,
-                                                            ordEdge: EdgeOrdering = defaultEdgeOrdering) = {
+  def asSortedString(
+      nodeSeparator: String = GraphBase.defaultSeparator,
+      edgeSeparator: String = GraphBase.defaultSeparator,
+      nodesEdgesSeparator: String = GraphBase.defaultSeparator,
+      withNodesEdgesPrefix: Boolean = false
+  )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering) = {
     val ns =
       if (withNodesEdgesPrefix) nodes.toSortedString(nodeSeparator)(ordNode)
       else nodes.asSortedString(nodeSeparator)(ordNode)
@@ -81,11 +82,12 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
 
   /** Same as `asSortedString` but additionally prefixed and parenthesized by `stringPrefix`.
     */
-  def toSortedString(nodeSeparator: String = GraphBase.defaultSeparator,
-                     edgeSeparator: String = GraphBase.defaultSeparator,
-                     nodesEdgesSeparator: String = GraphBase.defaultSeparator,
-                     withNodesEdgesPrefix: Boolean = false)(implicit ordNode: NodeOrdering = defaultNodeOrdering,
-                                                            ordEdge: EdgeOrdering = defaultEdgeOrdering) =
+  def toSortedString(
+      nodeSeparator: String = GraphBase.defaultSeparator,
+      edgeSeparator: String = GraphBase.defaultSeparator,
+      nodesEdgesSeparator: String = GraphBase.defaultSeparator,
+      withNodesEdgesPrefix: Boolean = false
+  )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering) =
     stringPrefix +
       "(" + asSortedString(nodeSeparator, edgeSeparator, nodesEdgesSeparator, withNodesEdgesPrefix)(ordNode, ordEdge) +
       ")"
@@ -106,13 +108,13 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     case that: Graph[N, E] =>
       (this eq that) ||
         (this.order == that.order) &&
-          (this.size == that.size) && {
+        (this.size == that.size) && {
           val thatNodes = that.nodes.toOuter
           try this.nodes forall (thisN => thatNodes(thisN.outer))
           catch { case _: ClassCastException => false }
         } && {
           val thatEdges = that.edges.toOuter
-          try this.edges forall (thisE => thatEdges(thisE.toOuter))
+          try this.edges forall (thisE => thatEdges(thisE.outer))
           catch { case _: ClassCastException => false }
         }
     case that: TraversableOnce[_] =>
@@ -123,7 +125,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
         catch { case _: ClassCastException => false }
       } && {
         val thatEdges = thatSet.asInstanceOf[Set[E]]
-        try this.edges forall (thisE => thatEdges(thisE.toOuter))
+        try this.edges forall (thisE => thatEdges(thisE.outer))
         catch { case _: ClassCastException => false }
       }
     case _ =>
@@ -149,7 +151,8 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     protected def copy: NodeSetT
 
     final override def -(node: NodeT): NodeSetT =
-      if (this contains node) { val c = copy; c minus node; c } else this.asInstanceOf[NodeSetT]
+      if (this contains node) { val c = copy; c minus node; c }
+      else this.asInstanceOf[NodeSetT]
 
     /** removes `node` from this node set leaving the edge set unchanged.
       *
@@ -167,12 +170,14 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
       * @param minusEdges implementation of removal of all incident edges.
       * @return `true` if `node` has been removed.
       */
-    final protected[collection] def subtract(node: NodeT,
-                                             rippleDelete: Boolean,
-                                             minusNode: (NodeT) => Unit,
-                                             minusEdges: (NodeT) => Unit): Boolean = {
+    final protected[collection] def subtract(
+        node: NodeT,
+        rippleDelete: Boolean,
+        minusNode: (NodeT) => Unit,
+        minusEdges: (NodeT) => Unit
+    ): Boolean = {
       def minusNodeTrue = { minusNode(node); true }
-      def minusAllTrue  = { minusEdges(node); minusNodeTrue }
+      def minusAllTrue = { minusEdges(node); minusNodeTrue }
       if (contains(node))
         if (node.edges.isEmpty) minusNodeTrue
         else if (rippleDelete) minusAllTrue
@@ -260,13 +265,11 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
 
     def build(nodes: Set[NodeT]): This[N, E] = {
       val b = companion.newBuilder[N, E]
-      nodes foreach {
-        case innerN @ InnerNode(outerN) =>
-          b addOne outerN
-          innerN.edges foreach {
-            case innerE @ InnerEdge(outerE) =>
-              if (fEdge(innerE) && (innerE.ends forall nodes.contains)) b += outerE
-          }
+      nodes foreach { case innerN @ InnerNode(outerN) =>
+        b addOne outerN
+        innerN.edges foreach { case innerE @ InnerEdge(outerE) =>
+          if (fEdge(innerE) && (innerE.ends forall nodes.contains)) b += outerE
+        }
       }
       b.result
     }
@@ -277,9 +280,9 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     }
   }
 
-  final def map[NN, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(implicit w1: E <:< GenericMapper,
-                                                              w2: EC[N] =:= E,
-                                                              fallbackMapper: EdgeCompanion[EC]): This[NN, EC[NN]] =
+  final def map[NN, EC[X] <: EdgeLike[X]](
+      fNode: NodeT => NN
+  )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E, fallbackMapper: EdgeCompanion[EC]): This[NN, EC[NN]] =
     mapNodes(fNode)(
       (m: PartialEdgeMapper[N, _], ns: (NN, NN)) => {
         def toExistingType                                   = m.map.andThen(_.asInstanceOf[EC[NN]])
@@ -287,11 +290,12 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
         toExistingType applyOrElse (ns, toWidenedType)
       },
       (m: PartialDiHyperEdgeMapper[N, _], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[EC[NN]], // TODO
-      (m: PartialHyperEdgeMapper[N, _], ns: Iterable[NN]) => null.asInstanceOf[EC[NN]] // TODO
+      (m: PartialHyperEdgeMapper[N, _], ns: Iterable[NN]) => null.asInstanceOf[EC[NN]]                    // TODO
     )
 
-  def mapBounded[NN <: N, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(implicit w1: E <:< PartialMapper,
-                                                                    w2: EC[N] =:= E): This[NN, EC[NN]] =
+  def mapBounded[NN <: N, EC[X] <: EdgeLike[X]](
+      fNode: NodeT => NN
+  )(implicit w1: E <:< PartialMapper, w2: EC[N] =:= E): This[NN, EC[NN]] =
     mapNodes(fNode)(
       (m: PartialEdgeMapper[N, _], ns: (NN, NN)) => m.map(ns).asInstanceOf[EC[NN]],
       (m: PartialDiHyperEdgeMapper[N, _], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[EC[NN]],
@@ -301,22 +305,20 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   private def mapNodes[NN, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(
       mapTypedEdge: (PartialEdgeMapper[N, _], (NN, NN)) => EC[NN],
       mapTypedDiHyper: (PartialDiHyperEdgeMapper[N, _], Iterable[NN], Iterable[NN]) => EC[NN],
-      mapTypedHyper: (PartialHyperEdgeMapper[N, _], Iterable[NN]) => EC[NN],
+      mapTypedHyper: (PartialHyperEdgeMapper[N, _], Iterable[NN]) => EC[NN]
   ): This[NN, EC[NN]] =
-    mapNodesInBuilder[NN, EC[NN]](fNode) pipe {
-      case (nMap, builder) =>
-        edges foreach {
-          case InnerEdge(outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
-            (nMap(n1), nMap(n2)) pipe {
-              case nns @ (nn1, nn2) =>
-                outer match {
-                  case m: GenericEdgeMapper[N, EC @unchecked]     => builder += m.map(nn1, nn2)
-                  case m: PartialEdgeMapper[N, EC[NN] @unchecked] => builder += mapTypedEdge(m, nns)
-                }
+    mapNodesInBuilder[NN, EC[NN]](fNode) pipe { case (nMap, builder) =>
+      edges foreach {
+        case InnerEdge(outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
+          (nMap(n1), nMap(n2)) pipe { case nns @ (nn1, nn2) =>
+            outer match {
+              case m: GenericEdgeMapper[N, EC @unchecked]     => builder += m.map(nn1, nn2)
+              case m: PartialEdgeMapper[N, EC[NN] @unchecked] => builder += mapTypedEdge(m, nns)
             }
-          case _ => ??? // TODO
-        }
-        builder.result
+          }
+        case _ => ??? // TODO
+      }
+      builder.result
     }
 
   private def mapNodesInBuilder[NN, EE <: EdgeLike[NN]](fNode: NodeT => NN): (MMap[N, NN], Builder[NN, EE, This]) = {
@@ -334,16 +336,15 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     mapBounded(fNode, fEdge)
 
   final def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, fEdge: (NN, NN) => EC): This[NN, EC] =
-    mapNodesInBuilder[NN, EC](fNode) pipe {
-      case (nMap, builder) =>
-        edges foreach {
-          case InnerEdge(outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
-            (nMap(n1), nMap(n2)) pipe {
-              case nns @ (nn1, nn2) => builder += fEdge(nn1, nn2)
-            }
-          case _ => ??? // TODO
-        }
-        builder.result
+    mapNodesInBuilder[NN, EC](fNode) pipe { case (nMap, builder) =>
+      edges foreach {
+        case InnerEdge(outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
+          (nMap(n1), nMap(n2)) pipe { case nns @ (nn1, nn2) =>
+            builder += fEdge(nn1, nn2)
+          }
+        case _ => ??? // TODO
+      }
+      builder.result
     }
 
   final protected def partition(elems: Iterable[OuterElem]): (MSet[N], MSet[E]) = {
@@ -358,7 +359,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
       case OuterNode(n) => nB += n
       case OuterEdge(e) => eB += e
     }
-    (nB.result, eB.result)
+    (nB.result(), eB.result())
   }
 }
 
@@ -386,7 +387,8 @@ object Graph extends GraphCoreCompanion[Graph] {
     immutable.Graph.empty[N, E](config)
 
   def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
-                                                                        config: Config = defaultConfig): Graph[N, E] =
+      config: Config = defaultConfig
+  ): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(config)
 
   def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]) = immutable.Graph.from[N, E[N]](Nil, edges)(defaultConfig)

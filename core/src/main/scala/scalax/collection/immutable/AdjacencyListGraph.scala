@@ -77,7 +77,7 @@ trait AdjacencyListGraph[
     if (this contains edge) this
     else copy(nodes.toOuter, edges.toOuter.toBuffer += edge)
 
-  def excl(node: N): This[N, E] = nodes find (nf => nf.value == node) match {
+  def excl(node: N): This[N, E] = nodes find (nf => nf.outer == node) match {
     case Some(nf) => copy(nodes.toOuter.toBuffer -= node, edges.toOuter.toBuffer --= (nf.edges map (_.outer)))
     case None     => this
   }

@@ -28,7 +28,7 @@ private class EditingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
   val flightNo   = "LH007"
 
   object `Custom edge 'Flight'` {
-    def `proper methods` {
+    def `proper methods` :Unit = {
       import Aviation.Implicits._
 
       val outer = Flight(ham, gig, flightNo)
@@ -51,7 +51,7 @@ private class EditingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
       }
     }
 
-    def `proper method shortcuts` {
+    def `proper method shortcuts` :Unit={
       import Aviation.Implicits._
       import Flight._
 

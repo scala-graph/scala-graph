@@ -380,7 +380,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     def toOuter: Set[N] = {
       val b = Set.newBuilder[N]
       this foreach (b += _)
-      b.result
+      b.result()
     }
 
     /** Finds the inner node corresponding to `outerNode`.
@@ -565,8 +565,8 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     /** Converts this edge set to a set of outer edges. */
     def toOuter: Set[E] = {
       val b = Set.newBuilder[E]
-      this foreach (b += _.toOuter)
-      b.result
+      this foreach (b += _.outer)
+      b.result()
     }
 
     final def draw(random: Random): EdgeT = (nodes draw random).edges draw random

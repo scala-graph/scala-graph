@@ -9,7 +9,7 @@ class ExtHashSetSpec extends RefSpec with Matchers {
 
   object `Hash set extensions work properly` {
 
-    def `draw element` {
+    def `draw element` :Unit= {
       val size = 32
       val r = new Random
       val set = ExtHashSet.fill(size)(r.nextInt(size * 2))
@@ -19,7 +19,7 @@ class ExtHashSetSpec extends RefSpec with Matchers {
       lengths.max - lengths.min should be < (nrProbes / 5)
     }
 
-    def `find element by predicate` {
+    def `find element by predicate`:Unit= {
       case class C(value: Int) {
         override def hashCode(): Int = 0
       }
@@ -50,7 +50,7 @@ class ExtHashSetSpec extends RefSpec with Matchers {
       set should have size 2
     }
 
-    def `iterate over hashCodes` {
+    def `iterate over hashCodes`:Unit= {
       case class C(value: Int) {
         override def hashCode(): Int = value
       }
@@ -61,7 +61,7 @@ class ExtHashSetSpec extends RefSpec with Matchers {
       elems.head should be (C(1))
     }
 
-    def `iterate over duplicate hashCodes` {
+    def `iterate over duplicate hashCodes` :Unit={
       case class C(i: Int, j: Int) {
         override def hashCode = i.##
       }
