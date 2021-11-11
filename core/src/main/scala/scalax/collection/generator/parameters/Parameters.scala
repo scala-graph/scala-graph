@@ -9,7 +9,7 @@ abstract class RandomRange(min: Int, max: Int, uniform: Boolean) {
   def mean            = min + (span - 1).toFloat / 2
   private val r, sign = new Random
   def draw = if (uniform) r.nextInt(span) + min
-  else ((r.nextGaussian + 1 + min) * halfSpan).toInt
+  else ((r.nextGaussian() + 1 + min) * halfSpan).toInt
   def drawHalf = {
     val d = draw
     val even =

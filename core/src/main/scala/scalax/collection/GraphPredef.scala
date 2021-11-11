@@ -29,7 +29,7 @@ object GraphPredef {
       def iterator = new AbstractIterator[OuterNode[N]] {
         private[this] val it = nodes.iterator
         def hasNext          = it.hasNext
-        def next             = it.next().outer
+        def next()             = it.next().outer
       }
     }
 

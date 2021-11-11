@@ -350,7 +350,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       * @param edges $INEDGES
       */
     protected[collection] def initialize(nodes: Iterable[N], edges: Iterable[E]): Unit
-    override def stringPrefix: String = "NodeSet"
+    override def className: String = "NodeSet"
 
     /** Sorts all nodes according to `ord` and concatenates them using `separator`.
       *

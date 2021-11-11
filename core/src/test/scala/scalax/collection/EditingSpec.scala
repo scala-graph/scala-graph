@@ -233,7 +233,7 @@ private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
 
     def `contains ` :Unit = {
       seq_1_3 foreach (n => gInt_1_3 contains n should be(true))
-      gInt_1_3.iterator.next shouldBe a[gInt_1_3.InnerNode]
+      gInt_1_3.iterator.next() shouldBe a[gInt_1_3.InnerNode]
     }
 
     def `toString `:Unit =  {

@@ -266,7 +266,7 @@ object GraphEdge {
         val bs = itB.iterator
         var j  = 0
         while (j < bLen) {
-          val b = bs.next
+          val b = bs.next()
           if (!used(j) && a == b) {
             nr += 1
             used(j) = true

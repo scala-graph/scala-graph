@@ -32,7 +32,7 @@ class AnyOrdering[N] extends Ordering[N] {
     case (IntegerType(_), StringType(_)) | (IntegerType(_), RefType(_)) => -1
 
     case (FloatType(a), FloatType(b))                               => a.compare(b.self)
-    case (FloatType(a), IntegerType(b))                             => a.compare(b.self)
+    case (FloatType(a), IntegerType(b))                             => a.compare(b.toDouble)
     case (FloatType(_), StringType(_)) | (FloatType(_), RefType(_)) => -1
 
     case (StringType(a), StringType(b))                                  => a.toString.compare(b.toString)

@@ -1,7 +1,6 @@
 package scalax.collection
 
 object Compat {
-  type IterableOnce[A] = scala.collection.IterableOnce[A]
 
   type CompatTraversable[+A] = scalax.collection.ForeachBasedDetachingIterable[A]
 

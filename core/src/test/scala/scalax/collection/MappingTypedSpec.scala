@@ -55,7 +55,7 @@ private class MappingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
     private val a_1   = A(1)
     private val b_0_0 = B(0, 0)
 
-    def `map node values without changing node or edge types` {
+    def `map node values without changing node or edge types`:Unit = {
       factory(NodeConnector(a_1, b_0_0)) pipe { g =>
         g.mapBounded {
           case g.InnerNode(a: A) => a + 1

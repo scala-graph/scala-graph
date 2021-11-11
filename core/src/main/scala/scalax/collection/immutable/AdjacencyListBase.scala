@@ -8,7 +8,7 @@ import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, Buffer, ExtHashSet}
 import scala.util.Random
 
-import scalax.collection.Compat.IterableOnce
+import scala.collection.compat._
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
@@ -285,7 +285,7 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
   /** Implements the heart of `--` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY */
   final protected def minusMinus(delNodes: IterableOnce[N], delEdges: IterableOnce[E]): This[N, E] = {
-    val delNodesEdges = remaining(delNodes.toSet, delEdges)
+    val delNodesEdges = remaining(delNodes.iterator.toSet, delEdges)
     companion.from[N, E](delNodesEdges._1, delNodesEdges._2)
   }
 

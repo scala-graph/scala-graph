@@ -50,7 +50,7 @@ package object collection {
 
       def hasNext: Boolean = i < 2
 
-      def next: A = {
+      def next(): A = {
         i += 1
         if (i == 1) _1
         else if (i == 2) _2

@@ -4,7 +4,6 @@ import scala.collection.generic.DefaultSerializable
 import scala.collection.immutable.{AbstractSet, Set, SortedSet, SortedSetOps, StrictOptimizedSortedSetOps}
 import scala.collection.mutable.{ArrayBuffer, ReusableBuilder}
 import scala.collection.{SortedIterableFactory, SortedSetFactoryDefaults}
-import scala.compat.Platform.arraycopy
 
 @SerialVersionUID(1L)
 class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Array[A]])(
@@ -24,7 +23,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
     else {
       val newSize = size + 1
       val newArr  = new Array[AnyRef](newSize).asInstanceOf[Array[A]]
-      arraycopy(array, 0, newArr, 0, size)
+      java.lang.System.arraycopy(array, 0, newArr, 0, size)
       newArr(size) = elem
       new SortedArraySet(newArr)
     }
@@ -50,7 +49,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
     new scala.collection.AbstractIterator[A] {
       private[this] var i = from
       def hasNext         = i < self.size
-      def next            = { val elm = array(i); i += 1; elm }
+      def next()            = { val elm = array(i); i += 1; elm }
     }
 
   def iterator: Iterator[A] = iterator(0)

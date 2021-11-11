@@ -1,6 +1,6 @@
 package scalax.collection.immutable
 
-import scalax.collection.Compat.IterableOnce
+import scala.collection.compat._
 import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.GraphLike

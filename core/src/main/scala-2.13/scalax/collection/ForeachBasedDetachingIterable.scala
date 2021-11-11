@@ -52,7 +52,7 @@ trait ForeachBasedDetachingIterable[+A] extends Iterable[A] {
   final override def to[C1](factory: Factory[A, C1]): C1 = {
     val b = factory.newBuilder
     this foreach b.+=
-    b.result
+    b.result()
   }
 
   // Size info
