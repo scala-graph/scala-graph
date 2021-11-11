@@ -39,7 +39,7 @@ trait Sonatype {
   def settings: Seq[Setting[_]] = Seq(
     publishMavenStyle := true,
     publishTo := version((v: String) => Some(if (isSnapshot(v)) ossSnapshots else ossStaging)).value,
-    publishArtifact in Test := false,
+    Test / publishArtifact  := false,
     pomIncludeRepository := (_ => false),
     pomExtra := (scalaVersion)(generatePomExtra).value
   )

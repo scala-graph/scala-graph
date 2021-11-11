@@ -89,7 +89,6 @@ ThisBuild / resolvers ++= Seq(
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
 )
 
-ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
 
 val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
@@ -99,7 +98,9 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalacOptions ++= Seq(
     unusedImports,
     "-Yrangepos",
-    "-Ywarn-unused:privates"
+    "-Ywarn-unused:privates",
+    "-deprecation",
+    "-feature"
   ),
   Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports),
   addCompilerPlugin(scalafixSemanticdb),
