@@ -20,10 +20,10 @@ lazy val core = project
       version := Version.core,
       libraryDependencies ++= Seq(
         "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
-        "org.gephi"               % "gephi-toolkit"           % "0.9.2"  % "test" classifier "all"
+        "org.gephi"               % "gephi-toolkit"           % "0.9.2" % "test" classifier "all"
       ),
       dependencyOverrides ++= {
-        val release                        = "RELEASE90"
+        val release                        = "RELEASE123"
         def netbeansModule(module: String) = "org.netbeans.modules" % module % release
         def netbeansApi(module: String)    = "org.netbeans.api"     % module % release
         Seq(
@@ -115,7 +115,7 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   autoAPIMappings := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
   libraryDependencies ++= Seq(
-      "org.scalatest"     %% "scalatest"       % "3.2.9"   % "test",
+    "org.scalatest"     %% "scalatest"       % "3.2.9"   % "test",
     "org.scalatestplus" %% "scalacheck-1-15" % "3.2.9.0" % "test"
-  ),
+  )
 ) ++ GraphSonatype.settings
