@@ -1,7 +1,8 @@
 package scala.collection.mutable
 
-import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
+import org.scalatest.matchers.should.Matchers
+
 
 import scala.util.Random
 

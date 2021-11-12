@@ -20,7 +20,6 @@ lazy val core = project
       version := Version.core,
       libraryDependencies ++= Seq(
         "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
-        "org.scalacheck"         %% "scalacheck"              % "1.15.4" % "optional;provided",
         "org.gephi"               % "gephi-toolkit"           % "0.9.2"  % "test" classifier "all"
       ),
       dependencyOverrides ++= {
@@ -115,5 +114,8 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   }).value,
   autoAPIMappings := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % "test"
+  libraryDependencies ++= Seq(
+      "org.scalatest"     %% "scalatest"       % "3.2.9"   % "test",
+    "org.scalatestplus" %% "scalacheck-1-15" % "3.2.9.0" % "test"
+  ),
 ) ++ GraphSonatype.settings

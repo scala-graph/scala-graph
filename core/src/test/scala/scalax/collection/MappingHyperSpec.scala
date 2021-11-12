@@ -1,7 +1,9 @@
 package scalax.collection
 
 import org.scalatest.refspec.RefSpec
-import org.scalatest.{Matchers, Suites}
+import org.scalatest.matchers.should.Matchers
+
+import org.scalatest.Suites
 
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef.HyperEdgeImplicits._

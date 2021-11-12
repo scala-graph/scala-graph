@@ -2,7 +2,9 @@ package scalax.collection
 
 import scala.language.implicitConversions
 
-import org.scalatest.{Matchers, Suites}
+import org.scalatest.matchers.should.Matchers
+
+import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
