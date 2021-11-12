@@ -18,7 +18,7 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
   type NodeT <: InnerNodeImpl
   abstract class InnerNodeImpl(val outer: N, hints: ArraySet.Hints)
       extends NodeBase
-      with super[GraphLike].InnerNode
+      with GraphLikeInnerNode
       with InnerNode { this: NodeT =>
 
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
@@ -69,8 +69,8 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
       } else false
   }
 
-  type NodeSetT = NodeSet
-  class NodeSet extends super[GraphLike].NodeSet with super.NodeSet with AddSubtract[NodeT, NodeSet] {
+  type NodeSetT = AdjacencyListNodeSet
+  class AdjacencyListNodeSet extends GraphLikeNodeSet with super.NodeSet with AddSubtract[NodeT, AdjacencyListNodeSet] {
     @inline override def add(node: NodeT): Boolean               = collection add node
     final protected[collection] def add(edge: EdgeT): Boolean    = fold(edge, (_: NodeT).add)
     final protected[collection] def upsert(edge: EdgeT): Boolean = fold(edge, (_: NodeT).upsert)
@@ -99,8 +99,8 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
 
   @inline final protected def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
 
-  type EdgeSetT = EdgeSet
-  class EdgeSet extends super[GraphLike].EdgeSet with super.EdgeSet with AddSubtract[EdgeT, EdgeSet] {
+  type EdgeSetT = AdjacencyListEdgeSet
+  class AdjacencyListEdgeSet extends GraphLikeEdgeSet with EdgeSet with AddSubtract[EdgeT, AdjacencyListEdgeSet] {
     final protected[AdjacencyListGraph] var initialized = false
 
     final override protected[collection] def initialize(edges: Iterable[E]): Unit = {

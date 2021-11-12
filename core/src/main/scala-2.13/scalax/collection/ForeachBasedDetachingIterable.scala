@@ -64,7 +64,6 @@ trait ForeachBasedDetachingIterable[+A] extends Iterable[A] {
   }
 
   final override def isEmpty: Boolean  = headOption.isEmpty
-  final override def nonEmpty: Boolean = !isEmpty
 
   // Element Retrieval
 
