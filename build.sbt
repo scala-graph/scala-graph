@@ -72,7 +72,7 @@ lazy val json = project
     defaultSettings ++ Seq(
       name := "Graph JSON",
       version := Version.json,
-      libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.3"
+      libraryDependencies += "net.liftweb" %% "lift-json" % "3.5.0"
     )
   )
 
@@ -116,7 +116,7 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   autoAPIMappings := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Test"))),
   libraryDependencies ++= Seq(
-    "org.scalatest"     %% "scalatest"       % "3.2.9"   % "test",
-    "org.scalatestplus" %% "scalacheck-1-15" % "3.2.9.0" % "test"
+    "org.scalatest"     %% "scalatest"       % "3.2.10"   % "test",
+    "org.scalatestplus" %% "scalacheck-1-15" % "3.2.10.0" % "test"
   )
 ) ++ GraphSonatype.settings
