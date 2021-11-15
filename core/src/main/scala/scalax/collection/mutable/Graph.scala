@@ -195,12 +195,12 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
   final override val companion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
-  @inline final protected def newNodeSet: NodeSetT = new AdjacencyListNodeSet
-  @transient private[this] var _nodes: NodeSetT    = newNodeSet
-  @inline final override def nodes: AdjacencyListNodeSet        = _nodes
+  @inline final protected def newNodeSet: NodeSetT       = new AdjacencyListNodeSet
+  @transient private[this] var _nodes: NodeSetT          = newNodeSet
+  @inline final override def nodes: AdjacencyListNodeSet = _nodes
 
-  @transient private[this] var _edges: EdgeSetT = new AdjacencyListEdgeSet
-  @inline final override def edges: AdjacencyListEdgeSet     = _edges
+  @transient private[this] var _edges: EdgeSetT          = new AdjacencyListEdgeSet
+  @inline final override def edges: AdjacencyListEdgeSet = _edges
 
   initialize(iniNodes, iniEdges)
 
