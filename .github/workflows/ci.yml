@@ -1,0 +1,22 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        scala: ["2.13.6", "2.12.15"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.4.0
+      - name: Cache SBT
+        uses: actions/cache@v2.1.6
+        with:
+            path: |
+                ~/.ivy2/cache
+                ~/.sbt
+            key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+      - uses: olafurpg/setup-scala@v13
+      - name: Test
+        run: sbt ++${{ matrix.scala }} test
