@@ -19,7 +19,7 @@ lazy val core = project
       name := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck"   % "1.14.0" % "optional;provided",
+        "org.scalacheck" %% "scalacheck"   % "1.14.3" % "optional;provided",
         "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all"
       ),
       dependencyOverrides ++= {
@@ -113,5 +113,5 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   }).value,
   autoAPIMappings := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % "test"
+  libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.9" % "test"
 ) ++ GraphSonatype.settings
