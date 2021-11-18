@@ -1,10 +1,11 @@
 package scalax.collection
 
-import org.scalatest.{Matchers, Suites}
+import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 import scalax.collection.GraphEdge.{~~, ~~>, AnyHyperEdge, EdgeLike}
 import scalax.collection.GraphPredef._
 import scalax.collection.generic.GraphCoreCompanion
+import org.scalatest.matchers.should.Matchers
 
 /** Editing any kind of hypergraph with unlabeled edges including mixed and multigraphs.
   */

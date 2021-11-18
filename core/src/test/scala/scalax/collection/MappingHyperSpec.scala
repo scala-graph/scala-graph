@@ -1,13 +1,14 @@
 package scalax.collection
 
 import org.scalatest.refspec.RefSpec
-import org.scalatest.{Matchers, Suites}
+import org.scalatest.Suites
 
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef.HyperEdgeImplicits._
 import scalax.collection.generic.GraphCoreCompanion
 
 import MappingHyperSpec._
+import org.scalatest.matchers.should.Matchers
 
 class MappingHyperSpec
     extends Suites(

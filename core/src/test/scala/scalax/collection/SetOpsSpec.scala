@@ -7,6 +7,7 @@ import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion
 
 import scalax.collection.visualization.Visualizer
+import org.scalatest.matchers.should.Matchers
 
 class SetOpsSpec
     extends Suites(

@@ -7,6 +7,7 @@ import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.generic.GraphCoreCompanion
 import scalax.collection.visualization.Visualizer
+import org.scalatest.matchers.should.Matchers
 
 class EditingTypedSpec
     extends Suites(

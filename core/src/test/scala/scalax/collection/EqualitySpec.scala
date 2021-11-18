@@ -1,11 +1,12 @@
 package scalax.collection
 
-import org.scalatest.{Matchers, Suites}
+import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 
 import scalax.collection.GraphEdge.{DiEdge, EdgeLike}
 import scalax.collection.GraphPredef._
 import scalax.collection.generic.GraphCoreCompanion
+import org.scalatest.matchers.should.Matchers
 
 class EqualitySpec
     extends Suites(

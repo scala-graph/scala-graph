@@ -5,6 +5,7 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
+import org.scalatest.matchers.should.Matchers
 
 /** Editing any kind of non-hypergraph with unlabeled edges including mixed and multigraphs.
   */

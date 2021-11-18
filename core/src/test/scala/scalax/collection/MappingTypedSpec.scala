@@ -2,11 +2,12 @@ package scalax.collection
 
 import scala.language.implicitConversions
 
-import org.scalatest.{Matchers, Suites}
+import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.generic.GraphCoreCompanion
+import org.scalatest.matchers.should.Matchers
 
 class MappingTypedSpec
     extends Suites(

@@ -6,6 +6,7 @@ import org.scalatest.refspec.RefSpec
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.generic.GraphCoreCompanion
+import org.scalatest.matchers.should.Matchers
 
 class MappingSpec
     extends Suites(

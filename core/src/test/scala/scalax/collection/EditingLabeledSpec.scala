@@ -1,9 +1,9 @@
 package scalax.collection
 
-import org.scalatest.Matchers
 import org.scalatest.refspec.RefSpec
 
 import scalax.collection.GraphEdge.EdgeLike
+import org.scalatest.matchers.should.Matchers
 
 /** Editing non-hypergraphs with labeled edges, in particular, editing multigraphs.
   */
