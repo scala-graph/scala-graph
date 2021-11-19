@@ -1,6 +1,6 @@
 package scalax.collection
 
-import scalax.collection.Compat.IterableOnce
+import scala.collection.compat._
 import scalax.collection.GraphEdge._
 
 /* Operations common to mutable and immutable graphs.
@@ -31,7 +31,8 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
     *    a. two or more directed edges having the same source and target
     *    a. two or more undirected edges connecting the same nodes
     *    a. two or more (directed) hyperedges that, after being decomposed into (directed) edges,
-    * yield any multy-edge as stipulated above. */
+    * yield any multy-edge as stipulated above.
+    */
   def isMulti: Boolean
 
   /** `true` if this graph has at most 1 node. */
@@ -89,8 +90,9 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
     * @param isolatedNodes to be concatenated. Nodes that are implicitly defined by any edge in `edges` will be ignored.
     * @param edges to be concatenated.
     */
-  def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(
-      implicit e: E2 <:< EdgeLike[N2]): This[N2, E2]
+  def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(implicit
+      e: E2 <:< EdgeLike[N2]
+  ): This[N2, E2]
 
   /** Same as `concat(isolatedNodes, edges)` but with empty `isolatedNodes`.
     * This method is useful if you don't need to pass any isolated node.
@@ -100,12 +102,14 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
 
   /** Alias for `concat(isolatedNodes, edges)`. */
   @inline final def ++[N2 >: N, E2 >: E <: EdgeLike[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(
-      implicit e: E2 <:< EdgeLike[N2]): This[N2, E2] =
+      implicit e: E2 <:< EdgeLike[N2]
+  ): This[N2, E2] =
     concat(isolatedNodes, edges)(e)
 
   /** Alias for `concat(edges)`. */
-  @inline final def ++[N2 >: N, E2 >: E <: EdgeLike[N2]](edges: IterableOnce[E2])(
-      implicit e: E2 <:< EdgeLike[N2]): This[N2, E2] =
+  @inline final def ++[N2 >: N, E2 >: E <: EdgeLike[N2]](edges: IterableOnce[E2])(implicit
+      e: E2 <:< EdgeLike[N2]
+  ): This[N2, E2] =
     concat[N2, E2](edges)(e)
 
   /** Computes the union between this graph and `that` graph. */
@@ -141,7 +145,8 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
   @inline final def apply(edge: E): Boolean = find(edge).isDefined
 
   /** Computes a new graph with nodes satisfying `fNode` and edges satisfying `fEdge`.
-    * If both `fNode` and `fEdge` have default values the original graph is retained. */
+    * If both `fNode` and `fEdge` have default values the original graph is retained.
+    */
   def filter(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): This[N, E]
 
   /** Searches this graph for an inner node that wraps an outer node equalling to the given outer node. */
@@ -194,9 +199,9 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
     * @return               the mapped graph with a possibly changed node type parameter.
     *                       Edge ends reflect the mapped nodes while edge types will be preserved as far as possible.
     */
-  def map[NN, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(implicit w1: E <:< GenericMapper,
-                                                        w2: EC[N] =:= E,
-                                                        fallbackMapper: EdgeCompanion[EC]): This[NN, EC[NN]]
+  def map[NN, EC[X] <: EdgeLike[X]](
+      fNode: NodeT => NN
+  )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E, fallbackMapper: EdgeCompanion[EC]): This[NN, EC[NN]]
 
   /** $mapNodes
     * Use this method to map a typed graph to a resulting typed graph bounded to the same edge type.
@@ -213,8 +218,9 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
     * @param w2    catches the current higher kind of `E` to determine the return type
     * @return      the mapped graph with a possibly downcasted node type parameter
     */
-  def mapBounded[NN <: N, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(implicit w1: E <:< PartialMapper,
-                                                                    w2: EC[N] =:= E): This[NN, EC[NN]]
+  def mapBounded[NN <: N, EC[X] <: EdgeLike[X]](
+      fNode: NodeT => NN
+  )(implicit w1: E <:< PartialMapper, w2: EC[N] =:= E): This[NN, EC[NN]]
 
   /** $mapEdges
     * Use this method to map nodes and edges to a graph with an edge type having one type parameter like `DiEdge[N]`.

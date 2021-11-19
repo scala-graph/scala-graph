@@ -2,6 +2,8 @@ package scalax.collection
 
 import scala.language.implicitConversions
 
+import org.scalatest.matchers.should.Matchers
+
 import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 import scalax.collection.GraphEdge._
@@ -56,7 +58,7 @@ private class MappingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
     private val a_1   = A(1)
     private val b_0_0 = B(0, 0)
 
-    def `map node values without changing node or edge types` {
+    def `map node values without changing node or edge types`:Unit = {
       factory(NodeConnector(a_1, b_0_0)) pipe { g =>
         g.mapBounded {
           case g.InnerNode(a: A) => a + 1
@@ -65,20 +67,20 @@ private class MappingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
       }
     }
 
-    def `downcast nodes` {
+    def `downcast nodes` : Unit ={
       factory(NodeConnector(a_1, b_0_0)) pipe { g =>
         (g.mapBounded(_ => b_0_0): CC[B, Connector[B]]) should not be empty
       }
     }
 
-    def `not upcast nodes without passing an edge mapper` {
+    def `not upcast nodes without passing an edge mapper`: Unit = {
       factory(AConnector(a_1, a_1)) pipe { g =>
         "g.map(_ => b_0_0): Graph[B, Edge]" shouldNot compile
         "g.map(_.toString)" shouldNot compile
       }
     }
 
-    def `upcast nodes to another typed edge if the typed edge mapper is passed` {
+    def `upcast nodes to another typed edge if the typed edge mapper is passed` : Unit ={
       factory(AConnector(a_1, a_1)) pipe { g =>
         g.mapBounded[Node, NodeConnector](_ => b_0_0, NodeConnector) pipe { mapped: CC[Node, NodeConnector] =>
           mapped.edges.head.outer should ===(NodeConnector(b_0_0, b_0_0))
@@ -86,7 +88,7 @@ private class MappingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
       }
     }
 
-    def `upcast nodes to any type if a generic edge mapper is passed` {
+    def `upcast nodes to any type if a generic edge mapper is passed` : Unit ={
       factory(AConnector(a_1, a_1)) pipe { g =>
         def toString(a: A): String = s"""string-$a"""
 

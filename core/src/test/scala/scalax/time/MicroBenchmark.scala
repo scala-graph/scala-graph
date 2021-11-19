@@ -53,7 +53,7 @@ object MicroBenchmark {
   }
 
   case class Result[A](result: A, times: ArrayBuffer[Long] = ArrayBuffer.empty) extends MeasurementResult(result) {
-    def this(result: A, firstNanoSecs: Long) { this(result, ArrayBuffer(firstNanoSecs)) }
+    def this(result: A, firstNanoSecs: Long) ={ this(result, ArrayBuffer(firstNanoSecs)) }
     def mediumNanoSecs: Long                 = times.sum / times.size
     def +=(nanoSecs: Long): this.type        = { this.times += nanoSecs; this }
     def nanoSecs                             = times.iterator

@@ -3,7 +3,7 @@ package mutable
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 
-import scalax.collection.Compat.IterableOnce
+import scala.collection.compat._
 import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.GraphEdge.EdgeLike
 
@@ -34,13 +34,13 @@ trait Shrinkable[-N, -E <: EdgeLike[N @uV]] extends OuterElems[N @uV, E @uV] {
 
   /** Removes all `nodes` and `edges` from this graph. */
   final def removeAll(nodes: IterableOnce[N @uV], edges: IterableOnce[E @uV]): this.type = {
-    nodes foreach -=
+    nodes.iterator.foreach(-=)
     removeAll(edges)
   }
 
   /** Removes all `edges` from this graph. */
   final def removeAll(edges: IterableOnce[E @uV]): this.type = {
-    edges foreach -=
+    edges.iterator.foreach(-=)
     this
   }
 

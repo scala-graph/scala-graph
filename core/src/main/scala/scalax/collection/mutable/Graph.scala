@@ -34,10 +34,10 @@ abstract protected[collection] class BuilderImpl[N, E <: EdgeLike[N]](implicit c
     }
   )
 
-  protected def add(node: N): Boolean           = NeverUsed
+  protected def add(node: N): Boolean = NeverUsed
   final override def addOne(node: N): this.type = { nodes += node; this }
 
-  def add(edge: E): Boolean                     = NeverUsed
+  def add(edge: E): Boolean = NeverUsed
   final override def addOne(edge: E): this.type = { edges += edge; this }
 
   def upsert(edge: E): Boolean = (edges contains edge) pipe { found =>
@@ -47,13 +47,14 @@ abstract protected[collection] class BuilderImpl[N, E <: EdgeLike[N]](implicit c
   }
 
   def clear(): Unit = {
-    nodes.clear
-    edges.clear
+    nodes.clear()
+    edges.clear()
   }
 }
 
 class Builder[N, E <: EdgeLike[N], +CC[N, E <: EdgeLike[N]] <: AnyGraphLike[N, E, CC] with AnyGraph[N, E]](
-    companion: GraphCompanion[CC])(implicit config: GraphConfig)
+    companion: GraphCompanion[CC]
+)(implicit config: GraphConfig)
     extends BuilderImpl[N, E] {
 
   def result: CC[N, E] = companion.from(nodes, edges)(config.asInstanceOf[companion.Config])
@@ -74,14 +75,15 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
 
   override def clone: This[N, E] = companion.from[N, E](nodes.toOuter, edges.toOuter)
 
-  type NodeT <: InnerNode
-  trait InnerNode extends super.InnerNode { // TODO with InnerNodeOps {
+  type NodeT <: GraphLikeInnerNode
+  trait GraphLikeInnerNode extends super.InnerNode { // TODO with InnerNodeOps {
     this: NodeT =>
 
     /** Adds new non-hyper edges connecting `this` inner node with `those` inner nodes.
       */
-    final def connectWith[AE <: E with AnyEdge[N]](n_1: NodeT, ns: NodeT*)(
-        implicit edgeFactory: (N, N) => AE): this.type = {
+    final def connectWith[AE <: E with AnyEdge[N]](n_1: NodeT, ns: NodeT*)(implicit
+        edgeFactory: (N, N) => AE
+    ): this.type = {
       def add(n: NodeT) = selfGraph.edges addOne newEdge(edgeFactory(this.outer, n.outer), this, n)
       add(n_1)
       ns foreach add
@@ -96,8 +98,8 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     }
   }
 
-  type NodeSetT <: NodeSet
-  trait NodeSet extends MSet[NodeT] with super.NodeSet {
+  type NodeSetT <: GraphLikeNodeSet
+  trait GraphLikeNodeSet extends MSet[NodeT] with super.NodeSet {
     override def remove(node: NodeT): Boolean = subtract(node, rippleDelete = true, minus, minusEdges)
 
     /** removes all incident edges of `node` from the edge set leaving the node set unchanged.
@@ -110,9 +112,9 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     override def diff(that: AnySet[NodeT]): MSet[NodeT] = this -- that
   }
 
-  type EdgeSetT <: EdgeSet
-  trait EdgeSet extends MSet[EdgeT] with super.EdgeSet with Compat.AddSubtract[EdgeT, EdgeSet] {
-    @inline final def addOne(edge: EdgeT)      = { add(edge); this }
+  type EdgeSetT <: GraphLikeEdgeSet
+  trait GraphLikeEdgeSet extends MSet[EdgeT] with EdgeSet with Compat.AddSubtract[EdgeT, GraphLikeEdgeSet] {
+    @inline final def addOne(edge: EdgeT) = { add(edge); this }
     @inline final def subtractOne(edge: EdgeT) = { remove(edge); this }
 
     /** Same as `upsert` at graph level. */
@@ -138,10 +140,10 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     */
   @inline final def addAndGet(edge: E): EdgeT = { add(edge); find(edge).get }
 
-  @inline final def remove(node: N): Boolean        = nodes find node exists (nodes remove _)
+  @inline final def remove(node: N): Boolean = nodes find node exists (nodes remove _)
   @inline final def subtractOne(node: N): this.type = { remove(node); this }
 
-  @inline final def remove(edge: E): Boolean        = edges remove InnerEdge(edge)
+  @inline final def remove(edge: E): Boolean = edges remove InnerEdge(edge)
   @inline final def subtractOne(edge: E): this.type = { remove(edge); this }
 
   def filterInPlace(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): this.type = {
@@ -173,8 +175,9 @@ object Graph extends MutableGraphCompanion[Graph] {
   def empty[N, E <: EdgeLike[N]](implicit config: Config = defaultConfig): Graph[N, E] =
     new DefaultGraphImpl[N, E]()(config)
 
-  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N] = Nil, edges: Iterable[E])(implicit config: Config =
-                                                                                         defaultConfig): Graph[N, E] =
+  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N] = Nil, edges: Iterable[E])(implicit
+      config: Config = defaultConfig
+  ): Graph[N, E] =
     DefaultGraphImpl.from[N, E](nodes, edges)(config)
 
   override def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]) =
@@ -182,9 +185,9 @@ object Graph extends MutableGraphCompanion[Graph] {
 }
 
 @SerialVersionUID(74L)
-class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), iniEdges: Iterable[E] = Set[E]())(
-    implicit override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
-    extends Graph[N, E]
+class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), iniEdges: Iterable[E] = Set[E]())(implicit
+    override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig
+) extends Graph[N, E]
     with AdjacencyListGraph[N, E, DefaultGraphImpl]
     /* TODO
     with GraphTraversalImpl[N, E]
@@ -192,12 +195,12 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
   final override val companion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
-  @inline final protected def newNodeSet: NodeSetT = new NodeSet
-  @transient private[this] var _nodes: NodeSetT    = newNodeSet
-  @inline final override def nodes: NodeSet        = _nodes
+  @inline final protected def newNodeSet: NodeSetT       = new AdjacencyListNodeSet
+  @transient private[this] var _nodes: NodeSetT          = newNodeSet
+  @inline final override def nodes: AdjacencyListNodeSet = _nodes
 
-  @transient private[this] var _edges: EdgeSetT = new EdgeSet
-  @inline final override def edges: EdgeSet     = _edges
+  @transient private[this] var _edges: EdgeSetT          = new AdjacencyListEdgeSet
+  @inline final override def edges: AdjacencyListEdgeSet = _edges
 
   initialize(iniNodes, iniEdges)
 
@@ -206,10 +209,10 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
   final override def clone: this.type              = super.clone.asInstanceOf[this.type]
 
   @SerialVersionUID(7370L)
-  final protected class NodeBase(override val outer: N, hints: ArraySet.Hints) extends InnerNodeImpl(outer, hints)
+  final protected class NodeBase_(override val outer: N, hints: ArraySet.Hints) extends InnerNodeImpl(outer, hints)
 // TODO      with    InnerNodeTraversalImpl
 
-  type NodeT = NodeBase
+  type NodeT = NodeBase_
 
   @inline final protected def newNodeWithHints(n: N, h: ArraySet.Hints) = new NodeT(n, h)
 
@@ -217,7 +220,7 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
 
   private def readObject(in: ObjectInputStream): Unit = {
     _nodes = newNodeSet
-    _edges = new EdgeSet
+    _edges = new AdjacencyListEdgeSet
     initializeFrom(in, _nodes, _edges)
   }
 }
@@ -228,7 +231,8 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
     new DefaultGraphImpl[N, E]()(config)
 
   override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
-                                                                                 config: Config = defaultConfig) =
+      config: Config = defaultConfig
+  ) =
     new DefaultGraphImpl[N, E](nodes, edges)(config)
 
   override def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]) =

@@ -8,16 +8,17 @@ import scalax.collection.immutable.AdjacencyListBase
 /** Implements an incident list based mutable graph representation.
   * @author Peter Empen
   */
-trait AdjacencyListGraph[
-    N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
-    extends GraphLike[N, E, This]
+trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[
+  X,
+  Y
+]] extends GraphLike[N, E, This]
     with AdjacencyListBase[N, E, This] {
   selfGraph: This[N, E] =>
 
   type NodeT <: InnerNodeImpl
   abstract class InnerNodeImpl(val outer: N, hints: ArraySet.Hints)
       extends NodeBase
-      with super[GraphLike].InnerNode
+      with GraphLikeInnerNode
       with InnerNode { this: NodeT =>
 
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
@@ -35,7 +36,7 @@ trait AdjacencyListGraph[
       inserted
     }
 
-    final protected def addDiSuccOrHook(edge: EdgeT) {
+    final protected def addDiSuccOrHook(edge: EdgeT): Unit = {
       if (edge.matches(nodeEqThis, nodeEqThis) && aHook.isEmpty)
         _aHook = Some(this -> edge)
       addDiSuccessors(edge, (n: NodeT) => diSucc put (n, edge))
@@ -53,7 +54,8 @@ trait AdjacencyListGraph[
           def onNonLooping(): Unit = edge.targets foreach (t =>
             edges
               .find((e: EdgeT) => e.hasTarget((n: NodeT) => n eq t))
-              .fold[Unit](ifEmpty = diSucc remove t)((e: EdgeT) => if (e hasSource this) diSucc put (t, e)))
+              .fold[Unit](ifEmpty = diSucc remove t)((e: EdgeT) => if (e hasSource this) diSucc put (t, e))
+          )
 
           if (edge.isHyperEdge)
             if (edge.isLooping) {
@@ -67,16 +69,15 @@ trait AdjacencyListGraph[
       } else false
   }
 
-  type NodeSetT = NodeSet
-  class NodeSet extends super[GraphLike].NodeSet with super.NodeSet with AddSubtract[NodeT, NodeSet] {
+  type NodeSetT = AdjacencyListNodeSet
+  class AdjacencyListNodeSet extends GraphLikeNodeSet with super.NodeSet with AddSubtract[NodeT, AdjacencyListNodeSet] {
     @inline override def add(node: NodeT): Boolean               = collection add node
     final protected[collection] def add(edge: EdgeT): Boolean    = fold(edge, (_: NodeT).add)
     final protected[collection] def upsert(edge: EdgeT): Boolean = fold(edge, (_: NodeT).upsert)
 
     private def fold(edge: EdgeT, op: NodeT => EdgeT => Boolean): Boolean =
-      edge.ends.foldLeft(false) {
-        case (cum, n) =>
-          op(collection findElem n getOrElse { collection += n; n })(edge) || cum
+      edge.ends.foldLeft(false) { case (cum, n) =>
+        op(collection findElem n getOrElse { collection += n; n })(edge) || cum
       }
 
     final protected[collection] def remove(edge: EdgeT): Boolean =
@@ -85,7 +86,7 @@ trait AdjacencyListGraph[
     @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
     @inline final protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }
 
-    @inline final def addOne(node: NodeT): this.type      = { add(node); this }
+    @inline final def addOne(node: NodeT): this.type = { add(node); this }
     @inline final def subtractOne(node: NodeT): this.type = { remove(node); this }
 
     final protected def minus(node: NodeT): Unit = collection -= node
@@ -98,8 +99,8 @@ trait AdjacencyListGraph[
 
   @inline final protected def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
 
-  type EdgeSetT = EdgeSet
-  class EdgeSet extends super[GraphLike].EdgeSet with super.EdgeSet with AddSubtract[EdgeT, EdgeSet] {
+  type EdgeSetT = AdjacencyListEdgeSet
+  class AdjacencyListEdgeSet extends GraphLikeEdgeSet with EdgeSet with AddSubtract[EdgeT, AdjacencyListEdgeSet] {
     final protected[AdjacencyListGraph] var initialized = false
 
     final override protected[collection] def initialize(edges: Iterable[E]): Unit = {

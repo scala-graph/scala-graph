@@ -25,7 +25,8 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y
   @inline final def |=(that: AnyGraph[N, E]): this.type = unionInPlace(that)
 
   /** Computes a new graph with nodes satisfying `fNode` and edges satisfying `fEdge`.
-    * If both `fNode` and `fEdge` have default values the original graph is retained. */
+    * If both `fNode` and `fEdge` have default values the original graph is retained.
+    */
   def filterInPlace(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): this.type
 
   /** Shrinks this graph to its intersection with `that` graph. */

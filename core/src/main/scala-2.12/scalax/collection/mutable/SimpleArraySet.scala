@@ -121,26 +121,30 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       val _size = size
       if (_size < hints.hashTableThreshold)
         setToArray(hashSet, _size)
-    } else if (hints.compactUpToUsed match {
-                 case perc if perc == 0   => false
-                 case perc if perc == 100 => nextFree < capacity
-                 case perc                => perc >= nextFree * 100 / capacity
-               })
+    } else if (
+      hints.compactUpToUsed match {
+        case perc if perc == 0   => false
+        case perc if perc == 100 => nextFree < capacity
+        case perc                => perc >= nextFree * 100 / capacity
+      }
+    )
       resizeArray(capacity, nextFree)
   }
 
   final protected def indexOf[B](elem: B, pred: (A, B) => Boolean): Int = {
     var i = 0
-    while (i < nextFree) if (pred(arr(i), elem)) return i
-    else i += 1
+    while (i < nextFree)
+      if (pred(arr(i), elem)) return i
+      else i += 1
     -1
   }
 
   /* Optimized 'arr contains c'. */
   final protected def indexOf(elem: A): Int = {
     var i = 0
-    while (i < nextFree) if (arr(i) == elem) return i
-    else i += 1
+    while (i < nextFree)
+      if (arr(i) == elem) return i
+      else i += 1
     -1
   }
 
@@ -162,8 +166,9 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
         if (resizedToHash)
           return add(elem)
       var i = 0
-      while (i < nextFree) if (arr(i) == elem) return false
-      else i += 1
+      while (i < nextFree)
+        if (arr(i) == elem) return false
+        else i += 1
       arr(nextFree) = elem
       nextFree += 1
       true
@@ -228,7 +233,8 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       hashSet match {
         case sorted: SortedSet[_] => sorted
         case unsorted             => SortedSet[A](hashSet.toList: _*)
-      } else {
+      }
+    else {
       val newArr: Array[AnyRef] = new Array(nextFree)
       arraycopy(arr, 0, newArr, 0, nextFree)
       new SortedArraySet(newArr.asInstanceOf[Array[A]])

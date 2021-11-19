@@ -1,6 +1,8 @@
 package scalax.collection
 
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+
+import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 
 import scalax.collection.GraphEdge._
@@ -25,7 +27,7 @@ private class Mapping[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
 
     private def fNode(n: originalG.NodeT) = n.outer + 1
 
-    def `yields another graph` {
+    def `yields another graph`:Unit = {
       val g = originalG map fNode
 
       g shouldBe a[CC[Int, UnDiEdge[Int]] @unchecked]
@@ -33,19 +35,19 @@ private class Mapping[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
       g.edges.head shouldBe an[g.Inner.UnDiEdge]
       (g.edges.head.outer: UnDiEdge[Int]) shouldBe an[UnDiEdge[_]]
     }
-    def `has correctly mapped nodes` {
+    def `has correctly mapped nodes` :Unit ={
       val g = originalG map fNode
 
       originalG.nodes zip g.nodes.toOuter foreach {
         case (original, mapped) => fNode(original) == mapped
       }
     }
-    def `has correctly mapped edges` {
+    def `has correctly mapped edges` :Unit ={
       val g = originalG map fNode
 
       g.edges.head should be(UnDiEdge(2, 3))
     }
-    def `may have a new node type` {
+    def `may have a new node type` :Unit ={
       val g = originalG map (_.toString)
 
       g.nodes.head.outer shouldBe a[String]

@@ -1,6 +1,8 @@
 package scalax.collection
 
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+
+import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 
 import GraphPredef._, GraphEdge._
@@ -56,15 +58,15 @@ private class SetOps[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E,
     factory(1 ~ 2) ++ (List('x'), List('a' ~ 'b')): Graph[AnyVal, UnDiEdge[AnyVal]]
   }
 
-  def `union ` {
+  def `union ` : Unit ={
     g union h shouldEqual Expected.g_union_h
   }
 
-  def `difference ` {
+  def `difference ` : Unit ={
     g diff h shouldEqual Expected.g_diff_h
   }
 
-  def `intersection ` {
+  def `intersection ` : Unit ={
     val expected = factory(3 ~ 5, 4)
     given(g intersect h)(_ shouldEqual expected)
     given(g & h)(_ shouldEqual expected)
@@ -81,17 +83,17 @@ private class SetOpsMutable extends RefSpec with Matchers with SetOpExamples[mut
 
   private val iH = immutable.Graph.from(hEdges)
 
-  def `unionInPlace ` {
+  def `unionInPlace ` :Unit = {
     (g |= h) shouldEqual Expected.g_union_h
     (g |= iH) shouldEqual Expected.g_union_h
   }
 
-  def `--= ` {
+  def `--= `:Unit =  {
     (g --= h) shouldEqual Expected.g_diff_h
     (g --= iH) shouldEqual Expected.g_diff_h
   }
 
-  def `&= ` {
+  def `&= `:Unit =  {
     val expected = factory(3 ~ 5, 4)
 
     (g &= h) shouldEqual expected
