@@ -47,7 +47,7 @@ class Connected[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: 
     val graphAdd = SimpleGraph.from(p.toOuterNodes, p.toOuterEdges)(self.edgeT)
     graphAdd.isConnected &&
     (self.isEmpty ||
-    (graphAdd.nodes exists (self find _ isDefined)))
+      (graphAdd.nodes exists (self find _ isDefined)))
   }
 
   /** Check the whole `newGraph`. */

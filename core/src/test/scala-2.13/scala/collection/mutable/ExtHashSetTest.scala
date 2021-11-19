@@ -49,9 +49,8 @@ class ExtHashSetTest extends RefSpec with should.Matchers {
       val nrProbes                      = set.size * nrProbesPerElement
       val frequencies                   = sortedProbeFrequencies(set, nrProbes, Some(77))
       val maxDeviationForBucketLength_% = Map(1 -> 25, 2 -> 50)
-      frequencies foreach {
-        case ProbeFrequency(element, count) =>
-          abs(nrProbesPerElement - count) should be < maxDeviationForBucketLength_%(bucketLengthOfElement(element))
+      frequencies foreach { case ProbeFrequency(element, count) =>
+        abs(nrProbesPerElement - count) should be < maxDeviationForBucketLength_%(bucketLengthOfElement(element))
       }
     }
 
@@ -126,12 +125,12 @@ object ExtHashSetTest extends App {
     Array
       .fill(nrProbes)(set draw r)
       .groupBy(identity)
-      .map {
-        case (k, v: Array[Int]) => ProbeFrequency(k, v.length)
+      .map { case (k, v: Array[Int]) =>
+        ProbeFrequency(k, v.length)
       }
       .toList
-      .sortBy {
-        case ProbeFrequency(_, v) => v
+      .sortBy { case ProbeFrequency(_, v) =>
+        v
       }
   }
 

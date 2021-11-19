@@ -101,12 +101,11 @@ object Transition extends CEdgeCompanion[Transition] {
                 ) =>
               new CEdgeParameters[Transition.P](n1, n2, (key(0), KeyModifier.withName(keyMod)))
           },
-          {
-            case CEdgeParameters((nId_1, nId_2), (key, keyMod)) =>
-              JArray(
-                JString(nId_1) :: JString(nId_2) ::
-                  JString(key.toString) :: JString(keyMod.toString) :: Nil
-              )
+          { case CEdgeParameters((nId_1, nId_2), (key, keyMod)) =>
+            JArray(
+              JString(nId_1) :: JString(nId_2) ::
+                JString(key.toString) :: JString(keyMod.toString) :: Nil
+            )
           }
         )
       )

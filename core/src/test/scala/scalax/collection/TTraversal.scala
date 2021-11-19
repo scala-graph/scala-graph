@@ -491,13 +491,12 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
       def innerNode(outer: Int) = g get outer
       var stack                 = List.empty[Int]
 
-      innerNode(4).innerNodeDownUpTraverser foreach {
-        case (down, node) =>
-          if (down) stack = node.value +: stack
-          else {
-            stack.head should be(node.value)
-            stack = stack.tail
-          }
+      innerNode(4).innerNodeDownUpTraverser foreach { case (down, node) =>
+        if (down) stack = node.value +: stack
+        else {
+          stack.head should be(node.value)
+          stack = stack.tail
+        }
       }
       stack should be('empty)
     }
@@ -545,13 +544,12 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
         nBA ~> Leaf("BA3", 12)
       )
     ) { g =>
-      (g get root).innerNodeDownUpTraverser foreach {
-        case (down, node) =>
-          if (!down)
-            node.value match {
-              case n: Node => n.sum = (0 /: node.diSuccessors)(_ + _.balance)
-              case _       =>
-            }
+      (g get root).innerNodeDownUpTraverser foreach { case (down, node) =>
+        if (!down)
+          node.value match {
+            case n: Node => n.sum = (0 /: node.diSuccessors)(_ + _.balance)
+            case _       =>
+          }
       }
       val expected = Map(root -> 39, nA -> 3, nB -> 36, nBA -> 33)
       g.nodes foreach {

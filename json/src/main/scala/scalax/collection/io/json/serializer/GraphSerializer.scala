@@ -25,10 +25,9 @@ final class GraphSerializer[N, E[+X] <: EdgeLikeIn[X]](descriptor: Descriptor[N]
       }
   }
 
-  override def serialize(implicit format: Formats) = {
-    case graph: Graph[N, E] =>
-      val export = new exp.Export(graph, descriptor)
-      import export._
-      jsonAST(List(jsonASTNodes, jsonASTEdges))
+  override def serialize(implicit format: Formats) = { case graph: Graph[N, E] =>
+    val export = new exp.Export(graph, descriptor)
+    import export._
+    jsonAST(List(jsonASTNodes, jsonASTEdges))
   }
 }

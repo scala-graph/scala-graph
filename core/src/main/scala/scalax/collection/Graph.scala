@@ -115,7 +115,7 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
     case that: Graph[N, E] =>
       (this eq that) ||
         (this.order == that.order) &&
-          (this.graphSize == that.graphSize) && {
+        (this.graphSize == that.graphSize) && {
           val thatNodes = that.nodes.toOuter
           try this.nodes forall (thisN => thatNodes(thisN.value))
           catch { case _: ClassCastException => false }
@@ -482,15 +482,15 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
     * @return A partial function combining the passed predicates.
     */
   def having(node: NodeFilter = _ => false, edge: EdgeFilter = null): PartialFunction[Param[N, E], Boolean] = {
-    val nodePred: PartialFunction[Param[N, E], Boolean] = {
-      case n: InnerNodeParam[N] => node(n.asNodeT[N, E, ThisGraph](thisGraph))
+    val nodePred: PartialFunction[Param[N, E], Boolean] = { case n: InnerNodeParam[N] =>
+      node(n.asNodeT[N, E, ThisGraph](thisGraph))
     }
     val edgePred: PartialFunction[Param[N, E], Boolean] =
-      if (edge eq null) {
-        case e: InnerEdgeParam[N, E, _, E] => e.asEdgeT[N, E, ThisGraph](thisGraph) forall (node(_))
+      if (edge eq null) { case e: InnerEdgeParam[N, E, _, E] =>
+        e.asEdgeT[N, E, ThisGraph](thisGraph) forall (node(_))
       }
-      else {
-        case e: InnerEdgeParam[N, E, _, E] => edge(e.asEdgeT[N, E, ThisGraph](thisGraph))
+      else { case e: InnerEdgeParam[N, E, _, E] =>
+        edge(e.asEdgeT[N, E, ThisGraph](thisGraph))
       }
     nodePred orElse edgePred
   }

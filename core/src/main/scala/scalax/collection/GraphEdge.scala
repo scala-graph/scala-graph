@@ -233,9 +233,9 @@ object GraphEdge {
       case that: EdgeLike[_] =>
         (this eq that) ||
           (that canEqual this) &&
-            (this.isDirected == that.isDirected) &&
-            (this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]) &&
-            equals(that)
+          (this.isDirected == that.isDirected) &&
+          (this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]) &&
+          equals(that)
       case _ => false
     }
 

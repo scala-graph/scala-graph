@@ -189,7 +189,7 @@ private object UserConstraints {
       case _      => false
     })
     def preAdd(edge: E[N]) = PreCheckResult.complete(
-      edge forall { !preAdd(_).abort }
+      edge forall !preAdd(_).abort
     )
     def preSubtract(node: self.NodeT, forced: Boolean) = checkComplete
     def preSubtract(edge: self.EdgeT, simple: Boolean) = checkComplete

@@ -58,7 +58,7 @@ class TGraphGenTest extends RefSpec with should.Matchers with ScalaCheckProperty
 
     val totalDegree = g.totalDegree
     totalDegree should (be >= (expectedTotalDegree - maxDegreeDeviation) and
-    be <= (expectedTotalDegree + maxDegreeDeviation))
+      be <= (expectedTotalDegree + maxDegreeDeviation))
   }
 
   object `tiny connected graph of [Int,DiEdge]` {

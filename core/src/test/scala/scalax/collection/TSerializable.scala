@@ -48,12 +48,12 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
   object GraphFile extends GraphStore {
     protected class Exec(filename: String) extends super.Exec {
       import FileSerialization._
-      def save[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): Unit = write(g, filename) recover {
-        case e => fail(s"Couldn't write $g: $e")
+      def save[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): Unit = write(g, filename) recover { case e =>
+        fail(s"Couldn't write $g: $e")
       }
 
-      def restore[N, E[+X] <: EdgeLikeIn[X]]: CC[N, E] = read(filename).recover {
-        case e => fail(s"Couldn't read graph: $e")
+      def restore[N, E[+X] <: EdgeLikeIn[X]]: CC[N, E] = read(filename).recover { case e =>
+        fail(s"Couldn't read graph: $e")
       }.get
     }
     private val tmpDir = System.getProperty("java.io.tmpdir")
@@ -225,10 +225,9 @@ object ByteArraySerialization {
       out writeObject obj
       out.close()
       bos.toByteArray
-    } recoverWith {
-      case e =>
-        out.close()
-        Failure[Array[Byte]](e)
+    } recoverWith { case e =>
+      out.close()
+      Failure[Array[Byte]](e)
     }
   }
 
@@ -243,10 +242,9 @@ object ByteArraySerialization {
       val read = in.readObject
       in.close()
       read.asInstanceOf[A]
-    } recoverWith {
-      case e =>
-        in.close()
-        Failure[A](e)
+    } recoverWith { case e =>
+      in.close()
+      Failure[A](e)
     }
 
   // resolves ClassNotFound issue with SBT
@@ -280,10 +278,9 @@ object FileSerialization {
       out writeObject obj
       out.close()
       file
-    } recoverWith {
-      case e =>
-        if (out ne null) out.close()
-        Failure[File](e)
+    } recoverWith { case e =>
+      if (out ne null) out.close()
+      Failure[File](e)
     }
   }
   def read[A](filename: String): Try[A] = read(new File(filename))
@@ -294,10 +291,9 @@ object FileSerialization {
       val read = in.readObject
       in.close()
       read.asInstanceOf[A]
-    } recoverWith {
-      case e =>
-        if (in ne null) in.close()
-        Failure[A](e)
+    } recoverWith { case e =>
+      if (in ne null) in.close()
+      Failure[A](e)
     }
   }
 }
@@ -350,9 +346,8 @@ protected object ScalaObjectSerialization extends App {
       println(s"saved (${saved.length} bytes)=${new String(saved)}")
       println(s"  contains MyVal=${new String(saved) contains "MyVal"}")
       read[A](saved)
-    } map (my => println(s"  okDef=${my.inner.d}, okVal=${my.inner.v}")) recover {
-      case e =>
-        println(s"serialization of $my failed with $e")
+    } map (my => println(s"  okDef=${my.inner.d}, okVal=${my.inner.v}")) recover { case e =>
+      println(s"serialization of $my failed with $e")
     }
 
   test(MyObject)

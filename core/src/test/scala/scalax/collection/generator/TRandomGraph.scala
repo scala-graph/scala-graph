@@ -53,7 +53,7 @@ class TRandomGraphTest extends RefSpec with should.Matchers {
                  | deviation=$deviation,
                  | (${100f * deviation / totalDegree}%2.2f percent)""".stripMargin.linesIterator.mkString)
     totalDegree should (be >= (expectedTotalDegree - maxDegreeDeviation) and
-    be <= (expectedTotalDegree + maxDegreeDeviation))
+      be <= (expectedTotalDegree + maxDegreeDeviation))
   }
 
   object `disconnected random graph` {

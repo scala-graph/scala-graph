@@ -717,12 +717,11 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
                         val start = missingPath.endNode
                         val shortenedPath = {
                           var found = false
-                          path takeWhile {
-                            case CycleStackElem(n, _) =>
-                              if (n eq start) {
-                                found = true
-                                true
-                              } else !found
+                          path takeWhile { case CycleStackElem(n, _) =>
+                            if (n eq start) {
+                              found = true
+                              true
+                            } else !found
                           }
                         }
                         if (

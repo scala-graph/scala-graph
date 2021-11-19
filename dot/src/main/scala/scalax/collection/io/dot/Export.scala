@@ -84,24 +84,22 @@ class Export[N, E[+X] <: EdgeLikeIn[X]](graph: Graph[N, E]) {
           cNodeTransformer map { visitor =>
             edge foreach { node =>
               if (visitedCNodes add node)
-                visitor(node) foreach {
-                  case (dotGraph, nodeStmt) =>
-                    val clusterNode = dotAST addAndGet DotCluster(dotGraph)
-                    connectClusters(clusterNode)
+                visitor(node) foreach { case (dotGraph, nodeStmt) =>
+                  val clusterNode = dotAST addAndGet DotCluster(dotGraph)
+                  connectClusters(clusterNode)
 
-                    clusterNode.dotStmts += nodeStmt
+                  clusterNode.dotStmts += nodeStmt
                 }
             }
           }
       }
       if (edge.edge.isHyperEdge && hEdgeTransformer.isDefined)
-        hEdgeTransformer.get(edge) foreach {
-          case (dotGraph, edgeStmt) => dotEdge(edge, dotGraph, edgeStmt)
+        hEdgeTransformer.get(edge) foreach { case (dotGraph, edgeStmt) =>
+          dotEdge(edge, dotGraph, edgeStmt)
         }
       else
-        edgeTransformer(edge) foreach {
-          case (dotGraph, edgeStmt) =>
-            dotEdge(edge, dotGraph, edgeStmt)
+        edgeTransformer(edge) foreach { case (dotGraph, edgeStmt) =>
+          dotEdge(edge, dotGraph, edgeStmt)
         }
     }
     visitedCNodes.clear
@@ -144,11 +142,10 @@ class Export[N, E[+X] <: EdgeLikeIn[X]](graph: Graph[N, E]) {
       case (true, cluster) =>
         def format(kv: DotAttr): String = s"${kv.name} = ${kv.value}"
         def outStmtList(stmtList: Seq[DotAttrStmt]) {
-          stmtList foreach {
-            case DotAttrStmt(t, attrs) =>
-              separate(true)
-              res append t.toString
-              res append s" [${attrs map format mkString ", "}]"
+          stmtList foreach { case DotAttrStmt(t, attrs) =>
+            separate(true)
+            res append t.toString
+            res append s" [${attrs map format mkString ", "}]"
           }
         }
         def outIdList(kvList: Seq[DotAttr]) {

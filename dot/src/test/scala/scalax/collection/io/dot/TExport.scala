@@ -185,19 +185,18 @@ class TExportTest extends RefSpec with should.Matchers {
     )
     val dot = g.toDot(
       dotRoot = root,
-      edgeTransformer =
-        _.edge match {
-          case LDiEdge(source, target, label) =>
-            def withPort(n: Node, port: String): NodeId = n match {
-              case Node(id, _) => NodeId(id, port)
-            }
-            label match {
-              case Ports(sourcePort, targetPort) =>
-                Some(
-                  (root, DotEdgeStmt(withPort(source.value, sourcePort), withPort(target.value, targetPort)))
-                ): Option[(DotGraph, DotEdgeStmt)]
-            }
-        },
+      edgeTransformer = _.edge match {
+        case LDiEdge(source, target, label) =>
+          def withPort(n: Node, port: String): NodeId = n match {
+            case Node(id, _) => NodeId(id, port)
+          }
+          label match {
+            case Ports(sourcePort, targetPort) =>
+              Some(
+                (root, DotEdgeStmt(withPort(source.value, sourcePort), withPort(target.value, targetPort)))
+              ): Option[(DotGraph, DotEdgeStmt)]
+          }
+      },
       cNodeTransformer = Some(_.value match {
         case Node(id, label) =>
           Some((root, DotNodeStmt(id, List(DotAttr("label", label.toString)))))
@@ -247,8 +246,11 @@ class TExportTest extends RefSpec with should.Matchers {
   }
 
   private val multilineCompatibleSpacing =
-    Spacing(indent = TwoSpaces, graphAttrSeparator = new AttrSeparator("""
-                                                                         |""".stripMargin) {})
+    Spacing(
+      indent = TwoSpaces,
+      graphAttrSeparator = new AttrSeparator("""
+                                               |""".stripMargin) {}
+    )
 
   private def sortMid(dot: String): String = {
     val lines = dot.linesWithSeparators.toBuffer

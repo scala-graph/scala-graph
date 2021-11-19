@@ -149,23 +149,21 @@ trait ForeachBasedDetachingIterable[+A] extends Iterable[A] {
     }
 
   final override def span(p: A => Boolean): (CC[A], CC[A]) =
-    withBuilders[A] {
-      case (l, r) =>
-        var toLeft = true
-        for (x <- this) {
-          toLeft = toLeft && p(x)
-          (if (toLeft) l else r) += x
-        }
+    withBuilders[A] { case (l, r) =>
+      var toLeft = true
+      for (x <- this) {
+        toLeft = toLeft && p(x)
+        (if (toLeft) l else r) += x
+      }
     }
 
   final override def splitAt(n: Int): (CC[A], CC[A]) =
-    withBuilders[A] {
-      case (l, r) =>
-        var i = 0
-        for (x <- this) {
-          (if (i < n) l else r) += x
-          i += 1
-        }
+    withBuilders[A] { case (l, r) =>
+      var i = 0
+      for (x <- this) {
+        (if (i < n) l else r) += x
+        i += 1
+      }
     }
 
   // Element Conditions

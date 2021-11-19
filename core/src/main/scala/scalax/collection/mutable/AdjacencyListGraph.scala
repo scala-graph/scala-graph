@@ -81,9 +81,8 @@ trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn
     final protected[collection] def upsert(edge: EdgeT): Boolean = fold(edge, (_: NodeT).upsert)
 
     private def fold(edge: EdgeT, op: NodeT => EdgeT => Boolean): Boolean =
-      edge.foldLeft(false) {
-        case (cum, n) =>
-          op(collection findElem n getOrElse { collection += n; n })(edge) || cum
+      edge.foldLeft(false) { case (cum, n) =>
+        op(collection findElem n getOrElse { collection += n; n })(edge) || cum
       }
 
     final protected[collection] def remove(edge: EdgeT): Boolean =

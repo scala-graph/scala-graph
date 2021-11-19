@@ -36,8 +36,8 @@ final class TConnectivity[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
 
     def `there exists no pair of mutually reachable nodes` {
       given(g) {
-        _.nodes.toList.combinations(2) foreach {
-          case List(a, b) => List(a pathTo b, b pathTo a) should contain(None)
+        _.nodes.toList.combinations(2) foreach { case List(a, b) =>
+          List(a pathTo b, b pathTo a) should contain(None)
         }
       }
     }
@@ -149,28 +149,26 @@ final class TConnectivity[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Graph
             (nodes zipWithIndex) withFilter { case (n, i) => i % every == 0 } map (_._1)
           }
         }
-        arbitraryNodes foreach {
-          case nodes =>
-            def checkBiConnected(n1: g.NodeT, n2: g.NodeT) =
-              if (n1 ne n2) {
-                n1 pathTo n2 should be('isDefined)
-                n2 pathTo n1 should be('isDefined)
-              }
-
-            nodes.sliding(2) foreach { pairOrSingle =>
-              pairOrSingle.toList match {
-                case List(n1, n2) => checkBiConnected(n1, n2)
-                case n :: Nil     => checkBiConnected(n, nodes.head)
-              }
+        arbitraryNodes foreach { case nodes =>
+          def checkBiConnected(n1: g.NodeT, n2: g.NodeT) =
+            if (n1 ne n2) {
+              n1 pathTo n2 should be('isDefined)
+              n2 pathTo n1 should be('isDefined)
             }
+
+          nodes.sliding(2) foreach { pairOrSingle =>
+            pairOrSingle.toList match {
+              case List(n1, n2) => checkBiConnected(n1, n2)
+              case n :: Nil     => checkBiConnected(n, nodes.head)
+            }
+          }
         }
         arbitraryNodes.sliding(2) foreach { pairOrSingle =>
           def checkNonBiConnected(ns1: Set[g.NodeT], ns2: Set[g.NodeT]) =
             if (ns1 ne ns2)
-              ns1 zip ns2 foreach {
-                case (n1, n2) =>
-                  (n1 pathTo n2).isDefined &&
-                    (n2 pathTo n1).isDefined should be(false)
+              ns1 zip ns2 foreach { case (n1, n2) =>
+                (n1 pathTo n2).isDefined &&
+                  (n2 pathTo n1).isDefined should be(false)
               }
 
           pairOrSingle.toList match {

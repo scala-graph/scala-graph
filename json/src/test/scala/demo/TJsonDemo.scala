@@ -126,13 +126,11 @@ class TJsonDemoTest extends RefSpec with should.Matchers {
       final class AuthorSerializer
           extends CustomSerializer[Author](formats =>
             (
-              {
-                case JArray(JString(surName) :: JString(firstName) :: Nil) =>
-                  Author(surName, firstName)
+              { case JArray(JString(surName) :: JString(firstName) :: Nil) =>
+                Author(surName, firstName)
               },
-              {
-                case Author(surName, firstName) =>
-                  JArray(JString(surName) :: JString(firstName) :: Nil)
+              { case Author(surName, firstName) =>
+                JArray(JString(surName) :: JString(firstName) :: Nil)
               }
             )
           )
@@ -145,8 +143,8 @@ class TJsonDemoTest extends RefSpec with should.Matchers {
           extends CustomSerializer[Book](formats =>
             (
               { case JArray(JString(title) :: JString(isbn) :: Nil) => Book(title, isbn) },
-              {
-                case Book(title, isbn) => JArray(JString(title) :: JString(isbn) :: Nil)
+              { case Book(title, isbn) =>
+                JArray(JString(title) :: JString(isbn) :: Nil)
               }
             )
           )
