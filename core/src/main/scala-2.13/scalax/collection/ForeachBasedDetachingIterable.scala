@@ -52,7 +52,7 @@ trait ForeachBasedDetachingIterable[+A] extends Iterable[A] {
   final override def to[C1](factory: Factory[A, C1]): C1 = {
     val b = factory.newBuilder
     this foreach b.+=
-    b.result
+    b.result()
   }
 
   // Size info
@@ -63,8 +63,7 @@ trait ForeachBasedDetachingIterable[+A] extends Iterable[A] {
     i
   }
 
-  final override def isEmpty: Boolean  = headOption.isEmpty
-  final override def nonEmpty: Boolean = !isEmpty
+  final override def isEmpty: Boolean = headOption.isEmpty
 
   // Element Retrieval
 
@@ -149,23 +148,21 @@ trait ForeachBasedDetachingIterable[+A] extends Iterable[A] {
     }
 
   final override def span(p: A => Boolean): (CC[A], CC[A]) =
-    withBuilders[A] {
-      case (l, r) =>
-        var toLeft = true
-        for (x <- this) {
-          toLeft = toLeft && p(x)
-          (if (toLeft) l else r) += x
-        }
+    withBuilders[A] { case (l, r) =>
+      var toLeft = true
+      for (x <- this) {
+        toLeft = toLeft && p(x)
+        (if (toLeft) l else r) += x
+      }
     }
 
   final override def splitAt(n: Int): (CC[A], CC[A]) =
-    withBuilders[A] {
-      case (l, r) =>
-        var i = 0
-        for (x <- this) {
-          (if (i < n) l else r) += x
-          i += 1
-        }
+    withBuilders[A] { case (l, r) =>
+      var i = 0
+      for (x <- this) {
+        (if (i < n) l else r) += x
+        i += 1
+      }
     }
 
   // Element Conditions
@@ -199,12 +196,11 @@ trait ForeachBasedDetachingIterable[+A] extends Iterable[A] {
   final override def reduceLeft[B >: A](op: (B, A) => B): B = {
     var first  = true
     var acc: B = 0.asInstanceOf[B]
-    for (x <- this) {
+    for (x <- this)
       if (first) {
         acc = x
         first = false
       } else acc = op(acc, x)
-    }
     if (first) throw new UnsupportedOperationException("empty.reduceLeft")
     else acc
   }

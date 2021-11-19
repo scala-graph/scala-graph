@@ -1,6 +1,8 @@
 package scalax.collection
 
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+
+import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 
 import scalax.collection.GraphEdge._
@@ -28,7 +30,7 @@ private class EditingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
   val flightNo   = "LH007"
 
   object `Custom edge 'Flight'` {
-    def `proper methods` {
+    def `proper methods` :Unit = {
       import Aviation.Implicits._
 
       val outer = Flight(ham, gig, flightNo)
@@ -51,7 +53,7 @@ private class EditingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
       }
     }
 
-    def `proper method shortcuts` {
+    def `proper method shortcuts` :Unit={
       import Aviation.Implicits._
       import Flight._
 

@@ -2,6 +2,7 @@
 *.log
 log/
 temp/
+.bsp
 
 # SBT
 dist/*

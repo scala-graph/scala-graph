@@ -19,13 +19,13 @@ lazy val core = project
       name := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck"   % "1.15.4" % "optional;provided",
-        "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all"
+        "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
+        "org.gephi"               % "gephi-toolkit"           % "0.9.2" % "test" classifier "all"
       ),
       dependencyOverrides ++= {
-        val release                        = "RELEASE90"
+        val release                        = "RELEASE123"
         def netbeansModule(module: String) = "org.netbeans.modules" % module % release
-        def netbeansApi(module: String)    = "org.netbeans.api" % module % release
+        def netbeansApi(module: String)    = "org.netbeans.api"     % module % release
         Seq(
           netbeansModule("org-netbeans-core"),
           netbeansModule("org-netbeans-core-startup-base"),
@@ -89,8 +89,6 @@ ThisBuild / resolvers ++= Seq(
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
 )
 
-ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
-
 val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion := Version.compiler_2_13,
@@ -99,7 +97,10 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalacOptions ++= Seq(
     unusedImports,
     "-Yrangepos",
-    "-Ywarn-unused:privates"
+    "-Ywarn-unused:privates",
+    "-deprecation",
+    "-feature",
+    "-language:higherKinds"
   ),
   Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports),
   addCompilerPlugin(scalafixSemanticdb),
@@ -113,5 +114,8 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   }).value,
   autoAPIMappings := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.9" % "test"
+  libraryDependencies ++= Seq(
+    "org.scalatest"     %% "scalatest"       % "3.2.9"   % "test",
+    "org.scalatestplus" %% "scalacheck-1-15" % "3.2.9.0" % "test"
+  )
 ) ++ GraphSonatype.settings

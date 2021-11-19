@@ -10,7 +10,7 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity) extends Set[A]
   final protected def sizeHint: Int = _sizeHint
   final protected def step          = 1
 
-  def this(other: EqHashSet[A]) {
+  def this(other: EqHashSet[A]) = {
     this()
     from(other)
   }
@@ -31,7 +31,7 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity) extends Set[A]
         val neg = ~i
         tab(neg) = masked
         _size += 1
-        if (_size >= threshold) resize
+        if (_size >= threshold) resize()
         true
       case i => false
     }
@@ -72,7 +72,7 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity) extends Set[A]
   override def clone: EqHashSet[A] = new EqHashSet[A](this)
 
   def iterator: Iterator[A] = new EqHashIterator[A] {
-    def next: A = {
+    def next(): A = {
       val i = nextIndex
       unmaskNull(tab(i)).asInstanceOf[A]
     }

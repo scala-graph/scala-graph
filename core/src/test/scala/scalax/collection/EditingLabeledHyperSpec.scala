@@ -1,6 +1,6 @@
 package scalax.collection
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
 /** Editing hypergraphs with labeled edges, in particular, editing multi-hypergraphs.

@@ -15,7 +15,7 @@ final class EqSet[K <: AnyRef](map: EqHashMap[K, _]) extends Set[K] with InclExc
   def contains(key: K) = map contains key
   def iterator         = map.keysIterator
 
-  /** $ON unless `elem` is already contained.*/
+  /** $ON unless `elem` is already contained. */
   def incl(elem: K) =
     if (map contains elem) this
     else {
@@ -24,7 +24,7 @@ final class EqSet[K <: AnyRef](map: EqHashMap[K, _]) extends Set[K] with InclExc
       new EqSet(newMap)
     }
 
-  /** $ON unless `elem` is not contained.*/
+  /** $ON unless `elem` is not contained. */
   def excl(elem: K) =
     if (map contains elem) {
       val newMap = map.clone

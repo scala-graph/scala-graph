@@ -219,7 +219,7 @@ trait Drawable {
         val realNodes = edge.ends.iterator
         val fake      = fakeNode
         addEdge(
-          src = realNodes.next.asNodeDraft,
+          src = realNodes.next().asNodeDraft,
           trg = fake,
           dir = EdgeDirection.UNDIRECTED
         )

@@ -7,7 +7,8 @@ import scalax.collection.immutable
 import scalax.collection.mutable
 
 import org.scalatest.refspec.RefSpec
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
+
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-operations.html
   *  Graph Operations]].
@@ -131,7 +132,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
 
       g.nodes filter (_ > 2) shouldBe Set(n(5), n(3))
       g.nodes filter (_.degree > 1) shouldBe Set(n(3))
-      g.edges filter (_ contains 4) shouldBe 'empty
+      g.edges filter (_ contains 4) shouldBe Symbol("empty")
 
       g filter (fNode = _ >= 2) should ===(Graph(2, 3, 5, 2 ~> 3))
       g filter (fEdge = _.isDirected) should ===(Graph(1, 5, 2, 3, 2 ~> 3))

@@ -4,7 +4,8 @@ package config
 import mutable.ArraySet
 
 /** Base trait for `Graph` configuration and optimization hints. This type is used by
-  *  the implicit parameter of `Graph` factory methods. */
+  *  the implicit parameter of `Graph` factory methods.
+  */
 trait GraphConfig {
 
   /** Indicates the expected number of nodes in the graph. */
@@ -15,7 +16,8 @@ object GraphConfig {
 }
 
 /** To be mixed in by any concrete class extending `GraphConfig` if the `Graph`
-  *  implementation is based on adjacency lists using `ArraySet`. */
+  *  implementation is based on adjacency lists using `ArraySet`.
+  */
 trait AdjacencyListArrayConfig {
   this: GraphConfig =>
 
@@ -23,7 +25,8 @@ trait AdjacencyListArrayConfig {
 }
 
 /** Configuration options for `Graph` factory methods in the core module. */
-case class CoreConfig(override val orderHint: Int = GraphConfig.defaultOrder,
-                      override val adjacencyListHints: ArraySet.Hints = ArraySet.Hints.Default)
-    extends GraphConfig
+case class CoreConfig(
+    override val orderHint: Int = GraphConfig.defaultOrder,
+    override val adjacencyListHints: ArraySet.Hints = ArraySet.Hints.Default
+) extends GraphConfig
     with AdjacencyListArrayConfig

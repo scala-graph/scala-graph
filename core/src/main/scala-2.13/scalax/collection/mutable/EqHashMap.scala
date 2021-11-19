@@ -13,7 +13,7 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
   final protected def sizeHint: Int = _sizeHint
   final protected def step          = 2
 
-  def this(other: EqHashMap[K, V]) {
+  def this(other: EqHashMap[K, V]) = {
     this()
     from(other)
   }
@@ -79,7 +79,7 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
         tab(neg) = maskedKey
         tab(neg + 1) = value.asInstanceOf[AnyRef]
         _size += 1
-        if (_size >= threshold) resize
+        if (_size >= threshold) resize()
         None
       case i =>
         val oldValue = tab(i + 1)
@@ -106,19 +106,19 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
   override def clone: EqHashMap[K, V] = new EqHashMap[K, V](this)
 
   protected class KeyIterator extends EqHashIterator[K] {
-    def next: K = unmaskNull(tab(nextIndex))
+    def next(): K = unmaskNull(tab(nextIndex))
   }
 
   override def keysIterator: Iterator[K] = new KeyIterator
 
   protected class ValueIterator extends EqHashIterator[V] {
-    def next: V = tab(nextIndex + 1)
+    def next(): V = tab(nextIndex + 1)
   }
 
   override def valuesIterator: Iterator[V] = new ValueIterator
 
   protected class EntryIterator extends EqHashIterator[(K, V)] {
-    def next: (K, V) = {
+    def next(): (K, V) = {
       val i = nextIndex
       (unmaskNull(tab(i)), tab(i + 1))
     }
