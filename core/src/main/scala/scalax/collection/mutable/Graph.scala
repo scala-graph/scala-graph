@@ -54,7 +54,7 @@ class GraphBuilder[N, E[+X] <: EdgeLikeIn[X], CC[N, E[+X] <: EdgeLikeIn[X]] <: C
   CC
 ] with CommonGraph[N, E]](companion: GraphCompanion[CC])(implicit edgeT: ClassTag[E[N]], config: GraphConfig)
     extends BuilderImpl[N, E, CC] {
-  def result: This =
+  def result(): This =
     companion.from(nodes, edges)(edgeT, config.asInstanceOf[companion.Config])
 }
 

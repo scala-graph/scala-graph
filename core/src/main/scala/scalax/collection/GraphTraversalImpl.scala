@@ -108,7 +108,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
     protected def select(fromNodes: Set[NodeT]): Option[NodeT] =
       Some(fromNodes.head)
 
-    def clear: Unit = {
+    def clear(): Unit = {
       nodes.clear; nodes += start
       edges.clear
       lastNode = Some(start)
@@ -119,7 +119,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
       ifEmpty = edges
     )(_ => edges.slice(0, edges.size - 1))
 
-    def result: Walk = new Walk {
+    def result(): Walk = new Walk {
       val nodes     = self.nodes
       def edges     = resultEdges
       val startNode = start
@@ -156,13 +156,13 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
     override protected def select(fromNodes: Set[NodeT]): Option[NodeT] =
       fromNodes find (!uniqueNodes(_))
 
-    override def clear: Unit = {
+    override def clear(): Unit = {
       super.clear
       uniqueNodes.clear
       uniqueNodes += start
     }
 
-    override def result: Path = new Path {
+    override def result(): Path = new Path {
       val nodes     = self.nodes
       val edges     = resultEdges
       val startNode = start

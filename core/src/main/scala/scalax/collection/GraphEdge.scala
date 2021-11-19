@@ -744,7 +744,7 @@ object GraphEdge {
     override def iterator: Iterator[N] = new AbstractIterator[N] {
       private var count = 0
       def hasNext       = count < 2
-      def next: N = {
+      def next(): N = {
         count += 1
         (count: @switch) match {
           case 1 => _1

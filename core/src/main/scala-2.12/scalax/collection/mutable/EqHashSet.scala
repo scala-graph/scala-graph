@@ -75,7 +75,7 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity)
   override def clone: EqHashSet[A] = new EqHashSet[A](this)
 
   def iterator: Iterator[A] = new EqHashIterator[A] {
-    def next: A = {
+    def next(): A = {
       val i = nextIndex
       unmaskNull(tab(i)).asInstanceOf[A]
     }

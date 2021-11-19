@@ -19,7 +19,7 @@ class GraphBuilder[N, E[+X] <: EdgeLikeIn[X], GC[N, E[+X] <: EdgeLikeIn[X]] <: C
     companion: GraphConstrainedCompanion[GC]
 )(implicit edgeT: ClassTag[E[N]], config: GenConstrainedConfig)
     extends BuilderImpl[N, E, GC] {
-  def result: This =
+  def result(): This =
     companion.from(nodes, edges)(edgeT, config.asInstanceOf[companion.Config])
 }
 
