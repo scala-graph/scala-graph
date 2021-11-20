@@ -11,7 +11,7 @@ class MicroBenchmarkTest extends RefSpec with Matchers {
   import MicroBenchmark._
 
   object `relativeTimes() reflects` {
-    def `relative execution times` :Unit ={
+    def `relative execution times`: Unit = {
       val r = 1 to 20
       val relTimes = relativeTimes(warmUp = 2)(
         r.toList.sorted,
@@ -32,7 +32,7 @@ class MicroBenchmarkTest extends RefSpec with Matchers {
     }
   }
   object `relativeTime() roughly reflects` {
-    def `O(N) complexity of List.size`:Unit = {
+    def `O(N) complexity of List.size`: Unit = {
       def fill(size: Int): (Int, List[Int]) = (size, List.fill(size)(0))
       val (small, big)                      = (fill(100), fill(1000))
 
@@ -44,7 +44,7 @@ class MicroBenchmarkTest extends RefSpec with Matchers {
       actual should ===(expected)
     }
   }
-  def `traversing immutable.Set takes marginally longer than mutable.Set` :Unit ={
+  def `traversing immutable.Set takes marginally longer than mutable.Set`: Unit = {
     import scala.collection.mutable
     import scala.collection.compat.immutable.ArraySeq
     val size  = 10000
@@ -53,9 +53,9 @@ class MicroBenchmarkTest extends RefSpec with Matchers {
     val imm   = Set(ArraySeq.unsafeWrapArray(array): _*)
     val m     = mutable.Set(ArraySeq.unsafeWrapArray(array): _*)
 
-    relativeTime(repetitions = 6)(m.sum == sum, imm.sum == sum) should be > (1.05f)
+    relativeTime(repetitions = 6)(m.sum == sum, imm.sum == sum) should be > 1.05f
   }
-  def `traversing mutable.Set takes longer than mutable.BitSet`:Unit = {
+  def `traversing mutable.Set takes longer than mutable.BitSet`: Unit = {
     import scala.collection.mutable
     import scala.collection.compat.immutable.ArraySeq
     val size  = 10000
@@ -63,6 +63,6 @@ class MicroBenchmarkTest extends RefSpec with Matchers {
     val s     = Set(ArraySeq.unsafeWrapArray(array): _*)
     val b     = mutable.BitSet(ArraySeq.unsafeWrapArray(array): _*)
 
-    relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > (1.1f)
+    relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > 1.1f
   }
 }

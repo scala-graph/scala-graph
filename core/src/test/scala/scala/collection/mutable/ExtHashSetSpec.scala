@@ -12,7 +12,7 @@ class ExtHashSetSpec extends RefSpec with Matchers {
   object `ExtHashSet works properly in that it` {
     import ExtHashSetSpec._
 
-    def `draws random elements with uniform distribution if buckets are of equal length`:Unit= {
+    def `draws random elements with uniform distribution if buckets are of equal length`: Unit = {
       val size = 16
       val set  = ExtHashSet(1 to size: _*)
       nonEmptyBuckets(set).length should ===(size)
@@ -24,7 +24,7 @@ class ExtHashSetSpec extends RefSpec with Matchers {
       range(frequencies) should be < (nrProbesPerElement * (2 * maxDeviation_%) / 100)
     }
 
-    def `draws random elements with near-uniform distribution if buckets are of different length` :Unit={
+    def `draws random elements with near-uniform distribution if buckets are of different length`: Unit = {
       val set = {
         val maxSize = 16
         val r       = new Random
@@ -49,13 +49,12 @@ class ExtHashSetSpec extends RefSpec with Matchers {
       val nrProbes                      = set.size * nrProbesPerElement
       val frequencies                   = sortedProbeFrequencies(set, nrProbes, Some(77))
       val maxDeviationForBucketLength_% = Map(1 -> 25, 2 -> 50)
-      frequencies foreach {
-        case ProbeFrequency(element, count) =>
-          abs(nrProbesPerElement - count) should be < maxDeviationForBucketLength_%(bucketLengthOfElement(element))
+      frequencies foreach { case ProbeFrequency(element, count) =>
+        abs(nrProbesPerElement - count) should be < maxDeviationForBucketLength_%(bucketLengthOfElement(element))
       }
     }
 
-    def `finds elements by predicate` :Unit={
+    def `finds elements by predicate`: Unit = {
       case class C(value: Int) {
         override def hashCode(): Int = 0
       }
@@ -86,18 +85,18 @@ class ExtHashSetSpec extends RefSpec with Matchers {
       set should have size 2
     }
 
-    def `iterates over hashCodes` :Unit={
+    def `iterates over hashCodes`: Unit = {
       case class C(value: Int) {
         override def hashCode(): Int = value
       }
       val set = ExtHashSet(C(1), C(2))
-      set.hashCodeIterator(3).toList should have size (0)
+      set.hashCodeIterator(3).toList should have size 0
       val elems = set.hashCodeIterator(1).toList
-      elems should have size (1)
+      elems should have size 1
       elems.head should be(C(1))
     }
 
-    def `iterates over duplicate hashCodes`:Unit= {
+    def `iterates over duplicate hashCodes`: Unit = {
       case class C(i: Int, j: Int) {
         override def hashCode = i.##
       }
@@ -116,20 +115,22 @@ object ExtHashSetSpec extends App {
 
   protected case class ProbeFrequency[A](probe: A, count: Int)
 
-  private def sortedProbeFrequencies(set: ExtHashSet[Int],
-                                     nrProbes: Int,
-                                     seed: Option[Long]): List[ProbeFrequency[Int]] = {
+  private def sortedProbeFrequencies(
+      set: ExtHashSet[Int],
+      nrProbes: Int,
+      seed: Option[Long]
+  ): List[ProbeFrequency[Int]] = {
     val r = new Random
     seed foreach r.setSeed
     Array
       .fill(nrProbes)(set draw r)
       .groupBy(identity)
-      .map {
-        case (k, v: Array[Int]) => ProbeFrequency(k, v.length)
+      .map { case (k, v: Array[Int]) =>
+        ProbeFrequency(k, v.length)
       }
       .toList
-      .sortBy {
-        case ProbeFrequency(_, v) => v
+      .sortBy { case ProbeFrequency(_, v) =>
+        v
       }
   }
 
@@ -146,5 +147,5 @@ object ExtHashSetSpec extends App {
   Range(10, 2000, 100) foreach { i =>
     println(sortedProbeFrequencies(set, i))
   }
- */
+   */
 }

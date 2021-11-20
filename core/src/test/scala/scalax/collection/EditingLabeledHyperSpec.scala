@@ -29,11 +29,11 @@ private class EditingLabeledHyperMutable extends RefSpec with Matchers {
           innerLabels should have size (outerLabels.size)
           /*
         innerLabels forall (outerLabels contains _) should be (true)
-   * https://groups.google.com/forum/?fromgroups=#!searchin/scala-internals/both$20method/scala-internals/nPZY2EMtDvY/PivCCtyRM_IJ
-   * https://issues.scala-lang.org/browse/SI-5330
-   */
+     * https://groups.google.com/forum/?fromgroups=#!searchin/scala-internals/both$20method/scala-internals/nPZY2EMtDvY/PivCCtyRM_IJ
+     * https://issues.scala-lang.org/browse/SI-5330
+     */
           (innerLabels: Iterable[Any]) forall (outerLabels contains _) should be(true)
         }
-   */
+     */
   }
 }
