@@ -1,10 +1,10 @@
 package scalax.collection
 
 import scala.language.implicitConversions
-
-import org.scalatest.matchers.should.Matchers
+import scala.util.chaining._
 
 import org.scalatest.Suites
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
@@ -22,7 +22,6 @@ private class MappingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
     with Matchers {
 
   object `when mapping a typed graph you may` {
-
     private trait Node
     private case class A(a: Int)         extends Node { def +(addend: Int) = A(a + addend)             }
     private case class B(a: Int, b: Int) extends Node { def +(addend: Int) = B(a + addend, b + addend) }

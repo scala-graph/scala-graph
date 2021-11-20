@@ -14,6 +14,7 @@ package scalax.collection
 
 import scala.collection.immutable.VectorBuilder
 import scala.collection.{Factory, Iterable, IterableFactory}
+import scala.util.chaining._
 
 /** Substitute for Scala 2.12 `Traversable` to continue support for collections that cannot implement `hasNext`/`next` easily.
   * The methods of Scala 2.13's `IterableOnce` are implemented in terms of `foreach`.

@@ -5,6 +5,7 @@ import java.io.{ObjectInputStream, ObjectOutputStream}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.math.max
+import scala.util.chaining._
 
 import scalax.collection.{Graph => AnyGraph, GraphLike => AnyGraphLike}
 import scalax.collection.GraphEdge.{AnyEdge, EdgeLike}

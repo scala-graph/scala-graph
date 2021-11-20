@@ -1,8 +1,9 @@
 package scalax.collection
 
-import org.scalatest.matchers.should.Matchers
+import scala.util.chaining._
 
 import org.scalatest.Suites
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
 import GraphPredef._, GraphEdge._
