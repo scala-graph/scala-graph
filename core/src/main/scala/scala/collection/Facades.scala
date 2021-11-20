@@ -1,7 +1,5 @@
 package scala.collection
 
-import scalax.collection.Compat.InclExcl
-
 /** Wraps the [[scala.collection.Iterable Iterable]] `i` to a
   *  [[scala.collection.Seq Seq]].
   *  It helps to avoid the creation of a copy of the elements of `i`
@@ -29,7 +27,7 @@ final class SeqFacade[+A](i: Iterable[A]) extends immutable.Seq[A] {
   *
   * @param i the underlying `Iterable` with unique elements.
   */
-final class EqSetFacade[A <: AnyRef](i: Iterable[A]) extends immutable.Set[A] with InclExcl[A, immutable.Set[A]] {
+final class EqSetFacade[A <: AnyRef](i: Iterable[A]) extends immutable.Set[A] {
   def iterator: Iterator[A] = i.iterator
   def incl(elem: A)         = i.toSet - elem
   def excl(elem: A)         = i.toSet + elem
@@ -52,8 +50,7 @@ trait FilterableSet[A] {
   */
 final class FilteredSet[A](val set: Set[A], val p: (A) => Boolean)
     extends immutable.Set[A]
-    with FilterableSet[A]
-    with InclExcl[A, immutable.Set[A]] {
+    with FilterableSet[A] {
   def contains(elem: A)     = p(elem) && (set contains elem)
   def iterator: Iterator[A] = set.iterator withFilter p
   def excl(elem: A)         = if (contains(elem)) iterator.toSet - elem else this

@@ -16,7 +16,6 @@ package scala.collection
 package mutable
 
 import scala.annotation.tailrec
-import scala.collection.ExtSetMethods
 import scala.collection.Stepper.EfficientSplit
 import scala.collection.generic.DefaultSerializationProxy
 import scala.util.Random
@@ -95,7 +94,7 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
       case hm: immutable.HashSet[A] =>
         hm.foreachWithHash((k, h) => addElem(k, improveHash(h)))
         this
-      case hm: mutable.ExtHashSet[A] =>
+      case hm: ExtHashSet[A] =>
         val iter = hm.nodeIterator
         while (iter.hasNext) {
           val next = iter.next()
@@ -118,7 +117,7 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
           size > 0
         }
         this
-      case hs: mutable.ExtHashSet[A] =>
+      case hs: ExtHashSet[A] =>
         val iter = hs.nodeIterator
         while (iter.hasNext) {
           val next = iter.next()

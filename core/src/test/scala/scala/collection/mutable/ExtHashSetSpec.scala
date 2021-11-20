@@ -5,7 +5,6 @@ import scala.util.Random
 import scala.util.chaining._
 
 import org.scalatest.matchers.should.Matchers
-
 import org.scalatest.refspec.RefSpec
 
 class ExtHashSetSpec extends RefSpec with Matchers {

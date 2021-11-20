@@ -1,13 +1,16 @@
 object Version {
-  val compiler_2_12 = "2.12.15"
   val compiler_2_13 = "2.13.6"
 
   private val isSnapshot = false
   private def snapshot   = if (isSnapshot) "-SNAPSHOT" else ""
-  private val major      = "1.13"
-  val highest            = s"$major.1$snapshot"
-  val core               = s"$major.2$snapshot"
-  val constrained        = s"$major.2$snapshot"
-  val dot                = s"$major.0$snapshot"
-  val json               = s"$major.0$snapshot"
+
+  private val major = 2
+  private val minor = 0
+  private def version(patch: Int) = s"$major.$minor.$patch$snapshot"
+
+  val highest     = version(0)
+  val core        = version(0)
+  val constrained = version(0)
+  val dot         = version(0)
+  val json        = version(0)
 }
