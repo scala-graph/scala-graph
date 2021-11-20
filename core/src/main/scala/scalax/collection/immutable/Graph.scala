@@ -48,8 +48,8 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
 
   initialize(iniNodes, iniEdges)
 
-  override protected[this] def newBuilder                         = new Builder[N, E, DefaultGraphImpl](DefaultGraphImpl)
-  final override def empty: DefaultGraphImpl[N, E]                = DefaultGraphImpl.empty[N, E]
+  override protected[this] def newBuilder          = new Builder[N, E, DefaultGraphImpl](DefaultGraphImpl)
+  final override def empty: DefaultGraphImpl[N, E] = DefaultGraphImpl.empty[N, E]
   final override def copy(nodes: Iterable[N], edges: Iterable[E]) = DefaultGraphImpl.from[N, E](nodes, edges)
 
   @SerialVersionUID(7170L)

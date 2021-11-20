@@ -34,10 +34,10 @@ abstract protected[collection] class BuilderImpl[N, E <: EdgeLike[N]](implicit c
     }
   )
 
-  protected def add(node: N): Boolean = NeverUsed
+  protected def add(node: N): Boolean           = NeverUsed
   final override def addOne(node: N): this.type = { nodes += node; this }
 
-  def add(edge: E): Boolean = NeverUsed
+  def add(edge: E): Boolean                     = NeverUsed
   final override def addOne(edge: E): this.type = { edges += edge; this }
 
   def upsert(edge: E): Boolean = (edges contains edge) pipe { found =>
@@ -114,7 +114,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
 
   type EdgeSetT <: GraphLikeEdgeSet
   trait GraphLikeEdgeSet extends MSet[EdgeT] with EdgeSet {
-    @inline final def addOne(edge: EdgeT) = { add(edge); this }
+    @inline final def addOne(edge: EdgeT)      = { add(edge); this }
     @inline final def subtractOne(edge: EdgeT) = { remove(edge); this }
 
     /** Same as `upsert` at graph level. */
@@ -140,10 +140,10 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     */
   @inline final def addAndGet(edge: E): EdgeT = { add(edge); find(edge).get }
 
-  @inline final def remove(node: N): Boolean = nodes find node exists (nodes remove _)
+  @inline final def remove(node: N): Boolean        = nodes find node exists (nodes remove _)
   @inline final def subtractOne(node: N): this.type = { remove(node); this }
 
-  @inline final def remove(edge: E): Boolean = edges remove InnerEdge(edge)
+  @inline final def remove(edge: E): Boolean        = edges remove InnerEdge(edge)
   @inline final def subtractOne(edge: E): this.type = { remove(edge); this }
 
   def filterInPlace(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): this.type = {

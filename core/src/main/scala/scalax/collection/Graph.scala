@@ -178,7 +178,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
         minusEdges: (NodeT) => Unit
     ): Boolean = {
       def minusNodeTrue = { minusNode(node); true }
-      def minusAllTrue = { minusEdges(node); minusNodeTrue }
+      def minusAllTrue  = { minusEdges(node); minusNodeTrue }
       if (contains(node))
         if (node.edges.isEmpty) minusNodeTrue
         else if (rippleDelete) minusAllTrue

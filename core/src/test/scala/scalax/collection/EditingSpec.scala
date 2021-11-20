@@ -93,7 +93,7 @@ private class EditingMutable extends RefSpec with Matchers {
       g addOne 2
       g.order should be(3)
       for (i <- 1 to 3)
-        g.contains(i) should be(true) //g should contain (i)
+        g.contains(i) should be(true) // g should contain (i)
     }
 
     def `serve -= properly`: Unit = {
@@ -110,7 +110,7 @@ private class EditingMutable extends RefSpec with Matchers {
       val g = Graph("A") addOne "B"
       g.elementCount should be(2)
       g.contains("A") should be(true)
-      g.contains("B") should be(true) //g should contain ("B")
+      g.contains("B") should be(true) // g should contain ("B")
 
       val hString_A = Graph[String, UnDiEdge]("A")
       val h         = hString_A += ("A" ~ "C")

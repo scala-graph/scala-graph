@@ -68,7 +68,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
   @inline final def isCustomEdgeFilter(f: EdgePredicate) = f ne anyEdge
 
   type NodeT <: InnerNode with Serializable
-  trait Node extends Serializable
+  trait Node      extends Serializable
   trait InnerNode extends Node with super.InnerNode {
 
     /** Synonym for `outer`. */

@@ -332,6 +332,7 @@ object GraphEdge {
 
     override protected def baseHashCode: Int = {
       var m = 4
+
       def mul(i: Int): Int = { m += 3; m * i }
       ends.foldLeft(0)((s: Int, n: Any) => s ^ mul(n.hashCode))
     }
@@ -509,7 +510,7 @@ object GraphEdge {
         }
       loop(fList)
     }
-    override def matches[M >: N](n1: M, n2: M): Boolean               = matches(List((n: M) => n == n1, (n: M) => n == n2))
+    override def matches[M >: N](n1: M, n2: M): Boolean = matches(List((n: M) => n == n1, (n: M) => n == n2))
     override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = matches(List(p1, p2))
 
     protected def nodesToStringSeparator: String = AnyHyperEdge.nodeSeparator
@@ -573,7 +574,7 @@ object GraphEdge {
     override def hasTarget[M >: N](node: M): Boolean    = targets exists (_ == node)
     override def hasTarget(pred: N => Boolean): Boolean = targets exists pred
 
-    override def matches[M >: N](n1: M, n2: M): Boolean               = sources.exists(_ == n1) && targets.exists(_ == n2)
+    override def matches[M >: N](n1: M, n2: M): Boolean = sources.exists(_ == n1) && targets.exists(_ == n2)
     override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = (sources exists p1) && (targets exists p2)
 
     override protected def nodesToStringSeparator: String = AnyDiHyperEdge.nodeSeparator

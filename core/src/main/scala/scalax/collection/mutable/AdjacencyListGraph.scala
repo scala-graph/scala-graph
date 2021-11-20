@@ -85,7 +85,7 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
     @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
     @inline final protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }
 
-    @inline final def addOne(node: NodeT): this.type = { add(node); this }
+    @inline final def addOne(node: NodeT): this.type      = { add(node); this }
     @inline final def subtractOne(node: NodeT): this.type = { remove(node); this }
 
     final protected def minus(node: NodeT): Unit = collection -= node
