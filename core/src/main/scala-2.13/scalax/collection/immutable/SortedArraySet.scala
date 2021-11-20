@@ -1,5 +1,7 @@
 package scalax.collection.immutable
 
+import java.lang.System.arraycopy
+
 import scala.collection.generic.DefaultSerializable
 import scala.collection.immutable.{AbstractSet, Set, SortedSet, SortedSetOps, StrictOptimizedSortedSetOps}
 import scala.collection.mutable.{ArrayBuffer, ReusableBuilder}
@@ -23,7 +25,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
     else {
       val newSize = size + 1
       val newArr  = new Array[AnyRef](newSize).asInstanceOf[Array[A]]
-      java.lang.System.arraycopy(array, 0, newArr, 0, size)
+      arraycopy(array, 0, newArr, 0, size)
       newArr(size) = elem
       new SortedArraySet(newArr)
     }
@@ -34,8 +36,8 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
     else {
       val newSize = size - 1
       val newArr  = new Array[AnyRef](newSize).asInstanceOf[Array[A]]
-      if (idx > 0) java.lang.System.arraycopy(array, 0, newArr, 0, idx)
-      if (idx < newSize) java.lang.System.arraycopy(array, idx + 1, newArr, idx, newSize - idx)
+      if (idx > 0) arraycopy(array, 0, newArr, 0, idx)
+      if (idx < newSize) arraycopy(array, idx + 1, newArr, idx, newSize - idx)
       new SortedArraySet(newArr)
     }
   }
@@ -76,7 +78,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
     else {
       val newSize               = idxTill - idxFrom + 1
       val newArr: Array[AnyRef] = new Array(newSize)
-      java.lang.System.arraycopy(array, idxFrom, newArr, 0, newSize)
+      arraycopy(array, idxFrom, newArr, 0, newSize)
       new SortedArraySet(newArr.asInstanceOf[Array[A]])
     }
   }
