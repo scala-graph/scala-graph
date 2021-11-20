@@ -14,8 +14,8 @@ class EqualityHyperSpec
     )
 
 private class EqualityHyper[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC])
-    extends RefSpec
+    val factory: GraphCoreCompanion[CC]
+) extends RefSpec
     with Matchers {
 
   def `hyperedges ` : Unit = {

@@ -34,12 +34,12 @@ class EditingImmutable extends RefSpec with Matchers {
   Graph.from(1 ~ 2 :: Nil)
 
   object `graphs ` {
-    def `are immutable by default` :Unit =  {
+    def `are immutable by default`: Unit = {
       val g = Graph[Nothing, Nothing]()
       g shouldBe a[immutable.Graph[_, Nothing]]
     }
 
-    def `+ Int` :Unit = {
+    def `+ Int`: Unit = {
       val g = Graph(1, 2 ~ 3)
       g + 1 should be(g)
       g + 0 should be(Graph(0, 1, 2, 3, 2 ~ 3))
@@ -48,7 +48,7 @@ class EditingImmutable extends RefSpec with Matchers {
 
     val gString_A = Graph[String, AnyEdge]("A")
 
-    def `- ` :Unit = {
+    def `- ` : Unit = {
       var g = gString_A - "B"
       g.order should be(1)
 
@@ -63,13 +63,13 @@ class EditingImmutable extends RefSpec with Matchers {
       h - 2 should be(Graph(1, 3))
     }
 
-    def `-- ` :Unit = {
+    def `-- ` : Unit = {
       val g = Graph(1, 2 ~ 3, 3 ~ 4)
       g -- (List(2), List(3 ~ 3)) should be(Graph(1, 3 ~ 4))
       g -- (List(2), List(3 ~ 4)) should be(Graph(1, 3, 4))
     }
 
-    def `+ String ` :Unit = {
+    def `+ String ` : Unit = {
       val g = gString_A + "B"
       g.elementCount should be(2)
       g.contains("A") should be(true)
@@ -88,7 +88,7 @@ private class EditingMutable extends RefSpec with Matchers {
   private val Graph = mutable.Graph
 
   object `mutable graphs` {
-    def `serve += properly` :Unit = {
+    def `serve += properly`: Unit = {
       val g = Graph[Int, Nothing](1, 3)
       g addOne 2
       g.order should be(3)
@@ -96,7 +96,7 @@ private class EditingMutable extends RefSpec with Matchers {
         g.contains(i) should be(true) //g should contain (i)
     }
 
-    def `serve -= properly` :Unit = {
+    def `serve -= properly`: Unit = {
       val g = Graph(1, 2, 2 ~ 3, 4)
       g remove 1 should be(true)
       g should be(Graph(2 ~ 3, 4))
@@ -106,7 +106,7 @@ private class EditingMutable extends RefSpec with Matchers {
       g should be(Symbol("empty"))
     }
 
-    def `+ String ` :Unit =  {
+    def `+ String ` : Unit = {
       val g = Graph("A") addOne "B"
       g.elementCount should be(2)
       g.contains("A") should be(true)
@@ -119,13 +119,13 @@ private class EditingMutable extends RefSpec with Matchers {
       h.elementCount should be(3)
     }
 
-    def `serve -= properly (2)`:Unit =  {
+    def `serve -= properly (2)` : Unit = {
       val g = Graph(1 ~ 2, 2 ~ 3)
       (g subtractOne 2) should be(Graph(1, 3))
       g.size should be(0)
     }
 
-    def `serve 'directed' properly` :Unit = {
+    def `serve 'directed' properly`: Unit = {
       val (di, unDi)                        = (1 ~> 2, 2 ~ 3)
       val g                                 = Graph[Int, AnyEdge](unDi)
       def directed(expected: Boolean): Unit = g.isDirected should be(expected)
@@ -137,7 +137,7 @@ private class EditingMutable extends RefSpec with Matchers {
       g.clear(); directed(false)
     }
 
-    def `serve 'diSuccessors' when directed` :Unit = {
+    def `serve 'diSuccessors' when directed`: Unit = {
       val (one, two, oneOne, oneTwo) = (1, 2, 1 ~> 1, 1 ~> 2)
       val g                          = Graph(oneOne, oneTwo, one ~> 3, one ~> 4)
       val (n1, n2)                   = (g get one, g get two)
@@ -161,7 +161,7 @@ private class EditingMutable extends RefSpec with Matchers {
       (n1 ~>? n1) should be(Some(e11))
     }
 
-    def `serve ++=, unionInPlace` :Unit = {
+    def `serve ++=, unionInPlace`: Unit = {
       val (gBefore, gAfter) = (Graph(1, 2 ~ 3), Graph(0, 1 ~ 2, 2 ~ 3))
       (gBefore ++= (0 :: Nil, List(1 ~ 2, 2 ~ 3))) should equal(gAfter)
       (gBefore |= Graph(0, 1 ~ 2)) should equal(gAfter)
@@ -183,13 +183,13 @@ private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
   private val gString_A = factory("A")
 
   object `graph editing` {
-    def `empty ` :Unit = {
+    def `empty ` : Unit = {
       val eg = factory.empty[Nothing, Nothing]
       eg shouldBe empty
       eg should have size 0
     }
 
-    def `apply ` :Unit = {
+    def `apply ` : Unit = {
       gInt_1_3 should not be empty
       gInt_1_3.order should be(2)
       gInt_1_3(0) should be(false)
@@ -210,21 +210,21 @@ private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
       h.elementCount should be(5)
     }
 
-    def `nodes of ADT fixes #40` :Unit = {
+    def `nodes of ADT fixes #40`: Unit = {
       sealed trait Node
       case class N1() extends Node
       case class N2() extends Node
       factory(N1() ~> N2(), N1() ~> N1()): CC[Node, DiEdge[Node]] // should typeCheck
     }
 
-    def `isDirected `:Unit =  {
+    def `isDirected ` : Unit = {
       def directed(g: CC[Int, AnyEdge[Int]], expected: Boolean): Unit = g.isDirected should be(expected)
 
       directed(factory(1 ~ 2), false)
       directed(factory(1 ~> 2), true)
     }
 
-    def `from `:Unit =  {
+    def `from ` : Unit = {
       val (n_start, n_end) = (11, 20)
       val nodes            = List.range(n_start, n_end)
       val edges            = List[DiEdge[Int]](14 ~> 16, 16 ~> 18, 18 ~> 20, 20 ~> 22)
@@ -233,17 +233,17 @@ private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
       g.edges.size should be(edges.size)
     }
 
-    def `contains ` :Unit = {
+    def `contains ` : Unit = {
       seq_1_3 foreach (n => gInt_1_3 contains n should be(true))
       gInt_1_3.iterator.next() shouldBe a[gInt_1_3.InnerNode]
     }
 
-    def `toString `:Unit =  {
+    def `toString ` : Unit = {
       gInt_1_3.toString should fullyMatch regex """Graph\([1], [3]\)"""
       gString_A.toString should fullyMatch regex """Graph\(["A"]\)"""
     }
 
-    def `from inner `:Unit =  {
+    def `from inner ` : Unit = {
       val gn = factory(2, 3)
       factory.from[Int, Nothing](gn.nodes.toOuter, Nil) should equal(gn)
 
@@ -252,7 +252,7 @@ private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
       factory.from(g.edges.toOuter) should equal(g)
     }
 
-    def `NodeSet ` :Unit = {
+    def `NodeSet ` : Unit = {
       val o = Vector.range(0, 4)
       val g = factory(o(1) ~ o(2), o(2) ~ o(3))
       val n = o map (g.nodes find _ getOrElse g.nodes.head)
@@ -270,7 +270,7 @@ private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
       restored.find(_ == n(1)).get.edges should have size 1
     }
 
-    def `EdgeAssoc ` :Unit = {
+    def `EdgeAssoc ` : Unit = {
       val e = 1 ~ 2
       e shouldBe an[UnDiEdge[_]]
       val x = factory(3 ~ 4).nodes
@@ -281,10 +281,10 @@ private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
       d shouldBe a[DiEdge[_]]
       d.source should be(1)
       d.target should be(2)
-      factory[Int, AnyEdge](1, d, 1 ~ 4).nodes should have size (3)
+      factory[Int, AnyEdge](1, d, 1 ~ 4).nodes should have size 3
     }
 
-    def `concat, ++, union` :Unit = {
+    def `concat, ++, union`: Unit = {
       val g = gString_A.concat[String, AnyEdge[String]](List("B", "C"), Nil)
       g.elementCount shouldEqual 3
       ('A' to 'C') map (_.toString) foreach (g.contains(_) shouldEqual true)
@@ -301,54 +301,54 @@ private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
     private val gMixed = factory[Int, AnyEdge](1 ~> 2, 2 ~> 3, 4 ~ 3)
 
     object `diSuccessors ` {
-      def `for UnDi`:Unit =  {
+      def `for UnDi`: Unit = {
         (gUnDi get 1).diSuccessors should be(Set(2, 3, 4))
         (gUnDi get 2).diSuccessors should be(Set(1))
       }
-      def `for Di` :Unit = {
+      def `for Di`: Unit = {
         (gDi get 1).diSuccessors should be(Set(2, 3, 4))
         (gDi get 2).diSuccessors should be(Set.empty)
       }
-      def `for mixed` :Unit = {
+      def `for mixed`: Unit = {
         (gMixed get 2).diSuccessors should be(Set(3))
         (gMixed get 3).diSuccessors should be(Set(4))
       }
     }
 
     object `diPredecessors ` {
-      def `for UnDi`:Unit =  {
+      def `for UnDi`: Unit = {
         (gUnDi get 1).diPredecessors should be(Set(2, 3, 4))
         (gUnDi get 2).diSuccessors should be(Set(1))
       }
-      def `for Di`:Unit =  {
+      def `for Di`: Unit = {
         (gDi get 1).diPredecessors should be(Set.empty)
         (gDi get 2).diPredecessors should be(Set(1))
       }
-      def `for mixed`:Unit =  {
+      def `for mixed`: Unit = {
         (gMixed get 2).diPredecessors should be(Set(1))
         (gMixed get 3).diSuccessors should be(Set(4))
       }
     }
 
     object `neighbors ` {
-      def `for UnDi` :Unit = {
+      def `for UnDi`: Unit = {
         (gUnDi get 1).neighbors should be(Set(2, 3, 4))
         (gUnDi get 2).neighbors should be(Set(1))
       }
-      def `for Di` :Unit = {
+      def `for Di`: Unit = {
         (gDi get 1).neighbors should be(Set(2, 3, 4))
         (gDi get 2).neighbors should be(Set(1))
       }
     }
 
-    def `findOutgoingTo Di`:Unit =  {
+    def `findOutgoingTo Di`: Unit = {
       val g         = factory(1 ~> 1, 1 ~> 2, 2 ~> 1)
       def n(i: Int) = g get i
       (n(1) findOutgoingTo n(2)) should be(Some(1 ~> 2))
       (n(1) findOutgoingTo n(1)) should be(Some(1 ~> 1))
     }
 
-    def `degree ` : Unit ={
+    def `degree ` : Unit = {
       val g = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
       (g get 1).degree should be(5)
       (g get 2).degree should be(1)
@@ -366,13 +366,13 @@ private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
       (h get 2).incoming should be(Set(dEdges(1)))
     }
 
-    def `edgeAdjacents UnDi` : Unit = {
+    def `edgeAdjacents UnDi`: Unit = {
       val g = factory[Int, AnyEdge](1 ~ 2, 2 ~ 3, 1 ~> 3, 1 ~ 5, 3 ~ 5, 3 ~ 4, 4 ~> 4, 4 ~> 5)
       (g get 4 ~> 4).adjacents should be(Set[AnyEdge[Int]](3 ~ 4, 4 ~> 5))
       (g get 1 ~ 2).adjacents should be(Set[AnyEdge[Int]](1 ~> 3, 1 ~ 5, 2 ~ 3))
     }
 
-    def `filter ` : Unit ={
+    def `filter ` : Unit = {
       val g = factory(2 ~> 3, 3 ~> 1, 5)
       g filter (_ > 1) should be(factory(2 ~> 3, 5))
       g filter (_ < 2) should be(factory(1))
@@ -385,11 +385,11 @@ private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
     def `match ` : Unit = {
       val di = 1 ~> 2
       (di match { case DiEdge(src, _) => src }) should be(1)
-      (di match { case src ~> trg     => src + trg }) should be(3)
+      (di match { case src ~> trg => src + trg }) should be(3)
 
       val unDi = 1 ~ 2
       (unDi match { case UnDiEdge(n1, _) => n1 }) should be(1)
-      (unDi match { case n1 ~ n2         => n1 + n2 }) should be(3)
+      (unDi match { case n1 ~ n2 => n1 + n2 }) should be(3)
     }
   }
 }

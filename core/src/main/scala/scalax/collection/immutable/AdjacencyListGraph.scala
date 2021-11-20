@@ -49,7 +49,7 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
   @inline final protected def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
 
   type EdgeSetT = EdgeSet
-  class EdgeSet extends super.EdgeSet with Compat.InclExcl[EdgeT, Set[EdgeT]] {
+  class EdgeSet extends super.EdgeSet {
     override protected[collection] def initialize(edges: Iterable[E]): Unit =
       if (edges ne null)
         edges foreach (this += InnerEdge(_))

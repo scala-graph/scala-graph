@@ -2,7 +2,6 @@ package scalax.collection
 package mutable
 
 import scalax.collection.GraphEdge.EdgeLike
-import scalax.collection.Compat.AddSubtract
 import scalax.collection.immutable.AdjacencyListBase
 
 /** Implements an incident list based mutable graph representation.
@@ -70,7 +69,7 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
   }
 
   type NodeSetT = AdjacencyListNodeSet
-  class AdjacencyListNodeSet extends GraphLikeNodeSet with super.NodeSet with AddSubtract[NodeT, AdjacencyListNodeSet] {
+  class AdjacencyListNodeSet extends GraphLikeNodeSet with super.NodeSet {
     @inline override def add(node: NodeT): Boolean               = collection add node
     final protected[collection] def add(edge: EdgeT): Boolean    = fold(edge, (_: NodeT).add)
     final protected[collection] def upsert(edge: EdgeT): Boolean = fold(edge, (_: NodeT).upsert)
@@ -100,7 +99,7 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
   @inline final protected def newEdgeTArray(size: Int): Array[EdgeT] = new Array[EdgeT](size)
 
   type EdgeSetT = AdjacencyListEdgeSet
-  class AdjacencyListEdgeSet extends GraphLikeEdgeSet with EdgeSet with AddSubtract[EdgeT, AdjacencyListEdgeSet] {
+  class AdjacencyListEdgeSet extends GraphLikeEdgeSet with EdgeSet {
     final protected[AdjacencyListGraph] var initialized = false
 
     final override protected[collection] def initialize(edges: Iterable[E]): Unit = {

@@ -92,7 +92,7 @@ ThisBuild / resolvers ++= Seq(
 val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion := Version.compiler_2_13,
-  crossScalaVersions := Seq(Version.compiler_2_12, scalaVersion.value),
+  crossScalaVersions := Seq(scalaVersion.value),
   organization := "org.scala-graph",
   scalacOptions ++= Seq(
     unusedImports,

@@ -17,8 +17,8 @@ class EditingTypedSpec
     )
 
 private class EditingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC])
-    extends RefSpec
+    val factory: GraphCoreCompanion[CC]
+) extends RefSpec
     with Matchers
     with Visualizer[CC] {
 
@@ -30,7 +30,7 @@ private class EditingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
   val flightNo   = "LH007"
 
   object `Custom edge 'Flight'` {
-    def `proper methods` :Unit = {
+    def `proper methods`: Unit = {
       import Aviation.Implicits._
 
       val outer = Flight(ham, gig, flightNo)
@@ -48,12 +48,12 @@ private class EditingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
         e should be(eqFlight)
         e.## should be(eqFlight.##)
         val neFlight = edges.Flight(ham, gig, flightNo + "x", 11 o 2)
-        e should not be (neFlight)
+        e should not be neFlight
         e.## should not be (neFlight.##)
       }
     }
 
-    def `proper method shortcuts` :Unit={
+    def `proper method shortcuts`: Unit = {
       import Aviation.Implicits._
       import Flight._
 

@@ -223,13 +223,13 @@ trait Drawable {
           trg = fake,
           dir = EdgeDirection.UNDIRECTED
         )
-        realNodes.foreach(
-          node =>
-            addEdge(
-              src = fake,
-              trg = node.asNodeDraft,
-              dir = edge.getDirection
-          ))
+        realNodes.foreach(node =>
+          addEdge(
+            src = fake,
+            trg = node.asNodeDraft,
+            dir = edge.getDirection
+          )
+        )
       }
     }
 

@@ -113,7 +113,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   }
 
   type EdgeSetT <: GraphLikeEdgeSet
-  trait GraphLikeEdgeSet extends MSet[EdgeT] with EdgeSet with Compat.AddSubtract[EdgeT, GraphLikeEdgeSet] {
+  trait GraphLikeEdgeSet extends MSet[EdgeT] with EdgeSet {
     @inline final def addOne(edge: EdgeT) = { add(edge); this }
     @inline final def subtractOne(edge: EdgeT) = { remove(edge); this }
 
@@ -147,8 +147,6 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   @inline final def subtractOne(edge: E): this.type = { remove(edge); this }
 
   def filterInPlace(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): this.type = {
-    import scalax.collection.Compat.MSetEnrichments
-    MSetEnrichments // prevents unused import warning in 2.13
     if (fNode ne anyNode) nodes filterInPlace fNode
     if (fEdge ne anyEdge) edges filterInPlace fEdge
     this

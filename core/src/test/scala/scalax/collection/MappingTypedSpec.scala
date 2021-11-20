@@ -36,15 +36,15 @@ private class MappingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
 
       case class NodeConnector(override val source: Node, override val target: Node)
           extends Edge[Node, NodeConnector](source, target) {
-        def map[NN]: PartialFunction[(NN, NN), NodeConnector] = {
-          case (node_1: Node, node_2: Node) => copy(node_1, node_2)
+        def map[NN]: PartialFunction[(NN, NN), NodeConnector] = { case (node_1: Node, node_2: Node) =>
+          copy(node_1, node_2)
         }
       }
 
       case class AConnector(override val source: A, override val target: A)
           extends Edge[A, AConnector](source, target) {
-        def map[NN]: PartialFunction[(NN, NN), AConnector] = {
-          case (node_1: A, node_2: A) => copy(node_1, node_2)
+        def map[NN]: PartialFunction[(NN, NN), AConnector] = { case (node_1: A, node_2: A) =>
+          copy(node_1, node_2)
         }
       }
 
@@ -57,37 +57,33 @@ private class MappingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
     private val a_1   = A(1)
     private val b_0_0 = B(0, 0)
 
-    def `map node values without changing node or edge types`:Unit = {
+    def `map node values without changing node or edge types`: Unit =
       factory(NodeConnector(a_1, b_0_0)) pipe { g =>
         g.mapBounded {
           case g.InnerNode(a: A) => a + 1
           case g.InnerNode(b: B) => b + 1
         } shouldEqual factory(NodeConnector(a_1 + 1, b_0_0 + 1))
       }
-    }
 
-    def `downcast nodes` : Unit ={
+    def `downcast nodes`: Unit =
       factory(NodeConnector(a_1, b_0_0)) pipe { g =>
         (g.mapBounded(_ => b_0_0): CC[B, Connector[B]]) should not be empty
       }
-    }
 
-    def `not upcast nodes without passing an edge mapper`: Unit = {
+    def `not upcast nodes without passing an edge mapper`: Unit =
       factory(AConnector(a_1, a_1)) pipe { g =>
         "g.map(_ => b_0_0): Graph[B, Edge]" shouldNot compile
         "g.map(_.toString)" shouldNot compile
       }
-    }
 
-    def `upcast nodes to another typed edge if the typed edge mapper is passed` : Unit ={
+    def `upcast nodes to another typed edge if the typed edge mapper is passed`: Unit =
       factory(AConnector(a_1, a_1)) pipe { g =>
         g.mapBounded[Node, NodeConnector](_ => b_0_0, NodeConnector) pipe { mapped: CC[Node, NodeConnector] =>
           mapped.edges.head.outer should ===(NodeConnector(b_0_0, b_0_0))
         }
       }
-    }
 
-    def `upcast nodes to any type if a generic edge mapper is passed` : Unit ={
+    def `upcast nodes to any type if a generic edge mapper is passed`: Unit =
       factory(AConnector(a_1, a_1)) pipe { g =>
         def toString(a: A): String = s"""string-$a"""
 
@@ -99,6 +95,5 @@ private class MappingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
         expect(g.map(toString(_), DiEdge[String]), toString(a_1) ~> toString(A(1)))
         expect(g.map(toString(_), UnDiEdge[String]), toString(a_1) ~ toString(A(1)))
       }
-    }
   }
 }

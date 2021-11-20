@@ -21,12 +21,13 @@ import scalax.collection.edges.Aviation._
   * @param departureAt daytime of departure
   * @param duration of flight
   */
-case class Flight(departure: Airport,
-                  destination: Airport,
-                  flightNo: String,
-                  departureAt: DayTime = DayTime(0, 0),
-                  duration: Duration = Duration(0, 0))
-    extends AbstractDiEdge[Airport](departure, destination)
+case class Flight(
+    departure: Airport,
+    destination: Airport,
+    flightNo: String,
+    departureAt: DayTime = DayTime(0, 0),
+    duration: Duration = Duration(0, 0)
+) extends AbstractDiEdge[Airport](departure, destination)
     with PartialEdgeMapper[Airport, Flight]
     with ExtendedKey[Airport] {
 
@@ -35,8 +36,8 @@ case class Flight(departure: Airport,
   def airline: String            = flightNo substring (0, 2)
 
   override protected def attributesToString: String = s" ($flightNo $departure $duration)"
-  override def map[NN]: PartialFunction[(NN, NN), Flight] = {
-    case (from: Airport, to: Airport) => copy(from, to)
+  override def map[NN]: PartialFunction[(NN, NN), Flight] = { case (from: Airport, to: Airport) =>
+    copy(from, to)
   }
 }
 

@@ -17,15 +17,15 @@ class EqualitySpec
     )
 
 private class Equality[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC])
-    extends RefSpec
+    val factory: GraphCoreCompanion[CC]
+) extends RefSpec
     with Matchers {
 
   private val seq_1_3   = Seq(1, 3)
   private val gInt_1_3  = factory(seq_1_3.toOuterElems[DiEdge[Int]]: _*)
   private val gString_A = factory("A")
 
-  def `Eq ` :Unit ={
+  def `Eq ` : Unit = {
     factory[Int, Nothing]() shouldEqual factory[Int, DiEdge]()
     gInt_1_3 shouldEqual factory(1, 3)
     gString_A shouldEqual factory("A")
@@ -49,7 +49,7 @@ private class EqualityMixed extends RefSpec with Matchers {
   def initH = (iFactory(oEdgesH: _*), mFactory(oEdgesH: _*))
 
   object `equals works properly` {
-    def `over immutable and mutable graphs`:Unit = {
+    def `over immutable and mutable graphs`: Unit = {
       val (iG, mG) = initG
       iG should ===(mG)
 

@@ -10,8 +10,8 @@ import scalax.collection.GraphEdge.EdgeLike
 class EditingLabeledSpec // TODO extends Suites()
 
 private class EditingLabeled[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: ConfigWrapper[CC])
-    extends RefSpec
+    val factory: ConfigWrapper[CC]
+) extends RefSpec
     with Matchers {
   /* TODO
   def `isMulti ` {
@@ -32,7 +32,7 @@ private class EditingLabeled[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLi
     directed(factory(wDi), true)
     directed(factory(0 ~> 1, wDi), true)
   }
- */
+   */
 }
 
 private class EditingLabeledMutable extends RefSpec with Matchers {
@@ -81,6 +81,6 @@ private class EditingLabeledMutable extends RefSpec with Matchers {
       g should have('graphSize (2))
       g.edges foreach { _.label should be(modLabel) }
     }
-   */
+     */
   }
 }

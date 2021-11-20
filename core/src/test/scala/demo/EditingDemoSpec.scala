@@ -9,7 +9,6 @@ import scalax.collection.mutable
 import org.scalatest.refspec.RefSpec
 import org.scalatest.matchers.should.Matchers
 
-
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-operations.html
   *  Graph Operations]].
   */
@@ -164,6 +163,6 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       g.isHyper shouldBe false
       g.isMulti shouldBe false
     }
-   */
+     */
   }
 }

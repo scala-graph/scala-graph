@@ -6,7 +6,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scala: ["2.13.7", "2.12.15"]
+        scala: ["2.13.7"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2.4.0
@@ -19,4 +19,4 @@ jobs:
             key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
       - uses: olafurpg/setup-scala@v13
       - name: Test
-        run: sbt ++${{ matrix.scala }} test
+        run: sbt ++${{ matrix.scala }} test scalafmtCheckAll

@@ -26,7 +26,7 @@ private class Mapping[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
 
     private def fNode(n: originalG.NodeT) = n.outer + 1
 
-    def `yields another graph`:Unit = {
+    def `yields another graph`: Unit = {
       val g = originalG map fNode
 
       g shouldBe a[CC[Int, UnDiEdge[Int]] @unchecked]
@@ -34,19 +34,19 @@ private class Mapping[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
       g.edges.head shouldBe an[g.Inner.UnDiEdge]
       (g.edges.head.outer: UnDiEdge[Int]) shouldBe an[UnDiEdge[_]]
     }
-    def `has correctly mapped nodes` :Unit ={
+    def `has correctly mapped nodes`: Unit = {
       val g = originalG map fNode
 
-      originalG.nodes zip g.nodes.toOuter foreach {
-        case (original, mapped) => fNode(original) == mapped
+      originalG.nodes zip g.nodes.toOuter foreach { case (original, mapped) =>
+        fNode(original) == mapped
       }
     }
-    def `has correctly mapped edges` :Unit ={
+    def `has correctly mapped edges`: Unit = {
       val g = originalG map fNode
 
       g.edges.head should be(UnDiEdge(2, 3))
     }
-    def `may have a new node type` :Unit ={
+    def `may have a new node type`: Unit = {
       val g = originalG map (_.toString)
 
       g.nodes.head.outer shouldBe a[String]

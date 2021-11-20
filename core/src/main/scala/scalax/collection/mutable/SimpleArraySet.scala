@@ -1,10 +1,11 @@
 package scalax.collection
 package mutable
 
-import scala.collection.{IterableFactory, IterableFactoryDefaults, SortedSet, StrictOptimizedIterableOps}
 import scala.collection.mutable.{ExtHashSet, GrowableBuilder}
+import scala.collection.{IterableFactory, IterableFactoryDefaults, SortedSet, StrictOptimizedIterableOps}
 import scala.util.Random
-import immutable.SortedArraySet
+
+import scalax.collection.immutable.SortedArraySet
 
 /** A basic [[ArraySet]] implementation suitable for efficient add operations.
   * Element removal could be optimized by another implementation.

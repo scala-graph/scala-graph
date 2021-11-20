@@ -8,7 +8,8 @@ import edge.Implicits._
  */
 
 abstract class TGraph[N, E <: EdgeLike[N], G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, G]](
-    val g: G[N, E]) {
+    val g: G[N, E]
+) {
   def node(outer: N): g.NodeT = g get outer
   def n(outer: N): g.NodeT    = node(outer)
   def edge(outer: E): g.EdgeT = g get outer
@@ -44,5 +45,5 @@ val elementsOfWUnDi_2 = List(
   1 ~> 2 % 3,
   2 ~ 2  % 1
 )
- */
+   */
 }

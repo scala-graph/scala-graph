@@ -15,8 +15,9 @@ trait ConfigWrapper[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, 
   def apply[N, E[X] <: EdgeLike[X]](elems: OuterElem[N, E[N]]*)(implicit config: companion.Config) =
     companion(elems: _*)
 
-  def from[N, E <: EdgeLike[N]](nodes: collection.Iterable[N], edges: collection.Iterable[E])(
-      implicit config: companion.Config) =
+  def from[N, E <: EdgeLike[N]](nodes: collection.Iterable[N], edges: collection.Iterable[E])(implicit
+      config: companion.Config
+  ) =
     companion.from[N, E](nodes, edges)
 
   def from[N, E[X] <: EdgeLike[X]](edges: collection.Iterable[E[N]]) = companion.from[N, E](edges)

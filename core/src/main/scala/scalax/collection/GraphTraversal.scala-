@@ -6,7 +6,6 @@ import scala.collection.mutable.{ArrayBuffer, Builder}
 import scala.language.implicitConversions
 import scala.math.{max, min}
 
-import scalax.collection.Compat.CompatTraversable
 import scalax.collection.GraphPredef.{EdgeLikeIn, OuterElem}
 import scalax.collection.mutable.{EqHashMap, EqHashSet}
 import scalax.collection.generic.GraphCoreCompanion
@@ -328,7 +327,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     * @define ADDEDGE Tries to add `edge` to the tail of the path/walk.
     * @define ADDSUCCESS Whether the addition was successful.
     */
-  trait WalkBuilder extends Builder[InnerElem, Walk] with Compat.Growable[InnerElem] {
+  trait WalkBuilder extends Builder[InnerElem, Walk] {
 
     /** The node this walk starts at. */
     def start: NodeT
@@ -622,7 +621,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   }
   protected object SubgraphProperties {
     def apply[A](t: Iterable[A], nodeFilter: NodeFilter, edgeFilter: EdgeFilter) =
-      new CompatTraversable[A] with SubgraphProperties {
+      new ForeachBasedDetachingIterable[A] with SubgraphProperties {
         protected def autarkicForeach[U](f: A => U): Unit = t foreach f
 
         final protected def sizeHint: Int = 64
@@ -1031,7 +1030,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   trait Traverser[A, +This <: Traverser[A, This]]
       extends TraverserMethods[A, This]
       with Properties
-      with CompatTraversable[A] {
+      with ForeachBasedDetachingIterable[A] {
     this: This =>
 
     protected def autarkicForeach[U](f: A => U): Unit =
