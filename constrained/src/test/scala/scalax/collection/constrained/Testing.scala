@@ -1,8 +1,7 @@
 package scalax.collection.constrained
 
 import org.scalatest.matchers.{MatchResult, Matcher}
-
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 
 import scalax.collection.{Graph => SimpleGraph}
 import scalax.collection.GraphPredef.EdgeLikeIn

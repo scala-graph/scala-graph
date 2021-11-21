@@ -4,7 +4,7 @@ import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.Graph
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
 class TKatzTest extends RefSpec with Matchers {

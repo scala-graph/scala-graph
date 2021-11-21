@@ -6,8 +6,9 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scalax.collection.io.json._
 import scalax.collection.io.json.descriptor.predefined.{Di, DiHyper}
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
+
 class TJsonDemoTest extends RefSpec with Matchers {
   val (programming, inDepth) = (
     Book("Programming in Scala", "978-0-9815316-2-5"),

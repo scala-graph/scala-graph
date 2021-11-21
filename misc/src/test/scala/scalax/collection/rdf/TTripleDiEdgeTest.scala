@@ -1,8 +1,8 @@
 package scalax.collection
 package rdf
 
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-import org.scalatest.Matchers
 
 class TTripleDiEdgeTest extends RefSpec with Matchers {
 

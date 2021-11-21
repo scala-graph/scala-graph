@@ -7,7 +7,7 @@ import scala.collection.SortedMap
 import GraphPredef._, GraphEdge._, edge.LDiEdge, edge.Implicits._
 import Indent._
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
 /** Tests [[Export]]. */

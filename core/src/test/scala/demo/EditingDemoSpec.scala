@@ -6,15 +6,15 @@ import scalax.collection.Graph
 import scalax.collection.immutable
 import scalax.collection.mutable
 
-import org.scalatest.refspec.RefSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.refspec.RefSpec
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-operations.html
   *  Graph Operations]].
   */
 final class EditingDemoSpec extends RefSpec with Matchers {
 
-  object `demonstraiting ` {
+  object `demonstrating ` {
 
     def `iterating ` : Unit = {
       val g = Graph(2 ~ 3, 3 ~ 1)

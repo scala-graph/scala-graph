@@ -11,8 +11,8 @@ import GraphEdge._
 import generator.{NodeDegreeRange, RandomGraph}
 
 import org.scalatest.Inspectors._
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-import org.scalatest.Matchers
 
 /** Ensure that stateful data handling used for traversals is thread-safe.
   */
