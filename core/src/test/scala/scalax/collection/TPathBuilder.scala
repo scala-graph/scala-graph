@@ -17,11 +17,19 @@ trait WalkBehaviors {
 
   import AGraph.UnDi_1._
 
-  def walk(builder: => g.WalkBuilder) {
-    it should "accept neighbors" in { builder add n(3) should be(true) }
-    it should "refuse non-neighbors" in { builder add n(4) should be(false) }
-    it should "accept outgoing edge" in { builder add (g get 1 ~ 2) should be(true) }
-    it should "refuse non-outgoing edge" in { builder add (g get 2 ~ 3) should be(false) }
+  def walk(builder: => g.WalkBuilder): Unit = {
+    it should "accept neighbors" in {
+      builder add n(3) should be(true)
+    }
+    it should "refuse non-neighbors" in {
+      builder add n(4) should be(false)
+    }
+    it should "accept outgoing edge" in {
+      builder add (g get 1 ~ 2) should be(true)
+    }
+    it should "refuse non-outgoing edge" in {
+      builder add (g get 2 ~ 3) should be(false)
+    }
   }
 }
 
@@ -29,8 +37,9 @@ class TPathBuilderTest extends AnyFlatSpec with WalkBehaviors with should.Matche
 
   import AGraph.UnDi_1._
 
-  def walkBuilder = g.newWalkBuilder(n(1))
-  def pathBuilder = g.newPathBuilder(n(1))
+  def walkBuilder: g.WalkBuilder = g.newWalkBuilder(n(1))
+
+  def pathBuilder: g.PathBuilder = g.newPathBuilder(n(1))
 
   "A WalkBuilder" should behave like walk(walkBuilder)
 

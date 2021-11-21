@@ -209,8 +209,9 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     componentTraverser().topologicalSort(visitor)
 
   /** Sorts every isolated component of this graph topologically.
-    *  @param visitor $SORTVISITOR
-    *  $SEEFLUENT
+    *
+    * @param visitor $SORTVISITOR
+    *                $SEEFLUENT
     */
   final def topologicalSortByComponent[U](implicit
       visitor: InnerElem => U = empty
@@ -311,15 +312,15 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     protected[GraphTraversal] trait Zero {
       this: Walk =>
       protected def single: NodeT
-      val nodes            = List(single)
-      def edges            = Nil
-      def startNode        = single
-      def endNode          = single
-      override def isValid = true
+      val nodes: List[NodeT] = List(single)
+      def edges              = Nil
+      def startNode          = single
+      def endNode            = single
+      override def isValid   = true
     }
 
     /** A walk of zero length that is a single node. */
-    def zero(node: NodeT) =
+    def zero(node: NodeT): Walk with Zero =
       new Walk with Zero {
         final protected def single = node
       }
@@ -376,8 +377,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Instantiates a [[WalkBuilder]] for this graph.
     *
-    * @param start The node this walk starts at.
-    * @param sizeHint Expected maximum number of nodes on this walk.
+    * @param start        The node this walk starts at.
+    * @param sizeHint     Expected maximum number of nodes on this walk.
     * @param edgeSelector $EDGESELECTOR
     */
   def newWalkBuilder(start: NodeT)(implicit
@@ -408,7 +409,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   object Path extends Serializable {
 
     /** A path of zero length that is a single node. */
-    def zero(node: NodeT) =
+    def zero(node: NodeT): Path with Walk.Zero =
       new Path with Walk.Zero {
         final protected def single = node
       }
@@ -431,8 +432,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Instantiates a [[PathBuilder]] for this graph.
     *
-    * @param start The node this path starts at.
-    * @param sizeHint Expected maximum number of nodes on this path.
+    * @param start        The node this path starts at.
+    * @param sizeHint     Expected maximum number of nodes on this path.
     * @param edgeSelector $EDGESELECTOR
     */
   def newPathBuilder(start: NodeT)(implicit
@@ -516,9 +517,9 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   /** Whether all nodes are pairwise adjacent.
     *
     * @return `true` if this graph is complete, `false` if this graph contains any
-    * independent nodes.
+    *         independent nodes.
     */
-  def isComplete = {
+  def isComplete: Boolean = {
     val orderLessOne = order - 1
     nodes forall (_.diSuccessors.size == orderLessOne)
   }
@@ -532,7 +533,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     *  for use in weight-based traversals that may be defined by `withMaxWeight`.
     */
   class Weight(val value: Double, val edgeWeight: EdgeT => Double) {
-    val ordering = Edge weightOrdering edgeWeight
+    val ordering: Ordering[EdgeT] = Edge weightOrdering edgeWeight
   }
   object Weight {
 
@@ -558,13 +559,14 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     */
   trait ExtendedNodeVisitor[U] extends (NodeT => U) {
     def apply(n: NodeT, cnt: Int, depth: Int, inf: => NodeInformer): U
-    def apply(node: NodeT) = apply(node, 0, 0, NodeInformer.empty)
+
+    def apply(node: NodeT): U = apply(node, 0, 0, NodeInformer.empty)
   }
   object ExtendedNodeVisitor {
 
     /** Instantiates an extended node visitor based on 'visitor'.
       */
-    def apply[N, E[+X] <: EdgeLikeIn[X], U](visitor: (NodeT, Int, Int, => NodeInformer) => U) =
+    def apply[N, E[+X] <: EdgeLikeIn[X], U](visitor: (NodeT, Int, Int, => NodeInformer) => U): ExtendedNodeVisitor[U] =
       new ExtendedNodeVisitor[U] {
         def apply(n: NodeT, cnt: Int, depth: Int, inf: => NodeInformer) =
           visitor(n, cnt, depth, inf)
@@ -575,53 +577,65 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   trait TraverserInnerNode extends super.InnerNode { this: NodeT =>
 
     /** Instantiates an [[InnerNodeTraverser]] $EXTENDSTYPE `NodeT` $SETROOT. $TOSTART
-      *  @param parameters $PARAMETERS
+      *
+      * @param parameters $PARAMETERS
       */
-    @inline final def innerNodeTraverser(implicit parameters: Parameters = Parameters()) =
+    @inline final def innerNodeTraverser(implicit parameters: Parameters = Parameters()): InnerNodeTraverser =
       thisGraph.innerNodeTraverser(this, parameters)
 
     /** Instantiates an [[OuterNodeTraverser]] $EXTENDSTYPE `N` $SETROOT. $TOSTART
-      *  @param parameters $PARAMETERS
+      *
+      * @param parameters $PARAMETERS
       */
-    @inline final def outerNodeTraverser(implicit parameters: Parameters = Parameters()) =
+    @inline final def outerNodeTraverser(implicit parameters: Parameters = Parameters()): OuterNodeTraverser =
       thisGraph.outerNodeTraverser(this, parameters)
 
     /** Instantiates an [[InnerEdgeTraverser]] $EXTENDSTYPE `EdgeT` $SETROOT. $TOSTART
-      *  @param parameters $PARAMETERS
+      *
+      * @param parameters $PARAMETERS
       */
-    @inline final def innerEdgeTraverser(implicit parameters: Parameters = Parameters()) =
+    @inline final def innerEdgeTraverser(implicit parameters: Parameters = Parameters()): InnerEdgeTraverser =
       thisGraph.innerEdgeTraverser(this, parameters)
 
     /** Instantiates an [[OuterEdgeTraverser]] $EXTENDSTYPE `E[N]` $SETROOT. $TOSTART
-      *  @param parameters $PARAMETERS
+      *
+      * @param parameters $PARAMETERS
       */
-    @inline final def outerEdgeTraverser(implicit parameters: Parameters = Parameters()) =
+    @inline final def outerEdgeTraverser(implicit parameters: Parameters = Parameters()): OuterEdgeTraverser =
       thisGraph.outerEdgeTraverser(this, parameters)
 
     /** Instantiates an [[InnerElemTraverser]] $EXTENDSTYPE `InnerElem` $SETROOT. $TOSTART
-      *  @param parameters $PARAMETERS
+      *
+      * @param parameters $PARAMETERS
       */
-    @inline final def innerElemTraverser(implicit parameters: Parameters = Parameters()) =
+    @inline final def innerElemTraverser(implicit parameters: Parameters = Parameters()): InnerElemTraverser =
       thisGraph.innerElemTraverser(this, parameters)
 
     /** Instantiates an [[OuterElemTraverser]] $EXTENDSTYPE `OuterElem` $SETROOT. $TOSTART
-      *  @param parameters $PARAMETERS
+      *
+      * @param parameters $PARAMETERS
       */
-    @inline final def outerElemTraverser(implicit parameters: Parameters = Parameters()) =
+    @inline final def outerElemTraverser(implicit parameters: Parameters = Parameters()): OuterElemTraverser =
       thisGraph.outerElemTraverser(this, parameters)
 
     /** Instantiates an [[InnerNodeDownUpTraverser]] $EXTENDSTYPE `(Boolean, NodeT)` $SETROOT.
-      *  $TOSTART
-      *  @param parameters $PARAMETERS
+      * $TOSTART
+      *
+      * @param parameters $PARAMETERS
       */
-    @inline final def innerNodeDownUpTraverser(implicit parameters: Parameters = Parameters()) =
+    @inline final def innerNodeDownUpTraverser(implicit
+        parameters: Parameters = Parameters()
+    ): InnerNodeDownUpTraverser =
       thisGraph.innerNodeDownUpTraverser(this, parameters)
 
     /** Instantiates an [[OuterNodeDownUpTraverser]] $EXTENDSTYPE `(Boolean, N)` $SETROOT.
-      *  $TOSTART
-      *  @param parameters $PARAMETERS
+      * $TOSTART
+      *
+      * @param parameters $PARAMETERS
       */
-    @inline final def outerNodeDownUpTraverser(implicit parameters: Parameters = Parameters()) =
+    @inline final def outerNodeDownUpTraverser(implicit
+        parameters: Parameters = Parameters()
+    ): OuterNodeDownUpTraverser =
       thisGraph.outerNodeDownUpTraverser(this, parameters)
   }
   @transient object TraverserInnerNode {
@@ -642,13 +656,19 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     def subgraphEdges: EdgeFilter
   }
   protected object SubgraphProperties {
-    def apply[A](t: Iterable[A], nodeFilter: NodeFilter, edgeFilter: EdgeFilter) =
+    def apply[A](
+        t: Iterable[A],
+        nodeFilter: NodeFilter,
+        edgeFilter: EdgeFilter
+    ): CompatTraversable[A] with SubgraphProperties =
       new CompatTraversable[A] with SubgraphProperties {
         protected def autarkicForeach[U](f: A => U): Unit = t foreach f
 
         final protected def sizeHint: Int = 64
-        final def subgraphNodes           = nodeFilter
-        final def subgraphEdges           = edgeFilter
+
+        final def subgraphNodes = nodeFilter
+
+        final def subgraphEdges = edgeFilter
       }
   }
 
@@ -764,7 +784,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     final private def nonBridge(e: EdgeT): Boolean = e.nodes forall nodes.contains
 
     protected def stringPrefix: String
-    override def toString = s"$stringPrefix(${nodes mkString ", "})"
+
+    override def toString: String = s"$stringPrefix(${nodes mkString ", "})"
   }
 
   /** Controls the properties of graph traversals with no specific root and allows
@@ -1025,14 +1046,14 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     def partOfCycle[U](implicit visitor: A => U = empty): Option[Cycle]
 
     /** Sorts the component designated by this node topologically.
-      *  Only nodes connected with this node will be included in the resulting topological order.
-      *  If the graph is known to be connected choose [[GraphTraversal#topologicalSort]] instead.
-      *  $SEEFLUENT
+      * Only nodes connected with this node will be included in the resulting topological order.
+      * If the graph is known to be connected choose [[GraphTraversal#topologicalSort]] instead.
+      * $SEEFLUENT
       *
-      *  @param ignorePredecessors If `true`, the topological sort will be partial in that it will only
-      *                            include successors of `root`. `withSubgraph` restricts the successor nodes to
-      *                            be included but not predecessors that will be excluded in total.
-      *  @param visitor            $VISITORDURING sort.
+      * @param ignorePredecessors If `true`, the topological sort will be partial in that it will only
+      *                           include successors of `root`. `withSubgraph` restricts the successor nodes to
+      *                           be included but not predecessors that will be excluded in total.
+      * @param visitor            $VISITORDURING sort.
       */
     def topologicalSort[U](ignorePredecessors: Boolean = false)(implicit
         visitor: InnerElem => U = empty
@@ -1421,14 +1442,14 @@ object GraphTraversal {
     */
   trait NodeInformer
   object NodeInformer extends Serializable {
-    def empty = new NodeInformer {}
+    def empty: NodeInformer = new NodeInformer {}
   }
 
   /** Algebraic type for the kind of traversal. */
   trait Kind {
 
     /** Whether 'this' kind equals to BreadthFirst. */
-    def isBsf = this eq BreadthFirst
+    def isBsf: Boolean = this eq BreadthFirst
   }
 
   /** Instructs the traverser to use a breadth first search
@@ -1466,20 +1487,23 @@ object GraphTraversal {
     def apply = new Parameters()
 
     /** Creates `Parameters` of kind `BreadthFirst` with specific `direction` and `maxDepth`. */
-    def Bfs(direction: Direction = Successors, maxDepth: Int = 0) =
+    def Bfs(direction: Direction = Successors, maxDepth: Int = 0): Parameters =
       Parameters(direction = direction, maxDepth = maxDepth)
 
     /** Creates `Parameters` of kind `DepthFirst` with specific `direction` and `maxDepth`. */
-    def Dfs(direction: Direction = Successors, maxDepth: Int = 0) =
+    def Dfs(direction: Direction = Successors, maxDepth: Int = 0): Parameters =
       Parameters(kind = DepthFirst, direction = direction, maxDepth = maxDepth)
   }
 
   /** Implements an empty visitor based on a value.
     */
   object Visitor {
-    final private val _empty: Any => Unit              = null
-    @inline final def empty[A, U]: A => U              = _empty.asInstanceOf[A => U]
-    @inline final def isEmpty[A, U](visitor: A => U)   = visitor eq _empty
-    @inline final def isDefined[A, U](visitor: A => U) = visitor ne _empty
+    final private val _empty: Any => Unit = null
+
+    @inline final def empty[A, U]: A => U = _empty.asInstanceOf[A => U]
+
+    @inline final def isEmpty[A, U](visitor: A => U): Boolean = visitor eq _empty
+
+    @inline final def isDefined[A, U](visitor: A => U): Boolean = visitor ne _empty
   }
 }

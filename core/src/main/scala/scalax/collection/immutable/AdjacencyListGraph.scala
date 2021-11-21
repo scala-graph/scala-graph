@@ -15,13 +15,17 @@ trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn
   This
 ] with Graph[X, Y]]
     extends GraphLike[N, E, This]
-    with AdjacencyListBase[N, E, This] { selfGraph: This[N, E] =>
+    with AdjacencyListBase[N, E, This] {
+  selfGraph: This[N, E] =>
 
   type NodeT <: InnerNodeImpl
-  abstract class InnerNodeImpl(value: N, hints: ArraySet.Hints) extends NodeBase(value) with InnerNode { this: NodeT =>
+
+  abstract class InnerNodeImpl(value: N, hints: ArraySet.Hints) extends NodeBase(value) with InnerNode {
+    this: NodeT =>
 
     final override val edges: ArraySet[EdgeT]                      = ArraySet.emptyWithHints[EdgeT](hints)
     @transient protected var _diSuccessors: immutable.EqSet[NodeT] = _
+
     final def diSuccessors: Set[NodeT] = {
       if (_diSuccessors eq null) _diSuccessors = new immutable.EqSet(Adj.diSucc)
       _diSuccessors
@@ -30,10 +34,14 @@ trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn
 
   type NodeSetT = NodeSet
   class NodeSet extends super.NodeSet {
-    @inline final override protected def minus(node: NodeT) { collection -= node }
+    @inline final override protected def minus(node: NodeT): Unit =
+      collection -= node
+
     override def +(node: NodeT) =
       if (collection contains node) this
-      else { val c = copy; c.collection += node; c }
+      else {
+        val c = copy; c.collection += node; c
+      }
 
     protected[AdjacencyListGraph] def add(edge: EdgeT): Boolean = {
       var added = false
@@ -65,12 +73,15 @@ trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn
       this
     }
 
-    @inline final protected[immutable] def addEdge(edge: EdgeT) { +=(edge) }
-    @inline final def incl(edge: EdgeT) = toSet + edge
-    @inline final def excl(edge: EdgeT) = toSet - edge
+    @inline final protected[immutable] def addEdge(edge: EdgeT): Unit =
+      +=(edge)
 
-    @inline final override lazy val maxArity        = super.maxArity
-    @inline final override lazy val hasAnyMultiEdge = super.hasAnyMultiEdge
+    @inline final def incl(edge: EdgeT): Set[EdgeT] = toSet + edge
+
+    @inline final def excl(edge: EdgeT): Set[EdgeT] = toSet - edge
+
+    @inline final override lazy val maxArity: Int            = super.maxArity
+    @inline final override lazy val hasAnyMultiEdge: Boolean = super.hasAnyMultiEdge
   }
   override def edges: EdgeSetT
 
@@ -85,7 +96,7 @@ trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn
     case None     => this
   }
 
-  def minusIsolated(n: N) = nodes find n match {
+  def minusIsolated(n: N): This[N, E] = nodes find n match {
     case Some(nf) =>
       val newNodes = nodes.toOuter.toBuffer
       val newEdges = edges.toOuter.toBuffer

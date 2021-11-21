@@ -15,9 +15,12 @@ case class Airport(val code: String) {
 abstract class HHMM(hour: Int, min: Int) {
   final val MAX_MIN = 60
   assert(hour >= 0 && hour < 100 && min >= 0 && min < MAX_MIN)
-  protected def fmt(i: Int) = "%02d" format i
-  def toInt                 = hour * MAX_MIN + min
-  override def toString     = fmt(hour) + ":" + fmt(min)
+
+  protected def fmt(i: Int): String = "%02d" format i
+
+  def toInt: Int = hour * MAX_MIN + min
+
+  override def toString: String = fmt(hour) + ":" + fmt(min)
 }
 
 /** Represents a time of day as "hh:mm" with 0 <= hh < 24 and 0 <= mm < 60. */
@@ -30,13 +33,14 @@ final class DayTimeAssoc(oClock: Int) {
 
 /** Represents a duration "hh:mm" with 0 <= hh < 100 and 0 <= mm < 100. */
 case class Duration(val hour: Int, val min: Int) extends HHMM(hour, min) {
-  override def toString = fmt(hour) + "h" + fmt(min) + "'"
+  override def toString: String = fmt(hour) + "h" + fmt(min) + "'"
 }
 final class DurationAssoc(hours: Int) {
   def h(mins: Int) = new Duration(hours, mins)
 }
 
 object Helper {
-  implicit def intToDuration(hours: Int) = new DurationAssoc(hours)
-  implicit def intToDayTime(oClock: Int) = new DayTimeAssoc(oClock)
+  implicit def intToDuration(hours: Int): DurationAssoc = new DurationAssoc(hours)
+
+  implicit def intToDayTime(oClock: Int): DayTimeAssoc = new DayTimeAssoc(oClock)
 }

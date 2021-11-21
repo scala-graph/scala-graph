@@ -7,6 +7,8 @@ import GraphPredef.{EdgeLikeIn, InnerEdgeParam, InnerNodeParam, OuterEdge, Outer
 import GraphEdge.{DiEdge, DiHyperEdgeLike, Keyed, UnDiEdge}
 import generic.GraphCoreCompanion
 import config.GraphConfig
+import scala.collection.BuildFrom
+import scala.collection.mutable.Builder
 
 /** A template trait for graphs.
   *
@@ -18,10 +20,9 @@ import config.GraphConfig
   * @tparam N    the user type of the nodes (vertices) in this graph.
   * @tparam E    the higher kinded type of the edges (links) in this graph.
   * @tparam This the higher kinded type of the graph itself.
-  *
   * @define REIMPLFACTORY Note that this method must be reimplemented in each module
-  *         having its own factory methods such as `constrained` does.
-  * @define CONTGRAPH The `Graph` instance that contains `this`
+  *                       having its own factory methods such as `constrained` does.
+  * @define CONTGRAPH     The `Graph` instance that contains `this`
   * @author Peter Empen
   */
 trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] <: GraphLike[NN, EE, This] with AnySet[
@@ -37,16 +38,16 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
   protected type ThisGraph = thisGraph.type
   implicit val edgeT: ClassTag[E[N]]
 
-  def isDirected: Boolean         = isDirectedT || edges.hasOnlyDiEdges
-  final protected val isDirectedT = classOf[DiHyperEdgeLike[_]].isAssignableFrom(edgeT.runtimeClass)
+  def isDirected: Boolean                  = isDirectedT || edges.hasOnlyDiEdges
+  final protected val isDirectedT: Boolean = classOf[DiHyperEdgeLike[_]].isAssignableFrom(edgeT.runtimeClass)
 
-  def isHyper: Boolean         = isHyperT && edges.hasAnyHyperEdge
-  final protected val isHyperT = !classOf[UnDiEdge[_]].isAssignableFrom(edgeT.runtimeClass)
+  def isHyper: Boolean                  = isHyperT && edges.hasAnyHyperEdge
+  final protected val isHyperT: Boolean = !classOf[UnDiEdge[_]].isAssignableFrom(edgeT.runtimeClass)
 
   def isMixed: Boolean = !isDirectedT && edges.hasMixedEdges
 
-  def isMulti: Boolean         = isMultiT || edges.hasAnyMultiEdge
-  final protected val isMultiT = classOf[Keyed].isAssignableFrom(edgeT.runtimeClass)
+  def isMulti: Boolean                  = isMultiT || edges.hasAnyMultiEdge
+  final protected val isMultiT: Boolean = classOf[Keyed].isAssignableFrom(edgeT.runtimeClass)
 
   protected type Config <: GraphConfig
   implicit def config: graphCompanion.Config with Config
@@ -56,26 +57,26 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
   /** Ensures sorted nodes/edges unless this `Graph` has more than 100 elements.
     * See also `asSortedString` and `toSortedString`.
     */
-  override def toString = if (size <= 100) toSortedString()()
+  override def toString: String = if (size <= 100) toSortedString()()
   else super.toString
 
   /** Sorts all nodes of this graph by `ordNode` followed by all edges sorted by `ordEdge`
     * and concatinates their string representation `nodeSeparator` and `edgeSeparator`
     * respectively.
     *
-    * @param nodeSeparator to separate nodes by.
-    * @param edgeSeparator to separate edges by.
-    * @param nodesEdgesSeparator to separate nodes from edges by.
+    * @param nodeSeparator       to separate nodes by.
+    * @param edgeSeparator       to separate edges by.
+    * @param nodesEdgesSeparator  to separate nodes from edges by.
     * @param withNodesEdgesPrefix whether the node and edge set should be prefixed.
-    * @param ordNode the node ordering defaulting to `defaultNodeOrdering`.
-    * @param ordEdge the edge ordering defaulting to `defaultEdgeOrdering`.
+    * @param ordNode              the node ordering defaulting to `defaultNodeOrdering`.
+    * @param ordEdge              the edge ordering defaulting to `defaultEdgeOrdering`.
     */
   def asSortedString(
       nodeSeparator: String = GraphBase.defaultSeparator,
       edgeSeparator: String = GraphBase.defaultSeparator,
       nodesEdgesSeparator: String = GraphBase.defaultSeparator,
       withNodesEdgesPrefix: Boolean = false
-  )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering) = {
+  )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering): String = {
     val ns =
       if (withNodesEdgesPrefix) nodes.toSortedString(nodeSeparator)(ordNode)
       else nodes.asSortedString(nodeSeparator)(ordNode)
@@ -94,7 +95,7 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
       edgeSeparator: String = GraphBase.defaultSeparator,
       nodesEdgesSeparator: String = GraphBase.defaultSeparator,
       withNodesEdgesPrefix: Boolean = false
-  )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering) =
+  )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering): String =
     stringPrefix +
       "(" + asSortedString(nodeSeparator, edgeSeparator, nodesEdgesSeparator, withNodesEdgesPrefix)(ordNode, ordEdge) +
       ")"
@@ -118,7 +119,9 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
         (this.graphSize == that.graphSize) && {
           val thatNodes = that.nodes.toOuter
           try this.nodes forall (thisN => thatNodes(thisN.value))
-          catch { case _: ClassCastException => false }
+          catch {
+            case _: ClassCastException => false
+          }
         } && {
           val thatEdges = that.edges.toOuter
           try this.edges forall (thisE => thatEdges(thisE.toOuter))
@@ -160,8 +163,9 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
     protected def copy: NodeSetT
 
     final override def -(node: NodeT): NodeSetT =
-      if (this contains node) { val c = copy; c minus node; c }
-      else this.asInstanceOf[NodeSetT]
+      if (this contains node) {
+        val c = copy; c minus node; c
+      } else this.asInstanceOf[NodeSetT]
 
     /** removes `node` from this node set leaving the edge set unchanged.
       *
@@ -185,8 +189,13 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
         minusNode: (NodeT) => Unit,
         minusEdges: (NodeT) => Unit
     ): Boolean = {
-      def minusNodeTrue = { minusNode(node); true }
-      def minusAllTrue = { minusEdges(node); minusNodeTrue }
+      def minusNodeTrue = {
+        minusNode(node); true
+      }
+
+      def minusAllTrue = {
+        minusEdges(node); minusNodeTrue
+      }
       if (contains(node))
         if (node.edges.isEmpty) minusNodeTrue
         else if (rippleDelete) minusAllTrue
@@ -207,7 +216,8 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
   class EdgeBase(override val edge: E[NodeT]) extends InnerEdgeParam[N, E, NodeT, E] with InnerEdge {
     this: EdgeT =>
     override def iterator: Iterator[NodeT] = edge.iterator
-    override def stringPrefix              = super.stringPrefix
+
+    override def stringPrefix: String = super.stringPrefix
   }
   type EdgeSetT <: EdgeSet
   trait EdgeSet extends super.EdgeSet {
@@ -220,10 +230,10 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
 
   /** Checks whether a given node or edge is contained in this graph.
     *
-    *  @param elem the node or edge the existence of which is to be checked
-    *  @return true if `elem` is contained in this graph
+    * @param elem the node or edge the existence of which is to be checked
+    * @return true if `elem` is contained in this graph
     */
-  def contains(elem: Param[N, E]) = elem match {
+  def contains(elem: Param[N, E]): Boolean = elem match {
     case n: OuterNode[N]    => nodes contains newNode(n.value)
     case e: OuterEdge[N, E] => edges contains newEdge(e.edge)
     case n: InnerNodeParam[N] =>
@@ -268,25 +278,25 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
     * @param outerEdge the outer edge to search for in this graph.
     * @return the inner edge if found. Otherwise NoSuchElementException is thrown.
     */
-  @inline final def get(outerEdge: E[N]) = find(outerEdge).get
+  @inline final def get(outerEdge: E[N]): EdgeT = find(outerEdge).get
 
   /** Searches for an inner node equaling to `outerNode` in this graph.
     *
     * @param outerNode the outer node to search for in this graph.
-    * @param default the inner node to return if `outerNode` is not contained.
+    * @param default   the inner node to return if `outerNode` is not contained.
     * @return The inner node looked up or `default` if no inner node
     *         equaling to `outerNode` could be found.
     */
-  @inline final def getOrElse(outerNode: N, default: NodeT) = find(outerNode).getOrElse(default)
+  @inline final def getOrElse(outerNode: N, default: NodeT): NodeT = find(outerNode).getOrElse(default)
 
   /** Searches for an inner edge equaling to `outerEdge` in this graph.
     *
     * @param outerEdge the outer edge to search for in this graph.
-    * @param default the inner edge to return if `outerEdge` cannot be found.
+    * @param default   the inner edge to return if `outerEdge` cannot be found.
     * @return the inner edge looked up or `default` if no inner edge
     *         equaling to `edge` could be found.
     */
-  @inline final def getOrElse(outerEdge: E[N], default: EdgeT) =
+  @inline final def getOrElse(outerEdge: E[N], default: EdgeT): EdgeT =
     find(outerEdge).getOrElse(default)
 
   /** Creates a new supergraph with an additional node, unless the node passed is
@@ -516,21 +526,32 @@ trait Graph[N, E[+X] <: EdgeLikeIn[X]] extends AnySet[Param[N, E]] with GraphLik
   * @author Peter Empen
   */
 object Graph extends GraphCoreCompanion[Graph] {
-  override def newBuilder[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config) =
+  override def newBuilder[N, E[+X] <: EdgeLikeIn[X]](implicit
+      edgeT: ClassTag[E[N]],
+      config: Config
+  ): Builder[Param[N, E], Graph[N, E]] =
     immutable.Graph.newBuilder[N, E](edgeT, config)
+
   def empty[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.empty[N, E](edgeT, config)
+
   def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Nil, edges: Iterable[E[N]])(implicit
       edgeT: ClassTag[E[N]],
       config: Config = defaultConfig
   ): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(edgeT, config)
 
-  implicit def cbfUnDi[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
+  implicit def cbfUnDi[N, E[+X] <: EdgeLikeIn[X]](implicit
+      edgeT: ClassTag[E[N]],
+      config: Config = defaultConfig
+  ): GraphCanBuildFrom[N, E] with BuildFrom[Graph[_, UnDiEdge], Param[N, E], Graph[N, E]] =
     new GraphCanBuildFrom[N, E]()(edgeT, config)
       .asInstanceOf[GraphCanBuildFrom[N, E] with CanBuildFrom[Graph[_, UnDiEdge], Param[N, E], Graph[N, E]]]
 
-  implicit def cbfDi[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
+  implicit def cbfDi[N, E[+X] <: EdgeLikeIn[X]](implicit
+      edgeT: ClassTag[E[N]],
+      config: Config = defaultConfig
+  ): GraphCanBuildFrom[N, E] with BuildFrom[Graph[_, DiEdge], Param[N, E], Graph[N, E]] =
     new GraphCanBuildFrom[N, E]()(edgeT, config)
       .asInstanceOf[GraphCanBuildFrom[N, E] with CanBuildFrom[Graph[_, DiEdge], Param[N, E], Graph[N, E]]]
 }

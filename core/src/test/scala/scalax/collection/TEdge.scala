@@ -42,7 +42,7 @@ class TEdgeTest extends RefSpec with should.Matchers {
     private def endpoints4(edge: Graph[Int, DiEdge]#EdgeT): (Graph[Int, DiEdge]#NodeT, Graph[Int, DiEdge]#NodeT) =
       (edge.source, edge.target)
 
-    def `are implicitly converted to outer edges` {
+    def `are implicitly converted to outer edges`: Unit =
       for (edge <- g.edges) {
         // access source and target directly
         val pair1 = (edge.source, edge.target)
@@ -56,7 +56,6 @@ class TEdgeTest extends RefSpec with should.Matchers {
         val pair4 = endpoints4(edge)
         pair4 should equal(pair1)
       }
-    }
   }
 
   trait OrderedEndpointsTest[E[+X] <: EdgeLike[X]] {
@@ -66,7 +65,7 @@ class TEdgeTest extends RefSpec with should.Matchers {
 
     def outerEdges(implicit kind: CollectionKind = Bag): List[E[_]]
 
-    def `are treated as a bag by default` {
+    def `are treated as a bag by default`: Unit = {
       val edges = outerEdges()
       edges(1) should be(edges(2))
       val g = Graph(edges: _*)
@@ -74,7 +73,7 @@ class TEdgeTest extends RefSpec with should.Matchers {
       ordered(g.edges) should be(false)
     }
 
-    def `may be defined to be sorted.` {
+    def `may be defined to be sorted.` : Unit = {
       val edges = outerEdges(Sequence)
       edges(1) should not equal (edges(2))
       val g = Graph(edges: _*)
@@ -107,7 +106,7 @@ class TEdgeTest extends RefSpec with should.Matchers {
 
   object `Custom edge tests` {
 
-    def `LkDiEdge ` {
+    def `LkDiEdge ` : Unit = {
       val outer = LkDiEdge(ham, gig)(Flight(flightNo))
       val g     = Graph(outer)
       val e     = g.edges.head
@@ -125,77 +124,107 @@ class TEdgeTest extends RefSpec with should.Matchers {
       e.## should not be (neFlight.##)
     }
 
-    def `LkDiEdgeShortcut ` {
+    def `LkDiEdgeShortcut ` : Unit = {
       val outer = LkDiEdge(ham, gig)(Flight(flightNo))
       (ham ~+#> gig)(Flight(flightNo)) should be(outer)
       (ham ~+#> gig)(Flight(flightNo, 11 o 20)) should be(outer)
     }
 
-    def `matching weighted edges` {
+    def `matching weighted edges`: Unit = {
       val (n1, n2, w) = (1, 2, 5)
-      def check(_n1: Int, _n2: Int, _w: Double) {
+
+      def check(_n1: Int, _n2: Int, _w: Double): Unit = {
         _n1 should be(n1)
         _n2 should be(n2)
         _w should be(w)
       }
+
       val wDi = (n1 ~%> n2)(w)
-      wDi match { case WDiEdge(s, t, w) => check(s, t, w) }
-      wDi match { case s :~> %(t, w) => check(s, t, w) }
-      wDi match { case s :~> t % w => check(s, t, w) }
+      wDi match {
+        case WDiEdge(s, t, w) => check(s, t, w)
+      }
+      wDi match {
+        case s :~> %(t, w) => check(s, t, w)
+      }
+      wDi match {
+        case s :~> t % w => check(s, t, w)
+      }
       Graph(wDi).get(wDi).edge match {
         case s :~> t % w => check(s.value, t.value, w)
       }
 
       val wkDi = (n1 ~%#> n2)(w)
-      wkDi match { case s :~> t % w => check(s, t, w) }
+      wkDi match {
+        case s :~> t % w => check(s, t, w)
+      }
     }
 
-    def `matching labeled edges` {
+    def `matching labeled edges`: Unit = {
       object StringLabel extends LEdgeImplicits[String]
       import StringLabel._
 
       val (n1, n2, label) = (1, 2, "A")
-      def check(_n1: Int, _n2: Int, _label: String) {
+
+      def check(_n1: Int, _n2: Int, _label: String): Unit = {
         _n1 should be(n1)
         _n2 should be(n2)
         _label should be(label)
       }
+
       val lDi = (n1 ~+> n2)(label)
-      lDi match { case LDiEdge(s, t, l) => check(s, t, l) }
-      lDi match { case s :~> +(t, l) => check(s, t, l) }
-      lDi match { case s :~> t + l => check(s, t, l) }
+      lDi match {
+        case LDiEdge(s, t, l) => check(s, t, l)
+      }
+      lDi match {
+        case s :~> +(t, l) => check(s, t, l)
+      }
+      lDi match {
+        case s :~> t + l => check(s, t, l)
+      }
       Graph(lDi).get(lDi).edge match {
         case s :~> t + l => check(s.value, t.value, l)
       }
 
       val lkDi = (n1 ~+#> n2)(label)
-      lkDi match { case s :~> t + l => check(s, t, l) }
+      lkDi match {
+        case s :~> t + l => check(s, t, l)
+      }
     }
 
-    def `matching weighted labeled edges` {
+    def `matching weighted labeled edges`: Unit = {
       object StringLabel extends LEdgeImplicits[String]
       import StringLabel._
 
       val (n1, n2, label, weight) = (1, 2, "A", 4d)
-      def check(_n1: Int, _n2: Int, _weight: Double, _label: String) {
+
+      def check(_n1: Int, _n2: Int, _weight: Double, _label: String): Unit = {
         _n1 should be(n1)
         _n2 should be(n2)
         _weight should be(weight)
         _label should be(label)
       }
+
       val wlDi = (n1 ~%+> n2)(weight, label)
-      wlDi match { case WLDiEdge(s, t, w, l) => check(s, t, w, l) }
-      wlDi match { case s :~> %+(t, w, l) => check(s, t, w, l) }
-      wlDi match { case s :~> t %+ (w, l) => check(s, t, w, l) }
+      wlDi match {
+        case WLDiEdge(s, t, w, l) => check(s, t, w, l)
+      }
+      wlDi match {
+        case s :~> %+(t, w, l) => check(s, t, w, l)
+      }
+      wlDi match {
+        case s :~> t %+ (w, l) => check(s, t, w, l)
+      }
       Graph(wlDi).get(wlDi).edge match {
         case s :~> t %+ (w, l) => check(s.value, t.value, w, l)
       }
 
       val wlkDi = (n1 ~%+#> n2)(weight, label)
-      wlkDi match { case s :~> t %+ (w, l) => check(s, t, w, l) }
+      wlkDi match {
+        case s :~> t %+ (w, l) => check(s, t, w, l)
+      }
     }
 
-    def `findOutgoingTo LkDiEdge` {
+    def `findOutgoingTo LkDiEdge`: Unit = {
       import edge.LkDiEdge
       val le  = LkDiEdge(1, 1)(1)
       val lg  = Graph(le)
@@ -203,7 +232,7 @@ class TEdgeTest extends RefSpec with should.Matchers {
       (ln1 findOutgoingTo ln1) should be(Some(le))
     }
 
-    def `LkHyperEdge equality` {
+    def `LkHyperEdge equality`: Unit = {
       val e1 = LkDiHyperEdge(1, 1)("a")
       val e2 = LkHyperEdge(1, 1)("b")
       val g  = Graph[Int, LHyperEdge](e1, e2)
@@ -212,7 +241,7 @@ class TEdgeTest extends RefSpec with should.Matchers {
       g find e2 should be('defined)
     }
 
-    def `LkDiHyperEdge equality` {
+    def `LkDiHyperEdge equality`: Unit = {
       val e1             = LkDiHyperEdge(1, 2, 3)("a")
       val e2             = LkDiHyperEdge(10, 11, 12, 13, 14, 15, 16)("b")
       val g              = Graph[Int, LHyperEdge](e1, e2)
@@ -234,67 +263,78 @@ case class Flight(flightNo: String, departure: DayTime = DayTime(0, 0), duration
    * narrowing equality to the flightNo attribute because the hash-code of key-labeled edges
    * is composed by the hash-code of the incident nodes and the label hash-code.
    */
-  override def equals(other: Any) = other match {
+  override def equals(other: Any): Boolean = other match {
     case that: Flight => that.flightNo == this.flightNo
     case _            => false
   }
+
   override def hashCode = flightNo.##
 }
 
 // Compiler tests for predefined edges.
 object Test {
+
   import scalax.collection.GraphPredef._
-  val h = 2 ~ 4 ~ 6
-  val d = 1 ~> 2
-  val u = 1 ~ -1
 
-  val (lh1, lh2) = (LHyperEdge(1, 3, 5)(6), LHyperEdge(1, 3, 5)(7))
-  val g_lh_h     = Graph(lh1, h)
-  val g_lh_d     = Graph[Int, HyperEdge](lh1, d) // not inferred
-  val g_lh_lh    = Graph(lh1, lh2)
+  val h: HyperEdge[Int] = 2 ~ 4 ~ 6
+  val d: DiEdge[Int]    = 1 ~> 2
+  val u: UnDiEdge[Int]  = 1 ~ -1
 
-  val (lkh1, lkh2) = (LkHyperEdge(1, 3, 5)(8), LkHyperEdge(1, 3, 5)(9))
-  val g_lkh_h      = Graph(lkh1, h)
-  val g_lkh_lkh    = Graph(lkh1, lkh2)
-  val g_lkh_lh     = Graph(lkh1, lh1)
+  val (lh1, lh2)                      = (LHyperEdge(1, 3, 5)(6), LHyperEdge(1, 3, 5)(7))
+  val g_lh_h: Graph[Int, HyperEdge]   = Graph(lh1, h)
+  val g_lh_d: Graph[Int, HyperEdge]   = Graph[Int, HyperEdge](lh1, d) // not inferred
+  val g_lh_lh: Graph[Int, LHyperEdge] = Graph(lh1, lh2)
 
-  val (ldh1, ldh2) = (LDiHyperEdge(1, 3, 5)(10), LDiHyperEdge(1, 3, 5)(11))
-  val g_ldh_h      = Graph(ldh1, h)
-  val g_ldh_ldh    = Graph(ldh1, ldh2)
-  val g_ldh_lh     = Graph(ldh1, lh2)
-  val g_ldh_lkh    = Graph[Int, LHyperEdge](ldh1, lkh2) // not inferred
+  val (lkh1, lkh2)                       = (LkHyperEdge(1, 3, 5)(8), LkHyperEdge(1, 3, 5)(9))
+  val g_lkh_h: Graph[Int, HyperEdge]     = Graph(lkh1, h)
+  val g_lkh_lkh: Graph[Int, LkHyperEdge] = Graph(lkh1, lkh2)
+  val g_lkh_lh: Graph[Int, LHyperEdge]   = Graph(lkh1, lh1)
 
-  val (lkdh1, lkdh2) = (LkDiHyperEdge(1, 3, 5)(12), LkDiHyperEdge(1, 3, 5)(13))
-  val g_lkdh_h       = Graph(lkdh1, h)
-  val g_lkdh_lkdh    = Graph(lkdh1, lkdh2)
-  val g_lkdh_ldh     = Graph(lkdh1, ldh2)
-  val g_lkdh_lh      = Graph(lkdh1, lh2)
-  val g_lkdh_lkh     = Graph[Int, LHyperEdge](lkdh1, lkh2) // not inferred
+  val (ldh1, ldh2)                        = (LDiHyperEdge(1, 3, 5)(10), LDiHyperEdge(1, 3, 5)(11))
+  val g_ldh_h: Graph[Int, HyperEdge]      = Graph(ldh1, h)
+  val g_ldh_ldh: Graph[Int, LDiHyperEdge] = Graph(ldh1, ldh2)
+  val g_ldh_lh: Graph[Int, LHyperEdge]    = Graph(ldh1, lh2)
+  val g_ldh_lkh: Graph[Int, LHyperEdge]   = Graph[Int, LHyperEdge](ldh1, lkh2) // not inferred
 
-  val (lu1, lu2) = (LUnDiEdge(1, 3)(4), LUnDiEdge(1, 3)(5))
-  val g_lu_u     = Graph(lu1, u)
-  val g_lu_h     = Graph(lu1, h)
-  val g_lu_d     = Graph[Int, UnDiEdge](lu1, d)    // not inferred
-  val g_lu_lu    = Graph(lu1, lu2)
-  val g_lu_lh    = Graph[Int, HyperEdge](lu1, lh2) // not inferred
+  val (lkdh1, lkdh2)                         = (LkDiHyperEdge(1, 3, 5)(12), LkDiHyperEdge(1, 3, 5)(13))
+  val g_lkdh_h: Graph[Int, HyperEdge]        = Graph(lkdh1, h)
+  val g_lkdh_lkdh: Graph[Int, LkDiHyperEdge] = Graph(lkdh1, lkdh2)
+  val g_lkdh_ldh: Graph[Int, LDiHyperEdge]   = Graph(lkdh1, ldh2)
+  val g_lkdh_lh: Graph[Int, LHyperEdge]      = Graph(lkdh1, lh2)
+  val g_lkdh_lkh: Graph[Int, LHyperEdge]     = Graph[Int, LHyperEdge](lkdh1, lkh2) // not inferred
+
+  val (lu1, lu2)                     = (LUnDiEdge(1, 3)(4), LUnDiEdge(1, 3)(5))
+  val g_lu_u: Graph[Int, UnDiEdge]   = Graph(lu1, u)
+  val g_lu_h: Graph[Int, HyperEdge]  = Graph(lu1, h)
+  val g_lu_d: Graph[Int, UnDiEdge]   = Graph[Int, UnDiEdge](lu1, d)    // not inferred
+  val g_lu_lu: Graph[Int, LUnDiEdge] = Graph(lu1, lu2)
+  val g_lu_lh: Graph[Int, HyperEdge] = Graph[Int, HyperEdge](lu1, lh2) // not inferred
 }
 
 // Compiler tests for calling label methods by means of implicits.
 object TestImplicits {
+
   import scalax.collection.Graph
-  case class MyLabel(val i: Int)
-  val eOuter = LUnDiEdge(1, 3)(MyLabel(4))
+
+  case class MyLabel(i: Int)
+
+  val eOuter: LUnDiEdge.Aux[Int, MyLabel] with EdgeCopy[LUnDiEdge] = LUnDiEdge[Int, MyLabel](1, 3)(MyLabel(4))
 
   object OuterEdge {
     object UserL extends LEdgeImplicits[MyLabel]
+
     import UserL._
+
     val four = eOuter.i
   }
+
   object InnerEdge {
     object UserL extends LEdgeImplicits[MyLabel]
+
     import UserL._
-    val g      = Graph(eOuter)
-    val eInner = g.edges.head
+
+    val g: Graph[Int, LUnDiEdge] = Graph(eOuter)
+    val eInner                   = g.edges.head
 
     // val four_0 = e.label match {case m: MyLabel => m.i}
     val four = eInner.i
@@ -303,6 +343,6 @@ object TestImplicits {
 
 // Compiler tests for predefined edge shortcuts.
 object TestOperators {
-  val ld  = (1 ~+> 2)(3)
-  val lkd = (3 ~+#> 4)(7)
+  val ld: LDiEdge[Int] with EdgeCopy[LDiEdge]    = (1 ~+> 2)(3)
+  val lkd: LkDiEdge[Int] with EdgeCopy[LkDiEdge] = (3 ~+#> 4)(7)
 }

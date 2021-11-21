@@ -9,47 +9,56 @@ object Implicits {
   final class WUnDiEdgeAssoc[N](e: UnDiEdge[N]) {
     def %(weight: Double) = new WUnDiEdge[N](e.nodes, weight)
   }
-  implicit def edge2WUnDiEdgeAssoc[N](e: UnDiEdge[N]) = new WUnDiEdgeAssoc[N](e)
+  implicit def edge2WUnDiEdgeAssoc[N](e: UnDiEdge[N]): WUnDiEdgeAssoc[N] = new WUnDiEdgeAssoc[N](e)
 
   final class WDiEdgeAssoc[N](e: DiEdgeLike[N]) {
     def %(weight: Double) = new WDiEdge[N](e.nodes, weight)
   }
-  implicit def edge2WDiEdgeAssoc[N](e: DiEdge[N]) = new WDiEdgeAssoc[N](e)
+
+  implicit def edge2WDiEdgeAssoc[N](e: DiEdge[N]): WDiEdgeAssoc[N] = new WDiEdgeAssoc[N](e)
+
   // Overload resolution should choose this type instead of the UnDiEdge conversion because it's narrower
-  implicit def wEdge2WDiEdgeAssoc[N](e: WDiEdge[N]) = new WDiEdgeAssoc[N](e)
+  implicit def wEdge2WDiEdgeAssoc[N](e: WDiEdge[N]): WDiEdgeAssoc[N] = new WDiEdgeAssoc[N](e)
 
   final class WHyperEdgeAssoc[N](e: HyperEdge[N]) {
     def %(weight: Double) = new WHyperEdge[N](e.nodes, weight)
   }
-  implicit def edge2WHyperEdgeAssoc[N](e: HyperEdge[N]) = new WHyperEdgeAssoc[N](e)
+
+  implicit def edge2WHyperEdgeAssoc[N](e: HyperEdge[N]): WHyperEdgeAssoc[N] = new WHyperEdgeAssoc[N](e)
 
   final class WDiHyperEdgeAssoc[N](e: DiHyperEdge[N]) {
     def %(weight: Double) = new WDiHyperEdge[N](e.nodes, weight)
   }
-  implicit def edge2WDiHyperEdgeAssoc[N](e: DiHyperEdge[N]) = new WDiHyperEdgeAssoc[N](e)
+
+  implicit def edge2WDiHyperEdgeAssoc[N](e: DiHyperEdge[N]): WDiHyperEdgeAssoc[N] = new WDiHyperEdgeAssoc[N](e)
 
   // ------------------------------------------------------------------------- L*
   final class LUnDiEdgeAssoc[N](e: UnDiEdge[N]) {
     def +[L](label: L) = LUnDiEdge.from[N, L](e.nodes)(label)
   }
-  implicit def edge2LUnDiEdgeAssoc[N](e: UnDiEdge[N]) = new LUnDiEdgeAssoc[N](e)
+
+  implicit def edge2LUnDiEdgeAssoc[N](e: UnDiEdge[N]): LUnDiEdgeAssoc[N] = new LUnDiEdgeAssoc[N](e)
 
   final class LDiEdgeAssoc[N](e: DiEdgeLike[N]) {
     def +[L](label: L) = LDiEdge.from[N, L](e.nodes)(label)
   }
-  implicit def edge2LDiEdgeAssoc[N](e: DiEdge[N]) = new LDiEdgeAssoc[N](e)
+
+  implicit def edge2LDiEdgeAssoc[N](e: DiEdge[N]): LDiEdgeAssoc[N] = new LDiEdgeAssoc[N](e)
+
   // Overload resolution should choose this type instead of the UnDiEdge conversion because it's narrower
-  implicit def lEdge2LDiEdgeAssoc[N](e: LDiEdge[N]) = new LDiEdgeAssoc[N](e)
+  implicit def lEdge2LDiEdgeAssoc[N](e: LDiEdge[N]): LDiEdgeAssoc[N] = new LDiEdgeAssoc[N](e)
 
   final class LHyperEdgeAssoc[N](e: HyperEdge[N])(implicit kind: CollectionKind = Bag) {
     def +[L](label: L) = LHyperEdge.from[N, L](e.nodes)(label)
   }
-  implicit def edge2LHyperEdgeAssoc[N](e: HyperEdge[N]) = new LHyperEdgeAssoc[N](e)
+
+  implicit def edge2LHyperEdgeAssoc[N](e: HyperEdge[N]): LHyperEdgeAssoc[N] = new LHyperEdgeAssoc[N](e)
 
   final class LDiHyperEdgeAssoc[N](e: DiHyperEdge[N])(implicit kind: CollectionKind = Bag) {
     def +[L](label: L) = LDiHyperEdge.from[N, L](e.nodes)(label)
   }
-  implicit def edge2LDiHyperEdgeAssoc[N](e: DiHyperEdge[N]) = new LDiHyperEdgeAssoc[N](e)
+
+  implicit def edge2LDiHyperEdgeAssoc[N](e: DiHyperEdge[N]): LDiHyperEdgeAssoc[N] = new LDiHyperEdgeAssoc[N](e)
 
   // ----------------------------------------------------------------------- Edge
   final class XEdgeAssoc[N1](n1: N1) {
@@ -71,7 +80,8 @@ object Implicits {
     def ~%+#>[N >: N1, N2 <: N, L](n2: N2)(w: Double, l: L)  = WLkDiEdge[N, L](Tuple2[N, N](n1, n2))(w, l)
     def ~%#+#>[N >: N1, N2 <: N, L](n2: N2)(w: Double, l: L) = WkLkDiEdge[N, L](Tuple2[N, N](n1, n2))(w, l)
   }
-  implicit def any2XEdgeAssoc[N1](n: N1) = new XEdgeAssoc(n)
+
+  implicit def any2XEdgeAssoc[N1](n: N1): XEdgeAssoc[N1] = new XEdgeAssoc(n)
 
   // ------------------------------------------------------------------ HyperEdge
   final class XHyperEdgeAssoc[NOld](e: EdgeLike[NOld]) {
@@ -111,7 +121,8 @@ object Implicits {
     def ~%#+#>[N >: NOld, L](n: N)(w: Double, l: L)(implicit endpointsKind: CollectionKind = Bag) =
       WkLkDiHyperEdge.from[N, L](product(e, n))(w, l)
   }
-  implicit def edge2XHyperEdgeAssoc[NOld](e: EdgeLike[NOld]) = new XHyperEdgeAssoc(e)
+
+  implicit def edge2XHyperEdgeAssoc[NOld](e: EdgeLike[NOld]): XHyperEdgeAssoc[NOld] = new XHyperEdgeAssoc(e)
 
   // ------------------------------------------------------------------ extractors
   /** Extractors for weighted and/or labeled undirected edges.

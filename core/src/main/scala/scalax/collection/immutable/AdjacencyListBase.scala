@@ -11,6 +11,7 @@ import scalax.collection.GraphPredef._
 import scalax.collection.{Graph => SimpleGraph}
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
+import scala.collection.FilterableSet
 
 /** Implementation of an incident list based graph representation. This trait is common to
   * both the immutable and mutable variants. An incidence list based representation speeds up
@@ -29,12 +30,13 @@ trait AdjacencyListBase[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[
   protected type Config <: GraphConfig with AdjacencyListArrayConfig
 
   type NodeT <: InnerNode
+
   trait InnerNode extends super.InnerNode {
     thisNode: NodeT =>
 
     def edges: ArraySet[EdgeT]
 
-    @inline final protected def nodeEqThis = (n: NodeT) => n eq this
+    @inline final protected def nodeEqThis: NodeT => Boolean = (n: NodeT) => n eq this
     protected[collection] object Adj extends Serializable { // lazy adjacents
       @transient protected[collection] var _aHook: Option[(NodeT, EdgeT)] = _
       final def aHook: Option[(NodeT, EdgeT)] = {
@@ -62,9 +64,9 @@ trait AdjacencyListBase[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[
     }
     import Adj._
 
-    final def connectionsWith(other: NodeT) = edges withSetFilter (_.isAt(other))
+    final def connectionsWith(other: NodeT): Set[EdgeT] with FilterableSet[EdgeT] = edges withSetFilter (_.isAt(other))
 
-    final def hasOnlyHooks = diSucc.isEmpty && aHook.isDefined
+    final def hasOnlyHooks: Boolean = diSucc.isEmpty && aHook.isDefined
 
     final def hook: Option[EdgeT] = aHook map (_._2)
 
@@ -94,47 +96,47 @@ trait AdjacencyListBase[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[
 
     final def hasPredecessors: Boolean = edges exists (_.hasSource((n: NodeT) => n ne this))
 
-    final protected[collection] def addDiPredecessors(edge: EdgeT, add: (NodeT) => Unit) {
+    final protected[collection] def addDiPredecessors(edge: EdgeT, add: (NodeT) => Unit): Unit =
       edge withSources (n => if (n ne this) add(n))
-    }
 
     final def neighbors: Set[NodeT] = {
       val m = new EqHashSet[NodeT](edges.size)
-      edges foreach (addNeighbors(_, (n: NodeT) => m += n))
+      edges.foreach(e => addNeighbors(e, (n: NodeT) => m += n))
       new EqSetFacade(m)
     }
 
-    final protected[collection] def addNeighbors(edge: EdgeT, add: (NodeT) => Unit) {
+    final protected[collection] def addNeighbors(edge: EdgeT, add: (NodeT) => Unit): Unit =
       edge foreach (n => if (n ne this) add(n))
-    }
 
-    final def outgoing = edges withSetFilter (e =>
+    final def outgoing: Set[EdgeT] with FilterableSet[EdgeT] = edges withSetFilter (e =>
       if (e.isDirected) e.hasSource((_: NodeT) eq this)
       else true
     )
+
     @inline private[this] def isOutgoingTo(e: EdgeT, to: NodeT): Boolean =
       if (e.isDirected)
         e matches ((_: NodeT) eq this, (_: NodeT) eq to)
       else
         e isAt ((_: NodeT) eq to)
 
-    final def outgoingTo(to: NodeT) = edges withSetFilter (isOutgoingTo(_, to))
+    final def outgoingTo(to: NodeT): Set[EdgeT] with FilterableSet[EdgeT] = edges withSetFilter (isOutgoingTo(_, to))
 
     final def findOutgoingTo(to: NodeT): Option[EdgeT] =
       if (to eq this) aHook map (_._2)
       else diSucc get to
 
-    final def incoming = edges withSetFilter (e =>
+    final def incoming: Set[EdgeT] with FilterableSet[EdgeT] = edges withSetFilter (e =>
       if (e.isDirected) e.hasTarget((_: NodeT) eq this)
       else true
     )
+
     @inline final private[this] def isIncomingFrom(e: EdgeT, from: NodeT): Boolean =
       if (e.isDirected)
         e matches ((_: NodeT) eq from, (_: NodeT) eq this)
       else
         e isAt ((_: NodeT) eq from)
 
-    final def incomingFrom(from: NodeT) =
+    final def incomingFrom(from: NodeT): Set[EdgeT] with FilterableSet[EdgeT] =
       edges withSetFilter (isIncomingFrom(_, from))
 
     final def findIncomingFrom(from: NodeT): Option[EdgeT] =
@@ -186,21 +188,26 @@ trait AdjacencyListBase[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[
 
     @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
   }
-  @inline final protected def newNode(n: N) = newNodeWithHints(n, config.adjacencyListHints)
+
+  @inline final protected def newNode(n: N): NodeT = newNodeWithHints(n, config.adjacencyListHints)
   protected def newNodeWithHints(node: N, hints: ArraySet.Hints): NodeT
 
   type NodeSetT <: NodeSet
   trait NodeSet extends super.NodeSet {
-    protected val collection = ExtHashSet.empty[NodeT]
-    override protected[collection] def initialize(nodes: Iterable[N], edges: Iterable[E[N]]) =
+    protected val collection: ExtHashSet[NodeT] = ExtHashSet.empty[NodeT]
+
+    override protected[collection] def initialize(nodes: Iterable[N], edges: Iterable[E[N]]): Unit =
       if (nodes ne null)
         collection ++= nodes map (Node(_))
-    override protected def copy = {
+
+    override protected def copy: NodeSetT = {
       val nodeSet = newNodeSet
       nodeSet.collection ++= this.collection
       nodeSet
     }
+
     @inline final override def find(elem: N): Option[NodeT] = Option(lookup(elem))
+
     final override def get(outer: N): NodeT = {
       val inner = lookup(outer)
       if (null == inner) throw new NoSuchElementException
@@ -240,7 +247,8 @@ trait AdjacencyListBase[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[
     final def hasMixedEdges: Boolean    = nrDi > 0 && nrEdges > 1
 
     private[this] var nrHyper = if (selfGraph.isHyperT) 0 else -1
-    final def hasAnyHyperEdge = nrHyper > 0
+
+    final def hasAnyHyperEdge: Boolean = nrHyper > 0
 
     final protected def statistics(edge: EdgeT, plus: Boolean): Boolean = {
       val add = if (plus) 1 else -1
@@ -252,15 +260,15 @@ trait AdjacencyListBase[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[
 
     override def size = nrEdges
 
-    def hasAnyMultiEdge = selfGraph.nodes exists { node: NodeT =>
+    def hasAnyMultiEdge: Boolean = selfGraph.nodes exists { node: NodeT =>
       val (di: Buffer[EdgeT @unchecked], unDi: Buffer[EdgeT @unchecked]) = {
         if (selfGraph.isDirected) (node.edges.toBuffer[EdgeT], Buffer.empty)
         else node.edges.toBuffer partition (_.isDirected)
       }
       val diTargets, unDiTargets = MSet.empty[NodeT]
       // format: off
-      di  .exists((e: EdgeT) => e.hasSource((n: NodeT) => n eq node) && ! e.targets.forall(diTargets add _)) ||
-      unDi.exists((e: EdgeT) => (e.n1 eq node)                       && ! e.iterator.drop(1).forall((n: NodeT) => unDiTargets add n))
+      di.exists((e: EdgeT) => e.hasSource((n: NodeT) => n eq node) && !e.targets.forall(diTargets add _)) ||
+        unDi.exists((e: EdgeT) => (e.n1 eq node) && !e.iterator.drop(1).forall((n: NodeT) => unDiTargets add n))
       // format: on
     }
   }

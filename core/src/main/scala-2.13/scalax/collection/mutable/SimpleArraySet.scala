@@ -25,12 +25,13 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   override def iterableFactory = SimpleArraySet
 
   protected[collection] def newNonCheckingBuilder[B] = new SimpleArraySet.NonCheckingBuilder[A, B](this)
-  override def clone                                 = (newNonCheckingBuilder ++= this).result
-  private var nextFree: Int                          = 0
-  private var arr: Array[A]                          = _
-  private var hashSet: ExtHashSet[A]                 = _
 
-  private def initialize() {
+  override def clone: SimpleArraySet[A] = (newNonCheckingBuilder ++= this).result
+  private var nextFree: Int             = 0
+  private var arr: Array[A]             = _
+  private var hashSet: ExtHashSet[A]    = _
+
+  private def initialize(): Unit = {
     val capacity = hints.nextCapacity(0)
     if (capacity == 0) hashSet = ExtHashSet.empty[A]
     else arr = new Array[AnyRef](capacity).asInstanceOf[Array[A]]
@@ -43,21 +44,22 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   protected[collection] def array     = arr
   protected[collection] def set       = hashSet
 
-  def addOne(elem: A) = { add(elem); this }
+  def addOne(elem: A): this.type = {
+    add(elem); this
+  }
 
-  def subtractOne(elem: A) = {
+  def subtractOne(elem: A): this.type = {
     if (isHash) hashSet -= elem
     else removeIndex(indexOf(elem))
     this
   }
 
-  protected def removeIndex(i: Int) {
+  protected def removeIndex(i: Int): Unit =
     if (i != -1) {
       if (i + 1 < nextFree)
         arraycopy(arr, i + 1, arr, i, nextFree - i - 1)
       nextFree -= 1
     }
-  }
 
   protected[collection] def +=!(elem: A): this.type = {
     if (isHash) hashSet add elem
@@ -91,21 +93,22 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
         }
       }
 
-  override def foreach[U](f: (A) => U) {
+  override def foreach[U](f: (A) => U): Unit =
     if (isHash) hashSet foreach f
     else {
       var i = 0
-      while (i < nextFree) { f(arr(i)); i += 1 }
+      while (i < nextFree) {
+        f(arr(i)); i += 1
+      }
     }
-  }
 
-  protected def resizeArray(fromCapacity: Int, toCapacity: Int) {
+  protected def resizeArray(fromCapacity: Int, toCapacity: Int): Unit = {
     val newArr: Array[AnyRef] = new Array(toCapacity)
     arraycopy(arr, 0, newArr, 0, math.min(fromCapacity, toCapacity))
     arr = newArr.asInstanceOf[Array[A]]
   }
 
-  protected def setToArray(set: Iterable[A], size: Int) {
+  protected def setToArray(set: Iterable[A], size: Int): Unit = {
     arr = new Array[AnyRef](size).asInstanceOf[Array[A]]
     nextFree = 0
     set foreach { elem =>
@@ -115,7 +118,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     hashSet = null
   }
 
-  def compact() {
+  def compact(): Unit =
     if (isHash) {
       val _size = size
       if (_size < hints.hashTableThreshold)
@@ -128,7 +131,6 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       }
     )
       resizeArray(capacity, nextFree)
-  }
 
   protected def indexOf[B](elem: B, pred: (A, B) => Boolean): Int = {
     var i = 0
@@ -187,7 +189,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     }
   }
 
-  override def size = if (isHash) hashSet.size else nextFree
+  override def size: Int = if (isHash) hashSet.size else nextFree
 
   protected[collection] def upsert(elem: A with AnyRef): Boolean =
     if (isHash) hashSet upsert elem
@@ -200,7 +202,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     }
 
   /** $OPT */
-  override def filter(p: (A) => Boolean) =
+  override def filter(p: (A) => Boolean): SimpleArraySet[A] =
     if (isHash) super.filter(p)
     else {
       val b = newNonCheckingBuilder[A]
@@ -219,7 +221,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     }
 
   /** $OPT */
-  override def partition(p: A => Boolean) =
+  override def partition(p: A => Boolean): (SimpleArraySet[A], SimpleArraySet[A]) =
     if (isHash) super.partition(p)
     else {
       val l, r = newNonCheckingBuilder[A]
@@ -284,6 +286,7 @@ object SimpleArraySet extends IterableFactory[SimpleArraySet] {
     override def addOne(x: B): this.type = { elems +=! x; this }
   }
 
-  override def from[A](source: IterableOnce[A]) = empty ++= source
-  override def newBuilder[A]                    = new GrowableBuilder[A, SimpleArraySet[A]](empty)
+  override def from[A](source: IterableOnce[A]): SimpleArraySet[A] = empty ++= source
+
+  override def newBuilder[A] = new GrowableBuilder[A, SimpleArraySet[A]](empty)
 }

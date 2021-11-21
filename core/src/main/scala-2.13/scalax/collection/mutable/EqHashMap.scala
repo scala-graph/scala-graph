@@ -13,7 +13,7 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
   final protected def sizeHint: Int = _sizeHint
   final protected def step          = 2
 
-  def this(other: EqHashMap[K, V]) {
+  def this(other: EqHashMap[K, V]) = {
     this()
     from(other)
   }
@@ -49,7 +49,9 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
       Some(oldValue)
   }
 
-  override def subtractOne(key: K) = { remove(key); this }
+  override def subtractOne(key: K): this.type = {
+    remove(key); this
+  }
 
   protected def move(oldTable: Array[AnyRef], oldLength: Int, newTable: Array[AnyRef], newLength: Int): Unit = {
     var j = 0
@@ -89,7 +91,9 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
     }
   }
 
-  override def addOne(kv: (K, V)) = { put(kv._1, kv._2); this }
+  override def addOne(kv: (K, V)): this.type = {
+    put(kv._1, kv._2); this
+  }
 
   override protected def elemHashCode: (Array[AnyRef], Int) => Int = (tab, i) => {
     val k = unmaskNull(tab(i))
@@ -131,7 +135,8 @@ object EqHashMap {
 
   import EqHash._
 
-  def apply[K <: AnyRef, V](elems: (K, V)*)                 = empty ++= elems
+  def apply[K <: AnyRef, V](elems: (K, V)*): EqHashMap[K, V] = empty ++= elems
+
   def empty[K <: AnyRef, V]: EqHashMap[K, V]                = empty(sizeHint = defCapacity)
   def empty[K <: AnyRef, V](sizeHint: Int): EqHashMap[K, V] = new EqHashMap[K, V](sizeHint)
 }

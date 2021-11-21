@@ -17,14 +17,13 @@ import edge.WLBase.{WLEdgeCompanion, WLHyperEdgeCompanion}
   * @tparam E Kind of type of the edges the generated will contain.
   * @tparam G Kind of type of the graph to be generated.
   * @param graphCompanion The graph companion the factory method `from`of which is
-  *        to be called to create random graphs.
-  * @param order The total number of nodes the generated random graph should contain.
-  * @param nodeFactory The function responsible for generating nodes.
-  * @param nodeDegree The characteristics of node degrees such as the span of degrees
-  *        for the graph to be generated.
-  * @param edgeCompanions The edge types to be used in the generated graph.
-  * @param connected Whether the generated graph should be connected.
-  *
+  *                        to be called to create random graphs.
+  * @param order           The total number of nodes the generated random graph should contain.
+  * @param nodeFactory     The function responsible for generating nodes.
+  * @param nodeDegree      The characteristics of node degrees such as the span of degrees
+  *                        for the graph to be generated.
+  * @param edgeCompanions  The edge types to be used in the generated graph.
+  * @param connected       Whether the generated graph should be connected.
   * @author Peter Empen
   */
 abstract class RandomGraph[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[
@@ -47,15 +46,21 @@ abstract class RandomGraph[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z
   implicit val graphConfig: graphCompanion.Config
 
   protected val doTrace = false
-  protected def trace(str: => String) { if (doTrace) print(str) }
-  protected def traceln(str: => String) { if (doTrace) println(str) }
+
+  protected def trace(str: => String): Unit =
+    if (doTrace) print(str)
+
+  protected def traceln(str: => String): Unit =
+    if (doTrace) println(str)
 
   final protected[RandomGraph] class DefaultWeightFactory {
     private[this] var weightCount = 0L
+
     def apply: () => Long = { () =>
       weightCount += 1
       weightCount
     }
+
     def reset: Unit = weightCount = 0
   }
 
@@ -137,7 +142,7 @@ abstract class RandomGraph[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z
     /* Whether a compaction has already taken place. */
     private[this] var isCompact = false
 
-    def sliding2(f: (N, N) => Unit) = {
+    def sliding2(f: (N, N) => Unit): Unit = {
       nodes sliding 2 foreach { a: Array[N] =>
         f(a(0), a(1))
       }
@@ -147,7 +152,8 @@ abstract class RandomGraph[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z
     def mayFinish: Boolean = active.toFloat / order < 0.5
 
     private[this] var idx = 0
-    def add(node: N, degree: Int) {
+
+    def add(node: N, degree: Int): Unit = {
       nodes(idx) = node
       degrees(idx) = degree
       idx += 1
@@ -162,7 +168,7 @@ abstract class RandomGraph[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z
       */
     final class Drawn(val node: N, index: Int, compactIndex: Int) {
 
-      def isDefined = index != Drawn.emptyIdx
+      def isDefined: Boolean = index != Drawn.emptyIdx
 
       def setUsed: Unit = {
         val drawnCompact = compactIndex >= 0
@@ -232,8 +238,8 @@ abstract class RandomGraph[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z
   }
 
   final protected[RandomGraph] class OuterNodes {
-    val nodes   = MSet.empty[N]
-    val degrees = new Degrees
+    val nodes: MSet[N] = MSet.empty[N]
+    val degrees        = new Degrees
 
     addExact[N](
       nrToAdd = order,
@@ -253,17 +259,17 @@ abstract class RandomGraph[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z
         true
       } else false
 
-    def sliding2(f: (N, N) => Unit) = degrees.sliding2(f)
+    def sliding2(f: (N, N) => Unit): Unit = degrees.sliding2(f)
   }
 
   protected[RandomGraph] class RandomEdge(weightFactory: () => Long, labelFactory: () => Any)(implicit val d: Degrees) {
     private[this] val c = RandomEdge.drawCompanion
-    val degrees = d.draw(
+    val degrees: ArrayBuffer[d.Drawn] = d.draw(
       if (c.isInstanceOf[EdgeCompanion[E]]) 2
       else 2 + RandomEdge.r.nextInt(5) // TODO use EdgeArityRange instead
     )
 
-    final def isDefined = !degrees.isEmpty
+    final def isDefined: Boolean = !degrees.isEmpty
 
     def draw: E[N] = {
       val it = degrees.iterator
@@ -303,10 +309,11 @@ abstract class RandomGraph[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z
     val companions     = edgeCompanions.toArray
     val nrOfCompanions = companions.size
 
-    val r             = Random
-    def drawCompanion = companions(r.nextInt(nrOfCompanions)).asInstanceOf[EdgeCompanionBase[E]]
+    val r = Random
 
-    def throwUnsupportedEdgeCompanionException(c: EdgeCompanionBase[E]) =
+    def drawCompanion: EdgeCompanionBase[E] = companions(r.nextInt(nrOfCompanions)).asInstanceOf[EdgeCompanionBase[E]]
+
+    def throwUnsupportedEdgeCompanionException(c: EdgeCompanionBase[E]): Nothing =
       throw new IllegalArgumentException(s"The edge companion '$c' not supported.")
   }
 
@@ -320,7 +327,7 @@ abstract class RandomGraph[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z
     private val edges = MSet.empty[E[N]]
     def outerEdges    = edges
 
-    implicit private val degrees = nodes.degrees
+    implicit private val degrees: Degrees = nodes.degrees
 
     if (connected)
       nodes.sliding2 { (n1, n2) =>
@@ -440,16 +447,16 @@ object RandomGraph {
     *  an order of `5` and a node degree range of `2` to `4`.
     */
   object TinyInt extends IntFactory {
-    val order       = 5
-    val nodeDegrees = NodeDegreeRange(2, 4)
+    val order                        = 5
+    val nodeDegrees: NodeDegreeRange = NodeDegreeRange(2, 4)
   }
 
   /** Predefined metrics of a 'small' graph with the node type of `Int`,
     *  an order of `20` and a node degree range of `2` to `5`.
     */
   object SmallInt extends IntFactory {
-    val order       = 20
-    val nodeDegrees = NodeDegreeRange(2, 5)
+    val order                        = 20
+    val nodeDegrees: NodeDegreeRange = NodeDegreeRange(2, 5)
   }
 
   /** Returns a generator for tiny, connected, non-labeled directed graphs

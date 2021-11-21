@@ -11,7 +11,7 @@ class WHyperEdge[+N](nodes: Product, override val weight: Double)
     with WEdge[N]
     with EdgeCopy[WHyperEdge]
     with OuterEdge[N, WHyperEdge] {
-  override protected[collection] def copy[NN](newNodes: Product) =
+  override protected[collection] def copy[NN](newNodes: Product): WHyperEdge[NN] =
     WHyperEdge.newEdge[NN](newNodes, weight)(CollectionKind.from(this))
 }
 object WHyperEdge extends WHyperEdgeCompanion[WHyperEdge] {
@@ -29,7 +29,7 @@ class WDiHyperEdge[+N](nodes: Product, override val weight: Double)
     with WEdge[N]
     with EdgeCopy[WDiHyperEdge]
     with OuterEdge[N, WDiHyperEdge] {
-  override protected[collection] def copy[NN](newNodes: Product) =
+  override protected[collection] def copy[NN](newNodes: Product): WDiHyperEdge[NN] =
     WDiHyperEdge.newEdge[NN](newNodes, weight)(CollectionKind.from(this))
 }
 object WDiHyperEdge extends WHyperEdgeCompanion[WDiHyperEdge] {

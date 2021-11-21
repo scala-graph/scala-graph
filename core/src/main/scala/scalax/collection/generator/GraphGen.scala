@@ -43,10 +43,10 @@ class GraphGen[N, E[+X] <: EdgeLikeIn[X], G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[
   protected[generator] def nodeSetGen: Gen[Set[N]] =
     Gen.containerOfN[Set, N](order, nodeGen) suchThat (_.size == order)
 
-  protected[generator] val outerNodeSet = Arbitrary(nodeSetGen)
+  protected[generator] val outerNodeSet: Arbitrary[Set[N]] = Arbitrary(nodeSetGen)
 
   final private class NonFailing[N](gen: Gen[N], genName: String) {
-    def draw = {
+    def draw: N = {
       var cnt              = 0
       var value: Option[N] = None
       while (value.isEmpty && cnt < 100) {
@@ -135,9 +135,9 @@ object GraphGen {
     *  including `org.scalacheck.Gen[Int]`.
     */
   object TinyInt extends Metrics[Int] {
-    val order       = 5
-    val nodeGen     = Gen.choose(1, minMax)
-    val nodeDegrees = NodeDegreeRange(2, 4)
+    val order                        = 5
+    val nodeGen: Gen[Int]            = Gen.choose(1, minMax)
+    val nodeDegrees: NodeDegreeRange = NodeDegreeRange(2, 4)
   }
 
   /** Predefined metrics of a 'small' graph with the node type of `Int`,
@@ -145,9 +145,9 @@ object GraphGen {
     *  including `org.scalacheck.Gen[Int]`.
     */
   object SmallInt extends Metrics[Int] {
-    val order       = 20
-    val nodeGen     = Gen.choose(1, minMax)
-    val nodeDegrees = NodeDegreeRange(2, 5)
+    val order                        = 20
+    val nodeGen: Gen[Int]            = Gen.choose(1, minMax)
+    val nodeDegrees: NodeDegreeRange = NodeDegreeRange(2, 5)
   }
 
   /** Returns an `org.scalacheck.Arbitrary[G[Int,DiEdge]]` for tiny, connected,

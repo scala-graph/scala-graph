@@ -31,11 +31,14 @@ final class SeqFacade[+A](i: Iterable[A]) extends immutable.Seq[A] {
   */
 final class EqSetFacade[A <: AnyRef](i: Iterable[A]) extends immutable.Set[A] with InclExcl[A, immutable.Set[A]] {
   def iterator: Iterator[A] = i.iterator
-  def incl(elem: A)         = i.toSet + elem
-  def excl(elem: A)         = i.toSet - elem
 
-  override def size: Int         = i.size
-  override def contains(elem: A) = i exists (_ eq elem)
+  def incl(elem: A): immutable.Set[A] = i.toSet + elem
+
+  def excl(elem: A): immutable.Set[A] = i.toSet - elem
+
+  override def size: Int = i.size
+
+  override def contains(elem: A): Boolean = i exists (_ eq elem)
 }
 
 /** Template for sets having a `withFilter` that keeps `Set` semantics.
@@ -55,10 +58,13 @@ final class FilteredSet[A](val set: Set[A], val p: (A) => Boolean)
     extends immutable.Set[A]
     with FilterableSet[A]
     with InclExcl[A, immutable.Set[A]] {
-  def contains(elem: A)     = p(elem) && (set contains elem)
+  def contains(elem: A): Boolean = p(elem) && (set contains elem)
+
   def iterator: Iterator[A] = set.iterator withFilter p
-  def excl(elem: A)         = if (contains(elem)) iterator.toSet - elem else this
-  def incl(elem: A)         = if (contains(elem)) this else iterator.toSet + elem
+
+  def excl(elem: A): immutable.Set[A] = if (contains(elem)) iterator.toSet - elem else this
+
+  def incl(elem: A): immutable.Set[A] = if (contains(elem)) this else iterator.toSet + elem
 
   override def withSetFilter(q: (A) => Boolean): immutable.Set[A] with FilterableSet[A] =
     new FilteredSet(this, elem => p(elem) && q(elem))

@@ -47,7 +47,9 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
   /** to save and restore graphs to/from files */
   object GraphFile extends GraphStore {
     protected class Exec(filename: String) extends super.Exec {
+
       import FileSerialization._
+
       def save[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): Unit = write(g, filename) recover { case e =>
         fail(s"Couldn't write $g: $e")
       }

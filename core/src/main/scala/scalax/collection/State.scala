@@ -42,7 +42,7 @@ protected trait State[N, E[+X] <: EdgeLikeIn[X]] {
 
   /** Avoid calling this directly, prefer `withHandle` instead. */
   protected def nextHandle: Handle = monitor.synchronized {
-    def clearNodes(hasDirtyExt: Boolean) {
+    def clearNodes(hasDirtyExt: Boolean): Unit = {
       clearNodeStates(dirty.flags, if (hasDirtyExt) dirty.flagsExt else null)
       dirty.flags = 0L
       if (hasDirtyExt) dirty.flagsExt.clear
@@ -75,7 +75,7 @@ protected trait State[N, E[+X] <: EdgeLikeIn[X]] {
   }
 
   /** Avoid calling this directly, prefer `withHandle` instead. */
-  protected def releaseHandle(handle: Handle) = monitor.synchronized {
+  protected def releaseHandle(handle: Handle): Unit = monitor.synchronized {
     inUse(handle) = false
     dirty(handle) = true
   }
@@ -129,7 +129,7 @@ protected trait State[N, E[+X] <: EdgeLikeIn[X]] {
     @inline final protected[collection] def visited(implicit handle: Handle): Boolean =
       bit(handle)
 
-    @inline final protected[collection] def bit_=[T](isSet: Boolean)(implicit handle: Handle) {
+    @inline final protected[collection] def bit_=[T](isSet: Boolean)(implicit handle: Handle): Unit =
       monitor.synchronized {
         if (handle.index == singleWord)
           flags =
@@ -137,15 +137,13 @@ protected trait State[N, E[+X] <: EdgeLikeIn[X]] {
             else flags & ~handle.mask
         else withFlagsExt(_.update(handle.index, handle.mask, isSet))
       }
-    }
 
     /** Sets this node to `visited` with respect to to `handle`. */
-    @inline final protected[collection] def visited_=(visited: Boolean)(implicit handle: Handle) {
+    @inline final protected[collection] def visited_=(visited: Boolean)(implicit handle: Handle): Unit =
       bit_=(visited)(handle)
-    }
   }
 
-  protected def clearNodeStates(flags: FlagWord, flagsExt: ExtBitSet) {
+  protected def clearNodeStates(flags: FlagWord, flagsExt: ExtBitSet): Unit = {
     val clear      = ~flags
     val doClearExt = flagsExt != null
     val clearExt   = if (doClearExt) ~flagsExt else null
@@ -163,8 +161,8 @@ object State {
     *  with respect to a given traversal where each traversal is represented by a `Handle`.
     */
   type FlagWord = Long
-  protected val nrOfFlagWordBits = 64
-  protected val minBitsForClear  = nrOfFlagWordBits >> 2
+  protected val nrOfFlagWordBits     = 64
+  protected val minBitsForClear: Int = nrOfFlagWordBits >> 2
 
   /** Growable collection for storing bitwise boolean state information
     *  as an extension of `FlagsWord`.
@@ -190,14 +188,13 @@ object State {
         flagsExt(handle.index, handle.mask)
 
     /** Sets `store` to `isSet` with respect to `handle`. */
-    def update(handle: Handle, isSet: Boolean) {
+    def update(handle: Handle, isSet: Boolean): Unit =
       if (handle.index == singleWord)
         flags =
           if (isSet) flags | handle.mask
           else flags & ~handle.mask
       else
         flagsExt(handle.index, handle.mask) = isSet
-    }
   }
 
   /** Dumps the state flags of a `node`. */
@@ -211,7 +208,7 @@ object State {
 
   /** Represents state flags of a graph for dump purposes. */
   class GraphDump(val inUse: ExtBitSet, val dirty: ExtBitSet) {
-    override def toString = "inUse = %s%ndirty = %s%n".format(inUse.toString, dirty.toString)
+    override def toString: String = "inUse = %s%ndirty = %s%n".format(inUse.toString, dirty.toString)
   }
 
   /** Dumps the state flags of a `graph`. */

@@ -10,7 +10,7 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity) extends Set[A]
   final protected def sizeHint: Int = _sizeHint
   final protected def step          = 1
 
-  def this(other: EqHashSet[A]) {
+  def this(other: EqHashSet[A]) = {
     this()
     from(other)
   }
@@ -83,7 +83,8 @@ object EqHashSet {
 
   import EqHash._
 
-  def apply[A <: AnyRef](elems: A*)                   = empty ++= elems
+  def apply[A <: AnyRef](elems: A*): EqHashSet[A] = empty ++= elems
+
   def empty[A <: AnyRef]: EqHashSet[A]                = empty(sizeHint = defCapacity)
   def empty[A <: AnyRef](sizeHint: Int): EqHashSet[A] = new EqHashSet[A](sizeHint)
 }

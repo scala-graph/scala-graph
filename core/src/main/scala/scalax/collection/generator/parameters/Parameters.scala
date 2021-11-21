@@ -4,20 +4,25 @@ import scala.util.Random
 
 abstract class RandomRange(min: Int, max: Int, uniform: Boolean) {
   require(min <= max)
-  val span            = max - min + 1
-  val halfSpan        = span.toFloat / 2
-  def mean            = min + (span - 1).toFloat / 2
+  val span: Int       = max - min + 1
+  val halfSpan: Float = span.toFloat / 2
+
+  def mean: Float = min + (span - 1).toFloat / 2
+
   private val r, sign = new Random
-  def draw = if (uniform) r.nextInt(span) + min
+
+  def draw: Int = if (uniform) r.nextInt(span) + min
   else ((r.nextGaussian + 1 + min) * halfSpan).toInt
-  def drawHalf = {
+
+  def drawHalf: Int = {
     val d = draw
     val even =
       if (d % 2 == 0) d
       else d + (if (sign.nextInt(2) == 1) 1 else -1)
     even / 2
   }
-  def includes(i: Int) = i >= min && i <= max
+
+  def includes(i: Int): Boolean = i >= min && i <= max
 }
 
 /** The arity of edges to be generated.
