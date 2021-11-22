@@ -4,8 +4,8 @@ object Version {
   private val isSnapshot = false
   private def snapshot   = if (isSnapshot) "-SNAPSHOT" else ""
 
-  private val major = 2
-  private val minor = 0
+  private val major               = 2
+  private val minor               = 0
   private def version(patch: Int) = s"$major.$minor.$patch$snapshot"
 
   val highest     = version(0)

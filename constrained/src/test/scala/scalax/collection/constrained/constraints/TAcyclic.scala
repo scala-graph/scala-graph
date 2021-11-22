@@ -11,7 +11,8 @@ class TAcyclicRootTest
     extends Suites(
       new TAcyclic[immutable.Graph](immutable.Graph),
       new TAcyclic[mutable.Graph](mutable.Graph),
-      new TAcyclicMutable)
+      new TAcyclicMutable
+    )
 
 class TAcyclicMutable extends RefSpec with Matchers with Testing[mutable.Graph] {
 
@@ -30,8 +31,8 @@ class TAcyclicMutable extends RefSpec with Matchers with Testing[mutable.Graph] 
 }
 
 class TAcyclic[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC] with GraphOps[N, E, CC]](
-    val factory: GraphConstrainedCompanion[CC])
-    extends RefSpec
+    val factory: GraphConstrainedCompanion[CC]
+) extends RefSpec
     with Matchers
     with Testing[CC] {
 

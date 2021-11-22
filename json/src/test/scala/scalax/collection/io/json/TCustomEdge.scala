@@ -19,8 +19,8 @@ class TCustomEdgeRootTest
     extends Suites(new TCustomEdge[immutable.Graph](immutable.Graph), new TCustomEdge[mutable.Graph](mutable.Graph))
 
 class TCustomEdge[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC])
-    extends RefSpec
+    val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC]
+) extends RefSpec
     with Matchers {
 
   val jsonText = """
@@ -41,11 +41,13 @@ class TCustomEdge[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC
         edgeCompanion = Transition,
         sampleAttributes = ('A', NoneModifier),
         customSerializer = Some(new Transition.Serializer),
-        typeId = "TraceEdge")
+        typeId = "TraceEdge"
+      )
     )
   val graph = factory[String, Transition](
     Transition("Editor", "Menu", 'M', Alt),
-    Transition("Menu", "Settings", 'S', NoneModifier))
+    Transition("Menu", "Settings", 'S', NoneModifier)
+  )
 
   object `JSON import/export of graphs with custom edges works fine` {
     def `when importing` {
@@ -66,7 +68,8 @@ import KeyModifier._
 
 /** Custom edge with the two custom attributes `key` and `keyMod`.
   *  Note that it is also necessary to extend `Attributes` enabling to be a member
-  *  of the JSON `CEdgeDescriptor`. */
+  *  of the JSON `CEdgeDescriptor`.
+  */
 class Transition[+N](from: N, to: N, val key: Char, val keyMod: KeyModifier)
     extends DiEdge[N](NodeProduct(from, to))
     with ExtendedKey[N]
@@ -80,21 +83,27 @@ class Transition[+N](from: N, to: N, val key: Char, val keyMod: KeyModifier)
 }
 
 /** Custom edge companion object extending `CEdgeCompanion`. This is necessary
-  *  to enable this custom edge to be a member of the JSON `CEdgeDescriptor`. */
+  *  to enable this custom edge to be a member of the JSON `CEdgeDescriptor`.
+  */
 object Transition extends CEdgeCompanion[Transition] {
   class Serializer
       extends CustomSerializer[CEdgeParameters[Transition.P]](formats =>
-        ({
-          case JArray(
-              JString(n1) :: JString(n2) ::
-                JString(key) :: JString(keyMod) :: Nil) =>
-            new CEdgeParameters[Transition.P](n1, n2, (key(0), KeyModifier.withName(keyMod)))
-        }, {
-          case CEdgeParameters((nId_1, nId_2), (key, keyMod)) =>
+        (
+          {
+            case JArray(
+                  JString(n1) :: JString(n2) ::
+                  JString(key) :: JString(keyMod) :: Nil
+                ) =>
+              new CEdgeParameters[Transition.P](n1, n2, (key(0), KeyModifier.withName(keyMod)))
+          },
+          { case CEdgeParameters((nId_1, nId_2), (key, keyMod)) =>
             JArray(
               JString(nId_1) :: JString(nId_2) ::
-                JString(key.toString) :: JString(keyMod.toString) :: Nil)
-        }))
+                JString(key.toString) :: JString(keyMod.toString) :: Nil
+            )
+          }
+        )
+      )
 
   /** Assuming that nodes are of type String. */
   def apply(from: String, to: String, key: Char, keyMod: KeyModifier) =

@@ -125,13 +125,15 @@ class TJsonDemoTest extends RefSpec with Matchers {
       import net.liftweb.json._
       final class AuthorSerializer
           extends CustomSerializer[Author](formats =>
-            ({
-              case JArray(JString(surName) :: JString(firstName) :: Nil) =>
+            (
+              { case JArray(JString(surName) :: JString(firstName) :: Nil) =>
                 Author(surName, firstName)
-            }, {
-              case Author(surName, firstName) =>
+              },
+              { case Author(surName, firstName) =>
                 JArray(JString(surName) :: JString(firstName) :: Nil)
-            }))
+              }
+            )
+          )
       val author = new NodeDescriptor[Author](typeId = "Authors", customSerializers = Seq(new AuthorSerializer)) {
         def id(node: Any) = node match {
           case Author(surName, firstName) => "" + surName(0) + firstName(0)
@@ -139,9 +141,13 @@ class TJsonDemoTest extends RefSpec with Matchers {
       }
       final class BookSerializer
           extends CustomSerializer[Book](formats =>
-            ({ case JArray(JString(title) :: JString(isbn) :: Nil) => Book(title, isbn) }, {
-              case Book(title, isbn)                               => JArray(JString(title) :: JString(isbn) :: Nil)
-            }))
+            (
+              { case JArray(JString(title) :: JString(isbn) :: Nil) => Book(title, isbn) },
+              { case Book(title, isbn) =>
+                JArray(JString(title) :: JString(isbn) :: Nil)
+              }
+            )
+          )
       val book = new NodeDescriptor[Book](typeId = "Books", customSerializers = Seq(new BookSerializer)) {
         def id(node: Any) = node match {
           case Book(_, isbn) => isbn
@@ -173,7 +179,7 @@ class TJsonDemoTest extends RefSpec with Matchers {
             "DiEdge":[["978-1-9351827-0-2","SJ"]]
           }
         }
-     */
+       */
     }
     def `importing the exported JSON yields an equal graph` {
       val expLibrary = library.toJson(Positioned.descriptor)

@@ -24,7 +24,8 @@ class TExportTest extends RefSpec with Matchers {
       ("A2" ~+> "B2")("(g o f)'"),
       "A3" ~> "B3",
       "B1" ~> "B3",
-      ("B2" ~+> "B3")("g'"))
+      ("B2" ~+> "B3")("g'")
+    )
     val root = DotRootGraph(directed = true, id = Some(Id("Wikipedia_Example")))
     val subA = DotSubGraph(ancestor = root, subgraphId = Id("A"), attrList = List(DotAttr(Id("rank"), Id("same"))))
     val subB = DotSubGraph(ancestor = root, subgraphId = Id("B"), attrList = List(DotAttr(Id("rank"), Id("same"))))
@@ -37,16 +38,20 @@ class TExportTest extends RefSpec with Matchers {
           NodeId(edge.from.toString),
           NodeId(edge.to.toString),
           if (label.nonEmpty) List(DotAttr(Id("label"), Id(label)))
-          else Nil))
+          else Nil
+        )
+      )
     }
     def nodeTransformer(innerNode: Graph[String, LDiEdge]#NodeT): Option[(DotGraph, DotNodeStmt)] =
       Some(
-        (if (innerNode.value.head == 'A') subA else subB, DotNodeStmt(NodeId(innerNode.toString), Seq.empty[DotAttr])))
+        (if (innerNode.value.head == 'A') subA else subB, DotNodeStmt(NodeId(innerNode.toString), Seq.empty[DotAttr]))
+      )
     val dot = g.toDot(
       dotRoot = root,
       edgeTransformer = edgeTransformer,
       cNodeTransformer = Some(nodeTransformer),
-      spacing = multilineCompatibleSpacing)
+      spacing = multilineCompatibleSpacing
+    )
 
     val (expected_1, expected_2) = {
       val expected_header_sorted =
@@ -58,7 +63,7 @@ class TExportTest extends RefSpec with Matchers {
           |  A3 -> B3
           |  B1 -> B3
           |  B2 -> B3 [label = "g'"]""".stripMargin
-      val expected_footer       = """
+      val expected_footer = """
                               |}""".stripMargin
       val expected_sub_A_sorted = """
                                     |  subgraph A {
@@ -76,7 +81,8 @@ class TExportTest extends RefSpec with Matchers {
                                     |  }""".stripMargin
       (
         expected_header_sorted + expected_sub_A_sorted + expected_sub_B_sorted + expected_footer,
-        expected_header_sorted + expected_sub_B_sorted + expected_sub_A_sorted + expected_footer)
+        expected_header_sorted + expected_sub_B_sorted + expected_sub_A_sorted + expected_footer
+      )
     }
     val dot_sorted = {
       var group = 1
@@ -92,17 +98,17 @@ class TExportTest extends RefSpec with Matchers {
         SortedMap(unsortedMap.toList: _*)
       }
       import scala.math.Ordering.fromLessThan
-      val groups_sorted = for (group <- groups.valuesIterator)
-        yield
-          group.sorted(
-            fromLessThan((a: String, b: String) => {
+      val groups_sorted =
+        for (group <- groups.valuesIterator)
+          yield group.sorted(
+            fromLessThan { (a: String, b: String) =>
               val (iA, iB) = (a.indexWhere(_ != ' '), b.indexWhere(_ != ' '))
               if (iA == iB)
                 if (a.contains("rank")) true
                 else a < b
               else if (a(iA) == '}') false
               else iA < iB
-            })
+            }
           )
       groups_sorted.flatten
     }.toList.foldLeft("")((result: String, elem: String) => result + elem)
@@ -116,7 +122,8 @@ class TExportTest extends RefSpec with Matchers {
       dotRoot = DotRootGraph(
         directed = false,
         id = None,
-        attrList = List(DotAttr(Id("attr_1"), Id(""""one"""")), DotAttr(Id("attr_2"), Id("<two>")))),
+        attrList = List(DotAttr(Id("attr_1"), Id(""""one"""")), DotAttr(Id("attr_2"), Id("<two>")))
+      ),
       edgeTransformer = _ => None,
       spacing = multilineCompatibleSpacing
     )
@@ -133,10 +140,10 @@ class TExportTest extends RefSpec with Matchers {
     val dot = hg.toDot(
       dotRoot = root,
       edgeTransformer = e => None,
-      hEdgeTransformer = Some(h => {
+      hEdgeTransformer = Some { h =>
         val source = h.edge.source.toString
         h.edge.targets map (target => (root, DotEdgeStmt(NodeId(source), NodeId(target.toString))))
-      }),
+      },
       spacing = multilineCompatibleSpacing
     )
     val expected = """digraph {
@@ -153,7 +160,8 @@ class TExportTest extends RefSpec with Matchers {
     val (n1, n2, n3): (Node, Node, Node) = (
       Node(
         struct(1),
-        Horizontal(Field("left", Some(f0)), Horizontal(Field("mid", Some(f1)), Field("right", Some(f2))))),
+        Horizontal(Field("left", Some(f0)), Horizontal(Field("mid", Some(f1)), Field("right", Some(f2))))
+      ),
       Node(struct(2), Horizontal(Field("one", Some(f0)), Field("two", Some(f1)))),
       Node(
         struct(3),
@@ -162,8 +170,10 @@ class TExportTest extends RefSpec with Matchers {
           Horizontal(
             Vertical(
               Horizontal(Field("b"), Vertical(Field("c"), Horizontal(Field("d", Some(here)), Field("e")))),
-              Field("f")),
-            Horizontal(Field("g"), Field("h")))
+              Field("f")
+            ),
+            Horizontal(Field("g"), Field("h"))
+          )
         )
       )
     )
@@ -175,17 +185,19 @@ class TExportTest extends RefSpec with Matchers {
     )
     val dot = g.toDot(
       dotRoot = root,
-      edgeTransformer = _.edge match {
-        case LDiEdge(source, target, label) =>
-          def withPort(n: Node, port: String): NodeId = n match {
-            case Node(id, _) => NodeId(id, port)
-          }
-          label match {
-            case Ports(sourcePort, targetPort) =>
-              Some((root, DotEdgeStmt(withPort(source.value, sourcePort), withPort(target.value, targetPort)))): Option[
-                (DotGraph, DotEdgeStmt)]
-          }
-      },
+      edgeTransformer =
+        _.edge match {
+          case LDiEdge(source, target, label) =>
+            def withPort(n: Node, port: String): NodeId = n match {
+              case Node(id, _) => NodeId(id, port)
+            }
+            label match {
+              case Ports(sourcePort, targetPort) =>
+                Some(
+                  (root, DotEdgeStmt(withPort(source.value, sourcePort), withPort(target.value, targetPort)))
+                ): Option[(DotGraph, DotEdgeStmt)]
+            }
+        },
       cNodeTransformer = Some(_.value match {
         case Node(id, label) =>
           Some((root, DotNodeStmt(id, List(DotAttr("label", label.toString)))))
@@ -224,12 +236,12 @@ class TExportTest extends RefSpec with Matchers {
         case _ =>
           Some((root, DotEdgeStmt("hi", "guys")))
       },
-      cNodeTransformer = Some({ _ =>
+      cNodeTransformer = Some { _ =>
         Some((cSubGraph, DotNodeStmt("cnode")))
-      }),
-      iNodeTransformer = Some({ _ =>
+      },
+      iNodeTransformer = Some { _ =>
         Some((iSubGraph, DotNodeStmt(iNode)))
-      })
+      }
     )
     dot.contains(iNode) should be(true)
   }
@@ -237,7 +249,8 @@ class TExportTest extends RefSpec with Matchers {
   private val multilineCompatibleSpacing = Spacing(
     indent = TwoSpaces,
     graphAttrSeparator = new AttrSeparator("""
-                                             |""".stripMargin) {})
+                                             |""".stripMargin) {}
+  )
 
   private def sortMid(dot: String): String = {
     val lines = dot.linesWithSeparators.toBuffer

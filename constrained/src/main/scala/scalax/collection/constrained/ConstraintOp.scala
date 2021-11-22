@@ -16,18 +16,20 @@ case object Or        extends BinaryOp
 abstract class ConstraintOp[N, E <: EdgeLike[N], G <: Graph[N, E]](self: G, val operator: Op)
     extends Constraint[N, E, G](self)
 
-class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override val self: G,
-                                                   operator: BinaryOp,
-                                                   left: Constraint[N, E],
-                                                   right: Constraint[N, E])
-    extends ConstraintOp[N, E, G](self, operator) {
+class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](
+    override val self: G,
+    operator: BinaryOp,
+    left: Constraint[N, E],
+    right: Constraint[N, E]
+) extends ConstraintOp[N, E, G](self, operator) {
 
   assert((self eq left.self) && (left.self eq right.self))
 
-  protected class PreCheckResults(override val followUp: PreCheckFollowUp,
-                                  constraint: Constraint[N, E, G],
-                                  result: PreCheckResult)
-      extends PreCheckResult(followUp) {
+  protected class PreCheckResults(
+      override val followUp: PreCheckFollowUp,
+      constraint: Constraint[N, E, G],
+      result: PreCheckResult
+  ) extends PreCheckResult(followUp) {
     val results: MMap[Constraint[N, E, G], PreCheckResult] = result match {
       case r: PreCheckResults => MMap(r.results.toSeq: _*)
       case _                  => MMap(constraint -> result)
@@ -41,10 +43,12 @@ class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override v
     }
   }
 
-  protected def eval(left: Constraint[N, E, G],
-                     leftResult: PreCheckResult,
-                     right: Constraint[N, E, G],
-                     rightResult: => PreCheckResult): PreCheckResult = {
+  protected def eval(
+      left: Constraint[N, E, G],
+      leftResult: PreCheckResult,
+      right: Constraint[N, E, G],
+      rightResult: => PreCheckResult
+  ): PreCheckResult = {
     var rightDone          = false
     val leftFollowUp       = leftResult.followUp
     lazy val rightFollowUp = { rightDone = true; rightResult.followUp }
@@ -60,7 +64,7 @@ class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override v
       if (rightDone) {
         leftResult match {
           case r: PreCheckResults => r += (right, rightResult)
-          case _                  => new PreCheckResults(min(leftFollowUp, rightFollowUp), left, leftResult) += (right, rightResult)
+          case _ => new PreCheckResults(min(leftFollowUp, rightFollowUp), left, leftResult) += (right, rightResult)
         }
       } else leftResult
     }
@@ -92,18 +96,22 @@ class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override v
       left,
       left preSubtract (node.asInstanceOf[LNodeT], forced),
       right,
-      right preSubtract (node.asInstanceOf[RNodeT], forced))
+      right preSubtract (node.asInstanceOf[RNodeT], forced)
+    )
 
   final override def preSubtract(edge: self.EdgeT, simple: Boolean): PreCheckResult =
     eval(
       left,
       left preSubtract (edge.asInstanceOf[LEdgeT], simple),
       right,
-      right preSubtract (edge.asInstanceOf[REdgeT], simple))
+      right preSubtract (edge.asInstanceOf[REdgeT], simple)
+    )
 
-  final override def preSubtract(nodes: => Set[self.NodeT],
-                                 edges: => Set[self.EdgeT],
-                                 simple: Boolean): PreCheckResult =
+  final override def preSubtract(
+      nodes: => Set[self.NodeT],
+      edges: => Set[self.EdgeT],
+      simple: Boolean
+  ): PreCheckResult =
     eval(
       left,
       left preSubtract (nodes.asInstanceOf[Set[LNodeT]], edges.asInstanceOf[Set[LEdgeT]], simple),
@@ -111,22 +119,27 @@ class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](override v
       right preSubtract (nodes.asInstanceOf[Set[RNodeT]], edges.asInstanceOf[Set[REdgeT]], simple)
     )
 
-  final override def postAdd(newGraph: G @uV,
-                             passedNodes: Iterable[N],
-                             passedEdges: Iterable[E],
-                             preCheck: PreCheckResult): Either[PostCheckFailure, G] =
+  final override def postAdd(
+      newGraph: G @uV,
+      passedNodes: Iterable[N],
+      passedEdges: Iterable[E],
+      preCheck: PreCheckResult
+  ): Either[PostCheckFailure, G] =
     eval(
       left postAdd (newGraph, passedNodes, passedEdges, preCheck),
       right postAdd (newGraph, passedNodes, passedEdges, preCheck)
     )
 
-  final override def postSubtract(newGraph: G @uV,
-                                  passedNodes: Iterable[N],
-                                  passedEdges: Iterable[E],
-                                  preCheck: PreCheckResult): Either[PostCheckFailure, G] =
+  final override def postSubtract(
+      newGraph: G @uV,
+      passedNodes: Iterable[N],
+      passedEdges: Iterable[E],
+      preCheck: PreCheckResult
+  ): Either[PostCheckFailure, G] =
     eval(
       left postSubtract (newGraph, passedNodes, passedEdges, preCheck),
-      right postSubtract (newGraph, passedNodes, passedEdges, preCheck))
+      right postSubtract (newGraph, passedNodes, passedEdges, preCheck)
+    )
 }
 
 /** Base class for any operation on `ConstraintCompanion`s.
