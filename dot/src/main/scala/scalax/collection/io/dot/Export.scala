@@ -30,12 +30,14 @@ class Export[N, E <: EdgeLike[N]](graph: Graph[N, E]) {
     * @param spacing separation and indentation rules to be followed when building
     *        the DOT language representation of graph.
     */
-  def toDot(dotRoot: DotRootGraph,
-            edgeTransformer: EdgeTransformer[N, E],
-            hEdgeTransformer: Option[HyperEdgeTransformer[N, E]] = None,
-            cNodeTransformer: Option[NodeTransformer[N, E]] = None,
-            iNodeTransformer: Option[NodeTransformer[N, E]] = None,
-            spacing: Spacing = DefaultSpacing): String = {
+  def toDot(
+      dotRoot: DotRootGraph,
+      edgeTransformer: EdgeTransformer[N, E],
+      hEdgeTransformer: Option[HyperEdgeTransformer[N, E]] = None,
+      cNodeTransformer: Option[NodeTransformer[N, E]] = None,
+      iNodeTransformer: Option[NodeTransformer[N, E]] = None,
+      spacing: Spacing = DefaultSpacing
+  ): String = {
     val (dotAST: DotAST, root: DotCluster) =
       toAST(dotRoot, edgeTransformer, hEdgeTransformer, cNodeTransformer, iNodeTransformer)
     format(dotRoot, dotAST, root, spacing)
@@ -44,16 +46,18 @@ class Export[N, E <: EdgeLike[N]](graph: Graph[N, E]) {
   /** Builds the AST for `graph` employing `dotRoot` and the supplied transformers.
     *  $NORMALLY
     */
-  def toAST(dotRoot: DotRootGraph,
-            edgeTransformer: EdgeTransformer[N, E],
-            hEdgeTransformer: Option[HyperEdgeTransformer[N, E]] = None,
-            cNodeTransformer: Option[NodeTransformer[N, E]] = None,
-            iNodeTransformer: Option[NodeTransformer[N, E]] = None): (DotAST, DotCluster) = {
+  def toAST(
+      dotRoot: DotRootGraph,
+      edgeTransformer: EdgeTransformer[N, E],
+      hEdgeTransformer: Option[HyperEdgeTransformer[N, E]] = None,
+      cNodeTransformer: Option[NodeTransformer[N, E]] = None,
+      iNodeTransformer: Option[NodeTransformer[N, E]] = None
+  ): (DotAST, DotCluster) = {
     val root           = DotCluster(dotRoot)
     val dotAST: DotAST = DotAST(root)
     @tailrec def connectClusters(node: dotAST.NodeT): Unit = {
       def conn(ancestor: DotGraph): dotAST.NodeT = {
-        val ancestorNode      = dotAST addAndGet DotCluster(ancestor)
+        val ancestorNode                                                     = dotAST addAndGet DotCluster(ancestor)
         implicit def factory: (DotCluster, DotCluster) => DiEdge[DotCluster] = DiEdge(_, _)
         ancestorNode connectWith node
         ancestorNode
@@ -80,23 +84,22 @@ class Export[N, E <: EdgeLike[N]](graph: Graph[N, E]) {
           cNodeTransformer map { visitor =>
             edge.ends foreach { node =>
               if (visitedCNodes add node)
-                visitor(node) foreach {
-                  case (dotGraph, nodeStmt) =>
-                    val clusterNode = dotAST addAndGet DotCluster(dotGraph)
-                    connectClusters(clusterNode)
+                visitor(node) foreach { case (dotGraph, nodeStmt) =>
+                  val clusterNode = dotAST addAndGet DotCluster(dotGraph)
+                  connectClusters(clusterNode)
 
-                    clusterNode.dotStmts += nodeStmt
+                  clusterNode.dotStmts += nodeStmt
                 }
             }
           }
       }
       if (edge.isHyperEdge && hEdgeTransformer.isDefined)
-        hEdgeTransformer.get(edge) foreach {
-          case (dotGraph, edgeStmt) => dotEdge(edge, dotGraph, edgeStmt)
-        } else
-        edgeTransformer(edge) foreach {
-          case (dotGraph, edgeStmt) =>
-            dotEdge(edge, dotGraph, edgeStmt)
+        hEdgeTransformer.get(edge) foreach { case (dotGraph, edgeStmt) =>
+          dotEdge(edge, dotGraph, edgeStmt)
+        }
+      else
+        edgeTransformer(edge) foreach { case (dotGraph, edgeStmt) =>
+          dotEdge(edge, dotGraph, edgeStmt)
         }
     }
     visitedCNodes.clear
@@ -139,11 +142,10 @@ class Export[N, E <: EdgeLike[N]](graph: Graph[N, E]) {
       case (true, cluster) =>
         def format(kv: DotAttr): String = s"${kv.name} = ${kv.value}"
         def outStmtList(stmtList: Seq[DotAttrStmt]) {
-          stmtList foreach {
-            case DotAttrStmt(t, attrs) =>
-              separate(true)
-              res append t.toString
-              res append s" [${attrs map format mkString ", "}]"
+          stmtList foreach { case DotAttrStmt(t, attrs) =>
+            separate(true)
+            res append t.toString
+            res append s" [${attrs map format mkString ", "}]"
           }
         }
         def outIdList(kvList: Seq[DotAttr]) {

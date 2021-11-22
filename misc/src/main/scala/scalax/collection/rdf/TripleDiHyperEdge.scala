@@ -1,22 +1,20 @@
 package scalax.collection
 package rdf
 
-import scalax.collection.GraphPredef._,
-       scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 /** Custom edge type representing RDF triples as directed hyperedges.
- * 
- * This representation stores not only subjects and objects but also
- * predicates as nodes. Predicates are checked for equality.
- * RDF statements with a given predicate can be directly accessed
- * by the edges connecting to the predicate node. 
- */
-class TripleDiHyperEdge[N] private (nodes: Product)
-  extends DiHyperEdge[N](nodes) {
+  *
+  * This representation stores not only subjects and objects but also
+  * predicates as nodes. Predicates are checked for equality.
+  * RDF statements with a given predicate can be directly accessed
+  * by the edges connecting to the predicate node.
+  */
+class TripleDiHyperEdge[N] private (nodes: Product) extends DiHyperEdge[N](nodes) {
 
   private def node(i: Int): N = iterator.drop(i).next match {
-    case inner: Graph[N,_]#NodeT @unchecked => inner.value
-    case outer => outer
+    case inner: Graph[N, _]#NodeT @unchecked => inner.value
+    case outer                               => outer
   }
   def subject   = node(0).asInstanceOf[Subject]
   def predicate = node(1).asInstanceOf[Predicate]

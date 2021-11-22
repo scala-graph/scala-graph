@@ -47,11 +47,13 @@ abstract class TypeId(val typeId: String)
   * @param sectionIds denotes node/edge sections in a JSON text defaulting to `"nodes"`
   *        and `"edges"`.
   */
-class Descriptor[N](val defaultNodeDescriptor: NodeDescriptor[N],
-                    val defaultEdgeDescriptor: GenEdgeDescriptor[N],
-                    namedNodeDescriptors: Iterable[NodeDescriptor[N]] = Seq.empty[NodeDescriptor[N]],
-                    namedEdgeDescriptors: Iterable[GenEdgeDescriptor[N]] = Seq.empty[GenEdgeDescriptor[N]],
-                    val sectionIds: SectionId = DefaultSectionId) {
+class Descriptor[N](
+    val defaultNodeDescriptor: NodeDescriptor[N],
+    val defaultEdgeDescriptor: GenEdgeDescriptor[N],
+    namedNodeDescriptors: Iterable[NodeDescriptor[N]] = Seq.empty[NodeDescriptor[N]],
+    namedEdgeDescriptors: Iterable[GenEdgeDescriptor[N]] = Seq.empty[GenEdgeDescriptor[N]],
+    val sectionIds: SectionId = DefaultSectionId
+) {
   def requireUniqueTypeIds(descriptors: Iterable[TypeId]) {
     def duplicateTypeId =
       (namedNodeDescriptors.map(_.typeId).toList).sorted sliding 2 find
@@ -66,15 +68,19 @@ class Descriptor[N](val defaultNodeDescriptor: NodeDescriptor[N],
   protected val edgeDescriptors = Seq(defaultEdgeDescriptor) ++ namedEdgeDescriptors
 
   def nodeDescriptor(typeId: String): Option[NodeDescriptor[N]] =
-    if (typeId == defaultId ||
-        typeId == defaultNodeDescriptor.typeId)
+    if (
+      typeId == defaultId ||
+      typeId == defaultNodeDescriptor.typeId
+    )
       Some(defaultNodeDescriptor)
     else
       namedNodeDescriptors find (_.typeId == typeId)
 
   def edgeDescriptor(typeId: String): Option[GenEdgeDescriptor[N]] =
-    if (typeId == defaultId ||
-        typeId == defaultEdgeDescriptor.typeId)
+    if (
+      typeId == defaultId ||
+      typeId == defaultEdgeDescriptor.typeId
+    )
       Some(defaultEdgeDescriptor)
     else
       namedEdgeDescriptors find (_.typeId == typeId)
@@ -109,10 +115,11 @@ class Descriptor[N](val defaultNodeDescriptor: NodeDescriptor[N],
         nodeDescriptorsByManifest
           .find(_._1.runtimeClass == classManifest(node).runtimeClass)
           .flatMap(kv => Some(kv._2)) getOrElse ((nodeDescriptorsByManifest find (classTag =>
-          manifest.runtimeClass.isAssignableFrom(classTag._1.runtimeClass)))
-          .flatMap(kv => Some(kv._2)) getOrElse (throw err(
+          manifest.runtimeClass.isAssignableFrom(classTag._1.runtimeClass)
+        )).flatMap(kv => Some(kv._2)) getOrElse (throw err(
           NoNodeDescr,
-          clazz flatMap (c => Some(c.getName)) getOrElse ("AnyVal"))))
+          clazz flatMap (c => Some(c.getName)) getOrElse "AnyVal"
+        )))
       if (clazz.isDefined)
         lastNodeDescriptor = (clazz.get, descr)
       descr

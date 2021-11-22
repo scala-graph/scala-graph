@@ -16,11 +16,12 @@ import org.scalatest.refspec.RefSpec
 class TGraphSerializerRootTest
     extends Suites(
       new TGraphSerializer[immutable.Graph](immutable.Graph),
-      new TGraphSerializer[mutable.Graph](mutable.Graph))
+      new TGraphSerializer[mutable.Graph](mutable.Graph)
+    )
 
 class TGraphSerializer[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC])
-    extends RefSpec
+    val factory: GraphCoreCompanion[CC]
+) extends RefSpec
     with Matchers {
 
   private object GraphFixture {

@@ -1,7 +1,7 @@
 package scalax.collection.io.dot
 
 /** Types for record-based nodes as described on
-    [[http://www.graphviz.org/doc/info/shapes.html]].
+  *    [[http://www.graphviz.org/doc/info/shapes.html]].
   */
 object Record {
   sealed trait RLabel

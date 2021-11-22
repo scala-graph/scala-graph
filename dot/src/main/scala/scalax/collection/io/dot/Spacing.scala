@@ -19,13 +19,13 @@ abstract class AttrSeparator(value: String) {
 /** Holds predefined character sequences to separate specific DOT language elements. */
 object AttrSeparator {
 
-  /** The new line separator.*/
+  /** The new line separator. */
   object NewLine extends AttrSeparator(scala.sys.process.BasicIO.Newline)
 
-  /** The separator `";"`.   */
+  /** The separator `";"`. */
   object Semicolon extends AttrSeparator(";")
 
-  /** The separator `"; "`.  */
+  /** The separator `"; "`. */
   object SemicolonSpace extends AttrSeparator("; ")
 }
 
@@ -39,9 +39,11 @@ import Indent._, AttrSeparator._
   * @param elemAttrSeparator the separator to be used for edge/node level DOT graph
   *        language elements.
   */
-case class Spacing(indent: Indent = Tab,
-                   graphAttrSeparator: AttrSeparator = NewLine,
-                   elemAttrSeparator: AttrSeparator = SemicolonSpace)
+case class Spacing(
+    indent: Indent = Tab,
+    graphAttrSeparator: AttrSeparator = NewLine,
+    elemAttrSeparator: AttrSeparator = SemicolonSpace
+)
 
 /** [[scalax.collection.io.dot.Spacing]] with `indent` set to `Tab`,
   *  `graphAttrSeparator` set to `NewLine` and

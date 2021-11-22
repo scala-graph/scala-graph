@@ -35,8 +35,10 @@ object Parser {
     }
 
   def parse[N, C <: EdgeCompanionBase[EdgeLike]](jsonAST: List[JField], descriptor: Descriptor[N]): Iterable[ElemList] =
-    (for (JField(name, values) <- jsonAST
-          if descriptor.sectionIds contains name)
+    (for (
+      JField(name, values) <- jsonAST
+      if descriptor.sectionIds contains name
+    )
       yield {
         def makeList(elemTypeId: String, arr: Iterable[JValue]): ElemList =
           if (descriptor.sectionIds.isNodes(name))
@@ -51,14 +53,12 @@ object Parser {
 
         values match {
           case JObject(objects) =>
-            for (obj <- objects) yield {
-              obj match {
-                case JField(elemTypeId, value) =>
-                  value match {
-                    case JArray(arr) => makeList(elemTypeId, arr)
-                    case _           => throw err(NonArray, value.toString, value.getClass.toString)
-                  }
-              }
+            for (obj <- objects) yield obj match {
+              case JField(elemTypeId, value) =>
+                value match {
+                  case JArray(arr) => makeList(elemTypeId, arr)
+                  case _           => throw err(NonArray, value.toString, value.getClass.toString)
+                }
             }
           case JArray(arr) => Iterable(makeList(defaultId, arr))
           case JNothing    => Iterable(makeList(defaultId, Iterable.empty))

@@ -19,41 +19,50 @@ class Connected[N, E <: EdgeLike[N], G <: Graph[N, E]](override val self: G) ext
   /** Skips this pre-check to rely on the post-check `postAdd` except for trivial cases. */
   override def preCreate(nodes: Iterable[N], edges: Iterable[E]) =
     PreCheckResult(
-      if (edges.isEmpty && nodes.size <= 1 ||
-          nodes.isEmpty && edges.size <= 1) Complete
+      if (
+        edges.isEmpty && nodes.size <= 1 ||
+        nodes.isEmpty && edges.size <= 1
+      ) Complete
       else PostCheck
     )
 
   /** `Complete` if `node` is contained even though no addition will be performed;
-    *  otherwise `Abort` because `node` would become isolated. */
+    *  otherwise `Abort` because `node` would become isolated.
+    */
   override def preAdd(node: N): PreCheckResult = PreCheckResult.complete(self contains node)
 
   /** `Complete` if `edge` itself or at least one end of `edge` is already contained;
-    *  otherwise `Abort`. */
+    *  otherwise `Abort`.
+    */
   override def preAdd(edge: E): PreCheckResult = PreCheckResult.complete(
     (self contains edge.asInstanceOf[OuterEdge[N, E]]) ||
       (edge exists (self contains _))
   )
 
   /** `Complete` if `elems` build a connected graph and at least one node of `elems`
-    *  is already contained; otherwise `Abort`. */
+    *  is already contained; otherwise `Abort`.
+    */
   override def preAdd(elems: InParam[N, E]*): PreCheckResult = PreCheckResult.complete {
     val p        = Param.Partitions(elems)
     val graphAdd = SimpleGraph.from(p.toOuterNodes, p.toOuterEdges)
     graphAdd.isConnected &&
     (self.isEmpty ||
-    (graphAdd.nodes exists (self find _ isDefined)))
+      (graphAdd.nodes exists (self find _ isDefined)))
   }
 
   /** Check the whole `newGraph`. */
-  override def postAdd(newGraph: Graph[N, E],
-                       passedNodes: Iterable[N],
-                       passedEdges: Iterable[E],
-                       preCheck: PreCheckResult) = newGraph.isConnected
-  override def postAdd(newGraph: G @uV,
-                       passedNodes: Iterable[N],
-                       passedEdges: Iterable[E],
-                       preCheck: PreCheckResult): Either[PostCheckFailure, G] =
+  override def postAdd(
+      newGraph: Graph[N, E],
+      passedNodes: Iterable[N],
+      passedEdges: Iterable[E],
+      preCheck: PreCheckResult
+  ) = newGraph.isConnected
+  override def postAdd(
+      newGraph: G @uV,
+      passedNodes: Iterable[N],
+      passedEdges: Iterable[E],
+      preCheck: PreCheckResult
+  ): Either[PostCheckFailure, G] =
     if (newGraph.isConnected) Right(newGraph)
     else Left(PostCheckFailure(s"Unexpected isolated node found when adding $passedNodes, $passedEdges."))
 
@@ -66,9 +75,11 @@ class Connected[N, E <: EdgeLike[N], G <: Graph[N, E]](override val self: G) ext
     * @param excludeEdges edges to be subtracted.
     * @return `true`if all nodes in `include` are connected.
     */
-  protected def isConnected(include: Set[self.NodeT],
-                            excludeNodes: Set[self.NodeT],
-                            excludeEdges: Set[self.EdgeT]): Boolean =
+  protected def isConnected(
+      include: Set[self.NodeT],
+      excludeNodes: Set[self.NodeT],
+      excludeEdges: Set[self.EdgeT]
+  ): Boolean =
     include.headOption forall { head =>
       val cnt = head
         .withDirection(AnyConnected)
@@ -89,7 +100,7 @@ class Connected[N, E <: EdgeLike[N], G <: Graph[N, E]](override val self: G) ext
       else isConnected(edge.ends.toSet -- edge.privateNodes, edge.privateNodes, Set(edge))
     )
   override def preSubtract(nodes: => Set[self.NodeT], edges: => Set[self.EdgeT], simple: Boolean): PreCheckResult =
-    PreCheckResult.complete({
+    PreCheckResult.complete {
       def neighbors(nodes: Set[self.NodeT]) =
         (for (n <- nodes) yield n.neighbors).flatten
       val nodesToInspect = nodes ++ (for {
@@ -102,8 +113,9 @@ class Connected[N, E <: EdgeLike[N], G <: Graph[N, E]](override val self: G) ext
         isConnected(
           neighbors(nodesToInspect) -- nodes,
           nodes ++ (for (e <- edges) yield e.privateNodes).flatten,
-          edges ++ (for (n <- nodes) yield n.edges).flatten)
-    })
+          edges ++ (for (n <- nodes) yield n.edges).flatten
+        )
+    }
 }
 
 object Connected extends ConstraintCompanion[Connected] {

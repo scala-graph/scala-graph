@@ -10,8 +10,9 @@ import scalax.collection.GraphPredef._, scalax.collection.Graph
 
 import descriptor._
 
-class Export[N, E <: EdgeLike[N]](graph: Graph[N, E], descriptor: Descriptor[N])(
-    implicit simpleClassNames: Boolean = true) {
+class Export[N, E <: EdgeLike[N]](graph: Graph[N, E], descriptor: Descriptor[N])(implicit
+    simpleClassNames: Boolean = true
+) {
   def jsonASTNodes: JField = {
     def className(a: Any) = {
       val clazz = a.asInstanceOf[AnyRef].getClass
@@ -40,7 +41,8 @@ class Export[N, E <: EdgeLike[N]](graph: Graph[N, E], descriptor: Descriptor[N])
         case _ =>
           JObject(
             (for (classNodes <- classNodesMap)
-              yield NodeValues(classNodes).jField).toList)
+              yield NodeValues(classNodes).jField).toList
+          )
       }
     )
   }
@@ -69,7 +71,8 @@ class Export[N, E <: EdgeLike[N]](graph: Graph[N, E], descriptor: Descriptor[N])
         case _ =>
           JObject(
             (for (classEdges <- classEdgesMap)
-              yield EdgeValues(classEdges).jField).toList)
+              yield EdgeValues(classEdges).jField).toList
+          )
       }
     )
   }

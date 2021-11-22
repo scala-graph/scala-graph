@@ -25,18 +25,17 @@ trait Graph[N, E <: EdgeLikeIn[N]] extends Set[Param[N, E]] with SimpleGraph[N, 
   * @author Peter Empen
   */
 object Graph extends GraphConstrainedCompanion[Graph] {
-  override def newBuilder[N, E <: EdgeLike[N]]( config: Config) =
+  override def newBuilder[N, E <: EdgeLike[N]](config: Config) =
     immutable.Graph.newBuilder[N, E](config)
 
-  def empty[N, E <: EdgeLike[N]]( config: Config = defaultConfig): Graph[N, E] =
+  def empty[N, E <: EdgeLike[N]](config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.empty[N, E](config)
-  def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
-
-      config: Config = defaultConfig): Graph[N, E] =
+  def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(config)
   override protected[collection] def fromWithoutCheck[N, E[+X] <: EdgeLikeIn[X]](
       nodes: Iterable[N],
-      edges: Iterable[E])( config: Config = defaultConfig): Graph[N, E] =
+      edges: Iterable[E]
+  )(config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.fromWithoutCheck[N, E](nodes, edges)(config)
 }
 
@@ -49,12 +48,9 @@ trait UserConstrainedGraph[N, E <: EdgeLike[N], +G <: Graph[N, E]] { _: Graph[N,
   override def preCreate(nodes: Iterable[N], edges: Iterable[E]) =
     constraint preCreate (nodes, edges)
   override def preAdd(node: N)               = constraint preAdd node
-  override def preAdd(edge: E)            = constraint preAdd edge
+  override def preAdd(edge: E)               = constraint preAdd edge
   override def preAdd(elems: InParam[N, E]*) = constraint preAdd (elems: _*)
-  override def postAdd(newGraph: G @uV,
-                       passedNodes: Iterable[N],
-                       passedEdges: Iterable[E],
-                       preCheck: PreCheckResult) =
+  override def postAdd(newGraph: G @uV, passedNodes: Iterable[N], passedEdges: Iterable[E], preCheck: PreCheckResult) =
     constraint postAdd (newGraph, passedNodes, passedEdges, preCheck)
 
   override def preSubtract(node: self.NodeT, forced: Boolean) =
@@ -67,9 +63,11 @@ trait UserConstrainedGraph[N, E <: EdgeLike[N], +G <: Graph[N, E]] { _: Graph[N,
     edges.asInstanceOf[Set[C_EdgeT]],
     simple)
 
-  override def postSubtract(newGraph: G @uV,
-                            passedNodes: Iterable[N],
-                            passedEdges: Iterable[E],
-                            preCheck: PreCheckResult) =
+  override def postSubtract(
+      newGraph: G @uV,
+      passedNodes: Iterable[N],
+      passedEdges: Iterable[E],
+      preCheck: PreCheckResult
+  ) =
     constraint postSubtract (newGraph, passedNodes, passedEdges, preCheck)
 }

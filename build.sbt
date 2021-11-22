@@ -5,8 +5,8 @@ lazy val all = project
   .in(file("."))
   .settings(
     Seq(
-      name := "Graph for Scala 2",
-      version := Version.highest,
+      name      := "Graph for Scala 2",
+      version   := Version.highest,
       publishTo := None
     )
   )
@@ -16,7 +16,7 @@ lazy val core = project
   .in(file("core"))
   .settings(
     defaultSettings ++ Seq(
-      name := "Graph Core",
+      name    := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
         "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
@@ -91,9 +91,9 @@ ThisBuild / resolvers ++= Seq(
 
 val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
-  scalaVersion := Version.compiler_2_13,
+  scalaVersion       := Version.compiler_2_13,
   crossScalaVersions := Seq(scalaVersion.value),
-  organization := "org.scala-graph",
+  organization       := "org.scala-graph",
   scalacOptions ++= Seq(
     unusedImports,
     "-Yrangepos",
@@ -112,7 +112,7 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   Compile / doc / scalacOptions ++= (baseDirectory map { d =>
     Seq("-doc-root-content", (d / "rootdoc.txt").getPath)
   }).value,
-  autoAPIMappings := true,
+  autoAPIMappings    := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
   libraryDependencies ++= Seq(
     "org.scalatest"     %% "scalatest"       % "3.2.10"   % "test",

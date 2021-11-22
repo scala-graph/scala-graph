@@ -11,8 +11,9 @@ trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
 
   def factory: GraphConstrainedCompanion[CC]
 
-  protected def shouldLeaveGraphUnchanged[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E])(
-      op: CC[N, E] => Either[ConstraintViolation, CC[N, E]]): Unit = {
+  protected def shouldLeaveGraphUnchanged[N, E[+X] <: EdgeLikeIn[X]](
+      g: CC[N, E]
+  )(op: CC[N, E] => Either[ConstraintViolation, CC[N, E]]): Unit = {
     val before = isolated(g)
     op(g) should be('Left)
     g should ===(before)
@@ -60,10 +61,12 @@ trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
     protected def verboseResult(before: CC[N, E], afterVerbose: Either[ConstraintViolation, CC[N, E]]): Boolean
     protected def msgTitle(negate: Boolean): String
 
-    final protected def msg(before: CC[N, E],
-                            after: CC[N, E],
-                            afterVerbose: Either[ConstraintViolation, CC[N, E]],
-                            negate: Boolean): String =
+    final protected def msg(
+        before: CC[N, E],
+        after: CC[N, E],
+        afterVerbose: Either[ConstraintViolation, CC[N, E]],
+        negate: Boolean
+    ): String =
       s"""${msgTitle(negate)}:
          |  before:     $before
          |  silent  op: $after
@@ -78,7 +81,7 @@ trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
 
   private def isolated[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): CC[N, E] =
     g match {
-      case mG: mutable.Graph[N, E] => factory.from(mG.nodes.toOuter, mG.edges.toOuter)(mG. mG.config)
+      case mG: mutable.Graph[N, E] => factory.from(mG.nodes.toOuter, mG.edges.toOuter)(mG.mG.config)
       case iG                      => iG
     }
 }
