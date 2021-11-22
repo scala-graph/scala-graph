@@ -1,6 +1,8 @@
 package scalax.collection.constrained
 
-import scalax.collection.GraphPredef.{EdgeLikeIn, InParam, InnerEdgeParam, InnerNodeParam, OutParam, OuterEdge, OuterNode, Param}
+import scalax.collection.GraphPredef.{
+  EdgeLikeIn, InParam, InnerEdgeParam, InnerNodeParam, OutParam, OuterEdge, OuterNode, Param
+}
 import scalax.collection.config._
 import scalax.collection.constrained.config.GenConstrainedConfig
 import scalax.collection.constrained.generic.GraphConstrainedCompanion
@@ -11,20 +13,20 @@ import scala.collection.{GenTraversableOnce, Set}
 import scala.language.postfixOps
 
 /** A template trait for graphs.
- *
- * This trait provides the common structure and operations of immutable graphs independently
- * of its representation.
- *
- * If `E` inherits `DirectedEdgeLike` the graph is directed, otherwise it is undirected or mixed.
- *
- * @tparam N    the user type of the nodes (vertices) in this graph.
- * @tparam E    the higher kinded type of the edges (links) in this graph.
- * @tparam This the higher kinded type of the graph itself.
- * @author Peter Empen
- */
-trait GraphLike[N,
-                E[+X] <: EdgeLikeIn[X],
-                +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[Param[X, Y]] with Graph[X, Y]]
+  *
+  * This trait provides the common structure and operations of immutable graphs independently
+  * of its representation.
+  *
+  * If `E` inherits `DirectedEdgeLike` the graph is directed, otherwise it is undirected or mixed.
+  *
+  * @tparam N    the user type of the nodes (vertices) in this graph.
+  * @tparam E    the higher kinded type of the edges (links) in this graph.
+  * @tparam This the higher kinded type of the graph itself.
+  * @author Peter Empen
+  */
+trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[
+  Param[X, Y]
+] with Graph[X, Y]]
     extends SimpleGraphLike[N, E, This]
     with GraphOps[N, E, This]
     with Constrained[N, E, This[N, E]] {
@@ -123,11 +125,13 @@ trait GraphLike[N,
     }
   }
 
-  protected def checkedPlus(contained: => Boolean,
-                            preAdd: => PreCheckResult,
-                            copy: => This[N, E] @uV,
-                            nodes: => Iterable[N],
-                            edges: => Iterable[E[N]]): Either[ConstraintViolation, This[N, E]] =
+  protected def checkedPlus(
+      contained: => Boolean,
+      preAdd: => PreCheckResult,
+      copy: => This[N, E] @uV,
+      nodes: => Iterable[N],
+      edges: => Iterable[E[N]]
+  ): Either[ConstraintViolation, This[N, E]] =
     if (checkSuspended) Right(copy)
     else if (contained) Right(this)
     else {
@@ -139,9 +143,11 @@ trait GraphLike[N,
       }
     }
 
-  protected def checkedMinusNode(node: N,
-                                 forced: Boolean,
-                                 copy: (N, NodeT) => This[N, E] @uV): Either[ConstraintViolation, This[N, E]] =
+  protected def checkedMinusNode(
+      node: N,
+      forced: Boolean,
+      copy: (N, NodeT) => This[N, E] @uV
+  ): Either[ConstraintViolation, This[N, E]] =
     nodes find node map { innerNode =>
       def subtract = copy(node, innerNode)
       if (checkSuspended)
@@ -156,9 +162,11 @@ trait GraphLike[N,
       }
     } getOrElse Right(this)
 
-  protected def checkedMinusEdge(edge: E[N],
-                                 simple: Boolean,
-                                 copy: (E[N], EdgeT) => This[N, E] @uV): Either[ConstraintViolation, This[N, E]] =
+  protected def checkedMinusEdge(
+      edge: E[N],
+      simple: Boolean,
+      copy: (E[N], EdgeT) => This[N, E] @uV
+  ): Either[ConstraintViolation, This[N, E]] =
     edges find edge map { innerEdge =>
       def subtract = copy(edge, innerEdge)
       if (checkSuspended) Right(subtract)
