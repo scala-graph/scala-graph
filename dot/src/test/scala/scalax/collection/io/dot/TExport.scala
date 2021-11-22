@@ -63,7 +63,7 @@ class TExportTest extends RefSpec with should.Matchers {
           |  A3 -> B3
           |  B1 -> B3
           |  B2 -> B3 [label = "g'"]""".stripMargin
-      val expected_footer       = """
+      val expected_footer = """
                               |}""".stripMargin
       val expected_sub_A_sorted = """
                                     |  subgraph A {

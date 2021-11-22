@@ -100,7 +100,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
 
   sealed trait InnerElem
   type NodeT <: InnerNode with Serializable
-  trait Node extends Serializable
+  trait Node      extends Serializable
   trait InnerNode extends InnerNodeParam[N] with Node with InnerElem {
 
     /** The outer node as supplied at instantiation time or while adding nodes this graph.

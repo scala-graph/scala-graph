@@ -205,7 +205,7 @@ object GraphPredef {
         innerEdge: InnerEdgeParam[NI, EI, NO, EO]
     ): EO[NO] = innerEdge.edge
   }
-  //-----------------------------------------------------------------------//
+  // -----------------------------------------------------------------------//
   import GraphEdge._
 
   @inline implicit def anyToNode[N](n: N) = OuterNode(n)

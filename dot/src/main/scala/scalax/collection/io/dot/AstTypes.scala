@@ -1,6 +1,6 @@
 package scalax.collection.io.dot
 
-import language.{postfixOps}
+import language.postfixOps
 import scala.collection.mutable.{Set => MutableSet}
 import scala.util.matching.Regex
 

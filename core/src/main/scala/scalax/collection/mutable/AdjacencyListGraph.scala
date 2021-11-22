@@ -91,7 +91,7 @@ trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn
     @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
     @inline final protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }
 
-    @inline final def addOne(node: NodeT) = { add(node); this }
+    @inline final def addOne(node: NodeT)      = { add(node); this }
     @inline final def subtractOne(node: NodeT) = { remove(node); this }
 
     final protected def minus(node: NodeT): Unit = collection -= node
@@ -142,9 +142,9 @@ trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn
   }
   override def edges: EdgeSetT
 
-  @inline final def clear(): Unit            = nodes.clear()
-  @inline final def add(node: N): Boolean    = nodes add Node(node)
-  @inline final def add(edge: E[N]): Boolean = edges add Edge(edge)
+  @inline final def clear(): Unit                        = nodes.clear()
+  @inline final def add(node: N): Boolean                = nodes add Node(node)
+  @inline final def add(edge: E[N]): Boolean             = edges add Edge(edge)
   @inline final protected def +=#(edge: E[N]): this.type = { add(edge); this }
-  @inline final def upsert(edge: E[N]): Boolean = edges upsert Edge(edge)
+  @inline final def upsert(edge: E[N]): Boolean          = edges upsert Edge(edge)
 }

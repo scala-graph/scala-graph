@@ -48,8 +48,8 @@ class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](
       right: Constraint[N, E, G],
       rightResult: => PreCheckResult
   ): PreCheckResult = {
-    var rightDone    = false
-    val leftFollowUp = leftResult.followUp
+    var rightDone          = false
+    val leftFollowUp       = leftResult.followUp
     lazy val rightFollowUp = { rightDone = true; rightResult.followUp }
     val followUp =
       operator match {
@@ -62,7 +62,7 @@ class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](
     else if (rightDone)
       leftResult match {
         case r: PreCheckResults => r += (right, rightResult)
-        case _                  => new PreCheckResults(min(leftFollowUp, rightFollowUp), left, leftResult) += (right, rightResult)
+        case _ => new PreCheckResults(min(leftFollowUp, rightFollowUp), left, leftResult) += (right, rightResult)
       }
     else leftResult
   }

@@ -441,6 +441,7 @@ object GraphEdge {
 
     override protected def baseHashCode = {
       var m = 4
+
       def mul(i: Int): Int = { m += 3; m * i }
       iterator.foldLeft(0)((s: Int, n: Any) => s ^ mul(n.hashCode))
     }

@@ -34,7 +34,7 @@ package object collection {
   /** Adds chaining methods `tap` and `pipe` to `Any`. Back ported from Scala 2.13.
     */
   implicit final class ChainingOps[A](val self: A) extends AnyVal {
-    def tap[U](f: A => U): A = { f(self); self }
+    def tap[U](f: A => U): A  = { f(self); self }
     def pipe[B](f: A => B): B = f(self)
   }
 }

@@ -65,7 +65,7 @@ trait Drawable {
       val filterController: FilterController = assertedLookup(classOf[FilterController])
       val degreeFilter                       = new DegreeRangeFilter
       degreeFilter.init(gm.getDirectedGraph)
-      degreeFilter.setRange(new Range(1, Integer.MAX_VALUE)) //Remove nodes with degree < 1
+      degreeFilter.setRange(new Range(1, Integer.MAX_VALUE)) // Remove nodes with degree < 1
       filterController.filter(filterController.createQuery(degreeFilter))
     }
 

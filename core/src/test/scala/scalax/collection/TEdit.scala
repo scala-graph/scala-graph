@@ -69,7 +69,7 @@ class TEditMutable extends RefSpec with should.Matchers {
       g += 2
       g should have size 3
       for (i <- 1 to 3)
-        g.contains(i) should be(true) //g should contain (i)
+        g.contains(i) should be(true) // g should contain (i)
     }
     def `serve -= properly` {
       val g = mutable.Graph(1, 2, 2 ~ 3, 4)
@@ -197,40 +197,40 @@ class TEditMutable extends RefSpec with should.Matchers {
       (g +~= (n(2), n(2))) should have size 4
 
       g.addAndGetEdge(2, 3)(DiEdge).directed should be(true)
-      g should have('order (2), 'graphSize (3))
+      g should have('order(2), 'graphSize(3))
 
       n(3) +~ 4
-      g should have('order (3), 'graphSize (4))
+      g should have('order(3), 'graphSize(4))
 
       (n(3) +~ n(2))(DiEdge)
-      g should have('order (3), 'graphSize (5))
+      g should have('order(3), 'graphSize(5))
     }
     def `serve +~ for hyperedeges` {
       implicit val factory = HyperEdge
       val h                = mutable.Graph(1 ~ 1 ~ 2)
-      h should have('order (2), 'graphSize (1))
+      h should have('order(2), 'graphSize(1))
       h +~= (0, 1, 2, 3)
-      h should have('order (4), 'graphSize (2))
+      h should have('order(4), 'graphSize(2))
       h +~= (11, 12, 13, 14, 15, 16) // edge with at least 6 endpoints will trigger use of NodeProduct
-      h should have('order (10), 'graphSize (3))
+      h should have('order(10), 'graphSize(3))
     }
     def `serve +~%= for weighted edeges` {
       val g          = mutable.Graph(2 ~ 3)
       implicit val f = edge.WUnDiEdge
       g.addWEdge(3, 4)(2)
-      g should have('order (3), 'graphSize (2), 'totalWeight (3))
+      g should have('order(3), 'graphSize(2), 'totalWeight(3))
       (g +~%= (2, 4))(3)
-      g should have('order (3), 'graphSize (3), 'totalWeight (6))
+      g should have('order(3), 'graphSize(3), 'totalWeight(6))
       // (g +~%= (0,1,2,3))(3)(edge.WHyperEdge) // must not compile
     }
     def `serve +~%= weighted hyperedeges` {
       implicit val factory = edge.WHyperEdge
       val h                = mutable.Graph(1 ~ 1 ~ 2)
-      h should have('order (2), 'graphSize (1))
+      h should have('order(2), 'graphSize(1))
       h.addWEdge(3, 4, 5)(2)
-      h should have('order (5), 'graphSize (2), 'totalWeight (3))
+      h should have('order(5), 'graphSize(2), 'totalWeight(3))
       (h +~%= (0, 1, 2, 3))(3)
-      h should have('order (6), 'graphSize (3), 'totalWeight (6))
+      h should have('order(6), 'graphSize(3), 'totalWeight(6))
     }
     def `fulfill labeled edege equality` {
       import edge.Implicits._
@@ -240,9 +240,9 @@ class TEditMutable extends RefSpec with should.Matchers {
       val str                = "A"
       val label: StringLabel = Some(str)
       val g                  = mutable.Graph(2 ~ 3, (2 ~+# 3)(label))
-      g should have('order (2), 'graphSize (2))
+      g should have('order(2), 'graphSize(2))
 
-      import edge.LBase.{LEdgeImplicits}
+      import edge.LBase.LEdgeImplicits
       object StringLabelImplicit extends LEdgeImplicits[StringLabel]
       import StringLabelImplicit._
       for (e <- g.edges if e.isLabeled) {
@@ -254,7 +254,7 @@ class TEditMutable extends RefSpec with should.Matchers {
       implicit val factory = LDiEdge
       val listLabel        = List(1, 0, 1)
       g.addLEdge(3, 4)(listLabel) should be(true)
-      g should have('order (3), 'graphSize (3))
+      g should have('order(3), 'graphSize(3))
       val findAdded = g.edges find (3 ~> 4)
       findAdded should be('isDefined)
       val added: g.EdgeT = findAdded.get
@@ -271,9 +271,9 @@ class TEditMutable extends RefSpec with should.Matchers {
 
       implicit val factory = LHyperEdge
       (g +~+= (3, 4, 5))(outerLabels(1))
-      g should have('order (5), 'graphSize (3))
+      g should have('order(5), 'graphSize(3))
       g.addLEdge(4, 5, 6)(outerLabels(2)) should be(true)
-      g should have('order (6), 'graphSize (4))
+      g should have('order(6), 'graphSize(4))
 
       val innerLabels: collection.mutable.Set[_ >: StringLabel] =
         g.edges filter (_.isLabeled) map (_.label)
@@ -302,7 +302,7 @@ class TEditMutable extends RefSpec with should.Matchers {
           case LDiEdge(s, t, l) => g upsert (LDiEdge(s.value, t.value)(modLabel))
         }
       }
-      g should have('graphSize (2))
+      g should have('graphSize(2))
       g.edges foreach { _.label should be(modLabel) }
     }
     def `yield another graph when mapped` {
@@ -396,7 +396,7 @@ class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
     }
     def `contains ` {
       seq_1_3 foreach { i =>
-        gInt_1_3.contains(i) should be(true) //gInt_1_3 should contain (i)
+        gInt_1_3.contains(i) should be(true) // gInt_1_3 should contain (i)
       }
       gInt_1_3.head.isInstanceOf[InnerNodeParam[Int]] should be(true)
     }
@@ -420,13 +420,13 @@ class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       g + 1 should be(g)
       g + 0 should be(Graph(0, 1, 2, 3, 2 ~ 3))
       g + 0 ~ 1 should be(Graph(0, 1, 2, 3, 0 ~ 1, 2 ~ 3))
-      //g + "A" !!! // error: type mismatch
+      // g + "A" !!! // error: type mismatch
     }
     def `+ String ` {
       val g = gString_A + "B"
       g should have size 2
-      g.contains("A") should be(true) //g should contain ("A")
-      g.contains("B") should be(true) //g should contain ("B")
+      g.contains("A") should be(true) // g should contain ("A")
+      g.contains("B") should be(true) // g should contain ("B")
 
       val hString_A = factory[String, UnDiEdge]("A")
       val h         = hString_A + ("A" ~ "C")
@@ -437,9 +437,9 @@ class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
     def `++ ` {
       val g = gString_A + "B" + "C"
       g should have size 3
-      g.contains("A") should be(true) //g should contain ("A")
-      g.contains("B") should be(true) //g should contain ("B")
-      g.contains("C") should be(true) //g should contain ("C")
+      g.contains("A") should be(true) // g should contain ("A")
+      g.contains("B") should be(true) // g should contain ("B")
+      g.contains("C") should be(true) // g should contain ("C")
 
       val (gBefore, gAfter) = (factory(1, 2 ~ 3), factory(0, 1 ~ 2, 2 ~ 3))
       gBefore ++ List[Param[Int, UnDiEdge]](1 ~ 2, 2 ~ 3, 0) should equal(gAfter)
@@ -451,7 +451,7 @@ class TEdit[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC
       g should have size 1
 
       g = gString_A - "A"
-      g.contains("A") should be(false) //gMinus should not contain ("A")
+      g.contains("A") should be(false) // gMinus should not contain ("A")
       g should have size 0
       g should be('isEmpty)
 

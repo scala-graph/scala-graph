@@ -162,7 +162,7 @@ class TConstrained[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N
         implicit val config: Config = EvenNode
 
         val g1 = factory[Int, Nothing](2, 4)
-        g1 should have('order (2), 'graphSize (0))
+        g1 should have('order(2), 'graphSize(0))
       }
       {
         implicit val config: Config = EvenNode && MinDegree_2

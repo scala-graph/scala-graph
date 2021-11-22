@@ -31,7 +31,7 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
     with GraphTraversal[N, E]
     with GraphBase[N, E]
     with GraphDegree[N, E] {
-  //thisGraph: This[N,E] => // see https://youtrack.jetbrains.com/issue/SCL-13199
+  // thisGraph: This[N,E] => // see https://youtrack.jetbrains.com/issue/SCL-13199
   thisGraph: This[N, E] with GraphLike[N, E, This] with AnySet[Param[N, E]] with Graph[N, E] =>
 
   protected type ThisGraph = thisGraph.type
@@ -186,7 +186,7 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
         minusEdges: (NodeT) => Unit
     ): Boolean = {
       def minusNodeTrue = { minusNode(node); true }
-      def minusAllTrue = { minusEdges(node); minusNodeTrue }
+      def minusAllTrue  = { minusEdges(node); minusNodeTrue }
       if (contains(node))
         if (node.edges.isEmpty) minusNodeTrue
         else if (rippleDelete) minusAllTrue

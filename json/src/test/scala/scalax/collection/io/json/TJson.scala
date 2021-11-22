@@ -144,7 +144,7 @@ class TJsonTest[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E
 
       object `using default edge desriptors` {
         private object FixtureLEdge {
-          val jsonText   = """
+          val jsonText = """
             { "nodes" : [["A"], ["B"]],
               "edges": [
                 {"n1":"A", "n2":"B", "label":"L1"},

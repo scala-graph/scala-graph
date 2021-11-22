@@ -96,7 +96,7 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
 
   type EdgeSetT <: EdgeSet
   trait EdgeSet extends MutableSet[EdgeT] with super.EdgeSet with Compat.AddSubtract[EdgeT, EdgeSet] {
-    @inline final def addOne(edge: EdgeT) = { add(edge); this }
+    @inline final def addOne(edge: EdgeT)      = { add(edge); this }
     @inline final def subtractOne(edge: EdgeT) = { remove(edge); this }
 
     /** Same as `upsert` at graph level. */
@@ -152,16 +152,16 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
     */
   def upsert(edge: E[N]): Boolean
 
-  @inline final def -(node: N): This[N, E]   = clone -= node
-  @inline final def remove(node: N): Boolean = nodes find node exists (nodes remove _)
-  @inline final def -=(node: N): this.type = { remove(node); this }
-  @inline final def -?=(node: N): this.type = { removeGently(node); this }
+  @inline final def -(node: N): This[N, E]             = clone -= node
+  @inline final def remove(node: N): Boolean           = nodes find node exists (nodes remove _)
+  @inline final def -=(node: N): this.type             = { remove(node); this }
+  @inline final def -?=(node: N): this.type            = { removeGently(node); this }
   @inline final def minusIsolated(node: N): This[N, E] = clone -?= node
   @inline final def removeGently(node: N): Boolean     = nodes find node exists (nodes removeGently _)
 
-  @inline final def -(edge: E[N]): This[N, E]   = clone -=# edge
-  @inline final def remove(edge: E[N]): Boolean = edges remove Edge(edge)
-  @inline final protected def -=#(edge: E[N]): this.type = { remove(edge); this }
+  @inline final def -(edge: E[N]): This[N, E]             = clone -=# edge
+  @inline final def remove(edge: E[N]): Boolean           = edges remove Edge(edge)
+  @inline final protected def -=#(edge: E[N]): this.type  = { remove(edge); this }
   @inline final protected def -!=#(edge: E[N]): this.type = { removeWithNodes(edge); this }
   @inline final def -!(edge: E[N]): This[N, E]            = clone -!=# edge
   @inline final protected def -!#(edge: E[N]): This[N, E] = clone -!=# edge
@@ -257,7 +257,7 @@ class DefaultGraphImpl[N, E[+X] <: EdgeLikeIn[X]](
   initialize(iniNodes, iniEdges)
 
   // TODO what to do with newBuilder & empty?
-  //override protected[this] def newBuilder          = new GraphBuilder[N, E, DefaultGraphImpl](DefaultGraphImpl)
+  // override protected[this] def newBuilder          = new GraphBuilder[N, E, DefaultGraphImpl](DefaultGraphImpl)
   final override def empty: DefaultGraphImpl[N, E] = DefaultGraphImpl.empty[N, E]
   final override def clone: this.type              = super.clone.asInstanceOf[this.type]
 

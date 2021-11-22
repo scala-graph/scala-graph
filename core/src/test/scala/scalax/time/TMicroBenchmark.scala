@@ -36,8 +36,8 @@ class TMicroBenchmark extends RefSpec with should.Matchers {
 
       implicit val tolerance = new FloatTolerance(4f)
       val expected           = big._1.toFloat / small._1.toFloat
-      val results            = measureAll(warmUp = 5, repetitions = 10)(small._2.size == small._1, big._2.size == big._1)
-      val actual             = results.relativeTimes()(1)
+      val results = measureAll(warmUp = 5, repetitions = 10)(small._2.size == small._1, big._2.size == big._1)
+      val actual  = results.relativeTimes()(1)
 
       actual should ===(expected)
     }

@@ -2,7 +2,7 @@ package scalax.collection
 
 import scala.annotation.{switch, tailrec}
 import scala.collection.{FilterableSet, FilteredSet}
-import scala.collection.mutable.{ArrayBuffer, PriorityQueue, Queue, ArrayStack => Stack, Map => MMap}
+import scala.collection.mutable.{ArrayBuffer, ArrayStack => Stack, Map => MMap, PriorityQueue, Queue}
 
 import scalax.collection.Compat._
 import scalax.collection.GraphPredef.EdgeLikeIn
@@ -548,10 +548,10 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
           // replaces successor loop in tail recursion
           object Level {
             private val stack: Stack[Level] = Stack.empty[Level]
-            def push(level: Level): Level = { stack push level; level }
-            def pop: Level             = stack.pop
-            def stackHead: Level       = stack.head
-            def nonEmptyStack: Boolean = stack.nonEmpty
+            def push(level: Level): Level   = { stack push level; level }
+            def pop: Level                  = stack.pop
+            def stackHead: Level            = stack.head
+            def nonEmptyStack: Boolean      = stack.nonEmpty
           }
           case class Level(elem: Element, successors: Iterator[NodeT]) {
             def this(elem: Element) = this(
@@ -815,7 +815,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
             layer_0: Iterable[NodeT],
             inDegrees: MMap[NodeT, Int],
             maybeInspectedNode: Option[NodeT]
-          )                                   = setup
+          ) = setup
           val untilDepth: Int                 = maxDepth
           val estimatedLayers: Int            = expectedMaxNodes(4)
           val estimatedNodesPerLayer: Int     = order / estimatedLayers

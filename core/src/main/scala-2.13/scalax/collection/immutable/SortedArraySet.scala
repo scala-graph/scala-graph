@@ -50,7 +50,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
     new scala.collection.AbstractIterator[A] {
       private[this] var i = from
       def hasNext         = i < self.size
-      def next = { val elm = array(i); i += 1; elm }
+      def next            = { val elm = array(i); i += 1; elm }
     }
 
   def iterator: Iterator[A] = iterator(0)
@@ -97,9 +97,9 @@ object SortedArraySet extends SortedIterableFactory[SortedArraySet] {
     newBuilder.addAll(it).result()
 
   override def newBuilder[A](implicit ordering: Ordering[A]) = new ReusableBuilder[A, SortedArraySet[A]] {
-    val buffer                 = new ArrayBuffer[AnyRef]()
-    override def clear(): Unit = buffer.clear()
-    override def result()      = new SortedArraySet(buffer.toArray.asInstanceOf[Array[A]])
+    val buffer                   = new ArrayBuffer[AnyRef]()
+    override def clear(): Unit   = buffer.clear()
+    override def result()        = new SortedArraySet(buffer.toArray.asInstanceOf[Array[A]])
     override def addOne(elem: A) = { buffer.addOne(elem.asInstanceOf[AnyRef]); this }
   }
 }

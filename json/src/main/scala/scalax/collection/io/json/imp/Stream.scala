@@ -25,35 +25,34 @@ object Stream {
     val idMap = collection.mutable.Map.empty[String, N]
     val nodes: Iterable[N] = {
       val buf = new ArrayBuffer[N](512)
-      for (
-        nodeList <- jsonLists collect { case n: NodeList => n };
-        NodeList(typeId, jsonNodes) = nodeList;
+      for {
+        nodeList <- jsonLists collect { case n: NodeList => n }
+        NodeList(typeId, jsonNodes) = nodeList
         nodeDescriptor              = descriptor.nodeDescriptor(typeId).get
-      )
-        for (jsonNode <- nodeList) yield {
-          val node      = nodeDescriptor.extract(jsonNode)
-          val nodeId    = nodeDescriptor.id(node)
-          val nodeInMap = idMap get nodeId
-          buf += (
-            if (nodeInMap.isDefined) {
-              warn(DuplicateNodeId)
-              nodeInMap.get
-            } else {
-              idMap += nodeId -> node
-              node
-            }
-          )
-        }
+      } for (jsonNode <- nodeList) yield {
+        val node      = nodeDescriptor.extract(jsonNode)
+        val nodeId    = nodeDescriptor.id(node)
+        val nodeInMap = idMap get nodeId
+        buf += (
+          if (nodeInMap.isDefined) {
+            warn(DuplicateNodeId)
+            nodeInMap.get
+          } else {
+            idMap += nodeId -> node
+            node
+          }
+        )
+      }
       buf
     }
     type AEdge[X] = UnDiEdge[N] with Attributes[N]
     val edges: Iterable[E[N]] = {
       val buf = new ArrayBuffer[E[N]](16 * nodes.size)
-      for (
-        edgeList <- jsonLists collect { case e: EdgeList => e };
-        EdgeList(typeId, edges) = edgeList;
+      for {
+        edgeList <- jsonLists collect { case e: EdgeList => e }
+        EdgeList(typeId, edges) = edgeList
         edgeDescriptor          = descriptor.edgeDescriptor(typeId).get
-      ) {
+      } {
         def lookupNode(nodeId: String): N = {
           val nodeInMap = idMap get nodeId
           if (nodeInMap.isDefined) nodeInMap.get

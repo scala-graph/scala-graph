@@ -14,12 +14,12 @@ class TArraySetTest extends RefSpec with should.Matchers {
   implicit val hints = ArraySet.Hints(4, 4, 12, 100)
 
   private class LkDiEdgeGenerator {
-    private var i = 0
+    private var i           = 0
     def draw: LkDiEdge[Int] = { i += 1; LkDiEdge(1, 2)(i) }
   }
 
   private class WUnDiEdgeGenerator {
-    private var i = 0
+    private var i            = 0
     def draw: WUnDiEdge[Int] = { i += 1; WUnDiEdge(i, i + 1)(2 * i + 1) }
   }
 
