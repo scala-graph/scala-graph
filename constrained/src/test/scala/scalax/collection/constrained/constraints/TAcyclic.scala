@@ -2,7 +2,9 @@ package scalax.collection.constrained
 package constraints
 
 import org.scalatest._
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
+
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.constrained.generic.GraphConstrainedCompanion
@@ -11,9 +13,10 @@ class TAcyclicRootTest
     extends Suites(
       new TAcyclic[immutable.Graph](immutable.Graph),
       new TAcyclic[mutable.Graph](mutable.Graph),
-      new TAcyclicMutable)
+      new TAcyclicMutable
+    )
 
-class TAcyclicMutable extends RefSpec with Matchers with Testing[mutable.Graph] {
+class TAcyclicMutable extends RefSpec with should.Matchers with Testing[mutable.Graph] {
 
   import mutable.Graph
   val factory = mutable.Graph
@@ -30,9 +33,9 @@ class TAcyclicMutable extends RefSpec with Matchers with Testing[mutable.Graph] 
 }
 
 class TAcyclic[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC] with GraphOps[N, E, CC]](
-    val factory: GraphConstrainedCompanion[CC])
-    extends RefSpec
-    with Matchers
+    val factory: GraphConstrainedCompanion[CC]
+) extends RefSpec
+    with should.Matchers
     with Testing[CC] {
 
   info("factory = " + factory.getClass)

@@ -4,13 +4,13 @@ import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import scalax.collection.Graph
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-customizing.html
   *  Customizing Graphs]].
   */
-class CustomizingTest extends RefSpec with Matchers {
+class CustomizingTest extends RefSpec with should.Matchers {
 
   object `demonstraiting how to` {
 

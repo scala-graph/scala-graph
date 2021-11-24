@@ -7,8 +7,9 @@ import scala.util.Random
 import org.scalacheck._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest._
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
-import org.scalatest.prop.PropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import GraphPredef._
 import GraphEdge._
@@ -26,15 +27,15 @@ class TTraversalRootTest
       new TTraversal[mutable.Graph](mutable.Graph)
     )
 
-/**	This class contains tests for graph traversals to be run for Graph instances created
-  *	by the Graph factory and passed to the constructor. For instance,
-  *	this allows the same tests to be run for mutable and immutable Graphs.
+/** This class contains tests for graph traversals to be run for Graph instances created
+  * by the Graph factory and passed to the constructor. For instance,
+  * this allows the same tests to be run for mutable and immutable Graphs.
   */
 final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
-    val factory: GraphCoreCompanion[G])
-    extends RefSpec
-    with Matchers
-    with PropertyChecks
+    val factory: GraphCoreCompanion[G]
+) extends RefSpec
+    with should.Matchers
+    with ScalaCheckPropertyChecks
     with Visualizer[G] {
 
   implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
@@ -248,7 +249,8 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
       (n(1) shortestPathTo (n(3), reverseWeight)).get.nodes.toStream should contain theSameElementsInOrderAs Array(
         1,
         2,
-        3)
+        3
+      )
     }
   }
 
@@ -339,7 +341,8 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
 
     private def check(kind: Kind): Unit =
       List[Long](Long.MaxValue, 5, 4, 3, 2, 1, 0) map (max => n(1) withKind kind withMaxWeight max size) should be(
-        List(5, 4, 3, 2, 1, 1, 1))
+        List(5, 4, 3, 2, 1, 1, 1)
+      )
 
     def `calling DepthFirst` = given(WUnDi_1.g) { _ =>
       check(DepthFirst)
@@ -356,7 +359,8 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
       innerNode(1).outerNodeTraverser.toGraph should equal(factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
 
       innerNode(2).outerNodeTraverser(anyConnected).toGraph should equal(
-        factory(1 ~> 2, 2 ~> 3, 4 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
+        factory(1 ~> 2, 2 ~> 3, 4 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3)
+      )
 
       innerNode(3).outerNodeTraverser(predecessors).toGraph should equal(factory(4 ~> 3, 1 ~> 3, 2 ~> 3, 1 ~> 2))
     }
@@ -386,7 +390,7 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
     given(UnDi_1.g) { _ =>
       var lastCount = 0
       n(1).innerNodeTraverser.withKind(DepthFirst) foreach
-        ExtendedNodeVisitor((node, count, depth, informer) => {
+        ExtendedNodeVisitor { (node, count, depth, informer) =>
           count should be(lastCount + 1)
           lastCount += 1
 
@@ -395,13 +399,13 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
             case 2 => depth should (be(1) or (be(2) or be(3)))
             case 3 => depth should (be(1) or be(2))
             case 4 => depth should (be(2) or be(3))
-            case 5 => depth should (be > (0) and be < (5))
+            case 5 => depth should (be > 0 and be < 5)
           }
           informer match {
             case DfsInformer(stack, path) => ;
             case _                        => fail
           }
-        })
+        }
     }
   }
 
@@ -447,8 +451,9 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
         visited += e
       }
       val visitedSorted = visited.toList.sortWith((a: g.EdgeT, b: g.EdgeT) => a.flightNo < b.flightNo)
-      visitedSorted.sameElements(List(flight("BA 174"), flight("LH 400"), flight("UA 8840"), flight("UN 2222"))) should be(
-        true)
+      visitedSorted.sameElements(
+        List(flight("BA 174"), flight("LH 400"), flight("UA 8840"), flight("UN 2222"))
+      ) should be(true)
     }
   }
 
@@ -486,13 +491,12 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
       def innerNode(outer: Int) = g get outer
       var stack                 = List.empty[Int]
 
-      innerNode(4).innerNodeDownUpTraverser foreach {
-        case (down, node) =>
-          if (down) stack = node.value +: stack
-          else {
-            stack.head should be(node.value)
-            stack = stack.tail
-          }
+      innerNode(4).innerNodeDownUpTraverser foreach { case (down, node) =>
+        if (down) stack = node.value +: stack
+        else {
+          stack.head should be(node.value)
+          stack = stack.tail
+        }
       }
       stack should be('empty)
     }
@@ -538,14 +542,14 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
         nBA ~> Leaf("BA1", 10),
         nBA ~> Leaf("BA2", 11),
         nBA ~> Leaf("BA3", 12)
-      )) { g =>
-      (g get root).innerNodeDownUpTraverser foreach {
-        case (down, node) =>
-          if (!down)
-            node.value match {
-              case n: Node => n.sum = (0 /: node.diSuccessors)(_ + _.balance)
-              case _       =>
-            }
+      )
+    ) { g =>
+      (g get root).innerNodeDownUpTraverser foreach { case (down, node) =>
+        if (!down)
+          node.value match {
+            case n: Node => n.sum = (0 /: node.diSuccessors)(_ + _.balance)
+            case _       =>
+          }
       }
       val expected = Map(root -> 39, nA -> 3, nB -> 36, nBA -> 33)
       g.nodes foreach {
@@ -584,9 +588,11 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
 
         node(2).outerNodeTraverser(maxDepth_1).sum should be(expectedSumLayer1SuccessorsOf_2)
         node(2).outerNodeTraverser(maxDepth_1.withDirection(Predecessors)).sum should be(
-          expectedSumLayer1PredecessorsOf_2)
+          expectedSumLayer1PredecessorsOf_2
+        )
         node(2).outerNodeTraverser(maxDepth_1.withDirection(AnyConnected)).sum should be(
-          expectedSumLayer1AnyConnectedsOf_2)
+          expectedSumLayer1AnyConnectedsOf_2
+        )
         an[IllegalArgumentException] should be thrownBy {
           node(2).innerNodeTraverser(anyConnected) pathTo node(2)
         }
@@ -615,7 +621,9 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
         3 ~> 31,
         4 ~> 42,
         4 ~> 41,
-        4 ~> 43)) { g =>
+        4 ~> 43
+      )
+    ) { g =>
       val root         = g get 0
       val nodeOrdering = g.NodeOrdering(Ordering.Int.compare(_, _))
 
@@ -623,12 +631,14 @@ final class TTraversal[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLik
       orderedTraverser.toList should be(
         List(0 to 4: _*) ++
           List(11 to 13: _*) ++ List(21 to 23: _*) ++
-          List(31 to 33: _*) ++ List(41 to 43: _*))
+          List(31 to 33: _*) ++ List(41 to 43: _*)
+      )
 
       orderedTraverser.withKind(DepthFirst).toList should be(
         (0 ::
           List(1) ::: List(11 to 13: _*) ::: List(2) ::: List(21 to 23: _*) :::
-          List(3) ::: List(31 to 33: _*) ::: List(4) ::: List(41 to 43: _*)))
+          List(3) ::: List(31 to 33: _*) ::: List(4) ::: List(41 to 43: _*))
+      )
     }
   }
 

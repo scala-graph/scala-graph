@@ -77,7 +77,7 @@ object TGraphTest extends App {
         Person(Leo, Bell,2008)~Person(Leo, Smith,1983),
         ...
     )
-   */
+     */
   }
 
   object GG {
@@ -127,7 +127,8 @@ object TGraphTest extends App {
 
       def nameGen: Gen[String] = Gen.resultOf((firstName: String, surname: String) => s"$firstName, $surname")(
         Arbitrary(firstNameGen),
-        Arbitrary(surameGen))
+        Arbitrary(surameGen)
+      )
 
       def yearOfBirthGen: Gen[Int] = Gen.choose(maxYearOfBirth - 100, maxYearOfBirth)
     }
@@ -137,7 +138,8 @@ object TGraphTest extends App {
       val nodeDegrees = PersonData.degrees
       def nodeGen: Gen[Person] = Gen.resultOf((name: String, year: Int) => Person(name, year))(
         Arbitrary(Person.nameGen),
-        Arbitrary(Person.yearOfBirthGen))
+        Arbitrary(Person.yearOfBirthGen)
+      )
     }
 
     type Mixed = Graph[Person, UnDiEdge]
@@ -152,11 +154,11 @@ object TGraphTest extends App {
     println(arbitraryMixedGraph.arbitrary.sample)
 
     // Integrating with ScalaTest, limiting the minimum # of successful test
-    import org.scalatest.Matchers
-    import org.scalatest.prop.PropertyChecks
+    import org.scalatest.matchers.should
+    import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
     import org.scalatest.refspec.RefSpec
 
-    class TGraphGenTest extends RefSpec with Matchers with PropertyChecks {
+    class TGraphGenTest extends RefSpec with should.Matchers with ScalaCheckPropertyChecks {
 
       implicit val config =
         PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)

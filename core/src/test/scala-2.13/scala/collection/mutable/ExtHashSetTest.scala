@@ -3,11 +3,11 @@ package scala.collection.mutable
 import scala.math.abs
 import scala.util.chaining._
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 import scala.util.Random
 
-class ExtHashSetTest extends RefSpec with Matchers {
+class ExtHashSetTest extends RefSpec with should.Matchers {
 
   object `ExtHashSet works properly in that it` {
     import ExtHashSetTest._
@@ -49,9 +49,8 @@ class ExtHashSetTest extends RefSpec with Matchers {
       val nrProbes                      = set.size * nrProbesPerElement
       val frequencies                   = sortedProbeFrequencies(set, nrProbes, Some(77))
       val maxDeviationForBucketLength_% = Map(1 -> 25, 2 -> 50)
-      frequencies foreach {
-        case ProbeFrequency(element, count) =>
-          abs(nrProbesPerElement - count) should be < maxDeviationForBucketLength_%(bucketLengthOfElement(element))
+      frequencies foreach { case ProbeFrequency(element, count) =>
+        abs(nrProbesPerElement - count) should be < maxDeviationForBucketLength_%(bucketLengthOfElement(element))
       }
     }
 
@@ -91,9 +90,9 @@ class ExtHashSetTest extends RefSpec with Matchers {
         override def hashCode(): Int = value
       }
       val set = ExtHashSet(C(1), C(2))
-      set.hashCodeIterator(3).toList should have size (0)
+      set.hashCodeIterator(3).toList should have size 0
       val elems = set.hashCodeIterator(1).toList
-      elems should have size (1)
+      elems should have size 1
       elems.head should be(C(1))
     }
 
@@ -116,20 +115,22 @@ object ExtHashSetTest extends App {
 
   protected case class ProbeFrequency[A](probe: A, count: Int)
 
-  private def sortedProbeFrequencies(set: ExtHashSet[Int],
-                                     nrProbes: Int,
-                                     seed: Option[Long]): List[ProbeFrequency[Int]] = {
+  private def sortedProbeFrequencies(
+      set: ExtHashSet[Int],
+      nrProbes: Int,
+      seed: Option[Long]
+  ): List[ProbeFrequency[Int]] = {
     val r = new Random
     seed foreach r.setSeed
     Array
       .fill(nrProbes)(set draw r)
       .groupBy(identity)
-      .map {
-        case (k, v: Array[Int]) => ProbeFrequency(k, v.length)
+      .map { case (k, v: Array[Int]) =>
+        ProbeFrequency(k, v.length)
       }
       .toList
-      .sortBy {
-        case ProbeFrequency(_, v) => v
+      .sortBy { case ProbeFrequency(_, v) =>
+        v
       }
   }
 
@@ -146,5 +147,5 @@ object ExtHashSetTest extends App {
   Range(10, 2000, 100) foreach { i =>
     println(sortedProbeFrequencies(set, i))
   }
- */
+   */
 }

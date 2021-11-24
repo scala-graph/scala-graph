@@ -12,11 +12,11 @@ import generator.{NodeDegreeRange, RandomGraph}
 
 import org.scalatest.Inspectors._
 import org.scalatest.refspec.RefSpec
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 
 /** Ensure that stateful data handling used for traversals is thread-safe.
   */
-class TStateTest extends RefSpec with Matchers {
+class TStateTest extends RefSpec with should.Matchers {
   val g = Graph(Data.elementsOfUnDi_2: _*)
 
   // a sample traversal with recursive calls in its node visitor
@@ -61,7 +61,8 @@ class TStateTest extends RefSpec with Matchers {
             if (recursion == 0) 0
             else if (n eq recurseAt) countNodesDeep(recursion - 1)
             else 1
-          ))
+          )
+        )
         nrNodes
       }
       for (i <- 1 to 2) countNodesDeep(aLotOfTimes)
@@ -85,7 +86,7 @@ class TStateTest extends RefSpec with Matchers {
     def `when traversing by futures` {
       val traversals = Future.sequence(
         for (i <- 1 to aLotOfTimes)
-          yield Future { countNodes() }
+          yield Future(countNodes())
       )
       // statistics map with key = nrOfNodesCounted, value = frequency
       val stat = MutableMap.empty[Int, Int]

@@ -1,7 +1,7 @@
 package demo
 
 import org.scalatest.refspec.RefSpec
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
@@ -10,7 +10,7 @@ import scalax.collection.Graph
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-traversing.html
   * Traversing Graphs]].
   */
-final class TraversingTest extends RefSpec with Matchers {
+final class TraversingTest extends RefSpec with should.Matchers {
 
   import scalax.collection.edge.WUnDiEdge
   import scalax.collection.edge.Implicits._

@@ -8,7 +8,8 @@ import scalax.collection.GraphPredef.{EdgeLikeIn, Param}
 import scalax.collection.{Graph, GraphLike}
 
 private[collection] trait GraphCompanionCanBuildFrom[
-    +CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] {
+    +CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]
+] {
   this: GraphCompanion[CC] =>
 
   class GraphCanBuildFrom[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config)

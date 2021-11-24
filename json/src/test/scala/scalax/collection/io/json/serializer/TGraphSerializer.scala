@@ -11,16 +11,19 @@ import scalax.collection.edge.Implicits._
 import scalax.collection.io.json.descriptor.StringNodeDescriptor
 
 import org.scalatest._
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
+
 class TGraphSerializerRootTest
     extends Suites(
       new TGraphSerializer[immutable.Graph](immutable.Graph),
-      new TGraphSerializer[mutable.Graph](mutable.Graph))
+      new TGraphSerializer[mutable.Graph](mutable.Graph)
+    )
 
 class TGraphSerializer[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC])
-    extends RefSpec
-    with Matchers {
+    val factory: GraphCoreCompanion[CC]
+) extends RefSpec
+    with should.Matchers {
 
   private object GraphFixture {
     val graphJsonText = """

@@ -45,7 +45,7 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
 
   trait InnerNodeOps { this: NodeT =>
 
-    /**Creates a new inner edge between this node and `that` using `edgeFactory`
+    /** Creates a new inner edge between this node and `that` using `edgeFactory`
       * and adds it to the edge set of this graph.
       * $AUTOADD
       * Same as calling `addAndGetEdge(this, that)`.
@@ -61,7 +61,7 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
     @inline final def +~(that: N)(implicit edgeFactory: EdgeCompanion[E]) =
       connectWith(that)
 
-    /**Creates a new inner hyperedge between this node and `that` plus `those`
+    /** Creates a new inner hyperedge between this node and `that` plus `those`
       * using `edgeFactory` and adds it to the edge set of this graph.
       * $AUTOADD
       * Same as calling `addAndGetEdge(this, that, those)` on a `Graph` instance.
@@ -71,16 +71,20 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       * @param edgeFactory $EDGEFACTORY
       * @return $HEDGEADDED
       */
-    @inline final def connectWith(that: N, those: N*)(implicit edgeFactory: HyperEdgeCompanion[E],
-                                                      endpointsKind: CollectionKind = Bag): EdgeT =
+    @inline final def connectWith(that: N, those: N*)(implicit
+        edgeFactory: HyperEdgeCompanion[E],
+        endpointsKind: CollectionKind = Bag
+    ): EdgeT =
       selfGraph addAndGetEdge (this, that, those: _*)
 
     /** Synonym to `connectWith` */
-    @inline final def +~(that: N, those: N*)(implicit edgeFactory: HyperEdgeCompanion[E],
-                                             endpointsKind: CollectionKind = Bag) = connectWith(that, those: _*)
+    @inline final def +~(that: N, those: N*)(implicit
+        edgeFactory: HyperEdgeCompanion[E],
+        endpointsKind: CollectionKind = Bag
+    ) = connectWith(that, those: _*)
 
     // ---------------------------------------------------------------------- W
-    /**Creates a new weighted inner edge between this node and `that`
+    /** Creates a new weighted inner edge between this node and `that`
       * using `edgeFactory` and adds it to the edge set of this graph.
       * $AUTOADD
       * Same as `addAndGetWEdge(this, that)(weight)` on a `Graph` instance.
@@ -90,14 +94,16 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       * @param edgeFactory $EDGEFACTORY
       * @return $EDGEADDED
       */
-    @inline final def connectWithW[EE[+X] <: E[X] with WEdgeBound[X]](that: N)(weight: Double)(
-        implicit edgeFactory: WEdgeCompanion[EE]) = selfGraph.addAndGetWEdge[EE](this, that)(weight)
+    @inline final def connectWithW[EE[+X] <: E[X] with WEdgeBound[X]](that: N)(weight: Double)(implicit
+        edgeFactory: WEdgeCompanion[EE]
+    ) = selfGraph.addAndGetWEdge[EE](this, that)(weight)
 
     /** Synonym to `connectWithW(that)(weight)`. */
-    @inline final def +~%[EE[+X] <: E[X] with WEdgeBound[X]](that: N)(weight: Double)(
-        implicit edgeFactory: WEdgeCompanion[EE]) = connectWithW[EE](that)(weight)
+    @inline final def +~%[EE[+X] <: E[X] with WEdgeBound[X]](that: N)(weight: Double)(implicit
+        edgeFactory: WEdgeCompanion[EE]
+    ) = connectWithW[EE](that)(weight)
 
-    /**Creates a new weighted inner hyperedge between this node and `that` plus `those`
+    /** Creates a new weighted inner hyperedge between this node and `that` plus `those`
       * using `edgeFactory` and adds it to the edge set of this graph.
       * $AUTOADD
       * Same as `addAndGetWEdge(this, that, those)(weight)` on a `Graph` instance.
@@ -109,16 +115,18 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       * @return $HEDGEADDED
       */
     @inline final def connectWithW[EE[+X] <: E[X] with WEdgeBound[X]](that: N, those: N*)(
-        weight: Double)(implicit edgeFactory: WHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) =
+        weight: Double
+    )(implicit edgeFactory: WHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) =
       selfGraph.addAndGetWEdge[EE](this, that, those: _*)(weight)
 
     /** Synonym to `connectWithW(that, those)(weight)`. */
     @inline final def +~%[EE[+X] <: E[X] with WEdgeBound[X]](that: N, those: N*)(
-        weight: Double)(implicit edgeFactory: WHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) =
+        weight: Double
+    )(implicit edgeFactory: WHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) =
       connectWithW[EE](that, those: _*)(weight)
 
     // ---------------------------------------------------------------------- L
-    /**Creates a new labeled inner edge between this node and `that`
+    /** Creates a new labeled inner edge between this node and `that`
       * using `edgeFactory` and adds it to the edge set of this graph.
       * $AUTOADD
       * Same as `addAndGetLEdge(this, that)(label)` on a `Graph` instance.
@@ -128,16 +136,18 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       * @param edgeFactory $EDGEFACTORY
       * @return $EDGEADDED
       */
-    @inline final def connectWithL[EE[+X] <: E[X] with LEdgeBound[X], L](that: N)(label: L)(
-        implicit edgeFactory: LEdgeCompanion[EE]) =
+    @inline final def connectWithL[EE[+X] <: E[X] with LEdgeBound[X], L](
+        that: N
+    )(label: L)(implicit edgeFactory: LEdgeCompanion[EE]) =
       selfGraph.addAndGetLEdge[EE, L](this, that)(label)
 
     /** Synonym to `connectWithL(that)(label)`. */
-    @inline final def +~+[EE[+X] <: E[X] with LEdgeBound[X], L](that: N)(label: L)(
-        implicit edgeFactory: LEdgeCompanion[EE]) =
+    @inline final def +~+[EE[+X] <: E[X] with LEdgeBound[X], L](
+        that: N
+    )(label: L)(implicit edgeFactory: LEdgeCompanion[EE]) =
       connectWithL[EE, L](that)(label)
 
-    /**Creates a new labeled inner hyperedge between this node and `that` plus `those`
+    /** Creates a new labeled inner hyperedge between this node and `that` plus `those`
       * using `edgeFactory` and adds it to the edge set of this graph.
       * $AUTOADD
       * Same as `addAndGetLEdge(this, that, those)(label)` on a `Graph` instance.
@@ -148,16 +158,18 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       * @param edgeFactory $EDGEFACTORY
       * @return $HEDGEADDED
       */
-    @inline final def connectWithL[EE[+X] <: E[X] with LEdgeBound[X], L](that: N, those: N*)(label: L)(
-        implicit edgeFactory: LHyperEdgeCompanion[EE]) =
+    @inline final def connectWithL[EE[+X] <: E[X] with LEdgeBound[X], L](that: N, those: N*)(
+        label: L
+    )(implicit edgeFactory: LHyperEdgeCompanion[EE]) =
       selfGraph.addAndGetLEdge[EE, L](this, that, those: _*)(label)
 
     /** Synonym to `connectWithL(that, those)(label)`. */
-    @inline final def +~+[EE[+X] <: E[X] with LEdgeBound[X], L](that: N, those: N*)(label: L)(
-        implicit edgeFactory: LHyperEdgeCompanion[EE]) = connectWithL[EE, L](that, those: _*)(label)
+    @inline final def +~+[EE[+X] <: E[X] with LEdgeBound[X], L](that: N, those: N*)(label: L)(implicit
+        edgeFactory: LHyperEdgeCompanion[EE]
+    ) = connectWithL[EE, L](that, those: _*)(label)
 
     // --------------------------------------------------------------------- WL
-    /**Creates a new weighted and labeled inner edge between this node and `that`
+    /** Creates a new weighted and labeled inner edge between this node and `that`
       * using `edgeFactory` and adds it to the edge set of this graph.
       * $AUTOADD
       * Same as `addAndGetWLEdge(this, that)(weight, label)` on a `Graph` instance.
@@ -168,16 +180,18 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       * @param edgeFactory $EDGEFACTORY
       * @return $EDGEADDED
       */
-    @inline final def connectWithWL[EE[+X] <: E[X] with WLEdgeBound[X], L](that: N)(weight: Double, label: L)(
-        implicit edgeFactory: WLEdgeCompanion[EE]) =
+    @inline final def connectWithWL[EE[+X] <: E[X] with WLEdgeBound[X], L](
+        that: N
+    )(weight: Double, label: L)(implicit edgeFactory: WLEdgeCompanion[EE]) =
       selfGraph.addAndGetWLEdge[EE, L](this, that)(weight, label)
 
     /** Synonym to `connectWithWL(that)(weight, label)`. */
-    @inline final def +~%+[EE[+X] <: E[X] with WLEdgeBound[X], L](that: N)(weight: Double, label: L)(
-        implicit edgeFactory: WLEdgeCompanion[EE]) =
+    @inline final def +~%+[EE[+X] <: E[X] with WLEdgeBound[X], L](
+        that: N
+    )(weight: Double, label: L)(implicit edgeFactory: WLEdgeCompanion[EE]) =
       connectWithWL[EE, L](that)(weight, label)
 
-    /**Creates a new weighted and labeled inner hyperedge between this node and `that`
+    /** Creates a new weighted and labeled inner hyperedge between this node and `that`
       * plus `those` using `edgeFactory` and adds it to the edge set of this graph.
       * $AUTOADD
       * Same as `addAndGetWLEdge(this, that, those)(weight, label)` on a `Graph` instance.
@@ -189,19 +203,21 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       * @param edgeFactory $EDGEFACTORY
       * @return $HEDGEADDED
       */
-    @inline final def connectWithWL[EE[+X] <: E[X] with WLEdgeBound[X], L](that: N, those: N*)(
-        weight: Double,
-        label: L)(implicit edgeFactory: WLHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) =
+    @inline final def connectWithWL[EE[+X] <: E[X] with WLEdgeBound[X], L](
+        that: N,
+        those: N*
+    )(weight: Double, label: L)(implicit edgeFactory: WLHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) =
       selfGraph.addAndGetWLEdge[EE, L](this, that, those: _*)(weight, label)
 
     /** Synonym to `connectWithWL(that, those)(weight, label)`. */
-    @inline final def +~%+[EE[+X] <: E[X] with WLEdgeBound[X], L](that: N, those: N*)(weight: Double, label: L)(
-        implicit edgeFactory: WLHyperEdgeCompanion[EE],
-        endpointsKind: CollectionKind = Bag) =
+    @inline final def +~%+[EE[+X] <: E[X] with WLEdgeBound[X], L](that: N, those: N*)(weight: Double, label: L)(implicit
+        edgeFactory: WLHyperEdgeCompanion[EE],
+        endpointsKind: CollectionKind = Bag
+    ) =
       connectWithWL[EE, L](that, those: _*)(weight, label)
   }
   // ------------------------------------------------------------------------------- Edge
-  /**Creates a new inner edge between `node_1` and `node_2` using `edgeFactory`
+  /** Creates a new inner edge between `node_1` and `node_2` using `edgeFactory`
     * and adds it to the edge set of this graph.
     * $AUTOADD
     *
@@ -213,7 +229,7 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
   @inline final def addEdge(node_1: N, node_2: N)(implicit edgeFactory: EdgeCompanion[E]) =
     edges add nodesToEdge(edgeFactory, node_1, node_2)
 
-  /**Same as `addEdge(node_1, node_2)` except for the returned result.
+  /** Same as `addEdge(node_1, node_2)` except for the returned result.
     * @return $THIS
     */
   @inline final def +~=(node_1: N, node_2: N)(implicit edgeFactory: EdgeCompanion[E]): this.type = {
@@ -221,7 +237,7 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
     this
   }
 
-  /**Same as `addEdge(node_1, node_2)` except for the returned result.
+  /** Same as `addEdge(node_1, node_2)` except for the returned result.
     * @return $EDGE
     */
   @inline final def addAndGetEdge(node_1: N, node_2: N)(implicit edgeFactory: EdgeCompanion[E]) = {
@@ -230,7 +246,7 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
     else edges find (_ == e) get
   }
 
-  /**Creates a new inner hyperedge between `node_1`, `node_2` and `nodes`
+  /** Creates a new inner hyperedge between `node_1`, `node_2` and `nodes`
     * using `edgeFactory` and adds it to the edge set of this graph.
     * $AUTOADD
     *
@@ -240,30 +256,36 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
     * @param edgeFactory $EDGEFACTORY
     * @return            $HEDGEADDED
     */
-  @inline final def addEdge(node_1: N, node_2: N, nodes: N*)(implicit edgeFactory: HyperEdgeCompanion[E],
-                                                             endpointsKind: CollectionKind = Bag) =
+  @inline final def addEdge(node_1: N, node_2: N, nodes: N*)(implicit
+      edgeFactory: HyperEdgeCompanion[E],
+      endpointsKind: CollectionKind = Bag
+  ) =
     edges add nodesToEdge(edgeFactory, node_1, node_2, nodes: _*)
 
-  /**Same as `addEdge(node_1, node_2, nodes)` except for the returned result.
+  /** Same as `addEdge(node_1, node_2, nodes)` except for the returned result.
     * @return $THISH
     */
-  @inline final def +~=(node_1: N, node_2: N, nodes: N*)(implicit edgeFactory: HyperEdgeCompanion[E],
-                                                         endpointsKind: CollectionKind = Bag): this.type = {
+  @inline final def +~=(node_1: N, node_2: N, nodes: N*)(implicit
+      edgeFactory: HyperEdgeCompanion[E],
+      endpointsKind: CollectionKind = Bag
+  ): this.type = {
     addEdge(node_1, node_2, nodes: _*)
     this
   }
 
-  /**Same as `addEdge(node_1, node_2, nodes)` except for the returned result.
+  /** Same as `addEdge(node_1, node_2, nodes)` except for the returned result.
     * @return $HEDGE
     */
-  def addAndGetEdge(node_1: N, node_2: N, nodes: N*)(implicit edgeFactory: HyperEdgeCompanion[E],
-                                                     endpointsKind: CollectionKind = Bag): EdgeT = {
+  def addAndGetEdge(node_1: N, node_2: N, nodes: N*)(implicit
+      edgeFactory: HyperEdgeCompanion[E],
+      endpointsKind: CollectionKind = Bag
+  ): EdgeT = {
     val e = nodesToEdge(edgeFactory, node_1, node_2, nodes: _*)
     if (edges add e) e
     else edges find (_ == e) get
   }
   // ------------------------------------------------------------------------------ WEdge
-  /**Creates a new weighted inner edge between `node_1` and `node_2`
+  /** Creates a new weighted inner edge between `node_1` and `node_2`
     * using `edgeFactory` and adds it to the edge set of this graph.
     * $AUTOADD
     *
@@ -273,30 +295,33 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
     * @param edgeFactory $EDGEFACTORY
     * @return            $EDGEADDED
     */
-  @inline final def addWEdge[EE[+X] <: E[X] with WEdgeBound[X]](node_1: N, node_2: N)(weight: Double)(
-      implicit edgeFactory: WEdgeCompanion[EE]) =
+  @inline final def addWEdge[EE[+X] <: E[X] with WEdgeBound[X]](node_1: N, node_2: N)(
+      weight: Double
+  )(implicit edgeFactory: WEdgeCompanion[EE]) =
     edges add nodesToWEdge(edgeFactory, weight, node_1, node_2)
 
-  /**Same as `addWEdge(node_1, node_2)(weight)` except for the returned result.
+  /** Same as `addWEdge(node_1, node_2)(weight)` except for the returned result.
     * @return $THIS
     */
-  @inline final def +~%=[EE[+X] <: E[X] with WEdgeBound[X]](node_1: N, node_2: N)(weight: Double)(
-      implicit edgeFactory: WEdgeCompanion[EE]): this.type = {
+  @inline final def +~%=[EE[+X] <: E[X] with WEdgeBound[X]](node_1: N, node_2: N)(
+      weight: Double
+  )(implicit edgeFactory: WEdgeCompanion[EE]): this.type = {
     addWEdge(node_1, node_2)(weight)
     this
   }
 
-  /**Same as `addWEdge(node_1, node_2)(weight)` except for the returned result.
+  /** Same as `addWEdge(node_1, node_2)(weight)` except for the returned result.
     * @return $EDGE
     */
-  @inline final def addAndGetWEdge[EE[+X] <: E[X] with WEdgeBound[X]](node_1: N, node_2: N)(weight: Double)(
-      implicit edgeFactory: WEdgeCompanion[EE]) = {
+  @inline final def addAndGetWEdge[EE[+X] <: E[X] with WEdgeBound[X]](node_1: N, node_2: N)(
+      weight: Double
+  )(implicit edgeFactory: WEdgeCompanion[EE]) = {
     val e = nodesToWEdge(edgeFactory, weight, node_1, node_2)
     if (edges add e) e
     else edges find (_ == e) get
   }
 
-  /**Creates a new weighted inner hyperedge between `node_1`, `node_2` and `nodes`
+  /** Creates a new weighted inner hyperedge between `node_1`, `node_2` and `nodes`
     * using `edgeFactory` and adds it to the edge set of this graph.
     * $AUTOADD
     *
@@ -308,30 +333,33 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
     * @return            $HEDGEADDED
     */
   @inline final def addWEdge[EE[+X] <: E[X] with WHyperEdgeBound[X]](node_1: N, node_2: N, nodes: N*)(
-      weight: Double)(implicit edgeFactory: WHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) =
+      weight: Double
+  )(implicit edgeFactory: WHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) =
     edges add nodesToWEdge(edgeFactory, weight, node_1, node_2, nodes: _*)
 
-  /**Same as `addWEdge(node_1, node_2, nodes)(weight)` except for the returned result.
+  /** Same as `addWEdge(node_1, node_2, nodes)(weight)` except for the returned result.
     * @return $THISH
     */
   @inline final def +~%=[EE[+X] <: E[X] with WHyperEdgeBound[X]](node_1: N, node_2: N, nodes: N*)(
-      weight: Double)(implicit edgeFactory: WHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag): this.type = {
+      weight: Double
+  )(implicit edgeFactory: WHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag): this.type = {
     addWEdge(node_1, node_2, nodes: _*)(weight)
     this
   }
 
-  /**Same as `addWEdge(node_1, node_2, nodes)(weight)` except for the returned result.
+  /** Same as `addWEdge(node_1, node_2, nodes)(weight)` except for the returned result.
     * @return $HEDGE
     */
   def addAndGetWEdge[EE[+X] <: E[X] with WHyperEdgeBound[X]](node_1: N, node_2: N, nodes: N*)(
-      weight: Double)(implicit edgeFactory: WHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) = {
+      weight: Double
+  )(implicit edgeFactory: WHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) = {
     val e = nodesToWEdge(edgeFactory, weight, node_1, node_2, nodes: _*)
     if (edges add e) e
     else edges find (_ == e) get
   }
 
   // ------------------------------------------------------------------------------ LEdge
-  /**Creates a new labeled inner edge between `node_1` and `node_2`
+  /** Creates a new labeled inner edge between `node_1` and `node_2`
     * using `edgeFactory` and adds it to the edge set of this graph.
     * $AUTOADD
     *
@@ -341,30 +369,33 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
     * @param edgeFactory $EDGEFACTORY
     * @return            $EDGEADDED
     */
-  @inline final def addLEdge[EE[+X] <: E[X] with LEdgeBound[X], L](node_1: N, node_2: N)(label: L)(
-      implicit edgeFactory: LEdgeCompanion[EE]) =
+  @inline final def addLEdge[EE[+X] <: E[X] with LEdgeBound[X], L](node_1: N, node_2: N)(
+      label: L
+  )(implicit edgeFactory: LEdgeCompanion[EE]) =
     edges add nodesToLEdge(edgeFactory, label, node_1, node_2)
 
-  /**Same as `addLEdge(node_1, node_2)(label)` except for the returned result.
+  /** Same as `addLEdge(node_1, node_2)(label)` except for the returned result.
     * @return $THIS
     */
-  @inline final def +~+=[EE[+X] <: E[X] with LEdgeBound[X], L](node_1: N, node_2: N)(label: L)(
-      implicit edgeFactory: LEdgeCompanion[EE]): this.type = {
+  @inline final def +~+=[EE[+X] <: E[X] with LEdgeBound[X], L](node_1: N, node_2: N)(
+      label: L
+  )(implicit edgeFactory: LEdgeCompanion[EE]): this.type = {
     addLEdge(node_1, node_2)(label)
     this
   }
 
-  /**Same as `addLEdge(node_1, node_2)(label)` except for the returned result.
+  /** Same as `addLEdge(node_1, node_2)(label)` except for the returned result.
     * @return $EDGE
     */
-  @inline final def addAndGetLEdge[EE[+X] <: E[X] with LEdgeBound[X], L](node_1: N, node_2: N)(label: L)(
-      implicit edgeFactory: LEdgeCompanion[EE]) = {
+  @inline final def addAndGetLEdge[EE[+X] <: E[X] with LEdgeBound[X], L](node_1: N, node_2: N)(
+      label: L
+  )(implicit edgeFactory: LEdgeCompanion[EE]) = {
     val e = nodesToLEdge(edgeFactory, label, node_1, node_2)
     if (edges add e) e
     else edges find (_ == e) get
   }
 
-  /**Creates a new weighted and labeled inner hyperedge between `node_1`, `node_2` and `nodes`
+  /** Creates a new weighted and labeled inner hyperedge between `node_1`, `node_2` and `nodes`
     * using `edgeFactory` and adds it to the edge set of this graph.
     * $AUTOADD
     *
@@ -375,24 +406,27 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
     * @param edgeFactory $EDGEFACTORY
     * @return            $HEDGEADDED
     */
-  @inline final def addLEdge[EE[+X] <: E[X] with LHyperEdgeBound[X], L](node_1: N, node_2: N, nodes: N*)(label: L)(
-      implicit edgeFactory: LHyperEdgeCompanion[EE]) =
+  @inline final def addLEdge[EE[+X] <: E[X] with LHyperEdgeBound[X], L](node_1: N, node_2: N, nodes: N*)(
+      label: L
+  )(implicit edgeFactory: LHyperEdgeCompanion[EE]) =
     edges add nodesToLEdge(edgeFactory, label, node_1, node_2, nodes: _*)
 
-  /**Same as `addLEdge(node_1, node_2, nodes)(label)` except for the returned result.
+  /** Same as `addLEdge(node_1, node_2, nodes)(label)` except for the returned result.
     * @return $THISH
     */
-  @inline final def +~+=[EE[+X] <: E[X] with LHyperEdgeBound[X], L](node_1: N, node_2: N, nodes: N*)(label: L)(
-      implicit edgeFactory: LHyperEdgeCompanion[EE]): this.type = {
+  @inline final def +~+=[EE[+X] <: E[X] with LHyperEdgeBound[X], L](node_1: N, node_2: N, nodes: N*)(
+      label: L
+  )(implicit edgeFactory: LHyperEdgeCompanion[EE]): this.type = {
     addLEdge(node_1, node_2, nodes: _*)(label)
     this
   }
 
-  /**Same as `addLEdge(node_1, node_2, nodes)(label)` except for the returned result.
+  /** Same as `addLEdge(node_1, node_2, nodes)(label)` except for the returned result.
     * @return $HEDGE
     */
-  def addAndGetLEdge[EE[+X] <: E[X] with LHyperEdgeBound[X], L](node_1: N, node_2: N, nodes: N*)(label: L)(
-      implicit edgeFactory: LHyperEdgeCompanion[EE]) = {
+  def addAndGetLEdge[EE[+X] <: E[X] with LHyperEdgeBound[X], L](node_1: N, node_2: N, nodes: N*)(
+      label: L
+  )(implicit edgeFactory: LHyperEdgeCompanion[EE]) = {
     val e = nodesToLEdge(edgeFactory, label, node_1, node_2, nodes: _*)
     if (edges add e) e
     else edges find (_ == e) get
@@ -410,30 +444,33 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
     * @return            $EDGEADDED
     */
   @inline final def addWLEdge[EE[+X] <: E[X] with WLEdgeBound[X], L](node_1: N, node_2: N)(weight: Double, label: L)(
-      implicit edgeFactory: WLEdgeCompanion[EE]) =
+      implicit edgeFactory: WLEdgeCompanion[EE]
+  ) =
     edges add nodesToWLEdge(edgeFactory, weight, label, node_1, node_2)
 
-  /**Same as `addWLEdge(node_1, node_2)(weight, label)` except for the returned result.
+  /** Same as `addWLEdge(node_1, node_2)(weight, label)` except for the returned result.
     * @return $THIS
     */
   @inline final def +~%+=[EE[+X] <: E[X] with WLEdgeBound[X], L](node_1: N, node_2: N)(weight: Double, label: L)(
-      implicit edgeFactory: WLEdgeCompanion[EE]): this.type = {
+      implicit edgeFactory: WLEdgeCompanion[EE]
+  ): this.type = {
     addWLEdge(node_1, node_2)(weight, label)
     this
   }
 
-  /**Same as `addWLEdge(node_1, node_2)(weight, label)` except for the returned result.
+  /** Same as `addWLEdge(node_1, node_2)(weight, label)` except for the returned result.
     * @return $EDGE
     */
-  @inline final def addAndGetWLEdge[EE[+X] <: E[X] with WLEdgeBound[X], L](node_1: N, node_2: N)(
-      weight: Double,
-      label: L)(implicit edgeFactory: WLEdgeCompanion[EE]) = {
+  @inline final def addAndGetWLEdge[EE[+X] <: E[X] with WLEdgeBound[X], L](
+      node_1: N,
+      node_2: N
+  )(weight: Double, label: L)(implicit edgeFactory: WLEdgeCompanion[EE]) = {
     val e = nodesToWLEdge(edgeFactory, weight, label, node_1, node_2)
     if (edges add e) e
     else edges find (_ == e) get
   }
 
-  /**Creates a new weighted and labeled inner hyperedge between `node_1`, `node_2` and `nodes`
+  /** Creates a new weighted and labeled inner hyperedge between `node_1`, `node_2` and `nodes`
     * using `edgeFactory` and adds it to the edge set of this graph.
     * $AUTOADD
     *
@@ -447,7 +484,8 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
     */
   @inline final def addWLEdge[EE[+X] <: E[X] with WLHyperEdgeBound[X], L](node_1: N, node_2: N, nodes: N*)(
       weight: Double,
-      label: L)(implicit edgeFactory: WLHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) =
+      label: L
+  )(implicit edgeFactory: WLHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) =
     edges add nodesToWLEdge(edgeFactory, weight, label, node_1, node_2, nodes: _*)
 
   /** Same as `addWLEdge(node_1, node_2, nodes)(weight, label)` except for the returned result.
@@ -455,17 +493,19 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
     */
   @inline final def +~%+=[EE[+X] <: E[X] with WLHyperEdgeBound[X], L](node_1: N, node_2: N, nodes: N*)(
       weight: Double,
-      label: L)(implicit edgeFactory: WLHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag): this.type = {
+      label: L
+  )(implicit edgeFactory: WLHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag): this.type = {
     addWLEdge(node_1, node_2, nodes: _*)(weight, label)
     this
   }
 
-  /**Same as `addWLEdge(node_1, node_2, nodes)(weight, label)` except for the returned result.
+  /** Same as `addWLEdge(node_1, node_2, nodes)(weight, label)` except for the returned result.
     * @return $HEDGE
     */
   def addAndGetWLEdge[EE[+X] <: E[X] with WLHyperEdgeBound[X], L](node_1: N, node_2: N, nodes: N*)(
       weight: Double,
-      label: L)(implicit edgeFactory: WLHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) = {
+      label: L
+  )(implicit edgeFactory: WLHyperEdgeCompanion[EE], endpointsKind: CollectionKind = Bag) = {
     val e = nodesToWLEdge(edgeFactory, weight, label, node_1, node_2, nodes: _*)
     if (edges add e) e
     else edges find (_ == e) get
@@ -474,14 +514,17 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
   @inline final protected def nodesToEdge(edgeFactory: EdgeCompanion[E], node_1: N, node_2: N): EdgeT =
     newEdge(nodesToEdgeCont(edgeFactory, node_1, node_2))
 
-  @inline final protected def nodesToEdge(edgeFactory: HyperEdgeCompanion[E], node_1: N, node_2: N, nodes: N*)(
-      implicit endpointsKind: CollectionKind): EdgeT =
+  @inline final protected def nodesToEdge(edgeFactory: HyperEdgeCompanion[E], node_1: N, node_2: N, nodes: N*)(implicit
+      endpointsKind: CollectionKind
+  ): EdgeT =
     newEdge(nodesToEdgeCont(edgeFactory, node_1, node_2, nodes: _*))
 
-  @inline final protected def nodesToWEdge[EE[+X] <: E[X] with WEdgeBound[X]](edgeFactory: WEdgeCompanion[EE],
-                                                                              weight: Double,
-                                                                              node_1: N,
-                                                                              node_2: N): EdgeT =
+  @inline final protected def nodesToWEdge[EE[+X] <: E[X] with WEdgeBound[X]](
+      edgeFactory: WEdgeCompanion[EE],
+      weight: Double,
+      node_1: N,
+      node_2: N
+  ): EdgeT =
     newEdge(nodesToWEdgeCont(edgeFactory, weight, node_1, node_2))
 
   @inline final protected def nodesToWEdge[EE[+X] <: E[X] with WHyperEdgeBound[X]](
@@ -489,13 +532,16 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       weight: Double,
       node_1: N,
       node_2: N,
-      nodes: N*)(implicit kind: CollectionKind): EdgeT =
+      nodes: N*
+  )(implicit kind: CollectionKind): EdgeT =
     newEdge(nodesToWEdgeCont(edgeFactory, weight, node_1, node_2, nodes: _*))
 
-  @inline final protected def nodesToLEdge[EE[+X] <: E[X] with LEdgeBound[X], L](edgeFactory: LEdgeCompanion[EE],
-                                                                                 label: L,
-                                                                                 node_1: N,
-                                                                                 node_2: N): EdgeT =
+  @inline final protected def nodesToLEdge[EE[+X] <: E[X] with LEdgeBound[X], L](
+      edgeFactory: LEdgeCompanion[EE],
+      label: L,
+      node_1: N,
+      node_2: N
+  ): EdgeT =
     newEdge(nodesToLEdgeCont(edgeFactory, label, node_1, node_2))
 
   @inline final protected def nodesToLEdge[EE[+X] <: E[X] with LHyperEdgeBound[X], L](
@@ -503,14 +549,17 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       label: L,
       node_1: N,
       node_2: N,
-      nodes: N*): EdgeT =
+      nodes: N*
+  ): EdgeT =
     newEdge(nodesToLEdgeCont(edgeFactory, label, node_1, node_2, nodes: _*))
 
-  @inline final protected def nodesToWLEdge[EE[+X] <: E[X] with WLEdgeBound[X], L](edgeFactory: WLEdgeCompanion[EE],
-                                                                                   weight: Double,
-                                                                                   label: L,
-                                                                                   node_1: N,
-                                                                                   node_2: N): EdgeT =
+  @inline final protected def nodesToWLEdge[EE[+X] <: E[X] with WLEdgeBound[X], L](
+      edgeFactory: WLEdgeCompanion[EE],
+      weight: Double,
+      label: L,
+      node_1: N,
+      node_2: N
+  ): EdgeT =
     newEdge(nodesToWLEdgeCont(edgeFactory, weight, label, node_1, node_2))
 
   @inline final protected def nodesToWLEdge[EE[+X] <: E[X] with WLHyperEdgeBound[X], L](
@@ -519,12 +568,14 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       label: L,
       node_1: N,
       node_2: N,
-      nodes: N*)(implicit kind: CollectionKind): EdgeT =
+      nodes: N*
+  )(implicit kind: CollectionKind): EdgeT =
     newEdge(nodesToWLEdgeCont(edgeFactory, weight, label, node_1, node_2, nodes: _*))
 
   /** Creates a new simple inner hyperedge $WOMOD. */
-  protected[collection] def nodesToEdgeCont(factory: HyperEdgeCompanion[E], node_1: N, node_2: N, nodes: N*)(
-      implicit kind: CollectionKind): E[NodeT] =
+  protected[collection] def nodesToEdgeCont(factory: HyperEdgeCompanion[E], node_1: N, node_2: N, nodes: N*)(implicit
+      kind: CollectionKind
+  ): E[NodeT] =
     factory.from[NodeT](Edge.mkNodes(node_1, node_2, nodes: _*)).asInstanceOf[E[NodeT]]
 
   /** Creates a new simple inner edge $WOMOD. */
@@ -537,14 +588,17 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       weight: Double,
       node_1: N,
       node_2: N,
-      nodes: N*)(implicit kind: CollectionKind): E[NodeT] =
+      nodes: N*
+  )(implicit kind: CollectionKind): E[NodeT] =
     factory.from[NodeT](Edge.mkNodes(node_1, node_2, nodes: _*))(weight).asInstanceOf[E[NodeT]]
 
   /** Creates a new weighted inner edge $WOMOD. */
-  protected[collection] def nodesToWEdgeCont[EE[+X] <: E[X] with WEdgeBound[X]](factory: WEdgeCompanion[EE],
-                                                                                weight: Double,
-                                                                                node_1: N,
-                                                                                node_2: N): E[NodeT] =
+  protected[collection] def nodesToWEdgeCont[EE[+X] <: E[X] with WEdgeBound[X]](
+      factory: WEdgeCompanion[EE],
+      weight: Double,
+      node_1: N,
+      node_2: N
+  ): E[NodeT] =
     factory.from[NodeT](Edge.mkNodes(node_1, node_2))(weight).asInstanceOf[E[NodeT]]
 
   /** Creates a new labeled inner hyperedge $WOMOD. */
@@ -553,14 +607,17 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       label: L,
       node_1: N,
       node_2: N,
-      nodes: N*)(implicit kind: CollectionKind = Bag): E[NodeT] =
+      nodes: N*
+  )(implicit kind: CollectionKind = Bag): E[NodeT] =
     factory.from[NodeT, L](Edge.mkNodes(node_1, node_2, nodes: _*))(label).asInstanceOf[E[NodeT]]
 
   /** Creates a new labeled inner edge $WOMOD. */
-  protected[collection] def nodesToLEdgeCont[EE[+X] <: E[X] with LEdgeBound[X], L](factory: LEdgeCompanion[EE],
-                                                                                   label: L,
-                                                                                   node_1: N,
-                                                                                   node_2: N): E[NodeT] =
+  protected[collection] def nodesToLEdgeCont[EE[+X] <: E[X] with LEdgeBound[X], L](
+      factory: LEdgeCompanion[EE],
+      label: L,
+      node_1: N,
+      node_2: N
+  ): E[NodeT] =
     factory.from[NodeT, L](Edge.mkNodes(node_1, node_2))(label).asInstanceOf[E[NodeT]]
 
   /** Creates a new weighted and labeled inner hyperedge $WOMOD. */
@@ -570,22 +627,27 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       label: L,
       node_1: N,
       node_2: N,
-      nodes: N*)(implicit kind: CollectionKind): E[NodeT] =
+      nodes: N*
+  )(implicit kind: CollectionKind): E[NodeT] =
     factory.from[NodeT, L](Edge.mkNodes(node_1, node_2, nodes: _*))(weight, label).asInstanceOf[E[NodeT]]
 
   /** Creates a new weighted and labeled inner edge $WOMOD. */
-  protected[collection] def nodesToWLEdgeCont[EE[+X] <: E[X] with WLEdgeBound[X], L](factory: WLEdgeCompanion[EE],
-                                                                                     weight: Double,
-                                                                                     label: L,
-                                                                                     node_1: N,
-                                                                                     node_2: N): E[NodeT] =
+  protected[collection] def nodesToWLEdgeCont[EE[+X] <: E[X] with WLEdgeBound[X], L](
+      factory: WLEdgeCompanion[EE],
+      weight: Double,
+      label: L,
+      node_1: N,
+      node_2: N
+  ): E[NodeT] =
     factory.from[NodeT, L](Edge.mkNodes(node_1, node_2))(weight, label).asInstanceOf[E[NodeT]]
 
   /** Creates a new custom inner edge $WOMOD. */
-  protected[collection] def nodesToCEdgeCont[EE[+X] <: E[X] with CEdgeBound[X]](factory: CEdgeCompanion[EE],
-                                                                                attrib: Product,
-                                                                                node_1: N,
-                                                                                node_2: N): E[NodeT] =
+  protected[collection] def nodesToCEdgeCont[EE[+X] <: E[X] with CEdgeBound[X]](
+      factory: CEdgeCompanion[EE],
+      attrib: Product,
+      node_1: N,
+      node_2: N
+  ): E[NodeT] =
     factory.from[NodeT](Edge.mkNodes(node_1, node_2), attrib.asInstanceOf[factory.P]).asInstanceOf[E[NodeT]]
 
   /** Creates a new custom inner hyperedge $WOMOD. */
@@ -594,6 +656,7 @@ trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: Gra
       attrib: Product,
       node_1: N,
       node_2: N,
-      nodes: N*)(implicit kind: CollectionKind): E[NodeT] =
+      nodes: N*
+  )(implicit kind: CollectionKind): E[NodeT] =
     factory.from[NodeT](Edge.mkNodes(node_1, node_2, nodes: _*), attrib.asInstanceOf[factory.P]).asInstanceOf[E[NodeT]]
 }

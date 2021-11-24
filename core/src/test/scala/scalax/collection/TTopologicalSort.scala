@@ -1,12 +1,15 @@
 package scalax.collection
 
-import GraphPredef._, GraphEdge._
-import GraphTraversal._, GraphTraversal.Parameters._
+import GraphPredef._
+import GraphEdge._
+import GraphTraversal._
+import GraphTraversal.Parameters._
 import generic.GraphCoreCompanion
 import edge.Implicits._
 
 import org.scalatest._
-import org.scalatest.prop.PropertyChecks
+import org.scalatest.matchers.should
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalatest.refspec.RefSpec
 
 import scalax.collection.edge.WkDiEdge
@@ -19,10 +22,10 @@ class TTopologicalSortRootTest
     )
 
 private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
-    val factory: GraphCoreCompanion[G])
-    extends RefSpec
-    with Matchers
-    with PropertyChecks
+    val factory: GraphCoreCompanion[G]
+) extends RefSpec
+    with should.Matchers
+    with ScalaCheckPropertyChecks
     with Visualizer[G] {
 
   private object Topo {
@@ -34,9 +37,11 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
 
       type OrderedInnerNodes = Iterable[graph.NodeT]
 
-      def checkInnerNodes(seq: OrderedInnerNodes,
-                          root: Option[graph.NodeT] = None,
-                          ignorePredecessors: Boolean = false): Unit = {
+      def checkInnerNodes(
+          seq: OrderedInnerNodes,
+          root: Option[graph.NodeT] = None,
+          ignorePredecessors: Boolean = false
+      ): Unit = {
         checkOrder(seq, if (ignorePredecessors) root else None)
         checkCompletenis(seq, root, ignorePredecessors)
       }
@@ -54,9 +59,11 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
           allowedPredecessors + innerNode
         }
 
-      def checkCompletenis(seq: OrderedInnerNodes,
-                           maybeRoot: Option[graph.NodeT],
-                           ignorePredecessors: Boolean): Unit = {
+      def checkCompletenis(
+          seq: OrderedInnerNodes,
+          maybeRoot: Option[graph.NodeT],
+          ignorePredecessors: Boolean
+      ): Unit = {
         val expected = maybeRoot.fold(
           ifEmpty = graph.nodes.toSet
         ) { root =>
@@ -66,7 +73,8 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
         val set = seq.toSet
         if (set != expected)
           fail(
-            s"Ordering is incomplete when root=$maybeRoot and ignorePredecessors=$ignorePredecessors: expected ${expected} but was ${set}.")
+            s"Ordering is incomplete when root=$maybeRoot and ignorePredecessors=$ignorePredecessors: expected ${expected} but was ${set}."
+          )
       }
     }
 
@@ -121,7 +129,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
         order =>
           new Topo.Checker(typicalDay) {
             checkOuterNodes(order.toOuter)
-        }
+          }
       )
     }
   }
@@ -139,12 +147,10 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
               outer <- someOuter
               inner = graph get outer
               ignorePredecessors <- Array(false, true)
-            } {
-              inner
-                .topologicalSort(ignorePredecessors)
-                .fold(Topo.unexpectedCycle, order => checkInnerNodes(order, Some(inner), ignorePredecessors))
-            }
-        }
+            } inner
+              .topologicalSort(ignorePredecessors)
+              .fold(Topo.unexpectedCycle, order => checkInnerNodes(order, Some(inner), ignorePredecessors))
+          }
       )
     }
   }
@@ -156,7 +162,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
         order =>
           new Topo.Checker(g) {
             checkOuterNodes(order.toOuter)
-        }
+          }
       )
     }
   }
@@ -197,7 +203,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
 
   def `combining with filtered edges by withSubgraph #104` {
     given(factory((1 ~+> 3)("a"), (1 ~+> 2)("b"), (2 ~+> 3)("a"))) { g =>
-      val n1 = (g get 1)
+      val n1 = g get 1
       n1.topologicalSort() should be('isRight)
 
       n1.withSubgraph(edges = _.label == "a")
@@ -207,7 +213,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
           order =>
             new Topo.Checker(g) {
               checkOuterNodes(order.toOuter)
-          }
+            }
         )
     }
   }

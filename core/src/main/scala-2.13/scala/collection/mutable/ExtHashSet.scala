@@ -475,7 +475,7 @@ object ExtHashSet extends IterableFactory[ExtHashSet] {
   private[collection] final class Node[K](_key: K, _hash: Int, private[this] var _next: Node[K]) {
     def key: K = _key
     def hash: Int = _hash
-    def next: Node[K] = _next
+    def next(): Node[K] = _next
     def next_= (n: Node[K]): Unit = _next = n
 
     @tailrec

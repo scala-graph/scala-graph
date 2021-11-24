@@ -46,8 +46,8 @@ package object json {
     descriptor.WLHyperEdgeDescriptor[N, E, C, L]
 
   implicit final class JsonGraphCoreCompanion[+G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
-      val companion: GraphCoreCompanion[G])
-      extends AnyVal {
+      val companion: GraphCoreCompanion[G]
+  ) extends AnyVal {
 
     /** Creates a new Graph instance and populates it with all nodes/edges found in
       * the node/edge sections of a JSON text.
@@ -56,9 +56,10 @@ package object json {
       * @param descriptor $DESCR
       * @return new `Graph` instance populated from `jsonAST`
       */
-    def fromJson[N, E[+X] <: EdgeLikeIn[X]](jsonAST: JValue, descriptor: Descriptor[N])(
-        implicit edgeT: ClassTag[E[N]],
-        config: companion.Config): G[N, E] =
+    def fromJson[N, E[+X] <: EdgeLikeIn[X]](jsonAST: JValue, descriptor: Descriptor[N])(implicit
+        edgeT: ClassTag[E[N]],
+        config: companion.Config
+    ): G[N, E] =
       fromJson[N, E](parse(jsonAST, descriptor), descriptor)
 
     /** Creates a new Graph instance and populates it with all nodes/edges found in
@@ -68,9 +69,10 @@ package object json {
       * @param descriptor $DESCR
       * @return new `Graph` instance populated from `jsonText`
       */
-    def fromJson[N, E[+X] <: EdgeLikeIn[X]](jsonText: String, descriptor: Descriptor[N])(
-        implicit edgeT: ClassTag[E[N]],
-        config: companion.Config = companion.defaultConfig): G[N, E] =
+    def fromJson[N, E[+X] <: EdgeLikeIn[X]](jsonText: String, descriptor: Descriptor[N])(implicit
+        edgeT: ClassTag[E[N]],
+        config: companion.Config = companion.defaultConfig
+    ): G[N, E] =
       fromJson[N, E](parse(jsonText, descriptor), descriptor)
 
     /** Creates a new Graph instance and populates it with all nodes/edges found in
@@ -80,9 +82,10 @@ package object json {
       * @param descriptor $DESCR
       * @return new `Graph` instance populated from `jsonText`
       */
-    def fromJson[N, E[+X] <: EdgeLikeIn[X]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N])(
-        implicit edgeT: ClassTag[E[N]],
-        config: companion.Config): G[N, E] = {
+    def fromJson[N, E[+X] <: EdgeLikeIn[X]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N])(implicit
+        edgeT: ClassTag[E[N]],
+        config: companion.Config
+    ): G[N, E] = {
       val target = createOuterElems[N, E](jsonLists, descriptor)
       companion.from[N, E](nodes = target._1, edges = target._2)(edgeT, config)
     }
@@ -106,10 +109,12 @@ package object json {
     * in `params` one by one. The result is guaranteed not to become longer than
     * `maxLength`.
     */
-  def replacePlaceholders(source: String,
-                          params: Iterable[String],
-                          maxLength: Int = 50,
-                          paramPlaceholder: String = "{}"): String = {
+  def replacePlaceholders(
+      source: String,
+      params: Iterable[String],
+      maxLength: Int = 50,
+      paramPlaceholder: String = "{}"
+  ): String = {
     var target = source
     val it     = params.iterator
     var i      = 0

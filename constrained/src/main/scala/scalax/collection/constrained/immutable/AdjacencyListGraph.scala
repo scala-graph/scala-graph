@@ -6,15 +6,18 @@ import scalax.collection.immutable.{AdjacencyListGraph => SimpleAdjacencyListGra
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 import config.GenConstrainedConfig
 
-trait AdjacencyListGraph[
-    N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[
+  X,
+  Y,
+  This
+] with Graph[X, Y]]
     extends SimpleAdjacencyListGraph[N, E, This]
     with GraphLike[N, E, This] { this: This[N, E] =>
 
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
 
   final override protected def initialize(nodes: Iterable[N], edges: Iterable[E[N]]) {
-    withoutChecks { super.initialize(nodes, edges) }
+    withoutChecks(super.initialize(nodes, edges))
   }
 
   def copy_?(nodes: Iterable[N], edges: Iterable[E[N]]): Either[ConstraintViolation, This[N, E]]
@@ -27,7 +30,8 @@ trait AdjacencyListGraph[
       preAdd = preAdd(node),
       copy = copy(nodes.toOuter.toBuffer += node, edges.toOuter),
       nodes = Set(node),
-      edges = Set.empty[E[N]])
+      edges = Set.empty[E[N]]
+    )
 
   final override protected def +#(e: E[N]): This[N, E] = +#?(e) getOrElse this
 
@@ -37,7 +41,8 @@ trait AdjacencyListGraph[
       preAdd = preAdd(e),
       copy = copy(nodes.toOuter, edges.toOuter.toBuffer += e),
       nodes = Set.empty[N],
-      edges = Set(e))
+      edges = Set(e)
+    )
 
   final override def -(node: N): This[N, E] = -?(node) getOrElse this
 
@@ -45,7 +50,8 @@ trait AdjacencyListGraph[
     n,
     forced = true,
     (outerNode: N, innerNode: NodeT) =>
-      copy(nodes.toOuter.toBuffer -= outerNode, edges.toOuter.toBuffer --= (innerNode.edges map (_.toOuter))))
+      copy(nodes.toOuter.toBuffer -= outerNode, edges.toOuter.toBuffer --= (innerNode.edges map (_.toOuter)))
+  )
 
   final override def minusIsolated(n: N): This[N, E] = minusIsolated_?(n) getOrElse this
 
@@ -59,7 +65,8 @@ trait AdjacencyListGraph[
         innerNode,
         rippleDelete = false,
         innerNode => newNodes -= outerNode,
-        innerNode => newEdges --= (innerNode.edges map (_.toOuter)))
+        innerNode => newEdges --= (innerNode.edges map (_.toOuter))
+      )
       copy(newNodes, newEdges)
     }
   )
@@ -69,7 +76,8 @@ trait AdjacencyListGraph[
   final protected def -#?(e: E[N]): Either[ConstraintViolation, This[N, E]] = checkedMinusEdge(
     e,
     simple = true,
-    (outerEdge: E[N], innerEdge: EdgeT) => copy(nodes.toOuter, edges.toOuter.toBuffer -= outerEdge))
+    (outerEdge: E[N], innerEdge: EdgeT) => copy(nodes.toOuter, edges.toOuter.toBuffer -= outerEdge)
+  )
 
   final override protected def -!#(e: E[N]): This[N, E] = -!#?(e) getOrElse this
 
@@ -77,5 +85,6 @@ trait AdjacencyListGraph[
     e,
     simple = false,
     (outerEdge: E[N], innerEdge: EdgeT) =>
-      copy(nodes.toOuter.toBuffer --= innerEdge.privateNodes map (n => n.value), edges.toOuter.toBuffer -= e))
+      copy(nodes.toOuter.toBuffer --= innerEdge.privateNodes map (n => n.value), edges.toOuter.toBuffer -= e)
+  )
 }

@@ -13,11 +13,10 @@ import generic.{GraphCompanion, MutableGraphCompanion}
 import config._
 import GraphEdge.UnDiEdge
 
-abstract protected[collection] class BuilderImpl[
+abstract protected[collection] class BuilderImpl[N, E[+X] <: EdgeLikeIn[X], CC[
     N,
-    E[+X] <: EdgeLikeIn[X],
-    CC[N, E[+X] <: EdgeLikeIn[X]] <: CommonGraph[N, E] with CommonGraphLike[N, E, CC]](implicit edgeT: ClassTag[E[N]],
-                                                                                       config: GraphConfig)
+    E[+X] <: EdgeLikeIn[X]
+] <: CommonGraph[N, E] with CommonGraphLike[N, E, CC]](implicit edgeT: ClassTag[E[N]], config: GraphConfig)
     extends Builder[Param[N, E], CC[N, E]]
     with Compat.Growable[Param[N, E]] {
 
@@ -49,12 +48,13 @@ abstract protected[collection] class BuilderImpl[
     edges.clear()
   }
 }
-class GraphBuilder[N,
-                   E[+X] <: EdgeLikeIn[X],
-                   CC[N, E[+X] <: EdgeLikeIn[X]] <: CommonGraphLike[N, E, CC] with CommonGraph[N, E]](
-    companion: GraphCompanion[CC])(implicit edgeT: ClassTag[E[N]], config: GraphConfig)
+class GraphBuilder[N, E[+X] <: EdgeLikeIn[X], CC[N, E[+X] <: EdgeLikeIn[X]] <: CommonGraphLike[
+  N,
+  E,
+  CC
+] with CommonGraph[N, E]](companion: GraphCompanion[CC])(implicit edgeT: ClassTag[E[N]], config: GraphConfig)
     extends BuilderImpl[N, E, CC] {
-  def result: This =
+  def result(): This =
     companion.from(nodes, edges)(edgeT, config.asInstanceOf[companion.Config])
 }
 
@@ -221,9 +221,10 @@ trait Graph[N, E[+X] <: EdgeLikeIn[X]] extends CommonGraph[N, E] with GraphLike[
 object Graph extends MutableGraphCompanion[Graph] {
   def empty[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig): Graph[N, E] =
     new DefaultGraphImpl[N, E]()(edgeT, config)
-  override def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Nil, edges: Iterable[E[N]])(
-      implicit edgeT: ClassTag[E[N]],
-      config: Config = defaultConfig): Graph[N, E] =
+  override def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Nil, edges: Iterable[E[N]])(implicit
+      edgeT: ClassTag[E[N]],
+      config: Config = defaultConfig
+  ): Graph[N, E] =
     DefaultGraphImpl.from[N, E](nodes, edges)(edgeT, config)
 
   implicit def cbfUnDi[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
@@ -232,11 +233,13 @@ object Graph extends MutableGraphCompanion[Graph] {
 }
 
 @SerialVersionUID(74L)
-class DefaultGraphImpl[N, E[+X] <: EdgeLikeIn[X]](iniNodes: Iterable[N] = Set[N](),
-                                                  iniEdges: Iterable[E[N]] = Set[E[N]]())(
-    implicit override val edgeT: ClassTag[E[N]],
-    override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig)
-    extends Graph[N, E]
+class DefaultGraphImpl[N, E[+X] <: EdgeLikeIn[X]](
+    iniNodes: Iterable[N] = Set[N](),
+    iniEdges: Iterable[E[N]] = Set[E[N]]()
+)(implicit
+    override val edgeT: ClassTag[E[N]],
+    override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig
+) extends Graph[N, E]
     with AdjacencyListGraph[N, E, DefaultGraphImpl]
     with GraphTraversalImpl[N, E] {
   final override val graphCompanion = DefaultGraphImpl
@@ -254,7 +257,7 @@ class DefaultGraphImpl[N, E[+X] <: EdgeLikeIn[X]](iniNodes: Iterable[N] = Set[N]
   initialize(iniNodes, iniEdges)
 
   // TODO what to do with newBuilder & empty?
-  //override protected[this] def newBuilder          = new GraphBuilder[N, E, DefaultGraphImpl](DefaultGraphImpl)
+  // override protected[this] def newBuilder          = new GraphBuilder[N, E, DefaultGraphImpl](DefaultGraphImpl)
   final override def empty: DefaultGraphImpl[N, E] = DefaultGraphImpl.empty[N, E]
   final override def clone: this.type              = super.clone.asInstanceOf[this.type]
 
@@ -284,8 +287,9 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
   def empty[N, E[+X] <: EdgeLikeIn[X]](implicit edgeT: ClassTag[E[N]], config: Config = defaultConfig) =
     new DefaultGraphImpl[N, E]()(edgeT, config)
 
-  override def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Nil, edges: Iterable[E[N]])(
-      implicit edgeT: ClassTag[E[N]],
-      config: Config = defaultConfig) =
+  override def from[N, E[+X] <: EdgeLikeIn[X]](nodes: Iterable[N] = Nil, edges: Iterable[E[N]])(implicit
+      edgeT: ClassTag[E[N]],
+      config: Config = defaultConfig
+  ) =
     new DefaultGraphImpl[N, E](nodes, edges)(edgeT, config)
 }

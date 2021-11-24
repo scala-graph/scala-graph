@@ -1,19 +1,17 @@
 package scalax.collection.constrained
 
-import org.scalatest.matchers.{MatchResult, Matcher}
-
-import org.scalatest.Matchers
-
+import org.scalatest.matchers.{should, MatchResult, Matcher}
 import scalax.collection.{Graph => SimpleGraph}
 import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.constrained.generic.GraphConstrainedCompanion
 
-trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] { this: Matchers =>
+trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] { this: should.Matchers =>
 
   def factory: GraphConstrainedCompanion[CC]
 
-  protected def shouldLeaveGraphUnchanged[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E])(
-      op: CC[N, E] => Either[ConstraintViolation, CC[N, E]]): Unit = {
+  protected def shouldLeaveGraphUnchanged[N, E[+X] <: EdgeLikeIn[X]](
+      g: CC[N, E]
+  )(op: CC[N, E] => Either[ConstraintViolation, CC[N, E]]): Unit = {
     val before = isolated(g)
     op(g) should be('Left)
     g should ===(before)
@@ -61,10 +59,12 @@ trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
     protected def verboseResult(before: CC[N, E], afterVerbose: Either[ConstraintViolation, CC[N, E]]): Boolean
     protected def msgTitle(negate: Boolean): String
 
-    final protected def msg(before: CC[N, E],
-                            after: CC[N, E],
-                            afterVerbose: Either[ConstraintViolation, CC[N, E]],
-                            negate: Boolean): String =
+    final protected def msg(
+        before: CC[N, E],
+        after: CC[N, E],
+        afterVerbose: Either[ConstraintViolation, CC[N, E]],
+        negate: Boolean
+    ): String =
       s"""${msgTitle(negate)}:
          |  before:     $before
          |  silent  op: $after

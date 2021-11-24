@@ -10,8 +10,11 @@ import scalax.collection.Compat.AddSubtract
   *
   * @author Peter Empen
   */
-trait AdjacencyListGraph[
-    N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[
+  X,
+  Y,
+  This
+] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with AddSubtract[Param[N, E], This[N, E]]
     with AdjacencyListBase[N, E, This] {
@@ -56,7 +59,8 @@ trait AdjacencyListGraph[
           def onNonLooping(): Unit = edge withTargets (t =>
             edges
               .find((e: EdgeT) => e.hasTarget((n: NodeT) => n eq t))
-              .fold[Unit](ifEmpty = diSucc remove t)((e: EdgeT) => if (e hasSource this) diSucc put (t, e)))
+              .fold[Unit](ifEmpty = diSucc remove t)((e: EdgeT) => if (e hasSource this) diSucc put (t, e))
+          )
 
           if (edge.isHyperEdge)
             if (edge.isLooping) {
@@ -77,9 +81,8 @@ trait AdjacencyListGraph[
     final protected[collection] def upsert(edge: EdgeT): Boolean = fold(edge, (_: NodeT).upsert)
 
     private def fold(edge: EdgeT, op: NodeT => EdgeT => Boolean): Boolean =
-      edge.foldLeft(false) {
-        case (cum, n) =>
-          op(collection findElem n getOrElse { collection += n; n })(edge) || cum
+      edge.foldLeft(false) { case (cum, n) =>
+        op(collection findElem n getOrElse { collection += n; n })(edge) || cum
       }
 
     final protected[collection] def remove(edge: EdgeT): Boolean =

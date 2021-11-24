@@ -88,8 +88,9 @@ object LBase {
       newEdge[N, L](NodeProduct(nodes), label)
     @inline final protected[collection] def from[N, L](nodes: Product)(label: L)(implicit kind: CollectionKind) =
       newEdge[N, L](nodes, label)
-    protected def newEdge[N, L](nodes: Product, label_1: L)(
-        implicit kind: CollectionKind): E[N] with EdgeCopy[E] { type L1 = L }
+    protected def newEdge[N, L](nodes: Product, label_1: L)(implicit
+        kind: CollectionKind
+    ): E[N] with EdgeCopy[E] { type L1 = L }
     @inline final def unapply[N](e: E[N]): Option[(Iterable[N], E[N]#L1)] =
       Some((e.sources, e.label))
   }
@@ -116,28 +117,28 @@ object LBase {
   abstract class OuterLEdgeImplicits[UL: ClassTag] {
 
     /** Lets implicitly convert a labeled outer edge to its label:
-      {{{
-      case class MyLabel(val i: Int)
-      val eOuter = LUnDiEdge(1,3)(MyLabel(4))
-
-      object MyLabelConversion extends OuterLEdgeImplicits[MyLabel]
-      import MyLabelConversion._
-      val four = eOuter.i
-      }}}
+      *      {{{
+      *      case class MyLabel(val i: Int)
+      *      val eOuter = LUnDiEdge(1,3)(MyLabel(4))
+      *
+      *      object MyLabelConversion extends OuterLEdgeImplicits[MyLabel]
+      *      import MyLabelConversion._
+      *      val four = eOuter.i
+      *      }}}
       */
     implicit def outerLEdge2UserLabel[N](edge: LEdge[N] { type L1 = UL }): UL = edge.label
 
     /** Lets implicitly convert a label to its user type:
-      {{{
-      case class MyLabel(val i: Int)
-      val eOuter = LUnDiEdge(1,3)(MyLabel(4))
-
-      object MyLabelConversion extends OuterLEdgeImplicits[MyLabel]
-      import MyLabelConversion._
-      val label: MyLabel = eOuter.label
-      }}}
-      As this conversion is not type safe, the user has to ensure that `label`
-      is of the type `UL`.
+      *      {{{
+      *      case class MyLabel(val i: Int)
+      *      val eOuter = LUnDiEdge(1,3)(MyLabel(4))
+      *
+      *      object MyLabelConversion extends OuterLEdgeImplicits[MyLabel]
+      *      import MyLabelConversion._
+      *      val label: MyLabel = eOuter.label
+      *      }}}
+      *      As this conversion is not type safe, the user has to ensure that `label`
+      *      is of the type `UL`.
       */
     implicit def toUserLabel[N, E[+X] <: LEdge[X]](label: E[N]#L1): UL =
       try label.asInstanceOf[UL]
@@ -149,7 +150,8 @@ object LBase {
       s"Expected label type: ${implicitly[ClassTag[UL]].runtimeClass.getName}, found: ${label match {
         case r: AnyRef => r.getClass.getName
         case a         => a.toString
-      }}.")
+      }}."
+    )
   }
 
   /** Implicit conversions from an inner or outer labeled edge to its label.
@@ -161,17 +163,17 @@ object LBase {
   abstract class LEdgeImplicits[UL: ClassTag] extends OuterLEdgeImplicits[UL] {
 
     /** Lets implicitly convert a labeled inner edge to its label:
-      {{{
-      case class MyLabel(val i: Int)
-      val g = Graph(LUnDiEdge(1,3)(MyLabel(4)))
-      val eInner = g.edges.head
-
-      object MyLabelConversion extends LEdgeImplicits[MyLabel]
-      import MyLabelConversion._
-      val four_2 = eInner.i
-      }}}
-      As this conversion is not type safe, the user has to ensure that `innerEdge`
-      is of appropriate type.
+      *      {{{
+      *      case class MyLabel(val i: Int)
+      *      val g = Graph(LUnDiEdge(1,3)(MyLabel(4)))
+      *      val eInner = g.edges.head
+      *
+      *      object MyLabelConversion extends LEdgeImplicits[MyLabel]
+      *      import MyLabelConversion._
+      *      val four_2 = eInner.i
+      *      }}}
+      *      As this conversion is not type safe, the user has to ensure that `innerEdge`
+      *      is of appropriate type.
       */
     implicit def innerEdge2UserLabel[N, E[+X] <: EdgeLikeIn[X]](innerEdge: Graph[N, E]#EdgeT): UL =
       try innerEdge.edge.label.asInstanceOf[UL]
@@ -190,19 +192,19 @@ object LBase {
       extends OuterLEdgeImplicits[UL] {
 
     /** Lets implicitly convert a labeled inner edge to its label:
-      {{{
-      import scalax.collection.mutable.{Graph => MGraph}
-
-      case class MyLabel(val i: Int)
-      val g = MGraph(LUnDiEdge(1,3)(MyLabel(4)))
-      val eInner = g.edges.head
-
-      object MyLabelConversion extends TypedLEdgeImplicits[MGraph, MyLabel]
-      import MyLabelConversion._
-      val four_2 = eInner.i
-      }}}
-      As this conversion is not type safe, the user has to ensure that `innerEdge`
-      is of appropriate type.
+      *      {{{
+      *      import scalax.collection.mutable.{Graph => MGraph}
+      *
+      *      case class MyLabel(val i: Int)
+      *      val g = MGraph(LUnDiEdge(1,3)(MyLabel(4)))
+      *      val eInner = g.edges.head
+      *
+      *      object MyLabelConversion extends TypedLEdgeImplicits[MGraph, MyLabel]
+      *      import MyLabelConversion._
+      *      val four_2 = eInner.i
+      *      }}}
+      *      As this conversion is not type safe, the user has to ensure that `innerEdge`
+      *      is of appropriate type.
       */
     implicit def innerEdge2UserLabel[N, E[+X] <: EdgeLikeIn[X]](innerEdge: G[N, E]#EdgeT): UL =
       try innerEdge.edge.label.asInstanceOf[UL]
@@ -254,16 +256,19 @@ object WLBase {
 
   /** Everything common to predefined weighted and labeled hyperedge companion objects. */
   trait WLHyperEdgeCompanion[E[+X] <: WLHyperEdgeBound[X]] extends EdgeCompanionBase[E] {
-    @inline final def apply[N, L](node_1: N, node_2: N, nodes: N*)(weight: Double, label: L)(
-        implicit kind: CollectionKind = Bag) =
+    @inline final def apply[N, L](node_1: N, node_2: N, nodes: N*)(weight: Double, label: L)(implicit
+        kind: CollectionKind = Bag
+    ) =
       newEdge[N, L](NodeProduct(node_1, node_2, nodes: _*), weight, label)
     @inline final def apply[N, L](nodes: Iterable[N])(weight: Double, label: L)(implicit kind: CollectionKind) =
       newEdge[N, L](NodeProduct(nodes), weight, label)
-    @inline final protected[collection] def from[N, L](nodes: Product)(weight: Double, label: L)(
-        implicit kind: CollectionKind) =
+    @inline final protected[collection] def from[N, L](
+        nodes: Product
+    )(weight: Double, label: L)(implicit kind: CollectionKind) =
       newEdge[N, L](nodes, weight, label)
-    protected def newEdge[N, L](nodes: Product, weight: Double, label_1: L)(
-        implicit kind: CollectionKind): E[N] with EdgeCopy[E]
+    protected def newEdge[N, L](nodes: Product, weight: Double, label_1: L)(implicit
+        kind: CollectionKind
+    ): E[N] with EdgeCopy[E]
     @inline final def unapply[N](e: E[N]): Option[(Iterable[N], Double, E[N]#L1)] =
       Some((e.sources, e.weight, e.label))
   }
@@ -350,7 +355,8 @@ object CBase {
 
     /** Must return an instance of `Tuple<n>` with `n` being the number of
       *  custom attributes. Custom attributes are defined by the constructor parameters
-      *  excluding those representing nodes. */
+      *  excluding those representing nodes.
+      */
     def attributes: P
   }
   type CHyperEdgeBound[+N] = EdgeLikeIn[N] with HyperEdge[N] with Attributes[N] with Serializable
@@ -368,7 +374,8 @@ object CBase {
       newEdge[N](nodes, attr)
 
     /** Must return an instance of the custom edge which is achieved by projecting the elements
-      *  of `attr` and passing them as single arguments to the custom edge constructor. */
+      *  of `attr` and passing them as single arguments to the custom edge constructor.
+      */
     protected def newEdge[N](nodes: Product, attr: P)(implicit kind: CollectionKind = Bag): E[N] with EdgeCopy[E]
   }
   type CEdgeBound[+N] = CHyperEdgeBound[N] with UnDiEdge[N]
@@ -383,7 +390,8 @@ object CBase {
       newEdge[N](nodes, attr)
 
     /** Must return an instance of the custom edge which is achieved by projecting the elements
-      *  of `attr` and passing them as single arguments to the custom edge constructor. */
+      *  of `attr` and passing them as single arguments to the custom edge constructor.
+      */
     protected def newEdge[N](nodes: Product, attr: P): E[N] with EdgeCopy[E]
   }
 }

@@ -18,15 +18,18 @@ import error.JsonGraphError._
   * @param furtherManifests list of manifests denoting subtypes of `N` which are to be
   *        processed, defaulting to an empty list.
   */
-abstract class NodeDescriptor[+N](override val typeId: String = Defaults.defaultId,
-                                  customSerializers: Iterable[Serializer[_]] = Nil,
-                                  extraClasses: List[Class[_]] = Nil,
-                                  furtherManifests: List[Manifest[_]] = Nil)(implicit nodeManifest: Manifest[N])
+abstract class NodeDescriptor[+N](
+    override val typeId: String = Defaults.defaultId,
+    customSerializers: Iterable[Serializer[_]] = Nil,
+    extraClasses: List[Class[_]] = Nil,
+    furtherManifests: List[Manifest[_]] = Nil
+)(implicit nodeManifest: Manifest[N])
     extends TypeId(typeId) {
   val manifests = nodeManifest :: furtherManifests
   implicit val formats = Serialization.formats(
     if (extraClasses.isEmpty) NoTypeHints
-    else new ShortTypeHints(extraClasses)) ++ customSerializers
+    else new ShortTypeHints(extraClasses)
+  ) ++ customSerializers
   def extract(jsonNode: JValue): N = jsonNode.extract[N]
   def decompose(node: Any): JValue = Extraction.decompose(node)
 
@@ -48,19 +51,17 @@ abstract class NodeDescriptor[+N](override val typeId: String = Defaults.default
 object StringNodeDescriptor extends NodeDescriptor[String] {
   override def extract(jsonNode: JValue) = {
     def mkString(jValues: Iterable[JValue]): String =
-      (for (fld <- jValues) yield {
-        fld match {
-          case JString(s)           => s
-          case JInt(_) | JDouble(_) => fld.extract[String]
-          case JBool(b)             => b.toString
-          case JArray(_)            => "(" + mkString(fld.children) + ")"
-          case JObject(obj) =>
-            val buf = new StringBuilder("(")
-            obj.foldLeft(buf)((buf, o) => buf.append(o.name + "," + mkString(List(o.value))))
-            buf.append(")").toString
-          case JNull    => "Null"
-          case JNothing => "Nothing"
-        }
+      (for (fld <- jValues) yield fld match {
+        case JString(s)           => s
+        case JInt(_) | JDouble(_) => fld.extract[String]
+        case JBool(b)             => b.toString
+        case JArray(_)            => "(" + mkString(fld.children) + ")"
+        case JObject(obj) =>
+          val buf = new StringBuilder("(")
+          obj.foldLeft(buf)((buf, o) => buf.append(o.name + "," + mkString(List(o.value))))
+          buf.append(")").toString
+        case JNull    => "Null"
+        case JNothing => "Nothing"
       }) mkString ","
     if (jsonNode.children.nonEmpty) mkString(jsonNode.children)
     else throw err(EmptyNodeFieldList)

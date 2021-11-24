@@ -75,7 +75,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     *    a. two or more directed edges having the same source and target
     *    a. two or more undirected edges connecting the same nodes
     *    a. two or more (directed) hyperedges that, after being decomposed into (directed) edges,
-           yield any multy-edge as stipulated above.
+    *           yield any multy-edge as stipulated above.
     */
   def isMulti: Boolean
 
@@ -100,7 +100,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
 
   sealed trait InnerElem
   type NodeT <: InnerNode with Serializable
-  trait Node extends Serializable
+  trait Node      extends Serializable
   trait InnerNode extends InnerNodeParam[N] with Node with InnerElem {
 
     /** The outer node as supplied at instantiation time or while adding nodes this graph.
@@ -275,7 +275,8 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     /** The degree of this node.
       * @return the number of edges that connect to this node. An edge that connects
       *         to this node at more than one ends (loop) is counted as much times as
-      *         it is connected to this node. */
+      *         it is connected to this node.
+      */
     def degree: Int
 
     /** `true` if this node's degree equals to 0. */
@@ -286,27 +287,33 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
 
     /** The outgoing degree of this node.
       * @return the number of edges that go out from this node including undirected edges.
-      *         Loops count once each. */
+      *         Loops count once each.
+      */
     def outDegree: Int
 
     /** The outgoing degree of this node after applying some filters to the outgoing edges and successors.
       */
-    def outDegree(nodeFilter: NodeFilter,
-                  edgeFilter: EdgeFilter = anyEdge,
-                  includeHooks: Boolean = false,
-                  ignoreMultiEdges: Boolean = true): Int
+    def outDegree(
+        nodeFilter: NodeFilter,
+        edgeFilter: EdgeFilter = anyEdge,
+        includeHooks: Boolean = false,
+        ignoreMultiEdges: Boolean = true
+    ): Int
 
     /** The incoming degree of this node.
       * @return the number of edges that come in to this node including undirected edges.
-      *         Loops count once each. */
+      *         Loops count once each.
+      */
     def inDegree: Int
 
     /** The incoming degree of this node after applying some filters to the incoming edges and predecessors.
       */
-    def inDegree(nodeFilter: NodeFilter,
-                 edgeFilter: EdgeFilter = anyEdge,
-                 includeHooks: Boolean = false,
-                 ignoreMultiEdges: Boolean = true): Int
+    def inDegree(
+        nodeFilter: NodeFilter,
+        edgeFilter: EdgeFilter = anyEdge,
+        includeHooks: Boolean = false,
+        ignoreMultiEdges: Boolean = true
+    ): Int
 
     def canEqual(that: Any) = true
 
@@ -388,9 +395,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   }
 
   final protected lazy val anyOrdering = new AnyOrdering[N]
-  final lazy val defaultNodeOrdering = NodeOrdering(
-    (a: NodeT, b: NodeT) => anyOrdering.compare(a.value, b.value)
-  )
+  final lazy val defaultNodeOrdering   = NodeOrdering((a: NodeT, b: NodeT) => anyOrdering.compare(a.value, b.value))
   type NodeSetT <: NodeSet
   trait NodeSet extends AnySet[NodeT] with ExtSetMethods[NodeT] {
 
@@ -409,8 +414,9 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       * @param ord custom ordering.
       * @return sorted and concatenated string representation of this node set.
       */
-    def asSortedString(separator: String = GraphBase.defaultSeparator)(
-        implicit ord: NodeOrdering = defaultNodeOrdering) =
+    def asSortedString(
+        separator: String = GraphBase.defaultSeparator
+    )(implicit ord: NodeOrdering = defaultNodeOrdering) =
       toList.sorted(ord) mkString separator
 
     /** Sorts all nodes according to `ord`, concatenates them using `separator`
@@ -420,8 +426,9 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       * @param ord custom ordering.
       * @return sorted, concatenated and prefixed string representation of this node set.
       */
-    def toSortedString(separator: String = GraphBase.defaultSeparator)(
-        implicit ord: NodeOrdering = defaultNodeOrdering) =
+    def toSortedString(
+        separator: String = GraphBase.defaultSeparator
+    )(implicit ord: NodeOrdering = defaultNodeOrdering) =
       stringPrefix + "(" + asSortedString(separator)(ord) + ")"
 
     /** Converts this node set to a set of outer nodes.
@@ -564,7 +571,8 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
     }
 
     /** Creates a new inner edge from the outer `edge` using its
-      *  factory method `copy` without modifying the node or edge set. */
+      *  factory method `copy` without modifying the node or edge set.
+      */
     protected[GraphBase] def edgeToEdgeCont(edge: E[N]): E[NodeT] = {
       freshNodes = Map.empty[N, NodeT]
       val newNodes = (edge.arity: @scala.annotation.switch) match {
@@ -607,13 +615,11 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   protected def newEdge(innerEdge: E[NodeT]): EdgeT
   implicit final protected def edgeToEdgeCont(e: E[N]): E[NodeT] = Edge.edgeToEdgeCont(e)
 
-  final lazy val defaultEdgeOrdering = EdgeOrdering(
-    (a: EdgeT, b: EdgeT) => {
-      val unequal: Option[(NodeT, NodeT)] = (a.edge zip b.edge) find (z => z._1 != z._2)
-      unequal map (t => anyOrdering.compare(t._1.value, t._2.value)) getOrElse
-        Ordering.Int.compare(a.arity, b.arity)
-    }
-  )
+  final lazy val defaultEdgeOrdering = EdgeOrdering { (a: EdgeT, b: EdgeT) =>
+    val unequal: Option[(NodeT, NodeT)] = (a.edge zip b.edge) find (z => z._1 != z._2)
+    unequal map (t => anyOrdering.compare(t._1.value, t._2.value)) getOrElse
+      Ordering.Int.compare(a.arity, b.arity)
+  }
 
   type EdgeSetT <: EdgeSet
   trait EdgeSet extends AnySet[EdgeT] with ExtSetMethods[EdgeT] with Serializable {
@@ -633,8 +639,9 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       * @param ord custom ordering.
       * @return sorted and concatenated string representation of this edge set.
       */
-    def asSortedString(separator: String = GraphBase.defaultSeparator)(
-        implicit ord: EdgeOrdering = defaultEdgeOrdering) =
+    def asSortedString(
+        separator: String = GraphBase.defaultSeparator
+    )(implicit ord: EdgeOrdering = defaultEdgeOrdering) =
       toList.sorted(ord) mkString separator
 
     /** Sorts all edges according to `ord`, concatenates them using `separator`
@@ -644,8 +651,9 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       * @param ord custom ordering.
       * @return sorted, concatenated and prefixed string representation of this edge set.
       */
-    def toSortedString(separator: String = GraphBase.defaultSeparator)(
-        implicit ord: EdgeOrdering = defaultEdgeOrdering) =
+    def toSortedString(
+        separator: String = GraphBase.defaultSeparator
+    )(implicit ord: EdgeOrdering = defaultEdgeOrdering) =
       stringPrefix + "(" + asSortedString(separator)(ord) + ")"
 
     /** Finds the inner edge corresponding to `outerEdge`.

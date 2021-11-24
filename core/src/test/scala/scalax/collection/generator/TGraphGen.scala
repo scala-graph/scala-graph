@@ -3,13 +3,13 @@ package generator
 
 import org.scalacheck.{Arbitrary, Gen}
 import Arbitrary.arbitrary
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
-import org.scalatest.prop.PropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import GraphEdge._
 
-class TGraphGenTest extends RefSpec with Matchers with PropertyChecks {
+class TGraphGenTest extends RefSpec with should.Matchers with ScalaCheckPropertyChecks {
 
   final val minSuccessful = 5
   implicit val config     = PropertyCheckConfiguration(minSuccessful = minSuccessful, maxDiscardedFactor = 1.0)
@@ -37,7 +37,7 @@ class TGraphGenTest extends RefSpec with Matchers with PropertyChecks {
 
     def `should conform to the passed size` {
       forAll(arbitrary[Set[Int]]) { (outerNodes: Set[Int]) =>
-        outerNodes should have size (order)
+        outerNodes should have size order
       }
     }
   }
@@ -58,7 +58,7 @@ class TGraphGenTest extends RefSpec with Matchers with PropertyChecks {
 
     val totalDegree = g.totalDegree
     totalDegree should (be >= (expectedTotalDegree - maxDegreeDeviation) and
-    be <= (expectedTotalDegree + maxDegreeDeviation))
+      be <= (expectedTotalDegree + maxDegreeDeviation))
   }
 
   object `tiny connected graph of [Int,DiEdge]` {
