@@ -6,21 +6,19 @@ import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 lazy val all = project
   .in(file("."))
-  .dependsOn(coreJVM, coreJS, constrainedJVM, constrainedJS, dotJVM, dotJS, jsonJVM, jsonJS)
-  .aggregate(coreJVM, coreJS, constrainedJVM, constrainedJS, dotJVM, dotJS, jsonJVM, jsonJS)
+  .aggregate(coreJVM, coreJS, constrainedJVM, constrainedJS, dotJVM, dotJS, json)
   .settings(
-    Seq(
-      name := "Graph for Scala",
-      version := Version.highest,
-      crossPaths := true,
-      publishTo := None
-    )
+    name := "Graph for Scala",
+    version := Version.highest,
+    crossPaths := true,
+    publishTo := None,
+    crossScalaVersions := Nil
   )
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 lazy val core = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CompatCrossType) // [Pure, Full, Dummy], default: CrossType.Full
+  .crossType(CrossType.Pure) // [Pure, Full, Dummy], default: CrossType.Full
   .in(file("core"))
   .settings(
     defaultSettings ++ Seq(
@@ -70,19 +68,16 @@ lazy val constrained = crossProject(JSPlatform, JVMPlatform)
 lazy val dotJVM = dot.jvm
 lazy val dotJS = dot.js
 lazy val dot = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CompatCrossType) // [Pure, Full, Dummy], default: CrossType.Full
+  .crossType(CrossType.Pure) // [Pure, Full, Dummy], default: CrossType.Full
   .in(file("dot"))
   .dependsOn(core)
   .settings(
     defaultSettings ++ Seq(name := "Graph DOT", version := Version.dot)
   )
 
-lazy val jsonJVM = json.jvm
-lazy val jsonJS = json.js
-lazy val json = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure) // [Pure, Full, Dummy], default: CrossType.Full
+lazy val json = project
   .in(file("json"))
-  .dependsOn(core)
+  .dependsOn(coreJVM)
   .settings(
     defaultSettings ++ Seq(
       name := "Graph JSON",
@@ -119,7 +114,7 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalacOptions ++= Seq(
     unusedImports,
     "-Yrangepos",
-    "-Ywarn-unused:privates",
+    "-Ywarn-unused:privates"
   ),
   Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports),
   addCompilerPlugin(scalafixSemanticdb),
