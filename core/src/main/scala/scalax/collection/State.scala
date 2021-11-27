@@ -160,13 +160,15 @@ object State {
 
   /** Word of flags, that is unit of bitwise boolean state information.
     *  These flags are mainly used to store whether a node counts as visited
-    *  with respect to a given traversal where each traversal is represented by a `Handle`. */
+    *  with respect to a given traversal where each traversal is represented by a `Handle`.
+    */
   type FlagWord = Long
   protected val nrOfFlagWordBits = 64
   protected val minBitsForClear  = nrOfFlagWordBits >> 2
 
   /** Growable collection for storing bitwise boolean state information
-    *  as an extension of `FlagsWord`. */
+    *  as an extension of `FlagsWord`.
+    */
   type FlagWords = ExtBitSet
   protected val minBitsForClearExt = nrOfFlagWordBits
   require(minBitsForClear < minBitsForClearExt)

@@ -7,17 +7,19 @@ import scalax.collection.generic.GraphCoreCompanion
 import descriptor.predefined._
 
 import org.scalatest._
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
 class TDefaultSerializationRootTest
     extends Suites(
       new TDefaultSerialization[immutable.Graph](immutable.Graph),
-      new TDefaultSerialization[mutable.Graph](mutable.Graph))
+      new TDefaultSerialization[mutable.Graph](mutable.Graph)
+    )
 
 class TDefaultSerialization[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC])
-    extends RefSpec
-    with Matchers {
+    val factory: GraphCoreCompanion[CC]
+) extends RefSpec
+    with should.Matchers {
 
   object Fixture {
     val jsonText = """

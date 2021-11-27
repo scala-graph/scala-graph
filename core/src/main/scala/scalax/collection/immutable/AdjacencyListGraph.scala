@@ -9,8 +9,11 @@ import mutable.ArraySet
   *
   * @author Peter Empen
   */
-trait AdjacencyListGraph[
-    N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+trait AdjacencyListGraph[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: AdjacencyListGraph[
+  X,
+  Y,
+  This
+] with Graph[X, Y]]
     extends GraphLike[N, E, This]
     with AdjacencyListBase[N, E, This] { selfGraph: This[N, E] =>
 

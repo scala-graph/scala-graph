@@ -2,9 +2,9 @@ package scalax.time
 
 import org.scalactic.Equality
 import org.scalatest.refspec.RefSpec
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 
-class TMicroBenchmark extends RefSpec with Matchers {
+class TMicroBenchmark extends RefSpec with should.Matchers {
 
   import MicroBenchmark._
 
@@ -36,8 +36,8 @@ class TMicroBenchmark extends RefSpec with Matchers {
 
       implicit val tolerance = new FloatTolerance(4f)
       val expected           = big._1.toFloat / small._1.toFloat
-      val results            = measureAll(warmUp = 5, repetitions = 10)(small._2.size == small._1, big._2.size == big._1)
-      val actual             = results.relativeTimes()(1)
+      val results = measureAll(warmUp = 5, repetitions = 10)(small._2.size == small._1, big._2.size == big._1)
+      val actual  = results.relativeTimes()(1)
 
       actual should ===(expected)
     }
@@ -50,7 +50,7 @@ class TMicroBenchmark extends RefSpec with Matchers {
     val imm   = Set(array: _*)
     val m     = mutable.Set(array: _*)
 
-    relativeTime(repetitions = 6)(m.sum == sum, imm.sum == sum) should be > (1.05f)
+    relativeTime(repetitions = 6)(m.sum == sum, imm.sum == sum) should be > 1.05f
   }
   def `traversing mutable.Set takes longer than mutable.BitSet` {
     import scala.collection.mutable
@@ -59,6 +59,6 @@ class TMicroBenchmark extends RefSpec with Matchers {
     val s     = Set(array: _*)
     val b     = mutable.BitSet(array: _*)
 
-    relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > (1.1f)
+    relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > 1.1f
   }
 }

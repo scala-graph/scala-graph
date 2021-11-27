@@ -52,11 +52,12 @@ object LHyperEdgeParameters {
   def unapply[L](p: LHyperEdgeParameters[L]): Option[(HyperEdgeNodeIds, String, L)] =
     Some(p.nodeIds, p.endpointsKind.toString, p.label)
 }
-class WLHyperEdgeParameters[L](val nodeIds: HyperEdgeNodeIds,
-                               val endpointsKind: String,
-                               val weight: Double,
-                               val label: L)
-    extends Parameters(NodeProduct(nodeIds))
+class WLHyperEdgeParameters[L](
+    val nodeIds: HyperEdgeNodeIds,
+    val endpointsKind: String,
+    val weight: Double,
+    val label: L
+) extends Parameters(NodeProduct(nodeIds))
 object WLHyperEdgeParameters {
   def unapply[L](p: WLHyperEdgeParameters[L]): Option[(HyperEdgeNodeIds, String, Double, L)] =
     Some(p.nodeIds, p.endpointsKind.toString, p.weight, p.label)

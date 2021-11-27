@@ -63,13 +63,12 @@ object GraphEdge {
     def _n(n: Int): N = (n: @scala.annotation.switch) match {
       case 0 => _1
       case 1 => _2
-      case _ => {
+      case _ =>
         if (n < 0 || n >= arity) throw new IndexOutOfBoundsException
         nodes match {
           case i: Iterable[N] => i.drop(n).head
           case p: Product     => nodes.productElement(n).asInstanceOf[N]
         }
-      }
     }
 
     /** Number of nodes linked by this Edge. At least two nodes are linked. In case of
@@ -217,13 +216,15 @@ object GraphEdge {
 
     /** `true` if<br />
       *  a) both `n1` and `n2` are at this edge for an undirected edge<br />
-      *  b) `n1` is a source and `n2` a target of this edge for a directed edge. */
+      *  b) `n1` is a source and `n2` a target of this edge for a directed edge.
+      */
     def matches[M >: N](n1: M, n2: M): Boolean
 
     /** `true` if<br />
       *  a) two distinct ends of this undirected edge exist
       *     for which `p1` and `p2` hold or<br />
-      *  b) `p1` holds for a source and `p2` for a target of this directed edge. */
+      *  b) `p1` holds for a source and `p2` for a target of this directed edge.
+      */
     def matches(p1: N => Boolean, p2: N => Boolean): Boolean
 
     override def canEqual(that: Any): Boolean = that.isInstanceOf[EdgeLike[_]]
@@ -232,9 +233,9 @@ object GraphEdge {
       case that: EdgeLike[_] =>
         (this eq that) ||
           (that canEqual this) &&
-            (this.isDirected == that.isDirected) &&
-            (this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]) &&
-            equals(that)
+          (this.isDirected == that.isDirected) &&
+          (this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]) &&
+          equals(that)
       case _ => false
     }
 
@@ -246,9 +247,8 @@ object GraphEdge {
 
     override def hashCode: Int = baseHashCode
 
-    final protected def thisSimpleClassName = try {
-      this.getClass.getSimpleName
-    } catch { // Malformed class name
+    final protected def thisSimpleClassName = try this.getClass.getSimpleName
+    catch { // Malformed class name
       case _: java.lang.InternalError => this.getClass.getName
     }
     override def stringPrefix                  = "Nodes"
@@ -330,7 +330,8 @@ object GraphEdge {
   protected[collection] trait Keyed
 
   /** Defines how to handle the ends of hyperedges, or the source/target ends of directed hyperedges,
-    *  with respect to equality. */
+    *  with respect to equality.
+    */
   sealed abstract class CollectionKind(val duplicatesAllowed: Boolean, val orderSignificant: Boolean)
   object CollectionKind {
     protected[collection] def from(duplicatesAllowed: Boolean, orderSignificant: Boolean): CollectionKind =
@@ -352,11 +353,13 @@ object GraphEdge {
   }
 
   /** Marks a hyperedge, $ORDIHYPER, to handle the endpoints
-    *  as an unordered collection of nodes with duplicates allowed. */
+    *  as an unordered collection of nodes with duplicates allowed.
+    */
   case object Bag extends CollectionKind(true, false)
 
   /** Marks a hyperedge, $ORDIHYPER, to handle the endpoints
-    *  as an ordered collection of nodes with duplicates allowed. */
+    *  as an ordered collection of nodes with duplicates allowed.
+    */
   case object Sequence extends CollectionKind(true, true)
 
   /** Marks (directed) hyperedge endpoints to have a significant order. */
@@ -387,11 +390,13 @@ object GraphEdge {
       }
       nr
     }
-    def equalTargets(left: EdgeLike[_],
-                     leftEnds: Iterable[_],
-                     right: EdgeLike[_],
-                     rightEnds: Iterable[_],
-                     arity: Int): Boolean = {
+    def equalTargets(
+        left: EdgeLike[_],
+        leftEnds: Iterable[_],
+        right: EdgeLike[_],
+        rightEnds: Iterable[_],
+        arity: Int
+    ): Boolean = {
       val thisOrdered = left.isInstanceOf[OrderedEndpoints]
       val thatOrdered = right.isInstanceOf[OrderedEndpoints]
       thisOrdered == thatOrdered && (
@@ -413,7 +418,8 @@ object GraphEdge {
   }
 
   /** Equality for targets handled as a $BAG.
-    *  Targets are equal if they contain the same nodes irrespective of their position. */
+    *  Targets are equal if they contain the same nodes irrespective of their position.
+    */
   protected[collection] trait EqDiHyper extends Eq {
     this: DiHyperEdgeLike[_] =>
 
@@ -429,11 +435,13 @@ object GraphEdge {
               this.source == diHyper.source &&
                 Eq.equalTargets(this, this.targets, other, other.targets, arity - 1)
             case _ => false
-          } else false
+          }
+      else false
     }
 
     override protected def baseHashCode = {
-      var m                = 4
+      var m = 4
+
       def mul(i: Int): Int = { m += 3; m * i }
       iterator.foldLeft(0)((s: Int, n: Any) => s ^ mul(n.hashCode))
     }
@@ -482,7 +490,8 @@ object GraphEdge {
     def to = target
 
     /** The target node for a directed edge;
-      *  one of the target nodes for a directed hyperedge. */
+      *  one of the target nodes for a directed hyperedge.
+      */
     @inline final def target = _2
 
     override def hasSource[M >: N](node: M)    = this._1 == node
@@ -736,7 +745,7 @@ object GraphEdge {
     override def iterator: Iterator[N] = new AbstractIterator[N] {
       private var count = 0
       def hasNext       = count < 2
-      def next: N = {
+      def next(): N = {
         count += 1
         (count: @switch) match {
           case 1 => _1
@@ -754,8 +763,8 @@ object GraphEdge {
 
     override def matches[M >: N](n1: M, n2: M): Boolean = unDiBaseEquals(n1, n2)
     override def matches(p1: N => Boolean, p2: N => Boolean): Boolean =
-      (p1(this._1) && p2(this._2) ||
-        p1(this._2) && p2(this._1))
+      p1(this._1) && p2(this._2) ||
+        p1(this._2) && p2(this._1)
   }
 
   /** Factory for undirected edges.

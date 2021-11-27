@@ -6,10 +6,10 @@ import collection.mutable.{Set => MutableSet}
 import edge.LkDiEdge, edge.WUnDiEdge
 import immutable.SortedArraySet
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
-class TArraySetTest extends RefSpec with Matchers {
+class TArraySetTest extends RefSpec with should.Matchers {
 
   implicit val hints = ArraySet.Hints(4, 4, 12, 100)
 
@@ -87,14 +87,14 @@ class TArraySetTest extends RefSpec with Matchers {
 
       val taken = arr take size
       taken.isInstanceOf[ArraySet[_]] should be(true)
-      taken should have size (size)
+      taken should have size size
 
       def setInterface[A](set: MutableSet[A], n: Int): MutableSet[A] = set take n
       setInterface(arr, size - 1).isInstanceOf[ArraySet[_]] should be(true)
 
       val filtered0 = arr filter (_ => false)
       filtered0.isInstanceOf[ArraySet[_]] should be(true)
-      taken should have size (size)
+      taken should have size size
       filtered0.hints.initialCapacity should equal(arr.size)
 
       for (i <- 1 to hints.capacityIncrement) arr += edges.draw

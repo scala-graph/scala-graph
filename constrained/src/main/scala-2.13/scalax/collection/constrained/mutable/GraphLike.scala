@@ -33,7 +33,7 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
             case Complete => Right(remove)
             case PostCheck =>
               val incidentEdges = node.edges.toBuffer
-              if (remove) {
+              if (remove)
                 postSubtract(selfGraph, Set(node), Set.empty[E[N]], preCheckResult).fold(
                   failure => {
                     withoutChecks {
@@ -44,7 +44,7 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
                   },
                   _ => Right(true)
                 )
-              } else Right(false)
+              else Right(false)
             case Abort => Left(preCheckResult)
           }
         }
@@ -65,7 +65,8 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
       preAdd = preAdd(node),
       copy = clone += node,
       nodes = Set(node),
-      edges = Set.empty)
+      edges = Set.empty
+    )
 
   final override protected def +#(e: E[N]): This[N, E] = +#?(e) getOrElse this
 
@@ -75,12 +76,13 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
       preAdd = preAdd(e),
       copy = clone +=# e,
       nodes = Set.empty,
-      edges = Set(e))
+      edges = Set(e)
+    )
 
   override def addAll(elems: TraversableOnce[Param[N, E]]): this.type = ++=?(elems) getOrElse this
 
   def ++=?(elems: TraversableOnce[Param[N, E]]): Either[ConstraintViolation, this.type] = {
-    def add: this.type = withoutChecks { super.addAll(elems) }
+    def add: this.type = withoutChecks(super.addAll(elems))
     if (checkSuspended) Right(add)
     else {
       def process(elems: Iterable[Param[N, E]]): Option[ConstraintViolation] = {
@@ -97,7 +99,7 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
         if (preCheckResult.abort) Some(preCheckResult)
         else {
           add
-          if (preCheckResult.postCheck) {
+          if (preCheckResult.postCheck)
             postAdd(this, newNodes, newEdges, preCheckResult).fold(
               failure => {
                 withoutChecks {
@@ -108,7 +110,7 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
               },
               _ => None
             )
-          } else None
+          else None
         }
       }
       (elems match {
@@ -135,13 +137,13 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: G
     val preCheckResult =
       preSubtract(innerNodes.asInstanceOf[Set[self.NodeT]], innerEdges.asInstanceOf[Set[self.EdgeT]], true)
     preCheckResult.followUp match {
-      case Complete => Right(withoutChecks { super.--=(elems) })
+      case Complete => Right(withoutChecks(super.--=(elems)))
       case PostCheck =>
         val subtractables = (elems filter this.contains).toArray ++ innerNodes.flatMap(_.edges).toBuffer
-        withoutChecks { super.--=(subtractables) }
+        withoutChecks(super.--=(subtractables))
         postSubtract(this, outerNodes, outerEdges, preCheckResult).fold(
           failure => {
-            withoutChecks { super.++=(subtractables) }
+            withoutChecks(super.++=(subtractables))
             Left(failure)
           },
           _ => Right(this)

@@ -8,12 +8,12 @@ import scalax.collection.Graph
 import scalax.collection.mutable
 
 import org.scalatest.refspec.RefSpec
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-operations.html
   *  Graph Operations]].
   */
-final class EditingTest extends RefSpec with Matchers {
+final class EditingTest extends RefSpec with should.Matchers {
 
   object `demonstraiting ` {
     def `iterating ` : Unit = {
@@ -99,7 +99,8 @@ final class EditingTest extends RefSpec with Matchers {
         e.edge match {
           case s :~> t + (l: String) if l contains 'A' =>
             sum + s.outDegree + t.outDegree
-      }) shouldBe 6
+        }
+      ) shouldBe 6
     }
     def `neighbors ` : Unit = {
       val g                                = Graph(0, 1 ~ 3, 3 ~> 2)

@@ -7,9 +7,9 @@ import scala.collection.{SortedIterableFactory, SortedSetFactoryDefaults}
 import scala.compat.Platform.arraycopy
 
 @SerialVersionUID(1L)
-class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Array[A]])(
-    implicit val ordering: Ordering[A])
-    extends AbstractSet[A]
+class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Array[A]])(implicit
+    val ordering: Ordering[A]
+) extends AbstractSet[A]
     with SortedSet[A]
     with SortedSetOps[A, SortedArraySet, SortedArraySet[A]]
     with StrictOptimizedSortedSetOps[A, SortedArraySet, SortedArraySet[A]]
@@ -58,8 +58,9 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
   final protected def search(elem: A, cond: (A, A) => Boolean): Option[Int] = {
     var i     = 0
     var found = -1
-    while (found == -1 && i < size) if (cond(array(i), elem)) i += 1
-    else found = i
+    while (found == -1 && i < size)
+      if (cond(array(i), elem)) i += 1
+      else found = i
     if (found == -1) None else Some(found)
   }
 
@@ -70,7 +71,8 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
       search(e, ordering.lt) orElse (
         if (ordering.gt(e, array(size - 1))) Some(size)
         else Some(-1)
-      )) getOrElse size) - 1
+      )
+    ) getOrElse size) - 1
     if (idxFrom > idxTill) empty
     else {
       val newSize               = idxTill - idxFrom + 1

@@ -29,11 +29,13 @@ trait ConstraintCompanion[+CC[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]] <: Co
   }
 
   /** The `stringPrefix` of constrained `Graph`s using `this` constraint will be replaced
-    *  by this string unless `None`. */
+    *  by this string unless `None`.
+    */
   def stringPrefix: Option[String] = None
 
   /** Sets `stringPrefix` of constrained `Graph`s using `this` combined constraint companion
-    *  to `graphStringPrefix`. */
+    *  to `graphStringPrefix`.
+    */
   def withStringPrefix(stringPrefix: String): PrefixedConstraintCompanion = {
     val printable = stringPrefix.trim filter (_.isLetterOrDigit)
     new PrefixedConstraintCompanion(if (printable.length > 0) Some(printable) else None)
@@ -81,11 +83,13 @@ trait PreCheckResultCompanion {
   def apply(followUp: PreCheckFollowUp): PreCheckResult
 
   /** If `ok` is `true` returns a new `PreCheckResult` with `followUp` equaling to `PostCheck`
-    *  otherwise to `Abort`. */
+    *  otherwise to `Abort`.
+    */
   def postCheck(ok: Boolean): PreCheckResult = apply(if (ok) PostCheck else Abort)
 
   /** If `ok` is `true` returns a new `PreCheckResult` with `followUp` equaling to `Complete`
-    *  otherwise to `Abort`. */
+    *  otherwise to `Abort`.
+    */
   def complete(ok: Boolean): PreCheckResult = apply(if (ok) Complete else Abort)
 }
 
@@ -148,7 +152,8 @@ trait ConstraintMethods[N, E[+X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
   def preCreate(nodes: Iterable[N], edges: Iterable[E[N]]): PreCheckResult =
     PreCheckResult.postCheck(
       (nodes forall ((n: N) => !preAdd(n).abort)) &&
-        (edges forall ((e: E[N]) => !preAdd(e).abort)))
+        (edges forall ((e: E[N]) => !preAdd(e).abort))
+    )
 
   /** This pre-check must return `Abort` if the addition is to be canceled, `PostCheck` if `postAdd`
     * is to be called to decide or `Complete` if the outer `node` is allowed to be added.
@@ -238,7 +243,8 @@ trait ConstraintMethods[N, E[+X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
   def preSubtract(nodes: => Set[self.NodeT], edges: => Set[self.EdgeT], simple: Boolean): PreCheckResult =
     PreCheckResult.postCheck(
       (nodes forall (n => !preSubtract(n, simple).abort)) &&
-        (edges forall (e => !preSubtract(e, simple).abort)))
+        (edges forall (e => !preSubtract(e, simple).abort))
+    )
 
   /** This post-check must return whether `newGraph` should be committed or the add
     * operation is to be rolled back.
@@ -251,10 +257,12 @@ trait ConstraintMethods[N, E[+X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
     * @param preCheck the result of `preAdd`.
     * @return `None` to accept `newGraph` or `Some` reason for constraint violation resp. rejection
     */
-  def postAdd(newGraph: G @uV,
-              passedNodes: Iterable[N],
-              passedEdges: Iterable[E[N]],
-              preCheck: PreCheckResult): Either[PostCheckFailure, G] = Right(newGraph)
+  def postAdd(
+      newGraph: G @uV,
+      passedNodes: Iterable[N],
+      passedEdges: Iterable[E[N]],
+      preCheck: PreCheckResult
+  ): Either[PostCheckFailure, G] = Right(newGraph)
 
   /** This post-check must return whether `newGraph` should be committed or the subtraction
     * is to be rolled back.
@@ -267,13 +275,16 @@ trait ConstraintMethods[N, E[+X] <: EdgeLikeIn[X], +G <: Graph[N, E]] {
     * @param preCheck the result of `preSubtract`.
     * @return `None` to accept `newGraph` or `Some` reason for constraint violation resp. rejection
     */
-  def postSubtract(newGraph: G @uV,
-                   passedNodes: Iterable[N],
-                   passedEdges: Iterable[E[N]],
-                   preCheck: PreCheckResult): Either[PostCheckFailure, G] = Right(newGraph)
+  def postSubtract(
+      newGraph: G @uV,
+      passedNodes: Iterable[N],
+      passedEdges: Iterable[E[N]],
+      preCheck: PreCheckResult
+  ): Either[PostCheckFailure, G] = Right(newGraph)
 
   /** Consolidates all outer nodes of the arguments by adding the edge ends
-    *  of `passedEdges` to `passedNodes`. */
+    *  of `passedEdges` to `passedNodes`.
+    */
   protected def allNodes(passedNodes: Iterable[N], passedEdges: Iterable[E[N]]): Set[N] = {
     val nodes = collection.mutable.Set[N]() ++ passedNodes
     passedEdges foreach (nodes ++= _)

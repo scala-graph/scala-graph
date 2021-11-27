@@ -35,8 +35,8 @@ trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
   }
 
   trait DegreeFunction extends Function1[NodeT, Int]
-  object Degree        extends DegreeFunction { def apply(n: NodeT) = n.degree }
-  object InDegree      extends DegreeFunction { def apply(n: NodeT) = n.inDegree }
+  object Degree        extends DegreeFunction { def apply(n: NodeT) = n.degree    }
+  object InDegree      extends DegreeFunction { def apply(n: NodeT) = n.inDegree  }
   object OutDegree     extends DegreeFunction { def apply(n: NodeT) = n.outDegree }
 
   trait Filter[T] extends Function1[T, Boolean]
@@ -103,8 +103,10 @@ trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
     * @param $DEGREEFUNCTION
     * @param $DEGREEFILTER
     */
-  def degreeSet(implicit nodeDegree: DegreeFunction = Degree,
-                degreeFilter: Int => Boolean = AnyDegree): SortedSet[Int] =
+  def degreeSet(implicit
+      nodeDegree: DegreeFunction = Degree,
+      degreeFilter: Int => Boolean = AnyDegree
+  ): SortedSet[Int] =
     SortedSet[Int]()(IntReverseOrdering) ++ (if (degreeFilter == AnyDegree) nodes map nodeDegree
                                              else nodes.view map nodeDegree filter degreeFilter)
 
@@ -119,8 +121,10 @@ trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
     * @param $DEGREEFUNCTION
     * @param $DEGREEFILTER
     */
-  def degreeNodeSeq(implicit nodeDegree: DegreeFunction = Degree,
-                    degreeFilter: Int => Boolean = AnyDegree): Seq[DegreeNodeSeqEntry] = {
+  def degreeNodeSeq(implicit
+      nodeDegree: DegreeFunction = Degree,
+      degreeFilter: Int => Boolean = AnyDegree
+  ): Seq[DegreeNodeSeqEntry] = {
     val r = (nodes.toList map (n => (nodeDegree(n), n))) sorted
       (new Ordering[DegreeNodeSeqEntry] {
         def compare(a: DegreeNodeSeqEntry, b: DegreeNodeSeqEntry) = b._1 compare a._1
@@ -136,8 +140,10 @@ trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
     * @param $DEGREEFUNCTION
     * @param $DEGREEFILTER
     */
-  def degreeNodesMap(implicit nodeDegree: DegreeFunction = Degree,
-                     degreeFilter: Int => Boolean = AnyDegree): SortedMap[Int, AnySet[NodeT]] = {
+  def degreeNodesMap(implicit
+      nodeDegree: DegreeFunction = Degree,
+      degreeFilter: Int => Boolean = AnyDegree
+  ): SortedMap[Int, AnySet[NodeT]] = {
     val r: SortedMap[Int, AnySet[NodeT]] =
       SortedMap[Int, AnySet[NodeT]]()(IntReverseOrdering) ++ (nodes groupBy nodeDegree)
     if (degreeFilter == AnyDegree) r
@@ -152,8 +158,10 @@ trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
     * @param $DEGREEFUNCTION
     * @param $DEGREEFILTER
     */
-  def degreeCount(implicit nodeDegree: DegreeFunction = Degree,
-                  degreeFilter: Int => Boolean = AnyDegree): SortedMap[Int, Int] =
+  def degreeCount(implicit
+      nodeDegree: DegreeFunction = Degree,
+      degreeFilter: Int => Boolean = AnyDegree
+  ): SortedMap[Int, Int] =
     SortedMap[Int, Int]()(IntReverseOrdering) ++ {
       val m = MutableMap[Int, Int]()
       nodes foreach { n =>

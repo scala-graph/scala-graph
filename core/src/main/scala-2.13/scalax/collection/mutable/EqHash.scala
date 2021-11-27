@@ -146,7 +146,7 @@ trait EqHash[A, This <: EqHash[A, This]] {
   }
 
   protected class KeyIndexIterator extends EqHashIterator[Int] {
-    def next: Int = nextIndex
+    def next(): Int = nextIndex
   }
 
   override def hashCode: Int = {

@@ -24,9 +24,9 @@ import scala.language.postfixOps
   * @tparam This the higher kinded type of the graph itself.
   * @author Peter Empen
   */
-trait GraphLike[N,
-                E[+X] <: EdgeLikeIn[X],
-                +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[Param[X, Y]] with Graph[X, Y]]
+trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[
+  Param[X, Y]
+] with Graph[X, Y]]
     extends SimpleGraphLike[N, E, This]
     with GraphOps[N, E, This]
     with Constrained[N, E, This[N, E]] {
@@ -125,11 +125,13 @@ trait GraphLike[N,
     }
   }
 
-  protected def checkedPlus(contained: => Boolean,
-                            preAdd: => PreCheckResult,
-                            copy: => This[N, E] @uV,
-                            nodes: => Iterable[N],
-                            edges: => Iterable[E[N]]): Either[ConstraintViolation, This[N, E]] =
+  protected def checkedPlus(
+      contained: => Boolean,
+      preAdd: => PreCheckResult,
+      copy: => This[N, E] @uV,
+      nodes: => Iterable[N],
+      edges: => Iterable[E[N]]
+  ): Either[ConstraintViolation, This[N, E]] =
     if (checkSuspended) Right(copy)
     else if (contained) Right(this)
     else {
@@ -141,9 +143,11 @@ trait GraphLike[N,
       }
     }
 
-  protected def checkedMinusNode(node: N,
-                                 forced: Boolean,
-                                 copy: (N, NodeT) => This[N, E] @uV): Either[ConstraintViolation, This[N, E]] =
+  protected def checkedMinusNode(
+      node: N,
+      forced: Boolean,
+      copy: (N, NodeT) => This[N, E] @uV
+  ): Either[ConstraintViolation, This[N, E]] =
     nodes find node map { innerNode =>
       def subtract = copy(node, innerNode)
       if (checkSuspended)
@@ -158,9 +162,11 @@ trait GraphLike[N,
       }
     } getOrElse Right(this)
 
-  protected def checkedMinusEdge(edge: E[N],
-                                 simple: Boolean,
-                                 copy: (E[N], EdgeT) => This[N, E] @uV): Either[ConstraintViolation, This[N, E]] =
+  protected def checkedMinusEdge(
+      edge: E[N],
+      simple: Boolean,
+      copy: (E[N], EdgeT) => This[N, E] @uV
+  ): Either[ConstraintViolation, This[N, E]] =
     edges find edge map { innerEdge =>
       def subtract = copy(edge, innerEdge)
       if (checkSuspended) Right(subtract)

@@ -4,7 +4,7 @@ package generator
 import scala.collection.mutable.{Set => MSet}
 import scala.reflect.ClassTag
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
 import GraphPredef._, GraphEdge._
@@ -12,7 +12,7 @@ import mutable.{Graph => MGraph}
 import generic.GraphCompanion
 import edge.{LDiEdge, WDiEdge}
 
-class TRandomGraphTest extends RefSpec with Matchers {
+class TRandomGraphTest extends RefSpec with should.Matchers {
 
   import RandomGraph._
   val normal = new IntFactory {
@@ -26,14 +26,16 @@ class TRandomGraphTest extends RefSpec with Matchers {
   def generator[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       edgeCompanion: EdgeCompanionBase[E],
       gCompanion: GraphCompanion[G],
-      connected: Boolean)(implicit edgeTag: ClassTag[E[N]], nodeTag: ClassTag[N], metrics: Metrics[N]) =
+      connected: Boolean
+  )(implicit edgeTag: ClassTag[E[N]], nodeTag: ClassTag[N], metrics: Metrics[N]) =
     new RandomGraph[N, E, G](
       gCompanion,
       metrics.order,
       metrics.nodeGen,
       metrics.nodeDegrees,
       Set(edgeCompanion),
-      connected) {
+      connected
+    ) {
       val graphConfig = graphCompanion.defaultConfig
     }
 
@@ -51,7 +53,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
                  | deviation=$deviation,
                  | (${100f * deviation / totalDegree}%2.2f percent)""".stripMargin.linesIterator.mkString)
     totalDegree should (be >= (expectedTotalDegree - maxDegreeDeviation) and
-    be <= (expectedTotalDegree + maxDegreeDeviation))
+      be <= (expectedTotalDegree + maxDegreeDeviation))
   }
 
   object `disconnected random graph` {

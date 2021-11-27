@@ -1,15 +1,13 @@
 package scalax.collection
 
 import language.postfixOps
-
 import GraphPredef._
 import GraphEdge._
 import generic.GraphCoreCompanion
 import edge._
+import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
-import org.scalatest.{Matchers, Suites}
-import org.scalatest.matchers.{MatchResult, Matcher}
-
+import org.scalatest.matchers.{should, MatchResult, Matcher}
 import scalax.collection.visualization.Visualizer
 
 class TCycleRootTest
@@ -41,7 +39,7 @@ trait CycleMatcher[N, E[+X] <: EdgeLikeIn[X]] {
 
 class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
-    with Matchers
+    with should.Matchers
     with Visualizer[CC] {
 
   object `given some directed graphs` extends CycleMatcher[Int, DiEdge] {
@@ -85,12 +83,14 @@ class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
           Seq(1, 5, 6, 1),
           Seq(1, 4, 5, 6, 1),
           Seq(1, 3, 7, 4, 5, 6, 1),
-          Seq(1, 2, 3, 7, 4, 5, 6, 1))
+          Seq(1, 2, 3, 7, 4, 5, 6, 1)
+        )
         n(4).findCycle should haveOneNodeSequenceOf(
           Seq(5, 6, 1, 5),
           Seq(4, 5, 6, 1, 4),
           Seq(4, 5, 6, 1, 3, 7, 4),
-          Seq(4, 5, 6, 1, 2, 3, 7, 4))
+          Seq(4, 5, 6, 1, 2, 3, 7, 4)
+        )
       }
 
       val g = {
@@ -143,11 +143,13 @@ class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
           Seq(1, 5, 6, 1),
           Seq(1, 4, 5, 6, 1),
           Seq(1, 3, 7, 4, 5, 6, 1),
-          Seq(1, 2, 3, 7, 4, 5, 6, 1))
+          Seq(1, 2, 3, 7, 4, 5, 6, 1)
+        )
         g.findCycleContaining(n(4)) should haveOneNodeSequenceOf(
           Seq(4, 5, 6, 1, 4),
           Seq(4, 5, 6, 1, 3, 7, 4),
-          Seq(4, 5, 6, 1, 2, 3, 7, 4))
+          Seq(4, 5, 6, 1, 2, 3, 7, 4)
+        )
         g.findCycleContaining(n(3)) should haveOneNodeSequenceOf(Seq(3, 7, 4, 5, 6, 1, 3), Seq(3, 7, 4, 5, 6, 1, 2, 3))
         g.findCycleContaining(n(2)) should haveOneNodeSequenceOf(Seq(2, 3, 7, 4, 5, 6, 1, 2))
       }
@@ -159,18 +161,19 @@ class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
 
         n(1).withSubgraph(nodes = _ != 3).partOfCycle() should haveOneNodeSequenceOf(
           Seq(1, 5, 6, 1),
-          Seq(1, 4, 5, 6, 1))
+          Seq(1, 4, 5, 6, 1)
+        )
         n(4).withSubgraph(nodes = _ != 3).partOfCycle() should haveOneNodeSequenceOf(Seq(4, 5, 6, 1, 4))
         n(2).withSubgraph(nodes = _ != 3).partOfCycle() should be(None)
       }
     }
 
     def `the cycle returned by 'findCycle' contains the expected edges` {
-      given(acyclic_1) { _.findCycle should be(None) }
-      given(cyclic_1) { _.findCycle.get.edges should contain(cyclicEdge_1) }
-      given(acyclic_2) { _.findCycle should be(None) }
-      given(cyclic_21) { _.findCycle.get.edges should contain(cyclicEdge_21) }
-      given(cyclic_22) { _.findCycle.get.edges should contain(cyclicEdge_22) }
+      given(acyclic_1)(_.findCycle should be(None))
+      given(cyclic_1)(_.findCycle.get.edges should contain(cyclicEdge_1))
+      given(acyclic_2)(_.findCycle should be(None))
+      given(cyclic_21)(_.findCycle.get.edges should contain(cyclicEdge_21))
+      given(cyclic_22)(_.findCycle.get.edges should contain(cyclicEdge_22))
     }
 
     def `the cycle returned by 'findCycleContaining' contains the expected edges` {
@@ -186,16 +189,16 @@ class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
     }
 
     def `'isCyclic' returns the expected result` {
-      given(acyclic_1) { _ should be('isAcyclic) }
-      given(cyclic_1) { _ should be('isCyclic) }
-      given(acyclic_2) { _ should be('isAcyclic) }
-      given(cyclic_21) { _ should be('isCyclic) }
-      given(cyclic_22) { _ should be('isCyclic) }
+      given(acyclic_1)(_ should be('isAcyclic))
+      given(cyclic_1)(_ should be('isCyclic))
+      given(acyclic_2)(_ should be('isAcyclic))
+      given(cyclic_21)(_ should be('isCyclic))
+      given(cyclic_22)(_ should be('isCyclic))
     }
 
     def `they are cyclic if they contain a self loop #76` {
       val loop = 1 ~> 1
-      given(acyclic_1 + loop) { _ should be('isCyclic) }
+      given(acyclic_1 + loop)(_ should be('isCyclic))
       given(factory(loop)) { g =>
         g.findCycle should (be('isDefined) and beValid)
         g.findCycleContaining(g get 1) should (be('isDefined) and beValid)
@@ -304,7 +307,8 @@ class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
           12 ~ 13,
           12 ~> 3,
           20 ~> 10
-        )) { g =>
+        )
+      ) { g =>
         g.findCycle pipe { cycle =>
           cycle should (be('isDefined) and beValid)
           cycle foreach (_.nodes foreach { n =>
@@ -312,7 +316,8 @@ class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
           })
         }
         (g get 13).innerNodeTraverser.withOrdering(g.NodeOrdering((a, b) => b.value - a.value)).findCycle should (be(
-          'isDefined) and beValid)
+          'isDefined
+        ) and beValid)
       }
       given(mixed - 5 - 4 ~> 4) { g =>
         (g get 1).findCycle should haveOneNodeSequenceOf(Seq(1, 3, 2, 1))
@@ -335,12 +340,14 @@ class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
           Seq(1, 2, 3, 5, 1),
           Seq(1, 5, 3, 2, 1),
           Seq(1, 2, 3, 4, 5, 1),
-          Seq(1, 3, 4, 5, 1))
+          Seq(1, 3, 4, 5, 1)
+        )
         g.findCycleContaining(n(4)) should haveOneNodeSequenceOf(
           Seq(4, 4),
           Seq(4, 5, 3, 4),
           Seq(4, 5, 1, 2, 3, 4),
-          Seq(4, 5, 1, 3, 4))
+          Seq(4, 5, 1, 3, 4)
+        )
       }
     }
 
@@ -351,7 +358,8 @@ class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
         n(2).withSubgraph(edges = _ != DiEdge(1, 3)).partOfCycle should haveOneNodeSequenceOf(
           Seq(2, 3, 4, 5, 1, 2),
           Seq(2, 1, 5, 3, 2),
-          Seq(2, 3, 5, 1, 2))
+          Seq(2, 3, 5, 1, 2)
+        )
         n(2)
           .withSubgraph(nodes = _ != 5)
           .withOrdering(g.EdgeOrdering(g.Edge.WeightOrdering.compare))

@@ -34,25 +34,25 @@ package object constrained {
   import config.ConstrainedConfig
 
   /** Aims defining a constraint valid for `Graph` instances in the scope:
-    *{{{
-    *implicit val config: Config = Acyclic
-    *val g = Graph(0 ~> 3) // g is constrained to Acyclic
-    *}}}
+    * {{{
+    * implicit val config: Config = Acyclic
+    * val g = Graph(0 ~> 3) // g is constrained to Acyclic
+    * }}}
     */
   type Config = ConstrainedConfig
 
   /** Companion object to configure `Graph` instances in the scope including `ArraySet.Hints`:
-    *{{{
-    *implicit val config = Config(Acyclic)(ArraySet.Hints(64, 0, 64, 75))
-    *val g = Graph(0 ~> 3) // g is constrained to Acyclic using the above optimization hints
-    *}}}
+    * {{{
+    * implicit val config = Config(Acyclic)(ArraySet.Hints(64, 0, 64, 75))
+    * val g = Graph(0 ~> 3) // g is constrained to Acyclic using the above optimization hints
+    * }}}
     */
   def Config = ConstrainedConfig
 
   /** Converts `constraint` to an instance of `config.ConstrainedConfig`. */
-  implicit def constraintToConfig(constraint: ConstraintCompanion[Constraint])(
-      implicit orderHint: Int = GraphConfig.defaultOrder,
-      adjacencyListHints: ArraySet.Hints = ArraySet.Hints()) =
+  implicit def constraintToConfig(
+      constraint: ConstraintCompanion[Constraint]
+  )(implicit orderHint: Int = GraphConfig.defaultOrder, adjacencyListHints: ArraySet.Hints = ArraySet.Hints()) =
     Config(orderHint, adjacencyListHints, constraint)
 
   /** Enables to quickly assemble immutable constrained graph companion modules. Example:
@@ -63,9 +63,9 @@ package object constrained {
     *  object DAG extends CompanionAlias[DiEdge](Acyclic withStringPrefix "DAG")
     *  }}}
     */
-  abstract class CompanionAlias[E[+X] <: EdgeLikeIn[X]](constraintCompanion: ConstraintCompanion[Constraint])(
-      implicit adjacencyListHints: ArraySet.Hints = ArraySet.Hints())
-      extends GraphConstrainedCompanionAlias[Graph, E](Graph, constraintCompanion)(adjacencyListHints)
+  abstract class CompanionAlias[E[+X] <: EdgeLikeIn[X]](constraintCompanion: ConstraintCompanion[Constraint])(implicit
+      adjacencyListHints: ArraySet.Hints = ArraySet.Hints()
+  ) extends GraphConstrainedCompanionAlias[Graph, E](Graph, constraintCompanion)(adjacencyListHints)
 
   /** Constraint representing a DAG. */
   def dagConstraint = Acyclic withStringPrefix "DAG"

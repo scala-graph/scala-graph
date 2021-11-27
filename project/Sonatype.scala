@@ -19,28 +19,28 @@ trait Sonatype {
   protected val ossStaging            = "Sonatype OSS Staging" at nexus + "service/local/staging/deploy/maven2/"
 
   protected def generatePomExtra(scalaVersion: String): xml.NodeSeq =
-    <url>{ projectUrl }
+    <url>{projectUrl}
     </url>
     <licenses><license>
-        <name>{ licenseName }</name>
-        <url>{ licenseUrl }</url>
-        <distribution>{ licenseDistribution }</distribution>
+        <name>{licenseName}</name>
+        <url>{licenseUrl}</url>
+        <distribution>{licenseDistribution}</distribution>
     </license></licenses>
     <scm>
-      <url>{ scmUrl }</url>
-      <connection>{ scmConnection }</connection>
+      <url>{scmUrl}</url>
+      <connection>{scmConnection}</connection>
     </scm>
     <developers><developer>
-      <id>{ developerId }</id>
-      <name>{ developerName }</name>
-      <url>{ developerUrl }</url>
+      <id>{developerId}</id>
+      <name>{developerName}</name>
+      <url>{developerUrl}</url>
     </developer></developers>
 
   def settings: Seq[Setting[_]] = Seq(
     publishMavenStyle := true,
     publishTo := version((v: String) => Some(if (isSnapshot(v)) ossSnapshots else ossStaging)).value,
-    publishArtifact in Test := false,
+    Test / publishArtifact := false,
     pomIncludeRepository := (_ => false),
-    pomExtra := (scalaVersion)(generatePomExtra).value
+    pomExtra := scalaVersion(generatePomExtra).value
   )
 }

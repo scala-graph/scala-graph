@@ -4,6 +4,7 @@ import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion
 
 import org.scalatest._
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
 import scalax.collection.visualization.Visualizer
@@ -13,7 +14,7 @@ class TOpRootTest
 
 class TOp[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
-    with Matchers
+    with should.Matchers
     with Visualizer[CC] {
 
   val g = factory(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
@@ -21,22 +22,22 @@ class TOp[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]]
 
   def `union ` {
     val expected = factory(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5, 3 ~ 4, 4 ~ 6, 5 ~ 6)
-    given(g union h) { _ should be(expected) }
-    given(g ++ h) { _ should be(expected) }
+    given(g union h)(_ should be(expected))
+    given(g ++ h)(_ should be(expected))
   }
   def `difference ` {
     val expected = factory(1 ~ 2)
-    given(g diff h) { _ should be(expected) }
-    given(g -- h) { _ should be(expected) }
+    given(g diff h)(_ should be(expected))
+    given(g -- h)(_ should be(expected))
   }
   def `intersection ` {
     val expected = factory(3 ~ 5, 4)
-    given(g intersect h) { _ should be(expected) }
-    given(g & h) { _ should be(expected) }
+    given(g intersect h)(_ should be(expected))
+    given(g & h)(_ should be(expected))
   }
 }
 
-class TMutableOp extends RefSpec with Matchers {
+class TMutableOp extends RefSpec with should.Matchers {
 
   val oEdgesG              = List[UnDiEdge[Int]](1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
   val oEdgesH              = List[UnDiEdge[Int]](3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)

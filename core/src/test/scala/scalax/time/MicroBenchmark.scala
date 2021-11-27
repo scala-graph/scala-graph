@@ -53,7 +53,7 @@ object MicroBenchmark {
   }
 
   case class Result[A](result: A, times: ArrayBuffer[Long] = ArrayBuffer.empty) extends MeasurementResult(result) {
-    def this(result: A, firstNanoSecs: Long) { this(result, ArrayBuffer(firstNanoSecs)) }
+    def this(result: A, firstNanoSecs: Long) = this(result, ArrayBuffer(firstNanoSecs))
     def mediumNanoSecs: Long                 = times.sum / times.size
     def +=(nanoSecs: Long): this.type        = { this.times += nanoSecs; this }
     def nanoSecs                             = times.iterator
@@ -96,7 +96,8 @@ object MicroBenchmark {
   // relation of elapsed times b : a
   def relativeTime[A](warmUp: Int = 1, repetitions: Int = 1, decimals: Int = 2, requireEqualResults: Boolean = true)(
       a: => A,
-      b: => A): Float =
+      b: => A
+  ): Float =
     measureAll[A](warmUp, repetitions, requireEqualResults)(a, b).list match {
       case mA :: mB :: Nil => mB.relativeTo(decimals)(mA)
       case x               => throw new MatchError(x)
@@ -106,7 +107,8 @@ object MicroBenchmark {
   implicit def toHolder[A](block: => A): ByName[A] = new ByName(block)
 
   def measureAll[A](warmUp: Int = 1, repetitions: Int = 1, requireEqualResults: Boolean = true)(
-      blocks: ByName[A]*): Results[A] = {
+      blocks: ByName[A]*
+  ): Results[A] = {
     require(repetitions > 0, "'repetitions' must be positive")
     for (i <- 1 to warmUp) blocks foreach once
 
@@ -127,6 +129,7 @@ object MicroBenchmark {
   }
 
   def relativeTimes[A](warmUp: Int = 1, repetitions: Int = 1, decimals: Int = 2, requireEqualResults: Boolean = true)(
-      blocks: ByName[A]*): Seq[Float] =
+      blocks: ByName[A]*
+  ): Seq[Float] =
     measureAll[A](warmUp, repetitions, requireEqualResults)(blocks: _*).relativeTimes(decimals)
 }

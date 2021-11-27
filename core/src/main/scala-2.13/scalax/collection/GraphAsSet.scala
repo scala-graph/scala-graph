@@ -6,10 +6,11 @@ import scala.reflect.ClassTag
 import scalax.collection.GraphPredef.{EdgeLikeIn, Param}
 import scalax.collection.generic.GraphCompanion
 
-private[collection] trait GraphAsSet[N,
-                                     E[+X] <: EdgeLikeIn[X],
-                                     +This[NN, EE[+XX] <: EdgeLikeIn[XX]] <: GraphLike[NN, EE, This] with AnySet[
-                                       Param[NN, EE]] with Graph[NN, EE]]
+private[collection] trait GraphAsSet[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] <: GraphLike[
+  NN,
+  EE,
+  This
+] with AnySet[Param[NN, EE]] with Graph[NN, EE]]
     extends AnySet[Param[N, E]]
     with SetOps[Param[N, E], AnySet, This[N, E]] {
   this: This[N, E] with GraphAsSet[N, E, This] with AnySet[Param[N, E]] with Graph[N, E] =>
@@ -27,7 +28,8 @@ private[collection] trait GraphAsSet[N,
   override def diff(that: AnySet[Param[N, E]]): This[N, E]          = this -- that
   override def --(elems: IterableOnce[Param[N, E]]): This[N, E]     = bulkOp(elems, isPlusPlus = false)
 
-  def map[NN, EE[+X] <: EdgeLikeIn[X]](f: Param[N, E] => Param[NN, EE])(
-      implicit edgeT: ClassTag[EE[NN]]): This[NN, EE] =
+  def map[NN, EE[+X] <: EdgeLikeIn[X]](
+      f: Param[N, E] => Param[NN, EE]
+  )(implicit edgeT: ClassTag[EE[NN]]): This[NN, EE] =
     graphCompanion.from(super.map(f))(edgeT, config)
 }

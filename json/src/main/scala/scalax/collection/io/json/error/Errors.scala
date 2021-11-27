@@ -5,7 +5,7 @@ trait JsonGraphIssue
 object JsonGraphError extends Enumeration with JsonGraphIssue {
   type JsonGraphError = Value
   val NonObjArrValue, NonArray, InvalidElemTypeId, EmptyNodeFieldList, InsufficientNodes, UnexpectedNodeId,
-  UnexpectedDescr, UnknownNode, NoNodeDescr, NoEdgeDescr = Value
+      UnexpectedDescr, UnknownNode, NoNodeDescr, NoEdgeDescr = Value
 
   def err(errType: JsonGraphError, args: String*) = {
     val msg = errType match {

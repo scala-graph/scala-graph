@@ -6,10 +6,10 @@ import scalax.collection.Graph
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.refspec.RefSpec
 
-class TExtByImplicitTest extends RefSpec with Matchers {
+class TExtByImplicitTest extends RefSpec with should.Matchers {
   object `graphs may be enriched` {
     def `at graph level for any edge type` {
 
@@ -22,7 +22,7 @@ class TExtByImplicitTest extends RefSpec with Matchers {
       /* Consume graph enrichment.
        */
       Graph(1 ~ 2, 2 ~ 3).diEdges should be(empty)
-      Graph(1 ~ 2, 2 ~> 3).diEdges should have size (1)
+      Graph(1 ~ 2, 2 ~> 3).diEdges should have size 1
     }
 
     def `at graph level restricted to directed graphs` {

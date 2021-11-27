@@ -6,36 +6,38 @@ import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 lazy val all = project
   .in(file("."))
-  .dependsOn(coreJVM, coreJS, constrainedJVM, constrainedJS, dotJVM, dotJS, jsonJVM, jsonJS)
-  .aggregate(coreJVM, coreJS, constrainedJVM, constrainedJS, dotJVM, dotJS, jsonJVM, jsonJS)
+  .aggregate(coreJVM, coreJS, constrainedJVM, constrainedJS, dotJVM, dotJS, json)
   .settings(
-    Seq(
-      name := "Graph for Scala",
-      version := Version.highest,
-      crossPaths := true,
-      publishTo := None
-    )
+    name := "Graph for Scala",
+    version := Version.highest,
+    crossPaths := true,
+    publishTo := None,
+    crossScalaVersions := Nil
   )
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 lazy val core = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CompatCrossType) // [Pure, Full, Dummy], default: CrossType.Full
+  .crossType(CrossType.Pure) // [Pure, Full, Dummy], default: CrossType.Full
   .in(file("core"))
   .settings(
     defaultSettings ++ Seq(
       name := "Graph Core",
       version := Version.core,
       crossPaths := true,
-      libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck"   % "1.14.0" % "optional;provided",
-        "org.gephi"      % "gephi-toolkit" % "0.9.2"  % "test" classifier "all",
-      ),
-      dependencyOverrides ++= {
-        val release                        = "RELEASE90"
-        def netbeansModule(module: String) = "org.netbeans.modules" % module % release
-        def netbeansApi(module: String)    = "org.netbeans.api" % module % release
+      libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.15.4" % "optional;provided",
+      libraryDependencies ++= {
+        val netbeansModulesOrg = "org.netbeans.modules"
+        val netbeansApiOrg     = "org.netbeans.api"
+        val release            = "RELEASE123"
+
+        def netbeansModule(module: String) = netbeansModulesOrg % module % release
+        def netbeansApi(module: String)    = netbeansApiOrg     % module % release
         Seq(
+          "org.gephi" % "gephi-toolkit" % "0.9.2" % "test" classifier "all" excludeAll (
+            ExclusionRule(organization = netbeansModulesOrg),
+            ExclusionRule(organization = netbeansApiOrg)
+          ),
           netbeansModule("org-netbeans-core"),
           netbeansModule("org-netbeans-core-startup-base"),
           netbeansModule("org-netbeans-modules-masterfs"),
@@ -66,24 +68,21 @@ lazy val constrained = crossProject(JSPlatform, JVMPlatform)
 lazy val dotJVM = dot.jvm
 lazy val dotJS = dot.js
 lazy val dot = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CompatCrossType) // [Pure, Full, Dummy], default: CrossType.Full
+  .crossType(CrossType.Pure) // [Pure, Full, Dummy], default: CrossType.Full
   .in(file("dot"))
   .dependsOn(core)
   .settings(
     defaultSettings ++ Seq(name := "Graph DOT", version := Version.dot)
   )
 
-lazy val jsonJVM = json.jvm
-lazy val jsonJS = json.js
-lazy val json = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure) // [Pure, Full, Dummy], default: CrossType.Full
+lazy val json = project
   .in(file("json"))
-  .dependsOn(core)
+  .dependsOn(coreJVM)
   .settings(
     defaultSettings ++ Seq(
       name := "Graph JSON",
       version := Version.json,
-      libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.0"
+      libraryDependencies += "net.liftweb" %% "lift-json" % "3.5.0"
     )
   )
 
@@ -101,11 +100,11 @@ lazy val misc = crossProject(JSPlatform, JVMPlatform)
   )
 
 ThisBuild / resolvers ++= Seq(
-  "NetBeans" at "http://bits.netbeans.org/maven2/",
+  ("NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/").withAllowInsecureProtocol(true),
   "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
 )
 
-ThisBuild / scalafmtConfig := Some(file(".scalafmt.conf"))
+ThisBuild / scalafmtConfig := file(".scalafmt.conf")
 
 val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
@@ -115,7 +114,7 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalacOptions ++= Seq(
     unusedImports,
     "-Yrangepos",
-    "-Ywarn-unused:privates",
+    "-Ywarn-unused:privates"
   ),
   Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports),
   addCompilerPlugin(scalafixSemanticdb),
@@ -129,5 +128,8 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   }).value,
   autoAPIMappings := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Test"))),
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % "test"
+  libraryDependencies ++= Seq(
+    "org.scalatest"     %% "scalatest"       % "3.2.10"   % "test",
+    "org.scalatestplus" %% "scalacheck-1-15" % "3.2.10.0" % "test"
+  )
 ) ++ GraphSonatype.settings

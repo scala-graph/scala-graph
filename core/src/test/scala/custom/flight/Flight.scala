@@ -26,24 +26,25 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
   * @param departure daytime of departure
   * @param duration of flight
   */
-case class Flight[+N](fromAirport: N,
-                      toAirport: N,
-                      flightNo: String,
-                      departure: DayTime = DayTime(0, 0),
-                      duration: Duration = Duration(0, 0))
-    extends DiEdge[N](NodeProduct(fromAirport, toAirport))
+case class Flight[+N](
+    fromAirport: N,
+    toAirport: N,
+    flightNo: String,
+    departure: DayTime = DayTime(0, 0),
+    duration: Duration = Duration(0, 0)
+) extends DiEdge[N](NodeProduct(fromAirport, toAirport))
     with ExtendedKey[N]
     with EdgeCopy[Flight]
     with OuterEdge[N, Flight] {
 
-  private def this(nodes: Product, flightNo: String, departure: DayTime, duration: Duration) {
+  private def this(nodes: Product, flightNo: String, departure: DayTime, duration: Duration) =
     this(
       nodes.productElement(0).asInstanceOf[N],
       nodes.productElement(1).asInstanceOf[N],
       flightNo,
       departure,
-      duration)
-  }
+      duration
+    )
 
   def keyAttributes                         = Seq(flightNo)
   override def weight                       = duration.toInt

@@ -107,19 +107,19 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
   override def clone: EqHashMap[K, V] = new EqHashMap[K, V](this)
 
   protected class KeyIterator extends EqHashIterator[K] {
-    def next: K = unmaskNull(tab(nextIndex))
+    def next(): K = unmaskNull(tab(nextIndex))
   }
 
   override def keysIterator: Iterator[K] = new KeyIterator
 
   protected class ValueIterator extends EqHashIterator[V] {
-    def next: V = tab(nextIndex + 1)
+    def next(): V = tab(nextIndex + 1)
   }
 
   override def valuesIterator: Iterator[V] = new ValueIterator
 
   protected class EntryIterator extends EqHashIterator[(K, V)] {
-    def next: (K, V) = {
+    def next(): (K, V) = {
       val i = nextIndex
       (unmaskNull(tab(i)), tab(i + 1))
     }
