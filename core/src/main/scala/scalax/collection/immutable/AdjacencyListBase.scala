@@ -254,10 +254,9 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
     override def size = nrEdges
 
     def hasAnyMultiEdge = selfGraph.nodes exists { node: NodeT =>
-      val (di: Buffer[EdgeT @unchecked], unDi: Buffer[EdgeT @unchecked]) = {
+      val (di: Buffer[EdgeT @unchecked], unDi: Buffer[EdgeT @unchecked]) =
         if (selfGraph.isDirected) (node.edges.toBuffer[EdgeT], Buffer.empty)
         else node.edges.toBuffer partition (_.isDirected)
-      }
       val diTargets, unDiTargets = MSet.empty[NodeT]
       // format: off
       di  .exists((e: EdgeT) => e.hasSource((n: NodeT) => n eq node) && ! e.targets.forall(diTargets add _)) ||
