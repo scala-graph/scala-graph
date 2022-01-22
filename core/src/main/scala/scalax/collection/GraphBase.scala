@@ -445,11 +445,11 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     override def equals(other: Any): Boolean = other match {
       case that: GraphBase[N, E, This]#InnerEdge =>
         (this eq that) ||
-          (this.outer eq that.outer) ||
-          (this.outer == that.outer)
+        (this.outer eq that.outer) ||
+        (this.outer == that.outer)
       case that: EdgeLike[_] =>
         (this.outer eq that) ||
-          (this.outer == that)
+        (this.outer == that)
       case _ => false
     }
 
