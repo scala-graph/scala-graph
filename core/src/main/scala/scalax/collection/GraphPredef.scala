@@ -134,7 +134,7 @@ object GraphPredef {
       this.asInstanceOf[g.NodeT]
 
     final protected[collection] def asNodeTProjection[N <: NI, E[+X] <: EdgeLikeIn[X]]: GraphBase[N, E]#NodeT =
-      this.asInstanceOf[Graph[N, E]#NodeT]
+      this.asInstanceOf[GraphBase[N, E]#NodeT]
 
     final def fold[N <: NI, E[+X] <: EdgeLikeIn[X], G <: GraphBase[N, E], T](
         g: G
