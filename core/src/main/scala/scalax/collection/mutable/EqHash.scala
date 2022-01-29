@@ -159,8 +159,8 @@ trait EqHash[A, This <: EqHash[A, This]] {
   override def equals(other: Any): Boolean = other match {
     case that: EqHash[A, This] with IterableOnce[A] with Equals =>
       (that canEqual this) &&
-        (that._size == this._size) &&
-        (that.iterator.forall(containsElem))
+      (that._size == this._size) &&
+      (that.iterator.forall(containsElem))
     case _ => false
   }
 
