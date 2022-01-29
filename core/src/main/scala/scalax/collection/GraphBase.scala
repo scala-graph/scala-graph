@@ -99,7 +99,7 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
   @inline final def isCustomEdgeFilter(f: EdgeFilter) = f ne anyEdge
 
   sealed trait InnerElem
-  type NodeT <: InnerNode with Serializable
+  type NodeT <: InnerNode
   trait Node      extends Serializable
   trait InnerNode extends InnerNodeParam[N] with Node with InnerElem {
 
@@ -354,7 +354,6 @@ trait GraphBase[N, E[+X] <: EdgeLikeIn[X]] extends Serializable { selfGraph =>
       */
     @inline implicit final def toValue[N](node: NodeT) = node.value
   }
-  abstract protected class NodeBase extends InnerNode
   protected def newNode(n: N): NodeT
 
   /** Base trait for graph `Ordering`s. */

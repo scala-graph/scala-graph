@@ -572,7 +572,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   }
 
   type NodeT <: TraverserInnerNode
-  trait TraverserInnerNode extends super.InnerNode { this: NodeT =>
+  trait TraverserInnerNode extends InnerNode { this: NodeT =>
 
     /** Instantiates an [[InnerNodeTraverser]] $EXTENDSTYPE `NodeT` $SETROOT. $TOSTART
       *  @param parameters $PARAMETERS

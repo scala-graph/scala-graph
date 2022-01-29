@@ -26,18 +26,18 @@ final class EditingTest extends RefSpec with should.Matchers {
       val g = Graph(1 ~ 2)
       g find 1 shouldBe Some(1) // Option[g.NodeT]
       g find 3 shouldBe None    // Option[g.NodeT]
-      g get 1 shouldBe 1        // g.NodeT = 1
+      g get 1 should be(1)      // g.NodeT = 1
       a[NoSuchElementException] should be thrownBy {
         g get 3
       }
-      g find 1 ~ 2 shouldBe Some(1 ~ 2)                 // Option[g.EdgeT]
-      g find (g.having(node = _ == 1)) shouldBe Some(1) // Option[Param[Int,UnDiEdge]]
+      g find 1 ~ 2 shouldBe Some(1 ~ 2)                         // Option[g.EdgeT]
+      g find (g.having(node = _.toOuter == 1)) shouldBe Some(1) // Option[Param[Int,UnDiEdge]]
       val h = mutable.Graph.empty[Int, UnDiEdge] ++ g
-      h addAndGet 5 shouldBe 5 // g.NodeT
+      h addAndGet 5 should be(5) // g.NodeT
     }
     def `equality ` : Unit = {
       val g = Graph(1 ~ 2)
-      (g get 1) == 1 shouldBe true
+      (g get 1).toOuter == 1 shouldBe true
       (g get 1 ~ 2) == 2 ~ 1 shouldBe true
       (g get 1 ~ 2) eq 2 ~ 1 shouldBe false
       (g get 1 ~ 2) == 2 ~ 2 shouldBe false
@@ -61,7 +61,7 @@ final class EditingTest extends RefSpec with should.Matchers {
       (h += 0) shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
       (h += (3 ~> 1)) shouldBe Graph(1, 2, 3, 2 ~ 3, 3 ~> 1)
       implicit val factory = scalax.collection.edge.LDiEdge
-      h.addLEdge(3, 4)('red) shouldBe true
+      h.addLEdge(3, 4)("red") shouldBe true
     }
     def `union ` : Unit = {
       val g = mutable.Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
@@ -118,7 +118,7 @@ final class EditingTest extends RefSpec with should.Matchers {
       def n(outer: Int): g.NodeT = g get outer
       g.nodes filter (_ > 2) shouldBe Set(n(5), n(3))
       g.nodes filter (_.degree > 1) shouldBe Set(n(3))
-      g.edges filter (_ contains 4) shouldBe 'empty
+      g.edges filter (_ contains 4) shouldBe empty
       g filter ((i: Int) => i >= 2) shouldBe Graph(2, 3, 5, 2 ~> 3)
       g filter g.having(node = _ >= 2) shouldBe Graph(2, 3, 5, 2 ~> 3)
       g filter g.having(edge = _.directed) shouldBe Graph(2, 3, 2 ~> 3)
@@ -140,7 +140,7 @@ final class EditingTest extends RefSpec with should.Matchers {
       val g = Graph(1, 2 ~> 3)
       g.isConnected shouldBe false
       (g + 2 ~> 1).isConnected shouldBe true
-      (g get 2).findConnected(_ == 3) shouldBe Some(3)
+      (g get 2).findConnected(_.toOuter == 3) shouldBe Some(3)
       g.isCyclic shouldBe false
       (g + 3 ~> 2).isCyclic shouldBe true
       g.isComplete shouldBe false

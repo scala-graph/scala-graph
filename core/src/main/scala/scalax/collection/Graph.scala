@@ -140,16 +140,13 @@ trait GraphLike[N, E[+X] <: EdgeLikeIn[X], +This[NN, EE[+XX] <: EdgeLikeIn[XX]] 
   }
 
   type NodeT <: InnerNode
-  trait InnerNode extends super.InnerNode with TraverserInnerNode {
+  trait InnerNode extends TraverserInnerNode {
     this: NodeT =>
 
-    /** $CONTGRAPH inner edge. */
+    /** $CONTGRAPH inner node. */
     final def containingGraph: ThisGraph = thisGraph
   }
-  abstract protected class NodeBase(override val value: N)
-      extends super.NodeBase
-      with InnerNodeParam[N]
-      with InnerNode {
+  abstract protected class NodeBase(override val value: N) extends InnerNodeParam[N] with InnerNode {
     this: NodeT =>
     final def isContaining[N, E[+X] <: EdgeLikeIn[X]](g: GraphBase[N, E]): Boolean =
       g eq containingGraph
