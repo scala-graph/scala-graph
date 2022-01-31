@@ -1,6 +1,5 @@
 package scalax.collection.centrality
 
-import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.Graph
 
@@ -30,22 +29,15 @@ class TKatzTest extends RefSpec with should.Matchers {
         jane ~ aziz,
         jane ~ samantha))
 
-    import Katz._
-    val centralities: Map[network.NodeT, Float] = network.centralities()
+    val katz = new Katz(network)
+    val centralities = katz .centralities()
 
-    def `yielding a non-empty map` {
-      centralities should be('nonEmpty)
+    def `it yields a non-empty map` {
+       centralities should be('nonEmpty)
     }
 
-    def `using path dependent node types` {
-      implicit def ord = centralityMapOrdering[String, UnDiEdge, network.type](centralities)
-      centralities.max._1 should be(network get jose)
-    }
-
-    def `using type projection node types` {
-      val pCentralities          = centralities: Map[_ <: Graph[String, UnDiEdge]#NodeT, Float]
-      implicit def projectionOrd = centralityProjectionMapOrdering(pCentralities)
-      pCentralities.min._1 should be(network get samantha)
+    def `it finds the maximum` {
+      centralities.max(katz.mapOrdering)._1 should be(network get jose)
     }
   }
 }

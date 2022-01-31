@@ -6,7 +6,7 @@ import org.scalatest.matchers.should
 
 class TTripleDiEdgeTest extends RefSpec with should.Matchers {
 
-  type Triple[N] = TripleDiEdge[N]
+  type Triple[+N] = TripleDiEdge[N]
   val Triple = TripleDiEdge
 
   val (subj_1, subj_2) = (IRI("s-1"), IRI("s-2"))

@@ -10,29 +10,30 @@ import LabelType.L
 
 /** Labeled directed edge with mutable label of a given type L. */
 class CustomDiEdge[+N](nodes: Product)(private var _label: L)
-    extends DiEdge   [N](nodes)
-    with    EdgeCopy [CustomDiEdge]
-    with    OuterEdge[N,CustomDiEdge] {
+    extends DiEdge[N](nodes)
+    with EdgeCopy[CustomDiEdge]
+    with OuterEdge[N, CustomDiEdge] {
 
-  override def label: L = _label
+  override def label: L    = _label
   def label_=(newLabel: L) = _label = newLabel
+
   override def copy[NN](newNodes: Product) = new CustomDiEdge[NN](newNodes)(_label)
 }
 
 object CustomDiEdge {
-  
+
   def apply[N](from: N, to: N, label: L) =
     new CustomDiEdge[N](NodeProduct(from, to))(label)
-    
+
   def unapply[N](e: CustomDiEdge[N]) = Some(e)
-  
-  final implicit class EdgeAssoc[N](n1: N) {
+
+  implicit final class EdgeAssoc[N](n1: N) {
     def ~+>(n2: N)(l: L) = new CustomDiEdge[N]((n1, n2))(l)
   }
 }
 
 object :~> {
-  def unapply[N](e: CustomDiEdge[N]): Option[(N, (N,L))] =
+  def unapply[N](e: CustomDiEdge[N]): Option[(N, (N, L))] =
     if (e eq null) None else Some(e._1, (e._2, e.label))
 }
 object + {
@@ -42,19 +43,19 @@ object + {
 
 private object TestCustomLDiEdge {
   import CustomDiEdge._
-  val outer = (1~+>2)(None)
+  val outer = (1 ~+> 2)(None)
   outer.label = None
 
   outer match {
-    case n1 :~> n2 + label => 
+    case n1 :~> n2 + label =>
   }
-  
+
   import scalax.collection.Graph
-  val g = Graph(outer)
+  val g     = Graph(outer)
   val inner = g.edges.head
-  inner.label = Some(List(1,2))
+  inner.label = Some(List(1, 2))
 
   inner.edge match {
-    case n1 :~> n2 + label => 
+    case n1 :~> n2 + label =>
   }
 }
