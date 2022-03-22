@@ -19,7 +19,7 @@ lazy val core = project
       name    := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
-        "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
+        "org.scala-lang.modules" %% "scala-collection-compat" % "2.7.0",
         "org.gephi"               % "gephi-toolkit"           % "0.9.2" % "test" classifier "all"
       ),
       dependencyOverrides ++= {
