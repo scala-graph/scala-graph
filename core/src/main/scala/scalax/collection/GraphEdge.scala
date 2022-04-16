@@ -164,10 +164,10 @@ object GraphEdge {
     override def equals(other: Any): Boolean = other match {
       case that: EdgeLike[_] =>
         (this eq that) ||
-          (that canEqual this) &&
-          (this.isDirected == that.isDirected) &&
-          (this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]) &&
-          equals(that)
+        (that canEqual this) &&
+        (this.isDirected == that.isDirected) &&
+        (this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]) &&
+        equals(that)
       case _ => false
     }
 
@@ -324,7 +324,7 @@ object GraphEdge {
           other match {
             case diHyper: AnyDiHyperEdge[_] =>
               this.sources.head == diHyper.sources.head &&
-                Eq.equalTargets(this, this.targets, other, other.targets, arity - 1)
+              Eq.equalTargets(this, this.targets, other, other.targets, arity - 1)
             case _ => false
           }
       else false
