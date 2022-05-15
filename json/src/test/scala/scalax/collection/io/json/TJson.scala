@@ -49,7 +49,7 @@ class TJsonTest[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]]
               WkDi.descriptor[String](Some(new WEdgeSerializer))
             )
           )
-        val graph = factory("A" ~ "B", "B" ~ "C", ("A" ~%#> "B")(3), ("B" ~%#> "C")(4), "X" ~ "Y", "Y" ~ "A")
+        val graph = factory("A" ~ "B", "B" ~ "C", "A" ~%#> "B" (3), "B" ~%#> "C" (4), "X" ~ "Y", "Y" ~ "A")
       }
       def `on parsing` {
         import FixtureMixed._
@@ -139,7 +139,7 @@ class TJsonTest[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]]
     }
 
     object `graphs with labeled edges` {
-      private val graph = factory(("A" ~+> "B")("L1"), ("B" ~+> "A")("L2"))
+      private val graph = factory("A" ~+> "B" ("L1"), "B" ~+> "A" ("L2"))
 
       object `using default edge desriptors` {
         private object FixtureLEdge {
@@ -207,7 +207,7 @@ class TJsonTest[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]]
             Some(new WLEdgeSerializer[String](new StringSerializer))
           )
         )
-        val graph = factory(("A" ~%+> "B")(100, "CLabel-1"), ("B" ~%+> "A")(200, "CLabel-2"))
+        val graph = factory("A" ~%+> "B" (100, "CLabel-1"), "B" ~%+> "A" (200, "CLabel-2"))
       }
       def `on importing` {
         import FixtureWLEdgeCustom._

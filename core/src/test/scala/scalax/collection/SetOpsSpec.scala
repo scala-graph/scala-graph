@@ -32,8 +32,8 @@ protected trait SetOpExamples[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphL
   protected object Expected {
     val g_union_h = factory.from(gEdges ++ hEdges)
     val g_diff_h =
-      (g.nodes.toOuter -- h.nodes.toOuter) pipe { nDiff =>
-        factory.from(nDiff, (gEdges ++ hEdges) filter { case n1 ~ n2 => nDiff(n1) && nDiff(n2) })
+      g.nodes.toOuter -- h.nodes.toOuter pipe { nDiff =>
+        factory.from(nDiff, gEdges ++ hEdges filter { case n1 ~ n2 => nDiff(n1) && nDiff(n2) })
       }
   }
 }

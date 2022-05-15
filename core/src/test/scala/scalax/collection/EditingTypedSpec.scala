@@ -49,7 +49,7 @@ private class EditingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
         e.## should be(eqFlight.##)
         val neFlight = edges.Flight(ham, gig, flightNo + "x", 11 o 2)
         e should not be neFlight
-        e.## should not be (neFlight.##)
+        e.## should not be neFlight.##
       }
     }
 
