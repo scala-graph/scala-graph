@@ -76,7 +76,7 @@ class EditingImmutable extends RefSpec with Matchers {
       g.contains("B") should be(true) // not compiling: g should contain ("B")
 
       val hString_A = Graph[String, UnDiEdge]("A")
-      val h         = hString_A + ("A" ~ "C")
+      val h         = hString_A + "A" ~ "C"
       h.nodes should have size 2
       h.edges should have size 1
       h.elementCount should be(3)
@@ -101,7 +101,7 @@ private class EditingMutable extends RefSpec with Matchers {
       g remove 1 should be(true)
       g should be(Graph(2 ~ 3, 4))
       g remove 5 should be(false)
-      (g subtractOne 2) should be(Graph(3, 4))
+      g subtractOne 2 should be(Graph(3, 4))
       g.clear()
       g should be(Symbol("empty"))
     }
@@ -113,7 +113,7 @@ private class EditingMutable extends RefSpec with Matchers {
       g.contains("B") should be(true) // g should contain ("B")
 
       val hString_A = Graph[String, UnDiEdge]("A")
-      val h         = hString_A += ("A" ~ "C")
+      val h         = hString_A += "A" ~ "C"
       h.nodes should have size 2
       h.edges should have size 1
       h.elementCount should be(3)
@@ -121,7 +121,7 @@ private class EditingMutable extends RefSpec with Matchers {
 
     def `serve -= properly (2)` : Unit = {
       val g = Graph(1 ~ 2, 2 ~ 3)
-      (g subtractOne 2) should be(Graph(1, 3))
+      g subtractOne 2 should be(Graph(1, 3))
       g.size should be(0)
     }
 
@@ -145,20 +145,20 @@ private class EditingMutable extends RefSpec with Matchers {
 
       g subtractOne 1 ~> 4 // Graph(oneOne, oneTwo, one~>3)
       n2.diSuccessors shouldBe empty
-      n1.diSuccessors shouldBe (Set(two, 3))
-      (n1 ~>? n1) should be(Some(e11))
+      n1.diSuccessors shouldBe Set(two, 3)
+      n1 ~>? n1 should be(Some(e11))
 
       g subtractOne oneTwo // Graph(oneOne, one~>3)
       n1.diSuccessors should be(Set(3))
-      (n1 ~>? n1) should be(Some(e11))
+      n1 ~>? n1 should be(Some(e11))
 
       g subtractOne oneOne // Graph(one~>3)
       n1.diSuccessors should be(Set(3))
-      (n1 ~>? n1) should be(None)
+      n1 ~>? n1 should be(None)
 
       g ++= (edges = List(oneOne, oneTwo)) // Graph(oneOne, oneTwo, one~>3)
       n1.diSuccessors should be(Set(two, 3))
-      (n1 ~>? n1) should be(Some(e11))
+      n1 ~>? n1 should be(Some(e11))
     }
 
     def `serve ++=, unionInPlace`: Unit = {
@@ -287,7 +287,7 @@ private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
     def `concat, ++, union`: Unit = {
       val g = gString_A.concat[String, AnyEdge[String]](List("B", "C"), Nil)
       g.elementCount shouldEqual 3
-      ('A' to 'C') map (_.toString) foreach (g.contains(_) shouldEqual true)
+      'A' to 'C' map (_.toString) foreach (g.contains(_) shouldEqual true)
 
       val (gBefore, gAfter) = (Graph(1, 2 ~ 3), Graph(0, 1 ~ 2, 2 ~ 3))
       gBefore ++ (edges = List(1 ~ 2, 2 ~ 3), isolatedNodes = List(0)) shouldEqual gAfter
@@ -344,8 +344,8 @@ private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
     def `findOutgoingTo Di`: Unit = {
       val g         = factory(1 ~> 1, 1 ~> 2, 2 ~> 1)
       def n(i: Int) = g get i
-      (n(1) findOutgoingTo n(2)) should be(Some(1 ~> 2))
-      (n(1) findOutgoingTo n(1)) should be(Some(1 ~> 1))
+      n(1) findOutgoingTo n(2) should be(Some(1 ~> 2))
+      n(1) findOutgoingTo n(1) should be(Some(1 ~> 1))
     }
 
     def `degree ` : Unit = {

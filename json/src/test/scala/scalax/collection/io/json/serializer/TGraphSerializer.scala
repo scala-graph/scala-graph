@@ -36,7 +36,7 @@ class TGraphSerializer[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, 
       StringNodeDescriptor,
       new WEdgeDescriptor[String, WDiEdge, WDiEdge.type](WDiEdge, Some(new WEdgeSerializer))
     )
-    val graph = factory(("A" ~%> "B")(1), ("B" ~%> "A")(2))
+    val graph = factory("A" ~%> "B" (1), "B" ~%> "A" (2))
   }
   import GraphFixture._
 

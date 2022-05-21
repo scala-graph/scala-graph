@@ -38,7 +38,7 @@ object + {
 
 private object TestCustomLDiEdge {
   import CustomDiEdge._
-  val outer = (1 ~+> 2)(None)
+  val outer = 1 ~+> 2 (None)
   outer.label = None
 
   outer match {

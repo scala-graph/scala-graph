@@ -21,7 +21,7 @@ class ExtHashSetSpec extends RefSpec with Matchers {
       val nrProbes           = size * nrProbesPerElement
       val frequencies        = sortedProbeFrequencies(set, nrProbes, Some(0))
       val maxDeviation_%     = 20
-      range(frequencies) should be < (nrProbesPerElement * (2 * maxDeviation_%) / 100)
+      range(frequencies) should be < nrProbesPerElement * (2 * maxDeviation_%) / 100
     }
 
     def `draws random elements with near-uniform distribution if buckets are of different length`: Unit = {

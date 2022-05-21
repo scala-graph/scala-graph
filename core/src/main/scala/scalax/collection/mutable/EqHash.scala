@@ -24,7 +24,7 @@ trait EqHash[A, This <: EqHash[A, This]] {
     _size = other._size
   }
 
-  @inline final protected def maxCapacity      = 1 << (31 - step)
+  @inline final protected def maxCapacity      = 1 << 31 - step
   @inline final private def len(capacity: Int) = capacity * step
   @inline final private def cap(length: Int)   = length / step
 
@@ -99,7 +99,7 @@ trait EqHash[A, This <: EqHash[A, This]] {
     var item = tab(i)
     while (item ne null) {
       val r = hash(item, len, step - 1)
-      if ((i < r && (r <= d || d <= i)) || (r <= d && d <= i)) {
+      if (i < r && (r <= d || d <= i) || r <= d && d <= i) {
         var j = 0
         while (j < s) {
           tab(d + j) = tab(i + j)
@@ -136,7 +136,7 @@ trait EqHash[A, This <: EqHash[A, This]] {
     }
 
     protected def nextIndex: Int = {
-      if (!indexValid && !hasNext) throw new NoSuchElementException()
+      if (!indexValid && !hasNext) throw new NoSuchElementException
 
       indexValid = false
       lastReturnedIndex = index
@@ -151,7 +151,7 @@ trait EqHash[A, This <: EqHash[A, This]] {
 
   override def hashCode: Int = {
     val tab = table
-    new KeyIndexIterator().foldLeft(0)(_ + elemHashCode(tab, _))
+    new KeyIndexIterator.foldLeft(0)(_ + elemHashCode(tab, _))
   }
 
   def containsElem(elem: A): Boolean
@@ -159,8 +159,8 @@ trait EqHash[A, This <: EqHash[A, This]] {
   override def equals(other: Any): Boolean = other match {
     case that: EqHash[A, This] with IterableOnce[A] with Equals =>
       (that canEqual this) &&
-        (that._size == this._size) &&
-        (that.iterator.forall(containsElem))
+      that._size == this._size &&
+      that.iterator.forall(containsElem)
     case _ => false
   }
 
@@ -176,10 +176,10 @@ object EqHash {
 
   @inline final private[this] def skipping(oHash: Int, len: Int, shift: Int): Int =
     // Multiply by -127 and left-shift to use least bit as part of hash
-    ((oHash << shift) - (oHash << 8)) & (len - 1)
+    (oHash << shift) - (oHash << 8) & len - 1
 
   @inline final private[this] def any(oHash: Int, len: Int): Int =
-    (oHash - (oHash << 8)) & (len - 1)
+    oHash - (oHash << 8) & len - 1
 
   @inline final private[mutable] def hash(o: AnyRef, len: Int, shift: Int): Int = {
     val h = System.identityHashCode(o)

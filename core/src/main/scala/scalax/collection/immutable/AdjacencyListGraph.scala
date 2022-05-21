@@ -79,7 +79,7 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
     else copy(nodes.toOuter, edges.toOuter.toBuffer += edge)
 
   def excl(node: N): This[N, E] = nodes find (nf => nf.outer == node) match {
-    case Some(nf) => copy(nodes.toOuter.toBuffer -= node, edges.toOuter.toBuffer --= (nf.edges map (_.outer)))
+    case Some(nf) => copy(nodes.toOuter.toBuffer -= node, edges.toOuter.toBuffer --= nf.edges map (_.outer))
     case None     => this
   }
 

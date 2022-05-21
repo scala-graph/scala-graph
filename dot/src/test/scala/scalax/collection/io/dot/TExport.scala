@@ -17,14 +17,14 @@ class TExportTest extends RefSpec with Matchers {
 
     implicit def toLDiEdge[N](diEdge: DiEdge[N]) = LDiEdge(diEdge._1, diEdge._2)("")
     val g = Graph[String, LDiEdge](
-      ("A1" ~+> "A2")("f"),
-      ("A2" ~+> "A3")("g"),
+      "A1" ~+> "A2" ("f"),
+      "A2" ~+> "A3" ("g"),
       "A1" ~> "B1",
       "A1" ~> "B1",
-      ("A2" ~+> "B2")("(g o f)'"),
+      "A2" ~+> "B2" ("(g o f)'"),
       "A3" ~> "B3",
       "B1" ~> "B3",
-      ("B2" ~+> "B3")("g'")
+      "B2" ~+> "B3" ("g'")
     )
     val root = DotRootGraph(directed = true, id = Some(Id("Wikipedia_Example")))
     val subA = DotSubGraph(ancestor = root, subgraphId = Id("A"), attrList = List(DotAttr(Id("rank"), Id("same"))))
@@ -177,7 +177,7 @@ class TExportTest extends RefSpec with Matchers {
         )
       )
     )
-    val g = Graph((n1 ~+> n2)(Ports(f1, f0)), (n1 ~+> n3)(Ports(f2, here)))
+    val g = Graph(n1 ~+> n2 (Ports(f1, f0)), n1 ~+> n3 (Ports(f2, here)))
     val root = DotRootGraph(
       directed = true,
       id = Some("structs"),
@@ -185,19 +185,18 @@ class TExportTest extends RefSpec with Matchers {
     )
     val dot = g.toDot(
       dotRoot = root,
-      edgeTransformer =
-        _.edge match {
-          case LDiEdge(source, target, label) =>
-            def withPort(n: Node, port: String): NodeId = n match {
-              case Node(id, _) => NodeId(id, port)
-            }
-            label match {
-              case Ports(sourcePort, targetPort) =>
-                Some(
-                  (root, DotEdgeStmt(withPort(source.value, sourcePort), withPort(target.value, targetPort)))
-                ): Option[(DotGraph, DotEdgeStmt)]
-            }
-        },
+      edgeTransformer = _.edge match {
+        case LDiEdge(source, target, label) =>
+          def withPort(n: Node, port: String): NodeId = n match {
+            case Node(id, _) => NodeId(id, port)
+          }
+          label match {
+            case Ports(sourcePort, targetPort) =>
+              Some(
+                (root, DotEdgeStmt(withPort(source.value, sourcePort), withPort(target.value, targetPort)))
+              ): Option[(DotGraph, DotEdgeStmt)]
+          }
+      },
       cNodeTransformer = Some(_.value match {
         case Node(id, label) =>
           Some((root, DotNodeStmt(id, List(DotAttr("label", label.toString)))))

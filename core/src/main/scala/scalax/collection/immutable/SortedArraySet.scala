@@ -67,7 +67,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
   }
 
   def rangeImpl(from: Option[A], until: Option[A]): SortedArraySet[A] = {
-    if (size == 0 || (from == None && until == None)) return this
+    if (size == 0 || from == None && until == None) return this
     val idxFrom = from flatMap (search(_, ordering.lt)) getOrElse 0
     val idxTill = (until flatMap (e =>
       search(e, ordering.lt) orElse (
@@ -93,13 +93,13 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
 }
 object SortedArraySet extends SortedIterableFactory[SortedArraySet] {
   override def empty[A](implicit ordering: Ordering[A]): SortedArraySet[A] =
-    new SortedArraySet[A]()
+    new SortedArraySet[A]
 
   override def from[E](it: IterableOnce[E])(implicit ordering: Ordering[E]): SortedArraySet[E] =
     newBuilder.addAll(it).result()
 
   override def newBuilder[A](implicit ordering: Ordering[A]) = new ReusableBuilder[A, SortedArraySet[A]] {
-    val buffer = new ArrayBuffer[AnyRef]()
+    val buffer = new ArrayBuffer[AnyRef]
 
     override def clear(): Unit   = buffer.clear()
     override def result()        = new SortedArraySet(buffer.toArray.asInstanceOf[Array[A]])

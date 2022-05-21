@@ -40,10 +40,10 @@ final class EditingDemoSpec extends RefSpec with Matchers {
 
     def `equality ` : Unit = {
       val g = Graph(1 ~ 2)
-      (g get 1) shouldBe 1
-      (g get 1 ~ 2) shouldBe 2 ~ 1
-      (g get 1 ~ 2) eq 2 ~ 1 shouldBe false
-      (g get 1 ~ 2) should not be 2 ~ 2
+      g get 1 shouldBe 1
+      g get 1 ~ 2 shouldBe 2 ~ 1
+      g get 1 ~ 2 eq 2 ~ 1 shouldBe false
+      g get 1 ~ 2 should not be 2 ~ 2
     }
 
     def `adding ` : Unit = {
@@ -60,7 +60,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       g -- (List(2), List(3 ~ 3)) shouldBe Graph(1, 3)
 
       def h = mutable.Graph.from[Int, AnyEdge[Int]](nodes = g.nodes.toOuter, edges = g.edges.toOuter)
-      (h addOne 0) shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
+      h addOne 0 shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
       (h += 3 ~> 1) shouldBe Graph[Int, AnyEdge](1, 2, 3, 2 ~ 3, 3 ~> 1)
     }
 
@@ -71,7 +71,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       g union h shouldBe Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5, 3 ~ 4, 4 ~ 6, 5 ~ 6)
       g diff h shouldBe Graph(1 ~ 2)
       g intersect h shouldBe Graph(4, 3 ~ 5)
-      (g & h) shouldBe Graph(4, 3 ~ 5)
+      g & h shouldBe Graph(4, 3 ~ 5)
     }
 
     def `endpoints ` : Unit = {
@@ -122,7 +122,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       n(3).diSuccessors shouldBe Set(n(1), n(2))
       n(3).diPredecessors shouldBe Set(n(1))
       n(2).incoming shouldBe Set(e(3 ~> 2))
-      (n(3) ~>? n(2)) shouldBe Some(e(3 ~> 2))
+      n(3) ~>? n(2) shouldBe Some(e(3 ~> 2))
     }
 
     def `querying ` : Unit = {
