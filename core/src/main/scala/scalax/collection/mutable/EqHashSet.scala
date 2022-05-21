@@ -11,7 +11,7 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity) extends Set[A]
   final protected def step          = 1
 
   def this(other: EqHashSet[A]) = {
-    this()
+    this
     from(other)
   }
 

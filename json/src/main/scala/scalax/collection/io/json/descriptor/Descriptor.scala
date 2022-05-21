@@ -91,7 +91,7 @@ class Descriptor[N](
       descr <- nodeDescriptors
       manifests = descr.manifests
       m <- manifests
-    } ret += (m -> descr)
+    } ret += m -> descr
     ret.toMap
   }
 

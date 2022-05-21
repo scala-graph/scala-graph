@@ -37,7 +37,7 @@ object + {
 
 object DemoLDiEdge extends App {
   import LDiEdge._
-  val outer = (1 ~+> 2)(None: Option[List[Int]])
+  val outer = 1 ~+> 2 (None: Option[List[Int]])
   outer.label = None
 
   outer match {

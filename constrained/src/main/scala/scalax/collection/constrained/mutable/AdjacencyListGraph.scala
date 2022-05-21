@@ -77,7 +77,7 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
               postAdd(selfGraph, Set.empty[N], Set(edge.toOuter), preCheckResult).fold(
                 failure => {
                   remove(edge)
-                  (edge.nodes filterNot contains) foreach nodes.remove
+                  edge.nodes filterNot contains foreach nodes.remove
                   Left(failure)
                 },
                 _ => Right(true)

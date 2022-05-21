@@ -34,7 +34,7 @@ private class Equality[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, 
     gInt_1_3 shouldNot be(factory(2, 3))
     gString_A shouldNot be(factory("B"))
 
-    gInt_1_3 shouldEqual (immutable.Graph(1) + 3)
+    gInt_1_3 shouldEqual immutable.Graph(1) + 3
   }
 }
 

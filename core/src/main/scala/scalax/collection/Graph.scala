@@ -109,19 +109,19 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   override def equals(that: Any): Boolean = that match {
     case that: Graph[N, E] =>
       (this eq that) ||
-        (this.order == that.order) &&
-        (this.size == that.size) && {
-          val thatNodes = that.nodes.toOuter
-          try this.nodes forall (thisN => thatNodes(thisN.outer))
-          catch { case _: ClassCastException => false }
-        } && {
-          val thatEdges = that.edges.toOuter
-          try this.edges forall (thisE => thatEdges(thisE.outer))
-          catch { case _: ClassCastException => false }
-        }
+      this.order == that.order &&
+      this.size == that.size && {
+        val thatNodes = that.nodes.toOuter
+        try this.nodes forall (thisN => thatNodes(thisN.outer))
+        catch { case _: ClassCastException => false }
+      } && {
+        val thatEdges = that.edges.toOuter
+        try this.edges forall (thisE => thatEdges(thisE.outer))
+        catch { case _: ClassCastException => false }
+      }
     case that: IterableOnce[_] =>
       val thatSet = that.iterator.to(Set)
-      (this.elementCount == thatSet.size) && {
+      this.elementCount == thatSet.size && {
         val thatNodes = thatSet.asInstanceOf[Set[N]]
         try this.nodes forall (thisN => thatNodes(thisN.outer))
         catch { case _: ClassCastException => false }

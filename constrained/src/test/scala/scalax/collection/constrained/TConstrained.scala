@@ -72,7 +72,7 @@ class TConstrainedMutable extends RefSpec with Matchers with Testing[mutable.Gra
       val g = factory[Int, UnDiEdge](1 ~ 2, 2 ~ 3, 3 ~ 4, 4 ~ 1)
 
       given(g, 5) both (_ += _, _ +=? _) should beRejected[Int, UnDiEdge]
-      (g +=? 5) should be(Left(PostCheckFailure(FailingPostAdd.leftWarning)))
+      g +=? 5 should be(Left(PostCheckFailure(FailingPostAdd.leftWarning)))
       given(g, 1 ~ 5) both (_ += _, _ +=? _) should beRejected[Int, UnDiEdge]
       given(g, List(5)) both (_ ++= _, _ ++=? _) should beRejected[Int, UnDiEdge]
       given(g, List(1 ~ 5)) both (_ ++= _, _ ++=? _) should beRejected[Int, UnDiEdge]
@@ -107,8 +107,8 @@ class TConstrained[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, C
       g should be('isEmpty)
       g + 5 contains 5 should be(false)
       g + 6 contains 6 should be(true)
-      (g ++ List[OuterNode[Int]](1, 2, 3)) should be('isEmpty)
-      (g ++ List[OuterNode[Int]](2, 4, 6)) should have size 3
+      g ++ List[OuterNode[Int]](1, 2, 3) should be('isEmpty)
+      g ++ List[OuterNode[Int]](2, 4, 6) should have size 3
     }
 
     def `when constraining nodes to have a minimum degree` {
@@ -152,7 +152,7 @@ class TConstrained[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, C
       g + 6 contains 6 should be(true)
       shouldLeaveGraphUnchanged[Int, Nothing](g)(_ ++? List[OuterNode[Int]](1, 2, 3))
 
-      (g ++ List[OuterNode[Int]](2, 4, 6)) should have size 3
+      g ++ List[OuterNode[Int]](2, 4, 6) should have size 3
     }
 
     def `be combined` {
@@ -274,7 +274,7 @@ private object UserConstraints {
       if (simple)
         edge.ends forall (_.degree > min)
       else
-        ((for (n <- edge) yield n.neighbors).flatten filterNot (edge contains _)) forall (_.degree > min)
+        (for (n <- edge) yield n.neighbors).flatten filterNot (edge contains _) forall (_.degree > min)
     )
 
     /** Sub-classed `PreCheckResult` to store `neighbors` which is calculated
