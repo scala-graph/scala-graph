@@ -172,7 +172,7 @@ trait Graph[N, E <: EdgeLike[N]] extends AnyGraph[N, E] with GraphLike[N, E, Gra
 object Graph extends MutableGraphCompanion[Graph] {
 
   def empty[N, E <: EdgeLike[N]](implicit config: Config = defaultConfig): Graph[N, E] =
-    new DefaultGraphImpl[N, E](config)
+    new DefaultGraphImpl[N, E](Set.empty)(config)
 
   override def from[N, E <: EdgeLike[N]](nodes: Iterable[N] = Nil, edges: Iterable[E])(implicit
       config: Config = defaultConfig
@@ -227,7 +227,7 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
 object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
 
   def empty[N, E <: EdgeLike[N]](implicit config: Config = defaultConfig) =
-    new DefaultGraphImpl[N, E](config)
+    new DefaultGraphImpl[N, E](Set.empty)(config)
 
   override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
       config: Config = defaultConfig

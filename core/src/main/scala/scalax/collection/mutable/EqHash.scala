@@ -151,7 +151,7 @@ trait EqHash[A, This <: EqHash[A, This]] {
 
   override def hashCode: Int = {
     val tab = table
-    new KeyIndexIterator.foldLeft(0)(_ + elemHashCode(tab, _))
+    (new KeyIndexIterator).foldLeft(0)(_ + elemHashCode(tab, _))
   }
 
   def containsElem(elem: A): Boolean
