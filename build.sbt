@@ -24,8 +24,8 @@ lazy val core = project
         val netbeansApiOrg     = "org.netbeans.api"
         val release            = "RELEASE123"
 
-        def netbeansModule(module: String) = netbeansModulesOrg % module % release
-        def netbeansApi(module: String)    = netbeansApiOrg     % module % release
+        def netbeansModule(module: String) = netbeansModulesOrg % module % release % "test"
+        def netbeansApi(module: String)    = netbeansApiOrg     % module % release % "test"
         Seq(
           "org.gephi" % "gephi-toolkit" % "0.9.2" % "test" classifier "all" excludeAll (
             ExclusionRule(organization = netbeansModulesOrg),
