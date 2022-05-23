@@ -74,7 +74,7 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
 object DefaultGraphImpl extends ImmutableGraphCompanion[DefaultGraphImpl] {
 
   override def empty[N, E <: EdgeLike[N]](implicit config: Config = defaultConfig) =
-    new DefaultGraphImpl[N, E](Set.empty)(config)
+    new DefaultGraphImpl[N, E]()(config)
 
   override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
       config: Config = defaultConfig
