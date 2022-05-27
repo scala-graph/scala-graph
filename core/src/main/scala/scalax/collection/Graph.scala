@@ -135,7 +135,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   }
 
   type NodeT <: InnerNode
-  trait InnerNode extends super.InnerNode { // TODO with TraverserInnerNode {
+  trait InnerNode extends BaseInnerNode { // TODO with TraverserInnerNode {
     this: NodeT =>
 
     /** $CONTGRAPH inner edge. */
@@ -190,11 +190,13 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     protected def handleNotGentlyRemovable = false
   }
 
-  trait InnerEdge extends super.InnerEdge {
+  trait InnerEdge extends BaseInnerEdge {
     this: EdgeT =>
 
     /** $CONTGRAPH inner edge. */
     final def containingGraph: ThisGraph = thisGraph
+
+    final protected[collection] def asEdgeT: EdgeT = this
   }
 
   type EdgeT = InnerEdge

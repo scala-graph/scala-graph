@@ -316,7 +316,7 @@ trait TraverserImpl[N, E <: EdgeLike[N]] {
           type PrioQueueElem = DijkstraInformer.Element[T]
           val PrioQueueElem = DijkstraInformer.Element
 
-          implicit def edgeOrdering: Ordering[EdgeT] = InnerEdge.weightOrdering(weight)
+          implicit def edgeOrdering: Ordering[EdgeT] = BaseInnerEdge.weightOrdering(weight)
           implicit object nodeOrdering extends Ordering[PrioQueueElem] {
             def compare(x: PrioQueueElem, y: PrioQueueElem) = num.compare(y.cumWeight, x.cumWeight)
           }
@@ -392,7 +392,7 @@ trait TraverserImpl[N, E <: EdgeLike[N]] {
                 new MinWeightEdgeLazyPath(
                   new MapPathTraversable[NodeT](map, potentialSuccessor, root),
                   subgraphEdges,
-                  InnerEdge.weightOrdering(weight)
+                  BaseInnerEdge.weightOrdering(weight)
                 )
               ) orElse (
               if (root eq potentialSuccessor) Some(Path.zero(potentialSuccessor)) else None

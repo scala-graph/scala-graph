@@ -104,7 +104,7 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
 
     final override protected[collection] def initialize(edges: Iterable[E]): Unit = {
       if (edges ne null)
-        edges foreach (this add InnerEdge(_))
+        edges foreach (this add BaseInnerEdge(_))
       initialized = true
     }
 
@@ -125,6 +125,6 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
 
   @inline final def clear(): Unit            = nodes.clear()
   @inline final def add(node: N): Boolean    = nodes add Node(node)
-  @inline final def add(edge: E): Boolean    = edges add InnerEdge(edge)
-  @inline final def upsert(edge: E): Boolean = edges upsert InnerEdge(edge)
+  @inline final def add(edge: E): Boolean    = edges add BaseInnerEdge(edge)
+  @inline final def upsert(edge: E): Boolean = edges upsert BaseInnerEdge(edge)
 }

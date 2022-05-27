@@ -144,7 +144,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   @inline final def remove(node: N): Boolean        = nodes find node exists (nodes remove _)
   @inline final def subtractOne(node: N): this.type = { remove(node); this }
 
-  @inline final def remove(edge: E): Boolean        = edges remove InnerEdge(edge)
+  @inline final def remove(edge: E): Boolean        = edges remove BaseInnerEdge(edge)
   @inline final def subtractOne(edge: E): this.type = { remove(edge); this }
 
   def filterInPlace(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): this.type = {
@@ -194,22 +194,31 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
   final override val companion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
-  @inline final protected def newNodeSet: NodeSetT       = new AdjacencyListNodeSet
-  @transient private[this] var _nodes: NodeSetT          = newNodeSet
+  @inline final protected def newNodeSet: NodeSetT = new AdjacencyListNodeSet
+
+  @transient private[this] var _nodes: NodeSetT = newNodeSet
+
   @inline final override def nodes: AdjacencyListNodeSet = _nodes
 
-  @transient private[this] var _edges: EdgeSetT          = new AdjacencyListEdgeSet
+  @transient private[this] var _edges: EdgeSetT = new AdjacencyListEdgeSet
+
   @inline final override def edges: AdjacencyListEdgeSet = _edges
 
   initialize(iniNodes, iniEdges)
 
-  override protected[this] def newBuilder          = new Builder[N, E, DefaultGraphImpl](DefaultGraphImpl)
+  override protected[this] def newBuilder = new Builder[N, E, DefaultGraphImpl](DefaultGraphImpl)
+
   final override def empty: DefaultGraphImpl[N, E] = DefaultGraphImpl.empty[N, E]
-  final override def clone: this.type              = super.clone.asInstanceOf[this.type]
+
+  final override def clone: this.type = super.clone.asInstanceOf[this.type]
 
   @SerialVersionUID(7370L)
-  final protected class NodeBase_(override val outer: N, hints: ArraySet.Hints) extends InnerNodeImpl(outer, hints)
-// TODO      with    InnerNodeTraversalImpl
+  final protected class NodeBase_(override val outer: N, hints: ArraySet.Hints)
+      extends InnerNodeImpl(outer, hints)
+      // TODO      with    InnerNodeTraversalImpl
+      {
+    final protected[collection] def asNodeT: NodeT = this
+  }
 
   type NodeT = NodeBase_
 

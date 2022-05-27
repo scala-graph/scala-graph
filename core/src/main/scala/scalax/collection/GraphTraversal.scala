@@ -348,7 +348,7 @@ trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal
     /** $ADDELEM
       *  @return $ADDSUCCESS
       */
-    @inline final def add(elem: InnerElem): Boolean = elem match {
+    final def add(elem: InnerElem): Boolean = elem match {
       case n: InnerNode => this add n.asNodeT
       case e: InnerEdge => this add e.asEdgeT
     }
@@ -542,7 +542,7 @@ trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal
     }
 
     /** Creates a new `Weight` with the given `value` and the default weight function returning `edge.weight`, */
-    def apply(value: Long) = new Weight(value.toDouble, InnerEdge.defaultWeight _)
+    def apply(value: Long) = new Weight(value.toDouble, BaseInnerEdge.defaultWeight _)
   }
 
   /** Template for extended node visitors.
@@ -571,7 +571,7 @@ trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal
   }
 
   type NodeT <: TraverserInnerNode
-  trait TraverserInnerNode extends super.InnerNode { this: NodeT =>
+  trait TraverserInnerNode extends BaseInnerNode { this: NodeT =>
 
     /** Instantiates an [[InnerNodeTraverser]] $EXTENDSTYPE `NodeT` $SETROOT. $TOSTART
       *  @param parameters $PARAMETERS
@@ -981,7 +981,7 @@ trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal
       * @return $SHORTESTPATHRET
       */
     @inline final def shortestPathTo[U](potentialSuccessor: NodeT)(implicit visitor: A => U = empty): Option[Path] =
-      shortestPathTo(potentialSuccessor, InnerEdge.defaultWeight, visitor)
+      shortestPathTo(potentialSuccessor, BaseInnerEdge.defaultWeight, visitor)
 
     /** $SHORTESTPATH
       *

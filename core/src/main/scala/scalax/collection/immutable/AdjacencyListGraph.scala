@@ -20,6 +20,7 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
 
     final override val edges: ArraySet[EdgeT]                      = ArraySet.emptyWithHints[EdgeT](hints)
     @transient protected var _diSuccessors: immutable.EqSet[NodeT] = _
+
     final def diSuccessors: Set[NodeT] = {
       if (_diSuccessors eq null) _diSuccessors = new immutable.EqSet(Adj.diSucc)
       _diSuccessors
@@ -52,7 +53,7 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
   class EdgeSet extends super.EdgeSet {
     override protected[collection] def initialize(edges: Iterable[E]): Unit =
       if (edges ne null)
-        edges foreach (this += InnerEdge(_))
+        edges foreach (this += BaseInnerEdge(_))
 
     @inline final protected[AdjacencyListGraph] def +=(edge: EdgeT): this.type = {
       if (nodes add edge) statistics(edge, plus = true)

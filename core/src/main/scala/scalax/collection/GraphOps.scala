@@ -56,20 +56,30 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
   def stringPrefix: String = "Graph"
 
   sealed trait InnerElem
+
+  type NodeT <: InnerNode
   trait InnerNode extends InnerElem {
 
     /** The outer node as supplied by instantiation or addition. */
     def outer: N
+
+    protected[collection] def asNodeT: NodeT
+  }
+  object InnerNode {
+    def unapply(node: InnerNode): Option[N] = Some(node.outer)
   }
 
+  type EdgeT <: InnerEdge
   trait InnerEdge extends InnerElem {
 
     /** The outer edge as supplied by instantiation or addition. */
     def outer: E
-  }
 
-  type NodeT <: InnerNode
-  type EdgeT <: InnerEdge
+    protected[collection] def asEdgeT: EdgeT
+  }
+  object InnerEdge {
+    def unapply(edge: InnerEdge): Option[E] = Some(edge.outer)
+  }
 
   /** Iterator over all inner nodes and edges. */
   def iterator: Iterator[InnerElem]

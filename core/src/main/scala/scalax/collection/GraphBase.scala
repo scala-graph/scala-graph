@@ -67,9 +67,9 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
   /** `true` if `f` is not equivalent to `anyEdge`. */
   @inline final def isCustomEdgeFilter(f: EdgePredicate) = f ne anyEdge
 
-  type NodeT <: InnerNode with Serializable
-  trait Node      extends Serializable
-  trait InnerNode extends Node with super.InnerNode {
+  type NodeT <: BaseInnerNode with Serializable
+  trait Node          extends Serializable
+  trait BaseInnerNode extends Node with InnerNode {
 
     /** Synonym for `outer`. */
     @deprecated("Use 'outer' instead", "2.0.0")
@@ -268,12 +268,10 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
         ignoreMultiEdges: Boolean = true
     ): Int
 
-    final protected[collection] def asNodeT: NodeT = this.asInstanceOf[NodeT]
-
     def canEqual(that: Any) = true
 
     override def equals(other: Any) = other match {
-      case that: GraphBase[N, E, This]#InnerNode =>
+      case that: GraphBase[N, E, This]#BaseInnerNode =>
         (this eq that) || (that canEqual this) && this.outer == that.outer
       case thatR: AnyRef =>
         val thisN = this.outer.asInstanceOf[AnyRef]
@@ -283,9 +281,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
 
     override def hashCode: Int    = outer.##
     override def toString: String = outer.toString
-  }
-  object InnerNode {
-    def unapply(node: InnerNode): Option[N] = Some(node.outer)
   }
 
   @transient object Node {
@@ -302,7 +297,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     /** Allows to call methods of N directly on Node instances. */
     @inline implicit final def toOuter(node: NodeT): N = node.outer
   }
-  abstract protected class NodeBase extends InnerNode
+  abstract protected class NodeBase extends BaseInnerNode
   protected def newNode(n: N): NodeT
 
   /** Base trait for graph `Ordering`s. */
@@ -427,9 +422,8 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     */
   def nodes: NodeSetT
 
-  type EdgeT <: InnerEdgeLike[NodeT] with InnerEdge
-
-  trait InnerEdge extends InnerEdgeLike[NodeT] with super.InnerEdge with Equals {
+  type EdgeT <: InnerEdgeLike[NodeT] with BaseInnerEdge
+  trait BaseInnerEdge extends InnerEdgeLike[NodeT] with InnerEdge with Equals {
     this: EdgeT =>
 
     /** Synonym for `outer`. */
@@ -449,14 +443,12 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       new immutable.EqSet(a)
     }
 
-    final protected[collection] def asEdgeT: EdgeT = this.asInstanceOf[EdgeT]
-
     override def canEqual(that: Any): Boolean =
-      that.isInstanceOf[GraphBase[N, E, This]#InnerEdge] ||
+      that.isInstanceOf[GraphBase[N, E, This]#BaseInnerEdge] ||
         that.isInstanceOf[EdgeLike[_]]
 
     override def equals(other: Any): Boolean = other match {
-      case that: GraphBase[N, E, This]#InnerEdge =>
+      case that: GraphBase[N, E, This]#BaseInnerEdge =>
         (this eq that) ||
         (this.outer eq that.outer) ||
         this.outer == that.outer
@@ -469,9 +461,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     override def hashCode: Int    = outer.##
     override def toString: String = outer.toString
   }
-  @transient object InnerEdge {
-    def unapply(edge: InnerEdge): Option[E] = Some(edge.outer)
-
+  @transient object BaseInnerEdge {
     protected[collection] def apply(outer: E): EdgeT = {
       @inline def lookup(n: N) = nodes lookup n
 
@@ -574,7 +564,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     def find(outerEdge: E): Option[EdgeT]
 
     /** The maximum arity of all edges in this edge set. */
-    def maxArity: Int = if (size == 0) 0 else max(InnerEdge.ArityOrdering).arity
+    def maxArity: Int = if (size == 0) 0 else max(BaseInnerEdge.ArityOrdering).arity
 
     /** `Iterator` over this `EdgeSet` mapped to outer edges. */
     @inline final def outerIterator: Iterator[E] = iterator map (_.outer)
@@ -597,9 +587,9 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
         case _                                     => throw new IllegalArgumentException
       }
       other match {
-        case OuterEdge(e) => find(e)
-        case e: InnerEdge => find(e.asInstanceOf[EdgeT].outer)
-        case _            => null.asInstanceOf[EdgeT]
+        case OuterEdge(e)     => find(e)
+        case e: BaseInnerEdge => find(e.asInstanceOf[EdgeT].outer)
+        case _                => null.asInstanceOf[EdgeT]
       }
     }
 

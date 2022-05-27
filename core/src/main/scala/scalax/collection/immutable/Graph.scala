@@ -53,10 +53,13 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
   final override def copy(nodes: Iterable[N], edges: Iterable[E]) = DefaultGraphImpl.from[N, E](nodes, edges)
 
   @SerialVersionUID(7170L)
-  final protected class NodeBase(override val outer: N, hints: ArraySet.Hints) extends InnerNodeImpl(outer, hints)
-  /* TODO
+  final protected class NodeBase(override val outer: N, hints: ArraySet.Hints)
+      extends InnerNodeImpl(outer, hints)
+      /* TODO
       with InnerNodeTraversalImpl
-   */
+       */ {
+    final protected[collection] def asNodeT: NodeT = this
+  }
 
   type NodeT = NodeBase
 
