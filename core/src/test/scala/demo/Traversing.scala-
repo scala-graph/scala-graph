@@ -113,7 +113,7 @@ final class TraversingTest extends RefSpec with Matchers {
         case g.InnerEdge(e) => e.weight > 1
       }                            .map {
                                      case g.InnerNode(n) => n.value
-                                     case g.InnerEdge(e) => e.toOuter
+                                     case g.InnerEdge(e) => e.outer
                                    }.toSet should be (Set[Any](
                                    1, 2, 3, 1~>3 % 2, 2~>3 % 3))
     }
@@ -174,7 +174,7 @@ final class TraversingTest extends RefSpec with Matchers {
       val disconnected = Graph.from(edges = componentEdges._1 ++ componentEdges._2)
       val sums =
         for (component <- disconnected.componentTraverser())
-          yield (0 /: component.nodes)((cum, n) => cum + n.toOuter)
+          yield (0 /: component.nodes)((cum, n) => cum + n.outer)
       sums should be (List(6, 18))
       
       val anyNode = disconnected.nodes.draw(new util.Random)

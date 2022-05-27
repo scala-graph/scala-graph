@@ -70,7 +70,7 @@ class TEdgeTest extends RefSpec with Matchers {
       val edges = outerEdges()
       edges(1) should be(edges(2))
       val g = Graph(edges: _*)
-      g.graphSize should be(2)
+      g.size should be(2)
       ordered(g.edges) should be(false)
     }
 
@@ -78,7 +78,7 @@ class TEdgeTest extends RefSpec with Matchers {
       val edges = outerEdges(Sequence)
       edges(1) should not equal (edges(2))
       val g = Graph(edges: _*)
-      g.graphSize should be(3)
+      g.size should be(3)
       ordered(g.edges) should be(true)
       ordered((g - g.edges.head).edges) should be(true)
     }
@@ -216,7 +216,7 @@ class TEdgeTest extends RefSpec with Matchers {
       val e1             = LkDiHyperEdge(1, 2, 3)("a")
       val e2             = LkDiHyperEdge(10, 11, 12, 13, 14, 15, 16)("b")
       val g              = Graph[Int, LHyperEdge](e1, e2)
-      val List(eo1, eo2) = g.edges.toOuter.toList
+      val List(eo1, eo2) = g.edges.outer.toList
 
       g find eo1 should be('defined)
       g find eo2 should be('defined)

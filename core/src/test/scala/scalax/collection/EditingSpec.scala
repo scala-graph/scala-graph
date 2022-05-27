@@ -245,11 +245,11 @@ private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
 
     def `from inner ` : Unit = {
       val gn = factory(2, 3)
-      factory.from[Int, Nothing](gn.nodes.toOuter, Nil) should equal(gn)
+      factory.from[Int, Nothing](gn.nodes.outerIterable, Nil) should equal(gn)
 
       val g = factory(2 ~ 3)
       factory(g.edges.head) should equal(g)
-      factory.from(g.edges.toOuter) should equal(g)
+      factory.from(g.edges.outerIterable) should equal(g)
     }
 
     def `NodeSet ` : Unit = {

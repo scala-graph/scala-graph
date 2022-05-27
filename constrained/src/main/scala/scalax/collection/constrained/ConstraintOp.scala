@@ -16,7 +16,7 @@ case object Or        extends BinaryOp
 abstract class ConstraintOp[N, E <: EdgeLike[N], G <: Graph[N, E]](self: G, val operator: Op)
     extends Constraint[N, E, G](self)
 
-class ConstraintBinaryOp[N, E[+X] <: EdgeLikeIn[X], G <: Graph[N, E]](
+class ConstraintBinaryOp[N, E <: EdgeLike[N], G <: Graph[N, E]](
     override val self: G,
     operator: BinaryOp,
     left: Constraint[N, E],

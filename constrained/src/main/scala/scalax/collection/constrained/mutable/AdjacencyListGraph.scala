@@ -69,12 +69,12 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
       def added = super.add(edge)
       if (checkSuspended) Right(added)
       else {
-        val preCheckResult = preAdd(edge.toOuter)
+        val preCheckResult = preAdd(edge.outer)
         preCheckResult.followUp match {
           case Complete => Right(added)
           case PostCheck =>
             if (added)
-              postAdd(selfGraph, Set.empty[N], Set(edge.toOuter), preCheckResult).fold(
+              postAdd(selfGraph, Set.empty[N], Set(edge.outer), preCheckResult).fold(
                 failure => {
                   remove(edge)
                   edge.nodes filterNot contains foreach nodes.remove
@@ -100,7 +100,7 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
           case Complete => Right(remove(edge))
           case PostCheck =>
             if (remove(edge))
-              postSubtract(selfGraph, Set.empty[N], Set(edge.toOuter), preCheckResult).fold(
+              postSubtract(selfGraph, Set.empty[N], Set(edge.outer), preCheckResult).fold(
                 failure => { selfGraph += edge; Left(failure) },
                 _ => Right(true)
               )

@@ -6,7 +6,7 @@ import scala.collection.mutable.{ArrayBuffer, Builder}
 import scala.language.implicitConversions
 import scala.math.{max, min}
 
-import scalax.collection.GraphPredef.{EdgeLikeIn, OuterElem}
+import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.mutable.{EqHashMap, EqHashSet}
 import scalax.collection.generic.GraphCoreCompanion
 
@@ -71,7 +71,7 @@ import scalax.collection.generic.GraphCoreCompanion
   *
   * @author Peter Empen
   */
-trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
+trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal] {
   thisGraph =>
 
   import GraphTraversal._
@@ -162,7 +162,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       new TopologicalOrder(layers, toA)(newOrdering)
 
     def toOuter: TopologicalOrder[N] =
-      new TopologicalOrder(layers, _.value)(layerOrdering)
+      new TopologicalOrder(layers, _.outer)(layerOrdering)
 
     def toLayered: LayeredTopologicalOrder[A] =
       new LayeredTopologicalOrder[A](layers, toA)(layerOrdering)
@@ -186,7 +186,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       new LayeredTopologicalOrder(layers, toA)(newOrdering)
 
     def toOuter: LayeredTopologicalOrder[N] =
-      new LayeredTopologicalOrder(layers, _.value)(layerOrdering)
+      new LayeredTopologicalOrder(layers, _.outer)(layerOrdering)
 
     def toLayered: LayeredTopologicalOrder[A] = this
   }
@@ -246,7 +246,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     override def iterator: Iterator[InnerElem] = new AbstractIterator[InnerElem] {
       private[this] var start, edgeToFollow = true
       private[this] val nodeIt              = nodes.iterator
-      private[this] val firstNode           = nodeIt.next
+      private[this] val firstNode           = nodeIt.next()
       private[this] val edgeIt              = edges.iterator
 
       def hasNext: Boolean = start || !edgeToFollow || edgeIt.hasNext
@@ -256,10 +256,10 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
           firstNode
         } else if (edgeToFollow) {
           edgeToFollow = false
-          edgeIt.next
+          edgeIt.next()
         } else {
           edgeToFollow = true
-          nodeIt.next
+          nodeIt.next()
         }
     }
 
@@ -272,9 +272,9 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
         @tailrec def ok(prev: NodeT, count: Int): Boolean =
           if (nodesIt.hasNext && edgesIt.hasNext) {
-            val node = nodesIt.next
+            val node = nodesIt.next()
             if (valid(prev) &&
-                edgesIt.next.matches((n: NodeT) => n eq prev, (n: NodeT) => n eq node))
+                edgesIt.next().matches((n: NodeT) => n eq prev, (n: NodeT) => n eq node))
               ok(node, count + 1)
             else false
           } else if (nodesIt.isEmpty && edgesIt.isEmpty) {
@@ -335,8 +335,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     /** $ADDELEM
       *  @return $ADDSUCCESS */
     @inline final def add(elem: InnerElem): Boolean = elem match {
-      case n: InnerNode => this add n.asNodeT[N, E, thisGraph.type](thisGraph)
-      case e: InnerEdge => this add e.asEdgeT[N, E, thisGraph.type](thisGraph)
+      case n: InnerNode => this add n.asNodeT
+      case e: InnerEdge => this add e.asEdgeT
     }
 
     /** $ADDNODE
@@ -483,7 +483,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
         def edges: Iterable[EdgeT] = {
           val out = {
             val outSet = start outgoingTo mid
-            outSet find (_.directed) getOrElse outSet.head
+            outSet find (_.isDirected) getOrElse outSet.head
           }
           val in = (mid outgoingTo start filterNot (_ eq out)).head
           List(out, in)
@@ -510,7 +510,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   /** Stores a value and an edge weight function
     *  for use in weight-based traversals that may be defined by `withMaxWeight`. */
   class Weight(val value: Double, val edgeWeight: EdgeT => Double) {
-    val ordering = Edge weightOrdering edgeWeight
+    val ordering = EdgeOrdering(edgeWeight)
   }
   object Weight {
 
@@ -521,7 +521,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     }
 
     /** Creates a new `Weight` with the given `value` and the default weight function returning `edge.weight`, */
-    def apply(value: Long) = new Weight(value, Edge.defaultWeight _ andThen (_.toDouble))
+    def apply(value: Long) = new Weight(value.toDouble, InnerEdge.defaultWeight _)
   }
 
   /** Template for extended node visitors.
@@ -542,7 +542,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
     /** Instantiates an extended node visitor based on 'visitor'.
       */
-    def apply[N, E[+X] <: EdgeLikeIn[X], U](visitor: (NodeT, Int, Int, => NodeInformer) => U) =
+    def apply[N, E <: EdgeLike[N], U](visitor: (NodeT, Int, Int, => NodeInformer) => U) =
       new ExtendedNodeVisitor[U] {
         def apply(n: NodeT, cnt: Int, depth: Int, inf: => NodeInformer) =
           visitor(n, cnt, depth, inf)
@@ -614,13 +614,13 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   protected trait SubgraphProperties {
 
     /** $SUBGRAPHNODES */
-    def subgraphNodes: NodeFilter
+    def subgraphNodes: NodePredicate
 
     /** $SUBGRAPHEDGES */
-    def subgraphEdges: EdgeFilter
+    def subgraphEdges: EdgePredicate
   }
   protected object SubgraphProperties {
-    def apply[A](t: Iterable[A], nodeFilter: NodeFilter, edgeFilter: EdgeFilter) =
+    def apply[A](t: Iterable[A], nodeFilter: NodePredicate, edgeFilter: EdgePredicate) =
       new ForeachBasedDetachingIterable[A] with SubgraphProperties {
         protected def autarkicForeach[U](f: A => U): Unit = t foreach f
 
@@ -653,7 +653,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   abstract protected class FluentProperties[+This <: FluentProperties[This]] {
     this: This with Properties =>
 
-    protected def newTraverser: (NodeT, Parameters, NodeFilter, EdgeFilter, ElemOrdering, Option[Weight]) => This
+    protected def newTraverser: (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => This
 
     /** $UPDATED `parameters`. */
     final def withParameters(parameters: Parameters): This =
@@ -661,7 +661,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
     /** $UPDATED `subgraphNodes` and/or `subgraphEdges`. */
-    final def withSubgraph(nodes: NodeFilter = anyNode, edges: EdgeFilter = anyEdge): This =
+    final def withSubgraph(nodes: NodePredicate = anyNode, edges: EdgePredicate = anyEdge): This =
       if ((this.subgraphNodes eq nodes) &&
           (this.subgraphEdges eq edges)) this
       else newTraverser(root, parameters, nodes, edges, ordering, maxWeight)
@@ -709,8 +709,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     def nodes: Set[NodeT]
 
     final lazy val (edges: Set[EdgeT], frontierEdges: Set[EdgeT]) = {
-      val edges   = new ArrayBuffer[EdgeT](graphSize / 2)
-      val bridges = new ArrayBuffer[EdgeT](if (mayHaveFrontierEdges) max(graphSize / 100, 16) else 0)
+      val edges   = new ArrayBuffer[EdgeT](thisGraph.size / 2)
+      val bridges = new ArrayBuffer[EdgeT](if (mayHaveFrontierEdges) max(thisGraph.size / 100, 16) else 0)
       for (n <- nodes) n.edges.withFilter(subgraphEdges) foreach { e =>
         if (nonBridge(e)) edges += e
         else bridges += e
@@ -722,7 +722,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       if (this.mayHaveFrontierEdges && that.mayHaveFrontierEdges) {
         // optimize calls of 'contains' because EqSetFacade's is O(N)
         def toEqSet(bridges: Set[EdgeT]) =
-          (new EqHashSet[EdgeT](bridges.size) /: bridges)((eqSet, e) => eqSet += e)
+          bridges.foldLeft(new EqHashSet[EdgeT](bridges.size))((eqSet, e) => eqSet += e)
         val (left, right) =
           if (this.frontierEdges.size > that.frontierEdges.size) (this.frontierEdges, toEqSet(that.frontierEdges))
           else (toEqSet(this.frontierEdges), that.frontierEdges)
@@ -730,14 +730,14 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       } else Set.empty
 
     final def to[
-        G[NN, EE[+X] <: EdgeLikeIn[X]] <: Graph[NN, EE] with GraphLike[NN, EE, G]
+        G[NN, EE <: EdgeLike[NN]] <: Graph[NN, EE] with GraphLike[NN, EE, G]
     ](factory: GraphCoreCompanion[G]): G[N, E] = thisGraph match {
       case g: Graph[N, E] =>
-        factory.from(edges = edges.map(_.toOuter))(g. factory.defaultConfig)
+        factory.from(nodes.map(_.outer), edges.map(_.outer))(factory.defaultConfig)
     }
 
     protected def mayHaveFrontierEdges: Boolean
-    final private def nonBridge(e: EdgeT): Boolean = e.nodes forall nodes.contains
+    final private def nonBridge(e: EdgeT): Boolean = e.ends forall nodes.contains
 
     protected def stringPrefix: String
     override def toString = s"$stringPrefix(${nodes mkString ", "})"
@@ -772,8 +772,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     * @param maxWeight $MAXWEIGHT
     */
   def componentTraverser(parameters: Parameters = Parameters(),
-                         subgraphNodes: NodeFilter = anyNode,
-                         subgraphEdges: EdgeFilter = anyEdge,
+                         subgraphNodes: NodePredicate = anyNode,
+                         subgraphEdges: EdgePredicate = anyEdge,
                          ordering: ElemOrdering = NoOrdering,
                          maxWeight: Option[Weight] = None): ComponentTraverser
 
@@ -794,8 +794,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     * @param maxWeight $MAXWEIGHT
     */
   def strongComponentTraverser(parameters: Parameters = Parameters(),
-                               subgraphNodes: NodeFilter = anyNode,
-                               subgraphEdges: EdgeFilter = anyEdge,
+                               subgraphNodes: NodePredicate = anyNode,
+                               subgraphEdges: EdgePredicate = anyEdge,
                                ordering: ElemOrdering = NoOrdering,
                                maxWeight: Option[Weight] = None): StrongComponentTraverser
 
@@ -825,7 +825,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       if (this.root eq root) this
       else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
-    protected def apply[U](pred: NodeFilter = noNode, visitor: A => U = empty): Option[NodeT]
+    protected def apply[U](pred: NodePredicate = noNode, visitor: A => U = empty): Option[NodeT]
 
     final protected def requireSuccessors[A](block: => A): A = {
       val direction = parameters.direction
@@ -844,7 +844,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       *         a. there exists no path to such a node or
       *         a. there exists a path to such a node but $DUETOSUBG
       */
-    final def findSuccessor[U](pred: NodeFilter)(implicit visitor: A => U = empty): Option[NodeT] =
+    final def findSuccessor[U](pred: NodePredicate)(implicit visitor: A => U = empty): Option[NodeT] =
       apply(pred, visitor)
 
     /** Checks whether `potentialSuccessor` is a successor of this node $CONSIDERING
@@ -873,7 +873,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       *         a. there exists no path from such a node to this node or
       *         a. there exists a path from such a node to `root` but $DUETOSUBG
       */
-    final def findPredecessor[U](pred: NodeFilter)(implicit visitor: A => U = empty): Option[NodeT] =
+    final def findPredecessor[U](pred: NodePredicate)(implicit visitor: A => U = empty): Option[NodeT] =
       withParameters(parameters.withDirection(Predecessors))(pred, visitor)
 
     /** Checks whether `potentialPredecessor` is a predecessor of `root` $CONSIDERING
@@ -904,7 +904,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       *         a. there exists no connection to such a node or
       *         a. there exists a connection to such a node but $DUETOSUBG
       */
-    final def findConnected[U](pred: NodeFilter)(implicit visitor: A => U = empty): Option[NodeT] =
+    final def findConnected[U](pred: NodePredicate)(implicit visitor: A => U = empty): Option[NodeT] =
       withParameters(parameters.withDirection(AnyConnected))(pred, visitor)
 
     /** Checks whether `potentialConnected` is a node (not necessarily directly)
@@ -931,7 +931,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       *         a. there exists no path to such a node or
       *         a. there exists a path to such a node but $DUETOSUBG
       */
-    def pathUntil[U](pred: NodeFilter)(implicit visitor: A => U = empty): Option[Path]
+    def pathUntil[U](pred: NodePredicate)(implicit visitor: A => U = empty): Option[Path]
 
     /** Finds a path from `root` to `potentialSuccessor` $CONSIDERING
       *
@@ -953,7 +953,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       * @return $SHORTESTPATHRET
       */
     @inline final def shortestPathTo[U](potentialSuccessor: NodeT)(implicit visitor: A => U = empty): Option[Path] =
-      shortestPathTo(potentialSuccessor, Edge.defaultWeight, visitor)
+      shortestPathTo(potentialSuccessor, InnerEdge.defaultWeight, visitor)
 
     /** $SHORTESTPATH
       *
@@ -1041,8 +1041,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
       *  elements visited.
       */
     final def toGraph: Graph[N, E] = thisGraph match {
-      case g: Graph[N, E] =>
-        val b = Graph.newBuilder(g. Graph.defaultConfig)
+      case _: Graph[N, E] =>
+        val b = Graph.newBuilder[N, E](Graph.defaultConfig)
         b += root
         val edgeTraverser = this match {
           case e: InnerEdgeTraverser => e
@@ -1054,7 +1054,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
         b.result
     }
 
-    final protected def nonOverflowingOrderMultipliedBy_2(): Int =
+    final protected def nonOverflowingOrderMultipliedBy_2: Int =
       if (order > (Int.MaxValue >> 1)) order else order << 1
   }
 
@@ -1075,8 +1075,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     */
   def innerNodeTraverser(root: NodeT,
                          parameters: Parameters = Parameters(),
-                         subgraphNodes: NodeFilter = anyNode,
-                         subgraphEdges: EdgeFilter = anyEdge,
+                         subgraphNodes: NodePredicate = anyNode,
+                         subgraphEdges: EdgePredicate = anyEdge,
                          ordering: ElemOrdering = NoOrdering,
                          maxWeight: Option[Weight] = None): InnerNodeTraverser
 
@@ -1097,15 +1097,15 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     */
   def outerNodeTraverser(root: NodeT,
                          parameters: Parameters = Parameters(),
-                         subgraphNodes: NodeFilter = anyNode,
-                         subgraphEdges: EdgeFilter = anyEdge,
+                         subgraphNodes: NodePredicate = anyNode,
+                         subgraphEdges: EdgePredicate = anyEdge,
                          ordering: ElemOrdering = NoOrdering,
                          maxWeight: Option[Weight] = None): OuterNodeTraverser
 
   /** Controls the properties of inner-edge graph traversals. $TOSTART
     */
   abstract class InnerEdgeTraverser extends Traverser[EdgeT, InnerEdgeTraverser] {
-    final protected def sizeHint: Int = graphSize
+    final protected def sizeHint: Int = thisGraph.size
   }
 
   /** Creates a [[InnerEdgeTraverser]] based on `scala.collection.Iterable[EdgeT]`.
@@ -1118,15 +1118,15 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     */
   def innerEdgeTraverser(root: NodeT,
                          parameters: Parameters = Parameters(),
-                         subgraphNodes: NodeFilter = anyNode,
-                         subgraphEdges: EdgeFilter = anyEdge,
+                         subgraphNodes: NodePredicate = anyNode,
+                         subgraphEdges: EdgePredicate = anyEdge,
                          ordering: ElemOrdering = NoOrdering,
                          maxWeight: Option[Weight] = None): InnerEdgeTraverser
 
   /** Controls the properties of outer-edge graph traversals. $TOSTART
     */
-  abstract class OuterEdgeTraverser extends Traverser[E[N], OuterEdgeTraverser] {
-    final protected def sizeHint: Int = graphSize
+  abstract class OuterEdgeTraverser extends Traverser[E, OuterEdgeTraverser] {
+    final protected def sizeHint: Int = thisGraph.size
   }
 
   /** Creates a [[OuterEdgeTraverser]] based on `scala.collection.Iterable[E[N]]`.
@@ -1140,15 +1140,15 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     */
   def outerEdgeTraverser(root: NodeT,
                          parameters: Parameters = Parameters(),
-                         subgraphNodes: NodeFilter = anyNode,
-                         subgraphEdges: EdgeFilter = anyEdge,
+                         subgraphNodes: NodePredicate = anyNode,
+                         subgraphEdges: EdgePredicate = anyEdge,
                          ordering: ElemOrdering = NoOrdering,
                          maxWeight: Option[Weight] = None): OuterEdgeTraverser
 
   /** Controls the properties of inner-element graph traversals. $TOSTART
     */
   abstract protected class InnerElemTraverser extends Traverser[InnerElem, InnerElemTraverser] {
-    final protected def sizeHint: Int = order + graphSize
+    final protected def sizeHint: Int = order + thisGraph.size
   }
 
   /** Creates a [[InnerElemTraverser]] based on `scala.collection.Iterable[InnerElem]`.
@@ -1162,15 +1162,15 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     */
   def innerElemTraverser(root: NodeT,
                          parameters: Parameters = Parameters(),
-                         subgraphNodes: NodeFilter = anyNode,
-                         subgraphEdges: EdgeFilter = anyEdge,
+                         subgraphNodes: NodePredicate = anyNode,
+                         subgraphEdges: EdgePredicate = anyEdge,
                          ordering: ElemOrdering = NoOrdering,
                          maxWeight: Option[Weight] = None): InnerElemTraverser
 
   /** Controls the properties of outer-element graph traversals. $TOSTART
     */
-  trait OuterElemTraverser extends Traverser[OuterElem[N, E], OuterElemTraverser] {
-    final protected def sizeHint: Int = order + graphSize
+  trait OuterElemTraverser extends Traverser[OuterElem, OuterElemTraverser] {
+    final protected def sizeHint: Int = order + thisGraph.size
   }
 
   /** Creates a [[OuterElemTraverser]] based on `scala.collection.Iterable[OuterElem]`.
@@ -1184,8 +1184,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     */
   def outerElemTraverser(root: NodeT,
                          parameters: Parameters = Parameters(),
-                         subgraphNodes: NodeFilter = anyNode,
-                         subgraphEdges: EdgeFilter = anyEdge,
+                         subgraphNodes: NodePredicate = anyNode,
+                         subgraphEdges: EdgePredicate = anyEdge,
                          ordering: ElemOrdering = NoOrdering,
                          maxWeight: Option[Weight] = None): OuterElemTraverser
 
@@ -1207,8 +1207,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     */
   def innerNodeDownUpTraverser(root: NodeT,
                                parameters: Parameters = Parameters(),
-                               subgraphNodes: NodeFilter = anyNode,
-                               subgraphEdges: EdgeFilter = anyEdge,
+                               subgraphNodes: NodePredicate = anyNode,
+                               subgraphEdges: EdgePredicate = anyEdge,
                                ordering: ElemOrdering = NoOrdering,
                                maxWeight: Option[Weight] = None): InnerNodeDownUpTraverser
 
@@ -1229,8 +1229,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     */
   def outerNodeDownUpTraverser(root: NodeT,
                                parameters: Parameters = Parameters(),
-                               subgraphNodes: NodeFilter = anyNode,
-                               subgraphEdges: EdgeFilter = anyEdge,
+                               subgraphNodes: NodePredicate = anyNode,
+                               subgraphEdges: EdgePredicate = anyEdge,
                                ordering: ElemOrdering = NoOrdering,
                                maxWeight: Option[Weight] = None): OuterNodeDownUpTraverser
 

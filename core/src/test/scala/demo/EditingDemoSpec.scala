@@ -59,7 +59,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       g - 2 ~ 3 shouldBe Graph(1, 2, 3)
       g -- (List(2), List(3 ~ 3)) shouldBe Graph(1, 3)
 
-      def h = mutable.Graph.from[Int, AnyEdge[Int]](nodes = g.nodes.toOuter, edges = g.edges.toOuter)
+      def h = mutable.Graph.from[Int, AnyEdge[Int]](nodes = g.nodes.outerIterable, edges = g.edges.outerIterable)
       h addOne 0 shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
       (h += 3 ~> 1) shouldBe Graph[Int, AnyEdge](1, 2, 3, 2 ~ 3, 3 ~> 1)
     }
@@ -104,7 +104,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       import scalax.collection.edge.LBase._
       object StringLabel extends LEdgeImplicits[String]
 
-      (0 /: g.edges)((sum, e) =>
+      g.edges.foldLeft(0)((sum, e) =>
         e.edge match {
           case s :~> t + (l: String) if l contains 'A' =>
             sum + s.outDegree + t.outDegree
@@ -142,7 +142,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       import scalax.collection.edge.Implicits._
       val g = Graph(1 ~ 2 % 4, 2 ~ 3 % 2, 1 ~> 3 % 5, 1 ~ 5 % 3, 3 ~ 5 % 2, 3 ~ 4 % 1, 4 ~> 4 % 1, 4 ~> 5 % 0)
       g.order shouldBe 5
-      g.graphSize shouldBe 8
+      g.size shouldBe 8
       g.size shouldBe 13
       g.totalDegree shouldBe 16
       g.degreeSet shouldBe SortedSet(4, 3, 2)

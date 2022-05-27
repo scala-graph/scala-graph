@@ -236,7 +236,7 @@ object LkBase {
   type LkEdgeBound[+N] = LkHyperEdgeBound[N] with UnDiEdge[N]
 
   /** Everything common to key-weighted edge companion objects. */
-  trait LkEdgeCompanion[E[+X] <: EdgeLikeIn[X] with LkEdgeBound[X]] extends LEdgeCompanion[E]
+  trait LkEdgeCompanion[E <: EdgeLike[N] with LkEdgeBound[X]] extends LEdgeCompanion[E]
 }
 
 /** Base traits for weighted and labeled edges. */
@@ -330,11 +330,11 @@ object WkLkBase {
   type WkLkHyperEdgeBound[+N] = WLHyperEdgeBound[N] with WkLkEdge[N]
 
   /** Everything common to weighted, key-labeled hyperedge companion objects. */
-  trait WkLkHyperEdgeCompanion[E[+X] <: EdgeLikeIn[X] with WkLkHyperEdgeBound[X]] extends WLHyperEdgeCompanion[E]
+  trait WkLkHyperEdgeCompanion[E <: EdgeLike[N] with WkLkHyperEdgeBound[X]] extends WLHyperEdgeCompanion[E]
   type WkLkEdgeBound[+N] = WkLkHyperEdgeBound[N] with UnDiEdge[N]
 
   /** Everything common to weighted, key-labeled edge companion objects. */
-  trait WkLkEdgeCompanion[E[+X] <: EdgeLikeIn[X] with WkLkEdgeBound[X]] extends WLEdgeCompanion[E]
+  trait WkLkEdgeCompanion[E <: EdgeLike[N] with WkLkEdgeBound[X]] extends WLEdgeCompanion[E]
 }
 
 /** Base traits for custom edges - hence the `C` prefix. Note that custom edges need only
@@ -354,7 +354,7 @@ object CBase {
     def attributes: P
   }
   type CHyperEdgeBound[+N] = EdgeLikeIn[N] with HyperEdge[N] with Attributes[N] with Serializable
-  trait CEdgeCompanionBase[E[+X] <: EdgeLikeIn[X] with CHyperEdgeBound[X]] extends EdgeCompanionBase[E] {
+  trait CEdgeCompanionBase[E <: EdgeLike[N] with CHyperEdgeBound[X]] extends EdgeCompanionBase[E] {
     protected[collection] type P <: Product
   }
 

@@ -44,7 +44,7 @@ package object json {
 =======
   type Descriptor[N]     = descriptor.Descriptor[N]
   type NodeDescriptor[N] = descriptor.NodeDescriptor[N]
-  type EdgeDescriptorBase[N, E[+X] <: EdgeLikeIn[X], +C <: EdgeCompanionBase[E]] =
+  type EdgeDescriptorBase[N, E <: EdgeLike[N], +C <: EdgeCompanionBase[E]] =
     descriptor.EdgeDescriptorBase[N, E, C]
   type EdgeDescriptor[N, E[+X] <: UnDiEdge[X], +C <: EdgeCompanion[E]] = descriptor.EdgeDescriptor[N, E, C]
   type WEdgeDescriptor[N, E[+X] <: UnDiEdge[X] with WEdge[X], +C <: WEdgeCompanion[E]] =

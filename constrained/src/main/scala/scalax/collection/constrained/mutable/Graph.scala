@@ -70,7 +70,7 @@ abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](
   @inline final override def empty = DefaultGraphImpl.empty(config)
 
   @inline final override def clone: this.type =
-    graphCompanion.fromWithoutCheck[N, E](nodes.toOuter, edges.toOuter)(config).asInstanceOf[this.type]
+    graphCompanion.fromWithoutCheck[N, E](nodes.outer, edges.outer)(config).asInstanceOf[this.type]
 
   @SerialVersionUID(8082L)
   protected class NodeBase(override val outer: N, hints: ArraySet.Hints)

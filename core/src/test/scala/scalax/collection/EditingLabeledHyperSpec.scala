@@ -20,9 +20,9 @@ private class EditingLabeledHyperMutable extends RefSpec with Matchers {
 
           implicit val factory = LHyperEdge
           (g +~+= (3, 4, 5)) (outerLabels(1))
-          g should have('order(5), 'graphSize(3))
+          g should have('order(5), 'size(3))
           g.addLEdge(4, 5, 6)(outerLabels(2)) should be(true)
-          g should have('order(6), 'graphSize(4))
+          g should have('order(6), 'size(4))
 
           val innerLabels: collection.mutable.Set[_ >: StringLabel] =
             g.edges filter (_.isLabeled) map (_.label)

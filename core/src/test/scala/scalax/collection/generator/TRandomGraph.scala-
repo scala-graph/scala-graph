@@ -23,7 +23,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
   /** Creates a `RandomGraph` generator that produces a graph
     *  with a constant order, constant `NodeDegreeRange` and a single edge type.
     */
-  def generator[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def generator[N, E <: EdgeLike[N], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       edgeCompanion: EdgeCompanionBase[E],
       gCompanion: GraphCompanion[G],
       connected: Boolean)(implicit edgeTag: ClassTag[E[N]], nodeTag: ClassTag[N], metrics: Metrics[N]) =
@@ -92,7 +92,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
 
     def `should have distinct weights` {
       val weights = MSet.empty[Long] ++ (g.edges map (_.weight))
-      weights.size should be(g.graphSize)
+      weights.size should be(g.size)
     }
   }
   object `default labeled random graph edges` {
@@ -101,7 +101,7 @@ class TRandomGraphTest extends RefSpec with Matchers {
 
     def `should have distinct labels` {
       val labels = MSet.empty[Any] ++ (g.edges map (_.label))
-      labels.size should be(g.graphSize)
+      labels.size should be(g.size)
     }
   }
   object IgnoreThis {

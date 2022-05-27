@@ -268,6 +268,8 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
         ignoreMultiEdges: Boolean = true
     ): Int
 
+    final protected[collection] def asNodeT: NodeT = this.asInstanceOf[NodeT]
+
     def canEqual(that: Any) = true
 
     override def equals(other: Any) = other match {
@@ -325,15 +327,21 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       override def isDefined               = false
     }
   }
+
+  /** Ordering for the path dependent type EdgeT. */
   sealed trait EdgeOrdering extends Ordering[EdgeT] with ElemOrdering
 
   /** Ordering for the path dependent type EdgeT. */
   object EdgeOrdering extends Serializable {
 
-    /** Creates a new EdgeOrdering with `compare` calling the supplied `cmp`. */
-    def apply(cmp: (EdgeT, EdgeT) => Int) = new EdgeOrdering {
+    def apply(cmp: (EdgeT, EdgeT) => Int): EdgeOrdering = new EdgeOrdering {
       def compare(a: EdgeT, b: EdgeT): Int = cmp(a, b)
     }
+
+    def apply(weight: EdgeT => Double): EdgeOrdering = new EdgeOrdering {
+      def compare(x: EdgeT, y: EdgeT): Int = Ordering[Double].compare(weight(x), weight(y))
+    }
+
     object None extends EdgeOrdering {
       def compare(a: EdgeT, b: EdgeT): Int = noneCompare
       override def isDefined               = false
@@ -377,8 +385,11 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     ): String =
       stringPrefix + "(" + asSortedString(separator)(ord) + ")"
 
-    /** Iterator over the node set mapping inner nodes to outer nodes. */
+    /** Iterator over this `NodeSet` mapped to outer nodes. */
     @inline final def outerIterator: Iterator[N] = iterator map (_.outer)
+
+    /** `Iterable` over this `NodeSet` mapped to outer nodes. */
+    @inline final def outerIterable: Iterable[N] = map(_.outer)
 
     /** Converts this node set to a set of outer nodes. */
     def toOuter: Set[N] = {
@@ -437,6 +448,8 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       a -= this
       new immutable.EqSet(a)
     }
+
+    final protected[collection] def asEdgeT: EdgeT = this.asInstanceOf[EdgeT]
 
     override def canEqual(that: Any): Boolean =
       that.isInstanceOf[GraphBase[N, E, This]#InnerEdge] ||
@@ -563,8 +576,11 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     /** The maximum arity of all edges in this edge set. */
     def maxArity: Int = if (size == 0) 0 else max(InnerEdge.ArityOrdering).arity
 
-    /** Iterator over the node set mapping inner nodes to outer nodes. */
+    /** `Iterator` over this `EdgeSet` mapped to outer edges. */
     @inline final def outerIterator: Iterator[E] = iterator map (_.outer)
+
+    /** `Iterable` over this `EdgeSet` mapped to outer edges. */
+    @inline final def outerIterable: Iterable[E] = map(_.outer)
 
     /** Converts this edge set to a set of outer edges. */
     def toOuter: Set[E] = {
@@ -587,7 +603,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       }
     }
 
-    def diff(that: AnySet[EdgeT]): AnySet[EdgeT] = this -- that
+    def diff(that: AnySet[EdgeT]): AnySet[EdgeT] = this diff that
   }
 
   /** The edge set of this `Graph` commonly referred to as E(G).

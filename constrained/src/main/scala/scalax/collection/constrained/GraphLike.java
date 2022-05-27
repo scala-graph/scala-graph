@@ -27,7 +27,7 @@ protected type Config<:GraphConfig with GenConstrainedConfig
         override def stringPrefix:String=constraintFactory.stringPrefix getOrElse super.stringPrefix
 
         override protected def plusPlus(newNodes:Iterable[N],newEdges:Iterable[E[N]]):This[N,E]=
-        graphCompanion.fromWithoutCheck[N,E](nodes.toOuter++newNodes,edges.toOuter++newEdges)(config)
+        graphCompanion.fromWithoutCheck[N,E](nodes.outer++newNodes,edges.outer++newEdges)(config)
 
         override protected def minusMinus(delNodes:Iterable[N],delEdges:Iterable[E[N]]):This[N,E]={
         val delNodesEdges=minusMinusNodesEdges(delNodes,delEdges)
@@ -55,7 +55,7 @@ final protected def withoutChecks[R](exec:=>R):R={
         case out:OutParam[_,_]=>
         out match{
         case n:InnerNodeParam[N]=>this+?n.value
-        case e:InnerEdgeParam[N,E,_,E]=>this+#?e.asEdgeT[N,E,this.type](this).toOuter
+        case e:InnerEdgeParam[N,E,_,E]=>this+#?e.asEdgeT[N,E,this.type](this).outer
         }
         }
 
@@ -87,7 +87,7 @@ protected def+#?(e:E[N]):Either[ConstraintViolation,This[N,E]]
         case out:OutParam[_,_]=>
         out match{
         case n:InnerNodeParam[N]=>this-?n.value
-        case e:InnerEdgeParam[N,E,_,E]=>this-#?e.asEdgeT[N,E,this.type](this).toOuter
+        case e:InnerEdgeParam[N,E,_,E]=>this-#?e.asEdgeT[N,E,this.type](this).outer
         }
         }
 

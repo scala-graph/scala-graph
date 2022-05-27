@@ -28,7 +28,7 @@ import edge.WLBase.{WLEdgeCompanion, WLHyperEdgeCompanion}
   * @author Peter Empen
   */
 abstract class RandomGraph[N,
-                           E[+X] <: EdgeLikeIn[X],
+                           E <: EdgeLike[N],
                            G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
     val graphCompanion: GraphCompanion[G],
     val order: Int,
@@ -363,7 +363,7 @@ abstract class RandomGraph[N,
   */
 object RandomGraph {
 
-  def apply[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def apply[N, E <: EdgeLike[N], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       order: Int,
       nodeFactory: => N,
@@ -384,7 +384,7 @@ object RandomGraph {
       val graphConfig = graphCompanion.defaultConfig
     }
 
-  def apply[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def apply[N, E <: EdgeLike[N], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       metrics: Metrics[N],
       edgeCompanions: Set[EdgeCompanionBase[E]])(implicit edgeTag: ClassTag[E[N]],

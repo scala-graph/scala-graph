@@ -37,7 +37,7 @@ private class Mapping[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
     def `has correctly mapped nodes`: Unit = {
       val g = originalG map fNode
 
-      originalG.nodes zip g.nodes.toOuter foreach { case (original, mapped) =>
+      originalG.nodes zip g.nodes.outerIterator foreach { case (original, mapped) =>
         fNode(original) == mapped
       }
     }

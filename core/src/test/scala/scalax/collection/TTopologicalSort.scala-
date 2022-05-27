@@ -120,7 +120,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
         Topo.unexpectedCycle,
         order =>
           new Topo.Checker(typicalDay) {
-            checkOuterNodes(order.toOuter)
+            checkOuterNodes(order.outer)
         }
       )
     }
@@ -134,7 +134,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
         Topo.unexpectedCycle,
         order =>
           new Topo.Checker(g) {
-            checkOuterNodes(order.toOuter)
+            checkOuterNodes(order.outer)
             for {
               outer <- someOuter
               inner = graph get outer
@@ -155,7 +155,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
         Topo.unexpectedCycle,
         order =>
           new Topo.Checker(g) {
-            checkOuterNodes(order.toOuter)
+            checkOuterNodes(order.outer)
         }
       )
     }
@@ -167,7 +167,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
     given(factory(_1 ~> _2, _3 ~> _4)) {
       _.topologicalSort.fold(
         Topo.unexpectedCycle,
-        _.toLayered.toOuter.toList match {
+        _.toLayered.outer.toList match {
           case (layer_0 :: layer_1 :: Nil) =>
             layer_0._2.toList.sorted should be(expectedLayer_0)
             layer_1._2.toList.sorted should be(expectedLayer_1)
@@ -206,7 +206,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
           Topo.unexpectedCycle,
           order =>
             new Topo.Checker(g) {
-              checkOuterNodes(order.toOuter)
+              checkOuterNodes(order.outer)
           }
         )
     }

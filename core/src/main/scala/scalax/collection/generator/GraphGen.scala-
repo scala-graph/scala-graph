@@ -7,7 +7,7 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.rng.Seed
 import org.scalacheck.util.Buildable._
 
-import GraphPredef.EdgeLikeIn, GraphEdge._
+import GraphEdge._
 import generic.GraphCompanion
 
 /** A `Graph` generator in terms of
@@ -29,7 +29,7 @@ import generic.GraphCompanion
   *
   * @author Peter Empen
   */
-class GraphGen[N, E[+X] <: EdgeLikeIn[X], G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+class GraphGen[N, E <: EdgeLike[N], G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
     val graphCompanion: GraphCompanion[G],
     val order: Int,
     nodeGen: Gen[N],
@@ -86,7 +86,7 @@ class GraphGen[N, E[+X] <: EdgeLikeIn[X], G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[
   */
 object GraphGen {
 
-  def apply[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def apply[N, E <: EdgeLike[N], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       order: Int,
       nodeGen: Gen[N],
@@ -105,7 +105,7 @@ object GraphGen {
       weightFactory,
       labelFactory)
 
-  def apply[N, E[+X] <: EdgeLikeIn[X], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def apply[N, E <: EdgeLike[N], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       metrics: Metrics[N],
       edgeCompanions: Set[EdgeCompanionBase[E]])(implicit edgeTag: ClassTag[E[N]],

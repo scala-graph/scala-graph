@@ -125,7 +125,7 @@ class Export[N, E <: EdgeLike[N]](graph: Graph[N, E]) {
     */
   def format(dotRoot: DotRootGraph, dotAST: DotAST, root: DotCluster, spacing: Spacing): String = {
     val res    = new StringBuilder(graph.size * 20)
-    val edgeOp = if (dotRoot.directed) "->" else "--"
+    val edgeOp = if (dotRoot.isDirected) "->" else "--"
     var level  = 0
     def indent(ofGraph: Boolean): Unit =
       if (ofGraph)

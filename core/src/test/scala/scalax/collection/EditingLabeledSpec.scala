@@ -46,7 +46,7 @@ private class EditingLabeledMutable extends RefSpec with Matchers {
       val str = "A"
       val label: StringLabel = Some(str)
       val g = mutable.Graph(2 ~ 3, (2 ~+# 3) (label))
-      g should have('order(2), 'graphSize(2))
+      g should have('order(2), 'size(2))
 
       import edge.LBase.{LEdgeImplicits}
       object StringLabelImplicit extends LEdgeImplicits[StringLabel]
@@ -60,7 +60,7 @@ private class EditingLabeledMutable extends RefSpec with Matchers {
       implicit val factory = LDiEdge
       val listLabel = List(1, 0, 1)
       g.addLEdge(3, 4)(listLabel) should be(true)
-      g should have('order(3), 'graphSize(3))
+      g should have('order(3), 'size(3))
       val findAdded = g.edges find (3 ~> 4)
       findAdded should be('isDefined)
       val added: g.EdgeT = findAdded.get
@@ -78,7 +78,7 @@ private class EditingLabeledMutable extends RefSpec with Matchers {
           case LDiEdge(s, t, l) => g upsert (LDiEdge(s.value, t.value)(modLabel))
         }
       }
-      g should have('graphSize (2))
+      g should have('size (2))
       g.edges foreach { _.label should be(modLabel) }
     }
      */

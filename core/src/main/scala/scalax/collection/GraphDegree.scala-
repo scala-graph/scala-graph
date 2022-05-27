@@ -4,7 +4,7 @@ import scala.language.postfixOps
 import scala.collection.{SortedMap, SortedSet}
 import scala.collection.mutable.{Map => MutableMap}
 
-import GraphPredef.EdgeLikeIn
+import GraphEdge.EdgeLike
 
 /** A trait for graph degree calculations.
   *
@@ -40,8 +40,8 @@ trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
   object OutDegree     extends DegreeFunction { def apply(n: NodeT) = n.outDegree }
 
   trait Filter[T] extends Function1[T, Boolean]
-//  trait NodeFilter extends Filter[NodeT]
-//  implicit object AnyNode extends NodeFilter { def apply = (n: NodeT) => true }
+//  trait NodePredicate extends Filter[NodeT]
+//  implicit object AnyNode extends NodePredicate { def apply = (n: NodeT) => true }
   /** The total degree of this graph equaling to the sum
     * of the degrees over all nodes or `0` if this graph is empty.
     *

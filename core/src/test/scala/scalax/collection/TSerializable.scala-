@@ -130,7 +130,7 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
     given(factory(e)) { g =>
       val back = store.test[MyNode, WLDiEdge](g)
 
-      back.graphSize should be(1)
+      back.size should be(1)
 
       val inner_1 = (back get n1)
       inner_1.diSuccessors should have size (1)

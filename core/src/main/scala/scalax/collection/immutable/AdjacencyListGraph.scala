@@ -72,14 +72,14 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
 
   def incl(node: N): This[N, E] =
     if (this contains node) this
-    else copy(nodes.toOuter.toBuffer += node, edges.toOuter)
+    else copy(nodes.outerIterable concat Iterable(node), edges.toOuter)
 
   def incl(edge: E): This[N, E] =
     if (this contains edge) this
-    else copy(nodes.toOuter, edges.toOuter.toBuffer += edge)
+    else copy(nodes.outerIterable, edges.outerIterable concat Iterable(edge))
 
   def excl(node: N): This[N, E] = nodes find (nf => nf.outer == node) match {
-    case Some(nf) => copy(nodes.toOuter.toBuffer -= node, edges.toOuter.toBuffer --= nf.edges map (_.outer))
+    case Some(nf) => copy(nodes.outerIterator.toBuffer -= node, edges.outerIterator.toBuffer --= nf.edges map (_.outer))
     case None     => this
   }
 

@@ -126,15 +126,15 @@ class TConstrained[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, C
       g7 should have size 7
       given(g6, 4) both (_ + _, _ +? _) should beRejected[Int, UnDiEdge]
       given(g6, 3 ~ 4) both (_ + _, _ +? _) should beRejected[Int, UnDiEdge]
-      given(g6, 1 ~> 2) both (_ + _, _ +? _) should meet((_: UnDi).graphSize == 4)
+      given(g6, 1 ~> 2) both (_ + _, _ +? _) should meet((_: UnDi).size == 4)
 
       given(g6, 3) both (_ - _, _ -? _) should beRejected[Int, UnDiEdge]
       given(g6, 2 ~ 3) both (_ - _, _ -? _) should beRejected[Int, UnDiEdge]
-      given(g7, 3 ~> 1) both (_ - _, _ -? _) should meet((_: UnDi).graphSize == 3)
+      given(g7, 3 ~> 1) both (_ - _, _ -? _) should meet((_: UnDi).size == 3)
 
       given(g6, List(2 ~ 3)) both (_ -- _, _ --? _) should beRejected[Int, UnDiEdge]
       given(g6, List(1, 2, 3)) both (_ -- _, _ --? _) should meet((_: UnDi).isEmpty)
-      given(g7, List(3 ~> 1)) both (_ -- _, _ --? _) should meet((_: UnDi).graphSize == 3)
+      given(g7, List(3 ~> 1)) both (_ -- _, _ --? _) should meet((_: UnDi).size == 3)
     }
   }
 
@@ -161,7 +161,7 @@ class TConstrained[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, C
         implicit val config: Config = EvenNode
 
         val g1 = factory[Int, Nothing](2, 4)
-        g1 should have('order(2), 'graphSize(0))
+        g1 should have('order(2), 'size(0))
       }
       {
         implicit val config: Config = EvenNode && MinDegree_2

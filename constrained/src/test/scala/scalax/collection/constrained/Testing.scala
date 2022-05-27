@@ -4,7 +4,7 @@ import org.scalatest.matchers.{MatchResult, Matcher}
 import org.scalatest.matchers.should.Matchers
 
 import scalax.collection.{Graph => SimpleGraph}
-import scalax.collection.GraphPredef.EdgeLikeIn
+import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.constrained.generic.GraphConstrainedCompanion
 
 trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] { this: Matchers =>
@@ -19,13 +19,13 @@ trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
     g should ===(before)
   }
 
-  protected type PlainOp[N, E[+X] <: EdgeLikeIn[X], A]   = (CC[N, E], A) => CC[N, E]
-  protected type VerboseOp[N, E[+X] <: EdgeLikeIn[X], A] = (CC[N, E], A) => Either[ConstraintViolation, CC[N, E]]
+  protected type PlainOp[N, E <: EdgeLike[N], A]   = (CC[N, E], A) => CC[N, E]
+  protected type VerboseOp[N, E <: EdgeLike[N], A] = (CC[N, E], A) => Either[ConstraintViolation, CC[N, E]]
   protected type Results[N, E[+X] <: EdgeLikeIn[X]]      = (CC[N, E], CC[N, E], Either[ConstraintViolation, CC[N, E]])
 
-  protected def given[N, E[+X] <: EdgeLikeIn[X], A](g: CC[N, E], arg: A): (CC[N, E], A) = (g, arg)
+  protected def given[N, E <: EdgeLike[N], A](g: CC[N, E], arg: A): (CC[N, E], A) = (g, arg)
 
-  implicit final protected class GraphAndArg[N, E[+X] <: EdgeLikeIn[X], A](val gA: (CC[N, E], A)) {
+  implicit final protected class GraphAndArg[N, E <: EdgeLike[N], A](val gA: (CC[N, E], A)) {
     def both(op1: PlainOp[N, E, A], op2: VerboseOp[N, E, A]): Results[N, E] = {
       val (before, arg) = gA
       (before, op1(isolated(before), arg), op2(isolated(before), arg))
@@ -81,7 +81,7 @@ trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
 
   private def isolated[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): CC[N, E] =
     g match {
-      case mG: mutable.Graph[N, E] => factory.from(mG.nodes.toOuter, mG.edges.toOuter)(mG.mG.config)
+      case mG: mutable.Graph[N, E] => factory.from(mG.nodes.outer, mG.edges.outer)(mG.mG.config)
       case iG                      => iG
     }
 }

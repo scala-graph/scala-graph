@@ -14,7 +14,7 @@ import scalax.collection.mutable.{GraphLike => SimpleGraphLike}
  */
 trait GraphOps[
     N,
-    E[+X] <: EdgeLikeIn[X],
+    E <: EdgeLike[N],
     +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[Param[X, Y]] with Graph[X, Y]
 ] { _: This[N, E] with SimpleGraphLike[N, E, This] with GraphOps[N, E, This] =>
 
@@ -34,7 +34,7 @@ trait GraphOps[
     case n: OuterNode[N]               => this +=? n.value
     case n: InnerNodeParam[N]          => this +=? n.value
     case e: OuterEdge[N, E]            => this +=#? e.edge
-    case e: InnerEdgeParam[N, E, _, E] => this +=#? e.asEdgeTProjection[N, E].toOuter
+    case e: InnerEdgeParam[N, E, _, E] => this +=#? e.asEdgeTProjection[N, E].outer
   }
 
   /** Same as `++=` but $Info. */
@@ -56,7 +56,7 @@ trait GraphOps[
     case n: OuterNode[N]               => this -=? n.value
     case n: InnerNodeParam[N]          => this -=? n.value
     case e: OuterEdge[N, E]            => this -=#? e.edge
-    case e: InnerEdgeParam[N, E, _, E] => this -=#? e.asEdgeTProjection[N, E].toOuter
+    case e: InnerEdgeParam[N, E, _, E] => this -=#? e.asEdgeTProjection[N, E].outer
   }
 
   /** Same as `--=` but $Info. */

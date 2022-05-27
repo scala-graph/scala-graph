@@ -2,7 +2,7 @@ package scalax.collection
 
 import language.postfixOps
 
-import GraphPredef.EdgeLikeIn
+import GraphEdge.EdgeLike
 import mutable.ExtBitSet
 
 /** Adds bit fields to the graph and its nodes facilitating fast storage and retrieval of
@@ -14,7 +14,7 @@ import mutable.ExtBitSet
   *
   *  @author Peter Empen
   */
-protected trait State[N, E[+X] <: EdgeLikeIn[X]] {
+protected trait State[N, E <: EdgeLike[N]] {
   this: GraphTraversalImpl[N, E] =>
 
   import State._
@@ -42,10 +42,10 @@ protected trait State[N, E[+X] <: EdgeLikeIn[X]] {
 
   /** Avoid calling this directly, prefer `withHandle` instead. */
   protected def nextHandle: Handle = monitor.synchronized {
-    def clearNodes(hasDirtyExt: Boolean) {
+    def clearNodes(hasDirtyExt: Boolean): Unit = {
       clearNodeStates(dirty.flags, if (hasDirtyExt) dirty.flagsExt else null)
       dirty.flags = 0L
-      if (hasDirtyExt) dirty.flagsExt.clear
+      if (hasDirtyExt) dirty.flagsExt.clear()
     }
     val free         = ~(inUse.flags | dirty.flags)
     val nrDirtyFlags = java.lang.Long.bitCount(dirty.flags)
@@ -129,7 +129,7 @@ protected trait State[N, E[+X] <: EdgeLikeIn[X]] {
     @inline final protected[collection] def visited(implicit handle: Handle): Boolean =
       bit(handle)
 
-    @inline final protected[collection] def bit_=[T](isSet: Boolean)(implicit handle: Handle) {
+    @inline final protected[collection] def bit_=[T](isSet: Boolean)(implicit handle: Handle): Unit = {
       monitor.synchronized {
         if (handle.index == singleWord)
           flags =
@@ -140,12 +140,12 @@ protected trait State[N, E[+X] <: EdgeLikeIn[X]] {
     }
 
     /** Sets this node to `visited` with respect to to `handle`. */
-    @inline final protected[collection] def visited_=(visited: Boolean)(implicit handle: Handle) {
+    @inline final protected[collection] def visited_=(visited: Boolean)(implicit handle: Handle): Unit = {
       bit_=(visited)(handle)
     }
   }
 
-  protected def clearNodeStates(flags: FlagWord, flagsExt: ExtBitSet) {
+  protected def clearNodeStates(flags: FlagWord, flagsExt: ExtBitSet): Unit = {
     val clear      = ~flags
     val doClearExt = flagsExt != null
     val clearExt   = if (doClearExt) ~flagsExt else null
@@ -188,7 +188,7 @@ object State {
         flagsExt(handle.index, handle.mask)
 
     /** Sets `store` to `isSet` with respect to `handle`. */
-    def update(handle: Handle, isSet: Boolean) {
+    def update(handle: Handle, isSet: Boolean): Unit = {
       if (handle.index == singleWord)
         flags =
           if (isSet) flags | handle.mask
@@ -199,7 +199,7 @@ object State {
   }
 
   /** Dumps the state flags of a `node`. */
-  def dump[N, E[+X] <: EdgeLikeIn[X]](node: Graph[N, E]#NodeT): ExtBitSet =
+  def dump[N, E <: EdgeLike[N]](node: Graph[N, E]#NodeT): ExtBitSet =
     node.containingGraph match {
       case g: State[_, _] =>
         node match {
@@ -213,7 +213,7 @@ object State {
   }
 
   /** Dumps the state flags of a `graph`. */
-  def dump[N, E[+X] <: EdgeLikeIn[X]](graph: Graph[N, E]): GraphDump = graph match {
+  def dump[N, E <: EdgeLike[N]](graph: Graph[N, E]): GraphDump = graph match {
     case g: State[_, _] => new GraphDump(g.dumpInUse, g.dumpDirty)
   }
 }

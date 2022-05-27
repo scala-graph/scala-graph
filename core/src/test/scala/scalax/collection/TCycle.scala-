@@ -366,7 +366,7 @@ class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
 
     def `the cycle returned by 'findCycle' contains the expected edges` {
       given(g) { g =>
-        g.graphSize should be(3)
+        g.size should be(3)
         g.nodes foreach { n =>
           val c = n.findCycle
           (n, c.isDefined) should be((n, true))
@@ -377,7 +377,7 @@ class TCycle[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, C
 
     def `the cycle returned by 'findCycleContaining' contains the expected edges` {
       given(g) { g =>
-        g.nodes.filterNot(_.toOuter == 3) foreach { n =>
+        g.nodes.filterNot(_.outer == 3) foreach { n =>
           val c = g.findCycleContaining(g get n)
           (n, c.isDefined) should be((n, true))
           c.get.edges should (be(cycleEdges) or

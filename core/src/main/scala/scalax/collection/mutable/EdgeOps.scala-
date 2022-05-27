@@ -3,9 +3,7 @@ package mutable
 
 import language.postfixOps
 
-import GraphPredef.EdgeLikeIn
-import GraphEdge.{Bag, CollectionKind}
-import GraphEdge.{EdgeCompanion, HyperEdgeCompanion}
+import GraphEdge.{Bag, CollectionKind, EdgeLike, EdgeCompanion, HyperEdgeCompanion}
 import edge.WBase.{WEdgeBound, WEdgeCompanion, WHyperEdgeBound, WHyperEdgeCompanion}
 import edge.LBase.{LEdgeBound, LEdgeCompanion, LHyperEdgeBound, LHyperEdgeCompanion}
 import edge.WLBase.{WLEdgeBound, WLEdgeCompanion, WLHyperEdgeBound, WLHyperEdgeCompanion}
@@ -40,7 +38,7 @@ import edge.CBase.{CEdgeBound, CEdgeCompanion, CHyperEdgeBound, CHyperEdgeCompan
   *
   * @author Peter Empen
   */
-trait EdgeOps[N, E[+X] <: EdgeLikeIn[X], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Graph[X, Y]] {
+trait EdgeOps[N, E <: EdgeLike[N], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Graph[X, Y]] {
   selfGraph: GraphLike[N, E, This] =>
 
   trait InnerNodeOps { this: NodeT =>

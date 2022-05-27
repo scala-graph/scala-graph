@@ -25,7 +25,7 @@ trait AdjacencyListGraph[
     checkedPlus(
       contained = nodes contains Node(node),
       preAdd = preAdd(node),
-      copy = copy(nodes.toOuter.toBuffer += node, edges.toOuter),
+      copy = copy(nodes.outer.toBuffer += node, edges.outer),
       nodes = Set(node),
       edges = Set.empty[E])
 
@@ -35,7 +35,7 @@ trait AdjacencyListGraph[
     checkedPlus(
       contained = edges contains Edge(e),
       preAdd = preAdd(e),
-      copy = copy(nodes.toOuter, edges.toOuter.toBuffer += e),
+      copy = copy(nodes.outer, edges.outer.toBuffer += e),
       nodes = Set.empty[N],
       edges = Set(e))
 
@@ -45,7 +45,7 @@ trait AdjacencyListGraph[
     n,
     forced = true,
     (outerNode: N, innerNode: NodeT) =>
-      copy(nodes.toOuter.toBuffer -= outerNode, edges.toOuter.toBuffer --= (innerNode.edges map (_.toOuter))))
+      copy(nodes.outer.toBuffer -= outerNode, edges.outer.toBuffer --= (innerNode.edges map (_.outer))))
 
   final override def minusIsolated(n: N): This[N, E] = minusIsolated_?(n) getOrElse this
 
@@ -53,7 +53,7 @@ trait AdjacencyListGraph[
     n,
     true,
     (outeNode: N, innerNode: NodeT) =>
-      copy(nodes.toOuter.toBuffer -= outeNode, edges.toOuter.toBuffer --= (innerNode.edges map (_.toOuter))))
+      copy(nodes.outer.toBuffer -= outeNode, edges.outer.toBuffer --= (innerNode.edges map (_.outer))))
 
   /** generic constrained subtraction of edges */
   protected def checkedSubtractEdge[G >: This[N, E]](edge: E,
@@ -84,7 +84,7 @@ trait AdjacencyListGraph[
   final protected def -#?(e: E): Either[ConstraintViolation, This[N, E]] = checkedMinusEdge(
     e,
     simple = true,
-    (outerEdge: E, innerEdge: EdgeT) => copy(nodes.toOuter, edges.toOuter.toBuffer -= outerEdge))
+    (outerEdge: E, innerEdge: EdgeT) => copy(nodes.outer, edges.outer.toBuffer -= outerEdge))
 
   final override protected def -!#(e: E): This[N, E] = -!#?(e) getOrElse this
 
@@ -92,5 +92,5 @@ trait AdjacencyListGraph[
     e,
     simple = false,
     (outerEdge: E, innerEdge: EdgeT) =>
-      copy(nodes.toOuter.toBuffer --= innerEdge.privateNodes map (n => n.value), edges.toOuter.toBuffer -= e))
+      copy(nodes.outer.toBuffer --= innerEdge.privateNodes map (n => n.value), edges.outer.toBuffer -= e))
 }
