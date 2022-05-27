@@ -129,7 +129,7 @@ protected trait State[N, E <: EdgeLike[N]] {
     @inline final protected[collection] def visited(implicit handle: Handle): Boolean =
       bit(handle)
 
-    @inline final protected[collection] def bit_=[T](isSet: Boolean)(implicit handle: Handle): Unit = {
+    @inline final protected[collection] def bit_=[T](isSet: Boolean)(implicit handle: Handle): Unit =
       monitor.synchronized {
         if (handle.index == singleWord)
           flags =
@@ -137,12 +137,10 @@ protected trait State[N, E <: EdgeLike[N]] {
             else flags & ~handle.mask
         else withFlagsExt(_.update(handle.index, handle.mask, isSet))
       }
-    }
 
     /** Sets this node to `visited` with respect to to `handle`. */
-    @inline final protected[collection] def visited_=(visited: Boolean)(implicit handle: Handle): Unit = {
+    @inline final protected[collection] def visited_=(visited: Boolean)(implicit handle: Handle): Unit =
       bit_=(visited)(handle)
-    }
   }
 
   protected def clearNodeStates(flags: FlagWord, flagsExt: ExtBitSet): Unit = {
@@ -160,13 +158,15 @@ object State {
 
   /** Word of flags, that is unit of bitwise boolean state information.
     *  These flags are mainly used to store whether a node counts as visited
-    *  with respect to a given traversal where each traversal is represented by a `Handle`. */
+    *  with respect to a given traversal where each traversal is represented by a `Handle`.
+    */
   type FlagWord = Long
   protected val nrOfFlagWordBits = 64
   protected val minBitsForClear  = nrOfFlagWordBits >> 2
 
   /** Growable collection for storing bitwise boolean state information
-    *  as an extension of `FlagsWord`. */
+    *  as an extension of `FlagsWord`.
+    */
   type FlagWords = ExtBitSet
   protected val minBitsForClearExt = nrOfFlagWordBits
   require(minBitsForClear < minBitsForClearExt)
@@ -188,14 +188,13 @@ object State {
         flagsExt(handle.index, handle.mask)
 
     /** Sets `store` to `isSet` with respect to `handle`. */
-    def update(handle: Handle, isSet: Boolean): Unit = {
+    def update(handle: Handle, isSet: Boolean): Unit =
       if (handle.index == singleWord)
         flags =
           if (isSet) flags | handle.mask
           else flags & ~handle.mask
       else
         flagsExt(handle.index, handle.mask) = isSet
-    }
   }
 
   /** Dumps the state flags of a `node`. */
