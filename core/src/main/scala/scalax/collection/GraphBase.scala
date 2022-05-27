@@ -414,7 +414,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
 
     def draw(random: Random): NodeT
 
-    def diff(that: AnySet[NodeT]): AnySet[NodeT] = this diff that
+    def diff(that: AnySet[NodeT]): AnySet[NodeT] = this -- that
   }
 
   /** The node (vertex) set of this `Graph` commonly referred to as V(G).
@@ -593,7 +593,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       }
     }
 
-    def diff(that: AnySet[EdgeT]): AnySet[EdgeT] = this diff that
+    def diff(that: AnySet[EdgeT]): AnySet[EdgeT] = this -- that
   }
 
   /** The edge set of this `Graph` commonly referred to as E(G).
