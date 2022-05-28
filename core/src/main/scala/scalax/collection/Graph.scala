@@ -27,9 +27,9 @@ import scala.collection.compat._
   */
 trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
     extends GraphBase[N, E, This]
+    with GraphTraversal[N, E]
     /* TODO
-      with GraphTraversal[N, E]
-      with GraphDegree[N, E]
+        with GraphDegree[N, E]
      */ {
   thisGraph: // This[N, E] => see https://youtrack.jetbrains.com/issue/SCL-13199
   This[N, E] with GraphLike[N, E, This] with Graph[N, E] =>
@@ -135,8 +135,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   }
 
   type NodeT <: InnerNode
-  trait InnerNode extends BaseInnerNode { // TODO with TraverserInnerNode {
-    this: NodeT =>
+  trait InnerNode extends BaseInnerNode with TraverserInnerNode { this: NodeT =>
 
     /** $CONTGRAPH inner edge. */
     final def containingGraph: ThisGraph = thisGraph

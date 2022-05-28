@@ -34,8 +34,7 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
     override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig
 ) extends Graph[N, E]
     with AdjacencyListGraph[N, E, DefaultGraphImpl]
-// TODO     with GraphTraversalImpl[N,E]
-    {
+    with GraphTraversalImpl[N, E] {
   final override val companion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
@@ -55,10 +54,8 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
   @SerialVersionUID(7170L)
   final protected class NodeBase(override val outer: N, hints: ArraySet.Hints)
       extends InnerNodeImpl(outer, hints)
-      /* TODO
-      with InnerNodeTraversalImpl
-       */ {
-    final protected[collection] def asNodeT: NodeT = this
+      with InnerNodeTraversalImpl {
+    protected[collection] def asNodeT: NodeT = this
   }
 
   type NodeT = NodeBase
