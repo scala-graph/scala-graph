@@ -90,7 +90,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
       nodesEdgesSeparator: String = GraphBase.defaultSeparator,
       withNodesEdgesPrefix: Boolean = false
   )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering) =
-    stringPrefix +
+    className +
       "(" + asSortedString(nodeSeparator, edgeSeparator, nodesEdgesSeparator, withNodesEdgesPrefix)(ordNode, ordEdge) +
       ")"
 

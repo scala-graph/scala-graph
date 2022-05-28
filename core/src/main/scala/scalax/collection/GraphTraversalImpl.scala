@@ -192,7 +192,7 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
   ) extends Component {
 
     final protected def mayHaveFrontierEdges: Boolean = false
-    protected def stringPrefix                        = "WeakComponent"
+    final protected def className                     = "WeakComponent"
   }
 
   protected class StrongComponentImpl(
@@ -205,7 +205,7 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
   ) extends Component {
 
     final protected def mayHaveFrontierEdges: Boolean = true
-    protected def stringPrefix                        = "StrongComponent"
+    final protected def className                     = "StrongComponent"
   }
 
   final protected def expectedMaxNodes(divisor: Int, min: Int = 128): Int = {
@@ -611,7 +611,7 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
     )
 
     final protected def nodeVisitor[U](f: ((Boolean, N)) => U): (NodeT) => U =
-      if (isDefined(f)) (n: NodeT) => f(true, n.value) else Visitor.empty
+      if (isDefined(f)) (n: NodeT) => f(true, n.outer) else Visitor.empty
   }
 
   def outerNodeDownUpTraverser(
@@ -635,7 +635,7 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
 
     override def iterator = source.map(_.node).iterator
 
-    override def stringPrefix = "Nodes"
+    final override protected def className = "Nodes"
 
     private[this] var _size: Option[Int] = None
     @inline override val size: Int       = _size getOrElse super.size
@@ -685,7 +685,7 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
     */
   final protected class MapPathTraversable[T](map: MMap[T, T], to: T, start: T) extends Iterable[T] {
 
-    override def stringPrefix = "Nodes"
+    final override protected def className = "Nodes"
 
     private lazy val s: Seq[T] = {
       val stack: Stack[T] = Stack.empty[T]
@@ -729,7 +729,7 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
 
     final lazy val edges = {
       val buf = new ArrayBuffer[EdgeT](nodes.size) {
-        override def stringPrefix = "Edges"
+        final override protected def className = "Edges"
       }
       nodes.tail.foldLeft(nodes.head) { (prev: NodeT, n: NodeT) =>
         buf += selectEdge(prev, n)
@@ -779,7 +779,7 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
 
     final lazy val edges = {
       val buf = new ArrayBuffer[EdgeT](nodes.size) {
-        override def stringPrefix = "Edges"
+        final override protected def className = "Edges"
       }
       val isDiGraph = thisGraph.isDirected
       nodes.source.tail.foldLeft(nodes.head) { (prev: NodeT, elem: CycleStackElem) =>

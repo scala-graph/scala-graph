@@ -147,7 +147,7 @@ trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal
       case _ => false
     }
 
-    override def stringPrefix = getClass.getSimpleName
+    final override protected def className = getClass.getSimpleName
   }
 
   /** A traversable topological order of nodes of a graph or of an isolated graph component.
@@ -223,7 +223,7 @@ trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal
     * @define CUMWEIGHT The cumulated weight of all edges on this path/walk.
     */
   trait Walk extends Iterable[InnerElem] {
-    override def stringPrefix = "Walk"
+    override protected def className = "Walk"
 
     /** All nodes on this path/walk in proper order. */
     def nodes: Iterable[NodeT]
@@ -391,7 +391,7 @@ trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal
     * Nodes and edges on the path are distinct. $WALKPATH
     */
   trait Path extends Walk {
-    override def stringPrefix = "Path"
+    override protected def className = "Path"
 
     /** Returns whether the nodes and edges on this path are valid with respect
       *  to this graph. $SANECHECK
@@ -451,7 +451,7 @@ trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal
     * being the start node and its head being the third element etc.
     */
   trait Cycle extends Path {
-    override def stringPrefix = "Cycle"
+    final override protected def className = "Cycle"
 
     override def endNode: NodeT = startNode
 
@@ -762,8 +762,8 @@ trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal
     protected def mayHaveFrontierEdges: Boolean
     final private def nonBridge(e: EdgeT): Boolean = e.ends forall nodes.contains
 
-    protected def stringPrefix: String
-    override def toString = s"$stringPrefix(${nodes mkString ", "})"
+    protected def className: String
+    override def toString = s"$className(${nodes mkString ", "})"
   }
 
   /** Controls the properties of graph traversals with no specific root and allows

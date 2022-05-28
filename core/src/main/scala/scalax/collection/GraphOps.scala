@@ -53,7 +53,7 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
   /** The Sum of the weight of all edges. */
   def totalWeight: Double
 
-  def stringPrefix: String = "Graph"
+  protected def className: String = "Graph"
 
   sealed trait InnerElem
 

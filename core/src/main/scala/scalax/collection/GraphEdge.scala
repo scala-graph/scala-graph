@@ -183,13 +183,13 @@ object GraphEdge {
     catch { // Malformed class name
       case _: java.lang.InternalError => this.getClass.getName
     }
-    def stringPrefix                           = "Nodes"
     protected def nodesToStringWithParenthesis = false
     protected def nodesToStringSeparator: String
     protected def nodesToString: String =
-      if (nodesToStringWithParenthesis)
-        ends.toString.patch(0, stringPrefix, stringPrefix.length)
-      else
+      if (nodesToStringWithParenthesis) {
+        def prefix = "Nodes"
+        ends.toString.patch(0, prefix, prefix.length)
+      } else
         ends mkString nodesToStringSeparator
 
     protected def attributesToString          = ""

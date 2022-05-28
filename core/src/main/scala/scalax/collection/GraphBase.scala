@@ -355,7 +355,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       * @param edges $INEDGES
       */
     protected[collection] def initialize(nodes: Iterable[N], edges: Iterable[E]): Unit
-    override def stringPrefix: String = "NodeSet"
+    final override protected def className: String = "NodeSet"
 
     /** Sorts all nodes according to `ord` and concatenates them using `separator`.
       *
@@ -532,7 +532,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     protected[collection] def initialize(edges: Iterable[E]): Unit
     def contains(node: NodeT): Boolean
 
-    override def stringPrefix: String = "EdgeSet"
+    final override protected def className: String = "EdgeSet"
 
     /** Sorts all edges according to `ord` and concatenates them using `separator`.
       *
