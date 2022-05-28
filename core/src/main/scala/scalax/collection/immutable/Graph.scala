@@ -38,12 +38,12 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
   final override val companion = DefaultGraphImpl
   protected type Config = DefaultGraphImpl.Config
 
-  @inline final protected def newNodeSet: NodeSetT = new NodeSet
-  @transient private[this] var _nodes: NodeSetT    = newNodeSet
-  @inline final override def nodes: NodeSet        = _nodes
+  @inline final protected def newNodeSet: NodeSetT       = new AdjacencyListNodeSet
+  @transient private[this] var _nodes: NodeSetT          = newNodeSet
+  @inline final override def nodes: AdjacencyListNodeSet = _nodes
 
-  @transient private[this] var _edges: EdgeSetT = new EdgeSet
-  @inline final override def edges: EdgeSet     = _edges
+  @transient private[this] var _edges: EdgeSetT          = new AdjacencyListEdgeSet
+  @inline final override def edges: AdjacencyListEdgeSet = _edges
 
   initialize(iniNodes, iniEdges)
 
@@ -52,13 +52,13 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
   final override def copy(nodes: Iterable[N], edges: Iterable[E]) = DefaultGraphImpl.from[N, E](nodes, edges)
 
   @SerialVersionUID(7170L)
-  final protected class NodeBase(override val outer: N, hints: ArraySet.Hints)
+  final protected class NodeBase_(override val outer: N, hints: ArraySet.Hints)
       extends InnerNodeImpl(outer, hints)
       with InnerNodeTraversalImpl {
     protected[collection] def asNodeT: NodeT = this
   }
 
-  type NodeT = NodeBase
+  type NodeT = NodeBase_
 
   @inline final protected def newNodeWithHints(n: N, h: ArraySet.Hints) = new NodeT(n, h)
 
@@ -66,7 +66,7 @@ class DefaultGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Set[N](), in
 
   private def readObject(in: ObjectInputStream): Unit = {
     _nodes = newNodeSet
-    _edges = new EdgeSet
+    _edges = new AdjacencyListEdgeSet
     initializeFrom(in, _nodes, _edges)
   }
 }

@@ -297,7 +297,7 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
     /** Allows to call methods of N directly on Node instances. */
     @inline implicit final def toOuter(node: NodeT): N = node.outer
   }
-  abstract protected class NodeBase extends BaseInnerNode
+  abstract protected class BaseNodeBase extends BaseInnerNode
   protected def newNode(n: N): NodeT
 
   /** Base trait for graph `Ordering`s. */

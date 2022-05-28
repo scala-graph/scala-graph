@@ -202,7 +202,7 @@ object State {
     node.containingGraph match {
       case g: State[_, _] =>
         node match {
-          case n: g.InnerNode with g.InnerNodeState => new ExtBitSet(n.dumpState)
+          case n: g.GraphInnerNode with g.InnerNodeState => new ExtBitSet(n.dumpState)
         }
     }
 

@@ -73,14 +73,14 @@ object GraphPredef {
   }
 
   object HyperEdgeImplicits extends AbstractHyperEdgeImplicits[HyperEdge, HyperEdge.type](HyperEdge) {
-    implicit class AnyToEdge[N](override val n1: N)             extends AnyVal with super.AnyToEdge[N]
-    implicit class EdgeToEdge[N](override val e1: HyperEdge[N]) extends AnyVal with super.EdgeToEdge[N]
+    implicit class HyperAnyToEdge[N](override val n1: N)             extends AnyVal with AnyToEdge[N]
+    implicit class HyperEdgeToEdge[N](override val e1: HyperEdge[N]) extends AnyVal with EdgeToEdge[N]
   }
 
   object OrderedHyperEdgeImplicits
       extends AbstractHyperEdgeImplicits[OrderedHyperEdge, OrderedHyperEdge.type](OrderedHyperEdge) {
-    implicit class AnyToEdge[N](override val n1: N)                    extends AnyVal with super.AnyToEdge[N]
-    implicit class EdgeToEdge[N](override val e1: OrderedHyperEdge[N]) extends AnyVal with super.EdgeToEdge[N]
+    implicit class HyperAnyToEdge[N](override val n1: N)                    extends AnyVal with AnyToEdge[N]
+    implicit class HyperEdgeToEdge[N](override val e1: OrderedHyperEdge[N]) extends AnyVal with EdgeToEdge[N]
   }
 
   abstract class AbstractDiHyperEdgeImplicits[E[N] <: AnyDiHyperEdge[N], C <: DiHyperEdgeCompanion[E]](companion: C) {
@@ -99,14 +99,14 @@ object GraphPredef {
   }
 
   object DiHyperEdgeImplicits extends AbstractDiHyperEdgeImplicits[DiHyperEdge, DiHyperEdge.type](DiHyperEdge) {
-    implicit class AnyToEdge[N](override val source: N)             extends AnyVal with super.AnyToEdge[N]
-    implicit class EdgeToEdge[N](override val sources: Iterable[N]) extends AnyVal with super.IterableToEdge[N]
+    implicit class DiHyperAnyToEdge[N](override val source: N)             extends AnyVal with AnyToEdge[N]
+    implicit class DiHyperEdgeToEdge[N](override val sources: Iterable[N]) extends AnyVal with IterableToEdge[N]
   }
 
   object OrderedDiHyperEdgeImplicits
       extends AbstractDiHyperEdgeImplicits[OrderedDiHyperEdge, OrderedDiHyperEdge.type](OrderedDiHyperEdge) {
-    implicit class AnyToEdge[N](override val source: N)             extends AnyVal with super.AnyToEdge[N]
-    implicit class EdgeToEdge[N](override val sources: Iterable[N]) extends AnyVal with super.IterableToEdge[N]
+    implicit class DiHyperAnyToEdge[N](override val source: N)             extends AnyVal with AnyToEdge[N]
+    implicit class DiHyperEdgeToEdge[N](override val sources: Iterable[N]) extends AnyVal with IterableToEdge[N]
   }
 
   trait AbstractEdgeImplicits[N, E[X] <: EdgeLike[X] with AnyEdge[X], C <: EdgeCompanion[E]] extends Any {

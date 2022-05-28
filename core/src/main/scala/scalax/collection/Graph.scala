@@ -134,21 +134,21 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
       false
   }
 
-  type NodeT <: InnerNode
-  trait InnerNode extends BaseInnerNode with TraverserInnerNode { this: NodeT =>
+  type NodeT <: GraphInnerNode
+  trait GraphInnerNode extends BaseInnerNode with TraverserInnerNode { this: NodeT =>
 
     /** $CONTGRAPH inner edge. */
     final def containingGraph: ThisGraph = thisGraph
   }
 
-  protected trait NodeBase extends super.NodeBase with InnerNode {
+  protected trait NodeBase extends BaseNodeBase with GraphInnerNode {
     this: NodeT =>
     final def isContaining[N, E <: EdgeLike[N]](g: GraphBase[N, E, This] @uV): Boolean =
       g eq containingGraph
   }
 
-  type NodeSetT <: NodeSet
-  trait NodeSet extends super.NodeSet {
+  type NodeSetT <: GraphNodeSet
+  trait GraphNodeSet extends NodeSet {
     protected def copy: NodeSetT
 
     final override def -(node: NodeT): NodeSetT =
@@ -189,7 +189,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     protected def handleNotGentlyRemovable = false
   }
 
-  trait InnerEdge extends BaseInnerEdge {
+  trait GraphInnerEdge extends BaseInnerEdge {
     this: EdgeT =>
 
     /** $CONTGRAPH inner edge. */
@@ -198,7 +198,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     final protected[collection] def asEdgeT: EdgeT = this
   }
 
-  type EdgeT = InnerEdge
+  type EdgeT = GraphInnerEdge
 
   @transient protected[collection] object Inner {
     import scala.{SerialVersionUID => S}
@@ -231,8 +231,8 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     case e                 => throw new MatchError(s"Unexpected Edge $e")
   }
 
-  type EdgeSetT <: EdgeSet
-  trait EdgeSet extends super.EdgeSet {
+  type EdgeSetT <: GraphEdgeSet
+  trait GraphEdgeSet extends EdgeSet {
     def hasOnlyDiEdges: Boolean
     def hasOnlyUnDiEdges: Boolean
     def hasMixedEdges: Boolean

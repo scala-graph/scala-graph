@@ -26,8 +26,8 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
 
   protected type Config <: GraphConfig with AdjacencyListArrayConfig
 
-  type NodeT <: InnerNode
-  trait InnerNode extends super.InnerNode {
+  type NodeT <: AdjacendyListBaseInnerNode
+  trait AdjacendyListBaseInnerNode extends GraphInnerNode {
     thisNode: NodeT =>
 
     def edges: ArraySet[EdgeT]
@@ -185,8 +185,8 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
   @inline final protected def newNode(n: N) = newNodeWithHints(n, config.adjacencyListHints)
   protected def newNodeWithHints(node: N, hints: ArraySet.Hints): NodeT
 
-  type NodeSetT <: NodeSet
-  trait NodeSet extends super.NodeSet {
+  type NodeSetT <: AdjacencyListBaseNodeSet
+  trait AdjacencyListBaseNodeSet extends GraphNodeSet {
     protected val collection = ExtHashSet.empty[NodeT]
 
     override protected[collection] def initialize(nodes: Iterable[N], edges: Iterable[E]) =
@@ -223,8 +223,8 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
 
   protected def newEdgeTArray(size: Int): Array[EdgeT]
 
-  type EdgeSetT <: EdgeSet
-  trait EdgeSet extends super.EdgeSet {
+  type EdgeSetT <: AdjacencyListBaseEdgeSet
+  trait AdjacencyListBaseEdgeSet extends GraphEdgeSet {
     final override def contains(node: NodeT): Boolean = nodes find node exists (_.edges.nonEmpty)
 
     final override def find(elem: E): Option[EdgeT] = nodes find elem._n(0) flatMap (_.edges find (_ == elem))

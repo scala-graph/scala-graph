@@ -48,11 +48,11 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
       case _ => None
     }
 
-  class WalkBuilder(
+  class WalkBuilderImpl(
       override val start: NodeT,
       sizeHint: Int = defaultPathSize,
       edgeSelector: (NodeT, NodeT) => Option[EdgeT]
-  ) extends super.WalkBuilder {
+  ) extends WalkBuilder {
     self =>
 
     protected[this] var lastNode: Option[NodeT] = Some(start)
@@ -131,15 +131,15 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
 
   def newWalkBuilder(
       start: NodeT
-  )(implicit sizeHint: Int = defaultPathSize, edgeSelector: (NodeT, NodeT) => Option[EdgeT]): WalkBuilder =
-    new WalkBuilder(start, sizeHint, edgeSelector)
+  )(implicit sizeHint: Int = defaultPathSize, edgeSelector: (NodeT, NodeT) => Option[EdgeT]): WalkBuilderImpl =
+    new WalkBuilderImpl(start, sizeHint, edgeSelector)
 
-  class PathBuilder(
+  class PathBuilderImpl(
       override val start: NodeT,
       sizeHint: Int = defaultPathSize,
       edgeSelector: (NodeT, NodeT) => Option[EdgeT]
-  ) extends WalkBuilder(start, sizeHint, edgeSelector)
-      with super.PathBuilder {
+  ) extends WalkBuilderImpl(start, sizeHint, edgeSelector)
+      with PathBuilder {
     self =>
 
     private[this] val uniqueNodes = new EqHashSet[NodeT](sizeHint) += start
@@ -174,8 +174,8 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
 
   def newPathBuilder(
       start: NodeT
-  )(implicit sizeHint: Int = defaultPathSize, edgeSelector: (NodeT, NodeT) => Option[EdgeT]): PathBuilder =
-    new PathBuilder(start, sizeHint, edgeSelector)
+  )(implicit sizeHint: Int = defaultPathSize, edgeSelector: (NodeT, NodeT) => Option[EdgeT]): PathBuilderImpl =
+    new PathBuilderImpl(start, sizeHint, edgeSelector)
 
   type NodeT <: InnerNodeTraversalImpl
   trait InnerNodeTraversalImpl extends TraverserInnerNode with InnerNodeState {
@@ -250,24 +250,25 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
     (nodesWithoutPredecessor, nodeInDegrees, inspectedNode)
   }
 
-  protected case class ComponentTraverser(
+  protected case class ComponentTraverserImpl(
       override val root: NodeT,
       override val parameters: Parameters,
       override val subgraphNodes: NodePredicate,
       override val subgraphEdges: EdgePredicate,
       override val ordering: ElemOrdering,
       override val maxWeight: Option[Weight]
-  ) extends super.ComponentTraverser {
+  ) extends ComponentTraverser {
 
     final protected def newTraverser
-        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => ComponentTraverser = copy
+        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => ComponentTraverserImpl =
+      copy
 
     final private def innerElemTraverser =
-      InnerElemTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
+      InnerElemTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering)
 
     protected lazy val components: Iterable[WeakComponentImpl] = {
       val traverser =
-        InnerNodeTraverser(root, parameters withDirection AnyConnected, subgraphNodes, subgraphEdges, ordering)
+        InnerNodeTraverserImpl(root, parameters withDirection AnyConnected, subgraphNodes, subgraphEdges, ordering)
       withHandle() { implicit visitedHandle =>
         for (node <- nodes if !node.visited && subgraphNodes(node)) yield {
           val componentNodes = new ArrayBuffer[NodeT](expectedMaxNodes(3))
@@ -296,7 +297,7 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
         withHandles(2) { handles =>
           implicit val visitedHandle: State.Handle = handles(0)
           for (node <- nodes if !node.visited && subgraphNodes(node)) {
-            val nodeTraverser: InnerElemTraverser =
+            val nodeTraverser: InnerElemTraverserImpl =
               traverser.withRoot(node) // TODO not sure why this declaration is needed
             val res = nodeTraverser.Runner(noNode, visitor).dfsWGB(handles)
             if (res.isDefined)
@@ -337,28 +338,28 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
   ) =
-    ComponentTraverser(null.asInstanceOf[NodeT], parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
+    ComponentTraverserImpl(null.asInstanceOf[NodeT], parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
-  protected case class StrongComponentTraverser(
+  protected case class StrongComponentTraverserImpl(
       override val root: NodeT,
       override val parameters: Parameters,
       override val subgraphNodes: NodePredicate,
       override val subgraphEdges: EdgePredicate,
       override val ordering: ElemOrdering,
       override val maxWeight: Option[Weight]
-  ) extends super.StrongComponentTraverser {
+  ) extends StrongComponentTraverser {
 
     final protected def newTraverser
-        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => StrongComponentTraverser =
+        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => StrongComponentTraverserImpl =
       copy
 
     protected lazy val components: Iterable[Component] = {
       val traverser =
-        InnerNodeTraverser(root, parameters withDirection Successors, subgraphNodes, subgraphEdges, ordering)
+        InnerNodeTraverserImpl(root, parameters withDirection Successors, subgraphNodes, subgraphEdges, ordering)
       withHandle() { implicit handle =>
         (for (node <- nodes if !node.visited && subgraphNodes(node))
           yield {
-            val nodeTraverser: InnerNodeTraverser = traverser.withRoot(node)
+            val nodeTraverser: InnerNodeTraverserImpl = traverser.withRoot(node)
             nodeTraverser.Runner(noNode, Visitor.empty).dfsTarjan(Some(handle))
           }).flatten
       }
@@ -374,20 +375,28 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
   ) =
-    StrongComponentTraverser(null.asInstanceOf[NodeT], parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
+    StrongComponentTraverserImpl(
+      null.asInstanceOf[NodeT],
+      parameters,
+      subgraphNodes,
+      subgraphEdges,
+      ordering,
+      maxWeight
+    )
 
-  protected case class InnerNodeTraverser(
+  protected case class InnerNodeTraverserImpl(
       override val root: NodeT,
       override val parameters: Parameters = Parameters(),
       override val subgraphNodes: NodePredicate = anyNode,
       override val subgraphEdges: EdgePredicate = anyEdge,
       override val ordering: ElemOrdering = NoOrdering,
       override val maxWeight: Option[Weight] = None
-  ) extends super.InnerNodeTraverser
-      with Impl[NodeT, InnerNodeTraverser] {
+  ) extends InnerNodeTraverser
+      with Impl[NodeT, InnerNodeTraverserImpl] {
 
     final protected def newTraverser
-        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => InnerNodeTraverser = copy
+        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => InnerNodeTraverserImpl =
+      copy
 
     final protected def nodeVisitor[U](f: NodeT => U): (NodeT) => U = f
     final protected def edgeVisitor[U](f: NodeT => U): (EdgeT) => U = Visitor.empty
@@ -401,20 +410,21 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
   ) =
-    InnerNodeTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
+    InnerNodeTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
-  protected case class OuterNodeTraverser(
+  protected case class OuterNodeTraverserImpl(
       override val root: NodeT,
       override val parameters: Parameters = Parameters(),
       override val subgraphNodes: NodePredicate = anyNode,
       override val subgraphEdges: EdgePredicate = anyEdge,
       override val ordering: ElemOrdering = NoOrdering,
       override val maxWeight: Option[Weight] = None
-  ) extends super.OuterNodeTraverser
-      with Impl[N, OuterNodeTraverser] {
+  ) extends OuterNodeTraverser
+      with Impl[N, OuterNodeTraverserImpl] {
 
     final protected def newTraverser
-        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => OuterNodeTraverser = copy
+        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => OuterNodeTraverserImpl =
+      copy
 
     final protected def nodeVisitor[U](f: N => U): (NodeT) => U =
       if (isDefined(f)) (n: NodeT) => f(n.outer) else Visitor.empty
@@ -430,20 +440,21 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
   ) =
-    OuterNodeTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
+    OuterNodeTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
-  protected case class InnerEdgeTraverser(
+  protected case class InnerEdgeTraverserImpl(
       override val root: NodeT,
       override val parameters: Parameters = Parameters(),
       override val subgraphNodes: NodePredicate = anyNode,
       override val subgraphEdges: EdgePredicate = anyEdge,
       override val ordering: ElemOrdering = NoOrdering,
       override val maxWeight: Option[Weight] = None
-  ) extends super.InnerEdgeTraverser
-      with Impl[EdgeT, InnerEdgeTraverser] {
+  ) extends InnerEdgeTraverser
+      with Impl[EdgeT, InnerEdgeTraverserImpl] {
 
     final protected def newTraverser
-        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => InnerEdgeTraverser = copy
+        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => InnerEdgeTraverserImpl =
+      copy
 
     final protected def nodeVisitor[U](f: EdgeT => U): (NodeT) => U = Visitor.empty
     final protected def edgeVisitor[U](f: EdgeT => U): (EdgeT) => U =
@@ -458,20 +469,21 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
   ) =
-    InnerEdgeTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
+    InnerEdgeTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
-  protected case class OuterEdgeTraverser(
+  protected case class OuterEdgeTraverserImpl(
       override val root: NodeT,
       override val parameters: Parameters = Parameters(),
       override val subgraphNodes: NodePredicate = anyNode,
       override val subgraphEdges: EdgePredicate = anyEdge,
       override val ordering: ElemOrdering = NoOrdering,
       override val maxWeight: Option[Weight] = None
-  ) extends super.OuterEdgeTraverser
-      with Impl[E, OuterEdgeTraverser] {
+  ) extends OuterEdgeTraverser
+      with Impl[E, OuterEdgeTraverserImpl] {
 
     final protected def newTraverser
-        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => OuterEdgeTraverser = copy
+        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => OuterEdgeTraverserImpl =
+      copy
 
     final protected def nodeVisitor[U](f: E => U): (NodeT) => U = Visitor.empty
     final protected def edgeVisitor[U](f: E => U): (EdgeT) => U =
@@ -486,20 +498,21 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
   ) =
-    OuterEdgeTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
+    OuterEdgeTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
-  protected case class InnerElemTraverser(
+  protected case class InnerElemTraverserImpl(
       override val root: NodeT,
       override val parameters: Parameters = Parameters(),
       override val subgraphNodes: NodePredicate = anyNode,
       override val subgraphEdges: EdgePredicate = anyEdge,
       override val ordering: ElemOrdering = NoOrdering,
       override val maxWeight: Option[Weight] = None
-  ) extends super.InnerElemTraverser
-      with Impl[InnerElem, InnerElemTraverser] {
+  ) extends InnerElemTraverser
+      with Impl[InnerElem, InnerElemTraverserImpl] {
 
     final protected def newTraverser
-        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => InnerElemTraverser = copy
+        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => InnerElemTraverserImpl =
+      copy
 
     final protected def nodeVisitor[U](f: InnerElem => U): (NodeT) => U = if (isDefined(f)) (n: NodeT) => f(n) else f
     final protected def edgeVisitor[U](f: InnerElem => U): (EdgeT) => U = if (isDefined(f)) (e: EdgeT) => f(e) else f
@@ -513,20 +526,21 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
   ) =
-    InnerElemTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
+    InnerElemTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
-  protected case class OuterElemTraverser(
+  protected case class OuterElemTraverserImpl(
       override val root: NodeT,
       override val parameters: Parameters = Parameters(),
       override val subgraphNodes: NodePredicate = anyNode,
       override val subgraphEdges: EdgePredicate = anyEdge,
       override val ordering: ElemOrdering = NoOrdering,
       override val maxWeight: Option[Weight] = None
-  ) extends super.OuterElemTraverser
-      with Impl[OuterElem, OuterElemTraverser] {
+  ) extends OuterElemTraverser
+      with Impl[OuterElem, OuterElemTraverserImpl] {
 
     final protected def newTraverser
-        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => OuterElemTraverser = copy
+        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => OuterElemTraverserImpl =
+      copy
 
     final protected def nodeVisitor[U](f: OuterElem => U): (NodeT) => U =
       if (isDefined(f)) (n: NodeT) => f(OuterNode(n.outer))
@@ -545,7 +559,7 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
   ) =
-    OuterElemTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
+    OuterElemTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
   protected trait DownUpTraverser[A, +This <: DownUpTraverser[A, This]] extends Impl[A, This] {
     this: This =>
@@ -558,18 +572,18 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
     final protected def edgeVisitor[U](f: (A) => U): (EdgeT) => U = Visitor.empty
   }
 
-  protected case class InnerNodeDownUpTraverser(
+  protected case class InnerNodeDownUpTraverserImpl(
       override val root: NodeT,
       override val parameters: Parameters = Parameters(),
       override val subgraphNodes: NodePredicate = anyNode,
       override val subgraphEdges: EdgePredicate = anyEdge,
       override val ordering: ElemOrdering = NoOrdering,
       override val maxWeight: Option[Weight] = None
-  ) extends super.InnerNodeDownUpTraverser
-      with DownUpTraverser[(Boolean, NodeT), InnerNodeDownUpTraverser] {
+  ) extends InnerNodeDownUpTraverser
+      with DownUpTraverser[(Boolean, NodeT), InnerNodeDownUpTraverserImpl] {
 
     final protected def newTraverser
-        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => InnerNodeDownUpTraverser =
+        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => InnerNodeDownUpTraverserImpl =
       copy
 
     final override protected def autarkicForeach[U](f: ((Boolean, NodeT)) => U): Unit = downUpForeach(
@@ -589,20 +603,20 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
   ) =
-    InnerNodeDownUpTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
+    InnerNodeDownUpTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
-  protected case class OuterNodeDownUpTraverser(
+  protected case class OuterNodeDownUpTraverserImpl(
       override val root: NodeT,
       override val parameters: Parameters = Parameters(),
       override val subgraphNodes: NodePredicate = anyNode,
       override val subgraphEdges: EdgePredicate = anyEdge,
       override val ordering: ElemOrdering = NoOrdering,
       override val maxWeight: Option[Weight] = None
-  ) extends super.OuterNodeDownUpTraverser
-      with DownUpTraverser[(Boolean, N), OuterNodeDownUpTraverser] {
+  ) extends OuterNodeDownUpTraverser
+      with DownUpTraverser[(Boolean, N), OuterNodeDownUpTraverserImpl] {
 
     final protected def newTraverser
-        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => OuterNodeDownUpTraverser =
+        : (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => OuterNodeDownUpTraverserImpl =
       copy
 
     final override protected def autarkicForeach[U](f: ((Boolean, N)) => U): Unit = downUpForeach(
@@ -622,7 +636,7 @@ trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with 
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
   ) =
-    OuterNodeDownUpTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
+    OuterNodeDownUpTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
   /** Efficient reverse `foreach` overcoming `Stack`'s deficiency not to overwrite `reverseIterator`.
     */

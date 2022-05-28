@@ -77,7 +77,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   override def clone: This[N, E] = companion.from[N, E](nodes.toOuter, edges.toOuter)
 
   type NodeT <: GraphLikeInnerNode
-  trait GraphLikeInnerNode extends super.InnerNode { // TODO with InnerNodeOps {
+  trait GraphLikeInnerNode extends super.GraphInnerNode { // TODO with InnerNodeOps {
     this: NodeT =>
 
     /** Adds new non-hyper edges connecting `this` inner node with `those` inner nodes.
@@ -100,7 +100,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   }
 
   type NodeSetT <: GraphLikeNodeSet
-  trait GraphLikeNodeSet extends MSet[NodeT] with super.NodeSet {
+  trait GraphLikeNodeSet extends MSet[NodeT] with super.GraphNodeSet {
     override def remove(node: NodeT): Boolean = subtract(node, rippleDelete = true, minus, minusEdges)
 
     /** removes all incident edges of `node` from the edge set leaving the node set unchanged.
@@ -114,7 +114,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   }
 
   type EdgeSetT <: GraphLikeEdgeSet
-  trait GraphLikeEdgeSet extends MSet[EdgeT] with EdgeSet {
+  trait GraphLikeEdgeSet extends MSet[EdgeT] with GraphEdgeSet {
     @inline final def addOne(edge: EdgeT)      = { add(edge); this }
     @inline final def subtractOne(edge: EdgeT) = { remove(edge); this }
 
