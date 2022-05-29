@@ -100,7 +100,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   }
 
   type NodeSetT <: GraphLikeNodeSet
-  trait GraphLikeNodeSet extends MSet[NodeT] with super.GraphNodeSet {
+  trait GraphLikeNodeSet extends MSet[NodeT] with GraphNodeSet {
     override def remove(node: NodeT): Boolean = subtract(node, rippleDelete = true, minus, minusEdges)
 
     /** removes all incident edges of `node` from the edge set leaving the node set unchanged.
@@ -110,7 +110,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     protected def minusEdges(node: NodeT): Unit
 
     override def clear(): Unit                          = this foreach -=
-    override def diff(that: AnySet[NodeT]): MSet[NodeT] = this -- that
+    override def diff(that: AnySet[NodeT]): MSet[NodeT] = clone().filterInPlace(n => ! that(n))
   }
 
   type EdgeSetT <: GraphLikeEdgeSet
@@ -123,7 +123,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     def removeWithNodes(edge: EdgeT): Boolean
 
     override def clear(): Unit                          = this foreach -=
-    override def diff(that: AnySet[EdgeT]): MSet[EdgeT] = this -- that
+    override def diff(that: AnySet[EdgeT]): MSet[EdgeT] = clone().filterInPlace(n => ! that(n))
   }
   def edges: EdgeSetT
 

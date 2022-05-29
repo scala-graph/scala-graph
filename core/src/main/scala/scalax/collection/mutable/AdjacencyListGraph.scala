@@ -91,8 +91,6 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
     final protected def minus(node: NodeT): Unit = collection -= node
     final protected def minusEdges(node: NodeT): Unit =
       edges --= node.edges.toList // toList is necessary to avoid failure of -=(node) like in TEdit.test_MinusEq_2
-
-    final override def diff(that: AnySet[NodeT]): MSet[NodeT] = this -- that
   }
   override def nodes: NodeSetT
 
@@ -119,7 +117,6 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
       } else false
 
     @inline final override def maxArity: Int            = super.maxArity
-    override def diff(that: AnySet[EdgeT]): MSet[EdgeT] = this -- that
   }
   override def edges: EdgeSetT
 
