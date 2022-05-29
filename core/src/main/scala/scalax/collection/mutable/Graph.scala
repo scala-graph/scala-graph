@@ -110,7 +110,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     protected def minusEdges(node: NodeT): Unit
 
     override def clear(): Unit                          = this foreach -=
-    override def diff(that: AnySet[NodeT]): MSet[NodeT] = clone().filterInPlace(n => ! that(n))
+    override def diff(that: AnySet[NodeT]): MSet[NodeT] = clone().filterInPlace(n => !that(n))
   }
 
   type EdgeSetT <: GraphLikeEdgeSet
@@ -123,7 +123,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     def removeWithNodes(edge: EdgeT): Boolean
 
     override def clear(): Unit                          = this foreach -=
-    override def diff(that: AnySet[EdgeT]): MSet[EdgeT] = clone().filterInPlace(n => ! that(n))
+    override def diff(that: AnySet[EdgeT]): MSet[EdgeT] = clone().filterInPlace(n => !that(n))
   }
   def edges: EdgeSetT
 

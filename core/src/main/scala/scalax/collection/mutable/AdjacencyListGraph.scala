@@ -116,7 +116,7 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
         true
       } else false
 
-    @inline final override def maxArity: Int            = super.maxArity
+    @inline final override def maxArity: Int = super.maxArity
   }
   override def edges: EdgeSetT
 
