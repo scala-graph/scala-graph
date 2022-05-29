@@ -252,7 +252,7 @@ class TExportTest extends RefSpec with Matchers {
   )
 
   private def sortMid(dot: String): String = {
-    val lines = dot.linesWithSeparators.toBuffer
+    val lines = dot.linesWithSeparators.toIterable
     val mid   = lines.tail.init
     s"${lines.head}${mid.sorted.mkString}${lines.last}"
   }

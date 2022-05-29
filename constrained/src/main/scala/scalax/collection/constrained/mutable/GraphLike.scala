@@ -32,7 +32,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLi
           preCheckResult.followUp match {
             case Complete => Right(remove)
             case PostCheck =>
-              val incidentEdges = node.edges.toBuffer
+              val incidentEdges = node.edges.toIterable
               if (remove) {
                 postSubtract(selfGraph, Set(node), Set.empty[E[N]], preCheckResult).fold(
                   failure => {
@@ -139,7 +139,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLi
     preCheckResult.followUp match {
       case Complete => Right(withoutChecks(super.--=(elems)))
       case PostCheck =>
-        val subtractables = (elems filter this.contains).toArray ++ innerNodes.flatMap(_.edges).toBuffer
+        val subtractables = (elems filter this.contains).toArray ++ innerNodes.flatMap(_.edges).toIterable
         withoutChecks(super.--=(subtractables))
         postSubtract(this, outerNodes, outerEdges, preCheckResult).fold(
           failure => {

@@ -5,7 +5,7 @@ import java.io.{ObjectInputStream, ObjectOutputStream}
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade}
-import scala.collection.mutable.{ArrayBuffer, Buffer, ExtHashSet}
+import scala.collection.mutable.{ArrayBuffer, ExtHashSet}
 import scala.util.Random
 
 import scala.collection.compat._
@@ -253,19 +253,20 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
 
     override def size = nrEdges
 
-    def hasAnyMultiEdge = selfGraph.nodes exists { node: NodeT =>
-      val (di: Buffer[EdgeT @unchecked], unDi: Buffer[EdgeT @unchecked]) =
-        if (selfGraph.isDirected) (node.edges.toBuffer[EdgeT], Buffer.empty)
-        else node.edges.toBuffer partition (_.isDirected)
+    def hasAnyMultiEdge: Boolean = selfGraph.nodes exists { node: NodeT =>
+      val (di: Iterator[EdgeT], unDi: Iterator[EdgeT]) =
+        if (selfGraph.isDirected) (node.edges.iterator, Iterator.empty)
+        else node.edges.iterator.partition(_.isDirected)
       val diTargets, unDiTargets = MSet.empty[NodeT]
       // format: off
-      di  .exists((e: EdgeT) => e.hasSource((n: NodeT) => n eq node) && ! e.targets.forall(diTargets add _)) ||
-      unDi.exists((e: EdgeT) => (e._n(0) eq node)                    && ! e.ends.drop(1).forall((n: NodeT) => unDiTargets add n))
+      di  .exists((e: EdgeT) => e.hasSource((n: NodeT) => n eq node) && ! e.targets.forall(diTargets.add)) ||
+      unDi.exists((e: EdgeT) => (e._n(0) eq node)                    && ! e.ends.drop(1).forall(unDiTargets.add))
       // format: on
     }
   }
 
-  def edgeIterator: Iterator[EdgeT] = nodes.iterator.flatMap(node => node.edges.iterator.filter(_.ends.head == node))
+  def edgeIterator: Iterator[EdgeT] =
+    nodes.iterator.flatMap(node => node.edges.iterator.filter(_.ends.head == node))
 
   final def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(implicit
       e: E2 <:< EdgeLike[N2]

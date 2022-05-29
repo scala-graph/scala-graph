@@ -80,13 +80,19 @@ trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Adja
     if (this contains edge) this
     else copy(nodes.outerIterable, edges.outerIterable concat Iterable(edge))
 
-  def excl(node: N): This[N, E] = nodes find (nf => nf.outer == node) match {
-    case Some(nf) => copy(nodes.outerIterator.toBuffer -= node, edges.outerIterator.toBuffer --= nf.edges map (_.outer))
-    case None     => this
-  }
+  def excl(node: N): This[N, E] =
+    nodes find (nf => nf.outer == node) match {
+      case Some(nf) =>
+        val exclEdges = nf.edges map (_.outer)
+        copy(
+          nodes.outerIterable.filterNot(_ == node),
+          edges.outerIterable.filterNot(exclEdges.contains)
+        )
+      case None => this
+    }
 
   def excl(edge: E): This[N, E] =
-    if (this contains edge) copy(nodes.toOuter, edges.toOuter.toBuffer -= edge)
+    if (this contains edge) copy(nodes.outerIterable, edges.outerIterable.filterNot(_ == edge))
     else this
 
   final def --(nodes: Iterable[N], edges: Iterable[E]): This[N, E] = bulkOp(nodes, edges, minusMinus)

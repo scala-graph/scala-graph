@@ -25,7 +25,7 @@ trait AdjacencyListGraph[
     checkedPlus(
       contained = nodes contains Node(node),
       preAdd = preAdd(node),
-      copy = copy(nodes.outer.toBuffer += node, edges.outer),
+      copy = copy(nodes.outerIterable ++ Iterable(node), edges.outerIterable),
       nodes = Set(node),
       edges = Set.empty[E])
 
@@ -35,7 +35,7 @@ trait AdjacencyListGraph[
     checkedPlus(
       contained = edges contains Edge(e),
       preAdd = preAdd(e),
-      copy = copy(nodes.outer, edges.outer.toBuffer += e),
+      copy = copy(nodes.outerIterable, edges.outerIterable ++ Iterable(e)),
       nodes = Set.empty[N],
       edges = Set(e))
 
@@ -44,16 +44,28 @@ trait AdjacencyListGraph[
   final def -?(n: N): Either[ConstraintViolation, This[N, E]] = checkedMinusNode(
     n,
     forced = true,
-    (outerNode: N, innerNode: NodeT) =>
-      copy(nodes.outer.toBuffer -= outerNode, edges.outer.toBuffer --= (innerNode.edges map (_.outer))))
+    (outerNode: N, innerNode: NodeT) => {
+      val exclNodes = innerNode.edges map (_.outer)
+      copy(
+        nodes.outerIterable.filterNot(_ == outerNode),
+        edges.outerIterable.filterNot(exclNodes.contains)
+      )
+    }
+  )
 
   final override def minusIsolated(n: N): This[N, E] = minusIsolated_?(n) getOrElse this
 
   final def minusIsolated_?(n: N): Either[ConstraintViolation, This[N, E]] = checkedMinusNode(
     n,
     true,
-    (outeNode: N, innerNode: NodeT) =>
-      copy(nodes.outer.toBuffer -= outeNode, edges.outer.toBuffer --= (innerNode.edges map (_.outer))))
+    (outeNode: N, innerNode: NodeT) => {
+      val exclNodes = innerNode.edges map (_.outer)
+      copy(
+        nodes.outerIterable.filterNot(_ == outerNode),
+        edges.outerIterable.filterNot(exclNodes.contains))
+      )
+    }
+  )
 
   /** generic constrained subtraction of edges */
   protected def checkedSubtractEdge[G >: This[N, E]](edge: E,
@@ -84,13 +96,18 @@ trait AdjacencyListGraph[
   final protected def -#?(e: E): Either[ConstraintViolation, This[N, E]] = checkedMinusEdge(
     e,
     simple = true,
-    (outerEdge: E, innerEdge: EdgeT) => copy(nodes.outer, edges.outer.toBuffer -= outerEdge))
+    (outerEdge: E, innerEdge: EdgeT) => copy(nodes.outerIterable, edges.outerIterable.filterNot(_ == outerEdge))
 
   final override protected def -!#(e: E): This[N, E] = -!#?(e) getOrElse this
 
   final protected def -!#?(e: E): Either[ConstraintViolation, This[N, E]] = checkedMinusEdge(
     e,
     simple = false,
-    (outerEdge: E, innerEdge: EdgeT) =>
-      copy(nodes.outer.toBuffer --= innerEdge.privateNodes map (n => n.value), edges.outer.toBuffer -= e))
+    (outerEdge: E, innerEdge: EdgeT) => {
+      val exclNodes = innerEdge.privateNodes map (_.outer)
+      copy(
+        nodes.outerIterable.filterNot(exclNodes.contains),
+        edges.outerIterable.filterNot(_ == e))
+    }
+  )
 }
