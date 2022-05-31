@@ -3,7 +3,6 @@ package mutable
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 
-import scala.collection.compat._
 import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.GraphEdge.EdgeLike
 

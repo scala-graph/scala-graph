@@ -8,7 +8,6 @@ import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, ExtHashSet}
 import scala.util.Random
 
-import scala.collection.compat._
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}

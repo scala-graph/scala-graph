@@ -8,7 +8,6 @@ import scalax.collection.GraphEdge._
 import scalax.collection.generic.{GraphCompanion, GraphCoreCompanion}
 import scalax.collection.config.GraphConfig
 import scalax.collection.mutable.Builder
-import scala.collection.compat._
 
 /** A template trait for graphs.
   *

@@ -1,5 +1,8 @@
 package scalax.time
 
+import scala.collection.immutable.ArraySeq
+import scala.collection.mutable
+
 import org.scalactic.Equality
 import org.scalatest.refspec.RefSpec
 import org.scalatest.matchers.should.Matchers
@@ -24,6 +27,7 @@ class MicroBenchmarkTest extends RefSpec with Matchers {
       }
     }
   }
+
   class FloatTolerance(maxDeviation: Float) extends Equality[Float] {
     private def eq(a: Float, b: Float): Boolean = if (a > b) a < b * maxDeviation else a > b / maxDeviation
     def areEqual(a: Float, b: Any) = b match {
@@ -31,6 +35,7 @@ class MicroBenchmarkTest extends RefSpec with Matchers {
       case i: Int   => eq(a, i.toFloat)
     }
   }
+
   object `relativeTime() roughly reflects` {
     def `O(N) complexity of List.size`: Unit = {
       def fill(size: Int): (Int, List[Int]) = (size, List.fill(size)(0))
@@ -44,25 +49,25 @@ class MicroBenchmarkTest extends RefSpec with Matchers {
       actual should ===(expected)
     }
   }
+
   def `traversing immutable.Set takes marginally longer than mutable.Set`: Unit = {
-    import scala.collection.mutable
-    import scala.collection.compat.immutable.ArraySeq
-    val size  = 10000
-    val array = Array.tabulate(size)(identity)
-    val sum   = array.sum
-    val imm   = Set(ArraySeq.unsafeWrapArray(array): _*)
-    val m     = mutable.Set(ArraySeq.unsafeWrapArray(array): _*)
+    val size = 10000
+    val seq  = ArraySeq.tabulate(size)(identity)
+    val sum  = seq.sum
+    val imm  = Set(seq: _*)
+    val m    = mutable.Set(seq: _*)
 
     relativeTime(repetitions = 6)(m.sum == sum, imm.sum == sum) should be > 1.05f
   }
+
+  /* assumption not correct
   def `traversing mutable.Set takes longer than mutable.BitSet`: Unit = {
-    import scala.collection.mutable
-    import scala.collection.compat.immutable.ArraySeq
     val size  = 10000
-    val array = Array.tabulate(size)(_ % (size / 10))
-    val s     = Set(ArraySeq.unsafeWrapArray(array): _*)
-    val b     = mutable.BitSet(ArraySeq.unsafeWrapArray(array): _*)
+    val seq = ArraySeq.tabulate(size)(_ % (size / 10))
+    val s     = Set(seq: _*)
+    val b     = mutable.BitSet(seq: _*)
 
     relativeTime(warmUp = 20, repetitions = 6)(b.sum, s.sum) should be > 1.1f
   }
+   */
 }
