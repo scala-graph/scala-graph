@@ -71,8 +71,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     /* TODO
     with EdgeOps[N, E, This]
      */ {
-  selfGraph: // This[N,E] => see https://youtrack.jetbrains.com/issue/SCL-13199
-  This[N, E] with GraphLike[N, E, This] with Graph[N, E] =>
+  selfGraph: This[N, E] =>
 
   override def clone: This[N, E] = companion.from[N, E](nodes.toOuter, edges.toOuter)
 

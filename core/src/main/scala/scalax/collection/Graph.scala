@@ -27,11 +27,8 @@ import scalax.collection.mutable.Builder
 trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
     extends GraphBase[N, E, This]
     with GraphTraversal[N, E]
-    /* TODO
-        with GraphDegree[N, E]
-     */ {
-  thisGraph: // This[N, E] => see https://youtrack.jetbrains.com/issue/SCL-13199
-  This[N, E] with GraphLike[N, E, This] with Graph[N, E] =>
+    with GraphDegree[N, E, This] {
+  thisGraph: This[N, E] =>
 
   protected type ThisGraph = thisGraph.type
 

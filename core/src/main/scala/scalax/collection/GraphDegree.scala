@@ -6,23 +6,23 @@ import scala.collection.mutable.{Map => MutableMap}
 
 import GraphEdge.EdgeLike
 
-/** A trait for graph degree calculations.
+/** Mixin for degree calculations.
   *
   * @tparam N the user type of the nodes (vertices) in this graph.
-  * @tparam E the kind of the edges (links) in this graph.
+  * @tparam E the type of the edges in this graph.
   *
   * @author Peter Empen
-  * @define DEGREEFUNCTION the degree function to apply
-  *         to the nodes defaulting to `Degree`. Non-default predefined
+  * @define DEGREEFUNCTION the degree function to apply to the nodes defaulting to `Degree`. Non-default predefined
   *         degree functions are `InDegree` and `OutDegree`.
   * @define DEGREEFILTER selects nodes to be included by their degree.
   */
-trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
+trait GraphDegree[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, Y, This]] {
+  this: GraphBase[N, E, This] =>
 
   /** Decreasing ordering of nodes with respect to their degree.
     */
   final class DegreeOrdering(val f: DegreeFunction) extends Ordering[NodeT] {
-    def compare(n1: NodeT, n2: NodeT) = n1.degree compare n2.degree
+    def compare(n1: NodeT, n2: NodeT): Int = n1.degree compare n2.degree
   }
   object DegreeOrdering {
     @inline final def apply(f: DegreeFunction) = new DegreeOrdering(f)
@@ -31,24 +31,23 @@ trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
   /** Decreasing ordering of integers.
     */
   object IntReverseOrdering extends Ordering[Int] {
-    def compare(d1: Int, d2: Int) = d2 compare d1
+    def compare(d1: Int, d2: Int): Int = d2 compare d1
   }
 
   trait DegreeFunction extends Function1[NodeT, Int]
-  object Degree        extends DegreeFunction { def apply(n: NodeT) = n.degree }
-  object InDegree      extends DegreeFunction { def apply(n: NodeT) = n.inDegree }
-  object OutDegree     extends DegreeFunction { def apply(n: NodeT) = n.outDegree }
+  object Degree        extends DegreeFunction { def apply(n: NodeT): Int = n.degree    }
+  object InDegree      extends DegreeFunction { def apply(n: NodeT): Int = n.inDegree  }
+  object OutDegree     extends DegreeFunction { def apply(n: NodeT): Int = n.outDegree }
 
   trait Filter[T] extends Function1[T, Boolean]
-//  trait NodePredicate extends Filter[NodeT]
-//  implicit object AnyNode extends NodePredicate { def apply = (n: NodeT) => true }
+
   /** The total degree of this graph equaling to the sum
     * of the degrees over all nodes or `0` if this graph is empty.
     *
     * @param nodeDegree $DEGREEFUNCTION
     * @param degreeFilter $DEGREEFILTER
     */
-  def totalDegree(implicit nodeDegree: DegreeFunction = Degree, degreeFilter: Int => Boolean = AnyDegree) =
+  def totalDegree(implicit nodeDegree: DegreeFunction = Degree, degreeFilter: Int => Boolean = AnyDegree): Int =
     if (edges.maxArity <= 2 && degreeFilter == AnyDegree) edges.size * 2
     else {
       var deg = 0
@@ -103,8 +102,10 @@ trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
     * @param $DEGREEFUNCTION
     * @param $DEGREEFILTER
     */
-  def degreeSet(implicit nodeDegree: DegreeFunction = Degree,
-                degreeFilter: Int => Boolean = AnyDegree): SortedSet[Int] =
+  def degreeSet(implicit
+      nodeDegree: DegreeFunction = Degree,
+      degreeFilter: Int => Boolean = AnyDegree
+  ): SortedSet[Int] =
     SortedSet[Int]()(IntReverseOrdering) ++ (if (degreeFilter == AnyDegree) nodes map nodeDegree
                                              else nodes.view map nodeDegree filter degreeFilter)
 
@@ -119,11 +120,13 @@ trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
     * @param $DEGREEFUNCTION
     * @param $DEGREEFILTER
     */
-  def degreeNodeSeq(implicit nodeDegree: DegreeFunction = Degree,
-                    degreeFilter: Int => Boolean = AnyDegree): Seq[DegreeNodeSeqEntry] = {
+  def degreeNodeSeq(implicit
+      nodeDegree: DegreeFunction = Degree,
+      degreeFilter: Int => Boolean = AnyDegree
+  ): Seq[DegreeNodeSeqEntry] = {
     val r = (nodes.toList map (n => (nodeDegree(n), n))) sorted
       (new Ordering[DegreeNodeSeqEntry] {
-        def compare(a: DegreeNodeSeqEntry, b: DegreeNodeSeqEntry) = b._1 compare a._1
+        def compare(a: DegreeNodeSeqEntry, b: DegreeNodeSeqEntry): Int = b._1 compare a._1
       })
     if (degreeFilter == AnyDegree) r
     else r filter (t => degreeFilter(t._1))
@@ -136,8 +139,10 @@ trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
     * @param $DEGREEFUNCTION
     * @param $DEGREEFILTER
     */
-  def degreeNodesMap(implicit nodeDegree: DegreeFunction = Degree,
-                     degreeFilter: Int => Boolean = AnyDegree): SortedMap[Int, AnySet[NodeT]] = {
+  def degreeNodesMap(implicit
+      nodeDegree: DegreeFunction = Degree,
+      degreeFilter: Int => Boolean = AnyDegree
+  ): SortedMap[Int, AnySet[NodeT]] = {
     val r: SortedMap[Int, AnySet[NodeT]] =
       SortedMap[Int, AnySet[NodeT]]()(IntReverseOrdering) ++ (nodes groupBy nodeDegree)
     if (degreeFilter == AnyDegree) r
@@ -152,8 +157,10 @@ trait GraphDegree[N, E[+X] <: EdgeLikeIn[X]] { this: GraphBase[N, E] =>
     * @param $DEGREEFUNCTION
     * @param $DEGREEFILTER
     */
-  def degreeCount(implicit nodeDegree: DegreeFunction = Degree,
-                  degreeFilter: Int => Boolean = AnyDegree): SortedMap[Int, Int] =
+  def degreeCount(implicit
+      nodeDegree: DegreeFunction = Degree,
+      degreeFilter: Int => Boolean = AnyDegree
+  ): SortedMap[Int, Int] =
     SortedMap[Int, Int]()(IntReverseOrdering) ++ {
       val m = MutableMap[Int, Int]()
       nodes foreach { n =>

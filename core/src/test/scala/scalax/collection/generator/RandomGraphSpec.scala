@@ -43,8 +43,7 @@ class RandomGraphSpec extends RefSpec with Matchers {
   def checkOrder(g: Graph[Int, DiEdge[Int]])(implicit metrics: Metrics[Int]): Unit =
     g.order should be(metrics.order)
 
-  /* TODO Degree
-  def checkSize(g: Graph[Int, DiEdge[Int]])(implicit metrics: Metrics[Int]) {
+  def checkSize(g: Graph[Int, DiEdge[Int]])(implicit metrics: Metrics[Int]): Unit = {
     import metrics._
     val totalDegree = g.totalDegree
     val deviation   = totalDegree - expectedTotalDegree
@@ -55,9 +54,8 @@ class RandomGraphSpec extends RefSpec with Matchers {
                  | deviation=$deviation,
                  | (${100f * deviation / totalDegree}%2.2f percent)""".stripMargin.linesIterator.mkString)
     totalDegree should (be >= (expectedTotalDegree - maxDegreeDeviation) and
-    be <= (expectedTotalDegree + maxDegreeDeviation))
+      be <= (expectedTotalDegree + maxDegreeDeviation))
   }
-   */
 
   object `disconnected random graph` {
     implicit val metrics: Metrics[Int] = normal
@@ -65,7 +63,7 @@ class RandomGraphSpec extends RefSpec with Matchers {
 
     def `should have expected size`: Unit =
       checkOrder(g)
-      // checkSize(g)
+    checkSize(g)
   }
 
   object `connected random graph` {
@@ -74,7 +72,7 @@ class RandomGraphSpec extends RefSpec with Matchers {
 
     def `should have expected size`: Unit =
       checkOrder(g)
-      // checkSize(g)
+    checkSize(g)
   }
 
   object `dense random graph` {
@@ -88,7 +86,7 @@ class RandomGraphSpec extends RefSpec with Matchers {
       dense.isDense shouldBe true
     def `should have expected size`: Unit =
       checkOrder(g)
-      // checkSize(g)
+    checkSize(g)
   }
 
   /* TODO L
@@ -125,6 +123,6 @@ class RandomGraphSpec extends RefSpec with Matchers {
 
     def `should have expected size`: Unit =
       checkOrder(g)
-      // checkSize(g)
+    // checkSize(g)
   }
 }

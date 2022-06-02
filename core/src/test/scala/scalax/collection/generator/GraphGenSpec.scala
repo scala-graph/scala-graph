@@ -46,17 +46,19 @@ class GraphGenSpec extends RefSpec with Matchers with ScalaCheckPropertyChecks {
   def checkMetrics(g: IntDiGraph, metrics: GraphGen.Metrics[Int]): Unit = {
     import metrics._
 
-    // TODO Degrees: val degrees                 = g.degreeSeq
-    // val tolerableMaxExceed: Int = if (g.isHyper) 8 else 1
+    val degrees                 = g.degreeSeq
+    val tolerableMaxExceed: Int = if (g.isHyper) 8 else 1
 
     g.order should be(order)
     g.isConnected should be(connected)
 
-    // TODO Degrees: degrees.min should be >= (nodeDegrees.min)
-    // TODO Degrees: degrees.max should be <= (nodeDegrees.max + tolerableMaxExceed)
+    degrees.min should be >= (nodeDegrees.min)
+    degrees.max should be <= (nodeDegrees.max + tolerableMaxExceed)
 
-    // TODO Degrees: g.totalDegree should (be >= (expectedTotalDegree - maxDegreeDeviation) and
-    // be <= (expectedTotalDegree + maxDegreeDeviation))
+    g.totalDegree should (
+      be >= (expectedTotalDegree - maxDegreeDeviation) and
+        be <= (expectedTotalDegree + maxDegreeDeviation)
+    )
   }
 
   object `tiny connected graph of [Int,DiEdge]` {
