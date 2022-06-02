@@ -1,18 +1,19 @@
 package scalax.collection
 package generator
 
-import scala.collection.mutable.{Set => MSet}
+// import scala.collection.mutable.{Set => MSet}
 import scala.reflect.ClassTag
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-
-import GraphPredef._, GraphEdge._
+import GraphEdge._
 import mutable.{Graph => MGraph}
 import generic.GraphCompanion
+/* TODO L
 import edge.{LDiEdge, WDiEdge}
+ */
 
-class TRandomGraphTest extends RefSpec with Matchers {
+class RandomGraphSpec extends RefSpec with Matchers {
 
   import RandomGraph._
   val normal = new IntFactory {
@@ -23,24 +24,27 @@ class TRandomGraphTest extends RefSpec with Matchers {
   /** Creates a `RandomGraph` generator that produces a graph
     *  with a constant order, constant `NodeDegreeRange` and a single edge type.
     */
-  def generator[N, E <: EdgeLike[N], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-      edgeCompanion: EdgeCompanionBase[E],
+  def generator[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+      edgeCompanion: EdgeCompanionBase,
       gCompanion: GraphCompanion[G],
-      connected: Boolean)(implicit edgeTag: ClassTag[E[N]], nodeTag: ClassTag[N], metrics: Metrics[N]) =
+      connected: Boolean
+  )(implicit nodeTag: ClassTag[N], metrics: Metrics[N]) =
     new RandomGraph[N, E, G](
       gCompanion,
       metrics.order,
       metrics.nodeGen,
       metrics.nodeDegrees,
       Set(edgeCompanion),
-      connected) {
+      connected
+    ) {
       val graphConfig = graphCompanion.defaultConfig
     }
 
-  def checkOrder(g: Graph[Int, DiEdge])(implicit metrics: Metrics[Int]) {
+  def checkOrder(g: Graph[Int, DiEdge[Int]])(implicit metrics: Metrics[Int]): Unit =
     g.order should be(metrics.order)
-  }
-  def checkSize(g: Graph[Int, DiEdge])(implicit metrics: Metrics[Int]) {
+
+  /* TODO Degree
+  def checkSize(g: Graph[Int, DiEdge[Int]])(implicit metrics: Metrics[Int]) {
     import metrics._
     val totalDegree = g.totalDegree
     val deviation   = totalDegree - expectedTotalDegree
@@ -53,39 +57,41 @@ class TRandomGraphTest extends RefSpec with Matchers {
     totalDegree should (be >= (expectedTotalDegree - maxDegreeDeviation) and
     be <= (expectedTotalDegree + maxDegreeDeviation))
   }
+   */
 
   object `disconnected random graph` {
-    implicit def metrics: Metrics[Int] = normal
-    val g                              = generator[Int, DiEdge, Graph](DiEdge, Graph, false).draw
+    implicit val metrics: Metrics[Int] = normal
+    val g                              = generator[Int, DiEdge[Int], Graph](DiEdge, Graph, false).draw
 
-    def `should have expected size` {
+    def `should have expected size`: Unit =
       checkOrder(g)
-      checkSize(g)
-    }
+      // checkSize(g)
   }
+
   object `connected random graph` {
-    implicit def metrics: Metrics[Int] = normal
-    val g                              = generator[Int, DiEdge, MGraph](DiEdge, MGraph, true).draw
+    implicit val metrics: Metrics[Int] = normal
+    val g                              = generator[Int, DiEdge[Int], MGraph](DiEdge, MGraph, true).draw
 
-    def `should have expected size` {
+    def `should have expected size`: Unit =
       checkOrder(g)
-      checkSize(g)
-    }
+      // checkSize(g)
   }
+
   object `dense random graph` {
     implicit val dense: Metrics[Int] = new IntFactory {
       val order       = 100
       val nodeDegrees = NodeDegreeRange(55, 95)
     }
-    val g = generator[Int, DiEdge, Graph](DiEdge, Graph, true).draw
+    val g = generator[Int, DiEdge[Int], Graph](DiEdge, Graph, true).draw
 
     def `should have dense metrics`: Unit =
-      dense should be('isDense)
-    def `should have expected size` {
+      dense.isDense shouldBe true
+    def `should have expected size`: Unit =
       checkOrder(g)
-      checkSize(g)
-    }
+      // checkSize(g)
   }
+
+  /* TODO L
   object `default weighted random graph edges` {
     implicit val metrics: Metrics[Int] = RandomGraph.TinyInt
     val g                              = generator[Int, WDiEdge, Graph](WDiEdge, Graph, true).draw
@@ -104,21 +110,21 @@ class TRandomGraphTest extends RefSpec with Matchers {
       labels.size should be(g.size)
     }
   }
+   */
+
   object IgnoreThis {
 //  object `huge graph` {
     implicit val huge: Metrics[Int] = new IntFactory {
       val order       = 100000
       val nodeDegrees = normal.nodeDegrees
     }
-    var g: MGraph[Int, DiEdge] = _
+    var g: MGraph[Int, DiEdge[Int]] = _
 
-    def `should be fast enough` {
-      g = generator[Int, DiEdge, MGraph](DiEdge, MGraph, true).draw
-    }
+    def `should be fast enough`: Unit =
+      g = generator[Int, DiEdge[Int], MGraph](DiEdge, MGraph, true).draw
 
-    def `should have expected size` {
+    def `should have expected size`: Unit =
       checkOrder(g)
-      checkSize(g)
-    }
+      // checkSize(g)
   }
 }

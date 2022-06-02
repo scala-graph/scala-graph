@@ -1,8 +1,9 @@
 package scalax.collection
-import org.scalatest.matchers.should.Matchers
 
 import org.scalatest.Suites
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
+
 import scalax.collection.GraphEdge.{~~, ~~>, AnyHyperEdge, EdgeLike}
 import scalax.collection.GraphPredef._
 import scalax.collection.generic.GraphCoreCompanion

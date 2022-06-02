@@ -5,11 +5,13 @@ import scala.collection.mutable.{ArrayBuffer, Set => MSet}
 import scala.util.Random
 import scala.reflect.ClassTag
 
-import GraphPredef._, GraphEdge._
+import GraphEdge._
 import generic.GraphCompanion
+/* TODO L
 import edge.WBase.{WEdgeCompanion, WHyperEdgeCompanion}
 import edge.LBase.{LEdgeCompanion, LHyperEdgeCompanion}
 import edge.WLBase.{WLEdgeCompanion, WLHyperEdgeCompanion}
+ */
 
 /** Supports random graph creation for graphs of any type with variable metrics.
   *
@@ -27,25 +29,24 @@ import edge.WLBase.{WLEdgeCompanion, WLHyperEdgeCompanion}
   *
   * @author Peter Empen
   */
-abstract class RandomGraph[N,
-                           E <: EdgeLike[N],
-                           G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+abstract class RandomGraph[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
     val graphCompanion: GraphCompanion[G],
     val order: Int,
     nodeFactory: => N,
     nodeDegree: NodeDegreeRange,
-    edgeCompanions: Set[EdgeCompanionBase[E]],
+    edgeCompanions: Set[EdgeCompanionBase],
     connected: Boolean,
     weightFactory: Option[() => Long] = None,
-    labelFactory: Option[() => Any] = None)(implicit edgeTag: ClassTag[E[N]], nodeTag: ClassTag[N]) {
+    labelFactory: Option[() => Any] = None
+)(implicit nodeTag: ClassTag[N]) {
   require(order > 0)
   if (connected) require(nodeDegree.min >= 2)
 
   implicit val graphConfig: graphCompanion.Config
 
-  protected val doTrace = false
-  protected def trace(str: => String) { if (doTrace) print(str) }
-  protected def traceln(str: => String) { if (doTrace) println(str) }
+  protected val doTrace                       = false
+  protected def trace(str: => String): Unit   = if (doTrace) print(str)
+  protected def traceln(str: => String): Unit = if (doTrace) println(str)
 
   final protected[RandomGraph] class DefaultWeightFactory {
     private[this] var weightCount = 0L
@@ -144,7 +145,7 @@ abstract class RandomGraph[N,
     def mayFinish: Boolean = active.toFloat / order < 0.5
 
     private[this] var idx = 0
-    def add(node: N, degree: Int) {
+    def add(node: N, degree: Int): Unit = {
       nodes(idx) = node
       degrees(idx) = degree
       idx += 1
@@ -236,7 +237,8 @@ abstract class RandomGraph[N,
       nrToAdd = order,
       add = add(nodeFactory),
       infiniteMsg = "'nodeFactory' yields too many duplicates.",
-      false)
+      false
+    )
 
     private def add(n: N): Boolean =
       if (nodes.add(n)) {
@@ -255,39 +257,45 @@ abstract class RandomGraph[N,
   protected[RandomGraph] class RandomEdge(weightFactory: () => Long, labelFactory: () => Any)(implicit val d: Degrees) {
     private[this] val c = RandomEdge.drawCompanion
     val degrees = d.draw(
-      if (c.isInstanceOf[EdgeCompanion[E]]) 2
-      else 2 + RandomEdge.r.nextInt(5) // TODO use EdgeArityRange instead
+      c match {
+        case _: EdgeCompanion[_] => 2
+        case _                   => 2 + RandomEdge.r.nextInt(5) // TODO use EdgeArityRange instead
+      }
     )
 
     final def isDefined = !degrees.isEmpty
 
-    def draw: E[N] = {
+    def draw: E = {
       val it = degrees.iterator
-      draw(it.next.node, it.next.node, it.map(_.node).toArray: _*)
+      draw(it.next().node, it.next().node, it.map(_.node).toSeq: _*)
     }
 
-    def draw(n1: N, n2: N): E[N] =
+    def draw(n1: N, n2: N): E =
       (c match {
+        /* TODO L
         case c: WLEdgeCompanion[E]    => c.from(n1, n2)(weightFactory(), labelFactory())
         case c: WEdgeCompanion[E]     => c.from(n1, n2)(weightFactory())
         case c: LEdgeCompanion[E]     => c.from(n1, n2)(labelFactory())
-        case c: EdgeCompanion[E]      => c(n1, n2)
-        case c: HyperEdgeCompanion[E] => c(n1, n2)
+         */
+        case c: EdgeCompanion[_]      => c(n1, n2)
+        case c: HyperEdgeCompanion[_] => c(n1, n2) // TODO Hyper
         case x                        => RandomEdge.throwUnsupportedEdgeCompanionException(x)
-      }).asInstanceOf[E[N]]
+      }).asInstanceOf[E]
 
-    def draw(n1: N, n2: N, n: N*): E[N] =
+    def draw(n1: N, n2: N, n: N*): E =
       (c match {
+        /* TODO L
         case c: WLEdgeCompanion[E]      => c(n1, n2)(weightFactory(), labelFactory())
         case c: WLHyperEdgeCompanion[E] => c(n1, n2, n: _*)(weightFactory(), labelFactory())
         case c: WEdgeCompanion[E]       => c(n1, n2)(weightFactory())
         case c: WHyperEdgeCompanion[E]  => c(n1, n2, n: _*)(weightFactory())
         case c: LEdgeCompanion[E]       => c(n1, n2)(labelFactory())
         case c: LHyperEdgeCompanion[E]  => c(n1, n2, n: _*)(labelFactory())
-        case c: EdgeCompanion[E]        => c(n1, n2)
-        case c: HyperEdgeCompanion[E]   => c(n1, n2, n: _*)
-        case x                          => RandomEdge.throwUnsupportedEdgeCompanionException(x)
-      }).asInstanceOf[E[N]]
+         */
+        case c: EdgeCompanion[_]      => c(n1, n2)
+        case c: HyperEdgeCompanion[_] => c(n1, n2, n: _*) // TODO Hyper
+        case x                        => RandomEdge.throwUnsupportedEdgeCompanionException(x)
+      }).asInstanceOf[E]
 
     def setUsed: Boolean = {
       degrees foreach (_.setUsed)
@@ -300,9 +308,9 @@ abstract class RandomGraph[N,
     val nrOfCompanions = companions.size
 
     val r             = Random
-    def drawCompanion = companions(r.nextInt(nrOfCompanions)).asInstanceOf[EdgeCompanionBase[E]]
+    def drawCompanion = companions(r.nextInt(nrOfCompanions))
 
-    def throwUnsupportedEdgeCompanionException(c: EdgeCompanionBase[E]) =
+    def throwUnsupportedEdgeCompanionException(c: EdgeCompanionBase) =
       throw new IllegalArgumentException(s"The edge companion '$c' not supported.")
   }
 
@@ -313,7 +321,7 @@ abstract class RandomGraph[N,
 
     def outerNodes = nodes.nodes
 
-    private val edges = MSet.empty[E[N]]
+    private val edges = MSet.empty[E]
     def outerEdges    = edges
 
     implicit private val degrees = nodes.degrees
@@ -327,7 +335,7 @@ abstract class RandomGraph[N,
     var added = false
     do {
       val mayFinish = degrees.mayFinish
-      added = addExact[E[N]](
+      added = addExact[E](
         1,
         if (edge.isDefined && edges.add(edge.draw)) {
           edge.setUsed
@@ -347,7 +355,8 @@ abstract class RandomGraph[N,
   def draw: G[N, E] = {
     val elems = new OuterElems(
       weightFactory getOrElse (new DefaultWeightFactory).apply,
-      labelFactory getOrElse (new DefaultLabelFactory).apply)
+      labelFactory getOrElse (new DefaultLabelFactory).apply
+    )
     graphCompanion.from(elems.outerNodes, elems.outerEdges)
   }
 
@@ -363,15 +372,16 @@ abstract class RandomGraph[N,
   */
 object RandomGraph {
 
-  def apply[N, E <: EdgeLike[N], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def apply[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       order: Int,
       nodeFactory: => N,
       nodeDegree: NodeDegreeRange,
-      edgeCompanions: Set[EdgeCompanionBase[E]],
+      edgeCompanions: Set[EdgeCompanionBase],
       connected: Boolean,
       weightFactory: Option[() => Long],
-      labelFactory: Option[() => Any])(implicit edgeTag: ClassTag[E[N]], nodeTag: ClassTag[N]): RandomGraph[N, E, G] =
+      labelFactory: Option[() => Any]
+  )(implicit nodeTag: ClassTag[N]): RandomGraph[N, E, G] =
     new RandomGraph[N, E, G](
       graphCompanion,
       order,
@@ -380,22 +390,24 @@ object RandomGraph {
       edgeCompanions,
       connected,
       weightFactory,
-      labelFactory) {
+      labelFactory
+    ) {
       val graphConfig = graphCompanion.defaultConfig
     }
 
-  def apply[N, E <: EdgeLike[N], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def fromMetrics[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       metrics: Metrics[N],
-      edgeCompanions: Set[EdgeCompanionBase[E]])(implicit edgeTag: ClassTag[E[N]],
-                                                 nodeTag: ClassTag[N]): RandomGraph[N, E, G] =
+      edgeCompanions: Set[EdgeCompanionBase]
+  )(implicit nodeTag: ClassTag[N]): RandomGraph[N, E, G] =
     new RandomGraph[N, E, G](
       graphCompanion,
       metrics.order,
       metrics.nodeGen,
       metrics.nodeDegrees,
       edgeCompanions,
-      metrics.connected) {
+      metrics.connected
+    ) {
       val graphConfig = graphCompanion.defaultConfig
     }
 
@@ -444,42 +456,44 @@ object RandomGraph {
     val nodeDegrees = NodeDegreeRange(2, 5)
   }
 
-  /** Returns a generator for tiny, connected, non-labeled directed graphs
-    *  with the metrics defined by `TinyInt`.
+  /** Returns a generator for tiny, connected, non-labeled directed graphs with the metrics defined by `TinyInt`.
     *
     *  @param graphCompanion $COMPANION
     */
-  def tinyConnectedIntDi[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
-      graphCompanion: GraphCompanion[G]): RandomGraph[Int, DiEdge, G] =
-    RandomGraph[Int, DiEdge, G](graphCompanion, TinyInt, Set(DiEdge))
+  def tinyConnectedIntDi[G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GraphCompanion[G]
+  ): RandomGraph[Int, DiEdge[Int], G] =
+    RandomGraph.fromMetrics[Int, DiEdge[Int], G](graphCompanion, TinyInt, Set(DiEdge))
 
-  /** Returns a generator for small, connected, non-labeled directed graphs
-    *  with the metrics defined by `SmallInt`.
+  /** Returns a generator for small, connected, non-labeled directed graphs with the metrics defined by `SmallInt`.
     *
     *  @param graphCompanion $COMPANION
     */
-  def smallConnectedIntDi[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
-      graphCompanion: GraphCompanion[G]): RandomGraph[Int, DiEdge, G] =
-    RandomGraph[Int, DiEdge, G](graphCompanion, SmallInt, Set(DiEdge))
+  def smallConnectedIntDi[N, G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GraphCompanion[G]
+  ): RandomGraph[Int, DiEdge[Int], G] =
+    RandomGraph.fromMetrics[Int, DiEdge[Int], G](graphCompanion, SmallInt, Set(DiEdge))
 
   /** Returns a generator for non-labeled directed graphs of any metrics and any type.
     *
     * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
-  def diGraph[N, G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+  def diGraph[N, G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
-      metrics: Metrics[N])(implicit edgeTag: ClassTag[DiEdge[N]], nodeTag: ClassTag[N]): RandomGraph[N, DiEdge, G] =
-    RandomGraph[N, DiEdge, G](graphCompanion, metrics, Set(DiEdge))
+      metrics: Metrics[N]
+  )(implicit nodeTag: ClassTag[N]): RandomGraph[N, DiEdge[N], G] =
+    RandomGraph.fromMetrics[N, DiEdge[N], G](graphCompanion, metrics, Set(DiEdge))
 
   /** Returns a generator for non-labeled undirected graphs of any metrics and any type.
     *
     * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
-  def unDiGraph[N, G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+  def unDiGraph[N, G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
-      metrics: Metrics[N])(implicit edgeTag: ClassTag[UnDiEdge[N]], nodeTag: ClassTag[N]): RandomGraph[N, UnDiEdge, G] =
-    RandomGraph[N, UnDiEdge, G](graphCompanion, metrics, Set[EdgeCompanionBase[UnDiEdge]](UnDiEdge))
+      metrics: Metrics[N]
+  )(implicit nodeTag: ClassTag[N]): RandomGraph[N, UnDiEdge[N], G] =
+    RandomGraph.fromMetrics[N, UnDiEdge[N], G](graphCompanion, metrics, Set(UnDiEdge))
 
 }

@@ -29,15 +29,16 @@ import generic.GraphCompanion
   *
   * @author Peter Empen
   */
-class GraphGen[N, E <: EdgeLike[N], G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+class GraphGen[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
     val graphCompanion: GraphCompanion[G],
     val order: Int,
     nodeGen: Gen[N],
     nodeDegrees: NodeDegreeRange,
-    edgeCompanions: Set[EdgeCompanionBase[E]],
+    edgeCompanions: Set[EdgeCompanionBase],
     connected: Boolean = true,
     weightFactory: Option[Gen[Long]] = None,
-    labelFactory: Option[Gen[Any]] = None)(implicit edgeTag: ClassTag[E[N]], nodeTag: ClassTag[N]) {
+    labelFactory: Option[Gen[Any]] = None
+)(implicit nodeTag: ClassTag[N]) {
 
   protected[generator] def nodeSetGen: Gen[Set[N]] =
     Gen.containerOfN[Set, N](order, nodeGen) suchThat (_.size == order)
@@ -45,15 +46,16 @@ class GraphGen[N, E <: EdgeLike[N], G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] 
   protected[generator] val outerNodeSet = Arbitrary(nodeSetGen)
 
   final private class NonFailing[N](gen: Gen[N], genName: String) {
-    def draw = {
+    def draw: N = {
       var cnt              = 0
       var value: Option[N] = None
       while (value.isEmpty && cnt < 100) {
-        value = gen.apply(Gen.Parameters.default, Seed.random)
+        value = gen.apply(Gen.Parameters.default, Seed.random())
         cnt += 1
       }
       value getOrElse (throw new IllegalArgumentException(
-        s"$genName generator fails to generate enough valid values. Try to ease its filter condition."))
+        s"$genName generator fails to generate enough valid values. Try to ease its filter condition."
+      ))
     }
   }
 
@@ -86,15 +88,16 @@ class GraphGen[N, E <: EdgeLike[N], G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] 
   */
 object GraphGen {
 
-  def apply[N, E <: EdgeLike[N], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def apply[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       order: Int,
       nodeGen: Gen[N],
       nodeDegrees: NodeDegreeRange,
-      edgeCompanions: Set[EdgeCompanionBase[E]],
+      edgeCompanions: Set[EdgeCompanionBase],
       connected: Boolean,
       weightFactory: Option[Gen[Long]],
-      labelFactory: Option[Gen[Any]])(implicit edgeTag: ClassTag[E[N]], nodeTag: ClassTag[N]): GraphGen[N, E, G] =
+      labelFactory: Option[Gen[Any]]
+  )(implicit nodeTag: ClassTag[N]): GraphGen[N, E, G] =
     new GraphGen[N, E, G](
       graphCompanion,
       order,
@@ -103,20 +106,22 @@ object GraphGen {
       edgeCompanions,
       connected,
       weightFactory,
-      labelFactory)
+      labelFactory
+    )
 
-  def apply[N, E <: EdgeLike[N], G[X, Y[+Z] <: EdgeLikeIn[Z]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def fromMetrics[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       metrics: Metrics[N],
-      edgeCompanions: Set[EdgeCompanionBase[E]])(implicit edgeTag: ClassTag[E[N]],
-                                                 nodeTag: ClassTag[N]): GraphGen[N, E, G] =
+      edgeCompanions: Set[EdgeCompanionBase]
+  )(implicit nodeTag: ClassTag[N]): GraphGen[N, E, G] =
     new GraphGen[N, E, G](
       graphCompanion,
       metrics.order,
       metrics.nodeGen,
       metrics.nodeDegrees,
       edgeCompanions,
-      metrics.connected)
+      metrics.connected
+    )
 
   /** Represents graph metrics like `order`, `nodeDegrees` and `connected`
     *  excluding the type of nodes, edges and the type of the graph to be generated.
@@ -150,8 +155,9 @@ object GraphGen {
     *
     *  @param graphCompanion $COMPANION
     */
-  def tinyConnectedIntDi[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
-      graphCompanion: GraphCompanion[G]): Arbitrary[G[Int, DiEdge]] =
+  def tinyConnectedIntDi[G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GraphCompanion[G]
+  ): Arbitrary[G[Int, DiEdge[Int]]] =
     diGraph[Int, G](graphCompanion, TinyInt)
 
   /** Returns an `org.scalacheck.Arbitrary[G[Int,DiEdge]]` for small, connected,
@@ -159,8 +165,9 @@ object GraphGen {
     *
     * @param graphCompanion $COMPANION
     */
-  def smallConnectedIntDi[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
-      graphCompanion: GraphCompanion[G]): Arbitrary[G[Int, DiEdge]] =
+  def smallConnectedIntDi[G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GraphCompanion[G]
+  ): Arbitrary[G[Int, DiEdge[Int]]] =
     diGraph[Int, G](graphCompanion, SmallInt)
 
   /** Returns an `org.scalacheck.Arbitrary[G[N,DiEdge]]` for non-labeled directed graphs
@@ -169,11 +176,12 @@ object GraphGen {
     * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
-  def diGraph[N, G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+  def diGraph[N, G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
-      metrics: Metrics[N])(implicit edgeTag: ClassTag[DiEdge[N]], nodeTag: ClassTag[N]): Arbitrary[G[N, DiEdge]] =
+      metrics: Metrics[N]
+  )(implicit nodeTag: ClassTag[N]): Arbitrary[G[N, DiEdge[N]]] =
     Arbitrary {
-      GraphGen[N, DiEdge, G](graphCompanion, metrics, Set[EdgeCompanionBase[DiEdge]](DiEdge)).apply
+      GraphGen.fromMetrics[N, DiEdge[N], G](graphCompanion, metrics, Set(DiEdge)).apply
     }
 
   /** Returns an `org.scalacheck.Arbitrary[G[N,UnDiEdge]]` for non-labeled undirected graphs
@@ -182,10 +190,11 @@ object GraphGen {
     * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
-  def unDiGraph[N, G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
+  def unDiGraph[N, G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
-      metrics: Metrics[N])(implicit edgeTag: ClassTag[UnDiEdge[N]], nodeTag: ClassTag[N]): Arbitrary[G[N, UnDiEdge]] =
+      metrics: Metrics[N]
+  )(implicit nodeTag: ClassTag[N]): Arbitrary[G[N, UnDiEdge[N]]] =
     Arbitrary {
-      GraphGen[N, UnDiEdge, G](graphCompanion, metrics, Set[EdgeCompanionBase[UnDiEdge]](UnDiEdge)).apply
+      GraphGen.fromMetrics[N, UnDiEdge[N], G](graphCompanion, metrics, Set(UnDiEdge)).apply
     }
 }

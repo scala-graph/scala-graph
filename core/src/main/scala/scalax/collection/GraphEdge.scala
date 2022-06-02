@@ -429,12 +429,12 @@ object GraphEdge {
 
   /** Marker trait for companion objects of any kind of edge.
     */
-  sealed trait EdgeCompanionBase[+E[N] <: EdgeLike[N]] extends Serializable
+  sealed trait EdgeCompanionBase extends Serializable
 
   /** The abstract methods of this trait must be implemented by companion objects
     * of simple (non-weighted, non-labeled) edges.
     */
-  trait EdgeCompanion[+E[N] <: EdgeLike[N]] extends EdgeCompanionBase[E] {
+  trait EdgeCompanion[+E[N] <: EdgeLike[N]] extends EdgeCompanionBase {
     def apply[NN](node_1: NN, node_2: NN): E[NN]
     implicit def thisCompanion: this.type = this
   }
@@ -524,7 +524,7 @@ object GraphEdge {
   /** The abstract methods of this trait must be implemented by companion objects of simple
     * (non-weighted, non-labeled) hyperedges.
     */
-  trait HyperEdgeCompanion[+E[N] <: AnyHyperEdge[N]] extends EdgeCompanionBase[E] {
+  trait HyperEdgeCompanion[+E[N] <: AnyHyperEdge[N]] extends EdgeCompanionBase {
 
     def apply[N](node_1: N, node_2: N, moreNodes: N*): E[N] = from(Iterable(node_1, node_2) ++ moreNodes)
     def apply[N](ends: Iterable[N]): E[N]                   = from(ends)
@@ -588,7 +588,7 @@ object GraphEdge {
 
   /** The abstract methods of this trait must be implemented by companion objects of directed, non-weighted, non-labeled hyperedges.
     */
-  trait DiHyperEdgeCompanion[+E[N] <: AnyDiHyperEdge[N]] extends EdgeCompanionBase[E] {
+  trait DiHyperEdgeCompanion[+E[N] <: AnyDiHyperEdge[N]] extends EdgeCompanionBase {
     def apply[N](sources: Iterable[N], targets: Iterable[N]): E[N]
     def unapply[N](edge: E[N] @uV): Option[(Seq[N], Seq[N])] = Some(edge.sources.toSeq, edge.targets.toSeq)
   }
