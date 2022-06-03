@@ -133,8 +133,8 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       g.nodes filter (_.degree > 1) shouldBe Set(n(3))
       g.edges filter (_ contains 4) shouldBe Symbol("empty")
 
-      g filter (fNode = _ >= 2) should ===(Graph(2, 3, 5, 2 ~> 3))
-      g filter (fEdge = _.isDirected) should ===(Graph(1, 5, 2, 3, 2 ~> 3))
+      g filter (nodeP = _ >= 2) should ===(Graph(2, 3, 5, 2 ~> 3))
+      g filter (edgeP = _.isDirected) should ===(Graph(1, 5, 2, 3, 2 ~> 3))
     }
 
     /* TODO

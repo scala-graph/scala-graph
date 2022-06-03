@@ -495,14 +495,14 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
       }
     }
 
-    def defaultWeight(edge: EdgeT): Double                               = edge.weight
-    def weightOrdering[T: Numeric](weightF: EdgeT => T): Ordering[EdgeT] = Ordering by weightF
-    def weightOrdering(weightF: EdgeT => Double): Ordering[EdgeT]        = Ordering by weightF
+    def defaultWeight(edge: EdgeT): Double                            = edge.weight
+    def weightOrdering[T: Numeric](weightF: EdgeT => T): EdgeOrdering = EdgeOrdering((Ordering by weightF).compare _)
+    def weightOrdering(weightF: EdgeT => Double): EdgeOrdering        = EdgeOrdering(weightF)
 
-    object WeightOrdering extends Ordering[EdgeT] {
+    object WeightOrdering extends EdgeOrdering {
       def compare(e1: EdgeT, e2: EdgeT): Int = e1.weight compare e2.weight
     }
-    object ArityOrdering extends Ordering[EdgeT] {
+    object ArityOrdering extends EdgeOrdering {
       def compare(e1: EdgeT, e2: EdgeT): Int = e1.arity compare e2.arity
     }
 

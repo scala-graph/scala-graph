@@ -259,7 +259,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   @inline final def get(node: N): NodeT = nodes get node
   @inline final def get(edge: E): EdgeT = edges.find(edge).get
 
-  def filter(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): This[N, E] = {
+  def filter(nodeP: NodePredicate = anyNode, edgeP: EdgePredicate = anyEdge): This[N, E] = {
     import scala.collection.Set
 
     def build(nodes: Set[NodeT]): This[N, E] = {
@@ -267,12 +267,12 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
       nodes foreach { case innerN @ InnerNode(outerN) =>
         b addOne outerN
         innerN.edges foreach { case innerE @ InnerEdge(outerE) =>
-          if (fEdge(innerE) && (innerE.ends forall nodes.contains)) b += outerE
+          if (edgeP(innerE) && (innerE.ends forall nodes.contains)) b += outerE
         }
       }
       b.result
     }
-    (fNode, fEdge) match {
+    (nodeP, edgeP) match {
       case (`anyNode`, `anyEdge`) => this
       case (`anyNode`, _)         => build(nodes)
       case (fN, _)                => build(nodes filter fN)

@@ -153,10 +153,16 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
   /** Whether the given edge is contained in this graph. */
   @inline final def apply(edge: E): Boolean = find(edge).isDefined
 
-  /** Computes a new graph with nodes satisfying `fNode` and edges satisfying `fEdge`.
-    * If both `fNode` and `fEdge` have default values the original graph is retained.
+  /** Computes a new graph with nodes satisfying `nodeP` and edges satisfying `edgeP`.
+    * If both `nodeP` and `edgeP` have default values the original graph is retained.
     */
-  def filter(fNode: NodePredicate = anyNode, fEdge: EdgePredicate = anyEdge): This[N, E]
+  def filter(nodeP: NodePredicate = anyNode, edgeP: EdgePredicate = anyEdge): This[N, E]
+
+  /** Computes a new graph without nodes satisfying `nodeP` and without edges satisfying `ePred`.
+    * If both `nodeP` and `ePred` have default values the original graph is retained.
+    */
+  def filterNot(nodeP: NodePredicate = noNode, edgeP: EdgePredicate = noEdge): This[N, E] =
+    filter(n => !nodeP(n), e => !edgeP(e))
 
   /** Searches this graph for an inner node that wraps an outer node equalling to the given outer node. */
   def find(node: N): Option[NodeT]
