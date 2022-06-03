@@ -16,27 +16,29 @@ trait Visualizer[G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, G]] 
 
   final def given[N, E <: EdgeLike[N]](graph: G[N, E])(test: G[N, E] => Unit): Unit = {
 
-    def reThrow(tExc: TestFailedException, secondLine: String) =
-      throw tExc.modifyMessage(_.map(testMessage => s"""$testMessage
-                                                       |$secondLine
-       """.stripMargin))
+    def reThrow(ex: TestFailedException, secondLine: String) =
+      throw ex.modifyMessage(_.map { testMessage =>
+        s"""$testMessage
+           |$secondLine
+       """.stripMargin
+      })
 
     try test(graph)
     catch {
-      case tExc: TestFailedException =>
+      case ex: TestFailedException =>
         makeImage(
           graph: Graph[N, E],
           path = "log/",
-          name = (tExc.failedCodeFileName match {
+          name = (ex.failedCodeFileName match {
             case Some(fileName) => fileName
             case None           => "failed_test"
-          }) + (tExc.failedCodeLineNumber match {
+          }) + (ex.failedCodeLineNumber match {
             case Some(number) => "_line" + number.toString
             case None         => ""
           }) + ".png"
         ) match {
-          case Success(f) => reThrow(tExc, s"The graph image is available at file://${f.getAbsolutePath}")
-          case Failure(e) => reThrow(tExc, s"Graph image generation failed with `${e.getMessage}`.")
+          case Success(f) => reThrow(ex, s"The graph image is available at file://${f.getAbsolutePath}")
+          case Failure(e) => reThrow(ex, s"Graph image generation failed with `${e.getMessage}`.")
         }
     }
   }
