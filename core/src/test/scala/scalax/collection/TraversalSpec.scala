@@ -93,7 +93,7 @@ final class Traversal[G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E,
       n(3) findPredecessor (_ > 2) shouldBe Some(4)
     }
 
-  def `find connected nodes by predicate in a mid-size graph`: Unit =
+  def `find connected nodes by predicate`: Unit =
     given(Di_1.g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       def n(outer: Int) = g get outer
 
@@ -101,10 +101,10 @@ final class Traversal[G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E,
         n(3) findConnected (_ == i) shouldBe empty
       }
       n(2) findConnected (_ == 4) shouldBe Some(4)
-      n(3) findConnected (_ > 3) shouldBe Some(5)
+      n(3) findConnected (_ > 3) should (be(Some(4)) or be(Some(5)))
     }
 
-  def `find path to a successor in a tiny graph`: Unit =
+  def `find path to a successor`: Unit =
     given(factory(1, 2 ~ 3, 3 ~ 4, 5 ~ 6, 6 ~ 1)) { case g: Graph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
       val n1 = g get 1
       n1 pathUntil (_ == n1) shouldBe None
@@ -124,7 +124,7 @@ final class Traversal[G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E,
       p5.length shouldBe (expected.size - 1)
     }
 
-  def `find path to a successor`: Unit =
+  def `find path to a successor in a minimalistic graph`: Unit =
     given(factory(0 ~ 1, 1 ~ 2)) { case g: Graph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
       def n(outer: Int) = g get outer
       for (i <- 0 to 2)

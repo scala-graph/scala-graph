@@ -3,6 +3,7 @@ package scalax.collection.visualization
 import scala.util.{Failure, Success}
 
 import org.scalatest.exceptions.TestFailedException
+
 import scalax.collection.GraphEdge.EdgeLike
 import scalax.collection.generic.GraphCoreCompanion
 import scalax.collection.{Graph, GraphLike}
@@ -24,7 +25,7 @@ trait Visualizer[G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, G]] 
     catch {
       case tExc: TestFailedException =>
         makeImage(
-          graph.asInstanceOf[Graph[N, E]],
+          graph: Graph[N, E],
           path = "log/",
           name = (tExc.failedCodeFileName match {
             case Some(fileName) => fileName
