@@ -4,6 +4,9 @@ import java.io._
 
 import scala.util.{Failure, Success, Try}
 
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
 import GraphPredef._, GraphEdge._
 import generic.GraphCoreCompanion
 
@@ -11,14 +14,17 @@ import org.scalatest._
 
 import scalax.collection.visualization.Visualizer
 
-class TSerializableRootTest
-    extends Suites(new TSerializable[immutable.Graph](immutable.Graph), new TSerializable[mutable.Graph](mutable.Graph))
+class SerializableSpec
+    extends Suites(
+      new TSerializable[immutable.Graph](immutable.Graph),
+      new TSerializable[mutable.Graph](mutable.Graph)
+    )
 
-/**	Tests for standard java serialization.
+/** Tests for standard java serialization.
   */
-final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC])
-    extends FlatSpec
+final private class TSerializable[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+    val factory: GraphCoreCompanion[CC]
+) extends AnyFlatSpec
     with Matchers
     with BeforeAndAfterEach
     with Visualizer[CC] {
@@ -28,30 +34,30 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
   s"Tests based on ${factoryName}" should "start" in {}
 
   trait GraphStore {
-    protected trait Exec {
-      def save[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): Unit
-      def restore[N, E[+X] <: EdgeLikeIn[X]]: CC[N, E]
+    protected trait ExecMethods {
+      def save[N, E <: EdgeLike[N]](g: CC[N, E]): Unit
+      def restore[N, E <: EdgeLike[N]]: CC[N, E]
     }
-    protected def newTest: Exec
-    def test[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): CC[N, E] = {
+    protected def newTest: ExecMethods
+    def test[N, E <: EdgeLike[N]](g: CC[N, E]): CC[N, E] = {
       val exec = newTest
       exec.save[N, E](g)
       val r = exec.restore[N, E]
-      given(r) { _ should be(g) }
+      given(r)(_ should be(g))
       r
     }
   }
 
   /** to save and restore graphs to/from files */
   object GraphFile extends GraphStore {
-    protected class Exec(filename: String) extends super.Exec {
+    protected class Exec(filename: String) extends ExecMethods {
       import FileSerialization._
-      def save[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): Unit = write(g, filename) recover {
-        case e => fail(s"Couldn't write $g: $e")
+      def save[N, E <: EdgeLike[N]](g: CC[N, E]): Unit = write(g, filename) recover { case e =>
+        fail(s"Couldn't write $g: $e")
       }
 
-      def restore[N, E[+X] <: EdgeLikeIn[X]]: CC[N, E] = read(filename).recover {
-        case e => fail(s"Couldn't read graph: $e")
+      def restore[N, E <: EdgeLike[N]]: CC[N, E] = read(filename).recover { case e =>
+        fail(s"Couldn't read graph: $e")
       }.get
     }
     private val tmpDir = System.getProperty("java.io.tmpdir")
@@ -59,22 +65,23 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
     protected def newTest: Exec = {
       cnt += 1
       new Exec( // include the name of the test method
-        s"$tmpDir${File.separator}${s"${this.getClass.getSimpleName.init}.${if (isImmutableTest) "i" else "m"}-${testNames.toArray.apply(cnt)}"}.ser")
+        s"$tmpDir${File.separator}${s"${this.getClass.getSimpleName.init}.${if (isImmutableTest) "i" else "m"}-${testNames.toArray.apply(cnt)}"}.ser"
+      )
     }
   }
 
   /** to save and restore graphs to/from byte arrays */
   object GraphByteArray extends GraphStore {
-    protected class Exec extends super.Exec {
+    protected class Exec extends ExecMethods {
       import ByteArraySerialization._
       private var _saved: Array[Byte] = _
 
-      def save[N, E[+X] <: EdgeLikeIn[X]](g: CC[N, E]): Unit = write(g) match {
+      def save[N, E <: EdgeLike[N]](g: CC[N, E]): Unit = write(g) match {
         case Success(s) => _saved = s
         case Failure(e) => fail("Couldn't write: " + g, e)
       }
 
-      def restore[N, E[+X] <: EdgeLikeIn[X]]: CC[N, E] = read[CC[N, E]](_saved) match {
+      def restore[N, E <: EdgeLike[N]]: CC[N, E] = read[CC[N, E]](_saved) match {
         case Success(s) => s
         case Failure(e) => fail("Couldn't read graph", e)
       }
@@ -91,23 +98,29 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
     val g = factory.empty[Nothing, Nothing]
     store.test[Nothing, Nothing](g)
   }
+
   "A graph of type [Int,Nothing]" should work in {
     val g = factory[Int, Nothing](-1, 1, 2)
     store.test[Int, Nothing](g)
   }
+
   "A graph of type [Int,UnDiEdge]" should work in {
-    val g = factory(-1 ~ 1, 2 ~> 1)
-    store.test[Int, UnDiEdge](g)
+    val g = factory[Int, AnyEdge](-1 ~ 1, 2 ~> 1)
+    store.test[Int, AnyEdge[Int]](g)
   }
+
   "A graph of type [String,UnDiEdge]" should work in {
-    val g = factory("a" ~ "b", "b" ~> "c")
-    store.test[String, UnDiEdge](g)
+    val g = factory[String, AnyEdge]("a" ~ "b", "b" ~> "c")
+    store.test[String, AnyEdge[String]](g)
   }
+
   "A graph of type [Int,DiEdge]" should work in {
     import Data.elementsOfDi_1
     val g = factory(elementsOfDi_1: _*)
-    store.test[Int, DiEdge](g)
+    store.test[Int, DiEdge[Int]](g)
   }
+
+  /* TODO L
   "A graph of [MyNode,WLDiEdge]" should work in {
     import edge.WLDiEdge
 
@@ -118,8 +131,8 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
 
     {
       /* if MyNode is declared as an inner class, it is not serializable;
-       * so we assert first, that both the node class and the label class are serializable
-       */
+   * so we assert first, that both the node class and the label class are serializable
+   */
       val bos = new ByteArrayOutputStream
       val out = new ObjectOutputStream(bos)
       out writeObject n1
@@ -132,8 +145,8 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
 
       back.size should be(1)
 
-      val inner_1 = (back get n1)
-      inner_1.diSuccessors should have size (1)
+      val inner_1 = back get n1
+      inner_1.diSuccessors should have size 1
       inner_1.diSuccessors.head should be(n2)
 
       val backEdge = back.edges.head
@@ -142,11 +155,13 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
       backEdge.label should be(label)
     }
   }
+   */
+
   "After calling diSuccessors the graph" should work in {
     import Data.elementsOfDi_1
     given(factory(elementsOfDi_1: _*)) { g =>
       g.nodes.head.diSuccessors
-      val back = store.test[Int, DiEdge](g)
+      val back = store.test[Int, DiEdge[Int]](g)
       back should be(g)
     }
   }
@@ -156,33 +171,33 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
       g.nodes.head.diSuccessors
       val n = g.nodes.head
       n.pathTo(n)
-      val back = store.test[Int, DiEdge](g)
+      val back = store.test[Int, DiEdge[Int]](g)
       back should be(g)
     }
   }
   "A deserialized graph" should "be traversable" in {
     import Data.elementsOfDi_1
     given(factory(elementsOfDi_1: _*)) { g =>
-      val back                        = store.test[Int, DiEdge](g)
-      def op(g: CC[Int, DiEdge]): Int = g.nodes.head.outerNodeTraverser.size
+      val back                             = store.test[Int, DiEdge[Int]](g)
+      def op(g: CC[Int, DiEdge[Int]]): Int = g.nodes.head.outerNodeTraverser.size
       op(back) should be(op(g))
     }
   }
   "A deserialized graph" should "have the same successors" in {
     import Data.elementsOfDi_1
     given(factory(elementsOfDi_1: _*)) { g =>
-      def outerSuccessors(g: CC[Int, DiEdge]) =
-        g.nodes map (innerNode => innerNode.value -> innerNode.diSuccessors.map(_.value))
+      def outerSuccessors(g: CC[Int, DiEdge[Int]]) =
+        g.nodes map (innerNode => innerNode.outer -> innerNode.diSuccessors.map(_.outer))
       val diSuccBefore = outerSuccessors(g)
-      val back         = store.test[Int, DiEdge](g)
+      val back         = store.test[Int, DiEdge[Int]](g)
       outerSuccessors(back) should be(diSuccBefore)
     }
   }
 
   trait EdgeStore {
-    def save[N, E[+X] <: EdgeLikeIn[X]](e: Iterable[InParam[N, E]]): Unit
-    def restore[N, E[+X] <: EdgeLikeIn[X]]: Iterable[InParam[N, E]]
-    def test[N, E[+X] <: EdgeLikeIn[X]](e: Iterable[InParam[N, E]]): Iterable[InParam[N, E]] = {
+    def save[N, E <: EdgeLike[N]](e: Iterable[OuterElem[N, E]]): Unit
+    def restore[N, E <: EdgeLike[N]]: Iterable[OuterElem[N, E]]
+    def test[N, E <: EdgeLike[N]](e: Iterable[OuterElem[N, E]]): Iterable[OuterElem[N, E]] = {
       save[N, E](e)
       val r = restore[N, E]
       r should be(e)
@@ -194,22 +209,22 @@ final class TSerializable[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with Grap
     import ByteArraySerialization._
     private var _saved: Array[Byte] = _
 
-    def save[N, E[+X] <: EdgeLikeIn[X]](it: Iterable[InParam[N, E]]): Unit = write(it) match {
+    def save[N, E <: EdgeLike[N]](it: Iterable[OuterElem[N, E]]): Unit = write(it) match {
       case Success(s) => _saved = s
       case Failure(e) => fail(s"Couldn't write '$it': $e")
     }
 
-    def restore[N, E[+X] <: EdgeLikeIn[X]]: Iterable[InParam[N, E]] =
-      readWithCustomClassLoader[Iterable[InParam[N, E]]](_saved) match {
+    def restore[N, E <: EdgeLike[N]]: Iterable[OuterElem[N, E]] =
+      readWithCustomClassLoader[Iterable[OuterElem[N, E]]](_saved) match {
         case Success(s) => s
         case Failure(e) => fail(s"Couldn't read iterable: $e")
       }
   }
 
   "A graph of [Int,WUnDiEdge]" should work in {
-    import edge.WUnDiEdge, Data.elementsOfWUnDi_2
-    given(factory(elementsOfWUnDi_2: _*)) { _ =>
-      new EdgeByteArray test [Int, WUnDiEdge] (elementsOfWUnDi_2)
+    import Data.elementsOfMixed_2
+    given(factory.from(elementsOfMixed_2)) { _ =>
+      (new EdgeByteArray).test[Int, AnyEdge[Int]](elementsOfMixed_2)
     }
   }
 }
@@ -222,10 +237,9 @@ object ByteArraySerialization {
       out writeObject obj
       out.close()
       bos.toByteArray
-    } recoverWith {
-      case e =>
-        out.close()
-        Failure[Array[Byte]](e)
+    } recoverWith { case e =>
+      out.close()
+      Failure[Array[Byte]](e)
     }
   }
 
@@ -240,19 +254,18 @@ object ByteArraySerialization {
       val read = in.readObject
       in.close()
       read.asInstanceOf[A]
-    } recoverWith {
-      case e =>
-        in.close()
-        Failure[A](e)
+    } recoverWith { case e =>
+      in.close()
+      Failure[A](e)
     }
 
   // resolves ClassNotFound issue with SBT
-  private val cl = classOf[TSerializableRootTest].getClassLoader
+  private val cl = classOf[SerializableSpec].getClassLoader
   private class CustomObjectInputStream(in: InputStream) extends ObjectInputStream(in) {
     override def resolveClass(cd: ObjectStreamClass): Class[_] =
-      try {
+      try
         cl.loadClass(cd.getName())
-      } catch {
+      catch {
         case cnf: ClassNotFoundException =>
           super.resolveClass(cd)
       }
@@ -278,10 +291,9 @@ object FileSerialization {
       out writeObject obj
       out.close()
       file
-    } recoverWith {
-      case e =>
-        if (out ne null) out.close()
-        Failure[File](e)
+    } recoverWith { case e =>
+      if (out ne null) out.close()
+      Failure[File](e)
     }
   }
   def read[A](filename: String): Try[A] = read(new File(filename))
@@ -292,10 +304,9 @@ object FileSerialization {
       val read = in.readObject
       in.close()
       read.asInstanceOf[A]
-    } recoverWith {
-      case e =>
-        if (in ne null) in.close()
-        Failure[A](e)
+    } recoverWith { case e =>
+      if (in ne null) in.close()
+      Failure[A](e)
     }
   }
 }
@@ -348,9 +359,8 @@ protected object ScalaObjectSerialization extends App {
       println(s"saved (${saved.length} bytes)=${new String(saved)}")
       println(s"  contains MyVal=${new String(saved) contains "MyVal"}")
       read[A](saved)
-    } map (my => println(s"  okDef=${my.inner.d}, okVal=${my.inner.v}")) recover {
-      case e =>
-        println(s"serialization of $my failed with $e")
+    } map (my => println(s"  okDef=${my.inner.d}, okVal=${my.inner.v}")) recover { case e =>
+      println(s"serialization of $my failed with $e")
     }
 
   test(MyObject)
