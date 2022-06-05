@@ -371,41 +371,40 @@ object GraphEdge {
     override protected def baseHashCode: Int = 23 * _1.## ^ _2.##
   }
 
-  /** This trait supports extending the default key of an edge with additional attributes.
+  /** Mixin for multi-edge support.
     *
-    * As a default, the key - represented by `hashCode` - of an edge is made up of the
-    * participating nodes.
-    * Custom edges may need to expand this default key with additional attributes
-    * thus enabling the definition of several edges between the same nodes (multi-edges).
-    * Edges representing flight connections between airports are a typical example
-    * for this requirement because their key must also include something like a flight number.
-    * When defining a custom edge for a multi-graph, this trait must be mixed in.
+    * As a default, hashCode/equality of edges is determined by their participating nodes.
+    * We also say that nodes are always part of the edge key.
     *
-    * @tparam N    type of the nodes
+    * Whenever your custom edge needs be a multi-edge, meaning that your graph is allowed to have more than one edge
+    * between the same nodes, the default equality needs be extended by adding further class members to the edge key.
+    *
+    * For example edges representing flight connections between airports need be multi-edges to allow for different
+    * flights between the same airports.
+    * For this purpose, mix in this trait and add some class member like a flight number to the edge key.
+    *
     * @author Peter Empen
     */
-  trait ExtendedKey[+N] { this: EdgeLike[N] =>
+  trait ExtendedKey { this: EdgeLike[_] =>
 
-    /** Each element in this sequence references an attribute of the custom
-      * edge which composes the key of this edge. All attributes added to this sequence
-      * will be considered when calculating `equals` and `hashCode`.
-      *
-      * Neither an empty sequence, nor null elements are permitted.
+    /** Each element in this sequence references a class member of the custom edge that will be added to the edge key.
+      * The edge ends, like `source` and `target`, are always part of the key so don't add them here.
+      * Once you add class members to the edge key they automatically become part of the edge's hashCode/equality.
       */
-    def keyAttributes: Seq[Any]
+    def extendKeyBy: Seq[Any]
 
     override def equals(other: Any): Boolean =
       super.equals(other) && (other match {
-        case that: ExtendedKey[_] => this.keyAttributes == that.keyAttributes
-        case _                    => false
+        case that: ExtendedKey => this.extendKeyBy == that.extendKeyBy
+        case _                 => false
       })
 
-    override def hashCode: Int = super.hashCode + keyAttributes.map(_.## * 41).sum
+    override def hashCode: Int = super.hashCode + extendKeyBy.map(_.## * 41).sum
 
     override protected def attributesToString: String
   }
   object ExtendedKey {
-    def unapply[N](e: ExtendedKey[N]) = Some(e)
+    def unapply(e: ExtendedKey) = Some(e)
   }
 
   trait LoopFreeEdge[+N] { this: EdgeLike[N] =>

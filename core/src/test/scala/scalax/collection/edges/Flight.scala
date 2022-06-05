@@ -29,11 +29,11 @@ case class Flight(
     duration: Duration = Duration(0, 0)
 ) extends AbstractDiEdge[Airport](departure, destination)
     with PartialEdgeMapper[Airport, Flight]
-    with ExtendedKey[Airport] {
+    with ExtendedKey {
 
-  def keyAttributes: Seq[String] = Seq(flightNo)
-  override def weight: Double    = duration.toInt
-  def airline: String            = flightNo substring (0, 2)
+  def extendKeyBy: Seq[String] = Seq(flightNo)
+  override def weight: Double  = duration.toInt
+  def airline: String          = flightNo substring (0, 2)
 
   override protected def attributesToString: String = s" ($flightNo $departure $duration)"
   override def map[NN]: PartialFunction[(NN, NN), Flight] = { case (from: Airport, to: Airport) =>

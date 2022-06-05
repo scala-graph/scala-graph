@@ -54,7 +54,7 @@ abstract class RandomGraph[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[
       weightCount += 1
       weightCount
     }
-    def reset: Unit = weightCount = 0
+    def reset(): Unit = weightCount = 0
   }
 
   /** A stateful String generator with deterministic results.
@@ -135,7 +135,7 @@ abstract class RandomGraph[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[
     /* Whether a compaction has already taken place. */
     private[this] var isCompact = false
 
-    def sliding2(f: (N, N) => Unit) = {
+    def sliding2(f: (N, N) => Unit): Unit = {
       nodes sliding 2 foreach { a: Array[N] =>
         f(a(0), a(1))
       }

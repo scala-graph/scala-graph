@@ -109,7 +109,7 @@ class ExtHashSetSpec extends RefSpec with Matchers {
   }
 }
 
-object ExtHashSetSpec extends App {
+object ExtHashSetSpec {
 
   private def nonEmptyBuckets(set: ExtHashSet[Int]) = set.dump filter (_.nonEmpty)
 
