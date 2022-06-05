@@ -71,14 +71,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
   trait Node          extends Serializable
   trait BaseInnerNode extends Node with InnerNode {
 
-    /** Synonym for `outer`. */
-    @deprecated("Use 'outer' instead", "2.0.0")
-    @inline final def value: N = outer
-
-    /** Synonym for `outer`. */
-    @deprecated("Use 'outer' instead", "2.0.0")
-    @inline final def toOuter: N = outer
-
     /** All edges at this node - commonly denoted as E(v).
       * @return all edges connecting to this node.
       */
@@ -425,10 +417,6 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
   type EdgeT <: InnerEdgeLike[NodeT] with BaseInnerEdge
   trait BaseInnerEdge extends InnerEdgeLike[NodeT] with InnerEdge with Equals {
     this: EdgeT =>
-
-    /** Synonym for `outer`. */
-    @deprecated("Use 'outer' instead", "2.0.0")
-    @inline final def toOuter: E = outer
 
     @inline final override def weight: Double = outer.weight
 
