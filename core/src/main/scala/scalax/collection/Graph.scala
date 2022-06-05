@@ -264,9 +264,9 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
 
     def build(nodes: Set[NodeT]): This[N, E] = {
       val b = companion.newBuilder[N, E]
-      nodes foreach { case innerN @ InnerNode(outerN) =>
+      nodes foreach { case InnerNode(innerN, outerN) =>
         b addOne outerN
-        innerN.edges foreach { case innerE @ InnerEdge(outerE) =>
+        innerN.edges foreach { case InnerEdge(innerE, outerE) =>
           if (edgeP(innerE) && (innerE.ends forall nodes.contains)) b += outerE
         }
       }
@@ -308,7 +308,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   ): This[NN, EC[NN]] =
     mapNodesInBuilder[NN, EC[NN]](fNode) pipe { case (nMap, builder) =>
       edges foreach {
-        case InnerEdge(outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
+        case InnerEdge(_, outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
           (nMap(n1), nMap(n2)) pipe { case nns @ (nn1, nn2) =>
             outer match {
               case m: GenericEdgeMapper[N, EC @unchecked]     => builder += m.map(nn1, nn2)
@@ -337,7 +337,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   final def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, fEdge: (NN, NN) => EC): This[NN, EC] =
     mapNodesInBuilder[NN, EC](fNode) pipe { case (nMap, builder) =>
       edges foreach {
-        case InnerEdge(outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
+        case InnerEdge(_, AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
           (nMap(n1), nMap(n2)) pipe { case nns @ (nn1, nn2) =>
             builder += fEdge(nn1, nn2)
           }

@@ -349,8 +349,8 @@ trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal
       *  @return $ADDSUCCESS
       */
     final def add(elem: InnerElem): Boolean = elem match {
-      case n: InnerNode => this add n.asNodeT
-      case e: InnerEdge => this add e.asEdgeT
+      case InnerNode(n, _) => this add n
+      case InnerEdge(e, _) => this add e
     }
 
     /** $ADDNODE

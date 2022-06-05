@@ -728,7 +728,7 @@ trait TraverserImpl[N, E <: EdgeLike[N]] {
                               if (isBlack(n))
                                 shortenedPath.push(new CycleStackElem(n, Set(edge)))
                               edge
-                            case (_, inner: InnerEdge) => inner.asEdgeT
+                            case (_, InnerEdge(e, _)) => e
                           }
                           return Some(start, shortenedPath)
                         }

@@ -23,8 +23,9 @@ class TraversalSpec
   * by the Graph factory and passed to the constructor.
   * It allows the same tests to be run for mutable and immutable Graphs.
   */
-final class Traversal[G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, G]](val factory: GraphCoreCompanion[G])
-    extends RefSpec
+final private class Traversal[G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+    val factory: GraphCoreCompanion[G]
+) extends RefSpec
     with Matchers
     with ScalaCheckPropertyChecks
     with Visualizer[G] {
@@ -370,8 +371,9 @@ final class Traversal[G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E,
       def nodePred(n: g.NodeT) = n.degree > 1
       def edgePred(e: g.EdgeT) = e.ends forall nodePred
 
-      val nodes = t collect { case n: g.InnerNode if nodePred(n.asNodeT) => n.asNodeT }
-      val edges = t collect { case e: g.InnerEdge if edgePred(e.asEdgeT) => e.asEdgeT }
+      val nodes = t collect { case g.InnerNode(n, _) if nodePred(n) => n }
+      val edges = t collect { case g.InnerEdge(e, _) if edgePred(e) => e }
+
       nodes.toSet shouldBe (g.nodes filter nodePred)
       edges.toSet shouldBe (g.edges filter edgePred)
     }

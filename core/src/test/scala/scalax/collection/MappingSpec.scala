@@ -54,7 +54,7 @@ private class Mapping[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E
       g.edges.head should be(edge._1.toString ~ edge._2.toString)
     }
     def `may yield a directed graph`: Unit = {
-      val g = originalG map ({ case originalG.InnerNode(i) => i + 1 }, DiEdge[Int])
+      val g = originalG map ({ case originalG.InnerNode(_, i) => i + 1 }, DiEdge[Int])
       (g: CC[Int, DiEdge[Int]]).edges.head.isDirected shouldBe true
     }
   }

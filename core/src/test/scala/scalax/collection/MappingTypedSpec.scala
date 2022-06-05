@@ -16,15 +16,15 @@ class MappingTypedSpec
       new MappingTyped[mutable.Graph](mutable.Graph)
     )
 
-private class MappingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+private class MappingTyped[+CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {
 
   object `when mapping a typed graph you may` {
     private trait Node
-    private case class A(a: Int)         extends Node { def +(addend: Int) = A(a + addend)             }
-    private case class B(a: Int, b: Int) extends Node { def +(addend: Int) = B(a + addend, b + addend) }
+    private case class A(a: Int)         extends Node { def +(addend: Int): A = A(a + addend)             }
+    private case class B(a: Int, b: Int) extends Node { def +(addend: Int): B = B(a + addend, b + addend) }
 
     private object edges {
       type Connector[+N] = Edge[N, _]
@@ -59,8 +59,8 @@ private class MappingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
     def `map node values without changing node or edge types`: Unit =
       factory(NodeConnector(a_1, b_0_0)) pipe { g =>
         g.mapBounded {
-          case g.InnerNode(a: A) => a + 1
-          case g.InnerNode(b: B) => b + 1
+          case g.InnerNode(_, a: A) => a + 1
+          case g.InnerNode(_, b: B) => b + 1
         } shouldEqual factory(NodeConnector(a_1 + 1, b_0_0 + 1))
       }
 
