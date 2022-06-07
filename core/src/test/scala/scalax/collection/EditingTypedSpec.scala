@@ -8,7 +8,6 @@ import org.scalatest.refspec.RefSpec
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.generic.GraphCoreCompanion
-import scalax.collection.visualization.Visualizer
 
 class EditingTypedSpec
     extends Suites(
@@ -19,8 +18,7 @@ class EditingTypedSpec
 private class EditingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
-    with Matchers
-    with Visualizer[CC] {
+    with Matchers {
 
   import scalax.collection.edges.Aviation
   import Aviation._
@@ -30,38 +28,51 @@ private class EditingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike
   val flightNo   = "LH007"
 
   object `Custom edge 'Flight'` {
-    def `proper methods`: Unit = {
+    def `edge methods`: Unit = {
       import Aviation.Implicits._
 
       val outer = Flight(ham, gig, flightNo)
 
       // TODO get apply/from work with Flight
-      given(factory.from[Airport, Flight](Nil, outer :: Nil)) { g =>
-        val e = g.edges.head
-        e.ends.head.getClass should be(g.nodes.head.getClass)
-        e.departure should be(ham)
-        e.destination should be(gig)
-        e.flightNo should be(flightNo)
-        e should be(outer)
-        e.## should be(outer.##)
-        val eqFlight = edges.Flight(ham, gig, flightNo, 11 o 2)
-        e should be(eqFlight)
-        e.## should be(eqFlight.##)
-        val neFlight = edges.Flight(ham, gig, flightNo + "x", 11 o 2)
-        e should not be neFlight
-        e.## should not be neFlight.##
+      val g: Graph[Airport, Flight] = factory.from[Airport, Flight](Nil, outer :: Nil) // `annotated for IntelliJ
+
+      val e = g.edges.head
+      e.ends.head.getClass should be(g.nodes.head.getClass)
+      e.departure should be(ham)
+      e.destination should be(gig)
+      e.flightNo should be(flightNo)
+      e should be(outer)
+      e.## should be(outer.##)
+      val eqFlight = edges.Flight(ham, gig, flightNo, 11 o 2)
+      e should be(eqFlight)
+      e.## should be(eqFlight.##)
+      val neFlight = edges.Flight(ham, gig, flightNo + "x", 11 o 2)
+      e should not be neFlight
+      e.## should not be neFlight.##
+    }
+
+    def `edge equality`: Unit = {
+      val outer_1 = Flight(ham, gig, flightNo)
+      val outer_2 = Flight(ham, gig, flightNo + "x")
+
+      outer_1 should not equal outer_2
+
+      val g = factory.from(outer_1 :: outer_2 :: Nil)
+      g.edges.toList match {
+        case inner_1 :: inner_2 :: Nil =>
+          inner_1 should not equal inner_2
+          inner_1 should equal(outer_1)
+        case _ => fail()
       }
     }
 
-    def `proper method shortcuts`: Unit = {
+    def `edge factory shortcuts`: Unit = {
       import Aviation.Implicits._
       import Flight._
 
       val outer = Flight(ham, gig, flightNo)
-      given(factory(outer)) { _ =>
-        ham ~> gig ## flightNo should be(outer)
-        ham ~> gig ## (flightNo, 11 o 20) should be(outer)
-      }
+      ham ~> gig ## flightNo should be(outer)
+      ham ~> gig ## (flightNo, 11 o 20) should be(outer)
     }
   }
 }
