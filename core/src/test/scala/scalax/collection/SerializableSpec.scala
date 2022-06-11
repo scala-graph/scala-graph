@@ -7,8 +7,9 @@ import scala.util.{Failure, Success, Try}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import GraphPredef._, GraphEdge._
-import generic.GraphCoreCompanion
+import scalax.collection.GraphPredef._
+import scalax.collection.edges._
+import scalax.collection.generic.{AnyEdge, EdgeLike, GraphCoreCompanion}
 
 import org.scalatest._
 

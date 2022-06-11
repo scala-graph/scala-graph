@@ -1,7 +1,7 @@
 package scalax.collection.immutable
 
 import scalax.collection.{Graph => AnyGraph}
-import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.generic.EdgeLike
 import scalax.collection.GraphLike
 
 /** Immutable graph only operations.

@@ -8,7 +8,7 @@ import scala.math.max
 import scala.util.chaining._
 
 import scalax.collection.{Graph => AnyGraph, GraphLike => AnyGraphLike}
-import scalax.collection.GraphEdge.{AnyEdge, EdgeLike}
+import scalax.collection.generic.{AnyEdge, EdgeLike}
 import scalax.collection.generic.{GraphCompanion, MutableGraphCompanion}
 import scalax.collection.config._
 

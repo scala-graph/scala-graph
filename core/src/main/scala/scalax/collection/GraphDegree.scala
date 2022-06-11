@@ -4,7 +4,7 @@ import scala.language.postfixOps
 import scala.collection.{SortedMap, SortedSet}
 import scala.collection.mutable.{Map => MutableMap}
 
-import GraphEdge.EdgeLike
+import scalax.collection.generic.EdgeLike
 
 /** Mixin for degree calculations.
   *

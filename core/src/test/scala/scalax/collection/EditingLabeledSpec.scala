@@ -3,7 +3,7 @@ package scalax.collection
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
-import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.generic.EdgeLike
 
 /** Editing non-hypergraphs with labeled edges, in particular, editing multigraphs.
   */

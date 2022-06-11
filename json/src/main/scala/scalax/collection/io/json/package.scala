@@ -1,7 +1,7 @@
 package scalax.collection.io
 
 import net.liftweb.json.JValue
-import scalax.collection.GraphEdge._
+import scalax.collection.generic._
 import scalax.collection.GraphPredef._
 import scalax.collection.edge.LBase._
 import scalax.collection.edge.WBase._

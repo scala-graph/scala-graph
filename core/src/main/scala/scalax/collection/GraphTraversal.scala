@@ -6,7 +6,7 @@ import scala.collection.mutable.{ArrayBuffer, Builder}
 import scala.language.implicitConversions
 import scala.math.{max, min}
 
-import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.generic.EdgeLike
 import scalax.collection.mutable.{EqHashMap, EqHashSet}
 import scalax.collection.generic.GraphCoreCompanion
 

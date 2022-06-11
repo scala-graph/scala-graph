@@ -4,7 +4,7 @@ package predefined
 
 import net.liftweb.json._
 
-import scalax.collection.GraphEdge._
+import scalax.collection.generic._
 import scalax.collection.edge._
 import scalax.collection.io.edge._
 

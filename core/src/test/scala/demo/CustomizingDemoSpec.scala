@@ -1,8 +1,9 @@
 package demo
 
-import scalax.collection.GraphPredef._
-import scalax.collection.GraphEdge._
 import scalax.collection.Graph
+import scalax.collection.GraphPredef._
+import scalax.collection.edges.DiEdge
+import scalax.collection.generic._
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec

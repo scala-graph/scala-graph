@@ -1,8 +1,9 @@
 package demo
 
-import scalax.collection.GraphPredef._
-import scalax.collection.GraphEdge._
 import scalax.collection.Graph
+import scalax.collection.GraphPredef._
+import scalax.collection.edges._
+import scalax.collection.generic._
 import scalax.collection.immutable
 import scalax.collection.mutable
 

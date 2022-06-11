@@ -1,7 +1,7 @@
 package demo
 
 import scalax.collection.Graph
-import scalax.collection.GraphEdge._
+import scalax.collection.edges._
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/test.html
   *  Test Utilities]].

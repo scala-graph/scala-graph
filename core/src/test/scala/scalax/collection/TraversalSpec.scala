@@ -8,9 +8,9 @@ import org.scalatest.refspec.RefSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scalax.collection.GraphPredef._
-import scalax.collection.GraphEdge._
 import scalax.collection.GraphTraversal._
-import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.edges._
+import scalax.collection.generic.{AnyEdge, EdgeLike, GraphCoreCompanion}
 import scalax.collection.visualization.Visualizer
 
 class TraversalSpec

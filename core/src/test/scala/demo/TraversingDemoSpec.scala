@@ -3,9 +3,10 @@ package demo
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
-import scalax.collection.GraphPredef._
-import scalax.collection.GraphEdge._
 import scalax.collection.Graph
+import scalax.collection.GraphPredef._
+import scalax.collection.edges._
+
 /* TODO L
 import scalax.collection.edge.WUnDiEdge
 import scalax.collection.edge.Implicits._

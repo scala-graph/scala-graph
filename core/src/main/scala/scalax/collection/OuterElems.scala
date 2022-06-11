@@ -1,6 +1,6 @@
 package scalax.collection
 
-import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.generic.EdgeLike
 
 /** Represents parameters that are accepted when calling `Graph(...)`.
   * @tparam N  the type of the nodes (vertices)

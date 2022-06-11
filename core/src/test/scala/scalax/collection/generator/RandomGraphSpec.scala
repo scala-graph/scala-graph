@@ -1,14 +1,14 @@
 package scalax.collection
 package generator
 
-// import scala.collection.mutable.{Set => MSet}
 import scala.reflect.ClassTag
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-import GraphEdge._
-import mutable.{Graph => MGraph}
-import generic.GraphCompanion
+
+import scalax.collection.edges._
+import scalax.collection.generic.{EdgeCompanionBase, EdgeLike, GraphCompanion}
+import scalax.collection.mutable.{Graph => MGraph}
 /* TODO L
 import edge.{LDiEdge, WDiEdge}
  */

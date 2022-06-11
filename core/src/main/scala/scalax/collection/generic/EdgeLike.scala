@@ -1,10 +1,10 @@
 package scalax.collection.generic
 
-import scala.annotation.{switch, tailrec}
-import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.collection.AbstractIterable
-
 import scalax.collection.{Iterable$Enrichments, MSet}
+
+import scala.annotation.unchecked.{uncheckedVariance => uV}
+import scala.annotation.{switch, tailrec}
+import scala.collection.AbstractIterable
 
 /** Template for Graph edges.
   *
@@ -16,7 +16,7 @@ import scalax.collection.{Iterable$Enrichments, MSet}
   * @define ISAT In case this edge is undirected this method maps to `isAt`
   * @author Peter Empen
   */
-sealed trait EdgeLike[+N] { this: Eq =>
+sealed trait EdgeLike[+N] extends Equals {
   import EdgeLike.ValidationException
 
   /** The endpoints of this edge, in other words the nodes this edge joins. */
@@ -150,24 +150,6 @@ sealed trait EdgeLike[+N] { this: Eq =>
 
   override def canEqual(that: Any): Boolean = that.isInstanceOf[EdgeLike[_]]
 
-  override def equals(other: Any): Boolean = other match {
-    case that: EdgeLike[_] =>
-      (this eq that) ||
-      (that canEqual this) &&
-      this.isDirected == that.isDirected &&
-      this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed] &&
-      equals(that)
-    case _ => false
-  }
-
-  /** Preconditions:
-    *  `this.directed == that.directed &&`
-    *  `this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]`
-    */
-  protected def equals(other: EdgeLike[_]): Boolean = baseEquals(other)
-
-  override def hashCode: Int = baseHashCode
-
   final protected def thisSimpleClassName: String =
     try this.getClass.getSimpleName
     catch { // Malformed class name
@@ -204,6 +186,8 @@ object EdgeLike {
 
   class ValidationException(val msg: String) extends Exception
 }
+
+private[collection] trait InnerEdgeLike[+N] extends EdgeLike[N]
 
 /** Marker trait for companion objects of any kind of edge.
   */

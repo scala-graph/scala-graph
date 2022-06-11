@@ -1,7 +1,7 @@
 package scalax.collection
 package mutable
 
-import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.generic.EdgeLike
 import scalax.collection.immutable.AdjacencyListBase
 
 /** Implements an incident list based mutable graph representation.

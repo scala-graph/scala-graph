@@ -4,7 +4,7 @@ package constraints
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 import scalax.collection.GraphPredef._
-import scalax.collection.GraphEdge._
+import scalax.collection.generic._
 import generic.GraphConstrainedCompanion
 import scalax.collection.mutable.{Graph => SimpleGraph}
 

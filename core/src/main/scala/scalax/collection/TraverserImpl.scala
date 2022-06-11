@@ -4,7 +4,7 @@ import scala.annotation.{switch, tailrec}
 import scala.collection.{FilterableSet, FilteredSet}
 import scala.collection.mutable.{ArrayBuffer, Map => MMap, PriorityQueue, Queue, Stack}
 
-import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.generic.EdgeLike
 import scalax.collection.immutable.SortedArraySet
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
 

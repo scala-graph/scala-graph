@@ -1,6 +1,6 @@
 package scalax.collection.hyperedges
 
-import scalax.collection.generic._
+import scalax.collection.generic.{AnyDiHyperEdge, DiHyperEdgeCompanion, OrderedEndpoints}
 
 /** Represents a directed edge in a hypergraph with an unlimited number of source and of target nodes.
   * Target nodes are handled as a $BAG.

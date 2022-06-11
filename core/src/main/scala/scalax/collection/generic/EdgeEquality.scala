@@ -1,8 +1,27 @@
 package scalax.collection.generic
 
-sealed protected[collection] trait Eq extends Equals {
+sealed protected[collection] trait Eq { this: EdgeLike[_] =>
   protected def baseEquals(other: EdgeLike[_]): Boolean
   protected def baseHashCode: Int
+
+  override def equals(other: Any): Boolean = other match {
+    case that: EdgeLike[_] =>
+      (this eq that) ||
+      (that canEqual this) &&
+      this.isDirected == that.isDirected &&
+      this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed] &&
+      equals(that)
+    case _ => false
+  }
+
+  /** Preconditions:
+    *  `this.directed == that.directed &&`
+    *  `this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]`
+    */
+  protected def equals(other: EdgeLike[_]): Boolean = baseEquals(other)
+
+  override def hashCode: Int = baseHashCode
+
 }
 
 protected[collection] object Eq {

@@ -7,8 +7,9 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.rng.Seed
 import org.scalacheck.util.Buildable._
 
-import GraphEdge._
-import generic.GraphCompanion
+import scalax.collection.generic._
+import scalax.collection.edges._
+import scalax.collection.generic.GraphCompanion
 
 /** A `Graph` generator in terms of
   *  [[http://www.scalacheck.org/files/scalacheck_2.10-1.11.3-api/org/scalacheck/Gen$.html org.scalacheck.Gen]].

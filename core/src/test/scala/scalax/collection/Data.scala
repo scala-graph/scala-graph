@@ -1,7 +1,7 @@
 package scalax.collection
 
 import GraphPredef._
-import GraphEdge._
+import scalax.collection.generic._
 /* TODO
 import edge._
 import edge.Implicits._

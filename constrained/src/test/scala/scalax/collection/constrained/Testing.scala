@@ -4,7 +4,7 @@ import org.scalatest.matchers.{MatchResult, Matcher}
 import org.scalatest.matchers.should.Matchers
 
 import scalax.collection.{Graph => SimpleGraph}
-import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.generic.EdgeLike
 import scalax.collection.constrained.generic.GraphConstrainedCompanion
 
 trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, CC]] { this: Matchers =>

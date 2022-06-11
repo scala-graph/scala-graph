@@ -1,6 +1,6 @@
 package scalax.collection.hyperedges
 
-import scalax.collection.generic._
+import scalax.collection.generic.{AnyHyperEdge, HyperEdgeCompanion, OrderedEndpoints}
 
 /** Represents an undirected hyperedge (hyperlink) with ends of bag semantic. */
 @SerialVersionUID(52)

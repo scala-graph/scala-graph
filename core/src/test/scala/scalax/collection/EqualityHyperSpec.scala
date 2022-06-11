@@ -4,8 +4,9 @@ import org.scalatest.matchers.should.Matchers
 
 import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
-import scalax.collection.GraphEdge.{DiHyperEdge, EdgeLike, HyperEdge}
-import scalax.collection.generic.GraphCoreCompanion
+
+import scalax.collection.hyperedges._
+import scalax.collection.generic.{EdgeLike, GraphCoreCompanion}
 
 class EqualityHyperSpec
     extends Suites(

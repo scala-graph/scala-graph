@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 
 import org.scalatest.Suites
 
-import scalax.collection.GraphEdge._
+import scalax.collection.generic._
 import scalax.collection.GraphPredef.HyperEdgeImplicits._
 import scalax.collection.generic.GraphCoreCompanion
 

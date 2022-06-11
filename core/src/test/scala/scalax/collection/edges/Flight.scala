@@ -1,6 +1,6 @@
 package scalax.collection.edges
 
-import scalax.collection.GraphEdge._
+import scalax.collection.generic._
 import scalax.collection.edges.Aviation._
 
 /** Represents a flight between two airports.

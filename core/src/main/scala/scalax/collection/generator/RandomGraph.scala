@@ -5,7 +5,8 @@ import scala.collection.mutable.{ArrayBuffer, Set => MSet}
 import scala.util.Random
 import scala.reflect.ClassTag
 
-import GraphEdge._
+import scalax.collection.generic._
+import scalax.collection.edges._
 import generic.GraphCompanion
 /* TODO L
 import edge.WBase.{WEdgeCompanion, WHyperEdgeCompanion}

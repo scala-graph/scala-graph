@@ -1,6 +1,6 @@
 package scalax.collection.centrality
 
-import scalax.collection.GraphEdge._
+import scalax.collection.generic._
 import scalax.collection.GraphPredef._
 import scalax.collection.Graph
 

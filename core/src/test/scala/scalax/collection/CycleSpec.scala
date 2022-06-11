@@ -1,14 +1,16 @@
 package scalax.collection
 
 import language.postfixOps
-import GraphPredef._
-import GraphEdge._
-import generic.GraphCoreCompanion
+
+import scalax.collection.GraphPredef._
+import scalax.collection.edges._
+import scalax.collection.generic._
+import scalax.collection.visualization.Visualizer
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import org.scalatest.Suites
 import org.scalatest.matchers.{MatchResult, Matcher}
-import scalax.collection.visualization.Visualizer
 
 import scala.util.chaining.scalaUtilChainingOps
 

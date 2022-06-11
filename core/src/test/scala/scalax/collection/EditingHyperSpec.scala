@@ -4,9 +4,9 @@ import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
-import scalax.collection.GraphEdge.{~~, ~~>, AnyHyperEdge, EdgeLike}
 import scalax.collection.GraphPredef._
-import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.hyperedges._
+import scalax.collection.generic._
 
 /** Editing any kind of hypergraph with unlabeled edges including mixed and multigraphs.
   */

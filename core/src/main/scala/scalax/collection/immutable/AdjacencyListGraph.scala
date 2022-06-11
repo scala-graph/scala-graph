@@ -2,7 +2,7 @@ package scalax.collection
 package immutable
 
 import scalax.collection.{Graph => AnyGraph}
-import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.generic.EdgeLike
 import scalax.collection.mutable.ArraySet
 
 /** Implements an incident list based immutable graph representation.

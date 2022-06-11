@@ -3,7 +3,7 @@ package scalax.collection
 import language.implicitConversions
 
 import GraphPredef._
-import GraphEdge._
+import scalax.collection.generic._
 import config.GraphConfig
 
 /** Traits enabling to implement constraints and use constrained graphs.

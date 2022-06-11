@@ -5,8 +5,10 @@ import org.scalatest._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+
 import scalax.collection.GraphPredef._
-import scalax.collection.GraphEdge._
+import scalax.collection.edges._
+import scalax.collection.generic._
 import scalax.collection.generator.RandomGraph.IntFactory
 import scalax.collection.generator._
 import scalax.collection.generic.GraphCoreCompanion

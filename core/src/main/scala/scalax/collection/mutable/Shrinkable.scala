@@ -4,7 +4,7 @@ package mutable
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 
 import scalax.collection.{Graph => AnyGraph}
-import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.generic.EdgeLike
 
 trait Shrinkable[-N, -E <: EdgeLike[N @uV]] extends OuterElems[N @uV, E @uV] {
 

@@ -5,7 +5,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 
-import scalax.collection.GraphEdge._
+import scalax.collection.edges._
+import scalax.collection.generic._
 import scalax.collection.GraphPredef._
 import scalax.collection.generic.GraphCoreCompanion
 

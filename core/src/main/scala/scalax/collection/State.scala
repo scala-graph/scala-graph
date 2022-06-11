@@ -2,8 +2,8 @@ package scalax.collection
 
 import language.postfixOps
 
-import GraphEdge.EdgeLike
-import mutable.ExtBitSet
+import scalax.collection.generic.EdgeLike
+import scalax.collection.mutable.ExtBitSet
 
 /** Adds bit fields to the graph and its nodes facilitating fast storage and retrieval of
   *  traversal-specific flags as a decoupled implementation trait. These flags are often used

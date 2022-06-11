@@ -3,7 +3,9 @@ package scalax.collection
 import scala.language.implicitConversions
 import scala.collection.{AbstractIterable, AbstractIterator, SeqFacade}
 
-import GraphEdge._
+import scalax.collection.generic._
+import scalax.collection.edges._
+import scalax.collection.hyperedges._
 
 /** This object serves as a container for several `Graph`-related definitions like parameter-types and implicit conversions.
   *
@@ -115,6 +117,8 @@ object GraphPredef {
     def ~[NN >: N](n2: NN): E[NN] = companion(n1, n2)
   }
 
+  /* supports implicit conversion from `node_1 ~ node_2` to `UnDiEdge(node_1, node_2)`.
+   */
   implicit class UnDiEdgeImplicits[N](override val n1: N)
       extends AnyVal
       with AbstractEdgeImplicits[N, UnDiEdge, UnDiEdge.type] {

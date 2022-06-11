@@ -7,7 +7,7 @@ import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.util.Random
 
-import GraphEdge._
+import scalax.collection.edges._
 import generator.{NodeDegreeRange, RandomGraph}
 
 import org.scalatest.Inspectors._

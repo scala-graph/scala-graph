@@ -1,6 +1,6 @@
 package scalax.collection
 
-import scalax.collection.GraphEdge._
+import scalax.collection.generic._
 
 /* Operations common to mutable and immutable graphs.
 

@@ -4,8 +4,8 @@ import scala.annotation.{switch, tailrec}
 import scala.collection.{AbstractIterable, EqSetFacade, IndexedSeq, Seq}
 import scala.collection.mutable.{ArrayBuffer, Buffer, Map => MMap, Stack}
 
-import GraphEdge.EdgeLike
-import mutable.{EqHashMap, EqHashSet}
+import scalax.collection.generic.EdgeLike
+import scalax.collection.mutable.{EqHashMap, EqHashSet}
 
 /** Default implementation of the functionality defined by [[GraphTraversal]]
   *  except for algorithms that are placed in [[TraverserImpl]].

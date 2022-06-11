@@ -20,8 +20,9 @@ import org.gephi.preview.api.PreviewProperty._
 import org.gephi.preview.types.{DependantColor, EdgeColor}
 import org.gephi.project.api.{ProjectController, Workspace}
 import org.openide.util.Lookup
+
 import scalax.collection.Graph
-import scalax.collection.GraphEdge.{AnyEdge, EdgeLike, LEdge}
+import scalax.collection.generic.{AnyEdge, EdgeLike, LEdge}
 
 /** Facilitates drawing any graph as an image.
   */

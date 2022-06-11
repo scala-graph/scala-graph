@@ -7,7 +7,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalatest.refspec.RefSpec
 
-import GraphEdge._
+import scalax.collection.edges._
 
 class GraphGenSpec extends RefSpec with Matchers with ScalaCheckPropertyChecks {
 

@@ -6,7 +6,7 @@ import java.io.{ObjectInputStream, ObjectOutputStream}
 import scala.collection.Set
 
 import scalax.collection.{Graph => AnyGraph}
-import scalax.collection.GraphEdge.EdgeLike
+import scalax.collection.generic.EdgeLike
 import scalax.collection.generic.ImmutableGraphCompanion
 import scalax.collection.config.AdjacencyListArrayConfig
 import scalax.collection.mutable.{ArraySet, Builder}

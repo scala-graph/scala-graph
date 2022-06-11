@@ -5,11 +5,11 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphTraversal.Parameters._
 import scalax.collection.GraphTraversal._
-import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.edges._
+import scalax.collection.generic.{EdgeLike, GraphCoreCompanion}
 import scalax.collection.visualization.Visualizer
 
 class TopologicalSortSpec

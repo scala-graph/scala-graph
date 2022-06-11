@@ -4,7 +4,7 @@ import scala.language.implicitConversions
 import scala.util.Random
 import scala.collection.{ExtSetMethods, FilterableSet}
 
-import GraphEdge._
+import scalax.collection.generic._
 import generic.AnyOrdering
 
 /** Base template trait for graphs.

@@ -4,7 +4,8 @@ import org.scalatest.matchers.should.Matchers
 
 import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
-import scalax.collection.GraphEdge.EdgeLike
+
+import scalax.collection.generic.EdgeLike
 import scalax.collection.generic.GraphCoreCompanion
 
 class MappingTypedHyperSpec
