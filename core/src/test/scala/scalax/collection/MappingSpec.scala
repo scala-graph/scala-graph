@@ -32,7 +32,7 @@ private class Mapping[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
 
       g shouldBe a[CC[Int, UnDiEdge[Int]] @unchecked]
       g.nodes.head.outer shouldBe an[Integer]
-      g.edges.head shouldBe an[g.Inner.UnDiEdge]
+      g.edges.head shouldBe an[g.InnerUnDiEdge]
       (g.edges.head.outer: UnDiEdge[Int]) shouldBe an[UnDiEdge[_]]
     }
     def `has correctly mapped nodes`: Unit = {

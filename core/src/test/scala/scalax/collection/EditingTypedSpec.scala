@@ -74,5 +74,22 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
       ham ~> gig ## flightNo should be(outer)
       ham ~> gig ## (flightNo, 11 o 20) should be(outer)
     }
+
+    def `pattern matching`: Unit = {
+      val g: Graph[Airport, Flight] = factory.empty[Airport, Flight]
+
+      g.nodes foreach { case g.InnerNode(inner, Airport(code)) =>
+        code -> inner.outDegree
+      }
+      g.nodes.outerIterator foreach { case Airport(code) =>
+        code
+      }
+      g.edges foreach { case g.InnerEdge(g.InnerDiEdge(source, _), Flight(_, _, no, _, _)) =>
+        no -> source.outDegree
+      }
+      g.edges.outerIterator foreach { case Flight(from, to, no, _, _) =>
+        (from.code, to.code, no)
+      }
+    }
   }
 }
