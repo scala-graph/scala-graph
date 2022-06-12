@@ -1,9 +1,7 @@
 package scalax.collection
 package mutable
 
-import language.postfixOps
-
-import GraphEdge.{Bag, CollectionKind, EdgeLike, EdgeCompanion, HyperEdgeCompanion}
+import generic.{Bag, CollectionKind, EdgeLike, EdgeCompanion, HyperEdgeCompanion}
 import edge.WBase.{WEdgeBound, WEdgeCompanion, WHyperEdgeBound, WHyperEdgeCompanion}
 import edge.LBase.{LEdgeBound, LEdgeCompanion, LHyperEdgeBound, LHyperEdgeCompanion}
 import edge.WLBase.{WLEdgeBound, WLEdgeCompanion, WLHyperEdgeBound, WLHyperEdgeCompanion}

@@ -3,7 +3,7 @@ package imp
 
 import net.liftweb.json._
 
-import scalax.collection.GraphEdge.{EdgeCompanionBase, EdgeLike}
+import scalax.collection.generic._.{EdgeCompanionBase, EdgeLike}
 import error.JsonGraphError._, descriptor._, descriptor.Defaults._
 
 // ---------------------------- data structures representing the parse result

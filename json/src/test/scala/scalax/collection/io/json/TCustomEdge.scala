@@ -3,7 +3,7 @@ package scalax.collection.io.json
 import net.liftweb.json._
 
 import scalax.collection._
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._, scalax.collection.generic._._
 import scalax.collection.generic.GraphCoreCompanion
 import scalax.collection.edge.CBase._
 

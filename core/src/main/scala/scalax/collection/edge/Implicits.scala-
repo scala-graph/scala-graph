@@ -2,7 +2,7 @@ package scalax.collection.edge
 
 import language.implicitConversions
 
-import scalax.collection.GraphEdge._
+import scalax.collection.generic._._
 
 object Implicits {
   // ------------------------------------------------------------------------- W*

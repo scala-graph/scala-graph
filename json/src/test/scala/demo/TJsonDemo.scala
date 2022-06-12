@@ -1,7 +1,7 @@
 package demo
 
 import scalax.collection._
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._, scalax.collection.generic._._
 
 import scalax.collection.io.json._
 import scalax.collection.io.json.descriptor.predefined.{Di, DiHyper}
@@ -60,7 +60,7 @@ class TJsonDemoTest extends RefSpec with Matchers {
           library.toJson(quickJson)
         }
       caught.msg should be(
-        """No 'EdgeDescriptor' capable of processing type "scalax.collection.GraphEdge$DiEdge" found."""
+        """No 'EdgeDescriptor' capable of processing type "scalax.collection.edges.DiEdge" found."""
       )
     }
   }

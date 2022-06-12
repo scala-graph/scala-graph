@@ -2,7 +2,7 @@ package scalax.collection
 
 /** '''Predefined edges'''.
   *
-  * While basic edge types are defined in the object `GraphEdge`,
+  * While basic edge types are defined in the packages `edges`, `hyperedges` and `multi`,
   * the predefined edges in this package cover the following categories
   * (prefixes, shortcuts):
   *
@@ -20,7 +20,7 @@ package scalax.collection
   * @author Peter Empen
   */
 package object edge {
-  import GraphEdge._
+  import generic._
   import edge.CBase.Attributes
 
   type CEdge[+X]      = UnDiEdge[X] with Attributes[X]

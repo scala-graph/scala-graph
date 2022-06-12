@@ -3,7 +3,7 @@ package scalax.collection.edge
 import language.implicitConversions
 import scala.reflect.ClassTag
 
-import scalax.collection.GraphEdge._, scalax.collection.GraphPredef._
+import scalax.collection.generic._._, scalax.collection.GraphPredef._
 import scalax.collection.{Graph, GraphBase}
 
 /** Base traits for weighted edges.

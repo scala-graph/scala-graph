@@ -3,7 +3,7 @@ package serializer
 
 import net.liftweb.json._
 
-import scalax.collection.GraphEdge.Bag
+import scalax.collection.generic.Bag
 import scalax.collection.io.edge._, scalax.collection.io.edge.Types._
 
 import error.JsonGraphError._

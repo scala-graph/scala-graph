@@ -5,7 +5,7 @@ object Types {
   type HyperEdgeNodeIds = List[String]
 }
 import Types._
-import scalax.collection.GraphEdge.NodeProduct
+import scalax.collection.generic.NodeProduct
 
 sealed abstract class Parameters(nodeIds: Product)
 class EdgeParameters(val n1: String, val n2: String) extends Parameters((n1, n2))

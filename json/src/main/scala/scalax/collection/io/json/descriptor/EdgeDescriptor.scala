@@ -5,7 +5,7 @@ import reflect.ClassTag
 
 import net.liftweb.json._
 
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._, scalax.collection.generic._._
 import scalax.collection.edge._, scalax.collection.edge.WBase._, scalax.collection.edge.LBase._,
 scalax.collection.edge.WLBase._, scalax.collection.edge.CBase._
 import scalax.collection.io.edge._

@@ -217,7 +217,7 @@ class TExportTest extends RefSpec with Matchers {
 
   def `doubly-nested subgraphs #69` {
     import scalax.collection.Graph
-    import scalax.collection.GraphEdge.DiEdge
+    import scalax.collection.edges.DiEdge
     import scalax.collection.io.dot.implicits._
 
     val g = Graph[Int, DiEdge](1)
