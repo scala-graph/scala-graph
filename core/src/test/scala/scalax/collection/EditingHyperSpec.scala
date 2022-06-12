@@ -18,7 +18,7 @@ class EditingHyperSpec
       new EditingHyperMutable
     )
 
-class EditingHyper[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
+class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers {
 

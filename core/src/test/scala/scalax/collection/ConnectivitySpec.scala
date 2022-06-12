@@ -23,7 +23,7 @@ class ConnectivitySpec
       new Connectivity[mutable.Graph](mutable.Graph)
     )
 
-final class Connectivity[G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+final class Connectivity[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G]
 ) extends RefSpec
     with Matchers

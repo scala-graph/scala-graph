@@ -2,10 +2,10 @@ package scalax.collection.mutable
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 import scalax.collection.GraphPredef.{OuterEdge, OuterElem, OuterNode}
 
-trait Growable[-N, -E <: EdgeLike[N @uV]] {
+trait Growable[-N, -E <: Edge[N @uV]] {
 
   /** Adds a single node to this graph.
     * @return `true` if this graph has not contained `node` before.

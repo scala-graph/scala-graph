@@ -6,7 +6,7 @@ import scala.collection.mutable.{ArrayBuffer, Builder}
 import scala.language.implicitConversions
 import scala.math.{max, min}
 
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 import scalax.collection.mutable.{EqHashMap, EqHashSet}
 import scalax.collection.generic.GraphCoreCompanion
 
@@ -71,7 +71,7 @@ import scalax.collection.generic.GraphCoreCompanion
   *
   * @author Peter Empen
   */
-trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal] {
+trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
   thisGraph =>
 
   import GraphTraversal._
@@ -563,7 +563,7 @@ trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal
 
     /** Instantiates an extended node visitor based on 'visitor'.
       */
-    def apply[N, E <: EdgeLike[N], U](visitor: (NodeT, Int, Int, => NodeInformer) => U) =
+    def apply[N, E <: Edge[N], U](visitor: (NodeT, Int, Int, => NodeInformer) => U) =
       new ExtendedNodeVisitor[U] {
         def apply(n: NodeT, cnt: Int, depth: Int, inf: => NodeInformer) =
           visitor(n, cnt, depth, inf)
@@ -753,7 +753,7 @@ trait GraphTraversal[N, E <: EdgeLike[N]] extends GraphBase[N, E, GraphTraversal
       } else Set.empty
 
     final def to[
-        G[NN, EE <: EdgeLike[NN]] <: Graph[NN, EE] with GraphLike[NN, EE, G]
+        G[NN, EE <: Edge[NN]] <: Graph[NN, EE] with GraphLike[NN, EE, G]
     ](factory: GraphCoreCompanion[G]): G[N, E] = thisGraph match {
       case g: Graph[N, E] =>
         factory.from(nodes.map(_.outer), edges.map(_.outer))(factory.defaultConfig)

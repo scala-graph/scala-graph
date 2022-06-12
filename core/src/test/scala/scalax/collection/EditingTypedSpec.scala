@@ -15,7 +15,7 @@ class EditingTypedSpec
       new EditingTyped[scalax.collection.mutable.Graph](scalax.collection.mutable.Graph)
     )
 
-private class EditingTyped[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+private class EditingTyped[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {

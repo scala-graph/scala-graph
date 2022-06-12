@@ -16,7 +16,7 @@ class CustomizingDemoSpec extends RefSpec with Matchers {
   object `demonstrating how to` {
 
     def `enrich graphs`: Unit = {
-      implicit class ExtGraph[N, E <: EdgeLike[N]](protected val g: Graph[N, E]) {
+      implicit class ExtGraph[N, E <: Edge[N]](protected val g: Graph[N, E]) {
         def foo: String = "bar"
       }
       val g = Graph(1 ~ 2)
@@ -25,7 +25,7 @@ class CustomizingDemoSpec extends RefSpec with Matchers {
 
     def `enrich inner nodes`: Unit = {
       // works for any Graph due to projection type
-      implicit class ExtGraphNode[N, E <: EdgeLike[N]](node: Graph[N, E]#NodeT) {
+      implicit class ExtGraphNode[N, E <: Edge[N]](node: Graph[N, E]#NodeT) {
         def outOverInDegree: Int = node.outDegree - node.inDegree
       }
 

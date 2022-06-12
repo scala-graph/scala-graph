@@ -2,13 +2,13 @@ package scalax.collection
 package immutable
 
 import scalax.collection.{Graph => AnyGraph}
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 import scalax.collection.mutable.ArraySet
 
 /** Implements an incident list based immutable graph representation.
   * @author Peter Empen
   */
-trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[
+trait AdjacencyListGraph[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: AdjacencyListGraph[X, Y, This] with Graph[
   X,
   Y
 ]] extends GraphLike[N, E, This]

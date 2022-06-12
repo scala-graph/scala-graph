@@ -10,7 +10,7 @@ import scalax.collection.GraphPredef._, scalax.collection.Graph
 
 import descriptor._
 
-class Export[N, E <: EdgeLike[N]](graph: Graph[N, E], descriptor: Descriptor[N])(implicit
+class Export[N, E <: Edge[N]](graph: Graph[N, E], descriptor: Descriptor[N])(implicit
     simpleClassNames: Boolean = true
 ) {
   def jsonASTNodes: JField = {

@@ -18,7 +18,7 @@ class MappingTypedSpec
       new MappingTyped[mutable.Graph](mutable.Graph)
     )
 
-private class MappingTyped[+CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+private class MappingTyped[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {
@@ -88,7 +88,7 @@ private class MappingTyped[+CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLik
       factory(AConnector(a_1, a_1)) pipe { g =>
         def toString(a: A): String = s"""string-$a"""
 
-        def expect[E[N] <: EdgeLike[N]](mapped: CC[String, E[String]], edge: E[String]): Unit = {
+        def expect[E[N] <: Edge[N]](mapped: CC[String, E[String]], edge: E[String]): Unit = {
           mapped.size should ===(1)
           mapped.edges.head.outer should ===(edge)
         }

@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 import scalax.collection.generic.GraphCoreCompanion
 
 class MappingTypedHyperSpec
@@ -14,7 +14,7 @@ class MappingTypedHyperSpec
       new MappingTypedHyper[mutable.Graph](mutable.Graph)
     )
 
-private class MappingTypedHyper[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+private class MappingTypedHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {}

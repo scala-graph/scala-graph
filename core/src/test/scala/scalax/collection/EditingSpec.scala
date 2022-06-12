@@ -172,7 +172,7 @@ private class EditingMutable extends RefSpec with Matchers {
   }
 }
 
-private class Editing[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: ConfigWrapper[CC])
+private class Editing[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: ConfigWrapper[CC])
     extends RefSpec
     with Matchers {
 

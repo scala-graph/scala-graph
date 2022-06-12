@@ -12,7 +12,7 @@ import scalax.collection.generic._
   $define $mapFEdge function to map edges based on the mapped nodes. It is expected to set the node ends to the passed nodes.
                     If this expectation is not met the resulting graph may become deteriorated.
  */
-trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterElems[N, E] {
+trait GraphOps[N, E <: Edge[N], +This[X, Y <: Edge[X]]] extends OuterElems[N, E] {
 
   /** Whether this graph contains any node or any edge. */
   @inline final def isEmpty: Boolean = iterator.isEmpty
@@ -99,30 +99,30 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
     * @param isolatedNodes to be concatenated. Nodes that are implicitly defined by any edge in `edges` will be ignored.
     * @param edges to be concatenated.
     */
-  def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(implicit
-      e: E2 <:< EdgeLike[N2]
+  def concat[N2 >: N, E2 >: E <: Edge[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(implicit
+      e: E2 <:< Edge[N2]
   ): This[N2, E2]
 
   /** Same as `concat(isolatedNodes, edges)` but with empty `isolatedNodes`.
     * This method is useful if you don't need to pass any isolated node.
     */
-  def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](edges: IterableOnce[E2])(implicit e: E2 <:< EdgeLike[N2]): This[N2, E2] =
+  def concat[N2 >: N, E2 >: E <: Edge[N2]](edges: IterableOnce[E2])(implicit e: E2 <:< Edge[N2]): This[N2, E2] =
     concat[N2, E2](Nil, edges)(e)
 
   /** Alias for `concat(isolatedNodes, edges)`. */
-  @inline final def ++[N2 >: N, E2 >: E <: EdgeLike[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(
-      implicit e: E2 <:< EdgeLike[N2]
+  @inline final def ++[N2 >: N, E2 >: E <: Edge[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(implicit
+      e: E2 <:< Edge[N2]
   ): This[N2, E2] =
     concat(isolatedNodes, edges)(e)
 
   /** Alias for `concat(edges)`. */
-  @inline final def ++[N2 >: N, E2 >: E <: EdgeLike[N2]](edges: IterableOnce[E2])(implicit
-      e: E2 <:< EdgeLike[N2]
+  @inline final def ++[N2 >: N, E2 >: E <: Edge[N2]](edges: IterableOnce[E2])(implicit
+      e: E2 <:< Edge[N2]
   ): This[N2, E2] =
     concat[N2, E2](edges)(e)
 
   /** Computes the union between this graph and `that` graph. */
-  @inline final def union[N2 >: N, E2 >: E <: EdgeLike[N2]](that: Graph[N2, E2]): This[N2, E2] =
+  @inline final def union[N2 >: N, E2 >: E <: Edge[N2]](that: Graph[N2, E2]): This[N2, E2] =
     concat(that.nodes.outerIterator, that.edges.outerIterator)
 
   /** Whether the given outer node is contained in this graph. */
@@ -214,7 +214,7 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
     * @return               the mapped graph with a possibly changed node type parameter.
     *                       Edge ends reflect the mapped nodes while edge types will be preserved as far as possible.
     */
-  def map[NN, EC[X] <: EdgeLike[X]](
+  def map[NN, EC[X] <: Edge[X]](
       fNode: NodeT => NN
   )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E, fallbackMapper: EdgeCompanion[EC]): This[NN, EC[NN]]
 
@@ -233,7 +233,7 @@ trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]]] extends OuterEle
     * @param w2    catches the current higher kind of `E` to determine the return type
     * @return      the mapped graph with a possibly downcasted node type parameter
     */
-  def mapBounded[NN <: N, EC[X] <: EdgeLike[X]](
+  def mapBounded[NN <: N, EC[X] <: Edge[X]](
       fNode: NodeT => NN
   )(implicit w1: E <:< PartialMapper, w2: EC[N] =:= E): This[NN, EC[NN]]
 

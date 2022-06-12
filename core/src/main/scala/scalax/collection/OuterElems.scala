@@ -1,12 +1,12 @@
 package scalax.collection
 
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 
 /** Represents parameters that are accepted when calling `Graph(...)`.
   * @tparam N  the type of the nodes (vertices)
   * @tparam E  the kind of the edges (links)
   */
-trait OuterElems[N, E <: EdgeLike[N]] {
+trait OuterElems[N, E <: Edge[N]] {
 
   sealed trait OuterElem
 

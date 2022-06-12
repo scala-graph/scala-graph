@@ -3,7 +3,7 @@ package imp
 
 import net.liftweb.json._
 
-import scalax.collection.generic._.{EdgeCompanionBase, EdgeLike}
+import scalax.collection.generic._.{EdgeCompanionBase, Edge}
 import error.JsonGraphError._, descriptor._, descriptor.Defaults._
 
 // ---------------------------- data structures representing the parse result
@@ -25,16 +25,16 @@ protected[json] case class EdgeList protected[imp] (val edgeTypeId: String, val 
 }
 object Parser {
   // ----------------------------------- parsing JSON text to NodeList/EdgeList
-  def parse[N, C <: EdgeCompanionBase[EdgeLike]](json: String, descriptor: Descriptor[N]): Iterable[ElemList] =
+  def parse[N, C <: EdgeCompanionBase[Edge]](json: String, descriptor: Descriptor[N]): Iterable[ElemList] =
     parse(JsonParser.parse(json), descriptor)
 
-  def parse[N, C <: EdgeCompanionBase[EdgeLike]](jsonAST: JValue, descriptor: Descriptor[N]): Iterable[ElemList] =
+  def parse[N, C <: EdgeCompanionBase[Edge]](jsonAST: JValue, descriptor: Descriptor[N]): Iterable[ElemList] =
     jsonAST match {
       case JObject(fields) => parse(fields, descriptor)
       case _               => Seq[ElemList]().toIterable
     }
 
-  def parse[N, C <: EdgeCompanionBase[EdgeLike]](jsonAST: List[JField], descriptor: Descriptor[N]): Iterable[ElemList] =
+  def parse[N, C <: EdgeCompanionBase[Edge]](jsonAST: List[JField], descriptor: Descriptor[N]): Iterable[ElemList] =
     (for (
       JField(name, values) <- jsonAST
       if descriptor.sectionIds contains name

@@ -59,7 +59,7 @@ class TEdgeTest extends RefSpec with Matchers {
     }
   }
 
-  trait OrderedEndpointsTest[E[+X] <: EdgeLike[X]] {
+  trait OrderedEndpointsTest[E[+X] <: Edge[X]] {
 
     def ordered(edges: Iterable[_]): Boolean =
       edges forall (_.isInstanceOf[OrderedEndpoints])

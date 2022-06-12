@@ -9,7 +9,7 @@ import scala.collection.generic.{Growable, Shrinkable}
 import scala.collection.mutable.Cloneable
 import scala.language.postfixOps
 
-trait GraphLike[N, E <: EdgeLike[N], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
+trait GraphLike[N, E <: Edge[N], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
     extends scalax.collection.mutable.GraphLike[N, E, This]
     with scalax.collection.constrained.GraphLike[N, E, This]
     with GraphOps[N, E, This]

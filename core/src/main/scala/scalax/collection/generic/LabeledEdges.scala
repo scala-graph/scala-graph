@@ -1,6 +1,6 @@
 package scalax.collection.generic
 
-trait Label[L] { this: EdgeLike[_] =>
+trait Label[L] { this: Edge[_] =>
   def isLabeled: Boolean = true
   def label: L
 }

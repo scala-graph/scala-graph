@@ -29,7 +29,7 @@ class LTraversalSpec
       new LTraversal[mutable.Graph](mutable.Graph)
     )
 
-final class LTraversal[G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+final class LTraversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G])
     extends RefSpec
     with Matchers

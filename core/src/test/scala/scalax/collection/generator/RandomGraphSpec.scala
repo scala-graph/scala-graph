@@ -7,7 +7,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
 import scalax.collection.edges._
-import scalax.collection.generic.{EdgeCompanionBase, EdgeLike, GraphCompanion}
+import scalax.collection.generic.{Edge, EdgeCompanionBase, GraphCompanion}
 import scalax.collection.mutable.{Graph => MGraph}
 /* TODO L
 import edge.{LDiEdge, WDiEdge}
@@ -24,7 +24,7 @@ class RandomGraphSpec extends RefSpec with Matchers {
   /** Creates a `RandomGraph` generator that produces a graph
     *  with a constant order, constant `NodeDegreeRange` and a single edge type.
     */
-  def generator[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def generator[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       edgeCompanion: EdgeCompanionBase,
       gCompanion: GraphCompanion[G],
       connected: Boolean

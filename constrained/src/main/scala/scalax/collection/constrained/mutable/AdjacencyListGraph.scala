@@ -3,7 +3,7 @@ package mutable
 
 import scala.collection.Set
 
-import scalax.collection.GraphPredef.EdgeLike
+import scalax.collection.GraphPredef.Edge
 import scalax.collection.mutable.{AdjacencyListGraph => SimpleAdjacencyListGraph}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 
@@ -17,7 +17,7 @@ import config.GenConstrainedConfig
   *
   * @author Peter Empen
   */
-trait AdjacencyListGraph[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: AdjacencyListGraph[X, Y, This] with Graph[
+trait AdjacencyListGraph[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: AdjacencyListGraph[X, Y, This] with Graph[
   X,
   Y
 ]] extends SimpleAdjacencyListGraph[N, E, This]

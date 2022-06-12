@@ -14,7 +14,7 @@ import scalax.collection.mutable.{GraphLike => SimpleGraphLike}
  */
 trait GraphOps[
     N,
-    E <: EdgeLike[N],
+    E <: Edge[N],
     +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[Param[X, Y]] with Graph[X, Y]
 ] { _: This[N, E] with SimpleGraphLike[N, E, This] with GraphOps[N, E, This] =>
 

@@ -24,7 +24,7 @@ import scalax.collection.mutable.Builder
   * @define CONTGRAPH The `Graph` instance that contains `this`
   * @author Peter Empen
   */
-trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
+trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
     extends GraphBase[N, E, This]
     with GraphTraversal[N, E]
     with GraphDegree[N, E, This] {
@@ -139,7 +139,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
 
   protected trait NodeBase extends BaseNodeBase with GraphInnerNode {
     this: NodeT =>
-    final def isContaining[N, E <: EdgeLike[N]](g: GraphBase[N, E, This] @uV): Boolean =
+    final def isContaining[N, E <: Edge[N]](g: GraphBase[N, E, This] @uV): Boolean =
       g eq containingGraph
   }
 
@@ -279,7 +279,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
     }
   }
 
-  final def map[NN, EC[X] <: EdgeLike[X]](
+  final def map[NN, EC[X] <: Edge[X]](
       fNode: NodeT => NN
   )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E, fallbackMapper: EdgeCompanion[EC]): This[NN, EC[NN]] =
     mapNodes(fNode)(
@@ -292,7 +292,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
       (m: PartialHyperEdgeMapper[N, _], ns: Iterable[NN]) => null.asInstanceOf[EC[NN]]                    // TODO
     )
 
-  def mapBounded[NN <: N, EC[X] <: EdgeLike[X]](
+  def mapBounded[NN <: N, EC[X] <: Edge[X]](
       fNode: NodeT => NN
   )(implicit w1: E <:< PartialMapper, w2: EC[N] =:= E): This[NN, EC[NN]] =
     mapNodes(fNode)(
@@ -301,7 +301,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
       (m: PartialHyperEdgeMapper[N, _], ns: Iterable[NN]) => null.asInstanceOf[EC[NN]]
     )
 
-  private def mapNodes[NN, EC[X] <: EdgeLike[X]](fNode: NodeT => NN)(
+  private def mapNodes[NN, EC[X] <: Edge[X]](fNode: NodeT => NN)(
       mapTypedEdge: (PartialEdgeMapper[N, _], (NN, NN)) => EC[NN],
       mapTypedDiHyper: (PartialDiHyperEdgeMapper[N, _], Iterable[NN], Iterable[NN]) => EC[NN],
       mapTypedHyper: (PartialHyperEdgeMapper[N, _], Iterable[NN]) => EC[NN]
@@ -320,7 +320,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
       builder.result
     }
 
-  private def mapNodesInBuilder[NN, EE <: EdgeLike[NN]](fNode: NodeT => NN): (MMap[N, NN], Builder[NN, EE, This]) = {
+  private def mapNodesInBuilder[NN, EE <: Edge[NN]](fNode: NodeT => NN): (MMap[N, NN], Builder[NN, EE, This]) = {
     val nMap = MMap.empty[N, NN]
     val b    = companion.newBuilder[NN, EE](config)
     nodes foreach { n =>
@@ -369,7 +369,7 @@ trait GraphLike[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, 
   * @tparam E the kind of the edges in this graph.
   * @author Peter Empen
   */
-trait Graph[N, E <: EdgeLike[N]] extends GraphLike[N, E, Graph] {
+trait Graph[N, E <: Edge[N]] extends GraphLike[N, E, Graph] {
   override def empty: Graph[N, E] = Graph.empty[N, E]
 }
 
@@ -379,17 +379,17 @@ trait Graph[N, E <: EdgeLike[N]] extends GraphLike[N, E, Graph] {
   */
 object Graph extends GraphCoreCompanion[Graph] {
 
-  override def newBuilder[N, E <: EdgeLike[N]](implicit config: Config) =
+  override def newBuilder[N, E <: Edge[N]](implicit config: Config) =
     scalax.collection.immutable.Graph.newBuilder[N, E](config)
 
-  def empty[N, E <: EdgeLike[N]](implicit config: Config = defaultConfig): Graph[N, E] =
+  def empty[N, E <: Edge[N]](implicit config: Config = defaultConfig): Graph[N, E] =
     scalax.collection.immutable.Graph.empty[N, E](config)
 
-  def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
+  def from[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
       config: Config = defaultConfig
   ): Graph[N, E] =
     scalax.collection.immutable.Graph.from[N, E](nodes, edges)(config)
 
-  def from[N, E[X] <: EdgeLike[X]](edges: Iterable[E[N]]) =
+  def from[N, E[X] <: Edge[X]](edges: Iterable[E[N]]) =
     scalax.collection.immutable.Graph.from[N, E[N]](Nil, edges)(defaultConfig)
 }

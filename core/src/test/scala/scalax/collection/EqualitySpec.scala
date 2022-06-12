@@ -7,7 +7,7 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.GraphPredef._
 import scalax.collection.edges._
-import scalax.collection.generic.{EdgeLike, GraphCoreCompanion}
+import scalax.collection.generic.{Edge, GraphCoreCompanion}
 
 class EqualitySpec
     extends Suites(
@@ -16,7 +16,7 @@ class EqualitySpec
       new EqualityMixed
     )
 
-private class Equality[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+private class Equality[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {

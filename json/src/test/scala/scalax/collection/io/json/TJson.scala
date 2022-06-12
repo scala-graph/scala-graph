@@ -16,7 +16,7 @@ import org.scalatest.refspec.RefSpec
 class TJsonRootTest
     extends Suites(new TJsonTest[immutable.Graph](immutable.Graph), new TJsonTest[mutable.Graph](mutable.Graph))
 
-class TJsonTest[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class TJsonTest[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC] with GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {

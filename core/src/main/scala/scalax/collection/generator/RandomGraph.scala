@@ -30,7 +30,7 @@ import edge.WLBase.{WLEdgeCompanion, WLHyperEdgeCompanion}
   *
   * @author Peter Empen
   */
-abstract class RandomGraph[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+abstract class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
     val graphCompanion: GraphCompanion[G],
     val order: Int,
     nodeFactory: => N,
@@ -373,7 +373,7 @@ abstract class RandomGraph[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[
   */
 object RandomGraph {
 
-  def apply[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def apply[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       order: Int,
       nodeFactory: => N,
@@ -396,7 +396,7 @@ object RandomGraph {
       val graphConfig = graphCompanion.defaultConfig
     }
 
-  def fromMetrics[N, E <: EdgeLike[N], G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def fromMetrics[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       metrics: Metrics[N],
       edgeCompanions: Set[EdgeCompanionBase]
@@ -461,7 +461,7 @@ object RandomGraph {
     *
     *  @param graphCompanion $COMPANION
     */
-  def tinyConnectedIntDi[G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def tinyConnectedIntDi[G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G]
   ): RandomGraph[Int, DiEdge[Int], G] =
     RandomGraph.fromMetrics[Int, DiEdge[Int], G](graphCompanion, TinyInt, Set(DiEdge))
@@ -470,7 +470,7 @@ object RandomGraph {
     *
     *  @param graphCompanion $COMPANION
     */
-  def smallConnectedIntDi[N, G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def smallConnectedIntDi[N, G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G]
   ): RandomGraph[Int, DiEdge[Int], G] =
     RandomGraph.fromMetrics[Int, DiEdge[Int], G](graphCompanion, SmallInt, Set(DiEdge))
@@ -480,7 +480,7 @@ object RandomGraph {
     * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
-  def diGraph[N, G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def diGraph[N, G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       metrics: Metrics[N]
   )(implicit nodeTag: ClassTag[N]): RandomGraph[N, DiEdge[N], G] =
@@ -491,7 +491,7 @@ object RandomGraph {
     * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
-  def unDiGraph[N, G[X, Y <: EdgeLike[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def unDiGraph[N, G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       metrics: Metrics[N]
   )(implicit nodeTag: ClassTag[N]): RandomGraph[N, UnDiEdge[N], G] =

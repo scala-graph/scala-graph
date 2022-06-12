@@ -7,7 +7,7 @@ import scala.collection.Set
 import scala.reflect.ClassTag
 
 import scalax.collection.GraphTraversalImpl
-import scalax.collection.GraphPredef.EdgeLike
+import scalax.collection.GraphPredef.Edge
 import scalax.collection.mutable.{ArraySet, BuilderImpl}
 import scalax.collection.config.AdjacencyListArrayConfig
 import scalax.collection.constrained.{Graph => CGraph, GraphLike => CGraphLike}
@@ -15,7 +15,7 @@ import PreCheckFollowUp._
 import generic.GraphConstrainedCompanion
 import config.GenConstrainedConfig
 
-class GraphBuilder[N, E <: EdgeLike[N], GC[N, E <: EdgeLike[N]] <: CGraph[N, E] with CGraphLike[N, E, GC]](
+class GraphBuilder[N, E <: Edge[N], GC[N, E <: Edge[N]] <: CGraph[N, E] with CGraphLike[N, E, GC]](
     companion: GraphConstrainedCompanion[GC]
 )(config: GenConstrainedConfig)
     extends BuilderImpl[N, E, GC] {
@@ -25,7 +25,7 @@ class GraphBuilder[N, E <: EdgeLike[N], GC[N, E <: EdgeLike[N]] <: CGraph[N, E] 
 
 import scalax.collection.constrained.generic.MutableGraphCompanion
 
-trait Graph[N, E <: EdgeLike[N]]
+trait Graph[N, E <: Edge[N]]
     extends scalax.collection.mutable.Graph[N, E]
     with scalax.collection.constrained.Graph[N, E]
     with GraphLike[N, E, Graph] {
@@ -33,19 +33,19 @@ trait Graph[N, E <: EdgeLike[N]]
 }
 
 object Graph extends MutableGraphCompanion[Graph] {
-  override def empty[N, E <: EdgeLike[N]](config: Config): Graph[N, E] =
+  override def empty[N, E <: Edge[N]](config: Config): Graph[N, E] =
     DefaultGraphImpl.empty[N, E](config)
 
-  override protected[collection] def fromWithoutCheck[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
+  override protected[collection] def fromWithoutCheck[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E])(
       config: Config
   ): Graph[N, E] =
     DefaultGraphImpl.fromWithoutCheck[N, E](nodes, edges)(config)
 
-  override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E[N]])(config: Config): Graph[N, E] =
+  override def from[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E[N]])(config: Config): Graph[N, E] =
     DefaultGraphImpl.from[N, E](nodes, edges)(config)
 }
 
-abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](
+abstract class DefaultGraphImpl[N, E <: Edge[N]](
     iniNodes: Iterable[N] = Set[N](),
     iniEdges: Iterable[E] = Set[E]()
 )(_config: DefaultGraphImpl.Config with GenConstrainedConfig with AdjacencyListArrayConfig)
@@ -83,19 +83,19 @@ abstract class DefaultGraphImpl[N, E <: EdgeLike[N]](
 }
 
 object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
-  override def empty[N, E <: EdgeLike[N]](config: Config): DefaultGraphImpl[N, E] =
+  override def empty[N, E <: Edge[N]](config: Config): DefaultGraphImpl[N, E] =
     fromWithoutCheck(Set.empty, Set.empty)(config)
 
-  override protected[collection] def fromWithoutCheck[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
+  override protected[collection] def fromWithoutCheck[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E])(
       config: Config
   ): DefaultGraphImpl[N, E] =
     new UserConstrainedGraphImpl[N, E](nodes, edges)(config)
 
-  final override def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
+  final override def from[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E])(
       config: Config
   ): DefaultGraphImpl[N, E] = from_?(nodes, edges) getOrElse empty[N, E](config)
 
-  def from_?[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(
+  def from_?[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E])(
       config: Config
   ): Either[ConstraintViolation, DefaultGraphImpl[N, E]] = {
     def emptyGraph = empty[N, E](config)
@@ -118,7 +118,7 @@ object DefaultGraphImpl extends MutableGraphCompanion[DefaultGraphImpl] {
 }
 
 @SerialVersionUID(7701L)
-class UserConstrainedGraphImpl[N, E <: EdgeLike[N]](iniNodes: Iterable[N] = Nil, iniEdges: Iterable[E[N]] = Nil)(
+class UserConstrainedGraphImpl[N, E <: Edge[N]](iniNodes: Iterable[N] = Nil, iniEdges: Iterable[E[N]] = Nil)(
     _config: DefaultGraphImpl.Config
 ) extends DefaultGraphImpl[N, E](iniNodes, iniEdges)(_config)
     with UserConstrainedGraph[N, E, DefaultGraphImpl[N, E]] {

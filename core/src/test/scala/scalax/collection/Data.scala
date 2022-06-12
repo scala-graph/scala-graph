@@ -7,7 +7,7 @@ import edge._
 import edge.Implicits._
  */
 
-abstract class TGraph[N, E <: EdgeLike[N], G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+abstract class TGraph[N, E <: Edge[N], G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
     val g: G[N, E]
 ) {
   def node(outer: N): g.NodeT = g get outer

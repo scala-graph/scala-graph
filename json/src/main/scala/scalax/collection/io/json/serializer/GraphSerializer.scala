@@ -13,7 +13,7 @@ import scalax.collection.config.CoreConfig
   *  contains on or more `Graph` instances.
   *  For usage see `scalax.collection.io.json.serializer.TGraphSerializer`.
   */
-final class GraphSerializer[N, E <: EdgeLike[N]](descriptor: Descriptor[N])(implicit edgeManifest: Manifest[E])
+final class GraphSerializer[N, E <: Edge[N]](descriptor: Descriptor[N])(implicit edgeManifest: Manifest[E])
     extends Serializer[Graph[N, E]] {
 
   override def deserialize(implicit format: Formats) = {

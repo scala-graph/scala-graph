@@ -4,7 +4,7 @@ import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.Set
 import scala.reflect.ClassTag
 
-import scalax.collection.GraphPredef.{EdgeLike, InParam, Param}
+import scalax.collection.GraphPredef.{Edge, InParam, Param}
 import scalax.collection.{Graph => SimpleGraph}
 import scalax.collection.constrained.generic.GraphConstrainedCompanion
 
@@ -25,12 +25,12 @@ trait Graph[N, E <: EdgeLikeIn[N]] extends Set[Param[N, E]] with SimpleGraph[N, 
   * @author Peter Empen
   */
 object Graph extends GraphConstrainedCompanion[Graph] {
-  override def newBuilder[N, E <: EdgeLike[N]](config: Config) =
+  override def newBuilder[N, E <: Edge[N]](config: Config) =
     immutable.Graph.newBuilder[N, E](config)
 
-  def empty[N, E <: EdgeLike[N]](config: Config = defaultConfig): Graph[N, E] =
+  def empty[N, E <: Edge[N]](config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.empty[N, E](config)
-  def from[N, E <: EdgeLike[N]](nodes: Iterable[N], edges: Iterable[E])(config: Config = defaultConfig): Graph[N, E] =
+  def from[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E])(config: Config = defaultConfig): Graph[N, E] =
     immutable.Graph.from[N, E](nodes, edges)(config)
   override protected[collection] def fromWithoutCheck[N, E[+X] <: EdgeLikeIn[X]](
       nodes: Iterable[N],
@@ -39,7 +39,7 @@ object Graph extends GraphConstrainedCompanion[Graph] {
     immutable.Graph.fromWithoutCheck[N, E](nodes, edges)(config)
 }
 
-trait UserConstrainedGraph[N, E <: EdgeLike[N], +G <: Graph[N, E]] { _: Graph[N, E] with Constrained[N, E, G] =>
+trait UserConstrainedGraph[N, E <: Edge[N], +G <: Graph[N, E]] { _: Graph[N, E] with Constrained[N, E, G] =>
   val constraint: Constraint[N, E, G] @uV
 
   private type C_NodeT = constraint.self.NodeT

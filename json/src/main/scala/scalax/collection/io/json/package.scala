@@ -30,7 +30,7 @@ package object json {
   scalax.collection.edge.WLBase._
   type Descriptor[N]                                                            = descriptor.Descriptor[N]
   type NodeDescriptor[N]                                                        = descriptor.NodeDescriptor[N]
-  type EdgeDescriptorBase[N, E <: EdgeLike[N], +C <: EdgeCompanionBase[E]] = descriptor.EdgeDescriptorBase[N, E, C]
+  type EdgeDescriptorBase[N, E <: Edge[N], +C <: EdgeCompanionBase[E]] = descriptor.EdgeDescriptorBase[N, E, C]
   type EdgeDescriptor[N, E[X] <: UnDiEdge[X], +C <: EdgeCompanion[E]]           = descriptor.EdgeDescriptor[N, E, C]
   type WEdgeDescriptor[N, E[X] <: UnDiEdge[X] with WEdge[X], +C <: WEdgeCompanion[E]] =
 ||||||| merged common ancestors
@@ -44,7 +44,7 @@ package object json {
 =======
   type Descriptor[N]     = descriptor.Descriptor[N]
   type NodeDescriptor[N] = descriptor.NodeDescriptor[N]
-  type EdgeDescriptorBase[N, E <: EdgeLike[N], +C <: EdgeCompanionBase[E]] =
+  type EdgeDescriptorBase[N, E <: Edge[N], +C <: EdgeCompanionBase[E]] =
     descriptor.EdgeDescriptorBase[N, E, C]
   type EdgeDescriptor[N, E[+X] <: UnDiEdge[X], +C <: EdgeCompanion[E]] = descriptor.EdgeDescriptor[N, E, C]
   type WEdgeDescriptor[N, E[+X] <: UnDiEdge[X] with WEdge[X], +C <: WEdgeCompanion[E]] =
@@ -67,7 +67,7 @@ package object json {
   import imp._, imp.Parser.parse, imp.Stream.createOuterElems
   import net.liftweb.json.JValue
 
-  implicit final class JsonGraphCoreCompanion[+G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+  implicit final class JsonGraphCoreCompanion[+G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
 ||||||| merged common ancestors
   import imp._, imp.Parser.parse, imp.Stream.createOuterElems
   import net.liftweb.json.JValue
@@ -87,7 +87,7 @@ package object json {
       * @return new `Graph` instance populated from `jsonAST`
       */
 <<<<<<< HEAD
-    def fromJson[N, E <: EdgeLike[N]](jsonAST: JValue, descriptor: Descriptor[N])(
+    def fromJson[N, E <: Edge[N]](jsonAST: JValue, descriptor: Descriptor[N])(
 
 ||||||| merged common ancestors
     def fromJson[N, E[X] <: EdgeLikeIn[X]](jsonAST: JValue, descriptor: Descriptor[N])(
@@ -107,7 +107,7 @@ package object json {
       * @return new `Graph` instance populated from `jsonText`
       */
 <<<<<<< HEAD
-    def fromJson[N, E <: EdgeLike[N]](jsonText: String, descriptor: Descriptor[N])(
+    def fromJson[N, E <: Edge[N]](jsonText: String, descriptor: Descriptor[N])(
 
 ||||||| merged common ancestors
     def fromJson[N, E[X] <: EdgeLikeIn[X]](jsonText: String, descriptor: Descriptor[N])(
@@ -127,7 +127,7 @@ package object json {
       * @return new `Graph` instance populated from `jsonText`
       */
 <<<<<<< HEAD
-    def fromJson[N, E <: EdgeLike[N]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N])(
+    def fromJson[N, E <: Edge[N]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N])(
 
 ||||||| merged common ancestors
     def fromJson[N, E[X] <: EdgeLikeIn[X]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N])(
@@ -143,7 +143,7 @@ package object json {
   }
 
 <<<<<<< HEAD
-  implicit final class JsonGraph[N, E <: EdgeLike[N]](val graph: Graph[N, E]) extends AnyVal {
+  implicit final class JsonGraph[N, E <: Edge[N]](val graph: Graph[N, E]) extends AnyVal {
 ||||||| merged common ancestors
   implicit final class JsonGraph[N, E[X] <: EdgeLikeIn[X]](val graph: Graph[N, E]) extends AnyVal {
 =======

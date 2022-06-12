@@ -15,7 +15,7 @@ class TDefaultSerializationRootTest
       new TDefaultSerialization[mutable.Graph](mutable.Graph)
     )
 
-class TDefaultSerialization[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class TDefaultSerialization[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {

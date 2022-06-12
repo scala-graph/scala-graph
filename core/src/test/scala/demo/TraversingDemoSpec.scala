@@ -26,7 +26,7 @@ final class TraversingDemoSpec extends RefSpec with Matchers {
   object `demonstrating ` {
     /* TODO
     def `traversals for a result`: Unit = {
-      def validatePath[N, E <: EdgeLike[N]](p: Graph[N,E]#Path,
+      def validatePath[N, E <: Edge[N]](p: Graph[N,E]#Path,
                                                     sample: List[OuterElem[N,E]]): Unit = {
         def toN(p: OuterElem[N,E]): N = p match {
           case OuterNode(n) => n

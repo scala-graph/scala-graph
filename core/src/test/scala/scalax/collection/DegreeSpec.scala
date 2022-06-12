@@ -16,14 +16,14 @@ class DegreeSpec
       new Degree[mutable.Graph](mutable.Graph)
     )
 
-class Degree[CC[N, E <: EdgeLike[N]] <: GraphLike[N, E, CC] with Graph[N, E]](val factory: GraphCoreCompanion[CC])
+class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with Graph[N, E]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers
     with Visualizer[CC] {
 
   private val emptyG = factory.empty[Int, DiEdge[Int]]
 
-  abstract class TestGraph[N, E <: EdgeLike[N]](override val g: CC[N, E]) extends TGraph(g) {
+  abstract class TestGraph[N, E <: Edge[N]](override val g: CC[N, E]) extends TGraph(g) {
     def degree(outer: N)                  = node(outer).degree
     val nodeDegrees: List[(g.NodeT, Int)] = g.nodes.iterator.map(n => (n, n.degree)).toList
     val degrees: List[Int]                = nodeDegrees map (_._2)

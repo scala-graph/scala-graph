@@ -4,7 +4,7 @@ import scala.annotation.{switch, tailrec}
 import scala.collection.{FilterableSet, FilteredSet}
 import scala.collection.mutable.{ArrayBuffer, Map => MMap, PriorityQueue, Queue, Stack}
 
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 import scalax.collection.immutable.SortedArraySet
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
 
@@ -13,7 +13,7 @@ import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
   *
   *  @author Peter Empen
   */
-trait TraverserImpl[N, E <: EdgeLike[N]] {
+trait TraverserImpl[N, E <: Edge[N]] {
   thisGraph: GraphTraversalImpl[N, E] =>
 
   import GraphTraversal._

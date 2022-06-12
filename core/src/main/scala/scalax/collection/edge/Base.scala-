@@ -11,7 +11,7 @@ import scalax.collection.{Graph, GraphBase}
   * @author Peter Empen
   */
 object WBase {
-  trait WEdge[+N] { this: EdgeLike[N] =>
+  trait WEdge[+N] { this: Edge[N] =>
     override protected def attributesToString = WEdge.wPrefix + weight.toString
   }
   object WEdge {
@@ -49,8 +49,8 @@ object WBase {
 object WkBase {
   import WBase._
   trait WkEdge[+N] extends WEdge[N] with Keyed {
-    this: EdgeLike[N] with Eq =>
-    override protected def equals(other: EdgeLike[_]) =
+    this: Edge[N] with Eq =>
+    override protected def equals(other: Edge[_]) =
       this.weight == other.weight && (other match {
         case wkEdge: WkEdge[_] => baseEquals(wkEdge)
         case _                 => false
@@ -69,7 +69,7 @@ object WkBase {
 
 /** Base traits for labeled edges. */
 object LBase {
-  trait LEdge[+N] { this: EdgeLike[N] =>
+  trait LEdge[+N] { this: Edge[N] =>
     type L1
     override def label: L1                    = throw new IllegalArgumentException
     override protected def attributesToString = LEdge.lPrefix + label
@@ -220,8 +220,8 @@ object LkBase {
     *  Such labeled and keyed edge classes are named `Lk<EdgeType>Edge` by convention.
     */
   trait LkEdge[+N] extends LEdge[N] with Keyed {
-    this: EdgeLike[N] with Eq =>
-    override protected def equals(other: EdgeLike[_]) = other match {
+    this: Edge[N] with Eq =>
+    override protected def equals(other: Edge[_]) = other match {
       case that: LkEdge[_] =>
         this.label == that.label &&
           baseEquals(that)
@@ -236,7 +236,7 @@ object LkBase {
   type LkEdgeBound[+N] = LkHyperEdgeBound[N] with UnDiEdge[N]
 
   /** Everything common to key-weighted edge companion objects. */
-  trait LkEdgeCompanion[E <: EdgeLike[N] with LkEdgeBound[X]] extends LEdgeCompanion[E]
+  trait LkEdgeCompanion[E <: Edge[N] with LkEdgeBound[X]] extends LEdgeCompanion[E]
 }
 
 /** Base traits for weighted and labeled edges. */
@@ -246,7 +246,7 @@ object WLBase {
   /** Everything common to predefined weighted and labeled edge classes.
     *  Such edge classes are prefixed with  `WL` by convention.
     */
-  trait WLEdge[+N] extends WEdge[N] with LEdge[N] { this: EdgeLike[N] =>
+  trait WLEdge[+N] extends WEdge[N] with LEdge[N] { this: Edge[N] =>
     override protected def attributesToString = WEdge.wPrefix + weight.toString +
       LEdge.lPrefix + label.toString
   }
@@ -299,7 +299,7 @@ object WkLBase {
 /** Base traits for weighted and key-labeled edges. */
 object WLkBase {
   import WBase._, LBase._, LkBase._, WLBase._
-  trait WLkEdge[+N] extends WEdge[N] with LkEdge[N] { this: EdgeLike[N] with Eq =>
+  trait WLkEdge[+N] extends WEdge[N] with LkEdge[N] { this: Edge[N] with Eq =>
     override protected def attributesToString = WEdge.wPrefix + weight.toString +
       LEdge.lkPrefix + label.toString
   }
@@ -316,8 +316,8 @@ object WLkBase {
 /** Base traits for key-weighted and key-labeled edges. */
 object WkLkBase {
   import WLBase._
-  trait WkLkEdge[+N] extends WLEdge[N] { this: EdgeLike[N] with Eq =>
-    override protected def equals(other: EdgeLike[_]) = other match {
+  trait WkLkEdge[+N] extends WLEdge[N] { this: Edge[N] with Eq =>
+    override protected def equals(other: Edge[_]) = other match {
       case that: WkLkEdge[_] =>
         this.weight == that.weight &&
           this.label == that.label &&
@@ -330,11 +330,11 @@ object WkLkBase {
   type WkLkHyperEdgeBound[+N] = WLHyperEdgeBound[N] with WkLkEdge[N]
 
   /** Everything common to weighted, key-labeled hyperedge companion objects. */
-  trait WkLkHyperEdgeCompanion[E <: EdgeLike[N] with WkLkHyperEdgeBound[X]] extends WLHyperEdgeCompanion[E]
+  trait WkLkHyperEdgeCompanion[E <: Edge[N] with WkLkHyperEdgeBound[X]] extends WLHyperEdgeCompanion[E]
   type WkLkEdgeBound[+N] = WkLkHyperEdgeBound[N] with UnDiEdge[N]
 
   /** Everything common to weighted, key-labeled edge companion objects. */
-  trait WkLkEdgeCompanion[E <: EdgeLike[N] with WkLkEdgeBound[X]] extends WLEdgeCompanion[E]
+  trait WkLkEdgeCompanion[E <: Edge[N] with WkLkEdgeBound[X]] extends WLEdgeCompanion[E]
 }
 
 /** Base traits for custom edges - hence the `C` prefix. Note that custom edges need only
@@ -343,7 +343,7 @@ object WkLkBase {
 object CBase {
 
   /** To be mixed in by the custom edge class. */
-  trait Attributes[+N] { this: EdgeLike[N] =>
+  trait Attributes[+N] { this: Edge[N] =>
 
     /** To be set to `<companion object>.P`. */
     type P <: Product
@@ -354,7 +354,7 @@ object CBase {
     def attributes: P
   }
   type CHyperEdgeBound[+N] = EdgeLikeIn[N] with HyperEdge[N] with Attributes[N] with Serializable
-  trait CEdgeCompanionBase[E <: EdgeLike[N] with CHyperEdgeBound[X]] extends EdgeCompanionBase[E] {
+  trait CEdgeCompanionBase[E <: Edge[N] with CHyperEdgeBound[X]] extends EdgeCompanionBase[E] {
     protected[collection] type P <: Product
   }
 

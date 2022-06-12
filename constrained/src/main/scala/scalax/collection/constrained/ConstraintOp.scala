@@ -6,17 +6,17 @@ import scala.collection.mutable.{Map => MMap}
 
 import scalax.collection.GraphPredef._
 import PreCheckFollowUp._
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 
 sealed trait Op
 sealed trait BinaryOp extends Op
 case object And       extends BinaryOp
 case object Or        extends BinaryOp
 
-abstract class ConstraintOp[N, E <: EdgeLike[N], G <: Graph[N, E]](self: G, val operator: Op)
+abstract class ConstraintOp[N, E <: Edge[N], G <: Graph[N, E]](self: G, val operator: Op)
     extends Constraint[N, E, G](self)
 
-class ConstraintBinaryOp[N, E <: EdgeLike[N], G <: Graph[N, E]](
+class ConstraintBinaryOp[N, E <: Edge[N], G <: Graph[N, E]](
     override val self: G,
     operator: BinaryOp,
     left: Constraint[N, E],
@@ -148,12 +148,12 @@ abstract class ConstraintCompanionOp(val operator: Op) extends ConstraintCompani
 
 /** Facilitates binary operations on `ConstraintCompanion`s.
   */
-class ConstraintCompanionBinaryOp[CC[N, E <: EdgeLike[N], G <: Graph[N, E]] <: Constraint[N, E, G]](
+class ConstraintCompanionBinaryOp[CC[N, E <: Edge[N], G <: Graph[N, E]] <: Constraint[N, E, G]](
     operator: BinaryOp,
     left: ConstraintCompanion[CC],
     right: ConstraintCompanion[CC]
 ) extends ConstraintCompanionOp(operator) {
 
-  def apply[N, E <: EdgeLike[N], G <: Graph[N, E]](self: G) =
+  def apply[N, E <: Edge[N], G <: Graph[N, E]](self: G) =
     new ConstraintBinaryOp[N, E, G](self, operator, left(self), right(self))
 }

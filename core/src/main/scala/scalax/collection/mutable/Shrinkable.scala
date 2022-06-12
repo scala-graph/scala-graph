@@ -4,9 +4,9 @@ package mutable
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 
 import scalax.collection.{Graph => AnyGraph}
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 
-trait Shrinkable[-N, -E <: EdgeLike[N @uV]] extends OuterElems[N @uV, E @uV] {
+trait Shrinkable[-N, -E <: Edge[N @uV]] extends OuterElems[N @uV, E @uV] {
 
   /** Removes a single node from this graph.
     * @return whether the node existed before.

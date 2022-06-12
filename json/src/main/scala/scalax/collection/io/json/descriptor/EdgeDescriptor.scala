@@ -37,7 +37,7 @@ sealed abstract class GenEdgeDescriptor[N](val edgeManifest: ClassTag[_], overri
   *
   * @author Peter Empen
   */
-sealed abstract class EdgeDescriptorBase[N, E <: EdgeLike[N], +C <: EdgeCompanionBase[E]](
+sealed abstract class EdgeDescriptorBase[N, E <: Edge[N], +C <: EdgeCompanionBase[E]](
     val edgeCompanion: C,
     val customSerializer: Option[Serializer[_ <: Parameters]] = None,
     val extraClasses: List[Class[_]] = Nil,

@@ -1,14 +1,14 @@
 package scalax.collection.immutable
 
 import scalax.collection.{Graph => AnyGraph}
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 import scalax.collection.GraphLike
 
 /** Immutable graph only operations.
   *
   *    $define edgesOnlyUseCase Provided for the use case when you don't need to pass any isolated node.
   */
-trait GraphOps[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y, This] with Graph[X, Y]] {
+trait GraphOps[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This] with Graph[X, Y]] {
 
   /** Creates a new supergraph with an additional node unless this graph already contains `node`. */
   def incl(node: N): This[N, E]

@@ -16,7 +16,7 @@ import scala.util.chaining.scalaUtilChainingOps
 
 class CycleSpec extends Suites(new Cycle[immutable.Graph](immutable.Graph), new Cycle[mutable.Graph](mutable.Graph))
 
-trait CycleMatcher[N, E <: EdgeLike[N]] {
+trait CycleMatcher[N, E <: Edge[N]] {
   protected type C = Graph[N, E]#Cycle
 
   def haveOneNodeSequenceOf(expected: Seq[N]*): Matcher[Option[C]] =
@@ -40,7 +40,7 @@ trait CycleMatcher[N, E <: EdgeLike[N]] {
     }
 }
 
-class Cycle[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
+class Cycle[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers
     with Visualizer[CC] {
@@ -100,7 +100,7 @@ class Cycle[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val
         var i, j = 0
         factory.fill(5) { i += 1; j = i + 1; i ~> j }
       }
-      def fromEachNode[N, E <: EdgeLike[N]](noCycles: Set[N], cycle: Graph[N, E]#Cycle): Unit =
+      def fromEachNode[N, E <: Edge[N]](noCycles: Set[N], cycle: Graph[N, E]#Cycle): Unit =
         given(cycle.nodes.head.containingGraph.asInstanceOf[CC[N, E]]) {
           case g: Graph[N, E] => // `annotated for IntelliJ
             g.nodes foreach { n =>

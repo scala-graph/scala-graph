@@ -3,13 +3,13 @@ package scalax.collection
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 
 /** Editing non-hypergraphs with labeled edges, in particular, editing multigraphs.
   */
 class EditingLabeledSpec // TODO extends Suites()
 
-private class EditingLabeled[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+private class EditingLabeled[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: ConfigWrapper[CC]
 ) extends RefSpec
     with Matchers {

@@ -8,7 +8,7 @@ import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, ExtHashSet}
 import scala.util.Random
 
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 import scalax.collection.{Graph => AnyGraph}
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
@@ -19,7 +19,7 @@ import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
   *
   * @author Peter Empen
   */
-trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphLike[X, Y, This] with AnyGraph[X, Y]]
+trait AdjacencyListBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This] with AnyGraph[X, Y]]
     extends GraphLike[N, E, This] {
   selfGraph: This[N, E] =>
 
@@ -267,11 +267,11 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
   def edgeIterator: Iterator[EdgeT] =
     nodes.iterator.flatMap(node => node.edges.iterator.filter(_.ends.head == node))
 
-  final def concat[N2 >: N, E2 >: E <: EdgeLike[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(implicit
-      e: E2 <:< EdgeLike[N2]
+  final def concat[N2 >: N, E2 >: E <: Edge[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(implicit
+      e: E2 <:< Edge[N2]
   ): This[N2, E2] = bulkOp[N2, E2](isolatedNodes, edges, plusPlus)
 
-  final protected def bulkOp[N2 >: N, E2 >: E <: EdgeLike[N2]](
+  final protected def bulkOp[N2 >: N, E2 >: E <: Edge[N2]](
       nodes: IterableOnce[N2],
       edges: IterableOnce[E2],
       op: (IterableOnce[N2], IterableOnce[E2]) => This[N2, E2] @uV
@@ -281,7 +281,7 @@ trait AdjacencyListBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: Graph
   /** Implements the heart of `++` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY
     */
-  final protected def plusPlus[N2 >: N, E2 >: E <: EdgeLike[N2]](
+  final protected def plusPlus[N2 >: N, E2 >: E <: Edge[N2]](
       newNodes: IterableOnce[N2],
       newEdges: IterableOnce[E2]
   ): This[N2, E2] =

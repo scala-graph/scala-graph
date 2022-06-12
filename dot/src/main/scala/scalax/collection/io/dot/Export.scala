@@ -4,7 +4,7 @@ package io.dot
 import scala.annotation.tailrec
 import scala.collection.mutable.{Set => MSet, StringBuilder}
 
-import GraphEdge.{DiEdge, EdgeLike}
+import GraphEdge.{DiEdge, Edge}
 
 /** Contains methods to transform `graph` to the DOT language.
   *
@@ -13,7 +13,7 @@ import GraphEdge.{DiEdge, EdgeLike}
   * @define NORMALLY Normally, this method will be called internally by `toDot`
   *         but it may also be used for test purposes.
   */
-class Export[N, E <: EdgeLike[N]](graph: Graph[N, E]) {
+class Export[N, E <: Edge[N]](graph: Graph[N, E]) {
 
   /** Creates a DOT string by calling the node and edge transformers for the elements
     * of `graph`.

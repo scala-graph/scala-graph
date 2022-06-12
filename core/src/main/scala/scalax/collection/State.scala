@@ -2,7 +2,7 @@ package scalax.collection
 
 import language.postfixOps
 
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 import scalax.collection.mutable.ExtBitSet
 
 /** Adds bit fields to the graph and its nodes facilitating fast storage and retrieval of
@@ -14,7 +14,7 @@ import scalax.collection.mutable.ExtBitSet
   *
   *  @author Peter Empen
   */
-protected trait State[N, E <: EdgeLike[N]] {
+protected trait State[N, E <: Edge[N]] {
   this: GraphTraversalImpl[N, E] =>
 
   import State._
@@ -198,7 +198,7 @@ object State {
   }
 
   /** Dumps the state flags of a `node`. */
-  def dump[N, E <: EdgeLike[N]](node: Graph[N, E]#NodeT): ExtBitSet =
+  def dump[N, E <: Edge[N]](node: Graph[N, E]#NodeT): ExtBitSet =
     node.containingGraph match {
       case g: State[_, _] =>
         node match {
@@ -212,7 +212,7 @@ object State {
   }
 
   /** Dumps the state flags of a `graph`. */
-  def dump[N, E <: EdgeLike[N]](graph: Graph[N, E]): GraphDump = graph match {
+  def dump[N, E <: Edge[N]](graph: Graph[N, E]): GraphDump = graph match {
     case g: State[_, _] => new GraphDump(g.dumpInUse, g.dumpDirty)
   }
 }

@@ -4,7 +4,7 @@ import scala.language.postfixOps
 import scala.collection.{SortedMap, SortedSet}
 import scala.collection.mutable.{Map => MutableMap}
 
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 
 /** Mixin for degree calculations.
   *
@@ -16,7 +16,7 @@ import scalax.collection.generic.EdgeLike
   *         degree functions are `InDegree` and `OutDegree`.
   * @define DEGREEFILTER selects nodes to be included by their degree.
   */
-trait GraphDegree[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, Y, This]] {
+trait GraphDegree[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]] {
   this: GraphBase[N, E, This] =>
 
   /** Decreasing ordering of nodes with respect to their degree.

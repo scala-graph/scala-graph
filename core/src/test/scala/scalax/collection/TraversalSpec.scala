@@ -10,7 +10,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphTraversal._
 import scalax.collection.edges._
-import scalax.collection.generic.{AnyEdge, EdgeLike, GraphCoreCompanion}
+import scalax.collection.generic.{AnyEdge, Edge, GraphCoreCompanion}
 import scalax.collection.visualization.Visualizer
 
 class TraversalSpec
@@ -23,7 +23,7 @@ class TraversalSpec
   * by the Graph factory and passed to the constructor.
   * It allows the same tests to be run for mutable and immutable Graphs.
   */
-final private class Traversal[G[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G]
 ) extends RefSpec
     with Matchers

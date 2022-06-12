@@ -1,13 +1,13 @@
 package scalax.collection.constrained
 package immutable
 
-import scalax.collection.GraphPredef.{EdgeLike, InParam, OuterEdge, OuterNode}
+import scalax.collection.GraphPredef.{Edge, InParam, OuterEdge, OuterNode}
 import scalax.collection.immutable.{AdjacencyListGraph => SimpleAdjacencyListGraph}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 import config.GenConstrainedConfig
 
 trait AdjacencyListGraph[
-    N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[N]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
+    N, E <: Edge[N], +This[X, Y <: Edge[N]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
     extends SimpleAdjacencyListGraph[N, E, This]
     with GraphLike[N, E, This] { this: This[N, E] =>
 

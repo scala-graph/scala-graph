@@ -14,7 +14,7 @@ import PreCheckFollowUp._
 /** Ensures that the underlying `Graph` is connected if it is undirected
   * or weakly connected if it is directed.
   */
-class Connected[N, E <: EdgeLike[N], G <: Graph[N, E]](override val self: G) extends Constraint[N, E, G](self) {
+class Connected[N, E <: Edge[N], G <: Graph[N, E]](override val self: G) extends Constraint[N, E, G](self) {
 
   /** Skips this pre-check to rely on the post-check `postAdd` except for trivial cases. */
   override def preCreate(nodes: Iterable[N], edges: Iterable[E]) =
@@ -119,5 +119,5 @@ class Connected[N, E <: EdgeLike[N], G <: Graph[N, E]](override val self: G) ext
 }
 
 object Connected extends ConstraintCompanion[Connected] {
-  def apply[N, E <: EdgeLike[N], G <: Graph[N, E]](self: G) = new Connected[N, E, G](self)
+  def apply[N, E <: Edge[N], G <: Graph[N, E]](self: G) = new Connected[N, E, G](self)
 }

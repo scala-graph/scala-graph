@@ -26,7 +26,7 @@ import generic.AnyOrdering
   *         Nodes being the end of any of these edges will be added to the node set.
   * @author Peter Empen
   */
-trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, Y, This]]
+trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]]
     extends GraphOps[N, E, This]
     with OuterElems[N, E]
     with Serializable { selfGraph =>
@@ -433,14 +433,14 @@ trait GraphBase[N, E <: EdgeLike[N], +This[X, Y <: EdgeLike[X]] <: GraphBase[X, 
 
     override def canEqual(that: Any): Boolean =
       that.isInstanceOf[GraphBase[N, E, This]#BaseInnerEdge] ||
-        that.isInstanceOf[EdgeLike[_]]
+        that.isInstanceOf[Edge[_]]
 
     override def equals(other: Any): Boolean = other match {
       case that: GraphBase[N, E, This]#BaseInnerEdge =>
         (this eq that) ||
         (this.outer eq that.outer) ||
         this.outer == that.outer
-      case that: EdgeLike[_] =>
+      case that: Edge[_] =>
         (this.outer eq that) ||
         this.outer == that
       case _ => false

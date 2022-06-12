@@ -6,9 +6,12 @@ import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.annotation.{switch, tailrec}
 import scala.collection.AbstractIterable
 
-/** Template for Graph edges.
+/** Base template for all edges in a `Graph`.
   *
-  * Irrespective of the containing `Graph` library-provided edges are immutable.
+  * Library-provided edges are immutable for both mutable and immutable `Graph`.
+  * However, when using mutable graphs with labeled edges where labels are mutable with respect to your use case,
+  * you might want to make your label mutable accordingly. Otherwise a much less efficient edge replacement
+  * would be necessary.
   *
   * @tparam N the type of the nodes (ends) of this edge.
   * @define CalledByValidate This function is called on every edge-instantiation
@@ -16,8 +19,8 @@ import scala.collection.AbstractIterable
   * @define ISAT In case this edge is undirected this method maps to `isAt`
   * @author Peter Empen
   */
-sealed trait EdgeLike[+N] extends Equals {
-  import EdgeLike.ValidationException
+sealed trait Edge[+N] extends Equals {
+  import Edge.ValidationException
 
   /** The endpoints of this edge, in other words the nodes this edge joins. */
   def ends: Iterable[N]
@@ -55,7 +58,7 @@ sealed trait EdgeLike[+N] extends Equals {
   /** Performs basic edge validation by calling `isValidArity` and `noNullEnd`.
     * `isValidCustom` is also called but you need to override this member to perform additional validation.
     * This validation method needs to be called in the constructor of any edge class
-    * that directly extends or mixes in `EdgeLike`.
+    * that directly extends or mixes in `Edge`.
     *
     * @throws ValidationException if any of the basic validations or the additional custom validation fails.
     */
@@ -148,7 +151,7 @@ sealed trait EdgeLike[+N] extends Equals {
     */
   def matches(p1: N => Boolean, p2: N => Boolean): Boolean
 
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[EdgeLike[_]]
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[Edge[_]]
 
   final protected def thisSimpleClassName: String =
     try this.getClass.getSimpleName
@@ -164,9 +167,9 @@ sealed trait EdgeLike[+N] extends Equals {
     } else
       ends mkString nodesToStringSeparator
 
-  protected def attributesToString          = ""
-  protected def toStringWithParenthesis     = false
-  protected def brackets: EdgeLike.Brackets = EdgeLike.curlyBraces
+  protected def attributesToString      = ""
+  protected def toStringWithParenthesis = false
+  protected def brackets: Edge.Brackets = Edge.curlyBraces
   override def toString: String = {
     val attr          = attributesToString
     val woParenthesis = nodesToString + (if (attr.nonEmpty) attr else "")
@@ -177,8 +180,8 @@ sealed trait EdgeLike[+N] extends Equals {
   }
 }
 
-object EdgeLike {
-  def unapply[N](e: EdgeLike[N]): Option[EdgeLike[Any]] = Some(e)
+object Edge {
+  def unapply[N](e: Edge[N]): Option[Edge[Any]] = Some(e)
 
   protected val curlyBraces: Brackets = Brackets('{', '}')
 
@@ -187,7 +190,7 @@ object EdgeLike {
   class ValidationException(val msg: String) extends Exception
 }
 
-private[collection] trait InnerEdgeLike[+N] extends EdgeLike[N]
+private[collection] trait InnerEdgeLike[+N] extends Edge[N]
 
 /** Marker trait for companion objects of any kind of edge.
   */
@@ -196,12 +199,12 @@ sealed trait EdgeCompanionBase extends Serializable
 /** The abstract methods of this trait must be implemented by companion objects
   * of simple (non-weighted, non-labeled) edges.
   */
-trait EdgeCompanion[+E[N] <: EdgeLike[N]] extends EdgeCompanionBase {
+trait EdgeCompanion[+E[N] <: Edge[N]] extends EdgeCompanionBase {
   def apply[NN](node_1: NN, node_2: NN): E[NN]
   implicit def thisCompanion: this.type = this
 }
 
-trait AnyHyperEdge[+N] extends EdgeLike[N] with EqHyper {
+trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
 
   def _1: N         = ends.head
   def _2: N         = ends.drop(1).head
@@ -307,7 +310,7 @@ trait DiHyperEdgeCompanion[+E[N] <: AnyDiHyperEdge[N]] extends EdgeCompanionBase
   def unapply[N](edge: E[N] @uV): Option[(Seq[N], Seq[N])] = Some(edge.sources.toSeq, edge.targets.toSeq)
 }
 
-trait AnyEdge[+N] extends EdgeLike[N] { this: Eq =>
+trait AnyEdge[+N] extends Edge[N] { this: Eq =>
 
   def _1: N
   def _2: N

@@ -12,7 +12,7 @@ import descriptor._
 import error.JsonGraphError._, error.JsonGraphWarning._
 
 object Stream {
-  def createOuterElems[N, E <: EdgeLike[N]](
+  def createOuterElems[N, E <: Edge[N]](
       jsonLists: Iterable[JsonList],
       descriptor: Descriptor[N] /*,
       failures:   Failures*/

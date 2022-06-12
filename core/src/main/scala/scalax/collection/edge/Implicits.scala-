@@ -74,8 +74,8 @@ object Implicits {
   implicit def any2XEdgeAssoc[N1](n: N1) = new XEdgeAssoc(n)
 
   // ------------------------------------------------------------------ HyperEdge
-  final class XHyperEdgeAssoc[NOld](e: EdgeLike[NOld]) {
-    final private def product[N >: NOld](e: EdgeLike[NOld], n: N): Product = NodeProduct(e.iterator.toBuffer[N] += n)
+  final class XHyperEdgeAssoc[NOld](e: Edge[NOld]) {
+    final private def product[N >: NOld](e: Edge[NOld], n: N): Product = NodeProduct(e.iterator.toBuffer[N] += n)
 
     def ~%[N >: NOld](n: N)(w: Double)(implicit endpointsKind: CollectionKind = Bag) =
       WHyperEdge.from[N](product(e, n))(w)
@@ -111,7 +111,7 @@ object Implicits {
     def ~%#+#>[N >: NOld, L](n: N)(w: Double, l: L)(implicit endpointsKind: CollectionKind = Bag) =
       WkLkDiHyperEdge.from[N, L](product(e, n))(w, l)
   }
-  implicit def edge2XHyperEdgeAssoc[NOld](e: EdgeLike[NOld]) = new XHyperEdgeAssoc(e)
+  implicit def edge2XHyperEdgeAssoc[NOld](e: Edge[NOld]) = new XHyperEdgeAssoc(e)
 
   // ------------------------------------------------------------------ extractors
   /** Extractors for weighted and/or labeled undirected edges.

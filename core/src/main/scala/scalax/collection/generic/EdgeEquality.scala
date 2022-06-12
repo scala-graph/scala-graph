@@ -1,11 +1,11 @@
 package scalax.collection.generic
 
-sealed protected[collection] trait Eq { this: EdgeLike[_] =>
-  protected def baseEquals(other: EdgeLike[_]): Boolean
+sealed protected[collection] trait Eq { this: Edge[_] =>
+  protected def baseEquals(other: Edge[_]): Boolean
   protected def baseHashCode: Int
 
   override def equals(other: Any): Boolean = other match {
-    case that: EdgeLike[_] =>
+    case that: Edge[_] =>
       (this eq that) ||
       (that canEqual this) &&
       this.isDirected == that.isDirected &&
@@ -18,7 +18,7 @@ sealed protected[collection] trait Eq { this: EdgeLike[_] =>
     *  `this.directed == that.directed &&`
     *  `this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed]`
     */
-  protected def equals(other: EdgeLike[_]): Boolean = baseEquals(other)
+  protected def equals(other: Edge[_]): Boolean = baseEquals(other)
 
   override def hashCode: Int = baseHashCode
 
@@ -46,9 +46,9 @@ protected[collection] object Eq {
   }
 
   def equalTargets(
-      left: EdgeLike[_],
+      left: Edge[_],
       leftEnds: Iterable[_],
-      right: EdgeLike[_],
+      right: Edge[_],
       rightEnds: Iterable[_],
       arity: Int
   ): Boolean = {
@@ -64,7 +64,7 @@ protected[collection] object Eq {
 protected[collection] trait EqHyper extends Eq {
   this: AnyHyperEdge[_] =>
 
-  override protected def baseEquals(other: EdgeLike[_]): Boolean = {
+  override protected def baseEquals(other: Edge[_]): Boolean = {
     val (thisArity, thatArity) = (arity, other.arity)
     if (thisArity == thatArity)
       Eq.equalTargets(this, this.sources, other, other.sources, thisArity)
@@ -80,7 +80,7 @@ protected[collection] trait EqHyper extends Eq {
 protected[collection] trait EqDiHyper extends Eq {
   this: AnyDiHyperEdge[_] =>
 
-  override protected def baseEquals(other: EdgeLike[_]): Boolean = {
+  override protected def baseEquals(other: Edge[_]): Boolean = {
     val (thisArity, thatArity) = (arity, other.arity)
     if (thisArity == thatArity)
       if (thisArity == 2)
@@ -111,7 +111,7 @@ protected[collection] trait EqUnDi[+N] extends Eq {
     this._1 == n1 && this._2 == n2 ||
       this._1 == n2 && this._2 == n1
 
-  override protected def baseEquals(other: EdgeLike[_]): Boolean = other match {
+  override protected def baseEquals(other: Edge[_]): Boolean = other match {
     case edge: AnyEdge[_] => unDiBaseEquals(edge._1, edge._2)
     case hyper: AnyHyperEdge[_] if hyper.isUndirected && hyper.arity == 2 =>
       unDiBaseEquals(hyper._n(0), hyper._n(1))
@@ -128,7 +128,7 @@ protected[collection] trait EqDi[+N] extends Eq {
     this._1 == n1 &&
       this._2 == n2
 
-  final override protected def baseEquals(other: EdgeLike[_]): Boolean = other match {
+  final override protected def baseEquals(other: Edge[_]): Boolean = other match {
     case edge: AnyDiEdge[_]                           => diBaseEquals(edge._1, edge._2)
     case hyper: AnyDiHyperEdge[_] if hyper.arity == 2 => diBaseEquals(hyper.sources.head, hyper.targets.head)
     case _                                            => false
@@ -154,7 +154,7 @@ object CollectionKind {
     else if (s == Sequence.toString) Sequence
     else throw new IllegalArgumentException(s"Unexpected representation of '$s' for endpoints kind.")
 
-  protected[collection] def from(edge: EdgeLike[_]): CollectionKind =
+  protected[collection] def from(edge: Edge[_]): CollectionKind =
     CollectionKind.from(duplicatesAllowed = true, orderSignificant = edge.isInstanceOf[OrderedEndpoints])
 
   def unapply(kind: CollectionKind): Option[(Boolean, Boolean)] =
@@ -190,7 +190,7 @@ protected[collection] trait Keyed // TODO check usage
   *
   * @author Peter Empen
   */
-trait ExtendedKey { this: EdgeLike[_] =>
+trait ExtendedKey { this: Edge[_] =>
 
   /** Each element in this sequence references a class member of the custom edge that will be added to the edge key.
     * The edge ends, like `source` and `target`, are always part of the key so don't add them here.
@@ -212,7 +212,7 @@ object ExtendedKey {
   def unapply(e: ExtendedKey) = Some(e)
 }
 
-trait LoopFreeEdge[+N] { this: EdgeLike[N] =>
+trait LoopFreeEdge[+N] { this: Edge[N] =>
   override protected def isValidCustom: Boolean =
     if (arity == 2) ends.head != ends.drop(1).head
     else nonLooping

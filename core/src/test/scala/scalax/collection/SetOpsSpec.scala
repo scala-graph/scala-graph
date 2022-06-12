@@ -8,7 +8,7 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.GraphPredef._
 import scalax.collection.edges._
-import scalax.collection.generic.{AnyEdge, EdgeLike, GraphCoreCompanion}
+import scalax.collection.generic.{AnyEdge, Edge, GraphCoreCompanion}
 
 import scalax.collection.visualization.Visualizer
 
@@ -20,7 +20,7 @@ class SetOpsSpec
       new SetOpsMutable
     )
 
-protected trait SetOpExamples[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]] {
+protected trait SetOpExamples[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]] {
 
   protected def factory: GraphCoreCompanion[CC]
 
@@ -39,7 +39,7 @@ protected trait SetOpExamples[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphL
   }
 }
 
-private class SetOps[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+private class SetOps[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers

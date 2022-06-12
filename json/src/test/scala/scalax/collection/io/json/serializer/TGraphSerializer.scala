@@ -19,7 +19,7 @@ class TGraphSerializerRootTest
       new TGraphSerializer[mutable.Graph](mutable.Graph)
     )
 
-class TGraphSerializer[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+class TGraphSerializer[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {

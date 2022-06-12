@@ -6,7 +6,7 @@ import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 
 import scalax.collection.hyperedges._
-import scalax.collection.generic.{EdgeLike, GraphCoreCompanion}
+import scalax.collection.generic.{Edge, GraphCoreCompanion}
 
 class EqualityHyperSpec
     extends Suites(
@@ -14,7 +14,7 @@ class EqualityHyperSpec
       new EqualityHyper[mutable.Graph](mutable.Graph)
     )
 
-private class EqualityHyper[CC[N, E <: EdgeLike[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+private class EqualityHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {

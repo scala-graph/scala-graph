@@ -4,7 +4,7 @@ import scala.annotation.{switch, tailrec}
 import scala.collection.{AbstractIterable, EqSetFacade, IndexedSeq, Seq}
 import scala.collection.mutable.{ArrayBuffer, Buffer, Map => MMap, Stack}
 
-import scalax.collection.generic.EdgeLike
+import scalax.collection.generic.Edge
 import scalax.collection.mutable.{EqHashMap, EqHashSet}
 
 /** Default implementation of the functionality defined by [[GraphTraversal]]
@@ -12,7 +12,7 @@ import scalax.collection.mutable.{EqHashMap, EqHashSet}
   *
   *  @author Peter Empen
   */
-trait GraphTraversalImpl[N, E <: EdgeLike[N]] extends GraphTraversal[N, E] with TraverserImpl[N, E] with State[N, E] {
+trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with TraverserImpl[N, E] with State[N, E] {
   thisGraph: TraverserImpl[N, E] =>
 
   import GraphTraversal._
