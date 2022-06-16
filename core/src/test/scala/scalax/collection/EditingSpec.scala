@@ -148,19 +148,19 @@ private class EditingMutable extends RefSpec with Matchers {
       g subtractOne 1 ~> 4 // Graph(oneOne, oneTwo, one~>3)
       n2.diSuccessors shouldBe empty
       n1.diSuccessors shouldBe Set(two, 3)
-      n1 ~>? n1 should be(Some(e11))
+      n1 findOutgoingTo n1 should be(Some(e11))
 
       g subtractOne oneTwo // Graph(oneOne, one~>3)
       n1.diSuccessors should be(Set(3))
-      n1 ~>? n1 should be(Some(e11))
+      n1 findOutgoingTo n1 should be(Some(e11))
 
       g subtractOne oneOne // Graph(one~>3)
       n1.diSuccessors should be(Set(3))
-      n1 ~>? n1 should be(None)
+      n1 findOutgoingTo n1 should be(None)
 
       g ++= (edges = List(oneOne, oneTwo)) // Graph(oneOne, oneTwo, one~>3)
       n1.diSuccessors should be(Set(two, 3))
-      n1 ~>? n1 should be(Some(e11))
+      n1 findOutgoingTo n1 should be(Some(e11))
     }
 
     def `serve ++=, unionInPlace`: Unit = {

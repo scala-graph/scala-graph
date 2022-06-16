@@ -123,7 +123,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       n(3).diSuccessors shouldBe Set(n(1), n(2))
       n(3).diPredecessors shouldBe Set(n(1))
       n(2).incoming shouldBe Set(e(3 ~> 2))
-      n(3) ~>? n(2) shouldBe Some(e(3 ~> 2))
+      n(3) findOutgoingTo n(2) shouldBe Some(e(3 ~> 2))
     }
 
     def `querying ` : Unit = {

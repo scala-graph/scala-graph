@@ -76,9 +76,6 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
       */
     def edges: ExtSet[EdgeT]
 
-    /** Synonym for `edges`. */
-    @inline final def ~ : ExtSet[EdgeT] = edges
-
     /** All edges connecting this node with `other` including outgoing and incoming edges.
       * This method is useful in case of multigraphs.
       * @param other A node which is possibly connected with this node.
@@ -124,9 +121,6 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
     /** Synonym for `diSuccessors`. */
     @inline final def outNeighbors: Set[NodeT] = diSuccessors
 
-    /** Synonym for `diSuccessors`. */
-    @inline final def ~>| : Set[NodeT] = diSuccessors
-
     /** All direct predecessors of this node, also called ''predecessor set'' or
       * ''open in-neighborhood'': source nodes of directed incident edges and / or
       * adjacent nodes of undirected incident edges excluding this node.
@@ -142,9 +136,6 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
     /** Synonym for `diPredecessors`. */
     @inline final def inNeighbors = diPredecessors
 
-    /** Synonym for `diPredecessors`. */
-    @inline final def <~| = diPredecessors
-
     /** All adjacent nodes (direct successors and predecessors) of this node,
       * also called ''open neighborhood'' excluding this node.
       * @return set of all neighbors.
@@ -152,17 +143,11 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
     def neighbors: Set[NodeT]
     protected[collection] def addNeighbors(edge: EdgeT, add: NodeT => Unit): Unit
 
-    /** Synonym for `neighbors`. */
-    @inline final def ~| : Set[NodeT] = neighbors
-
     /** All edges outgoing from this node.
       * @return set of all edges outgoing from this node
       *         including undirected edges and hooks.
       */
     def outgoing: Set[EdgeT] with FilterableSet[EdgeT]
-
-    /** Synonym for `outgoing`. */
-    @inline final def ~> : Set[EdgeT] with FilterableSet[EdgeT] = outgoing
 
     /** All outgoing edges connecting this node with `to`.
       * @param to The node which is the end point of zero, one or more edges starting at this node.
@@ -172,9 +157,6 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
       */
     def outgoingTo(to: NodeT): Set[EdgeT] with FilterableSet[EdgeT]
 
-    /** Synonym for `outgoingTo`. */
-    @inline final def ~>(to: NodeT) = outgoingTo(to)
-
     /** An outgoing edge connecting this node with `to`.
       * @param to The node which is the end point of an edge starting at this node.
       * @return One of possibly several edges connecting this node with `to`.
@@ -183,16 +165,10 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
       */
     def findOutgoingTo(to: NodeT): Option[EdgeT]
 
-    /** Synonym for `findOutgoingTo`. */
-    @inline final def ~>?(to: NodeT) = findOutgoingTo(to)
-
     /** Incoming edges of this node.
       * @return set of all edges incoming to of this including undirected edges.
       */
     def incoming: Set[EdgeT] with FilterableSet[EdgeT]
-
-    /** Synonym for `incoming`. */
-    @inline final def <~ = incoming
 
     /** All incoming edges connecting `from` with this node.
       * @param from The node with zero, one or more edges
@@ -203,9 +179,6 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
       */
     def incomingFrom(from: NodeT): Set[EdgeT] with FilterableSet[EdgeT]
 
-    /** Synonym for `incomingFrom`. */
-    @inline final def <~(from: NodeT) = incomingFrom(from)
-
     /** An edge at `from` having this node as a successor.
       * @param from The node being at an edge which has
       *           this node as a successor.
@@ -214,9 +187,6 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
       *         If `from` is not an adjacent node `None` is returned.
       */
     def findIncomingFrom(from: NodeT): Option[EdgeT]
-
-    /** Synonym for `findIncomingFrom`. */
-    @inline final def <~?(from: NodeT) = findIncomingFrom(from)
 
     /** The degree of this node.
       * @return the number of edges that connect to this node. An edge that connects

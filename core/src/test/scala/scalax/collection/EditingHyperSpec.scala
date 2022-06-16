@@ -100,19 +100,19 @@ private class EditingHyperMutable extends RefSpec with Matchers {
 
       n2.diSuccessors shouldBe empty
       n1.diSuccessors should be(Set(two, three))
-      n1 ~>? n1 should be(Some(oneOneTwo))
+      n1 findOutgoingTo n1 should be(Some(oneOneTwo))
 
       g subtractOne oneTwoThree // Graph(oneOneTwo)
       n1.diSuccessors should be(Set(two))
-      n1 ~>? n1 should be(Some(oneOneTwo))
+      n1 findOutgoingTo n1 should be(Some(oneOneTwo))
 
       g subtractOne two // Graph(one)
       n1.diSuccessors shouldBe empty
-      n1 ~>? n1 should be(None)
+      n1 findOutgoingTo n1 should be(None)
 
       g += oneOneTwo // Graph(oneOneTwo)
       n1.diSuccessors should be(Set(2))
-      n1 ~>? n1 should be(Some(oneOneTwo))
+      n1 findOutgoingTo n1 should be(Some(oneOneTwo))
     }
   }
 }
