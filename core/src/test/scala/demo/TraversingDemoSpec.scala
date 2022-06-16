@@ -4,7 +4,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
 import scalax.collection.Graph
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 
 /* TODO L

@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 import scalax.collection.GraphTraversal.Parameters._
 import scalax.collection.GraphTraversal._
 import scalax.collection.edges._

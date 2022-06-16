@@ -7,6 +7,7 @@ import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.util.Random
 
+import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import generator.{NodeDegreeRange, RandomGraph}
 

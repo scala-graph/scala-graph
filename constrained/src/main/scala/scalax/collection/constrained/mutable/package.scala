@@ -5,7 +5,7 @@ package scalax.collection.constrained
   * @author Peter Empen
   */
 package object mutable {
-  import scalax.collection.GraphPredef._, scalax.collection.generic._._
+  import scalax.collection.OuterImplicits._, scalax.collection.generic._._
   import scalax.collection.mutable.ArraySet
   import generic._
 

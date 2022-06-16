@@ -6,7 +6,7 @@ import scala.collection.immutable.Iterable
 
 import net.liftweb.json._
 
-import scalax.collection.GraphPredef._, scalax.collection.Graph
+import scalax.collection.OuterImplicits._, scalax.collection.Graph
 
 import descriptor._
 

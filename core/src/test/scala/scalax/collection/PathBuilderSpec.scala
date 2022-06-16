@@ -1,9 +1,10 @@
 package scalax.collection
 
-import scalax.collection.generic._
-import GraphPredef._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import scalax.collection.generic._
+import scalax.collection.edges._
 
 protected trait WalkBehaviors {
   this: AnyFlatSpec with Matchers =>

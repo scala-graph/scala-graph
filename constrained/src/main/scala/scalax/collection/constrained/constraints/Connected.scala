@@ -5,7 +5,7 @@ import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.language.postfixOps
 import scala.collection.Set
 
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 import scalax.collection.{Graph => SimpleGraph}
 import scalax.collection.GraphTraversal.AnyConnected
 

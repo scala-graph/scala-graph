@@ -4,7 +4,7 @@ package io.dot
 import language.implicitConversions
 import scala.collection.SortedMap
 
-import GraphPredef._, GraphEdge._, edge.LDiEdge, edge.Implicits._
+import OuterImplicits._, GraphEdge._, edge.LDiEdge, edge.Implicits._
 import Indent._
 
 import org.scalatest.matchers.should.Matchers

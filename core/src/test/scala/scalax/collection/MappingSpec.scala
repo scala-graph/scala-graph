@@ -7,7 +7,7 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.edges._
 import scalax.collection.generic._
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 import scalax.collection.generic.GraphCoreCompanion
 
 class MappingSpec

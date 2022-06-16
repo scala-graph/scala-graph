@@ -1,11 +1,7 @@
 package scalax.collection
 
-import GraphPredef._
 import scalax.collection.generic._
-/* TODO
-import edge._
-import edge.Implicits._
- */
+import scalax.collection.edges._
 
 abstract class TGraph[N, E <: Edge[N], G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
     val g: G[N, E]

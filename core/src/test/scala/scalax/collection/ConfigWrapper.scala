@@ -1,7 +1,6 @@
 package scalax.collection
 
 import scalax.collection.generic._
-import scalax.collection.GraphPredef._
 import scalax.collection.generic.GraphCompanion
 
 /** Enables to transparently pass `GraphCompanion` objects with non-default configuration parameters to specs.

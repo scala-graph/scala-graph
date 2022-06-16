@@ -6,7 +6,7 @@ import scala.util.Try
 import org.scalatest._
 import org.scalatest.refspec.RefSpec
 
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 import scalax.collection.generic._
 import generic.GraphConstrainedCompanion
 

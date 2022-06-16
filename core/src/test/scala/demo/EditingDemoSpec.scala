@@ -1,7 +1,7 @@
 package demo
 
 import scalax.collection.Graph
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import scalax.collection.generic._
 import scalax.collection.immutable
@@ -91,7 +91,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
         case s ~> t => s - t
       }) shouldBe -1
 
-      import scalax.collection.GraphPredef.HyperEdgeImplicits._
+      import scalax.collection.hyperedges.HyperEdgeImplicits._
       val hE = 1 ~~ 2 ~~ 11 ~~ 12 // HyperEdge[Int]
       hE._n(hE.arity - 1) shouldBe 12
       hE.ends.sum shouldBe 26

@@ -4,7 +4,7 @@ import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.Set
 import scala.collection.mutable.{Map => MMap}
 
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 import PreCheckFollowUp._
 import scalax.collection.generic.Edge
 

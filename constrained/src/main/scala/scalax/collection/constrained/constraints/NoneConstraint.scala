@@ -1,7 +1,7 @@
 package scalax.collection.constrained
 package constraints
 
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 
 /** The empty constraint treating any addition or subtraction as valid.
   */

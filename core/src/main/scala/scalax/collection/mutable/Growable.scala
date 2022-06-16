@@ -1,9 +1,9 @@
-package scalax.collection.mutable
+package scalax.collection
+package mutable
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 
 import scalax.collection.generic.Edge
-import scalax.collection.GraphPredef.{OuterEdge, OuterElem, OuterNode}
 
 trait Growable[-N, -E <: Edge[N @uV]] {
 

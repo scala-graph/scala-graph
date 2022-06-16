@@ -1,8 +1,6 @@
 package scalax.collection
 package generic
 
-import scalax.collection.generic.Edge
-import scalax.collection.GraphPredef.OuterElem
 import scalax.collection.config.{CoreConfig, GraphConfig}
 import scalax.collection.mutable.Builder
 

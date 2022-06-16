@@ -8,7 +8,7 @@ import org.scalatest.refspec.RefSpec
 import scalax.collection.edges._
 import scalax.collection.hyperedges._
 import scalax.collection.generic._
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 
 /** Editing any kind of non-hypergraph with unlabeled edges including mixed and multigraphs.
   */

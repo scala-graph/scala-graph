@@ -6,7 +6,6 @@ import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 
 import scalax.collection.generic._
-import scalax.collection.GraphPredef._
 import scalax.collection.generic.GraphCoreCompanion
 
 class EditingTypedSpec

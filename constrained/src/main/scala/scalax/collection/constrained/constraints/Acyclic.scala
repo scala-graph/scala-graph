@@ -6,7 +6,7 @@ import scala.language.postfixOps
 import scala.collection.Set
 import scala.collection.mutable.{Set => MutableSet}
 
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 import scalax.collection.{Graph => SimpleGraph}
 import scalax.collection.config.CoreConfig
 import PreCheckFollowUp._

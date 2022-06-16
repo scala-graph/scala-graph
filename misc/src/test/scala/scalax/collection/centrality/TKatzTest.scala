@@ -1,7 +1,7 @@
 package scalax.collection.centrality
 
 import scalax.collection.generic._
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 import scalax.collection.Graph
 
 import org.scalatest.matchers.should.Matchers

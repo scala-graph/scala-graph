@@ -1,7 +1,7 @@
 package demo
 
 import scalax.collection._
-import scalax.collection.GraphPredef._, scalax.collection.generic._._
+import scalax.collection.OuterImplicits._, scalax.collection.generic._._
 
 import scalax.collection.io.json._
 import scalax.collection.io.json.descriptor.predefined.{Di, DiHyper}

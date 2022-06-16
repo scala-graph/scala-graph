@@ -1,7 +1,7 @@
 package scalax.collection
 package mutable
 
-import GraphPredef._, GraphEdge._
+import OuterImplicits._, GraphEdge._
 
 object LabelType {
   type L = Option[List[Int]]

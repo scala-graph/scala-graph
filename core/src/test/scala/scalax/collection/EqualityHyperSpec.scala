@@ -31,7 +31,7 @@ private class EqualityHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N,
   }
 
   def `directed hyperedges ` : Unit = {
-    import scalax.collection.GraphPredef.DiHyperEdgeImplicits._
+    import scalax.collection.hyperedges.DiHyperEdgeImplicits._
     val sources = List('A', 'B', 'C')
     val target  = 'D'
     val dhe     = sources ~~> target

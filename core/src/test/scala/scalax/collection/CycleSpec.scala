@@ -2,7 +2,7 @@ package scalax.collection
 
 import language.postfixOps
 
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import scalax.collection.generic._
 import scalax.collection.visualization.Visualizer

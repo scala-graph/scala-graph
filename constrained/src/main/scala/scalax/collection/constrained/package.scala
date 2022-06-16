@@ -2,7 +2,7 @@ package scalax.collection
 
 import language.implicitConversions
 
-import GraphPredef._
+import OuterImplicits._
 import scalax.collection.generic._
 import config.GraphConfig
 

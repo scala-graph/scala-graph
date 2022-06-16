@@ -3,7 +3,7 @@ package serializer
 
 import net.liftweb.json._
 
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 import scalax.collection._
 import scalax.collection.generic.GraphCoreCompanion
 import scalax.collection.edge._

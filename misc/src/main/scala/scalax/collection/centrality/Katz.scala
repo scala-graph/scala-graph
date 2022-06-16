@@ -2,7 +2,7 @@ package scalax.collection.centrality
 
 import math.{ceil, min}
 
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 import scalax.collection.Graph
 
 /** Calculation of node centrality based on Katz centrality.

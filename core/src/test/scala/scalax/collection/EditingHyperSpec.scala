@@ -4,8 +4,10 @@ import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
+import scalax.collection.edges._
 import scalax.collection.hyperedges._
+import scalax.collection.hyperedges.DiHyperEdgeImplicits._
 import scalax.collection.generic._
 
 /** Editing any kind of hypergraph with unlabeled edges including mixed and multigraphs.
@@ -93,7 +95,6 @@ private class EditingHyperMutable extends RefSpec with Matchers {
 
   object `mutable graphs with labeled edges` {
     def `'diSuccessors' when directed hypergraph`: Unit = {
-      import scalax.collection.GraphPredef.DiHyperEdgeImplicits._
       val (one, two, three, oneOneTwo, oneTwoThree) = (1, 2, 3, 1 ~~> List(1, 2), 1 ~~> List(2, 3))
       val g                                         = Graph(oneOneTwo, oneTwoThree)
       val (n1, n2)                                  = (g get one, g get two)

@@ -1,7 +1,7 @@
 package scalax.collection
 package rdf
 
-import scalax.collection.GraphPredef._, scalax.collection.generic._._
+import scalax.collection.OuterImplicits._, scalax.collection.generic._._
 
 /** Custom edge type representing RDF triples as directed edges.
   *

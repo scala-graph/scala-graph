@@ -3,7 +3,7 @@ package scalax.collection.constrained
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.Set
 
-import scalax.collection.GraphPredef._
+import scalax.collection.OuterImplicits._
 
 /** Base trait for ordinary `Constraint` companion objects.
   */
