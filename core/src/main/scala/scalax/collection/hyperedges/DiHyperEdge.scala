@@ -7,9 +7,8 @@ import scalax.collection.generic.{AnyDiHyperEdge, DiHyperEdgeCompanion, OrderedE
   */
 @SerialVersionUID(53)
 final case class DiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])
-    extends AnyDiHyperEdge[N] {
-  validate()
-}
+    extends AnyDiHyperEdge[N]
+
 object DiHyperEdge extends DiHyperEdgeCompanion[DiHyperEdge]
 
 /** Represents a directed edge in a hypergraph with an unlimited number of source and of target nodes
@@ -18,7 +17,6 @@ object DiHyperEdge extends DiHyperEdgeCompanion[DiHyperEdge]
 @SerialVersionUID(-53)
 final case class OrderedDiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])
     extends AnyDiHyperEdge[N]
-    with OrderedEndpoints {
-  validate()
-}
+    with OrderedEndpoints
+
 object OrderedDiHyperEdge extends DiHyperEdgeCompanion[OrderedDiHyperEdge]

@@ -211,13 +211,3 @@ trait ExtendedKey { this: Edge[_] =>
 object ExtendedKey {
   def unapply(e: ExtendedKey) = Some(e)
 }
-
-trait LoopFreeEdge[+N] { this: Edge[N] =>
-  override protected def isValidCustom: Boolean =
-    if (arity == 2) ends.head != ends.drop(1).head
-    else nonLooping
-  override protected def customMsgPrefix = "Unexpected loop detected"
-}
-object LoopFreeEdge {
-  def unapply[N](e: LoopFreeEdge[N]) = Some(e)
-}

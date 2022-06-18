@@ -20,7 +20,6 @@ import scala.collection.AbstractIterable
   * @author Peter Empen
   */
 sealed trait Edge[+N] extends Equals {
-  import Edge.ValidationException
 
   /** The endpoints of this edge, in other words the nodes this edge joins. */
   def ends: Iterable[N]
@@ -34,38 +33,7 @@ sealed trait Edge[+N] extends Equals {
     */
   def arity: Int
 
-  /** Determines whether the `arity` is valid.
-    * $CalledByValidate
-    */
-  protected def isValidArity: Boolean
-
-  /** Ensures that none of the endpoints is a null reference.
-    *  $CalledByValidate
-    */
-  protected def noNullEnd: Boolean
-
-  /** This method may be overridden to enforce additional validation at edge creation time.
-    *  Its default implementation always returns `true`.
-    *  $CalledByValidate
-    */
-  protected def isValidCustom: Boolean = true
-
   protected def customMsgPrefix: String = "Custom validation failed"
-
-  final protected def handleFailure(msgPrefix: String): Unit =
-    throw new ValidationException(s"$msgPrefix at $toString.")
-
-  /** Performs basic edge validation by calling `isValidArity` and `noNullEnd`.
-    * `isValidCustom` is also called but you need to override this member to perform additional validation.
-    * This validation method needs to be called in the constructor of any edge class
-    * that directly extends or mixes in `Edge`.
-    *
-    * @throws ValidationException if any of the basic validations or the additional custom validation fails.
-    */
-  final protected def validate(): Unit =
-    if (!isValidArity) handleFailure("Invalid arity detected")
-    else if (!noNullEnd) handleFailure("Null endpoint detected")
-    else if (!isValidCustom) handleFailure(customMsgPrefix)
 
   /** Whether this edge is directed. */
   def isDirected: Boolean
@@ -189,8 +157,6 @@ object Edge {
   protected val curlyBraces: Brackets = Brackets('{', '}')
 
   case class Brackets(left: Char, right: Char)
-
-  class ValidationException(val msg: String) extends Exception
 }
 
 private[collection] trait InnerEdgeLike[+N] extends Edge[N]
@@ -218,14 +184,6 @@ trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
 
   override def sources: Iterable[N] = ends
   override def targets: Iterable[N] = sources
-
-  protected def isValidArity: Boolean = ends.size >= 2
-  protected def noNullEnd(coll: Iterable[N @uV]): Boolean = coll forall {
-    case n: AnyRef => n ne null
-    case _         => true
-  }
-
-  protected def noNullEnd: Boolean = noNullEnd(ends)
 
   override def isAt[M >: N](node: M): Boolean    = ends.iterator contains node
   override def isAt(pred: N => Boolean): Boolean = ends exists pred
@@ -261,7 +219,16 @@ object AnyHyperEdge {
   def nodeSeparator: String = " ~ "
 }
 
-abstract class AbstractHyperEdge[+N](val ends: Iterable[N]) extends AnyHyperEdge[N]
+abstract class AbstractHyperEdge[+N](val ends: Iterable[N]) extends AnyHyperEdge[N] {
+  private def hasAtLeastTwoEnds: Boolean = {
+    val it = ends.iterator
+    it.hasNext && {
+      it.next()
+      it.hasNext
+    }
+  }
+  require(hasAtLeastTwoEnds, "'ends' must have size >= 2")
+}
 
 /** The abstract methods of this trait must be implemented by companion objects of non-labeled hyperedges.
   */
@@ -280,9 +247,7 @@ trait AnyDiHyperEdge[+N] extends AnyHyperEdge[N] with EqDiHyper {
   override def _n(n: Int): N = ends.drop(n).head
   def ends: Iterable[N]      = sources ++ targets
 
-  override def arity: Int                      = sources.size + targets.size
-  override protected def isValidArity: Boolean = sources.iterator.hasNext && targets.iterator.hasNext
-  override protected def noNullEnd: Boolean    = noNullEnd(sources) && noNullEnd(targets)
+  override def arity: Int = sources.size + targets.size
 
   @inline final override def isDirected = true
 
@@ -302,7 +267,10 @@ object AnyDiHyperEdge {
 }
 
 abstract class AbstractDiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])
-    extends AnyDiHyperEdge[N]
+    extends AnyDiHyperEdge[N] {
+  require(sources.iterator.nonEmpty, "'sources' must not be empty")
+  require(targets.iterator.nonEmpty, "'targets' must not be empty")
+}
 
 /** The abstract methods of this trait must be implemented by companion objects of directed, non-labeled hyperedges.
   */
@@ -323,18 +291,8 @@ trait AnyEdge[+N] extends Edge[N] { this: Eq =>
   }
 
   // the following five methods should be made final as soon as DiEdge no more extends UnDiEdge
-  @inline override def arity: Int             = 2
-  @inline override protected def isValidArity = true
-
+  @inline override def arity: Int  = 2
   @inline override def isHyperEdge = false
-
-  override protected def noNullEnd: Boolean = {
-    def notNull(n: N) = n match {
-      case r: AnyRef => r ne null
-      case _         => true
-    }
-    notNull(_1) && notNull(_2)
-  }
 
   def ends: Iterable[N] = new AbstractIterable[N] {
     def iterator: Iterator[N] = Iterator.double(_1, _2)
