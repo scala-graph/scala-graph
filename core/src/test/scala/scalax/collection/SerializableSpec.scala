@@ -21,7 +21,7 @@ class SerializableSpec
       new TSerializable[mutable.Graph](mutable.Graph)
     )
 
-/** Tests for standard java serialization.
+/** Tests standard java serialization.
   */
 final private class TSerializable[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]

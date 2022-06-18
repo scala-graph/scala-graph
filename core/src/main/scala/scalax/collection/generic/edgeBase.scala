@@ -167,12 +167,15 @@ sealed trait Edge[+N] extends Equals {
     } else
       ends mkString nodesToStringSeparator
 
-  protected def attributesToString      = ""
+  protected def toStringPostfix         = ""
   protected def toStringWithParenthesis = false
   protected def brackets: Edge.Brackets = Edge.curlyBraces
+
+  /** Implementation based on protected methods that you can overwrite in your custom `Edge` class.
+    */
   override def toString: String = {
-    val attr          = attributesToString
-    val woParenthesis = nodesToString + (if (attr.nonEmpty) attr else "")
+    val postfix       = toStringPostfix
+    val woParenthesis = nodesToString + (if (postfix.nonEmpty) postfix else "")
     if (toStringWithParenthesis)
       thisSimpleClassName + brackets.left + woParenthesis + brackets.right
     else
@@ -192,12 +195,11 @@ object Edge {
 
 private[collection] trait InnerEdgeLike[+N] extends Edge[N]
 
-/** Marker trait for companion objects of any kind of edge.
+/** Marker trait for companion objects of any non-labeled edge.
   */
 sealed trait EdgeCompanionBase extends Serializable
 
-/** The abstract methods of this trait must be implemented by companion objects
-  * of simple (non-weighted, non-labeled) edges.
+/** The abstract methods of this trait must be implemented by companion objects of non-labeled edges.
   */
 trait EdgeCompanion[+E[N] <: Edge[N]] extends EdgeCompanionBase {
   def apply[NN](node_1: NN, node_2: NN): E[NN]
@@ -261,8 +263,7 @@ object AnyHyperEdge {
 
 abstract class AbstractHyperEdge[+N](val ends: Iterable[N]) extends AnyHyperEdge[N]
 
-/** The abstract methods of this trait must be implemented by companion objects of simple
-  * (non-weighted, non-labeled) hyperedges.
+/** The abstract methods of this trait must be implemented by companion objects of non-labeled hyperedges.
   */
 trait HyperEdgeCompanion[+E[N] <: AnyHyperEdge[N]] extends EdgeCompanionBase {
 
@@ -303,7 +304,7 @@ object AnyDiHyperEdge {
 abstract class AbstractDiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])
     extends AnyDiHyperEdge[N]
 
-/** The abstract methods of this trait must be implemented by companion objects of directed, non-weighted, non-labeled hyperedges.
+/** The abstract methods of this trait must be implemented by companion objects of directed, non-labeled hyperedges.
   */
 trait DiHyperEdgeCompanion[+E[N] <: AnyDiHyperEdge[N]] extends EdgeCompanionBase {
   def apply[N](sources: Iterable[N], targets: Iterable[N]): E[N]
@@ -349,22 +350,22 @@ object AnyEdge {
 
 trait AnyUnDiEdge[+N] extends AnyHyperEdge[N] with AnyEdge[N] with EqUnDi[N] {
 
-  def node_1: N
-  def node_2: N
+  def source: N
+  def target: N
 
-  @inline final override def sources: Set[N @uV] = Set(node_1, node_2)
+  @inline final override def sources: Set[N @uV] = Set(source, target)
   @inline final override def targets: Set[N @uV] = sources
 
-  @inline final override def _1: N = node_1
-  @inline final override def _2: N = node_2
+  @inline final override def _1: N = source
+  @inline final override def _2: N = target
 
-  final override def hasSource[M >: N](node: M): Boolean    = node_1 == node || node_2 == node
-  final override def hasSource(pred: N => Boolean): Boolean = pred(node_1) || pred(node_2)
+  final override def hasSource[M >: N](node: M): Boolean    = source == node || target == node
+  final override def hasSource(pred: N => Boolean): Boolean = pred(source) || pred(target)
 
   final override def hasTarget[M >: N](node: M): Boolean    = hasSource(node)
   final override def hasTarget(pred: N => Boolean): Boolean = hasSource(pred)
 
-  final override def withSources[U](f: N => U): Unit = { f(node_1); f(node_2) }
+  final override def withSources[U](f: N => U): Unit = { f(source); f(target) }
   final override def withTargets[U](f: N => U): Unit = withSources(f)
 
   override def isDirected = false
@@ -381,7 +382,7 @@ object AnyUnDiEdge {
   def unapply[N](e: AnyUnDiEdge[N]) = Some(e)
 }
 
-abstract class AbstractUnDiEdge[+N](val node_1: N, val node_2: N) extends AnyUnDiEdge[N]
+abstract class AbstractUnDiEdge[+N](val source: N, val target: N) extends AnyUnDiEdge[N]
 
 trait AbstractGenericUnDiEdge[+N, +This[X] <: AbstractGenericUnDiEdge[X, This]]
     extends AnyHyperEdge[N]

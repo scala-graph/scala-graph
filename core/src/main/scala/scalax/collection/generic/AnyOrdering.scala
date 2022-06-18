@@ -3,10 +3,9 @@ package scalax.collection.generic
 import runtime._
 import collection.immutable.WrappedString
 
-/** Ordering for Any with the following rules:
-  * numerical > string > any other reference type.
-  * If a reference type is not a subclass of Ordered, it will be ordered according
-  * to its toString value.
+/** Ordering for Any with the following rules: numerical > string > any other reference type.
+  * If a reference type is not a subclass of Ordered, it will be ordered according to its toString value.
+  * Used to predictably order elements when computing `Graph.toString`.
   *
   * @author Peter Empen
   */
@@ -40,12 +39,12 @@ class AnyOrdering[N] extends Ordering[N] {
     case (StringType(_), RefType(_))                                     => -1
 
     case (RefType(a), RefType(b)) =>
-      def fallback = a.toString.compare(b.toString)
+      def fallback: Int = a.toString.compare(b.toString)
       (a, b) match {
         case (a: Ordered[_], b: Ordered[_]) =>
           try a.asInstanceOf[Ordered[AnyRef]].compare(b.asInstanceOf[AnyRef with Ordered[AnyRef]])
           catch {
-            case e: ClassCastException => fallback
+            case _: ClassCastException => fallback
           }
         case _ => fallback
       }

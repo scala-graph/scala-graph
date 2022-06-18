@@ -5,15 +5,12 @@ import scalax.collection.edges.Aviation._
 
 /** Represents a flight between two airports.
   *
-  * This object defines the edge type `Flight` needed for the flight route map example as a custom edge type.
+  * Defines a custom edge type that can be used for a flight route map.
   *
   * A `Flight` has several attributes like `departure` and `duration`.
-  * To enable duplicate flights between airports, `flightNo` is added to the key attributes.
+  * To enable multiple flights between airports, the key is extended by `flightNo`.
   *
-  * Note that this is not a real-life design. For instance, calculating the shortest path does not consider
-  * waiting times on the airports, it just uses the flight duration.
-  *
-  * For a usage example see TFlight.scala.
+  * @see EditingTypedSpec.scala.
   *
   * @param departure The departure airport
   * @param destination The destination airport
@@ -31,11 +28,11 @@ case class Flight(
     with PartialEdgeMapper[Airport, Flight]
     with ExtendedKey {
 
-  def extendKeyBy: Seq[String] = Seq(flightNo)
+  def extendKeyBy: Seq[String] = flightNo :: Nil
   override def weight: Double  = duration.toInt
   def airline: String          = flightNo substring (0, 2)
 
-  override protected def attributesToString: String = s" ($flightNo $departure $duration)"
+  override protected def toStringPostfix: String = s" ($flightNo $departure $duration)"
   override def map[NN]: PartialFunction[(NN, NN), Flight] = { case (from: Airport, to: Airport) =>
     copy(from, to)
   }
@@ -45,11 +42,12 @@ case class Flight(
   */
 object Flight {
 
-  /** Defines the `Flight` factory shortcut `##` which can be invoked like
+  /** Defines a `Flight` factory shortcut which can be invoked like
     * {{{
     * val (hamburg, newYork) = (Airport("HAM"), Airport("JFK"))
-    * hamburg ~> newYork ## ("AL 007", 15 o 05, 10 h 20) // yields Flight[Airport]
+    * hamburg ~> newYork ## ("AL 007", 15 o 05, 10 h 20)
     * }}}
+    * that yields an edge of the type Flight[Airport].
     */
   implicit final class ImplicitEdge[A <: Airport](val e: DiEdge[A]) extends AnyVal {
 

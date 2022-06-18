@@ -16,7 +16,7 @@ import scala.util.chaining.scalaUtilChainingOps
 
 class CycleSpec extends Suites(new Cycle[immutable.Graph](immutable.Graph), new Cycle[mutable.Graph](mutable.Graph))
 
-trait CycleMatcher[N, E <: Edge[N]] {
+private trait CycleMatcher[N, E <: Edge[N]] {
   protected type C = Graph[N, E]#Cycle
 
   def haveOneNodeSequenceOf(expected: Seq[N]*): Matcher[Option[C]] =
@@ -40,7 +40,7 @@ trait CycleMatcher[N, E <: Edge[N]] {
     }
 }
 
-class Cycle[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
+private class Cycle[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
     extends RefSpec
     with Matchers
     with Visualizer[CC] {
@@ -268,28 +268,25 @@ class Cycle[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val fac
     }
   }
 
-  /* TODO L
   object `given an undirected multigraph` {
+    import scalax.collection.edges.multilabeled._
+    val (e1, e2) = (1 ~ 2 % 0, 1 ~ 2 % 1)
 
-    private val (e1, e2) = (WkUnDiEdge(1, 2)(0), WkUnDiEdge(1, 2)(1))
-    private val g        = factory(e1, e2)
+    val g: Graph[Int, WUnDiEdge[Int]] = factory(e1, e2) // `annotated for IntelliJ
 
-    def `the cycle returned by 'findCycle' contains the expected edges`: Unit =
-      given(g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
-        val c = (g get 1).findCycle
-        c shouldBe defined
-        c.get.edges should (be(List(e1, e2)) or be(List(e2, e1)))
-      }
+    def `the cycle returned by 'findCycle' contains the expected edges`: Unit = {
+      val c = (g get 1).findCycle
+      c shouldBe defined
+      c.get.edges should (be(List(e1, e2)) or be(List(e2, e1)))
+    }
 
-    def `the cycle returned by 'findCycleContaining' contains the expected edges`: Unit =
-      given(g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
-        val c = g.findCycleContaining(g get 1)
-        c shouldBe defined
-        c.get.edges should (be(List(e1, e2)) or
-          be(List(e2, e1)))
-      }
+    def `the cycle returned by 'findCycleContaining' contains the expected edges`: Unit = {
+      val c = g.findCycleContaining(g get 1)
+      c shouldBe defined
+      c.get.edges should (be(List(e1, e2)) or
+        be(List(e2, e1)))
+    }
   }
-   */
 
   object `given some mixed graphs` extends CycleMatcher[Int, AnyEdge[Int]] {
 

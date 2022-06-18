@@ -3,125 +3,114 @@ package demo
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
-import scalax.collection.Graph
+import scalax.collection.{Graph, OuterElem, OuterNode}
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
-
-/* TODO L
-import scalax.collection.edge.WUnDiEdge
-import scalax.collection.edge.Implicits._
- */
+import scalax.collection.edges.labeled._
+import scalax.collection.generic.AnyEdge
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-traversing.html
   * Traversing Graphs]].
   */
 final class TraversingDemoSpec extends RefSpec with Matchers {
 
-  /* TODO L
-  type IntWUnDiParam = OuterElem[Int, WUnDiEdge]
-  val g = Graph(1 ~ 2 % 4, 2 ~ 3 % 2, 1 ~> 3 % 5, 1 ~ 5 % 3, 3 ~ 5 % 2, 3 ~ 4 % 1, 4 ~> 4 % 1, 4 ~> 5 % 0)
+  type Outer = OuterElem[Int, AnyEdge[Int]]
+  val g = Graph[Int, AnyEdge](1 ~ 2 % 4, 2 ~ 3 % 2, 1 ~> 3 % 5, 1 ~ 5 % 3, 3 ~ 5 % 2, 3 ~ 4 % 1, 4 ~> 4 % 1, 4 ~> 5 % 0)
   def n(outer: Int): g.NodeT = g get outer
-   */
 
   object `demonstrating ` {
-    /* TODO
     def `traversals for a result`: Unit = {
-      def validatePath[N, E <: Edge[N]](p: Graph[N,E]#Path,
-                                                    sample: List[OuterElem[N,E]]): Unit = {
-        def toN(p: OuterElem[N,E]): N = p match {
+      def validatePath(p: g.Path, sample: List[Outer]): Unit = {
+        def toN(p: Outer): Int = p match {
           case OuterNode(n) => n
-          case _ => throw new IllegalArgumentException
+          case _            => throw new IllegalArgumentException
         }
-        p.isValid                       should be (true)
-        p.startNode == toN(sample.head) should be (true)
-        p.endNode   == toN(sample.last) should be (true)
+        p.isValid shouldBe true
+        p.startNode == toN(sample.head) shouldBe true
+        p.endNode == toN(sample.last) shouldBe true
       }
 
-      n(1) findSuccessor (_.outDegree >  3)              should be (None)
-      n(1) findSuccessor (_.outDegree >= 3)              should be (Some(3))
-      n(4) findSuccessor (_.edges forall (_.undirected)) should be (Some(2))
-      n(4) isPredecessorOf n(1)                          should be (true)
-                                   validatePath[Int,WUnDiEdge]((
-      n(1) pathTo n(4)
-                                   ).get, List[IntWUnDiParam](1, 1~>3 %5, 3, 3~4 %1, 4))
-                                   validatePath[Int,WUnDiEdge]((
-      n(1) pathUntil (_.outDegree >= 3)
-                                   ).get, List[IntWUnDiParam](1, 1~>3 %5, 3))
+      n(1) findSuccessor (_.outDegree > 3) shouldBe None
+      n(1) findSuccessor (_.outDegree >= 3) should be(Some(3))
+      n(4) findSuccessor (_.edges forall (!_.isDirected)) should be(Some(2))
+      n(4) isPredecessorOf n(1) shouldBe true
+      validatePath(
+        (n(1) pathTo n(4)).get,
+        List[Outer](1, 1 ~> 3 % 5, 3, 3 ~ 4 % 1, 4)
+      )
+      validatePath(
+        (n(1) pathUntil (_.outDegree >= 3)).get,
+        List[Outer](1, 1 ~> 3 % 5, 3)
+      )
       val spO = n(3) shortestPathTo n(1)
-      val sp = spO.get
-                                   validatePath[Int,WUnDiEdge](sp,
-                                   List[IntWUnDiParam](3, 3~4 %1, 4, 4~>5 %0, 5, 1~5 %3, 1))
-      sp.nodes                     .toList should be (List(3, 4, 5, 1))
-      sp.weight                    should be (4)
+      val sp  = spO.get
+      validatePath(sp, List[Outer](3, 3 ~ 4 % 1, 4, 4 ~> 5 % 0, 5, 1 ~ 5 % 3, 1))
+      sp.nodes.toList should be(List(3, 4, 5, 1))
+      sp.weight shouldBe 4
 
       def negWeight(e: g.EdgeT): Double = 5.5f - e.weight
-      val spNO = n(3) shortestPathTo (n(1), negWeight)
-      val spN = spNO.get
-                                   validatePath[Int,WUnDiEdge](sp,
-                                   List[IntWUnDiParam](3, 2~3 %2, 2, 1~>2 %4, 1))
-      spN.nodes                    .toList should be (List(3, 2, 1))
-      spN.weight                   should be (6)
+      val spNO                          = n(3) shortestPathTo (n(1), negWeight)
+      val spN                           = spNO.get
+      validatePath(sp, List[Outer](3, 2 ~ 3 % 2, 2, 1 ~> 2 % 4, 1))
+      spN.nodes.toList shouldBe List(3, 2, 1)
+      spN.weight shouldBe 6
 
       val pO1 = n(4).withSubgraph(nodes = _ < 4) pathTo n(2)
-                                   validatePath[Int,WUnDiEdge](pO1.get,
-                                   List[IntWUnDiParam](4, 3~4 %1, 3, 2~3 %2, 2))
-      pO1.map(_.nodes)             .get.toList should be (List(4, 3, 2))
+      validatePath(pO1.get, List[Outer](4, 3 ~ 4 % 1, 3, 2 ~ 3 % 2, 2))
+      pO1.map(_.nodes).get.toList shouldBe List(4, 3, 2)
 
       val pO2 = n(4).withSubgraph(edges = _.weight != 2) pathTo n(2)
-                                   validatePath[Int,WUnDiEdge](pO2.get,
-                                   List[IntWUnDiParam](4, 4~>5 %0, 5, 1~5 %3, 1, 1~2 %4, 2))
-      pO2.map(_.nodes)             .get.toList should be (List(4, 5, 1, 2))
+      validatePath(pO2.get, List[Outer](4, 4 ~> 5 % 0, 5, 1 ~ 5 % 3, 1, 1 ~ 2 % 4, 2))
+      pO2.map(_.nodes).get.toList shouldBe List(4, 5, 1, 2)
     }
-     */
 
     def `cycle detection`: Unit = {
       val g   = Graph(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4, 4 ~> 2)
       val fc1 = g.findCycle
-      fc1.get.sameElements(List(2, 2 ~> 3, 3, 3 ~> 4, 4, 4 ~> 2, 2)) should be(true)
+      fc1.get.sameElements(List(2, 2 ~> 3, 3, 3 ~> 4, 4, 4 ~> 2, 2)) shouldBe true
       val fc2 = (g get 4).findCycle
-      fc2.get.sameElements(List(4, 4 ~> 2, 2, 2 ~> 3, 3, 3 ~> 4, 4)) should be(true)
+      fc2.get.sameElements(List(4, 4 ~> 2, 2, 2 ~> 3, 3, 3 ~> 4, 4)) shouldBe true
       for {
         c1 <- fc1
         c2 <- fc2
-      } yield c1 == c2 should be(false)
+      } yield c1 == c2 shouldBe false
       for {
         c1 <- fc1
         c2 <- fc2
-      } yield c1 sameAs c2 should be(true)
+      } yield c1 sameAs c2 shouldBe true
     }
 
-    /* TODO L
     def `ordered traversal`: Unit = {
       val root = 1
-      val g = Graph(root~>4 % 2, root~>2 % 5, root~>3 % 4,
-                       3~>6 % 4,    3~>5 % 5,    3~>7 % 2)
+      val g    = Graph(root ~> 4 % 2, root ~> 2 % 5, root ~> 3 % 4, 3 ~> 6 % 4, 3 ~> 5 % 5, 3 ~> 7 % 2)
 
-      def edgeOrdering = g.EdgeOrdering(g.Edge.WeightOrdering.reverse.compare)
-      val traverser = (g get root).outerNodeTraverser.withOrdering(edgeOrdering)
+      def edgeOrdering = g.EdgeOrdering(g.BaseInnerEdge.WeightOrdering.reverse.compare _)
+      val traverser    = (g get root).outerNodeTraverser.withOrdering(edgeOrdering)
 
       traverser.toList should equal(List(1 to 7: _*))
     }
 
-    def `traversers with fluent properties` {
-      val g = Graph(1~>2 % 1, 1~>3 % 2, 2~>3 % 3, 3~>4 % 1)
+    def `traversers with fluent properties`: Unit = {
+      val g  = Graph(1 ~> 2 % 1, 1 ~> 3 % 2, 2 ~> 3 % 3, 3 ~> 4 % 1)
       val n1 = g get 1
 
-      n1.outerNodeTraverser.sum                 should be (10)
-      g.outerNodeTraverser(n1).sum              should be (10)
-      n1.outerNodeTraverser.withMaxDepth(1).sum should be (6)
+      n1.outerNodeTraverser.sum shouldBe 10
+      g.outerNodeTraverser(n1).sum shouldBe 10
+      n1.outerNodeTraverser.withMaxDepth(1).sum shouldBe 6
 
-      n1.innerEdgeTraverser.map(_.weight).sum   should be (7)
+      n1.innerEdgeTraverser.map(_.weight).sum shouldBe 7
 
-      n1.innerElemTraverser.filter {
-        case g.InnerNode(n) => n.degree > 1
-        case g.InnerEdge(e) => e.weight > 1
-      }                            .map {
-                                     case g.InnerNode(n) => n.outer
-                                     case g.InnerEdge(e) => e.outer
-                                   }.toSet should be (Set[Any](
-                                   1, 2, 3, 1~>3 % 2, 2~>3 % 3))
+      n1.innerElemTraverser
+        .filter {
+          case g.InnerNode(n, _) => n.degree > 1
+          case g.InnerEdge(_, e) => e.weight > 1
+        }
+        .map {
+          case g.InnerNode(_, n) => n
+          case g.InnerEdge(_, e) => e
+        }
+        .toSet shouldBe Set(1, 2, 3, 1 ~> 3 % 2, 2 ~> 3 % 3)
     }
-     */
 
     def `DownUp traverser`: Unit = {
       import scala.collection.mutable.ArrayBuffer
@@ -166,8 +155,8 @@ final class TraversingDemoSpec extends RefSpec with Matchers {
           case None        => Some(n)
         }
       )
-      maybeCycle.get.sameElements(List(2, 2 ~> 3, 3, 3 ~> 4, 4, 4 ~> 2, 2)) should be(true)
-      center.get should be(2)
+      maybeCycle.get.sameElements(List(2, 2 ~> 3, 3, 3 ~> 4, 4, 4 ~> 2, 2)) shouldBe true
+      center.get shouldBe 2
     }
 
     def `weak component traverser`: Unit = {
@@ -200,19 +189,17 @@ final class TraversingDemoSpec extends RefSpec with Matchers {
       startAt.innerNodeTraverser.strongComponents(_ => ())
     }
 
-    /* TODO L
     def `path builder`: Unit = {
       val builder = g.newPathBuilder(n(1))
       builder += n(3) += n(4)
-      builder.result.toString should be("Path(1, 1~>3 %5.0, 3, 3~4 %1.0, 4)")
+      builder.result().toOuterElems.toList shouldBe List[Outer](1, 1 ~> 3 % 5.0, 3, 3 ~ 4 % 1.0, 4)
 
-      builder.clear
+      builder.clear()
       builder += n(4) += n(3)
-      builder.result.toString should be("Path(1, 1~>3 %5.0, 3)")
+      builder.result().toOuterElems.toList shouldBe List[Outer](1, 1 ~> 3 % 5.0, 3)
 
-      builder.clear
-      builder add n(4) should be(false)
+      builder.clear()
+      builder add n(4) shouldBe false
     }
-     */
   }
 }

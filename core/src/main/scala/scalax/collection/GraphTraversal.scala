@@ -304,6 +304,11 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
 
     /** The `Graph` instance that contains `this` walk. */
     final def containingGraph: thisGraph.type = thisGraph
+
+    def toOuterElems: Iterable[scalax.collection.OuterElem[N, E]] = this map {
+      case InnerNode(_, n) => scalax.collection.OuterNode[N](n)
+      case InnerEdge(_, e) => scalax.collection.OuterEdge[N, E](e)
+    }
   }
 
   object Walk {

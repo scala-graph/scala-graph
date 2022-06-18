@@ -154,19 +154,18 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: Graph[N, E] with Graph
     }
   }
 
-  /* TODO L
   def `multi graph`: Unit = {
-    given(factory(WkDiEdge(1, 2)(0), WkDiEdge(1, 2)(1))) { g =>
-      g.topologicalSort.fold(
-        Topo.unexpectedCycle,
-        order =>
-          new Topo.Checker(g) {
-            checkOuterNodes(order.outer)
-          }
-      )
-    }
+    import scalax.collection.edges.multilabeled._
+
+    val g = factory(1 ~> 2 % 0, 1 ~> 2 % 1)
+    g.topologicalSort.fold(
+      Topo.unexpectedCycle,
+      order =>
+        new Topo.Checker(g) {
+          checkOuterNodes(order.toOuter)
+        }
+    )
   }
-   */
 
   def `unconnected graph`: Unit = {
     val expectedLayer_0 @ (_1 :: _3 :: Nil) = List(1, 3)

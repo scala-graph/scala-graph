@@ -10,7 +10,7 @@ import scalax.collection.edges._
 import scalax.collection.generic.{Edge, EdgeCompanionBase, GraphCompanion}
 import scalax.collection.mutable.{Graph => MGraph}
 /* TODO L
-import edge.{LDiEdge, WDiEdge}
+import scalax.collection.edges.labeled._
  */
 
 class RandomGraphSpec extends RefSpec with Matchers {
@@ -92,25 +92,26 @@ class RandomGraphSpec extends RefSpec with Matchers {
   /* TODO L
   object `default weighted random graph edges` {
     implicit val metrics: Metrics[Int] = RandomGraph.TinyInt
-    val g                              = generator[Int, WDiEdge, Graph](WDiEdge, Graph, true).draw
+    val g                              = generator[Int, WDiEdge[Int], Graph](WDiEdge, Graph, true).draw
 
-    def `should have distinct weights` {
+    def `should have distinct weights`: Unit = {
       val weights = MSet.empty[Long] ++ (g.edges map (_.weight))
       weights.size should be(g.size)
     }
   }
+
   object `default labeled random graph edges` {
     implicit val metrics: Metrics[Int] = RandomGraph.SmallInt
     val g                              = generator[Int, LDiEdge, Graph](LDiEdge, Graph, true).draw
 
-    def `should have distinct labels` {
+    def `should have distinct labels`: Unit = {
       val labels = MSet.empty[Any] ++ (g.edges map (_.label))
       labels.size should be(g.size)
     }
   }
    */
 
-  object IgnoreThis {
+  object IgnoreThis { // TODO
 //  object `huge graph` {
     implicit val huge: Metrics[Int] = new IntFactory {
       val order       = 100000

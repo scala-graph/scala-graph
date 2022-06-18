@@ -13,9 +13,6 @@ import scalax.collection.generator.RandomGraph.IntFactory
 import scalax.collection.generator._
 import scalax.collection.generic.GraphCoreCompanion
 import scalax.collection.visualization.Visualizer
-/* TODO L
-import edge.Implicits._
- */
 
 class ConnectivitySpec
     extends Suites(

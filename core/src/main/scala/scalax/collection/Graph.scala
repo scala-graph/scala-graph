@@ -204,7 +204,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
   @S(-903) class InnerDiHyperEdge       (override val sources: Iterable[NodeT], override val targets: Iterable[NodeT], val outer: E) extends Abstract.DiHyperEdge       (sources, targets) with EdgeT
   @S(-904) class InnerOrderedDiHyperEdge(override val sources: Iterable[NodeT], override val targets: Iterable[NodeT], val outer: E) extends Abstract.OrderedDiHyperEdge(sources, targets) with EdgeT
 
-  @S(-905) class InnerUnDiEdge(val node_1: NodeT, val node_2: NodeT, val outer: E) extends Abstract.UnDiEdge(node_1, node_2) with EdgeT
+  @S(-905) class InnerUnDiEdge(val source: NodeT, val target: NodeT, val outer: E) extends Abstract.UnDiEdge(source, target) with EdgeT
   @S(-906) class InnerDiEdge  (val source: NodeT, val target: NodeT, val outer: E) extends Abstract.DiEdge  (source, target) with EdgeT
 
   @transient object InnerHyperEdge        { def unapply(edge:        InnerHyperEdge): Option[Iterable[NodeT]] = Some(edge.ends) }
@@ -213,7 +213,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
   @transient object InnerDiHyperEdge        { def unapply(edge:        InnerDiHyperEdge): Option[(Iterable[NodeT], Iterable[NodeT])] = Some(edge.sources, edge.targets) }
   @transient object InnerOrderedDiHyperEdge { def unapply(edge: InnerOrderedDiHyperEdge): Option[(Iterable[NodeT], Iterable[NodeT])] = Some(edge.sources, edge.targets) }
 
-  @transient object InnerUnDiEdge { def unapply(edge: InnerUnDiEdge): Option[(NodeT, NodeT)] = Some(edge.node_1, edge.node_2) }
+  @transient object InnerUnDiEdge { def unapply(edge: InnerUnDiEdge): Option[(NodeT, NodeT)] = Some(edge.source, edge.target) }
   @transient object InnerDiEdge   { def unapply(edge:   InnerDiEdge): Option[(NodeT, NodeT)] = Some(edge.source, edge.target) }
   // format: on
 
