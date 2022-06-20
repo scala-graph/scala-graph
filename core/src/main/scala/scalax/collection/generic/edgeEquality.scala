@@ -25,9 +25,10 @@ sealed protected[collection] trait Eq { this: Edge[_] =>
 }
 
 protected[collection] object Eq {
-  private def nrEqualingNodes(itA: Iterator[_], itB: Iterable[_]): Int = {
+  /* Works for both sets and bags.
+   */
+  private def nrEqualingNodes(itA: Iterable[_], itB: Iterable[_], bLen: Int): Int = {
     var nr   = 0
-    val bLen = itB.size
     val used = new Array[Boolean](bLen)
     for (a <- itA) {
       val bs = itB.iterator
@@ -53,9 +54,13 @@ protected[collection] object Eq {
   ): Boolean = {
     val thisOrdered = left.isInstanceOf[OrderedEndpoints]
     val thatOrdered = right.isInstanceOf[OrderedEndpoints]
+
     thisOrdered == thatOrdered && (
-      if (thisOrdered) leftEnds.toSeq == rightEnds.toSeq
-      else Eq.nrEqualingNodes(leftEnds.iterator, rightEnds) == rightEnds.size
+      if (thisOrdered) leftEnds == rightEnds
+      else {
+        val rightSize = rightEnds.size
+        Eq.nrEqualingNodes(leftEnds, rightEnds, rightSize) == rightSize
+      }
     )
   }
 }
