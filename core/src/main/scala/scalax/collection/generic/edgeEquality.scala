@@ -45,18 +45,17 @@ protected[collection] object Eq {
     nr
   }
 
-  def equalTargets(
+  def equalEnds(
       left: Edge[_],
       leftEnds: Iterable[_],
       right: Edge[_],
-      rightEnds: Iterable[_],
-      arity: Int
+      rightEnds: Iterable[_]
   ): Boolean = {
     val thisOrdered = left.isInstanceOf[OrderedEndpoints]
     val thatOrdered = right.isInstanceOf[OrderedEndpoints]
     thisOrdered == thatOrdered && (
       if (thisOrdered) leftEnds.toSeq == rightEnds.toSeq
-      else Eq.nrEqualingNodes(leftEnds.iterator, rightEnds.toIterable) == arity
+      else Eq.nrEqualingNodes(leftEnds.iterator, rightEnds) == rightEnds.size
     )
   }
 }
@@ -67,7 +66,7 @@ protected[collection] trait EqHyper extends Eq {
   override protected def baseEquals(other: Edge[_]): Boolean = {
     val (thisArity, thatArity) = (arity, other.arity)
     if (thisArity == thatArity)
-      Eq.equalTargets(this, this.sources, other, other.sources, thisArity)
+      Eq.equalEnds(this, this.ends, other, other.ends)
     else false
   }
 
@@ -89,8 +88,8 @@ protected[collection] trait EqDiHyper extends Eq {
       else
         other match {
           case diHyper: AnyDiHyperEdge[_] =>
-            this.sources.head == diHyper.sources.head &&
-            Eq.equalTargets(this, this.targets, other, other.targets, arity - 1)
+            Eq.equalEnds(this, this.sources, diHyper, diHyper.sources) &&
+            Eq.equalEnds(this, this.targets, diHyper, diHyper.targets)
           case _ => false
         }
     else false

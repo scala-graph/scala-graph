@@ -7,7 +7,6 @@ import org.scalatest.refspec.RefSpec
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import scalax.collection.hyperedges._
-import scalax.collection.hyperedges.DiHyperEdgeImplicits._
 import scalax.collection.generic._
 
 /** Editing any kind of hypergraph with unlabeled edges including mixed and multigraphs.
@@ -29,17 +28,13 @@ class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     def `isHyper ` : Unit = {
       def test(g: CC[Int, AnyHyperEdge[Int]], expected: Boolean): Unit = g.isHyper should be(expected)
 
-      import HyperEdgeImplicits._
       test(factory.from[Int, AnyHyperEdge](List(1 ~> 2, 1 ~~ 2 ~~ 3)), true)
       test(factory.from[Int, AnyHyperEdge](1 ~ 2 :: Nil), false)
       test(factory.from[Int, AnyHyperEdge](1 ~> 2 :: Nil), false)
     }
   }
 
-  private val hDi = {
-    import DiHyperEdgeImplicits._
-    factory(1 ~~> List(1, 5), 1 ~~> List(2, 5), 1 ~~> List(3, 5), 1 ~~> List(4, 9))
-  }
+  val hDi = factory(1 ~~> List(1, 5), 1 ~~> List(2, 5), 1 ~~> List(3, 5), 1 ~~> List(4, 9))
 
   object `diSuccessors ` {
     def `for DiHyper`: Unit = {
@@ -66,7 +61,6 @@ class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
   }
 
   def `match hyperedge`: Unit = {
-    import HyperEdgeImplicits._
     val hyper                      = 1 ~~ 2 ~~ 3
     val ~~(Seq(n1, n2, n3, _ @_*)) = hyper
     n1 + n2 + n3 should be(6)
@@ -74,7 +68,6 @@ class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
   }
 
   def `match dircted hyperedge`: Unit = {
-    import DiHyperEdgeImplicits._
     val count               = 3
     val sources             = List.tabulate(count - 1)(_ + 1)
     val target              = count

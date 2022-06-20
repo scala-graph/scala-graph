@@ -1,27 +1,31 @@
 package scalax.collection.generic
 
-abstract class AbstractHyperEdgeImplicits[E[N] <: AnyHyperEdge[N], C <: HyperEdgeCompanion[E]](companion: C) {
+object AbstractHyperEdgeImplicits {
 
-  trait AnyToEdge[N] extends Any {
+  trait FromAny[N, E[N] <: AnyHyperEdge[N], C <: HyperEdgeCompanion[E]] extends Any {
+    protected def companion: C
     def n1: N
     def ~~[NN >: N](n2: NN): E[NN] = companion(n1, n2)
   }
 
-  trait EdgeToEdge[N] extends Any {
+  trait FromEdge[N, E[N] <: AnyHyperEdge[N], C <: HyperEdgeCompanion[E]] extends Any {
+    protected def companion: C
     def e1: E[N]
-    def ~~[NN >: N](n: NN): E[NN] = companion[NN](e1.ends ++ (n :: Nil))
+    def ~~[NN >: N](n: NN): E[NN] = companion(e1.ends ++ (n :: Nil))
   }
 }
 
-abstract class AbstractDiHyperEdgeImplicits[E[N] <: AnyDiHyperEdge[N], C <: DiHyperEdgeCompanion[E]](companion: C) {
+object AbstractDiHyperEdgeImplicits {
 
-  trait AnyToEdge[N] extends Any {
+  trait FromAny[N, E[N] <: AnyDiHyperEdge[N], C <: DiHyperEdgeCompanion[E]] extends Any {
+    protected def companion: C
     def source: N
     def ~~>[NN >: N](target: NN): E[NN]            = companion(Iterable(source), Iterable(target))
     def ~~>[NN >: N](targets: Iterable[NN]): E[NN] = companion(Iterable(source), targets)
   }
 
-  trait IterableToEdge[N] extends Any {
+  trait FromIterable[N, E[N] <: AnyDiHyperEdge[N], C <: DiHyperEdgeCompanion[E]] extends Any {
+    protected def companion: C
     def sources: Iterable[N]
     def ~~>[NN >: N](target: NN): E[NN]            = companion(sources, Iterable(target))
     def ~~>[NN >: N](targets: Iterable[NN]): E[NN] = companion(sources, targets)

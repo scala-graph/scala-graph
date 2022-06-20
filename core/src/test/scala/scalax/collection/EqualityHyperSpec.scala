@@ -1,46 +1,69 @@
 package scalax.collection
 
 import org.scalatest.matchers.should.Matchers
-
-import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 
-import scalax.collection.hyperedges._
-import scalax.collection.generic.{Edge, GraphCoreCompanion}
+class EqualityHyperSpec extends RefSpec with Matchers {
 
-class EqualityHyperSpec
-    extends Suites(
-      new EqualityHyper[immutable.Graph](immutable.Graph),
-      new EqualityHyper[mutable.Graph](mutable.Graph)
-    )
+  def `hyperedges, bag like ` : Unit = {
+    import scalax.collection.hyperedges._
 
-private class EqualityHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC]
-) extends RefSpec
-    with Matchers {
+    val nodes = List('A', 'B', 'C', 'C')
+    val hEdge = HyperEdge(nodes)
+    hEdge shouldEqual 'A' ~~ 'B' ~~ 'C' ~~ 'C'
+    hEdge shouldEqual 'C' ~~ 'C' ~~ 'B' ~~ 'A'
 
-  def `hyperedges ` : Unit = {
-    val heNodes = List("A", "B", "C")
-    val he      = HyperEdge(heNodes)
-
-    he shouldBe a[HyperEdge[_]]
-    he.arity shouldEqual heNodes.size
-    he._1 shouldEqual heNodes(0)
-    he._2 shouldEqual heNodes(1)
-    for (i <- heNodes.indices) he._n(i) should be(heNodes(i))
+    hEdge.arity shouldBe nodes.size
+    for (i <- nodes.indices)
+      hEdge._n(i) shouldBe nodes(i)
   }
 
-  def `directed hyperedges ` : Unit = {
-    import scalax.collection.hyperedges.DiHyperEdgeImplicits._
-    val sources = List('A', 'B', 'C')
-    val target  = 'D'
-    val dhe     = sources ~~> target
+  def `hyperedges, ordered ` : Unit = {
+    import scalax.collection.hyperedges.ordered._
 
-    dhe shouldBe a[DiHyperEdge[_]]
-    dhe.ends should contain theSameElementsAs (target +: sources)
-    dhe.arity should be(4)
-    dhe.sources.head should be(sources.head)
-    dhe.sources.last should be(sources.last)
-    dhe.targets.head should be(target)
+    val nodes = List('A', 'B', 'C', 'C')
+    val hEdge = HyperEdge(nodes)
+    hEdge shouldEqual 'A' ~~ 'B' ~~ 'C' ~~ 'C'
+    hEdge shouldNot equal('C' ~~ 'C' ~~ 'B' ~~ 'A')
+
+    hEdge.arity shouldBe nodes.size
+    for (i <- nodes.indices)
+      hEdge._n(i) shouldBe nodes(i)
+  }
+
+  def `directed hyperedges, bag like`: Unit = {
+    import scalax.collection.hyperedges._
+
+    val sources = List('A', 'B', 'C')
+    val targets = List('D', 'D', 'E')
+    val dhEdge  = DiHyperEdge(sources, targets)
+    dhEdge shouldEqual sources ~~> targets
+    dhEdge shouldEqual sources.reverse ~~> targets.reverse
+
+    dhEdge.ends should contain theSameElementsAs (sources ++ targets)
+
+    val sourcesSize = sources.size
+    dhEdge.arity shouldBe sourcesSize + targets.size
+
+    for (i <- sources.indices) dhEdge._n(i) shouldBe sources(i)
+    for (i <- targets.indices) dhEdge._n(i + sourcesSize) shouldBe targets(i)
+  }
+
+  def `directed hyperedges, ordered`: Unit = {
+    import scalax.collection.hyperedges.ordered._
+
+    val sources = List('A', 'B', 'C')
+    val targets = List('D', 'D', 'E')
+    val dhEdge  = DiHyperEdge(sources, targets)
+    dhEdge shouldEqual sources ~~> targets
+    dhEdge shouldNot equal(sources.reverse ~~> targets.reverse)
+
+    dhEdge.ends should contain theSameElementsAs (sources ++ targets)
+
+    val sourcesSize = sources.size
+    dhEdge.arity shouldBe sourcesSize + targets.size
+
+    for (i <- sources.indices) dhEdge._n(i) shouldBe sources(i)
+    for (i <- targets.indices) dhEdge._n(i + sourcesSize) shouldBe targets(i)
   }
 }

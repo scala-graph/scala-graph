@@ -1,8 +1,10 @@
-package scalax.collection
+package scalax.collection.hyperedges
 
 import scalax.collection.generic.{AbstractDiHyperEdgeImplicits, AbstractHyperEdgeImplicits}
 
-package object hyperedges {
+/* Intentionally repeated hyperedges.package to facilitate implicit value classes.
+ */
+package object ordered {
 
   /* implicit conversion from `node_1 ~~ node_2` to `HyperEdge(node_1, node_2)`.
    */

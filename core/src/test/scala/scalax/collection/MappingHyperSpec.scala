@@ -7,7 +7,7 @@ import org.scalatest.Suites
 
 import scalax.collection.OuterImplicits._
 import scalax.collection.generic._
-import scalax.collection.hyperedges.HyperEdgeImplicits._
+import scalax.collection.hyperedges._
 import scalax.collection.generic.GraphCoreCompanion
 
 import MappingHyperSpec._
