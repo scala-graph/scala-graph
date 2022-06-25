@@ -2,36 +2,34 @@ package scalax.collection
 package labeled
 
 import scala.language.postfixOps
-import scala.util.Random
-
-import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck._
+//import scala.util.Random
+//import org.scalacheck.Arbitrary.arbitrary
+//import org.scalacheck._
 import org.scalatest._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-import GraphPredef._
-import GraphEdge._
+import Data._
+import OuterImplicits._
+//import generator.GraphGen
+import generic.{AnyEdge, Edge, GraphCoreCompanion}
+import edges._
+import edges.multilabeled._
 import GraphTraversal._
-import generic.GraphCoreCompanion
-/* TODO L
-import edge.WDiEdge
-import edge.WUnDiEdge
-import edge.Implicits._
-*/
-import generator.GraphGen
-import scalax.collection.visualization.Visualizer
+import visualization.Visualizer
 
-class LTraversalSpec
+import scala.collection.mutable.ListBuffer
+
+class TraversalSpec
     extends Suites(
-      new LTraversal[immutable.Graph](immutable.Graph),
-      new LTraversal[mutable.Graph](mutable.Graph)
+      new Traversal[immutable.Graph](immutable.Graph),
+      new Traversal[mutable.Graph](mutable.Graph)
     )
 
-final class LTraversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
-    val factory: GraphCoreCompanion[G])
-    extends RefSpec
+final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+    val factory: GraphCoreCompanion[G]
+) extends RefSpec
     with Matchers
     with ScalaCheckPropertyChecks
     with Visualizer[G] {
@@ -41,28 +39,26 @@ final class LTraversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]
   val predecessors = Parameters(direction = Predecessors)
   val anyConnected = Parameters(direction = AnyConnected)
 
-  def `assert bug 9 of shortestPathTo is fixed`: Unit = {
+  def `assert bug 9 of shortestPathTo is fixed`: Unit =
     given(factory(0 ~> 1 % 3, 0 ~> 2 % 4, 1 ~> 3 % 3, 2 ~> 3 % 1)) { g =>
       def n(outer: Int) = g get outer
       (n(0) shortestPathTo n(3)).get.nodes.toList should be(List(0, 2, 3))
     }
-  }
 
-  def `shortestPathTo in WDi_1`: Unit = {
+  def `shortestPathTo in WDi_1`: Unit =
     given(factory(elementsOfWDi_1: _*)) { g =>
       def n(outer: Int) = g get outer
 
-      n(5) shortestPathTo n(4) should be(None)
-      n(5) shortestPathTo n(1) should be(None)
-      n(3) shortestPathTo n(1) should be(None)
+      n(5) shortestPathTo n(4) shouldBe None
+      n(5) shortestPathTo n(1) shouldBe None
+      n(3) shortestPathTo n(1) shouldBe None
 
-      (n(1) shortestPathTo n(3)).get.nodes.toList should be(List(1, 3))
-      (n(4) shortestPathTo n(5)).get.nodes.toList should be(List(4, 3, 5))
-      (n(1) shortestPathTo n(5)).get.nodes.toList should be(List(1, 5))
+      (n(1) shortestPathTo n(3)).get.nodes.toList shouldBe List(1, 3)
+      (n(4) shortestPathTo n(5)).get.nodes.toList shouldBe List(4, 3, 5)
+      (n(1) shortestPathTo n(5)).get.nodes.toList shouldBe List(1, 5)
     }
-  }
 
-  def `shortestPathTo in WDi_1 using Float`: Unit = {
+  def `shortestPathTo in WDi_1 using Float`: Unit =
     given(factory(elementsOfWDi_1: _*)) { g =>
       def n(outer: Int) = g get outer
 
@@ -71,22 +67,22 @@ final class LTraversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]
 
       n(5) shortestPathTo (n(4), weight) shouldBe empty
 
-      (n(1) shortestPathTo (n(3), weight)).get.nodes.toStream should contain theSameElementsInOrderAs Array(1, 3)
-      (n(1) shortestPathTo (n(3), reverseWeight)).get.nodes.toStream should contain theSameElementsInOrderAs Array(
+      (n(1) shortestPathTo (n(3), weight)).get.nodes.to(LazyList) should contain theSameElementsInOrderAs Array(1, 3)
+      (n(1) shortestPathTo (n(3), reverseWeight)).get.nodes.to(LazyList) should contain theSameElementsInOrderAs Array(
         1,
         2,
-        3)
+        3
+      )
     }
-  }
 
-  def `shortestPathTo in WUnDi_1`: Unit = {
-    given(factory(elementsOfWUnDi_1: _*)) { g =>
-      def shortestPathNodes(from: Int, to: Int): Stream[g.NodeT] = {
+  def `shortestPathTo in WUnDi_1`: Unit =
+    given(factory(elementsOfWMixed_1: _*)) { g =>
+      def shortestPathNodes(from: Int, to: Int): LazyList[g.NodeT] = {
         def n(value: Int): g.NodeT = g get value
 
         val path = n(from) shortestPathTo n(to)
         path shouldBe defined
-        path.get.nodes.toStream
+        path.get.nodes.to(LazyList)
       }
       shortestPathNodes(2, 5) should contain theSameElementsInOrderAs Array(2, 3, 4, 5)
       shortestPathNodes(4, 5) should contain theSameElementsInOrderAs Array(4, 5)
@@ -95,31 +91,28 @@ final class LTraversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]
       shortestPathNodes(5, 4) should contain theSameElementsInOrderAs Array(5, 3, 4)
       shortestPathNodes(3, 1) should contain theSameElementsInOrderAs Array(3, 4, 5, 1)
     }
-  }
 
-  def `shortestPathTo withMaxDepth`: Unit = {
-    given(factory(elementsOfWUnDi_1: _*)) { g =>
+  def `shortestPathTo withMaxDepth`: Unit =
+    given(factory(elementsOfWMixed_1: _*)) { g =>
       def n(value: Int): g.NodeT = g get value
 
       n(2).innerNodeTraverser.withMaxDepth(2).shortestPathTo(n(5)).get.nodes.toList should be(List(2, 3, 5))
     }
-  }
 
-  def `shortestPathTo withMaxWeight`: Unit = {
-    given(factory(elementsOfWUnDi_1: _*)) { g =>
+  def `shortestPathTo withMaxWeight`: Unit =
+    given(factory(elementsOfWMixed_1: _*)) { g =>
       def n(value: Int): g.NodeT = g get value
 
       val t = n(2).innerNodeTraverser
       t.withMaxWeight(3).shortestPathTo(n(5)) shouldBe defined
       t.withMaxWeight(2).shortestPathTo(n(5)) shouldBe empty
     }
-  }
 
   // see diagram WUnDi-2.jpg
-  val eUnDi_2 = List[WUnDiEdge[Int]](1 ~ 2 % 4, 2 ~ 3 % -1, 1 ~> 3 % 5, 1 ~ 3 % 4, 1 ~> 2 % 3, 2 ~ 2 % 1)
-  val gUnDi_2 = factory.from[Int, WUnDiEdge](Set.empty, eUnDi_2)
+  val eUnDi_2 = List[AnyEdge[Int]](1 ~ 2 % 4, 2 ~ 3 % -1, 1 ~> 3 % 5, 1 ~ 3 % 4, 1 ~> 2 % 3, 2 ~ 2 % 1)
+  val gUnDi_2 = factory.from[Int, AnyEdge[Int]](Set.empty, eUnDi_2)
 
-  def `shortestPathTo in UnDi_2`: Unit = {
+  def `shortestPathTo in UnDi_2`: Unit =
     given(gUnDi_2) { g =>
       def n(value: Int) = g get value
 
@@ -137,11 +130,10 @@ final class LTraversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]
 
       val p3_3 = (n(3) shortestPathTo n(3)).get
       p3_3.nodes.toList should be(List(3))
-      p3_3.edges.toList should be('empty)
+      p3_3.edges.toList shouldBe empty
     }
-  }
 
-  def `traverser withSubgraph`: Unit = {
+  def `traverser withSubgraph`: Unit =
     given(gUnDi_2) { g =>
       def n(value: Int) = g get value
 
@@ -157,34 +149,38 @@ final class LTraversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]
       p1_3_wLT4.nodes.toList should be(List(1, 2, 3))
       p1_3_wLT4.edges.toList should be(List(eUnDi_2(4), eUnDi_2(1)))
     }
-  }
 
   object `traverser withMaxWeight` {
-    object WUnDi_1 extends TGraph[Int, WUnDiEdge, G](factory(elementsOfWUnDi_1: _*))
+    object WMixed_1 extends TGraph[Int, AnyEdge[Int], G](factory.from(elementsOfWMixed_1))
+    import WMixed_1._
 
     private def check(kind: Kind): Unit =
       List[Long](Long.MaxValue, 5, 4, 3, 2, 1, 0) map (max => n(1) withKind kind withMaxWeight max size) should be(
-        List(5, 4, 3, 2, 1, 1, 1))
+        List(5, 4, 3, 2, 1, 1, 1)
+      )
 
-    def `calling DepthFirst` = given(WUnDi_1.g): Unit = { _ =>
+    def `calling DepthFirst`: Unit = given(WMixed_1.g) { _ =>
       check(DepthFirst)
     }
-    def `calling BreadthFirst` = given(WUnDi_1.g): Unit = { _ =>
+    def `calling BreadthFirst`: Unit = given(WMixed_1.g) { _ =>
       check(BreadthFirst)
     }
   }
 
-  def `traverser to graph`: Unit =
+  def `traverser to graph`: Unit = {
+    object Di_1 extends TGraph(factory(elementsOfDi_1: _*))
     given(Di_1.g) { g =>
       def innerNode(outer: Int) = g get outer
 
       innerNode(1).outerNodeTraverser.toGraph should equal(factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
 
       innerNode(2).outerNodeTraverser(anyConnected).toGraph should equal(
-        factory(1 ~> 2, 2 ~> 3, 4 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
+        factory(1 ~> 2, 2 ~> 3, 4 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3)
+      )
 
       innerNode(3).outerNodeTraverser(predecessors).toGraph should equal(factory(4 ~> 3, 1 ~> 3, 2 ~> 3, 1 ~> 2))
     }
+  }
 
   def `traverser with a visitor`: Unit =
     given(gUnDi_2) { g =>
@@ -203,10 +199,14 @@ final class LTraversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]
     }
 
   def `shortestPathTo in the flight example graph`: Unit = {
+    import edges.Aviation._
+    import edges.Aviation.Implicits._
+    import edges.Flight._
+
     val (jfc, lhr, dme, svx, fra, prg) =
       (Airport("JFC"), Airport("LHR"), Airport("DME"), Airport("SVX"), Airport("FRA"), Airport("PRG"))
 
-    val flights: List[Flight[Airport]] =
+    val flights: List[Flight] =
       List(
         jfc ~> dme ## ("UN 2222", 14 o 25, 8 h 50),
         dme ~> svx ## ("UN 109", 23 o 10, 2 h 15),
@@ -246,8 +246,9 @@ final class LTraversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]
         visited += e
       }
       val visitedSorted = visited.toList.sortWith((a: g.EdgeT, b: g.EdgeT) => a.flightNo < b.flightNo)
-      visitedSorted.sameElements(List(flight("BA 174"), flight("LH 400"), flight("UA 8840"), flight("UN 2222"))) should be(
-        true)
+      visitedSorted.sameElements(
+        List(flight("BA 174"), flight("LH 400"), flight("UA 8840"), flight("UN 2222"))
+      ) should be(true)
     }
   }
 
@@ -256,7 +257,7 @@ final class LTraversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]
     given(factory(outerEdges: _*)) { g =>
       val root = g get 1
 
-      def edgeOrdering = g EdgeOrdering (g.Edge.WeightOrdering.reverse.compare)
+      def edgeOrdering = g EdgeOrdering (g.BaseInnerEdge.WeightOrdering.reverse.compare _)
 
       val orderedTraverser = root.outerNodeTraverser.withOrdering(edgeOrdering)
       orderedTraverser.toList should be(List(1 to 7: _*))
@@ -264,9 +265,11 @@ final class LTraversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]
     }
   }
 
+  /* TODO GraphGen
   def `shortest path exists if path exists`: Unit = {
     implicit val arbitraryWDiGraph = Arbitrary {
-      new GraphGen[Int, WDiEdge, G](factory, order, nodeGen, nodeDegrees, Set(WDiEdge), connected).apply
+      import GraphGen.SmallInt._
+      new GraphGen[Int, WDiEdge[Int], G](factory, order, nodeGen, nodeDegrees, Set(WDiEdge), connected).apply
     }
     val r = new Random
 
@@ -282,4 +285,5 @@ final class LTraversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]
       }
     }
   }
+   */
 }
