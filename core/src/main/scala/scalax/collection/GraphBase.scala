@@ -1,5 +1,7 @@
 package scalax.collection
 
+import scala.collection.{Iterable => AnyIterable}
+import scala.collection.immutable.Iterable
 import scala.language.implicitConversions
 import scala.util.Random
 import scala.collection.{ExtSetMethods, FilterableSet}
@@ -37,7 +39,7 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
     * @param nodes $INNODES
     * @param edges $INEDGES
     */
-  protected def initialize(nodes: Iterable[N], edges: Iterable[E]): Unit = {
+  protected def initialize(nodes: AnyIterable[N], edges: AnyIterable[E]): Unit = {
     this.nodes.initialize(nodes, edges)
     this.edges.initialize(edges)
   }
@@ -316,7 +318,7 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
       * @param nodes $INNODES
       * @param edges $INEDGES
       */
-    protected[collection] def initialize(nodes: Iterable[N], edges: Iterable[E]): Unit
+    protected[collection] def initialize(nodes: AnyIterable[N], edges: AnyIterable[E]): Unit
     final override protected def className: String = "NodeSet"
 
     /** Sorts all nodes according to `ord` and concatenates them using `separator`.
@@ -346,7 +348,7 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
     @inline final def outerIterator: Iterator[N] = iterator map (_.outer)
 
     /** `Iterable` over this `NodeSet` mapped to outer nodes. */
-    @inline final def outerIterable: Iterable[N] = map(_.outer)
+    @inline final def outerIterable: AnyIterable[N] = map(_.outer)
 
     /** Converts this node set to a set of outer nodes. */
     def toOuter: Set[N] = {
@@ -439,7 +441,7 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
 
       outer match {
         case edge: AnyEdge[N] =>
-          val (n_1, n_2) = (edge._n(0), edge._n(1))
+          val (n_1, n_2) = (edge.node(0), edge.node(1))
           @inline def inner(n: N): NodeT = {
             val found = lookup(n)
             if (null eq found) newNode(n) else found
@@ -487,7 +489,7 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
       *
       * @param edges $INEDGES
       */
-    protected[collection] def initialize(edges: Iterable[E]): Unit
+    protected[collection] def initialize(edges: AnyIterable[E]): Unit
     def contains(node: NodeT): Boolean
 
     final override protected def className: String = "EdgeSet"
@@ -528,7 +530,7 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
     @inline final def outerIterator: Iterator[E] = iterator map (_.outer)
 
     /** `Iterable` over this `EdgeSet` mapped to outer edges. */
-    @inline final def outerIterable: Iterable[E] = map(_.outer)
+    @inline final def outerIterable: AnyIterable[E] = map(_.outer)
 
     /** Converts this edge set to a set of outer edges. */
     def toOuter: Set[E] = {
@@ -541,7 +543,7 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
 
     final def findElem[B](other: B, correspond: (EdgeT, B) => Boolean): EdgeT = {
       def find(edge: E): EdgeT = correspond match {
-        case c: ((EdgeT, E) => Boolean) @unchecked => nodes.lookup(edge._n(0)).edges findElem (edge, c)
+        case c: ((EdgeT, E) => Boolean) @unchecked => nodes.lookup(edge.node(0)).edges findElem (edge, c)
         case _                                     => throw new IllegalArgumentException
       }
       other match {

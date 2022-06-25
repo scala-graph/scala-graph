@@ -1,10 +1,8 @@
 package scalax.collection
 
 import org.scalatest.matchers.should.Matchers
-
 import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
-
 import scalax.collection.edges._
 import scalax.collection.hyperedges._
 import scalax.collection.generic._
@@ -198,6 +196,10 @@ private class Editing[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
       gInt_1_3(1) should be(true)
       gInt_1_3(2) should be(false)
       gInt_1_3(3) should be(true)
+
+      "HyperEdge(List(1))" shouldNot compile
+      "HyperEdge(List(1): _*)" shouldNot compile
+      HyperEdge.from(List(1)) shouldBe None
 
       val r = HyperEdge(1, 2, 3)
       val g = factory[Int, AnyHyperEdge](1, r, 1 ~ 2)

@@ -93,7 +93,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
 
       import scalax.collection.hyperedges._
       val hE = 1 ~~ 2 ~~ 11 ~~ 12 // HyperEdge[Int]
-      hE._n(hE.arity - 1) shouldBe 12
+      hE.node(hE.arity - 1) shouldBe 12
       hE.ends.sum shouldBe 26
     }
 

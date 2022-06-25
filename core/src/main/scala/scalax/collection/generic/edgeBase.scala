@@ -4,7 +4,7 @@ import scalax.collection.{Iterable$Enrichments, MSet}
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.annotation.{switch, tailrec}
-import scala.collection.AbstractIterable
+import scala.collection.immutable.Iterable
 
 /** Base template for all edges in a `Graph`.
   *
@@ -24,8 +24,16 @@ sealed trait Edge[+N] extends Equals {
   /** The endpoints of this edge, in other words the nodes this edge joins. */
   def ends: Iterable[N]
 
-  /** The n'th node with 0 <= n < arity. */
-  def _n(n: Int): N
+  /** The first node of this edge. */
+  def _1: N
+
+  /** The second node of this edge. */
+  def _2: N
+
+  /** The n'th node of this edge.
+    * @throws IllegalArgumentException if `n` does not meet `0 <= n < arity`.
+    */
+  def node(n: Int): N
 
   /** Number of the endpoints of this edge. At least two nodes are joined.
     * In case of a hook, the two nodes are identical.
@@ -174,10 +182,10 @@ trait EdgeCompanion[+E[N] <: Edge[N]] extends EdgeCompanionBase {
 
 trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
 
-  def _1: N         = ends.head
-  def _2: N         = ends.drop(1).head
-  def _n(n: Int): N = ends.drop(n).head
-  def arity: Int    = ends.size
+  def _1: N           = ends.head
+  def _2: N           = ends.drop(1).head
+  def node(n: Int): N = ends.drop(n).head
+  def arity: Int      = ends.size
 
   def isDirected  = false
   def isHyperEdge = true
@@ -219,33 +227,46 @@ object AnyHyperEdge {
   def nodeSeparator: String = " ~ "
 }
 
-abstract class AbstractHyperEdge[+N](val ends: Iterable[N]) extends AnyHyperEdge[N] {
-  private def hasAtLeastTwoEnds: Boolean = {
-    val it = ends.iterator
-    it.hasNext && {
-      it.next()
-      it.hasNext
-    }
-  }
-  require(hasAtLeastTwoEnds, "'ends' must have size >= 2")
-}
+abstract class AbstractHyperEdge[+N](val ends: Iterable[N]) extends AnyHyperEdge[N]
 
 /** The abstract methods of this trait must be implemented by companion objects of non-labeled hyperedges.
   */
 trait HyperEdgeCompanion[+E[N] <: AnyHyperEdge[N]] extends EdgeCompanionBase {
 
-  def apply[N](node_1: N, node_2: N, moreNodes: N*): E[N] = from(Iterable(node_1, node_2) ++ moreNodes)
-  def apply[N](ends: Iterable[N]): E[N]                   = from(ends)
-  def unapply[N](edge: E[N] @uV): Option[Seq[N]]          = Some(edge.ends.toSeq)
+  protected def apply[N](ends: Iterable[N]): E[N]
 
-  protected def from[N](ends: Iterable[N]): E[N]
+  def apply[N](node_1: N, node_2: N, moreNodes: N*): E[N] = apply(node_1 +: node_2 +: moreNodes)
+  final def unapply[N](edge: E[N] @uV): Option[Seq[N]]    = Some(edge.ends.toSeq)
+
+  /** `Some` hyperedge if `ends` contains at least two elements, otherwise `None`.
+    */
+  final def from[N](ends: Iterable[N]): Option[E[N]] =
+    if (atLeastTwoElements(ends)) Some(apply(ends))
+    else None
+
+  /** A hyperedge with these `ends`.
+    * @throws AssertionError if `ends` has not at least two elements.
+    */
+  final def unsafeFrom[N](ends: Iterable[N]): E[N] = {
+    assert(atLeastTwoElements(ends))
+    apply(ends)
+  }
+
+  final protected def atLeastTwoElements(iterable: Iterable[_]): Boolean = {
+    val it = iterable.iterator
+    it.hasNext && {
+      it.next()
+      it.hasNext
+    }
+  }
+
   implicit def thisCompanion: this.type = this
 }
 
 trait AnyDiHyperEdge[+N] extends AnyHyperEdge[N] with EqDiHyper {
 
-  override def _n(n: Int): N = ends.drop(n).head
-  def ends: Iterable[N]      = sources ++ targets
+  override def _1: N             = sources.head
+  override def ends: Iterable[N] = sources ++ targets
 
   override def arity: Int = sources.size + targets.size
 
@@ -281,25 +302,21 @@ trait DiHyperEdgeCompanion[+E[N] <: AnyDiHyperEdge[N]] extends EdgeCompanionBase
 
 trait AnyEdge[+N] extends Edge[N] { this: Eq =>
 
-  def _1: N
-  def _2: N
-
-  final override def _n(n: Int): N = (n: @switch) match {
+  final override def node(n: Int): N = (n: @switch) match {
     case 0 => _1
     case 1 => _2
     case _ => throw new NoSuchElementException
   }
 
-  // the following five methods should be made final as soon as DiEdge no more extends UnDiEdge
-  @inline override def arity: Int  = 2
-  @inline override def isHyperEdge = false
+  @inline final override def arity: Int  = 2
+  @inline final override def isHyperEdge = false
 
-  def ends: Iterable[N] = new AbstractIterable[N] {
+  def ends: Iterable[N] = new Iterable[N] {
     def iterator: Iterator[N] = Iterator.double(_1, _2)
   }
 
-  override def isAt[M >: N](node: M): Boolean    = this._1 == node || this._2 == node
-  override def isAt(pred: N => Boolean): Boolean = pred(this._1) || pred(this._2)
+  @inline final override def isAt[M >: N](node: M): Boolean    = this._1 == node || this._2 == node
+  @inline final override def isAt(pred: N => Boolean): Boolean = pred(this._1) || pred(this._2)
 }
 
 object AnyEdge {
@@ -335,6 +352,7 @@ trait AnyUnDiEdge[+N] extends AnyHyperEdge[N] with AnyEdge[N] with EqUnDi[N] {
 
   override protected def nodesToStringSeparator: String = AnyUnDiEdge.nodeSeparator
 }
+
 object AnyUnDiEdge {
   val nodeSeparator                 = " ~ "
   def unapply[N](e: AnyUnDiEdge[N]) = Some(e)

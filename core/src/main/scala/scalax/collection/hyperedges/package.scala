@@ -1,5 +1,6 @@
 package scalax.collection
 
+import scala.collection.immutable.Iterable
 import scalax.collection.generic.{AbstractDiHyperEdgeImplicits, AbstractHyperEdgeImplicits}
 
 package object hyperedges {

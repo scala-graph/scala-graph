@@ -1,5 +1,6 @@
 package scalax.collection.generic
 
+// TODO discard or reuse
 trait Label[L] { this: Edge[_] =>
   def isLabeled: Boolean = true
   def label: L

@@ -1,5 +1,6 @@
 package scalax.collection.hyperedges
 
+import scala.collection.immutable.Iterable
 import scalax.collection.generic.{AbstractDiHyperEdgeImplicits, AbstractHyperEdgeImplicits}
 
 /* Intentionally repeated hyperedges.package to facilitate implicit value classes.

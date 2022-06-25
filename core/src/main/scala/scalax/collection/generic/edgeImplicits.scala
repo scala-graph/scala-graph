@@ -1,5 +1,7 @@
 package scalax.collection.generic
 
+import scala.collection.immutable.Iterable
+
 object AbstractHyperEdgeImplicits {
 
   trait FromAny[N, E[N] <: AnyHyperEdge[N], C <: HyperEdgeCompanion[E]] extends Any {
@@ -11,7 +13,8 @@ object AbstractHyperEdgeImplicits {
   trait FromEdge[N, E[N] <: AnyHyperEdge[N], C <: HyperEdgeCompanion[E]] extends Any {
     protected def companion: C
     def e1: E[N]
-    def ~~[NN >: N](n: NN): E[NN] = companion(e1.ends ++ (n :: Nil))
+    def ~~[NN >: N](n: NN): E[NN] =
+      companion.unsafeFrom(e1.ends ++ (n :: Nil))
   }
 }
 

@@ -1,5 +1,6 @@
 package scalax.collection.hyperedges.ordered
 
+import scala.collection.immutable.Iterable
 import scalax.collection.generic.{AnyDiHyperEdge, DiHyperEdgeCompanion, OrderedEndpoints}
 
 /** Directed hyperedge with sources and ends having sequence semantic each.

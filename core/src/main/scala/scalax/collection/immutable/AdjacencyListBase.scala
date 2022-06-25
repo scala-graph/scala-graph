@@ -226,9 +226,9 @@ trait AdjacencyListBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, 
   trait AdjacencyListBaseEdgeSet extends GraphEdgeSet {
     final override def contains(node: NodeT): Boolean = nodes find node exists (_.edges.nonEmpty)
 
-    final override def find(elem: E): Option[EdgeT] = nodes find elem._n(0) flatMap (_.edges find (_ == elem))
+    final override def find(elem: E): Option[EdgeT] = nodes find elem.node(0) flatMap (_.edges find (_ == elem))
 
-    final def contains(edge: EdgeT): Boolean = nodes find edge.outer._n(0) exists (_.edges contains edge)
+    final def contains(edge: EdgeT): Boolean = nodes find edge.outer.node(0) exists (_.edges contains edge)
 
     final def iterator: Iterator[EdgeT] = edgeIterator
 
@@ -259,7 +259,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, 
       val diTargets, unDiTargets = MSet.empty[NodeT]
       // format: off
       di  .exists((e: EdgeT) => e.hasSource((n: NodeT) => n eq node) && ! e.targets.forall(diTargets.add)) ||
-      unDi.exists((e: EdgeT) => (e._n(0) eq node)                    && ! e.ends.drop(1).forall(unDiTargets.add))
+      unDi.exists((e: EdgeT) => (e.node(0) eq node)                  && ! e.ends.drop(1).forall(unDiTargets.add))
       // format: on
     }
   }

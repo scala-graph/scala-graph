@@ -1,5 +1,6 @@
 package scalax.collection.hyperedges
 
+import scala.collection.immutable.Iterable
 import scalax.collection.generic.{AnyDiHyperEdge, DiHyperEdgeCompanion}
 
 /** Directed hyperedge with sources and targets having set/bag semantic each.

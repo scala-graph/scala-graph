@@ -1,7 +1,8 @@
 package scalax.collection
 
+import scala.collection.{Iterable => AnyIterable}
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.collection.AbstractIterable
+import scala.collection.immutable.Iterable
 import scala.util.chaining._
 
 import scalax.collection.generic._
@@ -247,7 +248,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
 
   def iterator: Iterator[InnerElem] = nodes.iterator ++ edges.iterator
 
-  def toIterable: Iterable[InnerElem] = new AbstractIterable[InnerElem] {
+  def toIterable: Iterable[InnerElem] = new Iterable[InnerElem] {
     def iterator: Iterator[InnerElem] = thisGraph.iterator
   }
 
@@ -255,7 +256,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
     nodes.iterator.map[OuterElem](n => OuterNode(n.outer)) ++
       edges.iterator.map[OuterElem](e => OuterEdge(e.outer))
 
-  def toOuterIterable: Iterable[OuterElem] = new AbstractIterable[OuterElem] {
+  def toOuterIterable: Iterable[OuterElem] = new Iterable[OuterElem] {
     def iterator: Iterator[OuterElem] = outerIterator
   }
 
@@ -391,11 +392,11 @@ object Graph extends GraphCoreCompanion[Graph] {
   def empty[N, E <: Edge[N]](implicit config: Config = defaultConfig): Graph[N, E] =
     scalax.collection.immutable.Graph.empty[N, E](config)
 
-  def from[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
+  def from[N, E <: Edge[N]](nodes: AnyIterable[N], edges: AnyIterable[E])(implicit
       config: Config = defaultConfig
   ): Graph[N, E] =
     scalax.collection.immutable.Graph.from[N, E](nodes, edges)(config)
 
-  def from[N, E[X] <: Edge[X]](edges: Iterable[E[N]]) =
+  def from[N, E[X] <: Edge[X]](edges: AnyIterable[E[N]]) =
     scalax.collection.immutable.Graph.from[N, E[N]](Nil, edges)(defaultConfig)
 }

@@ -9,26 +9,26 @@ class EqualityHyperSpec extends RefSpec with Matchers {
     import scalax.collection.hyperedges._
 
     val nodes = List('A', 'B', 'C', 'C')
-    val hEdge = HyperEdge(nodes)
+    val hEdge = HyperEdge.unsafeFrom(nodes)
     hEdge shouldEqual 'A' ~~ 'B' ~~ 'C' ~~ 'C'
     hEdge shouldEqual 'C' ~~ 'C' ~~ 'B' ~~ 'A'
 
     hEdge.arity shouldBe nodes.size
     for (i <- nodes.indices)
-      hEdge._n(i) shouldBe nodes(i)
+      hEdge.node(i) shouldBe nodes(i)
   }
 
   def `hyperedges, ordered ` : Unit = {
     import scalax.collection.hyperedges.ordered._
 
     val nodes = List('A', 'B', 'C', 'C')
-    val hEdge = HyperEdge(nodes)
+    val hEdge = HyperEdge.unsafeFrom(nodes)
     hEdge shouldEqual 'A' ~~ 'B' ~~ 'C' ~~ 'C'
     hEdge shouldNot equal('C' ~~ 'C' ~~ 'B' ~~ 'A')
 
     hEdge.arity shouldBe nodes.size
     for (i <- nodes.indices)
-      hEdge._n(i) shouldBe nodes(i)
+      hEdge.node(i) shouldBe nodes(i)
   }
 
   def `directed hyperedges, bag like`: Unit = {
@@ -45,8 +45,8 @@ class EqualityHyperSpec extends RefSpec with Matchers {
     val sourcesSize = sources.size
     dhEdge.arity shouldBe sourcesSize + targets.size
 
-    for (i <- sources.indices) dhEdge._n(i) shouldBe sources(i)
-    for (i <- targets.indices) dhEdge._n(i + sourcesSize) shouldBe targets(i)
+    for (i <- sources.indices) dhEdge.node(i) shouldBe sources(i)
+    for (i <- targets.indices) dhEdge.node(i + sourcesSize) shouldBe targets(i)
   }
 
   def `directed hyperedges, ordered`: Unit = {
@@ -63,7 +63,7 @@ class EqualityHyperSpec extends RefSpec with Matchers {
     val sourcesSize = sources.size
     dhEdge.arity shouldBe sourcesSize + targets.size
 
-    for (i <- sources.indices) dhEdge._n(i) shouldBe sources(i)
-    for (i <- targets.indices) dhEdge._n(i + sourcesSize) shouldBe targets(i)
+    for (i <- sources.indices) dhEdge.node(i) shouldBe sources(i)
+    for (i <- targets.indices) dhEdge.node(i + sourcesSize) shouldBe targets(i)
   }
 }
