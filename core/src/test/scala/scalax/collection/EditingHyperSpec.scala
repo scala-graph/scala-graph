@@ -48,12 +48,12 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
     }
 
     def `create DiHyperEdge`: Unit = {
-      "DiHyperEdge(List(1))" shouldNot compile
-      "DiHyperEdge(List(1): _*)" shouldNot compile
+      "DiHyperEdge(List(1), List(1))" shouldNot compile
+      "DiHyperEdge(List(1): _*)()" shouldNot compile
 
       DiHyperEdge.from(List(1), Nil) shouldBe None
       an[IllegalArgumentException] shouldBe thrownBy {
-        HyperEdge.unsafeFrom(List(1))
+        DiHyperEdge.unsafeFrom(List(1), Nil)
       }
 
       val sources = List(1, 2)
@@ -68,6 +68,9 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
       1 ~~> targets shouldEqual DiHyperEdge(1)(targets.head, targets.tail: _*)
       sources ~~> 1 shouldEqual DiHyperEdge(sources.head, sources.tail: _*)(1)
       1 ~~> 1 shouldEqual DiHyperEdge(1)(1)
+      an[IllegalArgumentException] shouldBe thrownBy {
+        Nil ~~> 1
+      }
 
       val g = factory[Int, AnyHyperEdge](1, h, 1 ~ 2)
       g.nodes should have size 3

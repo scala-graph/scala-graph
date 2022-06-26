@@ -25,7 +25,7 @@ object AbstractDiHyperEdgeImplicits {
 
     def ~~>[NN >: N](target: NN): E[NN] = companion[NN](source)(target)
 
-    /** @throws IllegalArgumentException if targets is empty */
+    /** @throws IllegalArgumentException if `targets` is empty */
     def ~~>[NN >: N](targets: Iterable[NN]): E[NN] = companion.unsafeFrom(source :: Nil, targets)
   }
 
@@ -35,7 +35,7 @@ object AbstractDiHyperEdgeImplicits {
 
     def ~~>[NN >: N](target: NN): E[NN] = companion.unsafeFrom(sources, target :: Nil)
 
-    /** @throws IllegalArgumentException if targets is empty */
+    /** @throws IllegalArgumentException if `sources` or `targets` is empty. */
     def ~~>[NN >: N](targets: Iterable[NN]): E[NN] = companion.unsafeFrom(sources, targets)
   }
 }
