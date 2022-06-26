@@ -36,7 +36,7 @@ class EqualityHyperSpec extends RefSpec with Matchers {
 
     val sources = List('A', 'B', 'C')
     val targets = List('D', 'D', 'E')
-    val dhEdge  = DiHyperEdge(sources, targets)
+    val dhEdge  = DiHyperEdge.unsafeFrom(sources, targets)
     dhEdge shouldEqual sources ~~> targets
     dhEdge shouldEqual sources.reverse ~~> targets.reverse
 
@@ -54,7 +54,7 @@ class EqualityHyperSpec extends RefSpec with Matchers {
 
     val sources = List('A', 'B', 'C')
     val targets = List('D', 'D', 'E')
-    val dhEdge  = DiHyperEdge(sources, targets)
+    val dhEdge  = DiHyperEdge.unsafeFrom(sources, targets)
     dhEdge shouldEqual sources ~~> targets
     dhEdge shouldNot equal(sources.reverse ~~> targets.reverse)
 

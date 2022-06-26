@@ -32,7 +32,7 @@ case class Flight(
   override def weight: Double  = duration.toInt
   def airline: String          = flightNo substring (0, 2)
 
-  override protected def toStringPostfix: String = s" ($flightNo $departure $duration)"
+  override protected def labelToString: String = s" ($flightNo $departure $duration)"
   override def map[NN]: PartialFunction[(NN, NN), Flight] = { case (from: Airport, to: Airport) =>
     copy(from, to)
   }

@@ -134,24 +134,18 @@ sealed trait Edge[+N] extends Equals {
     catch { // Malformed class name
       case _: java.lang.InternalError => this.getClass.getName
     }
-  protected def nodesToStringWithParenthesis = false
   protected def nodesToStringSeparator: String
-  protected def nodesToString: String =
-    if (nodesToStringWithParenthesis) {
-      def prefix = "Nodes"
-      ends.toString.patch(0, prefix, prefix.length)
-    } else
-      ends mkString nodesToStringSeparator
+  protected def nodesToString: String = ends mkString nodesToStringSeparator
 
-  protected def toStringPostfix         = ""
+  /** No separator between the node part and the label part will be supplied so consider starting with ` `. */
+  protected def labelToString           = ""
   protected def toStringWithParenthesis = false
   protected def brackets: Edge.Brackets = Edge.curlyBraces
 
   /** Implementation based on protected methods that you can overwrite in your custom `Edge` class.
     */
   override def toString: String = {
-    val postfix       = toStringPostfix
-    val woParenthesis = nodesToString + (if (postfix.nonEmpty) postfix else "")
+    val woParenthesis = nodesToString + labelToString
     if (toStringWithParenthesis)
       thisSimpleClassName + brackets.left + woParenthesis + brackets.right
     else
@@ -224,7 +218,7 @@ trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
   protected def nodesToStringSeparator: String = AnyHyperEdge.nodeSeparator
 }
 object AnyHyperEdge {
-  def nodeSeparator: String = " ~ "
+  def nodeSeparator: String = " ~~ "
 }
 
 abstract class AbstractHyperEdge[+N](val ends: Iterable[N]) extends AnyHyperEdge[N]
@@ -236,7 +230,8 @@ trait HyperEdgeCompanion[+E[N] <: AnyHyperEdge[N]] extends EdgeCompanionBase {
   protected def apply[N](ends: Iterable[N]): E[N]
 
   def apply[N](node_1: N, node_2: N, moreNodes: N*): E[N] = apply(node_1 +: node_2 +: moreNodes)
-  final def unapply[N](edge: E[N] @uV): Option[Seq[N]]    = Some(edge.ends.toSeq)
+
+  final def unapply[N](edge: E[N] @uV): Option[Seq[N]] = Some(edge.ends.toSeq)
 
   /** `Some` hyperedge if `ends` contains at least two elements, otherwise `None`.
     */
@@ -245,10 +240,10 @@ trait HyperEdgeCompanion[+E[N] <: AnyHyperEdge[N]] extends EdgeCompanionBase {
     else None
 
   /** A hyperedge with these `ends`.
-    * @throws AssertionError if `ends` has not at least two elements.
+    * @throws IllegalArgumentException if `ends` has not at least two elements.
     */
   final def unsafeFrom[N](ends: Iterable[N]): E[N] = {
-    assert(atLeastTwoElements(ends))
+    require(atLeastTwoElements(ends))
     apply(ends)
   }
 
@@ -282,22 +277,42 @@ trait AnyDiHyperEdge[+N] extends AnyHyperEdge[N] with EqDiHyper {
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = (sources exists p1) && (targets exists p2)
 
   override protected def nodesToStringSeparator: String = AnyDiHyperEdge.nodeSeparator
+  override protected def nodesToString: String = {
+    def part(nodes: Iterable[N]): String = s"""{${nodes mkString ", "}}"""
+    s"${part(sources)}$nodesToStringSeparator${part(targets)}"
+  }
 }
 object AnyDiHyperEdge {
   def nodeSeparator: String = " ~~> "
 }
 
 abstract class AbstractDiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])
-    extends AnyDiHyperEdge[N] {
-  require(sources.iterator.nonEmpty, "'sources' must not be empty")
-  require(targets.iterator.nonEmpty, "'targets' must not be empty")
-}
+    extends AnyDiHyperEdge[N]
 
 /** The abstract methods of this trait must be implemented by companion objects of directed, non-labeled hyperedges.
   */
 trait DiHyperEdgeCompanion[+E[N] <: AnyDiHyperEdge[N]] extends EdgeCompanionBase {
-  def apply[N](sources: Iterable[N], targets: Iterable[N]): E[N]
+
+  protected def apply[N](sources: Iterable[N], targets: Iterable[N]): E[N]
+
+  def apply[N](source_1: N, moreSources: N*)(target_1: N, moreTargets: N*): E[N] =
+    apply(source_1 +: moreSources, target_1 +: moreTargets)
+
   def unapply[N](edge: E[N] @uV): Option[(Seq[N], Seq[N])] = Some(edge.sources.toSeq, edge.targets.toSeq)
+
+  /** `Some` directed hyperedge if `sources` and `targets` are not empty, otherwise `None`.
+    */
+  final def from[N](sources: Iterable[N], targets: Iterable[N]): Option[E[N]] =
+    if (sources.nonEmpty && targets.nonEmpty) Some(apply(sources, targets))
+    else None
+
+  /** A directed hyperedge with the supplied `sources` and `targets`.
+    * @throws IllegalArgumentException if `sources` or `targets` is empty.
+    */
+  final def unsafeFrom[N](sources: Iterable[N], targets: Iterable[N]): E[N] = {
+    require(sources.nonEmpty && targets.nonEmpty)
+    apply(sources, targets)
+  }
 }
 
 trait AnyEdge[+N] extends Edge[N] { this: Eq =>

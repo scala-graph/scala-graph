@@ -11,7 +11,7 @@ case object % {
   * Useful in combination with `toStringWithParenthesis = false`.
   */
 trait WeightToStringPostfix { this: Edge[_] =>
-  override def toStringPostfix: String = s" ${%} $weight"
+  override def labelToString: String = s" ${%} $weight"
 }
 
 trait ExtendedKeyByWeight extends ExtendedKey { this: Edge[_] =>

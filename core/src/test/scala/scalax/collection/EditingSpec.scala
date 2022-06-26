@@ -4,7 +4,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 import scalax.collection.edges._
-import scalax.collection.hyperedges._
 import scalax.collection.generic._
 import scalax.collection.OuterImplicits._
 
@@ -192,26 +191,10 @@ private class Editing[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
     def `apply ` : Unit = {
       gInt_1_3 should not be empty
       gInt_1_3.order should be(2)
-      gInt_1_3(0) should be(false)
-      gInt_1_3(1) should be(true)
-      gInt_1_3(2) should be(false)
-      gInt_1_3(3) should be(true)
-
-      "HyperEdge(List(1))" shouldNot compile
-      "HyperEdge(List(1): _*)" shouldNot compile
-      HyperEdge.from(List(1)) shouldBe None
-
-      val r = HyperEdge(1, 2, 3)
-      val g = factory[Int, AnyHyperEdge](1, r, 1 ~ 2)
-      g.nodes should have size 3
-      g.edges should have size 2
-      g.elementCount should be(5)
-      g.contains(r) should be(true)
-
-      val h = factory(UnDiEdge(1, 2), UnDiEdge(2, 3))
-      h.nodes should have size 3
-      h.edges should have size 2
-      h.elementCount should be(5)
+      gInt_1_3(0) shouldBe false
+      gInt_1_3(1) shouldBe true
+      gInt_1_3(2) shouldBe false
+      gInt_1_3(3) shouldBe true
     }
 
     def `nodes of ADT fixes #40`: Unit = {

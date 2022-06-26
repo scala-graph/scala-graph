@@ -19,11 +19,62 @@ class EditingHyperSpec
       new EditingHyperMutable
     )
 
-class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
-    extends RefSpec
+private class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+    val factory: GraphCoreCompanion[CC]
+) extends RefSpec
     with Matchers {
 
   object `hypergraph editing` {
+
+    def `create HyperEdge`: Unit = {
+      "HyperEdge(List(1))" shouldNot compile
+      "HyperEdge(List(1): _*)" shouldNot compile
+
+      HyperEdge.from(List(1)) shouldBe None
+      an[IllegalArgumentException] shouldBe thrownBy {
+        HyperEdge.unsafeFrom(List(1))
+      }
+
+      val h = HyperEdge(1, 2, 3)
+      1 ~~ 2 ~~ 3 shouldEqual h
+      h.arity shouldBe 3
+      h.toString shouldBe "1 ~~ 2 ~~ 3"
+
+      val g = factory[Int, AnyHyperEdge](1, h, 1 ~ 2)
+      g.nodes should have size 3
+      g.edges should have size 2
+      g.elementCount should be(5)
+      g.contains(h) should be(true)
+    }
+
+    def `create DiHyperEdge`: Unit = {
+      "DiHyperEdge(List(1))" shouldNot compile
+      "DiHyperEdge(List(1): _*)" shouldNot compile
+
+      DiHyperEdge.from(List(1), Nil) shouldBe None
+      an[IllegalArgumentException] shouldBe thrownBy {
+        HyperEdge.unsafeFrom(List(1))
+      }
+
+      val sources = List(1, 2)
+      val targets = List(2, 3)
+      val h       = DiHyperEdge(sources.head, sources.tail: _*)(targets.head, targets.tail: _*)
+
+      DiHyperEdge.from(sources, targets) shouldEqual Some(h)
+      sources ~~> targets shouldEqual h
+      h.arity shouldBe sources.size + targets.size
+      h.toString shouldBe "{1, 2} ~~> {2, 3}"
+
+      1 ~~> targets shouldEqual DiHyperEdge(1)(targets.head, targets.tail: _*)
+      sources ~~> 1 shouldEqual DiHyperEdge(sources.head, sources.tail: _*)(1)
+      1 ~~> 1 shouldEqual DiHyperEdge(1)(1)
+
+      val g = factory[Int, AnyHyperEdge](1, h, 1 ~ 2)
+      g.nodes should have size 3
+      g.edges should have size 2
+      g.elementCount shouldBe 5
+      g.contains(h) shouldBe true
+    }
 
     def `isHyper ` : Unit = {
       def test(g: CC[Int, AnyHyperEdge[Int]], expected: Boolean): Unit = g.isHyper should be(expected)
@@ -67,7 +118,7 @@ class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
     // TODO (hyper match { case HyperEdge(n1 ~~ (n2, n3)            => n1 + n2 + n3 }) should be(6)
   }
 
-  def `match dircted hyperedge`: Unit = {
+  def `match directed hyperedge`: Unit = {
     val count               = 3
     val sources             = List.tabulate(count - 1)(_ + 1)
     val target              = count
