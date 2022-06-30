@@ -1,7 +1,8 @@
 package scalax.collection
 package labeled
 
-import scala.language.postfixOps
+import scala.concurrent.duration._
+
 //import scala.util.Random
 //import org.scalacheck.Arbitrary.arbitrary
 //import org.scalacheck._
@@ -155,9 +156,8 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     import WMixed_1._
 
     private def check(kind: Kind): Unit =
-      List[Long](Long.MaxValue, 5, 4, 3, 2, 1, 0) map (max => n(1) withKind kind withMaxWeight max size) should be(
+      List[Long](Long.MaxValue, 5, 4, 3, 2, 1, 0).map(max => n(1).withKind(kind).withMaxWeight(max).size) shouldBe
         List(5, 4, 3, 2, 1, 1, 1)
-      )
 
     def `calling DepthFirst`: Unit = given(WMixed_1.g) { _ =>
       check(DepthFirst)
@@ -199,31 +199,28 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     }
 
   def `shortestPathTo in the flight example graph`: Unit = {
-    import edges.Aviation._
-    import edges.Aviation.Implicits._
-    import edges.Flight._
+    import scalax.collection.labeled.aviation._
 
     val (jfc, lhr, dme, svx, fra, prg) =
       (Airport("JFC"), Airport("LHR"), Airport("DME"), Airport("SVX"), Airport("FRA"), Airport("PRG"))
 
     val flights: List[Flight] =
       List(
-        jfc ~> dme ## ("UN 2222", 14 o 25, 8 h 50),
-        dme ~> svx ## ("UN 109", 23 o 10, 2 h 15),
-        jfc ~> lhr ## ("BA 174", 19 o 10, 6 h 50),
-        jfc ~> fra ## ("LH 400", 10 o 25, 8 h 20),
-        jfc ~> fra ## ("UA 8840", 15 o 40, 7 h 35),
-        lhr ~> dme ## ("BA 872", 8 o 55, 4 h 0),
-        lhr ~> dme ## ("SU 242", 20 o 15, 3 h 50),
-        lhr ~> fra ## ("LH 903", 9 o 50, 1 h 35),
-        lhr ~> prg ## ("BA 860", 11 o 15, 2 h 0),
-        fra ~> lhr ## ("LH 920", 19 o 50, 1 h 35),
-        fra ~> dme ## ("LH 1444", 7 o 50, 3 h 10),
-        fra ~> svx ## ("LH 1480", 19 o 20, 4 h 35),
-        prg ~> svx ## ("U6 902", 21 o 55, 4 h 25)
+        jfc ~> dme % ("UN 2222", Nil, 8.hours + 50.minutes),
+        dme ~> svx % ("UN 109", Nil, 2.hours + 15.minutes),
+        jfc ~> lhr % ("BA 174", Nil, 6.hours + 50.minutes),
+        jfc ~> fra % ("LH 400", Nil, 8.hours + 20.minutes),
+        jfc ~> fra % ("UA 8840", Nil, 7.hours + 35.minutes),
+        lhr ~> dme % ("BA 872", Nil, 4.hours),
+        lhr ~> dme % ("SU 242", Nil, 3.hours + 50.minutes),
+        lhr ~> fra % ("LH 903", Nil, 1.hours + 35.minutes),
+        lhr ~> prg % ("BA 860", Nil, 2.hours),
+        fra ~> lhr % ("LH 920", Nil, 1.hours + 35.minutes),
+        fra ~> dme % ("LH 1444", Nil, 3.hours + 10.minutes),
+        fra ~> svx % ("LH 1480", Nil, 4.hours + 35.minutes),
+        prg ~> svx % ("U6 902", Nil, 4.hours + 25.minutes)
       )
-
-    def flight(flightNo: String) = flights find (_.flightNo == flightNo) get
+    def flight(flightNo: String) = flights.find(_.flightNo == flightNo).get
     val g                        = factory.from[Airport, Flight](Set.empty, flights)
 
     given(g) { g =>

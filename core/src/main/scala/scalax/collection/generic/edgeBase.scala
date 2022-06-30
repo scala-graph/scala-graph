@@ -407,6 +407,7 @@ trait AnyDiEdge[+N] extends AnyDiHyperEdge[N] with AnyEdge[N] with EqDi[N] {
   final override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = p1(source) && p2(target)
 
   override protected def nodesToStringSeparator: String = AnyDiEdge.nodeSeparator
+  override protected def nodesToString: String          = ends mkString nodesToStringSeparator
 }
 
 object AnyDiEdge {

@@ -1,10 +1,15 @@
 package scalax.collection
 
-import org.scalatest.matchers.should.Matchers
+import java.time.DayOfWeek._
+import java.time.LocalTime
 
+import scala.concurrent.duration._
+
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 
+import scalax.collection.edges._
 import scalax.collection.generic._
 import scalax.collection.generic.GraphCoreCompanion
 
@@ -19,40 +24,48 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
 ) extends RefSpec
     with Matchers {
 
-  import scalax.collection.edges.Aviation
-  import Aviation._
-  import scalax.collection.edges.Flight
+  import scalax.collection.labeled.aviation._
 
-  val (ham, gig) = (Airport("HAM"), Airport("GIG"))
-  val flightNo   = "LH007"
+  val (madrid, rio) = (Airport("MAD"), Airport("GIG"))
+  val flightNo      = "IB 8711"
+  val outer = Flight(
+    madrid,
+    rio,
+    flightNo,
+    List(
+      TUESDAY  -> LocalTime.of(8, 20),
+      SATURDAY -> LocalTime.of(8, 20)
+    ),
+    12.hour + 30.minutes
+  )
 
   object `Custom edge 'Flight'` {
     def `edge methods`: Unit = {
-      import Aviation.Implicits._
-
-      val outer = Flight(ham, gig, flightNo)
 
       // TODO get apply/from work with Flight
-      val g: Graph[Airport, Flight] = factory.from[Airport, Flight](Nil, outer :: Nil) // `annotated for IntelliJ
+      val g: Graph[Airport, Flight] =
+        factory.from[Airport, Flight](Nil, edges = outer :: Nil) // `annotated for IntelliJ
 
       val e = g.edges.head
       e.ends.head.getClass should be(g.nodes.head.getClass)
-      e.departure should be(ham)
-      e.destination should be(gig)
+      e.departure should be(madrid)
+      e.destination should be(rio)
       e.flightNo should be(flightNo)
       e should be(outer)
       e.## should be(outer.##)
-      val eqFlight = edges.Flight(ham, gig, flightNo, 11 o 2)
+
+      val eqFlight = Flight(madrid, rio, flightNo, Nil, outer.duration + 1.minute)
       e should be(eqFlight)
       e.## should be(eqFlight.##)
-      val neFlight = edges.Flight(ham, gig, flightNo + "x", 11 o 2)
+
+      val neFlight = Flight(madrid, rio, flightNo + "x", outer.departures, outer.duration)
       e should not be neFlight
       e.## should not be neFlight.##
     }
 
     def `edge equality`: Unit = {
-      val outer_1 = Flight(ham, gig, flightNo)
-      val outer_2 = Flight(ham, gig, flightNo + "x")
+      val outer_1 = Flight(madrid, rio, flightNo, outer.departures, outer.duration + 1.minute)
+      val outer_2 = Flight(madrid, rio, flightNo + "x", outer.departures, outer.duration + 1.minute)
 
       outer_1 should not equal outer_2
 
@@ -65,14 +78,8 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
       }
     }
 
-    def `edge factory shortcuts`: Unit = {
-      import Aviation.Implicits._
-      import Flight._
-
-      val outer = Flight(ham, gig, flightNo)
-      ham ~> gig ## flightNo should be(outer)
-      ham ~> gig ## (flightNo, 11 o 20) should be(outer)
-    }
+    def `constructor shortcuts`: Unit =
+      madrid ~> rio % (flightNo, outer.departures, outer.duration) should be(outer)
 
     def `pattern matching`: Unit = {
       val g: Graph[Airport, Flight] = factory.empty[Airport, Flight]

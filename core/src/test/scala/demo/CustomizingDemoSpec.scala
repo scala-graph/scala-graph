@@ -1,10 +1,12 @@
 package demo
 
+import java.time.DayOfWeek._
+import java.time.LocalTime
+
 import scalax.collection.Graph
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import scalax.collection.generic._
-
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
@@ -37,29 +39,47 @@ class CustomizingDemoSpec extends RefSpec with Matchers {
     }
 
     def `work with a custom edge`: Unit = {
-      case class Airport(code: String) {
-        override def toString: String = code // without Airport-prefix
+      import scala.concurrent.duration._
+      import scalax.collection.labeled.aviation._
+
+      val amsterdam = Airport("AMS")
+      val hamburg   = Airport("HAM")
+      val newYork   = Airport("JFK")
+      val london    = Airport("LHR")
+      val mexico    = Airport("MEX")
+
+      val g = Graph(
+        hamburg ~> amsterdam % ("KL 1776", List(
+          MONDAY   -> LocalTime.of(17, 50),
+          SATURDAY -> LocalTime.of(17, 40)
+        ), 50.minutes),
+        hamburg ~> london % ("BA 967", List(
+          TUESDAY  -> LocalTime.of(8, 20),
+          SATURDAY -> LocalTime.of(8, 20)
+        ), 1.hour + 10.minutes),
+        london ~> newYork % ("UA 921", List(
+          THURSDAY -> LocalTime.of(18, 0)
+        ), 5.hours + 40.minutes),
+        newYork ~> mexico % ("VB 101", List(
+          TUESDAY -> LocalTime.of(14, 10),
+          SUNDAY  -> LocalTime.of(14, 20)
+        ), 4.hours + 25.minutes)
+      )
+
+      g.find(hamburg).map { ham =>
+        ham.diSuccessors shouldBe Set(amsterdam, london)
+        ham.outgoing.map { case g.InnerEdge(_, flight @ Flight(from, to, flightNo, days, duration)) =>
+        // TODO flight.toString shouldBe s"Flight($from, $to, $flightNo, $days, $duration)"
+        }
       }
-      val (ham, ny) = (Airport("HAM"), Airport("JFK"))
 
-      case class Flight[+N](from: N, to: N, flightNo: String, days: Seq[Int])
-          extends AbstractGenericDiEdge[N, Flight]
-          with ExtendedKey {
-
-        def source: N             = from
-        def target: N             = to
-        def extendKeyBy: Seq[Any] = Seq(flightNo)
-
-        def map[NN](n_1: NN, n_2: NN): Flight[NN] = copy(n_1, n_2)
+      // same with symbolic extractors
+      g.find(hamburg).map { ham =>
+        ham.diSuccessors shouldBe Set(amsterdam, london)
+        ham.outgoing.map { case g.InnerEdge(_, flight @ from :~> to % ((flightNo, days, duration))) =>
+        // TODO flight.toString shouldBe s"Flight($from, $to, $flightNo, $days, $duration)"
+        }
       }
-
-      implicit class FlightAssoc[A <: Airport](val e: DiEdge[A]) {
-        def ##(flightNo: String, days: Seq[Int]) = new Flight[A](e.source, e.target, flightNo, days)
-      }
-
-      val flight = ham ~> ny ## ("007", List(1, 5))
-      val g      = Graph(flight)
-      g.edges.toOuter shouldBe Set(flight)
     }
   }
 }
