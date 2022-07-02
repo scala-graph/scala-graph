@@ -1,5 +1,7 @@
 package scalax.collection.edges
 
+import scalax.collection.generic
+
 package object labeled {
 
   /** Factory shortcut for weighted edges that can be used like `a ~ b % w`.
@@ -13,4 +15,6 @@ package object labeled {
   implicit final class WDiEdgeFactory[N](val e: DiEdge[N]) extends AnyVal {
     def %(weight: Double): WDiEdge[N] = WDiEdge[N](e.source, e.target, weight)
   }
+
+  val % = generic.%
 }

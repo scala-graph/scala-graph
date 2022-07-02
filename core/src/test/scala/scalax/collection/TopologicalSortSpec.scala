@@ -157,7 +157,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: Graph[N, E] with Graph
   def `multi graph`: Unit = {
     import scalax.collection.edges.multilabeled._
 
-    val g = factory(1 ~> 2 % 0, 1 ~> 2 % 1)
+    val g = factory(1 ~> 2 %% 0, 1 ~> 2 %% 1)
     g.topologicalSort.fold(
       Topo.unexpectedCycle,
       order =>

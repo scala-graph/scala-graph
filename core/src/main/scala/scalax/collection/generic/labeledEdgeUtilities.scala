@@ -7,6 +7,15 @@ case object % {
   def unapply[N](nw: (N, Double)): Option[(N, Double)] = Some(nw._1, nw._2)
 }
 
+trait UnapplyLabeledEdge[N, E <: Edge[N], L] {
+  def unapply(edge: E): Option[(N, (N, L))] = Some(edge._1 -> (edge._2, label(edge)))
+  protected def label(edge: E): L
+}
+
+trait UnapplyLabel[N, L] {
+  def unapply(rest: (N, L)): Option[(N, L)] = Some(rest)
+}
+
 /** Adds a postfix of the format `% weight` to the `toString` representation of the `Edge`.
   * Useful in combination with `toStringWithParenthesis = false`.
   */

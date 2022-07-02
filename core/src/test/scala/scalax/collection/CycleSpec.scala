@@ -270,7 +270,7 @@ private class Cycle[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]]
 
   object `given an undirected multigraph` {
     import scalax.collection.edges.multilabeled._
-    val (e1, e2) = (1 ~ 2 % 0, 1 ~ 2 % 1)
+    val (e1, e2) = (1 ~ 2 %% 0, 1 ~ 2 %% 1)
 
     val g: Graph[Int, WUnDiEdge[Int]] = factory(e1, e2) // `annotated for IntelliJ
 

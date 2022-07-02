@@ -7,7 +7,7 @@ import scalax.collection.edges._
 import scalax.collection.generic._
 import scalax.collection.OuterImplicits._
 
-/** Editing any kind of non-hypergraph with unlabeled edges including mixed and multigraphs.
+/** Editing any kind of non-hypergraph with unlabeled edges including mixed graphs.
   */
 class EditingSpec
     extends Suites(

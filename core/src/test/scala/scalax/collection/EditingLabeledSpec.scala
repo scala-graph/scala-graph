@@ -2,7 +2,6 @@ package scalax.collection
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-
 import scalax.collection.generic.Edge
 
 /** Editing non-hypergraphs with labeled edges, in particular, editing multigraphs.
@@ -13,6 +12,29 @@ private class EditingLabeled[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     val factory: ConfigWrapper[CC]
 ) extends RefSpec
     with Matchers {
+
+  def `mixed infix constructors`: Unit = {
+    import edges.UnDiEdgeImplicits
+    import edges.labeled._
+    import edges.multilabeled._
+
+    1 ~ 2  % 3.2 shouldBe a[edges.labeled.WUnDiEdge[_]]
+    1 ~ 2 %% 3.2 shouldBe a[edges.labeled.WUnDiEdge[_]]
+  }
+
+  def `mixed infix extractors`: Unit = {
+    import edges.UnDiEdgeImplicits
+    import edges.labeled._
+    import edges.multilabeled._
+
+    1 ~ 2 % 3.2 match {
+      case n1 :~ n2 % w => (n1, n2, w) shouldBe (1, 2, 3.2)
+    }
+    1 ~ 2 %% 3.2 match {
+      case n1 ::~ n2 %% w => (n1, n2, w) shouldBe (1, 2, 3.2)
+    }
+  }
+
   /* TODO
   def `isMulti ` {
     import edge.WkDiEdge

@@ -78,10 +78,10 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
       }
     }
 
-    def `constructor shortcuts`: Unit =
-      madrid ~> rio % (flightNo, outer.departures, outer.duration) should be(outer)
+    def `infix constructor`: Unit =
+      madrid ~> rio + (flightNo, outer.departures, outer.duration) should be(outer)
 
-    def `pattern matching`: Unit = {
+    def `extractor`: Unit = {
       val g: Graph[Airport, Flight] = factory.empty[Airport, Flight]
 
       g.nodes foreach { case g.InnerNode(inner, Airport(code)) =>

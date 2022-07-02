@@ -16,6 +16,7 @@ import OuterImplicits._
 //import generator.GraphGen
 import generic.{AnyEdge, Edge, GraphCoreCompanion}
 import edges._
+import edges.labeled._
 import edges.multilabeled._
 import GraphTraversal._
 import visualization.Visualizer
@@ -110,7 +111,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     }
 
   // see diagram WUnDi-2.jpg
-  val eUnDi_2 = List[AnyEdge[Int]](1 ~ 2 % 4, 2 ~ 3 % -1, 1 ~> 3 % 5, 1 ~ 3 % 4, 1 ~> 2 % 3, 2 ~ 2 % 1)
+  val eUnDi_2 = List[AnyEdge[Int]](1 ~ 2 %% 4, 2 ~ 3 %% -1, 1 ~> 3 %% 5, 1 ~ 3 %% 4, 1 ~> 2 %% 3, 2 ~ 2 %% 1)
   val gUnDi_2 = factory.from[Int, AnyEdge[Int]](Set.empty, eUnDi_2)
 
   def `shortestPathTo in UnDi_2`: Unit =
@@ -140,7 +141,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
 
       val p2_1_nNE3 = n(2).withSubgraph(nodes = _ != 3).pathTo(n(1)).get
       p2_1_nNE3.nodes.toList should be(List(2, 1))
-      p2_1_nNE3.edges.toList should be(List(2 ~ 1 % 4))
+      p2_1_nNE3.edges.toList should be(List(2 ~ 1 %% 4))
 
       val p1_3_wGT4 = n(1).withSubgraph(edges = _.weight > 4).pathTo(n(3)).get
       p1_3_wGT4.nodes.toList should be(List(1, 3))
@@ -206,19 +207,19 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
 
     val flights: List[Flight] =
       List(
-        jfc ~> dme % ("UN 2222", Nil, 8.hours + 50.minutes),
-        dme ~> svx % ("UN 109", Nil, 2.hours + 15.minutes),
-        jfc ~> lhr % ("BA 174", Nil, 6.hours + 50.minutes),
-        jfc ~> fra % ("LH 400", Nil, 8.hours + 20.minutes),
-        jfc ~> fra % ("UA 8840", Nil, 7.hours + 35.minutes),
-        lhr ~> dme % ("BA 872", Nil, 4.hours),
-        lhr ~> dme % ("SU 242", Nil, 3.hours + 50.minutes),
-        lhr ~> fra % ("LH 903", Nil, 1.hours + 35.minutes),
-        lhr ~> prg % ("BA 860", Nil, 2.hours),
-        fra ~> lhr % ("LH 920", Nil, 1.hours + 35.minutes),
-        fra ~> dme % ("LH 1444", Nil, 3.hours + 10.minutes),
-        fra ~> svx % ("LH 1480", Nil, 4.hours + 35.minutes),
-        prg ~> svx % ("U6 902", Nil, 4.hours + 25.minutes)
+        jfc ~> dme + ("UN 2222", Nil, 8.hours + 50.minutes),
+        dme ~> svx + ("UN 109", Nil, 2.hours + 15.minutes),
+        jfc ~> lhr + ("BA 174", Nil, 6.hours + 50.minutes),
+        jfc ~> fra + ("LH 400", Nil, 8.hours + 20.minutes),
+        jfc ~> fra + ("UA 8840", Nil, 7.hours + 35.minutes),
+        lhr ~> dme + ("BA 872", Nil, 4.hours),
+        lhr ~> dme + ("SU 242", Nil, 3.hours + 50.minutes),
+        lhr ~> fra + ("LH 903", Nil, 1.hours + 35.minutes),
+        lhr ~> prg + ("BA 860", Nil, 2.hours),
+        fra ~> lhr + ("LH 920", Nil, 1.hours + 35.minutes),
+        fra ~> dme + ("LH 1444", Nil, 3.hours + 10.minutes),
+        fra ~> svx + ("LH 1480", Nil, 4.hours + 35.minutes),
+        prg ~> svx + ("U6 902", Nil, 4.hours + 25.minutes)
       )
     def flight(flightNo: String) = flights.find(_.flightNo == flightNo).get
     val g                        = factory.from[Airport, Flight](Set.empty, flights)
@@ -250,7 +251,14 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
   }
 
   def `traverser withOrdering for edges`: Unit = {
-    val outerEdges = List(1 ~> 4 % 2, 1 ~> 2 % 5, 1 ~> 3 % 4, 3 ~> 6 % 4, 3 ~> 5 % 5, 3 ~> 7 % 2)
+    val outerEdges = List(
+      1 ~> 4 % 2,
+      1 ~> 2 % 5,
+      1 ~> 3 % 4,
+      3 ~> 6 % 4,
+      3 ~> 5 % 5,
+      3 ~> 7 % 2
+    )
     given(factory(outerEdges: _*)) { g =>
       val root = g get 1
 
