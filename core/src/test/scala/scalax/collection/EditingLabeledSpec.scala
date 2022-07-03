@@ -1,17 +1,21 @@
 package scalax.collection
 
+import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-import scalax.collection.generic.Edge
+import scalax.collection.generic.{Edge, GraphCoreCompanion}
 
 /** Editing non-hypergraphs with labeled edges, in particular, editing multigraphs.
   */
-class EditingLabeledSpec // TODO extends Suites()
+class EditingLabeledSpec
+    extends Suites(
+      new EditingLabeledEdges
+      /* TODO
+      new EditingLabeled[immutable.Graph](immutable.Graph),
+      new EditingLabeled[mutable.Graph](mutable.Graph) */
+    )
 
-private class EditingLabeled[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: ConfigWrapper[CC]
-) extends RefSpec
-    with Matchers {
+private class EditingLabeledEdges extends RefSpec with Matchers {
 
   def `mixed infix constructors`: Unit = {
     import edges.UnDiEdgeImplicits
@@ -19,7 +23,7 @@ private class EditingLabeled[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     import edges.multilabeled._
 
     1 ~ 2  % 3.2 shouldBe a[edges.labeled.WUnDiEdge[_]]
-    1 ~ 2 %% 3.2 shouldBe a[edges.labeled.WUnDiEdge[_]]
+    1 ~ 2 %% 3.2 shouldBe a[edges.multilabeled.WUnDiEdge[_]]
   }
 
   def `mixed infix extractors`: Unit = {
@@ -34,6 +38,12 @@ private class EditingLabeled[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
       case n1 ::~ n2 %% w => (n1, n2, w) shouldBe (1, 2, 3.2)
     }
   }
+}
+
+private class EditingLabeled[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+    val factory: GraphCoreCompanion[G]
+) extends RefSpec
+    with Matchers {
 
   /* TODO
   def `isMulti ` {
