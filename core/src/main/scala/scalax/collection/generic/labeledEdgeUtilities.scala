@@ -16,13 +16,6 @@ trait UnapplyLabel[N, L] {
   def unapply(rest: (N, L)): Option[(N, L)] = Some(rest)
 }
 
-/** Adds a postfix of the format `% weight` to the `toString` representation of the `Edge`.
-  * Useful in combination with `toStringWithParenthesis = false`.
-  */
-trait WeightToStringPostfix { this: Edge[_] =>
-  override def labelToString: String = s" ${%} $weight"
-}
-
 trait ExtendedKeyByWeight extends ExtendedKey { this: Edge[_] =>
   override def extendKeyBy: Seq[Double] = weight :: Nil
 }

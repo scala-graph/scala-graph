@@ -1,11 +1,26 @@
 package scalax.collection
 
+import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
 /** Editing hypergraphs with labeled edges, in particular, editing multi-hypergraphs.
   */
-class EditingLabeledHyperSpec // TODO extends Suites()
+class EditingLabeledHyperSpec
+    extends Suites(
+      new EditingLabeledHyperEdges
+      /* TODO
+    new EditingLabeled[immutable.Graph](immutable.Graph),
+    new EditingLabeled[mutable.Graph](mutable.Graph) */
+    )
+
+private class EditingLabeledHyperEdges extends RefSpec with Matchers {
+
+  /*
+  def `toString of labeled hyper edge`: Unit =
+    x.toString should startWith(s"$madrid ~> $rio + ")
+   */
+}
 
 private class EditingLabeledHyperMutable extends RefSpec with Matchers {
   object `mutable graphs with labeled edges` { // TODO

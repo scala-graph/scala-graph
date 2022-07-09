@@ -128,37 +128,10 @@ sealed trait Edge[+N] extends Equals {
   def matches(p1: N => Boolean, p2: N => Boolean): Boolean
 
   override def canEqual(that: Any): Boolean = that.isInstanceOf[Edge[_]]
-
-  final protected def thisSimpleClassName: String =
-    try this.getClass.getSimpleName
-    catch { // Malformed class name
-      case _: java.lang.InternalError => this.getClass.getName
-    }
-  protected def nodesToStringSeparator: String
-  protected def nodesToString: String = ends mkString nodesToStringSeparator
-
-  /** No separator between the node part and the label part will be supplied so consider starting with ` `. */
-  protected def labelToString           = ""
-  protected def toStringWithParenthesis = false
-  protected def brackets: Edge.Brackets = Edge.curlyBraces
-
-  /** Implementation based on protected methods that you can overwrite in your custom `Edge` class.
-    */
-  override def toString: String = {
-    val woParenthesis = nodesToString + labelToString
-    if (toStringWithParenthesis)
-      thisSimpleClassName + brackets.left + woParenthesis + brackets.right
-    else
-      woParenthesis
-  }
 }
 
 object Edge {
   def unapply[N](e: Edge[N]): Option[Edge[Any]] = Some(e)
-
-  protected val curlyBraces: Brackets = Brackets('{', '}')
-
-  case class Brackets(left: Char, right: Char)
 }
 
 private[collection] trait InnerEdgeLike[+N] extends Edge[N]
@@ -214,11 +187,6 @@ trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
   }
   override def matches[M >: N](n1: M, n2: M): Boolean = matches(List((n: M) => n == n1, (n: M) => n == n2))
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = matches(List(p1, p2))
-
-  protected def nodesToStringSeparator: String = AnyHyperEdge.nodeSeparator
-}
-object AnyHyperEdge {
-  def nodeSeparator: String = " ~~ "
 }
 
 abstract class AbstractHyperEdge[+N](val ends: Iterable[N]) extends AnyHyperEdge[N]
@@ -275,15 +243,6 @@ trait AnyDiHyperEdge[+N] extends AnyHyperEdge[N] with EqDiHyper {
 
   override def matches[M >: N](n1: M, n2: M): Boolean               = sources.exists(_ == n1) && targets.exists(_ == n2)
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = (sources exists p1) && (targets exists p2)
-
-  override protected def nodesToStringSeparator: String = AnyDiHyperEdge.nodeSeparator
-  override protected def nodesToString: String = {
-    def part(nodes: Iterable[N]): String = s"""{${nodes mkString ", "}}"""
-    s"${part(sources)}$nodesToStringSeparator${part(targets)}"
-  }
-}
-object AnyDiHyperEdge {
-  def nodeSeparator: String = " ~~> "
 }
 
 abstract class AbstractDiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])
@@ -364,12 +323,9 @@ trait AnyUnDiEdge[+N] extends AnyHyperEdge[N] with AnyEdge[N] with EqUnDi[N] {
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean =
     p1(this._1) && p2(this._2) ||
       p1(this._2) && p2(this._1)
-
-  override protected def nodesToStringSeparator: String = AnyUnDiEdge.nodeSeparator
 }
 
 object AnyUnDiEdge {
-  val nodeSeparator                 = " ~ "
   def unapply[N](e: AnyUnDiEdge[N]) = Some(e)
 }
 
@@ -378,7 +334,6 @@ abstract class AbstractUnDiEdge[+N](val source: N, val target: N) extends AnyUnD
 trait AbstractGenericUnDiEdge[+N, +This[X] <: AbstractGenericUnDiEdge[X, This]]
     extends AnyHyperEdge[N]
     with AnyUnDiEdge[N]
-    with EqUnDi[N]
     with GenericEdgeMapper[N, This]
 
 trait AnyDiEdge[+N] extends AnyDiHyperEdge[N] with AnyEdge[N] with EqDi[N] {
@@ -405,13 +360,9 @@ trait AnyDiEdge[+N] extends AnyDiHyperEdge[N] with AnyEdge[N] with EqDi[N] {
 
   final override def matches[M >: N](n1: M, n2: M): Boolean               = diBaseEquals(n1, n2)
   final override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = p1(source) && p2(target)
-
-  override protected def nodesToStringSeparator: String = AnyDiEdge.nodeSeparator
-  override protected def nodesToString: String          = ends mkString nodesToStringSeparator
 }
 
 object AnyDiEdge {
-  val nodeSeparator               = " ~> "
   def unapply[N](e: AnyDiEdge[N]) = Some(e)
 }
 
@@ -420,7 +371,6 @@ abstract class AbstractDiEdge[+N](val source: N, val target: N) extends AnyDiEdg
 trait AbstractGenericDiEdge[+N, +This[X] <: AbstractGenericDiEdge[X, This]]
     extends AnyDiHyperEdge[N]
     with AnyDiEdge[N]
-    with EqDi[N]
     with GenericEdgeMapper[N, This]
 
 private[collection] object Abstract {

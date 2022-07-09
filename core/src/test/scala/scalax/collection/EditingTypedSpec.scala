@@ -9,23 +9,18 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 
-import scalax.collection.edges._
 import scalax.collection.generic._
 import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.labeled.aviation._
 
 class EditingTypedSpec
     extends Suites(
+      new EditingTypedEdges,
       new EditingTyped[scalax.collection.immutable.Graph](scalax.collection.immutable.Graph),
       new EditingTyped[scalax.collection.mutable.Graph](scalax.collection.mutable.Graph)
     )
 
-private class EditingTyped[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC]
-) extends RefSpec
-    with Matchers {
-
-  import scalax.collection.labeled.aviation._
-
+private object Samples {
   val (madrid, rio) = (Airport("MAD"), Airport("GIG"))
   val flightNo      = "IB 8711"
   val outer = Flight(
@@ -38,6 +33,20 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
     ),
     12.hour + 30.minutes
   )
+}
+
+private class EditingTypedEdges extends RefSpec with Matchers {
+  import Samples._
+
+  def `toString of typed edge`: Unit =
+    outer.toString should startWith(s"$madrid ~> $rio + ")
+}
+
+private class EditingTyped[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+    val factory: GraphCoreCompanion[CC]
+) extends RefSpec
+    with Matchers {
+  import Samples._
 
   object `Custom edge 'Flight'` {
     def `edge methods`: Unit = {
@@ -78,8 +87,10 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
       }
     }
 
-    def `infix constructor`: Unit =
+    def `infix constructor`: Unit = {
+      import scalax.collection.edges.DiEdgeImplicits
       madrid ~> rio + (flightNo, outer.departures, outer.duration) should be(outer)
+    }
 
     def `extractor`: Unit = {
       val g: Graph[Airport, Flight] = factory.empty[Airport, Flight]

@@ -17,6 +17,20 @@ class EditingLabeledSpec
 
 private class EditingLabeledEdges extends RefSpec with Matchers {
 
+  def `toString of labeled edge`: Unit = {
+    import edges.labeled._
+
+    WUnDiEdge('a', 'b', 2).toString shouldBe "a ~ b % 2.0"
+    WUnDiEdge("A", "B", 3).toString shouldBe "A ~ B % 3.0"
+  }
+
+  def `toString of multilabeled edge`: Unit = {
+    import edges.multilabeled._
+
+    WUnDiEdge('a', 'b', 2).toString shouldBe "a ~ b %% 2.0"
+    WUnDiEdge("A", "B", 3).toString shouldBe "A ~ B %% 3.0"
+  }
+
   def `mixed infix constructors`: Unit = {
     import edges.UnDiEdgeImplicits
     import edges.labeled._

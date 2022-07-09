@@ -3,6 +3,7 @@ package scalax.collection
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
+
 import scalax.collection.edges._
 import scalax.collection.generic._
 import scalax.collection.OuterImplicits._
@@ -11,6 +12,7 @@ import scalax.collection.OuterImplicits._
   */
 class EditingSpec
     extends Suites(
+      new EditingEdges,
       new Editing[Graph](new ConfigWrapper[Graph] {
         val companion = Graph
         val config    = Graph.defaultConfig
@@ -26,6 +28,14 @@ class EditingSpec
       new EditingImmutable,
       new EditingMutable
     )
+
+private class EditingEdges extends RefSpec with Matchers {
+
+  def `toString of edges`: Unit = {
+    DiEdge(1, 2).toString shouldBe "1 ~> 2"
+    UnDiEdge(1, 2).toString shouldBe "1 ~ 2"
+  }
+}
 
 class EditingImmutable extends RefSpec with Matchers {
   private val Graph = immutable.Graph
@@ -178,7 +188,7 @@ private class Editing[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
   implicit private val config: factory.companion.Config = factory.config
 
   private val seq_1_3   = Seq(1, 3)
-  private val gInt_1_3  = factory(seq_1_3.toOuterElems[DiEdge[Int]]: _*)
+  private val gInt_1_3  = factory.from(nodes = seq_1_3, Nil)
   private val gString_A = factory("A")
 
   object `graph editing` {

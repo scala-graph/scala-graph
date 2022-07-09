@@ -1,6 +1,6 @@
 package scalax.collection.labeled.aviation
 
-import scalax.collection.generic._
+import scalax.collection.generic.{AbstractDiEdge, ExtendedKey, LDiEdgeToString, PartialEdgeMapper}
 
 import java.time.{DayOfWeek, LocalTime}
 import scala.concurrent.duration.FiniteDuration
@@ -27,16 +27,17 @@ case class Flight(
     departures: List[(DayOfWeek, LocalTime)],
     duration: FiniteDuration
 ) extends AbstractDiEdge[Airport](departure, destination)
-    with PartialEdgeMapper[Airport, Flight]
-    with ExtendedKey {
+    with ExtendedKey
+    with LDiEdgeToString
+    with PartialEdgeMapper[Airport, Flight] {
 
-  def extendKeyBy: Seq[String] = flightNo :: Nil
+  override def extendKeyBy: Seq[String] = flightNo :: Nil
 
   override def weight: Double = duration.toMinutes.toDouble
 
   def airline: String = flightNo.takeWhile(_.isLetter)
 
-  override protected def labelToString: String = s" ($flightNo $departures $duration)"
+  override protected def labelToString: String = s"($flightNo $departures $duration)"
 
   override def map[NN]: PartialFunction[(NN, NN), Flight] = { case (from: Airport, to: Airport) =>
     copy(from, to)

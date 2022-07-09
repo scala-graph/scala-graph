@@ -1,6 +1,6 @@
 package scalax.collection.edges.multilabeled
 
-import scalax.collection.generic.{AbstractGenericUnDiEdge, ExtendedKeyByWeight, WeightToStringPostfix}
+import scalax.collection.generic.{AbstractGenericUnDiEdge, ExtendedKeyByWeight, MultiWEdgeToString, WUnDiEdgeToString}
 
 /** Generic weighted undirected edge for multigraphs.
   */
@@ -8,7 +8,8 @@ import scalax.collection.generic.{AbstractGenericUnDiEdge, ExtendedKeyByWeight, 
 final case class WUnDiEdge[+N](source: N, target: N, override val weight: Double)
     extends AbstractGenericUnDiEdge[N, WUnDiEdge]
     with ExtendedKeyByWeight
-    with WeightToStringPostfix {
+    with WUnDiEdgeToString
+    with MultiWEdgeToString {
 
   def map[NN](node_1: NN, node_2: NN): WUnDiEdge[NN] = copy[NN](node_1, node_2)
 }
