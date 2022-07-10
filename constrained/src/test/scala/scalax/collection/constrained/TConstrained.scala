@@ -198,8 +198,7 @@ private object UserConstraints {
     def apply[N, E <: Edge[N], G <: Graph[N, E]](self: G) = new EvenNode[N, E, G](self)
   }
 
-  abstract class NoPreCheck[N, E <: Edge[N], G <: Graph[N, E]](override val self: G)
-      extends Constraint[N, E, G](self) {
+  abstract class NoPreCheck[N, E <: Edge[N], G <: Graph[N, E]](override val self: G) extends Constraint[N, E, G](self) {
     def preAdd(node: N)                                = postCheck
     def preAdd(edge: E[N])                             = postCheck
     def preSubtract(node: self.NodeT, forced: Boolean) = postCheck
@@ -239,13 +238,12 @@ private object UserConstraints {
 
   object FailingPostAdd extends ConstraintCompanion[FailingPostAdd] {
     def apply[N, E <: Edge[N], G <: Graph[N, E]](self: G) = new FailingPostAdd[N, E, G](self)
-    val leftWarning                                           = "warning"
+    val leftWarning                                       = "warning"
   }
 
   /* Constrains the graph to nodes having a minimal degree of `min` by utilizing pre- and post-checks.
    */
-  abstract class MinDegree[N, E <: Edge[N], G <: Graph[N, E]](override val self: G)
-      extends Constraint[N, E, G](self) {
+  abstract class MinDegree[N, E <: Edge[N], G <: Graph[N, E]](override val self: G) extends Constraint[N, E, G](self) {
     // the required minimal degree
     val min: Int
 
