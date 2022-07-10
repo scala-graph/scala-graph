@@ -332,8 +332,7 @@ object AnyUnDiEdge {
 abstract class AbstractUnDiEdge[+N](val source: N, val target: N) extends AnyUnDiEdge[N]
 
 trait AbstractGenericUnDiEdge[+N, +This[X] <: AbstractGenericUnDiEdge[X, This]]
-    extends AnyHyperEdge[N]
-    with AnyUnDiEdge[N]
+    extends AnyUnDiEdge[N]
     with GenericEdgeMapper[N, This]
 
 trait AnyDiEdge[+N] extends AnyDiHyperEdge[N] with AnyEdge[N] with EqDi[N] {
@@ -369,8 +368,7 @@ object AnyDiEdge {
 abstract class AbstractDiEdge[+N](val source: N, val target: N) extends AnyDiEdge[N]
 
 trait AbstractGenericDiEdge[+N, +This[X] <: AbstractGenericDiEdge[X, This]]
-    extends AnyDiHyperEdge[N]
-    with AnyDiEdge[N]
+    extends AnyDiEdge[N]
     with GenericEdgeMapper[N, This]
 
 private[collection] object Abstract {
