@@ -17,12 +17,12 @@ import config.GenConstrainedConfig
   *
   * @author Peter Empen
   */
-trait AdjacencyListGraph[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: AdjacencyListGraph[X, Y, This] with Graph[
+trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListGraph[X, Y, CC] with Graph[
   X,
   Y
-]] extends SimpleAdjacencyListGraph[N, E, This]
-    with GraphLike[N, E, This] {
-  selfGraph: This[N, E] =>
+]] extends SimpleAdjacencyListGraph[N, E, CC]
+    with GraphLike[N, E, CC] {
+  selfGraph: CC[N, E] =>
 
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
 

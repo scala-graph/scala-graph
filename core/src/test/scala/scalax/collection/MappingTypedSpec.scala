@@ -30,9 +30,9 @@ private class MappingTyped[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N,
     private object edges {
       type Connector[+N] = Edge[N, _]
 
-      sealed abstract protected class Edge[+N, +This <: Edge[N, This]](override val source: N, override val target: N)
+      sealed abstract protected class Edge[+N, +CC <: Edge[N, CC]](override val source: N, override val target: N)
           extends AbstractDiEdge[N](source, target)
-          with PartialEdgeMapper[This]
+          with PartialEdgeMapper[CC]
 
       case class NodeConnector(override val source: Node, override val target: Node)
           extends Edge[Node, NodeConnector](source, target) {

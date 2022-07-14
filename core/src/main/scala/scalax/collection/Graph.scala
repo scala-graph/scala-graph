@@ -25,16 +25,16 @@ import scalax.collection.mutable.Builder
   * @define CONTGRAPH The `Graph` instance that contains `this`
   * @author Peter Empen
   */
-trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
-    extends GraphBase[N, E, This]
+trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] with Graph[X, Y]]
+    extends GraphBase[N, E, CC]
     with GraphTraversal[N, E]
-    with GraphDegree[N, E, This] {
-  thisGraph: This[N, E] =>
+    with GraphDegree[N, E, CC] {
+  thisGraph: CC[N, E] =>
 
   protected type ThisGraph = thisGraph.type
 
-  def empty: This[N, E]
-  protected[this] def newBuilder: mutable.Builder[N, E, This]
+  def empty: CC[N, E]
+  protected[this] def newBuilder: mutable.Builder[N, E, CC]
 
   def isDirected: Boolean = edges.size > 0 && edges.hasOnlyDiEdges
   def isHyper: Boolean    = edges.size > 0 && edges.hasAnyHyperEdge
@@ -42,7 +42,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
   def isMulti: Boolean    = edges.size > 0 && edges.hasAnyMultiEdge
 
   /** The companion object of `This`. */
-  val companion: GraphCompanion[This]
+  val companion: GraphCompanion[CC]
   protected type Config <: GraphConfig
   implicit def config: companion.Config with Config
 
@@ -140,7 +140,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
 
   protected trait NodeBase extends BaseNodeBase with GraphInnerNode {
     this: NodeT =>
-    final def isContaining[N, E <: Edge[N]](g: GraphBase[N, E, This] @uV): Boolean =
+    final def isContaining[N, E <: Edge[N]](g: GraphBase[N, E, CC] @uV): Boolean =
       g eq containingGraph
   }
 
@@ -266,10 +266,10 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
   @inline final def get(node: N): NodeT = nodes get node
   @inline final def get(edge: E): EdgeT = edges.find(edge).get
 
-  def filter(nodeP: NodePredicate = anyNode, edgeP: EdgePredicate = anyEdge): This[N, E] = {
+  def filter(nodeP: NodePredicate = anyNode, edgeP: EdgePredicate = anyEdge): CC[N, E] = {
     import scala.collection.Set
 
-    def build(nodes: Set[NodeT]): This[N, E] = {
+    def build(nodes: Set[NodeT]): CC[N, E] = {
       val b = companion.newBuilder[N, E]
       nodes foreach { case InnerNode(innerN, outerN) =>
         b addOne outerN
@@ -288,7 +288,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
 
   final def map[NN, EC[X] <: Edge[X]](
       fNode: NodeT => NN
-  )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E): This[NN, EC[NN]] =
+  )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E): CC[NN, EC[NN]] =
     mapNodes(fNode)(
       (m: PartialEdgeMapper[EC[NN]], ns: (NN, NN)) => m.map lift ns,
       (m: PartialDiHyperEdgeMapper[_], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[EC[NN]], // TODO
@@ -297,7 +297,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
 
   def mapBounded[NN <: N, EC[X] <: Edge[X]](
       fNode: NodeT => NN
-  )(implicit w1: E <:< PartialMapper, w2: EC[N] =:= E): This[NN, EC[NN]] =
+  )(implicit w1: E <:< PartialMapper, w2: EC[N] =:= E): CC[NN, EC[NN]] =
     mapNodes(fNode)(
       (m: PartialEdgeMapper[EC[NN]], ns: (NN, NN)) => m.map.lift(ns),
       (m: PartialDiHyperEdgeMapper[_], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[EC[NN]],
@@ -308,7 +308,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
       mapTypedEdge: (PartialEdgeMapper[EC[NN]], (NN, NN)) => Option[EC[NN]],
       mapTypedDiHyper: (PartialDiHyperEdgeMapper[_], Iterable[NN], Iterable[NN]) => EC[NN],
       mapTypedHyper: (PartialHyperEdgeMapper[_], Iterable[NN]) => EC[NN]
-  ): This[NN, EC[NN]] =
+  ): CC[NN, EC[NN]] =
     mapNodesInBuilder[NN, EC[NN]](fNode) pipe { case (nMap, builder) =>
       edges foreach {
         case InnerEdge(_, outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
@@ -323,7 +323,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
       builder.result
     }
 
-  private def mapNodesInBuilder[NN, EE <: Edge[NN]](fNode: NodeT => NN): (MMap[N, NN], Builder[NN, EE, This]) = {
+  private def mapNodesInBuilder[NN, EE <: Edge[NN]](fNode: NodeT => NN): (MMap[N, NN], Builder[NN, EE, CC]) = {
     val nMap = MMap.empty[N, NN]
     val b    = companion.newBuilder[NN, EE](config)
     nodes foreach { n =>
@@ -334,10 +334,10 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
     (nMap, b)
   }
 
-  final def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, fEdge: (NN, NN) => EC[NN]): This[NN, EC[NN]] =
+  final def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, fEdge: (NN, NN) => EC[NN]): CC[NN, EC[NN]] =
     mapBounded(fNode, fEdge)
 
-  final def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, fEdge: (NN, NN) => EC): This[NN, EC] =
+  final def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, fEdge: (NN, NN) => EC): CC[NN, EC] =
     mapNodesInBuilder[NN, EC](fNode) pipe { case (nMap, builder) =>
       edges foreach {
         case InnerEdge(_, AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>

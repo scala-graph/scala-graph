@@ -8,22 +8,26 @@ sealed protected[collection] trait HyperEdgeMapper   extends Mapper
 sealed protected[collection] trait DiHyperEdgeMapper extends Mapper
 sealed protected[collection] trait EdgeMapper        extends Mapper
 
-sealed trait GenericHyperEdgeMapper   extends GenericMapper with HyperEdgeMapper
-sealed trait GenericDiHyperEdgeMapper extends GenericMapper with DiHyperEdgeMapper
+trait GenericHyperEdgeMapper   extends GenericMapper with HyperEdgeMapper
+trait GenericDiHyperEdgeMapper extends GenericMapper with DiHyperEdgeMapper
 
-trait GenericEdgeMapper[+This[X] <: Edge[X]] extends GenericMapper with EdgeMapper { this: AnyEdge[_] =>
-  def map[N](node_1: N, node_2: N): This[N]
+/** Mixin for directed and undirected generic edges to facilitate `Graph` mapping by `def map(fNode)`.
+  *
+  * @tparam CC type constructor of the final edge class.
+  */
+trait GenericEdgeMapper[+CC[X] <: Edge[X]] extends GenericMapper with EdgeMapper { this: AnyEdge[_] =>
+  def map[N](node_1: N, node_2: N): CC[N]
 }
 
-trait PartialHyperEdgeMapper[+This <: Edge[_]] extends PartialMapper with HyperEdgeMapper { this: AnyHyperEdge[_] =>
-  def map[N]: PartialFunction[Iterable[N], This]
+trait PartialHyperEdgeMapper[+CC <: Edge[_]] extends PartialMapper with HyperEdgeMapper { this: AnyHyperEdge[_] =>
+  def map[N]: PartialFunction[Iterable[N], CC]
 }
 
-trait PartialDiHyperEdgeMapper[+This <: Edge[_]] extends PartialMapper with DiHyperEdgeMapper {
+trait PartialDiHyperEdgeMapper[+CC <: Edge[_]] extends PartialMapper with DiHyperEdgeMapper {
   this: AnyDiHyperEdge[_] =>
-  def map[N]: PartialFunction[(Iterable[N], Iterable[N]), This]
+  def map[N]: PartialFunction[(Iterable[N], Iterable[N]), CC]
 }
 
-trait PartialEdgeMapper[+This <: Edge[_]] extends PartialMapper with EdgeMapper { this: AnyEdge[_] =>
-  def map[N]: PartialFunction[(N, N), This]
+trait PartialEdgeMapper[+CC <: Edge[_]] extends PartialMapper with EdgeMapper { this: AnyEdge[_] =>
+  def map[N]: PartialFunction[(N, N), CC]
 }

@@ -15,8 +15,8 @@ import scalax.collection.mutable.{GraphLike => SimpleGraphLike}
 trait GraphOps[
     N,
     E <: Edge[N],
-    +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Set[Param[X, Y]] with Graph[X, Y]
-] { _: This[N, E] with SimpleGraphLike[N, E, This] with GraphOps[N, E, This] =>
+    +CC[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, CC] with Set[Param[X, Y]] with Graph[X, Y]
+] { _: CC[N, E] with SimpleGraphLike[N, E, CC] with GraphOps[N, E, CC] =>
 
   /** Same as `add` but $Info. */
   def add_?(node: N): Either[ConstraintViolation, Boolean]

@@ -19,7 +19,7 @@ class GraphBuilder[N, E <: Edge[N], GC[N, E <: Edge[N]] <: CGraph[N, E] with CGr
     companion: GraphConstrainedCompanion[GC]
 )(config: GenConstrainedConfig)
     extends BuilderImpl[N, E, GC] {
-  def result: This =
+  def result: CC =
     companion.from(nodes, edges)(config.asInstanceOf[companion.Config])
 }
 
