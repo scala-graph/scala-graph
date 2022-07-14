@@ -10,7 +10,7 @@ package object multilabeled {
     def %%(weight: Double): WUnDiEdge[N] = WUnDiEdge[N](e.source, e.target, weight)
   }
 
-  /** Factory shortcut for weighted edges that can be used like `a ~ b % w`.
+  /** Factory shortcut for weighted edges that can be used like `a ~> b % w`.
     */
   implicit final class MultiWDiEdgeFactory[N](val e: DiEdge[N]) extends AnyVal {
     def %%(weight: Double): WDiEdge[N] = WDiEdge[N](e.source, e.target, weight)

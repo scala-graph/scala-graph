@@ -32,18 +32,18 @@ private class MappingTyped[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N,
 
       sealed abstract protected class Edge[+N, +This <: Edge[N, This]](override val source: N, override val target: N)
           extends AbstractDiEdge[N](source, target)
-          with PartialEdgeMapper[N, This]
+          with PartialEdgeMapper[This]
 
       case class NodeConnector(override val source: Node, override val target: Node)
           extends Edge[Node, NodeConnector](source, target) {
-        def map[NN]: PartialFunction[(NN, NN), NodeConnector] = { case (node_1: Node, node_2: Node) =>
+        def map[N]: PartialFunction[(N, N), NodeConnector] = { case (node_1: Node, node_2: Node) =>
           copy(node_1, node_2)
         }
       }
 
       case class AConnector(override val source: A, override val target: A)
           extends Edge[A, AConnector](source, target) {
-        def map[NN]: PartialFunction[(NN, NN), AConnector] = { case (node_1: A, node_2: A) =>
+        def map[N]: PartialFunction[(N, N), AConnector] = { case (node_1: A, node_2: A) =>
           copy(node_1, node_2)
         }
       }

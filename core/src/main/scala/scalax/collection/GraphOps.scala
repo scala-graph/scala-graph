@@ -204,19 +204,19 @@ trait GraphOps[N, E <: Edge[N], +This[X, Y <: Edge[X]]] extends OuterElems[N, E]
     * Nonetheless, the type parameter `N` may be of any type.
     * Being `E` a generic edge type, you can map nodes to any type.
     *
-    * @tparam NN            $mapNN
-    * @tparam EC            $mapEC for use by `w2`
-    * @param fNode          $mapFNode
-    * @param w1             ensures that `E` of this graph is of type `GenericMapper`
-    * @param w2             catches the current higher kind of `E` for use by `fallbackMapper`
-    * @param fallbackMapper in case this graph contains generic and typed edges,
-    *                       this mapper is used to replace typed edges by generic ones if necessary
-    * @return               the mapped graph with a possibly changed node type parameter.
-    *                       Edge ends reflect the mapped nodes while edge types will be preserved as far as possible.
+    * If this graph contains not only generic but also typed edges and the typed edges' `map` partial function
+    * is not defined for `fNode`, the typed edges will be left out.
+    *
+    * @tparam NN   $mapNN
+    * @tparam EC   $mapEC for use by `w2`
+    * @param fNode $mapFNode
+    * @param w1    ensures that `E` of this graph is of type `GenericMapper`
+    * @param w2    catches the current higher kind of `E` for use by `fallbackMapper`
+    * @return      the mapped graph with a possibly changed node type parameter
     */
   def map[NN, EC[X] <: Edge[X]](
       fNode: NodeT => NN
-  )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E, fallbackMapper: EdgeCompanion[EC]): This[NN, EC[NN]]
+  )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E): This[NN, EC[NN]]
 
   /** $mapNodes
     * Use this method to map a typed graph to a resulting typed graph bounded to the same edge type.

@@ -140,10 +140,10 @@ private[collection] trait InnerEdgeLike[+N] extends Edge[N]
   */
 sealed trait EdgeCompanionBase extends Serializable
 
-/** The abstract methods of this trait must be implemented by companion objects of non-labeled edges.
+/** Template for companion objects of edges having an unconstrained `N` type parameter.
   */
 trait EdgeCompanion[+E[N] <: Edge[N]] extends EdgeCompanionBase {
-  def apply[NN](node_1: NN, node_2: NN): E[NN]
+  def apply[N](node_1: N, node_2: N): E[N]
   implicit def thisCompanion: this.type = this
 }
 
@@ -333,7 +333,7 @@ abstract class AbstractUnDiEdge[+N](val source: N, val target: N) extends AnyUnD
 
 trait AbstractGenericUnDiEdge[+N, +This[X] <: AbstractGenericUnDiEdge[X, This]]
     extends AnyUnDiEdge[N]
-    with GenericEdgeMapper[N, This]
+    with GenericEdgeMapper[This]
 
 trait AnyDiEdge[+N] extends AnyDiHyperEdge[N] with AnyEdge[N] with EqDi[N] {
 
@@ -369,7 +369,7 @@ abstract class AbstractDiEdge[+N](val source: N, val target: N) extends AnyDiEdg
 
 trait AbstractGenericDiEdge[+N, +This[X] <: AbstractGenericDiEdge[X, This]]
     extends AnyDiEdge[N]
-    with GenericEdgeMapper[N, This]
+    with GenericEdgeMapper[This]
 
 private[collection] object Abstract {
 
