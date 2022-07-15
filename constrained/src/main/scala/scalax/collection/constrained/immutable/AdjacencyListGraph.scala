@@ -7,9 +7,9 @@ import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 import config.GenConstrainedConfig
 
 trait AdjacencyListGraph[
-    N, E <: Edge[N], +This[X, Y <: Edge[N]] <: AdjacencyListGraph[X, Y, This] with Graph[X, Y]]
-    extends SimpleAdjacencyListGraph[N, E, This]
-    with GraphLike[N, E, This] { this: This[N, E] =>
+    N, E <: Edge[N], +CC[X, Y <: Edge[N]] <: AdjacencyListGraph[X, Y, CC] with Graph[X, Y]]
+    extends SimpleAdjacencyListGraph[N, E, CC]
+    with GraphLike[N, E, CC] { this: CC[N, E] =>
 
   protected type Config <: GraphConfig with GenConstrainedConfig with AdjacencyListArrayConfig
 
@@ -19,7 +19,7 @@ trait AdjacencyListGraph[
 
   def copy_?(nodes: Iterable[N], edges: Iterable[E]): Either[ConstraintViolation, This[N, E]]
 
-  final override def +(node: N): This[N, E] = +?(node) getOrElse this
+  final override def +(node: N): CC[N, E] = +?(node) getOrElse this
 
   final def +?(node: N): Either[ConstraintViolation, This[N, E]] =
     checkedPlus(
@@ -29,7 +29,7 @@ trait AdjacencyListGraph[
       nodes = Set(node),
       edges = Set.empty[E])
 
-  final override protected def +#(e: E): This[N, E] = +#?(e) getOrElse this
+  final override protected def +#(e: E): CC[N, E] = +#?(e) getOrElse this
 
   final protected def +#?(e: E): Either[ConstraintViolation, This[N, E]] =
     checkedPlus(
@@ -39,7 +39,7 @@ trait AdjacencyListGraph[
       nodes = Set.empty[N],
       edges = Set(e))
 
-  final override def -(node: N): This[N, E] = -?(node) getOrElse this
+  final override def -(node: N): CC[N, E] = -?(node) getOrElse this
 
   final def -?(n: N): Either[ConstraintViolation, This[N, E]] = checkedMinusNode(
     n,
@@ -53,7 +53,7 @@ trait AdjacencyListGraph[
     }
   )
 
-  final override def minusIsolated(n: N): This[N, E] = minusIsolated_?(n) getOrElse this
+  final override def minusIsolated(n: N): CC[N, E] = minusIsolated_?(n) getOrElse this
 
   final def minusIsolated_?(n: N): Either[ConstraintViolation, This[N, E]] = checkedMinusNode(
     n,
@@ -68,9 +68,9 @@ trait AdjacencyListGraph[
   )
 
   /** generic constrained subtraction of edges */
-  protected def checkedSubtractEdge[G >: This[N, E]](edge: E,
+  protected def checkedSubtractEdge[G >: CC[N, E]](edge: E,
                                                      simple: Boolean,
-                                                     copy: (E, EdgeT) => G): This[N, E] =
+                                                     copy: (E, EdgeT) => G): CC[N, E] =
     edges find edge map { innerEdge =>
       def subtract = copy(edge, innerEdge).asInstanceOf[This[N, E]]
       if (checkSuspended) subtract
@@ -91,14 +91,14 @@ trait AdjacencyListGraph[
     }
   )
 
-  final override protected def -#(e: E): This[N, E] = -#?(e) getOrElse this
+  final override protected def -#(e: E): CC[N, E] = -#?(e) getOrElse this
 
   final protected def -#?(e: E): Either[ConstraintViolation, This[N, E]] = checkedMinusEdge(
     e,
     simple = true,
     (outerEdge: E, innerEdge: EdgeT) => copy(nodes.outerIterable, edges.outerIterable.filterNot(_ == outerEdge))
 
-  final override protected def -!#(e: E): This[N, E] = -!#?(e) getOrElse this
+  final override protected def -!#(e: E): CC[N, E] = -!#?(e) getOrElse this
 
   final protected def -!#?(e: E): Either[ConstraintViolation, This[N, E]] = checkedMinusEdge(
     e,

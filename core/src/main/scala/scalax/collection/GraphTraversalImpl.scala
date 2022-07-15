@@ -561,8 +561,8 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
   ) =
     OuterElemTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
-  protected trait DownUpTraverser[A, +This <: DownUpTraverser[A, This]] extends Impl[A, This] {
-    this: This =>
+  protected trait DownUpTraverser[A, +CC <: DownUpTraverser[A, CC]] extends Impl[A, CC] {
+    this: CC =>
 
     final protected def downUpForeach[U](down: A => Unit, up: NodeT => Unit): Unit =
       Runner(noNode, down).dfsStack(up)

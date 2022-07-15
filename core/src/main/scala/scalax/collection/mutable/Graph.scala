@@ -65,15 +65,15 @@ class Builder[N, E <: Edge[N], +CC[N, E <: Edge[N]] <: AnyGraphLike[N, E, CC] wi
   *
   * @author Peter Empen
   */
-trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
-    extends AnyGraphLike[N, E, This]
-    with GraphOps[N, E, This]
+trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] with Graph[X, Y]]
+    extends AnyGraphLike[N, E, CC]
+    with GraphOps[N, E, CC]
     /* TODO
-    with EdgeOps[N, E, This]
+    with EdgeOps[N, E, CC]
      */ {
-  selfGraph: This[N, E] =>
+  selfGraph: CC[N, E] =>
 
-  override def clone: This[N, E] = companion.from[N, E](nodes.toOuter, edges.toOuter)
+  override def clone: CC[N, E] = companion.from[N, E](nodes.toOuter, edges.toOuter)
 
   type NodeT <: GraphLikeInnerNode
   trait GraphLikeInnerNode extends super.GraphInnerNode { // TODO with InnerNodeOps {

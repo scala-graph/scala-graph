@@ -12,7 +12,7 @@ import scalax.collection.generic._
   $define $mapFEdge function to map edges based on the mapped nodes. It is expected to set the node ends to the passed nodes.
                     If this expectation is not met the resulting graph may become deteriorated.
  */
-trait GraphOps[N, E <: Edge[N], +This[X, Y <: Edge[X]]] extends OuterElems[N, E] {
+trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
 
   /** Whether this graph contains any node or any edge. */
   @inline final def isEmpty: Boolean = iterator.isEmpty
@@ -101,28 +101,28 @@ trait GraphOps[N, E <: Edge[N], +This[X, Y <: Edge[X]]] extends OuterElems[N, E]
     */
   def concat[N2 >: N, E2 >: E <: Edge[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(implicit
       e: E2 <:< Edge[N2]
-  ): This[N2, E2]
+  ): CC[N2, E2]
 
   /** Same as `concat(isolatedNodes, edges)` but with empty `isolatedNodes`.
     * This method is useful if you don't need to pass any isolated node.
     */
-  def concat[N2 >: N, E2 >: E <: Edge[N2]](edges: IterableOnce[E2])(implicit e: E2 <:< Edge[N2]): This[N2, E2] =
+  def concat[N2 >: N, E2 >: E <: Edge[N2]](edges: IterableOnce[E2])(implicit e: E2 <:< Edge[N2]): CC[N2, E2] =
     concat[N2, E2](Nil, edges)(e)
 
   /** Alias for `concat(isolatedNodes, edges)`. */
   @inline final def ++[N2 >: N, E2 >: E <: Edge[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(implicit
       e: E2 <:< Edge[N2]
-  ): This[N2, E2] =
+  ): CC[N2, E2] =
     concat(isolatedNodes, edges)(e)
 
   /** Alias for `concat(edges)`. */
   @inline final def ++[N2 >: N, E2 >: E <: Edge[N2]](edges: IterableOnce[E2])(implicit
       e: E2 <:< Edge[N2]
-  ): This[N2, E2] =
+  ): CC[N2, E2] =
     concat[N2, E2](edges)(e)
 
   /** Computes the union between this graph and `that` graph. */
-  @inline final def union[N2 >: N, E2 >: E <: Edge[N2]](that: Graph[N2, E2]): This[N2, E2] =
+  @inline final def union[N2 >: N, E2 >: E <: Edge[N2]](that: Graph[N2, E2]): CC[N2, E2] =
     concat(that.nodes.outerIterator, that.edges.outerIterator)
 
   /** Whether the given outer node is contained in this graph. */
@@ -156,12 +156,12 @@ trait GraphOps[N, E <: Edge[N], +This[X, Y <: Edge[X]]] extends OuterElems[N, E]
   /** Computes a new graph with nodes satisfying `nodeP` and edges satisfying `edgeP`.
     * If both `nodeP` and `edgeP` have default values the original graph is retained.
     */
-  def filter(nodeP: NodePredicate = anyNode, edgeP: EdgePredicate = anyEdge): This[N, E]
+  def filter(nodeP: NodePredicate = anyNode, edgeP: EdgePredicate = anyEdge): CC[N, E]
 
   /** Computes a new graph without nodes satisfying `nodeP` and without edges satisfying `ePred`.
     * If both `nodeP` and `ePred` have default values the original graph is retained.
     */
-  def filterNot(nodeP: NodePredicate = noNode, edgeP: EdgePredicate = noEdge): This[N, E] =
+  def filterNot(nodeP: NodePredicate = noNode, edgeP: EdgePredicate = noEdge): CC[N, E] =
     filter(n => !nodeP(n), e => !edgeP(e))
 
   /** Searches this graph for an inner node that wraps an outer node equalling to the given outer node. */
@@ -182,41 +182,41 @@ trait GraphOps[N, E <: Edge[N], +This[X, Y <: Edge[X]]] extends OuterElems[N, E]
     */
   def get(edge: E): EdgeT
 
-  protected def removedAll(isolatedNodes: IterableOnce[N], edges: IterableOnce[E]): This[N, E]
+  protected def removedAll(isolatedNodes: IterableOnce[N], edges: IterableOnce[E]): CC[N, E]
 
   /** Computes a new graph that is the difference of this graph and `that` graph. */
-  final def diff(that: Graph[N, E]): This[N, E] = removedAll(that.nodes.outerIterator, that.edges.outerIterator)
+  final def diff(that: Graph[N, E]): CC[N, E] = removedAll(that.nodes.outerIterator, that.edges.outerIterator)
 
   /** Alias for `diff`. */
-  @inline final def &~(that: Graph[N, E]): This[N, E] = this diff that
+  @inline final def &~(that: Graph[N, E]): CC[N, E] = this diff that
 
   /** Computes the intersection between this graph and `that` graph. */
-  final def intersect(that: Graph[N, E]): This[N, E] = this filter (n => that(n.outer), e => that(e.outer))
+  final def intersect(that: Graph[N, E]): CC[N, E] = this filter (n => that(n.outer), e => that(e.outer))
 
   /** Alias for `intersect`. */
-  @inline final def &(that: Graph[N, E]): This[N, E] = this intersect that
+  @inline final def &(that: Graph[N, E]): CC[N, E] = this intersect that
 
   /** Alias for `union`. */
-  @inline final def |(that: Graph[N, E]): This[N, E] = this union that
+  @inline final def |(that: Graph[N, E]): CC[N, E] = this union that
 
   /** $mapNodes
     * The type parameter `E` of this graph is required to be generic meaning that `E` accepts ends of `Any` type.
     * Nonetheless, the type parameter `N` may be of any type.
     * Being `E` a generic edge type, you can map nodes to any type.
     *
-    * @tparam NN            $mapNN
-    * @tparam EC            $mapEC for use by `w2`
-    * @param fNode          $mapFNode
-    * @param w1             ensures that `E` of this graph is of type `GenericMapper`
-    * @param w2             catches the current higher kind of `E` for use by `fallbackMapper`
-    * @param fallbackMapper in case this graph contains generic and typed edges,
-    *                       this mapper is used to replace typed edges by generic ones if necessary
-    * @return               the mapped graph with a possibly changed node type parameter.
-    *                       Edge ends reflect the mapped nodes while edge types will be preserved as far as possible.
+    * If this graph contains not only generic but also typed edges and the typed edges' `map` partial function
+    * is not defined for `fNode`, the typed edges will be left out.
+    *
+    * @tparam NN   $mapNN
+    * @tparam EC   $mapEC for use by `w2`
+    * @param fNode $mapFNode
+    * @param w1    ensures that `E` of this graph is of type `GenericMapper`
+    * @param w2    catches the current higher kind of `E` for use by `fallbackMapper`
+    * @return      the mapped graph with a possibly changed node type parameter
     */
   def map[NN, EC[X] <: Edge[X]](
       fNode: NodeT => NN
-  )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E, fallbackMapper: EdgeCompanion[EC]): This[NN, EC[NN]]
+  )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E): CC[NN, EC[NN]]
 
   /** $mapNodes
     * Use this method to map a typed graph to a resulting typed graph bounded to the same edge type.
@@ -235,7 +235,7 @@ trait GraphOps[N, E <: Edge[N], +This[X, Y <: Edge[X]]] extends OuterElems[N, E]
     */
   def mapBounded[NN <: N, EC[X] <: Edge[X]](
       fNode: NodeT => NN
-  )(implicit w1: E <:< PartialMapper, w2: EC[N] =:= E): This[NN, EC[NN]]
+  )(implicit w1: E <:< PartialMapper, w2: EC[N] =:= E): CC[NN, EC[NN]]
 
   /** $mapEdges
     * Use this method to map nodes and edges to a graph with an edge type having one type parameter like `DiEdge[N]`.
@@ -248,7 +248,7 @@ trait GraphOps[N, E <: Edge[N], +This[X, Y <: Edge[X]]] extends OuterElems[N, E]
     * @param fEdge $mapFEdge
     * @return      the mapped graph with a possibly changed node type and edge type parameter
     */
-  def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, fEdge: (NN, NN) => EC[NN]): This[NN, EC[NN]]
+  def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, fEdge: (NN, NN) => EC[NN]): CC[NN, EC[NN]]
 
   /** $mapEdges
     * Use this method to map nodes and edges to a graph with an edge type having no type parameter as typed edges usually do.
@@ -261,5 +261,5 @@ trait GraphOps[N, E <: Edge[N], +This[X, Y <: Edge[X]]] extends OuterElems[N, E]
     * @param fEdge $mapFEdge
     * @return      the mapped graph with a possibly changed node type and edge type parameter
     */
-  def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, fEdge: (NN, NN) => EC): This[NN, EC]
+  def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, fEdge: (NN, NN) => EC): CC[NN, EC]
 }
