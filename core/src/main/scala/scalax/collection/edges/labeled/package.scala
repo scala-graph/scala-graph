@@ -1,6 +1,7 @@
 package scalax.collection.edges
 
 import scalax.collection.generic
+import scalax.collection.generic.Edge
 
 package object labeled {
 
@@ -17,4 +18,6 @@ package object labeled {
   }
 
   val % = generic.%
+
+  type GenericEdgeMapper[+CC[X] <: Edge[X]] = generic.GenericEdgeMapper[CC]
 }

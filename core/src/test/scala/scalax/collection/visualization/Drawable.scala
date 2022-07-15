@@ -22,7 +22,7 @@ import org.gephi.project.api.{ProjectController, Workspace}
 import org.openide.util.Lookup
 
 import scalax.collection.Graph
-import scalax.collection.generic.{AnyEdge, Edge, LEdge}
+import scalax.collection.generic.{AnyEdge, Edge, Label}
 
 /** Facilitates drawing any graph as an image.
   */
@@ -161,8 +161,8 @@ trait Drawable {
 
       def getLabel: String = {
         val label: List[String] = edge match {
-          case LEdge(eLabel) if isWeighted => edge.weight.toString :: eLabel.toString :: Nil
-          case LEdge(eLabel)               => eLabel.toString :: Nil
+          case Label(eLabel) if isWeighted => edge.weight.toString :: eLabel.toString :: Nil
+          case Label(eLabel)               => eLabel.toString :: Nil
           case _                           => Nil
         }
         label.mkString(" - ")
