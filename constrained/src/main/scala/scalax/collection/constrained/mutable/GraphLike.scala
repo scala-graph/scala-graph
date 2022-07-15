@@ -16,7 +16,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, 
     with Growable[Param[N, E]]
     with Shrinkable[Param[N, E]]
     with Cloneable[This[N, E]] {
-  selfGraph: CC[N,E] =>
+  selfGraph: CC[N, E] =>
 
   trait NodeSet extends super.NodeSet {
 
