@@ -66,5 +66,5 @@ class CHyperEdgeParameters[P <: Product](val nodeIds: HyperEdgeNodeIds, val endp
     extends Parameters(NodeProduct(nodeIds))
 object CHyperEdgeParameters {
   def unapply[A <: Product](p: CHyperEdgeParameters[A]): Option[(HyperEdgeNodeIds, String, A)] =
-    Some(p.nodeIds, p.endpointsKind.toString, p.attributes)
+    Some((p.nodeIds), p.endpointsKind.toString, p.attributes)
 }

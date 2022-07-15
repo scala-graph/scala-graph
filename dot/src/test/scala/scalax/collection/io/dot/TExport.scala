@@ -177,7 +177,7 @@ class TExportTest extends RefSpec with Matchers {
         )
       )
     )
-    val g = Graph(n1 ~+> n2(Ports(f1, f0)), n1 ~+> n3(Ports(f2, here)))
+    val g = Graph(n1 ~+> n2 (Ports(f1, f0)), n1 ~+> n3 (Ports(f2, here)))
     val root = DotRootGraph(
       directed = true,
       id = Some("structs"),
