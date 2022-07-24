@@ -4,16 +4,16 @@ import scala.collection.immutable.Iterable
 
 object AbstractHyperEdgeImplicits {
 
-  trait FromAny[N, E[N] <: AnyHyperEdge[N], C <: HyperEdgeCompanion[E]] extends Any {
+  trait FromAny[N, E[N] <: AbstractHyperEdge[N], C <: HyperEdgeCompanion[E]] extends Any {
     protected def companion: C
     def n1: N
     def ~~[NN >: N](n2: NN): E[NN] = companion(n1, n2)
   }
 
-  trait FromEdge[N, E[N] <: AnyHyperEdge[N], C <: HyperEdgeCompanion[E]] extends Any {
+  trait FromEdge[N, E[N] <: AbstractHyperEdge[N], C <: HyperEdgeCompanion[E]] extends Any {
     protected def companion: C
     def e1: E[N]
-    def ~~[NN >: N](n: NN): E[NN] = companion.unsafeFrom(e1.ends ++ (n :: Nil))
+    def ~~[NN >: N](n: NN): E[NN] = companion(Ends(e1._1, e1._2, (e1.ends.more: Iterable[NN]) ++ (n :: Nil)))
   }
 }
 

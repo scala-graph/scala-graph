@@ -189,35 +189,32 @@ trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = matches(List(p1, p2))
 }
 
-object AnyHyperEdge {
-  def unapply[N](e: AnyHyperEdge[N]): Option[Iterable[N]] = if (e eq null) None else Some(e.ends)
-}
+abstract class AbstractHyperEdge[+N](val ends: Ends[N]) extends AnyHyperEdge[N]
 
-abstract class AbstractHyperEdge[+N](val ends: Iterable[N]) extends AnyHyperEdge[N]
+object AbstractHyperEdge {
+  def unapply[N](e: AbstractHyperEdge[N]): Option[Ends[N]] = if (e eq null) None else Some(e.ends)
+}
 
 /** The abstract methods of this trait must be implemented by companion objects of non-labeled hyperedges.
   */
 trait HyperEdgeCompanion[+E[N] <: AnyHyperEdge[N]] extends EdgeCompanionBase {
 
-  protected def apply[N](ends: Iterable[N]): E[N]
+  def apply[N](ends: Ends[N]): E[N]
 
-  def apply[N](node_1: N, node_2: N, moreNodes: N*): E[N] = apply(node_1 +: node_2 +: moreNodes)
+  def apply[N](node_1: N, node_2: N, moreNodes: N*): E[N] = apply(Ends(node_1, node_2, moreNodes))
 
   final def unapply[N](edge: E[N] @uV): Option[Seq[N]] = Some(edge.ends.toSeq)
 
   /** `Some` hyperedge if `ends` contains at least two elements, otherwise `None`.
     */
-  final def from[N](ends: Iterable[N]): Option[E[N]] =
-    if (atLeastTwoElements(ends)) Some(apply(ends))
-    else None
+  final def from[N](iterable: Iterable[N]): Option[E[N]] =
+    Ends.from(iterable) map (ends => apply(ends))
 
   /** A hyperedge with these `ends`.
     * @throws IllegalArgumentException if `ends` has not at least two elements.
     */
-  final def unsafeFrom[N](ends: Iterable[N]): E[N] = {
-    require(atLeastTwoElements(ends))
-    apply(ends)
-  }
+  final def fromUnsafe[N](iterable: Iterable[N]): E[N] =
+    apply(Ends.fromUnsafe(iterable))
 
   final protected def atLeastTwoElements(iterable: Iterable[_]): Boolean = {
     val it = iterable.iterator

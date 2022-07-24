@@ -9,7 +9,7 @@ class EqualityHyperSpec extends RefSpec with Matchers {
     import scalax.collection.hyperedges._
 
     val nodes = List('A', 'B', 'C', 'C')
-    val hEdge = HyperEdge.unsafeFrom(nodes)
+    val hEdge = HyperEdge.fromUnsafe(nodes)
     hEdge shouldEqual 'A' ~~ 'B' ~~ 'C' ~~ 'C'
     hEdge shouldEqual 'C' ~~ 'C' ~~ 'B' ~~ 'A'
 
@@ -22,7 +22,7 @@ class EqualityHyperSpec extends RefSpec with Matchers {
     import scalax.collection.hyperedges.ordered._
 
     val nodes = List('A', 'B', 'C', 'C')
-    val hEdge = HyperEdge.unsafeFrom(nodes)
+    val hEdge = HyperEdge.fromUnsafe(nodes)
     hEdge shouldEqual 'A' ~~ 'B' ~~ 'C' ~~ 'C'
     hEdge shouldNot equal('C' ~~ 'C' ~~ 'B' ~~ 'A')
 

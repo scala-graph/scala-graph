@@ -326,7 +326,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
                 mapTypedDiHyper(m, nSources, nTargets).map(builder += _)
             }
           }
-        case InnerEdge(_, outer @ AnyHyperEdge(ends: Iterable[N] @unchecked)) =>
+        case InnerEdge(_, outer @ AbstractHyperEdge(ends: Ends[N] @unchecked)) =>
           ends.map(nMap) pipe { case nns =>
             outer match {
               case m: GenericHyperEdgeMapper[EC @unchecked]     => builder += m.map(nns)

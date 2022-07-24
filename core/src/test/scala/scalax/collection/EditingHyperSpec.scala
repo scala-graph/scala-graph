@@ -32,7 +32,7 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
 
       HyperEdge.from(List(1)) shouldBe None
       an[IllegalArgumentException] shouldBe thrownBy {
-        HyperEdge.unsafeFrom(List(1))
+        HyperEdge.fromUnsafe(List(1))
       }
 
       val h = HyperEdge(1, 2, 3)
