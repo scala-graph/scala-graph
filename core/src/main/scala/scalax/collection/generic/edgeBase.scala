@@ -21,7 +21,7 @@ import scala.collection.immutable.Iterable
   */
 sealed trait Edge[+N] extends Equals {
 
-  /** The endpoints of this edge, in other words the nodes this edge joins. */
+  /** The endpoints of this edge, in other words the nodes this edge connects. */
   def ends: Iterable[N]
 
   /** The first node of this edge. */
@@ -189,6 +189,10 @@ trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = matches(List(p1, p2))
 }
 
+object AnyHyperEdge {
+  def unapply[N](e: AnyHyperEdge[N]): Option[Iterable[N]] = if (e eq null) None else Some(e.ends)
+}
+
 abstract class AbstractHyperEdge[+N](val ends: Iterable[N]) extends AnyHyperEdge[N]
 
 /** The abstract methods of this trait must be implemented by companion objects of non-labeled hyperedges.
@@ -243,6 +247,11 @@ trait AnyDiHyperEdge[+N] extends AnyHyperEdge[N] with EqDiHyper {
 
   override def matches[M >: N](n1: M, n2: M): Boolean               = sources.exists(_ == n1) && targets.exists(_ == n2)
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = (sources exists p1) && (targets exists p2)
+}
+
+object AnyDiHyperEdge {
+  def unapply[N](e: AnyDiHyperEdge[N]): Option[(Iterable[N], Iterable[N])] =
+    if (e eq null) None else Some(e.sources, e.targets)
 }
 
 abstract class AbstractDiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])

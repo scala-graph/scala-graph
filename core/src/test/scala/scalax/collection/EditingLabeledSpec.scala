@@ -10,12 +10,12 @@ import scalax.collection.generic.{Edge, GraphCoreCompanion}
   */
 class EditingLabeledSpec
     extends Suites(
-      new EditingLabeledEdges,
-      new EditingLabeled[immutable.Graph](immutable.Graph),
-      new EditingLabeled[mutable.Graph](mutable.Graph)
+      new LabeledEdges,
+      new EditingLabeledEdges[immutable.Graph](immutable.Graph),
+      new EditingLabeledEdges[mutable.Graph](mutable.Graph)
     )
 
-private class EditingLabeledEdges extends RefSpec with Matchers {
+private class LabeledEdges extends RefSpec with Matchers {
 
   def `toString of labeled edge`: Unit = {
     import edges.labeled._
@@ -54,13 +54,13 @@ private class EditingLabeledEdges extends RefSpec with Matchers {
   }
 }
 
-private class EditingLabeled[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+private class EditingLabeledEdges[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G]
 ) extends RefSpec
     with Matchers {
 
   def `generic directed labeled edge`: Unit = {
-    import scalax.collection.edges.labeled.LDiEdge
+    import edges.labeled.LDiEdge
 
     case class MyEdge[+N](source: N, target: N, label: String) extends LDiEdge[N, String]
 
@@ -104,7 +104,7 @@ private class EditingLabeled[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N,
   }
 
   def `generic undirected labeled edge`: Unit = {
-    import scalax.collection.edges.labeled.LUnDiEdge
+    import edges.labeled.LUnDiEdge
 
     case class MyEdge[+N](source: N, target: N, label: String) extends LUnDiEdge[N, String]
 
@@ -148,7 +148,7 @@ private class EditingLabeled[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N,
   }
 
   def `generic directed labeled multiedge`: Unit = {
-    import scalax.collection.edges.multilabeled.LDiEdge
+    import edges.multilabeled.LDiEdge
 
     case class MyEdge[+N](source: N, target: N, label: String) extends LDiEdge[N, String]
 
@@ -192,7 +192,7 @@ private class EditingLabeled[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N,
   }
 
   def `generic undirected labeled multiedge`: Unit = {
-    import scalax.collection.edges.multilabeled.LUnDiEdge
+    import edges.multilabeled.LUnDiEdge
 
     case class MyEdge[+N](source: N, target: N, label: String) extends LUnDiEdge[N, String]
 

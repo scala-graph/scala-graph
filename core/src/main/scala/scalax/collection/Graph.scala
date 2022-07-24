@@ -291,8 +291,8 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E): CC[NN, EC[NN]] =
     mapNodes(fNode)(
       (m: PartialEdgeMapper[EC[NN]], ns: (NN, NN)) => m.map lift ns,
-      (m: PartialDiHyperEdgeMapper[_], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[EC[NN]], // TODO
-      (m: PartialHyperEdgeMapper[_], ns: Iterable[NN]) => null.asInstanceOf[EC[NN]]                    // TODO
+      (m: PartialDiHyperEdgeMapper[_], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[Option[EC[NN]]], // TODO
+      (m: PartialHyperEdgeMapper[_], ns: Iterable[NN]) => null.asInstanceOf[Option[EC[NN]]]                    // TODO
     )
 
   def mapBounded[NN <: N, EC[X] <: Edge[X]](
@@ -300,14 +300,14 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   )(implicit w1: E <:< PartialMapper, w2: EC[N] =:= E): CC[NN, EC[NN]] =
     mapNodes(fNode)(
       (m: PartialEdgeMapper[EC[NN]], ns: (NN, NN)) => m.map.lift(ns),
-      (m: PartialDiHyperEdgeMapper[_], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[EC[NN]],
-      (m: PartialHyperEdgeMapper[_], ns: Iterable[NN]) => null.asInstanceOf[EC[NN]]
+      (m: PartialDiHyperEdgeMapper[_], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[Option[EC[NN]]],
+      (m: PartialHyperEdgeMapper[_], ns: Iterable[NN]) => null.asInstanceOf[Option[EC[NN]]]
     )
 
   private def mapNodes[NN, EC[X] <: Edge[X]](fNode: NodeT => NN)(
       mapTypedEdge: (PartialEdgeMapper[EC[NN]], (NN, NN)) => Option[EC[NN]],
-      mapTypedDiHyper: (PartialDiHyperEdgeMapper[_], Iterable[NN], Iterable[NN]) => EC[NN],
-      mapTypedHyper: (PartialHyperEdgeMapper[_], Iterable[NN]) => EC[NN]
+      mapTypedDiHyper: (PartialDiHyperEdgeMapper[_], Iterable[NN], Iterable[NN]) => Option[EC[NN]],
+      mapTypedHyper: (PartialHyperEdgeMapper[_], Iterable[NN]) => Option[EC[NN]]
   ): CC[NN, EC[NN]] =
     mapNodesInBuilder[NN, EC[NN]](fNode) pipe { case (nMap, builder) =>
       edges foreach {
@@ -318,7 +318,21 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
               case m: PartialEdgeMapper[EC[NN] @unchecked] => mapTypedEdge(m, nns).map(builder += _)
             }
           }
-        case _ => ??? // TODO
+        case InnerEdge(_, outer @ AnyDiHyperEdge(sources: Iterable[N] @unchecked, targets: Iterable[N] @unchecked)) =>
+          (sources.map(nMap), targets.map(nMap)) pipe { case (nSources, nTargets) =>
+            outer match {
+              case m: GenericDiHyperEdgeMapper[EC @unchecked] => builder += m.map(nSources, nTargets)
+              case m: PartialDiHyperEdgeMapper[EC[NN] @unchecked] =>
+                mapTypedDiHyper(m, nSources, nTargets).map(builder += _)
+            }
+          }
+        case InnerEdge(_, outer @ AnyHyperEdge(ends: Iterable[N] @unchecked)) =>
+          ends.map(nMap) pipe { case nns =>
+            outer match {
+              case m: GenericHyperEdgeMapper[EC @unchecked]     => builder += m.map(nns)
+              case m: PartialHyperEdgeMapper[EC[NN] @unchecked] => mapTypedHyper(m, nns).map(builder += _)
+            }
+          }
       }
       builder.result
     }

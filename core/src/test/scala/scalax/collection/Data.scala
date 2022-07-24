@@ -1,5 +1,8 @@
 package scalax.collection
 
+import scala.collection.BuildFrom
+import scala.util.Random.shuffle
+
 import scalax.collection.generic._
 import scalax.collection.edges._
 import scalax.collection.edges.labeled._
@@ -79,4 +82,12 @@ object Data {
     1 ~> 2 % 3,
     2 ~ 2  % 1
   )
+
+  def shuffleNotEqual[T, C](xs: IterableOnce[T])(implicit bf: BuildFrom[xs.type, T, C]): C = {
+    def loop(shuffled: C): C =
+      if (shuffled == xs) loop(shuffle(xs))
+      else shuffled
+
+    loop(shuffle(xs))
+  }
 }

@@ -1,5 +1,7 @@
 package scalax.collection.generic
 
+import scala.collection.immutable.Iterable
+
 sealed protected[collection] trait Mapper
 sealed protected[collection] trait GenericMapper extends Mapper
 sealed protected[collection] trait PartialMapper extends Mapper
@@ -8,8 +10,14 @@ sealed protected[collection] trait HyperEdgeMapper   extends Mapper
 sealed protected[collection] trait DiHyperEdgeMapper extends Mapper
 sealed protected[collection] trait EdgeMapper        extends Mapper
 
-trait GenericHyperEdgeMapper   extends GenericMapper with HyperEdgeMapper
-trait GenericDiHyperEdgeMapper extends GenericMapper with DiHyperEdgeMapper
+trait GenericHyperEdgeMapper[+CC[X] <: Edge[X]] extends GenericMapper with HyperEdgeMapper { this: AnyHyperEdge[_] =>
+  def map[N](ends: Iterable[N]): CC[N]
+}
+
+trait GenericDiHyperEdgeMapper[+CC[X] <: Edge[X]] extends GenericMapper with DiHyperEdgeMapper {
+  this: AnyDiHyperEdge[_] =>
+  def map[N](sources: Iterable[N], targets: Iterable[N]): CC[N]
+}
 
 /** Mixin for directed and undirected generic edges to facilitate `Graph` mapping by `def map(fNode)`.
   *

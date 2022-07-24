@@ -4,7 +4,7 @@ import scalax.collection.edges.DiEdge
 import scalax.collection.generic.{AnyDiEdge, Edge, LDiEdgeToString, Label}
 
 /** Template for generic directed edges with a single `label` field.
-  * Equality is based solely on the nodes so this trait is not suitable for multigraphs.
+  * Equality is based solely on the `ends` so this trait is not suitable for multigraphs.
   * Mix in `GenericEdgeMapper` to get your derived edge also mappable.
   */
 abstract class LDiEdge[+N, L] extends AnyDiEdge[N] with Label[L] with LDiEdgeToString {
