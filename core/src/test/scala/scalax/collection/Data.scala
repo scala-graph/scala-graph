@@ -91,6 +91,6 @@ object Data {
     loop(shuffle(xs))
   }
 
-  def shuffleNotEqual[N](ends: Ends[N]): Ends[N] =
-    Ends.fromUnsafe(shuffleNotEqual(ends.iterator.toSeq))
+  def shuffleNotEqual[N](ends: Several[N]): Several[N] =
+    Several.fromUnsafe(shuffleNotEqual(ends.iterator.toSeq))
 }

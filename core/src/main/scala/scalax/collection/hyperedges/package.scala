@@ -42,4 +42,7 @@ package object hyperedges {
 
   /** Pattern shortcut enabling `diHyperedge match { case sources ~~> targets => f(sources, targets) }`. */
   val ~~> = DiHyperEdge
+
+  type Several[+N] = scalax.collection.Several[N]
+  val Several = scalax.collection.Several
 }

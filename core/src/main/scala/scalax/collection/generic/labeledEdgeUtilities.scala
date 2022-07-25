@@ -1,4 +1,5 @@
-package scalax.collection.generic
+package scalax.collection
+package generic
 
 trait Label[L] { this: Edge[_] =>
   def label: L
@@ -30,7 +31,7 @@ trait UnapplyGenericLabeledEdge[E[X] <: AnyEdge[X], L] {
 }
 
 trait UnapplyGenericLabeledHyperEdge[E[X] <: AbstractHyperEdge[X], L] {
-  def unapply[N](hyperedge: E[N] with Label[L]): Option[(Ends[N], L)] =
+  def unapply[N](hyperedge: E[N] with Label[L]): Option[(Several[N], L)] =
     Some(hyperedge.ends, label(hyperedge))
 
   protected def label[N](edge: E[N] with Label[L]): L = edge.label

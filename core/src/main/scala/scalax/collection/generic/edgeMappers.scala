@@ -1,4 +1,5 @@
-package scalax.collection.generic
+package scalax.collection
+package generic
 
 import scala.collection.immutable.Iterable
 
@@ -11,7 +12,7 @@ sealed protected[collection] trait DiHyperEdgeMapper extends Mapper
 sealed protected[collection] trait EdgeMapper        extends Mapper
 
 trait GenericHyperEdgeMapper[+CC[X] <: Edge[X]] extends GenericMapper with HyperEdgeMapper { this: AnyHyperEdge[_] =>
-  def map[N](ends: Ends[N]): CC[N]
+  def map[N](ends: Several[N]): CC[N]
 }
 
 trait GenericDiHyperEdgeMapper[+CC[X] <: Edge[X]] extends GenericMapper with DiHyperEdgeMapper {

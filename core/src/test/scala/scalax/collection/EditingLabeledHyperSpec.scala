@@ -5,7 +5,7 @@ import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import scalax.collection.Data.shuffleNotEqual
-import scalax.collection.generic.{Edge, Ends, GraphCoreCompanion}
+import scalax.collection.generic.{Edge, GraphCoreCompanion}
 
 /** Editing hypergraphs with labeled edges including support for multi-hypergraphs.
   */
@@ -20,13 +20,13 @@ object EditingLabeledHyperSpec {
   object Labeled {
     import hyperedges.labeled._
 
-    case class MyHyperEdge[+N](override val ends: Ends[N], label: Int)
+    case class MyHyperEdge[+N](override val ends: Several[N], label: Int)
         extends LHyperEdge[N, Int](ends)
         with GenericHyperEdgeMapper[MyHyperEdge] {
-      def map[N](ends: Ends[N]): MyHyperEdge[N] = copy(ends)
+      def map[N](ends: Several[N]): MyHyperEdge[N] = copy(ends)
     }
 
-    val ends  = Ends('a', 'b', 'c')
+    val ends  = Several('a', 'b', 'c')
     val label = 1
     val hE    = MyHyperEdge(ends, label)
   }
@@ -34,10 +34,10 @@ object EditingLabeledHyperSpec {
   object OrderedLabeled {
     import hyperedges.ordered.labeled._
 
-    case class MyHyperEdge[+N](override val ends: Ends[N], label: Int)
+    case class MyHyperEdge[+N](override val ends: Several[N], label: Int)
         extends LHyperEdge[N, Int](ends)
         with GenericHyperEdgeMapper[MyHyperEdge] {
-      def map[N](ends: Ends[N]): MyHyperEdge[N] = copy(ends)
+      def map[N](ends: Several[N]): MyHyperEdge[N] = copy(ends)
     }
 
     val ends  = Labeled.ends
@@ -109,8 +109,8 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual hE
       }
       hE match {
-        case Ends(n1 :: n2 :: n3 :: _) + label =>
-          val reconstructed = MyHyperEdge(Ends.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
+        case Several(n1 :: n2 :: n3 :: _) + label =>
+          val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
       }
@@ -148,8 +148,8 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual hE
       }
       hE match {
-        case Ends(n1 :: n2 :: n3 :: _) + label =>
-          val reconstructed = MyHyperEdge(Ends.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
+        case Several(n1 :: n2 :: n3 :: _) + label =>
+          val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
       }

@@ -1,5 +1,7 @@
 package scalax.collection.generic
 
+import scalax.collection.Several
+
 import scala.collection.immutable.Iterable
 
 object AbstractHyperEdgeImplicits {
@@ -13,7 +15,7 @@ object AbstractHyperEdgeImplicits {
   trait FromEdge[N, E[N] <: AbstractHyperEdge[N], C <: HyperEdgeCompanion[E]] extends Any {
     protected def companion: C
     def e1: E[N]
-    def ~~[NN >: N](n: NN): E[NN] = companion(Ends(e1._1, e1._2, (e1.ends.more: Iterable[NN]) ++ (n :: Nil)))
+    def ~~[NN >: N](n: NN): E[NN] = companion(Several(e1._1, e1._2, (e1.ends.more: Iterable[NN]) ++ (n :: Nil)))
   }
 }
 
