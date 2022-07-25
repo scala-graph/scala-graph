@@ -37,9 +37,9 @@ trait UnapplyGenericLabeledHyperEdge[E[X] <: AbstractHyperEdge[X], L] {
   protected def label[N](edge: E[N] with Label[L]): L = edge.label
 }
 
-trait UnapplyGenericLabeledDiHyperEdge[E[X] <: AnyDiHyperEdge[X], L] {
-  def unapply[N](diHyperedge: E[N] with Label[L]): Option[(Seq[N], (Seq[N], L))] =
-    Some(diHyperedge.sources.toSeq -> (diHyperedge.targets.toSeq, label(diHyperedge)))
+trait UnapplyGenericLabeledDiHyperEdge[E[X] <: AbstractDiHyperEdge[X], L] {
+  def unapply[N](diHyperedge: E[N] with Label[L]): Option[(OneOrMore[N], (OneOrMore[N], L))] =
+    Some(diHyperedge.sources -> (diHyperedge.targets, label(diHyperedge)))
 
   protected def label[N](edge: E[N] with Label[L]): L = edge.label
 }
@@ -49,7 +49,7 @@ trait UnapplyGenericLabel[L] {
 }
 
 trait UnapplyGenericHyperLabel[L] {
-  def unapply[N](rest: (Seq[N], L)): Option[(Seq[N], L)] = Some(rest)
+  def unapply[N](rest: (OneOrMore[N], L)): Option[(OneOrMore[N], L)] = Some(rest)
 }
 
 trait ExtendedKeyByWeight extends ExtendedKey { this: Edge[_] =>

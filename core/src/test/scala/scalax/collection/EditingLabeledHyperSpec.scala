@@ -48,14 +48,14 @@ object EditingLabeledHyperSpec {
   object LabeledDi {
     import hyperedges.labeled._
 
-    case class MyDiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N], label: Int)
-        extends LDiHyperEdge[N, Int]
+    case class MyDiHyperEdge[+N](override val sources: OneOrMore[N], override val targets: OneOrMore[N], label: Int)
+        extends LDiHyperEdge[N, Int](sources, targets)
         with GenericDiHyperEdgeMapper[MyDiHyperEdge] {
-      def map[N](sources: Iterable[N], targets: Iterable[N]): MyDiHyperEdge[N] = copy(sources, targets)
+      def map[N](sources: OneOrMore[N], targets: OneOrMore[N]): MyDiHyperEdge[N] = copy(sources, targets)
     }
 
-    val sources = List('a', 'b')
-    val targets = List('c', 'd')
+    val sources = Several('a', 'b')
+    val targets = Several('c', 'd')
     val label   = 1
     val diHE    = MyDiHyperEdge(sources, targets, label)
   }
@@ -63,14 +63,14 @@ object EditingLabeledHyperSpec {
   object OrderedLabeledDi {
     import hyperedges.ordered.labeled._
 
-    case class MyDiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N], label: Int)
-        extends LDiHyperEdge[N, Int]
+    case class MyDiHyperEdge[+N](override val sources: OneOrMore[N], override val targets: OneOrMore[N], label: Int)
+        extends LDiHyperEdge[N, Int](sources, targets)
         with GenericDiHyperEdgeMapper[MyDiHyperEdge] {
-      def map[N](sources: Iterable[N], targets: Iterable[N]): MyDiHyperEdge[N] = copy(sources, targets)
+      def map[N](sources: OneOrMore[N], targets: OneOrMore[N]): MyDiHyperEdge[N] = copy(sources, targets)
     }
 
-    val sources = List('a', 'b', 'x')
-    val targets = List('c', 'd')
+    val sources = Several('a', 'b', 'x')
+    val targets = Several('c', 'd')
     val label   = 1
     val diHE    = MyDiHyperEdge(sources, targets, label)
   }
@@ -190,8 +190,12 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case (s1 :: s2 :: _) :~~> (t1 :: t2 :: _) + label =>
-          val reconstructed = MyDiHyperEdge(List(s1, s2), List(t1, t2), label)
+        case Several(s1 :: s2 :: _) :~~> Several(t1 :: t2 :: _) + label =>
+          val reconstructed = MyDiHyperEdge(
+            Several.fromUnsafe(List(s1, s2)),
+            Several.fromUnsafe(List(t1, t2)),
+            label
+          )
           "reconstructed: MyDiHyperEdge[Char]" should compile
           reconstructed shouldEqual diHE
       }
@@ -232,10 +236,15 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case (s1 :: s2 :: sRest) :~~> (t1 :: t2 :: tRest) + label =>
-          val reconstructed = MyDiHyperEdge(List(s1, s2) ++ sRest, List(t1, t2) ++ tRest, label)
+        case Several(s1 :: s2 :: sRest) :~~> Several(t1 :: t2 :: tRest) + label =>
+          val reconstructed = MyDiHyperEdge(
+            Several.fromUnsafe(List(s1, s2) ++ sRest),
+            Several.fromUnsafe(List(t1, t2) ++ tRest),
+            label
+          )
           "reconstructed: MyDiHyperEdge[Char]" should compile
           reconstructed shouldEqual diHE
+        case OneOrMore(_) :~~> OneOrMore(_) + _ => fail("Needed for exhaustiveness but should not happen")
       }
     }
   }

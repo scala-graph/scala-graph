@@ -91,6 +91,11 @@ object Data {
     loop(shuffle(xs))
   }
 
-  def shuffleNotEqual[N](ends: Several[N]): Several[N] =
-    Several.fromUnsafe(shuffleNotEqual(ends.iterator.toSeq))
+  def shuffleNotEqual[N, C[X] <: OneOrMore[X]](o: C[N]): Several[N] = o match {
+    case One(_)        => throw new IllegalArgumentException("Cannot shuffle one.")
+    case s: Several[N] => shuffleNotEqual(s)
+  }
+
+  def shuffleNotEqual[N](s: Several[N]): Several[N] =
+    Several.fromUnsafe(shuffleNotEqual(s.toList))
 }

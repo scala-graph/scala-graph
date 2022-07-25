@@ -1,4 +1,5 @@
-package scalax.collection.hyperedges
+package scalax.collection
+package hyperedges
 
 import scalax.collection.generic.{AbstractHyperEdge, HyperEdgeCompanion, HyperEdgeToString}
 

@@ -196,13 +196,13 @@ object AbstractHyperEdge {
 
 /** The abstract methods of this trait must be implemented by companion objects of non-labeled hyperedges.
   */
-trait HyperEdgeCompanion[+E[N] <: AnyHyperEdge[N]] extends EdgeCompanionBase {
+trait HyperEdgeCompanion[+E[N] <: AbstractHyperEdge[N]] extends EdgeCompanionBase {
 
   def apply[N](ends: Several[N]): E[N]
 
   def apply[N](node_1: N, node_2: N, moreNodes: N*): E[N] = apply(Several(node_1, node_2, moreNodes))
 
-  final def unapply[N](edge: E[N] @uV): Option[Seq[N]] = Some(edge.ends.toSeq)
+  final def unapply[N](edge: E[N] @uV): Option[Several[N]] = Some(edge.ends)
 
   /** `Some` hyperedge if `ends` contains at least two elements, otherwise `None`.
     */
@@ -245,38 +245,38 @@ trait AnyDiHyperEdge[+N] extends AnyHyperEdge[N] with EqDiHyper {
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = (sources exists p1) && (targets exists p2)
 }
 
-object AnyDiHyperEdge {
-  def unapply[N](e: AnyDiHyperEdge[N]): Option[(Iterable[N], Iterable[N])] =
+abstract class AbstractDiHyperEdge[+N](override val sources: OneOrMore[N], override val targets: OneOrMore[N])
+    extends AnyDiHyperEdge[N]
+
+object AbstractDiHyperEdge {
+  def unapply[N](e: AbstractDiHyperEdge[N]): Option[(OneOrMore[N], OneOrMore[N])] =
     if (e eq null) None else Some(e.sources, e.targets)
 }
 
-abstract class AbstractDiHyperEdge[+N](override val sources: Iterable[N], override val targets: Iterable[N])
-    extends AnyDiHyperEdge[N]
-
 /** The abstract methods of this trait must be implemented by companion objects of directed, non-labeled hyperedges.
   */
-trait DiHyperEdgeCompanion[+E[N] <: AnyDiHyperEdge[N]] extends EdgeCompanionBase {
+trait DiHyperEdgeCompanion[+E[N] <: AbstractDiHyperEdge[N]] extends EdgeCompanionBase {
 
-  protected def apply[N](sources: Iterable[N], targets: Iterable[N]): E[N]
+  def apply[N](sources: OneOrMore[N], targets: OneOrMore[N]): E[N]
 
   def apply[N](source_1: N, moreSources: N*)(target_1: N, moreTargets: N*): E[N] =
-    apply(source_1 +: moreSources, target_1 +: moreTargets)
+    apply(OneOrMore(source_1, moreSources: _*), OneOrMore(target_1, moreTargets: _*))
 
-  def unapply[N](edge: E[N] @uV): Option[(Seq[N], Seq[N])] = Some(edge.sources.toSeq, edge.targets.toSeq)
+  def unapply[N](edge: E[N] @uV): Option[(OneOrMore[N], OneOrMore[N])] = Some(edge.sources, edge.targets)
 
-  /** `Some` directed hyperedge if `sources` and `targets` are not empty, otherwise `None`.
+  /** `Some` directed hyperedge if `sources` and `targets` have at least one element each, otherwise `None`.
     */
   final def from[N](sources: Iterable[N], targets: Iterable[N]): Option[E[N]] =
-    if (sources.nonEmpty && targets.nonEmpty) Some(apply(sources, targets))
-    else None
+    (OneOrMore.from(sources), OneOrMore.from(targets)) match {
+      case (Some(s), Some(t)) => Some(apply(s, t))
+      case _                  => None
+    }
 
   /** A directed hyperedge with the supplied `sources` and `targets`.
     * @throws IllegalArgumentException if `sources` or `targets` is empty.
     */
-  final def unsafeFrom[N](sources: Iterable[N], targets: Iterable[N]): E[N] = {
-    require(sources.nonEmpty && targets.nonEmpty)
-    apply(sources, targets)
-  }
+  final def unsafeFrom[N](sources: Iterable[N], targets: Iterable[N]): E[N] =
+    apply(OneOrMore.fromUnsafe(sources), OneOrMore.fromUnsafe(targets))
 }
 
 trait AnyEdge[+N] extends Edge[N] { this: Eq =>

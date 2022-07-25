@@ -17,7 +17,7 @@ trait GenericHyperEdgeMapper[+CC[X] <: Edge[X]] extends GenericMapper with Hyper
 
 trait GenericDiHyperEdgeMapper[+CC[X] <: Edge[X]] extends GenericMapper with DiHyperEdgeMapper {
   this: AnyDiHyperEdge[_] =>
-  def map[N](sources: Iterable[N], targets: Iterable[N]): CC[N]
+  def map[N](sources: OneOrMore[N], targets: OneOrMore[N]): CC[N]
 }
 
 /** Mixin for directed and undirected generic edges to facilitate `Graph` mapping by `def map(fNode)`.

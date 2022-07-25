@@ -3,6 +3,8 @@ package scalax.collection
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
+import scalax.collection.generic.AbstractDiHyperEdge
+
 class EqualityHyperSpec extends RefSpec with Matchers {
 
   def `hyperedges, bag like ` : Unit = {
@@ -34,9 +36,9 @@ class EqualityHyperSpec extends RefSpec with Matchers {
   def `directed hyperedges, bag like`: Unit = {
     import scalax.collection.hyperedges._
 
-    val sources = List('A', 'B', 'C')
-    val targets = List('D', 'D', 'E')
-    val dhEdge  = DiHyperEdge.unsafeFrom(sources, targets)
+    val sources = Several('A', 'B', 'C')
+    val targets = Several('D', 'D', 'E')
+    val dhEdge  = DiHyperEdge(sources, targets)
     dhEdge shouldEqual sources ~~> targets
     dhEdge shouldEqual sources.reverse ~~> targets.reverse
 
@@ -45,16 +47,16 @@ class EqualityHyperSpec extends RefSpec with Matchers {
     val sourcesSize = sources.size
     dhEdge.arity shouldBe sourcesSize + targets.size
 
-    for (i <- sources.indices) dhEdge.node(i) shouldBe sources(i)
-    for (i <- targets.indices) dhEdge.node(i + sourcesSize) shouldBe targets(i)
+    checkIndices(sources, dhEdge)
+    checkIndices(targets, dhEdge, sourcesSize)
   }
 
   def `directed hyperedges, ordered`: Unit = {
     import scalax.collection.hyperedges.ordered._
 
-    val sources = List('A', 'B', 'C')
-    val targets = List('D', 'D', 'E')
-    val dhEdge  = DiHyperEdge.unsafeFrom(sources, targets)
+    val sources = Several('A', 'B', 'C')
+    val targets = Several('D', 'D', 'E')
+    val dhEdge  = DiHyperEdge(sources, targets)
     dhEdge shouldEqual sources ~~> targets
     dhEdge shouldNot equal(sources.reverse ~~> targets.reverse)
 
@@ -63,7 +65,12 @@ class EqualityHyperSpec extends RefSpec with Matchers {
     val sourcesSize = sources.size
     dhEdge.arity shouldBe sourcesSize + targets.size
 
-    for (i <- sources.indices) dhEdge.node(i) shouldBe sources(i)
-    for (i <- targets.indices) dhEdge.node(i + sourcesSize) shouldBe targets(i)
+    checkIndices(sources, dhEdge)
+    checkIndices(targets, dhEdge, sourcesSize)
+  }
+
+  private def checkIndices(s: Several[_], dhEdge: AbstractDiHyperEdge[_], plus: Int = 0): Unit = {
+    val list = s.toList
+    for (i <- list.indices) dhEdge.node(i + plus) shouldBe list(i)
   }
 }

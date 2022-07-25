@@ -1,4 +1,5 @@
-package scalax.collection.hyperedges
+package scalax.collection
+package hyperedges
 package ordered.labeled
 
 import scalax.collection.generic.{AbstractHyperEdge, LHyperEdgeToString, Label, OrderedEndpoints}

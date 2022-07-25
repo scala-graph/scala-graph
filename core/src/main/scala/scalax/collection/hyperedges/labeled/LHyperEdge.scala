@@ -1,4 +1,5 @@
-package scalax.collection.hyperedges.labeled
+package scalax.collection
+package hyperedges.labeled
 
 import scalax.collection.generic.{AbstractHyperEdge, LHyperEdgeToString, Label}
 import scalax.collection.hyperedges._
