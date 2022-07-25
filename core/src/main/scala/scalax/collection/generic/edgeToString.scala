@@ -46,13 +46,13 @@ sealed protected trait LEdgeToString extends EdgeToString { _: Edge[_] =>
   override def toString: String = s"$nodesToString$labelSeparator$labelToString"
 }
 
-trait LUnDiEdgeToString extends LEdgeToString with UnDiEdgeToString { _: AnyUnDiEdge[_] => }
+trait LUnDiEdgeToString extends LEdgeToString with UnDiEdgeToString { this: AnyUnDiEdge[_] => }
 
-trait LDiEdgeToString extends LEdgeToString with DiEdgeToString { _: AnyDiEdge[_] => }
+trait LDiEdgeToString extends LEdgeToString with DiEdgeToString { this: AnyDiEdge[_] => }
 
-trait LHyperEdgeToString extends LEdgeToString with HyperEdgeToString { _: AnyHyperEdge[_] => }
+trait LHyperEdgeToString extends LEdgeToString with HyperEdgeToString { this: AbstractHyperEdge[_] => }
 
-trait LDiHyperEdgeToString extends LEdgeToString with DiHyperEdgeToString { _: AnyDiHyperEdge[_] => }
+trait LDiHyperEdgeToString extends LEdgeToString with DiHyperEdgeToString { this: AbstractDiHyperEdge[_] => }
 
 /** Mix in this trait in your labeled edge class if you want to indicate in its `toString` representation
   * that the edge supports multigraphs. Once mixed in, the `labelSeparator` gets `++`.

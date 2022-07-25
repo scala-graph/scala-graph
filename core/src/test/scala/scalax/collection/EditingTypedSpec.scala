@@ -39,7 +39,7 @@ private class EditingTypedEdges extends RefSpec with Matchers {
   import Samples._
 
   def `toString of typed edge`: Unit =
-    outer.toString should startWith(s"$madrid ~> $rio + ")
+    outer.toString should startWith(s"$madrid ~> $rio ++ ")
 }
 
 private class EditingTyped[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](

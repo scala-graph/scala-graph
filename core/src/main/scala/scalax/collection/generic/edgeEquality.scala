@@ -210,7 +210,3 @@ trait ExtendedKey { this: Edge[_] =>
 
   override def hashCode: Int = super.hashCode + extendKeyBy.map(_.## * 41).sum
 }
-
-object ExtendedKey {
-  def unapply(e: ExtendedKey) = Some(e)
-}

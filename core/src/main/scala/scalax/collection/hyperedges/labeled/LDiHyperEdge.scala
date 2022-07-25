@@ -1,7 +1,7 @@
 package scalax.collection
 package hyperedges.labeled
 
-import scalax.collection.generic.{AbstractDiHyperEdge, LDiHyperEdgeToString, Label}
+import scalax.collection.generic.{AbstractDiHyperEdge, LDiHyperEdgeToString, SingleLabel}
 import scalax.collection.hyperedges.DiHyperEdge
 
 /** Template for generic directed hyperedges with a single `label` field.
@@ -10,14 +10,12 @@ import scalax.collection.hyperedges.DiHyperEdge
   */
 abstract class LDiHyperEdge[+N, L](sources: OneOrMore[N], targets: OneOrMore[N])
     extends AbstractDiHyperEdge[N](sources, targets)
-    with Label[L]
-    with LDiHyperEdgeToString {
-  protected def labelToString: String = label.toString
-}
+    with SingleLabel[L]
+    with LDiHyperEdgeToString
 
 /** Template for an `implicit class` that defines the infix constructor `+` to pass a label like `Several(1, 2) ~~> One(3) + aLabel`.
   */
-abstract class LDiHyperEdgeInfixConstructor[N, L, CC[X] <: AbstractDiHyperEdge[X] with Label[L]](
+abstract class LDiHyperEdgeInfixConstructor[N, L, CC[X] <: AbstractDiHyperEdge[X] with SingleLabel[L]](
     apply: (OneOrMore[N], OneOrMore[N], L) => CC[N]
 ) {
   def diHyperedge: DiHyperEdge[N]

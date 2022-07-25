@@ -74,11 +74,69 @@ object EditingLabeledHyperSpec {
     val label   = 1
     val diHE    = MyDiHyperEdge(sources, targets, label)
   }
+
+  object MultiLabeled {
+    import hyperedges.multilabeled._
+
+    case class MyHyperEdge[+N](override val ends: Several[N], label: Int)
+        extends LHyperEdge[N, Int](ends)
+        with GenericHyperEdgeMapper[MyHyperEdge] {
+      def map[N](ends: Several[N]): MyHyperEdge[N] = copy(ends)
+    }
+
+    val ends  = Labeled.ends
+    val label = Labeled.label
+    val hE    = MyHyperEdge(ends, label)
+  }
+
+  object MultiOrderedLabeled {
+    import hyperedges.ordered.multilabeled._
+
+    case class MyHyperEdge[+N](override val ends: Several[N], label: Int)
+        extends LHyperEdge[N, Int](ends)
+        with GenericHyperEdgeMapper[MyHyperEdge] {
+      def map[N](ends: Several[N]): MyHyperEdge[N] = copy(ends)
+    }
+
+    val ends  = Labeled.ends
+    val label = Labeled.label
+    val hE    = MyHyperEdge(ends, label)
+  }
+
+  object MultiLabeledDi {
+    import hyperedges.multilabeled._
+
+    case class MyDiHyperEdge[+N](override val sources: OneOrMore[N], override val targets: OneOrMore[N], label: Int)
+        extends LDiHyperEdge[N, Int](sources, targets)
+        with GenericDiHyperEdgeMapper[MyDiHyperEdge] {
+      def map[N](sources: OneOrMore[N], targets: OneOrMore[N]): MyDiHyperEdge[N] = copy(sources, targets)
+    }
+
+    val sources = LabeledDi.sources
+    val targets = LabeledDi.targets
+    val label   = LabeledDi.label
+    val diHE    = MyDiHyperEdge(sources, targets, label)
+  }
+
+  object MultiOrderedLabeledDi {
+    import hyperedges.ordered.multilabeled._
+
+    case class MyDiHyperEdge[+N](override val sources: OneOrMore[N], override val targets: OneOrMore[N], label: Int)
+        extends LDiHyperEdge[N, Int](sources, targets)
+        with GenericDiHyperEdgeMapper[MyDiHyperEdge] {
+      def map[N](sources: OneOrMore[N], targets: OneOrMore[N]): MyDiHyperEdge[N] = copy(sources, targets)
+    }
+
+    val sources = OrderedLabeledDi.sources
+    val targets = OrderedLabeledDi.targets
+    val label   = OrderedLabeledDi.label
+    val diHE    = MyDiHyperEdge(sources, targets, label)
+  }
 }
 
 private class LabeledHyperEdges extends RefSpec with Matchers {
 
-  object `a generic undirected, mappable labeled edge` {
+  object `a generic undirected, mappable labeled hyperedge` {
     import hyperedges._
     import hyperedges.labeled._
     import EditingLabeledHyperSpec.Labeled._
@@ -88,8 +146,8 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
 
     def `meets equality rules`: Unit = {
       hE.copy(label = 9) shouldEqual hE
-      hE shouldEqual HyperEdge.fromUnsafe(hE.ends)
-      hE shouldEqual HyperEdge.fromUnsafe(shuffleNotEqual(hE.ends))
+      hE shouldEqual HyperEdge(hE.ends)
+      hE shouldEqual HyperEdge(shuffleNotEqual(hE.ends))
     }
 
     def `supports infix construction`: Unit = {
@@ -117,7 +175,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     }
   }
 
-  object `generic undirected, mappable, ordered labeled edge` {
+  object `generic undirected, mappable, ordered labeled hyperedge` {
     import hyperedges._
     import hyperedges.ordered.labeled._
     import EditingLabeledHyperSpec.OrderedLabeled._
@@ -128,7 +186,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     def `meets equality rules`: Unit = {
       hE.copy(label = 9) shouldEqual hE
       hE.copy(ends = shuffleNotEqual(hE.ends)) shouldNot equal(hE)
-      hE shouldNot equal(HyperEdge.fromUnsafe(hE.ends))
+      hE shouldNot equal(HyperEdge(hE.ends))
     }
 
     def `supports infix construction`: Unit = {
@@ -156,7 +214,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     }
   }
 
-  object `generic directed, mappable labeled edge` {
+  object `generic directed, mappable labeled hyperedge` {
     import hyperedges._
     import hyperedges.labeled._
     import EditingLabeledHyperSpec.LabeledDi._
@@ -168,8 +226,8 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
 
     def `meets equality rules`: Unit = {
       diHE.copy(label = 9) shouldEqual diHE
-      diHE shouldEqual DiHyperEdge.unsafeFrom(diHE.sources, diHE.targets)
-      diHE shouldEqual DiHyperEdge.unsafeFrom(shuffleNotEqual(diHE.sources), shuffleNotEqual(diHE.targets))
+      diHE shouldEqual DiHyperEdge(diHE.sources, diHE.targets)
+      diHE shouldEqual DiHyperEdge(shuffleNotEqual(diHE.sources), shuffleNotEqual(diHE.targets))
     }
 
     def `supports infix construction`: Unit = {
@@ -202,7 +260,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     }
   }
 
-  object `generic directed, mappable, ordered labeled edge` {
+  object `generic directed, mappable, ordered labeled hyperedge` {
     import hyperedges._
     import hyperedges.ordered.labeled._
     import EditingLabeledHyperSpec.OrderedLabeledDi._
@@ -245,6 +303,175 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           "reconstructed: MyDiHyperEdge[Char]" should compile
           reconstructed shouldEqual diHE
         case OneOrMore(_) :~~> OneOrMore(_) + _ => fail("Needed for exhaustiveness but should not happen")
+      }
+    }
+  }
+
+  object `a generic undirected, mappable multilabeled hyperedge` {
+    import hyperedges._
+    import hyperedges.multilabeled._
+    import EditingLabeledHyperSpec.MultiLabeled._
+
+    def `meets toString convention`: Unit =
+      hE.toString shouldBe s"${ends mkString " ~~ "} ++ 1"
+
+    def `meets equality rules`: Unit = {
+      hE.copy(label = 9) shouldNot equal(hE)
+      hE shouldNot equal(HyperEdge(hE.ends))
+    }
+
+    def `supports infix construction`: Unit = {
+      implicit class MyInfixConstructor[N](val hyperedge: HyperEdge[N])
+          extends LHyperEdgeInfixConstructor[N, Int, MyHyperEdge](MyHyperEdge.apply)
+      'a' ~~ 'b' ~~ 'c' ++ 1 shouldEqual hE
+    }
+
+    def `supports infix extraction`: Unit = {
+      import generic.UnapplyGenericLabeledHyperEdge
+      object ++ extends UnapplyGenericLabeledHyperEdge[MyHyperEdge, Int]
+
+      hE match {
+        case ends ++ label =>
+          val reconstructed = MyHyperEdge(ends, label)
+          "reconstructed: MyHyperEdge[Char]" should compile
+          reconstructed shouldEqual hE
+      }
+      hE match {
+        case Several(n1 :: n2 :: n3 :: _) ++ label =>
+          val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
+          "reconstructed: MyHyperEdge[Char]" should compile
+          reconstructed shouldEqual hE
+      }
+    }
+  }
+
+  object `generic undirected, mappable, ordered multilabeled hyperedge` {
+    import hyperedges._
+    import hyperedges.ordered.multilabeled._
+    import EditingLabeledHyperSpec.MultiOrderedLabeled._
+
+    def `meets toString convention`: Unit =
+      hE.toString shouldBe s"${ends mkString " ~~ "} ++ 1"
+
+    def `meets equality rules`: Unit = {
+      hE.copy(label = 9) shouldNot equal(hE)
+      hE.copy(ends = shuffleNotEqual(hE.ends)) shouldNot equal(hE)
+      hE shouldNot equal(HyperEdge(hE.ends))
+    }
+
+    def `supports infix construction`: Unit = {
+      implicit class MyInfixConstructor[N](val hyperedge: HyperEdge[N])
+          extends LHyperEdgeInfixConstructor[N, Int, MyHyperEdge](MyHyperEdge.apply)
+      'a' ~~ 'b' ~~ 'c' ++ 1 shouldEqual hE
+    }
+
+    def `supports infix extraction`: Unit = {
+      import generic.UnapplyGenericLabeledHyperEdge
+      object ++ extends UnapplyGenericLabeledHyperEdge[MyHyperEdge, Int]
+
+      hE match {
+        case ends ++ label =>
+          val reconstructed = MyHyperEdge(ends, label)
+          "reconstructed: MyHyperEdge[Char]" should compile
+          reconstructed shouldEqual hE
+      }
+      hE match {
+        case Several(n1 :: n2 :: n3 :: _) ++ label =>
+          val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
+          "reconstructed: MyHyperEdge[Char]" should compile
+          reconstructed shouldEqual hE
+      }
+    }
+  }
+
+  object `generic directed, mappable multilabeled hyperedge` {
+    import hyperedges._
+    import hyperedges.multilabeled._
+    import EditingLabeledHyperSpec.MultiLabeledDi._
+
+    def `meets toString convention`: Unit = {
+      def nodesToString(nodes: Iterable[_]) = nodes.mkString("{", ", ", "}")
+      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} ++ $label"
+    }
+
+    def `meets equality rules`: Unit = {
+      diHE.copy(label = 9) shouldNot equal(diHE)
+      diHE shouldNot equal(DiHyperEdge(diHE.sources, diHE.targets))
+    }
+
+    def `supports infix construction`: Unit = {
+      implicit class MyInfixConstructor[N](val diHyperedge: DiHyperEdge[N])
+          extends LDiHyperEdgeInfixConstructor[N, Int, MyDiHyperEdge](MyDiHyperEdge.apply)
+      sources ~~> targets ++ 1 shouldEqual diHE
+    }
+
+    def `supports infix extraction`: Unit = {
+      import generic.{UnapplyGenericHyperLabel, UnapplyGenericLabeledDiHyperEdge}
+      object :~~> extends UnapplyGenericLabeledDiHyperEdge[MyDiHyperEdge, Int]
+      object ++   extends UnapplyGenericHyperLabel[Int]
+
+      diHE match {
+        case sources :~~> targets ++ label =>
+          val reconstructed = MyDiHyperEdge(sources, targets, label)
+          "reconstructed: MyDiHyperEdge[Char]" should compile
+          reconstructed shouldEqual diHE
+      }
+      diHE match {
+        case Several(s1 :: s2 :: _) :~~> Several(t1 :: t2 :: _) ++ label =>
+          val reconstructed = MyDiHyperEdge(
+            Several.fromUnsafe(List(s1, s2)),
+            Several.fromUnsafe(List(t1, t2)),
+            label
+          )
+          "reconstructed: MyDiHyperEdge[Char]" should compile
+          reconstructed shouldEqual diHE
+      }
+    }
+  }
+
+  object `generic directed, mappable, ordered multilabeled hyperedge` {
+    import hyperedges._
+    import hyperedges.ordered.multilabeled._
+    import EditingLabeledHyperSpec.MultiOrderedLabeledDi._
+
+    def `meets toString convention`: Unit = {
+      def nodesToString(nodes: Iterable[_]) = nodes.mkString("{", ", ", "}")
+      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} ++ $label"
+    }
+
+    def `meets equality rules`: Unit = {
+      diHE.copy(label = 9) shouldNot equal(diHE)
+      diHE.copy(shuffleNotEqual(diHE.sources), shuffleNotEqual(diHE.targets)) shouldNot equal(diHE)
+      diHE shouldNot equal(DiHyperEdge(diHE.sources, diHE.targets))
+    }
+
+    def `supports infix construction`: Unit = {
+      implicit class MyInfixConstructor[N](val diHyperedge: DiHyperEdge[N])
+          extends LDiHyperEdgeInfixConstructor[N, Int, MyDiHyperEdge](MyDiHyperEdge.apply)
+      sources ~~> targets ++ 1 shouldEqual diHE
+    }
+
+    def `supports infix extraction`: Unit = {
+      import generic.{UnapplyGenericHyperLabel, UnapplyGenericLabeledDiHyperEdge}
+      object :~~> extends UnapplyGenericLabeledDiHyperEdge[MyDiHyperEdge, Int]
+      object ++   extends UnapplyGenericHyperLabel[Int]
+
+      diHE match {
+        case sources :~~> targets ++ label =>
+          val reconstructed = MyDiHyperEdge(sources, targets, label)
+          "reconstructed: MyDiHyperEdge[Char]" should compile
+          reconstructed shouldEqual diHE
+      }
+      diHE match {
+        case Several(s1 :: s2 :: sRest) :~~> Several(t1 :: t2 :: tRest) ++ label =>
+          val reconstructed = MyDiHyperEdge(
+            Several.fromUnsafe(List(s1, s2) ++ sRest),
+            Several.fromUnsafe(List(t1, t2) ++ tRest),
+            label
+          )
+          "reconstructed: MyDiHyperEdge[Char]" should compile
+          reconstructed shouldEqual diHE
+        case OneOrMore(_) :~~> OneOrMore(_) ++ _ => fail("Needed for exhaustiveness but should not happen")
       }
     }
   }

@@ -1,12 +1,17 @@
 package scalax.collection
 package generic
 
-trait Label[L] { this: Edge[_] =>
+trait SingleLabel[L] { this: Edge[_] with LEdgeToString =>
   def label: L
+  protected def labelToString: String = label.toString
 }
 
-object Label {
-  def unapply[L](edge: Edge[_] with Label[L]): Option[L] = Some(edge.label)
+object SingleLabel {
+  def unapply[L](edge: Edge[_] with SingleLabel[L]): Option[L] = Some(edge.label)
+}
+
+trait ExtendedKeyBySingleLabel extends ExtendedKey { this: Edge[_] with SingleLabel[_] =>
+  def extendKeyBy: Seq[Any] = label :: Nil
 }
 
 /** Intermediate infix extractor for the "unlabeled part" of a weighted edge.
@@ -26,22 +31,22 @@ trait UnapplyLabel[N, L] {
 }
 
 trait UnapplyGenericLabeledEdge[E[X] <: AnyEdge[X], L] {
-  def unapply[N](edge: E[N] with Label[L]): Option[(N, (N, L))] = Some(edge._1 -> (edge._2, label(edge)))
-  protected def label[N](edge: E[N] with Label[L]): L           = edge.label
+  def unapply[N](edge: E[N] with SingleLabel[L]): Option[(N, (N, L))] = Some(edge._1 -> (edge._2, label(edge)))
+  protected def label[N](edge: E[N] with SingleLabel[L]): L           = edge.label
 }
 
 trait UnapplyGenericLabeledHyperEdge[E[X] <: AbstractHyperEdge[X], L] {
-  def unapply[N](hyperedge: E[N] with Label[L]): Option[(Several[N], L)] =
+  def unapply[N](hyperedge: E[N] with SingleLabel[L]): Option[(Several[N], L)] =
     Some(hyperedge.ends, label(hyperedge))
 
-  protected def label[N](edge: E[N] with Label[L]): L = edge.label
+  protected def label[N](edge: E[N] with SingleLabel[L]): L = edge.label
 }
 
 trait UnapplyGenericLabeledDiHyperEdge[E[X] <: AbstractDiHyperEdge[X], L] {
-  def unapply[N](diHyperedge: E[N] with Label[L]): Option[(OneOrMore[N], (OneOrMore[N], L))] =
+  def unapply[N](diHyperedge: E[N] with SingleLabel[L]): Option[(OneOrMore[N], (OneOrMore[N], L))] =
     Some(diHyperedge.sources -> (diHyperedge.targets, label(diHyperedge)))
 
-  protected def label[N](edge: E[N] with Label[L]): L = edge.label
+  protected def label[N](edge: E[N] with SingleLabel[L]): L = edge.label
 }
 
 trait UnapplyGenericLabel[L] {
