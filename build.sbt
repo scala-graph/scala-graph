@@ -20,7 +20,7 @@ lazy val core = project
       version := Version.core,
       libraryDependencies ++= Seq(
         "org.scalacheck" %% "scalacheck"    % "1.15.4",
-        "org.gephi"       % "gephi-toolkit" % "0.9.2" % "test" classifier "all"
+        "org.gephi"       % "gephi-toolkit" % "0.9.7" % "test" classifier "all"
       ),
       dependencyOverrides ++= {
         val release                        = "RELEASE123"
