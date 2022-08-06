@@ -198,7 +198,7 @@ object State {
   }
 
   /** Dumps the state flags of a `node`. */
-  def dump[N, E <: Edge[N]](node: Graph[N, E]#NodeT): ExtBitSet =
+  def dump[N, E <: Edge[N]](node: AnyGraph[N, E]#NodeT): ExtBitSet =
     node.containingGraph match {
       case g: State[_, _] =>
         node match {
@@ -212,7 +212,7 @@ object State {
   }
 
   /** Dumps the state flags of a `graph`. */
-  def dump[N, E <: Edge[N]](graph: Graph[N, E]): GraphDump = graph match {
+  def dump[N, E <: Edge[N]](graph: AnyGraph[N, E]): GraphDump = graph match {
     case g: State[_, _] => new GraphDump(g.dumpInUse, g.dumpDirty)
   }
 }

@@ -18,7 +18,7 @@ class TopologicalSortSpec
       new TopologicalSort[mutable.Graph](mutable.Graph)
     )
 
-final private class TopologicalSort[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G]
 ) extends RefSpec
     with Matchers
@@ -76,10 +76,10 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: Graph[N, E] with Graph
       }
     }
 
-    def unexpectedCycle[N, E <: Edge[N]](cycleNode: Graph[N, E]#NodeT) =
+    def unexpectedCycle[N, E <: Edge[N]](cycleNode: AnyGraph[N, E]#NodeT) =
       fail(s"Unexpected cycle starting at ${cycleNode.outer}")
 
-    def unexpectedRight[N, E <: Edge[N]](order: Graph[N, E]#TopologicalOrder[_]) =
+    def unexpectedRight[N, E <: Edge[N]](order: AnyGraph[N, E]#TopologicalOrder[_]) =
       fail(s"Cycle expected but topological order ${order.toLayered} found")
   }
 
@@ -120,7 +120,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: Graph[N, E] with Graph
       listening_to_music
     )
 
-    given(typicalDay) { case g: Graph[String, DiEdge[String]] => // `annotated for IntelliJ
+    given(typicalDay) { case g: AnyGraph[String, DiEdge[String]] => // `annotated for IntelliJ
       g.topologicalSort.fold(
         Topo.unexpectedCycle,
         order =>
@@ -134,7 +134,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: Graph[N, E] with Graph
   def `connected graph`: Unit = {
     val someOuter @ n0 :: n1 :: n5 :: Nil = 0 :: 1 :: 5 :: Nil
     val connected                         = factory[Int, DiEdge](n0 ~> n1, 2 ~> 4, 2 ~> n5, n0 ~> 3, n1 ~> 4, 4 ~> 3)
-    given(connected) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(connected) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       g.isMulti shouldBe false
       g.topologicalSort.fold(
         Topo.unexpectedCycle,
@@ -170,7 +170,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: Graph[N, E] with Graph
   def `unconnected graph`: Unit = {
     val expectedLayer_0 @ (_1 :: _3 :: Nil) = List(1, 3)
     val expectedLayer_1 @ (_2 :: _4 :: Nil) = List(2, 4)
-    given(factory(_1 ~> _2, _3 ~> _4)) { g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(factory(_1 ~> _2, _3 ~> _4)) { g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       g.topologicalSort.fold(
         Topo.unexpectedCycle,
         _.toLayered.toOuter.toList match {
@@ -184,7 +184,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: Graph[N, E] with Graph
   }
 
   def `cyclic graph`: Unit =
-    given(factory(1 ~> 2, 2 ~> 1)) { g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(factory(1 ~> 2, 2 ~> 1)) { g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       g.topologicalSort.fold(
         identity,
         Topo.unexpectedRight
@@ -192,7 +192,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: Graph[N, E] with Graph
     }
 
   def `cyclic graph #68`: Unit =
-    given(factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)) { g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)) { g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       g.topologicalSort.fold(
         identity,
         Topo.unexpectedRight

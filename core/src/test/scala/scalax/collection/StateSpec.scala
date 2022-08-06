@@ -6,14 +6,13 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.util.Random
-
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import generator.{NodeDegreeRange, RandomGraph}
-
 import org.scalatest.Inspectors._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
+import scalax.collection.immutable.Graph
 
 /** Ensure that stateful data handling used for traversals is thread-safe.
   */

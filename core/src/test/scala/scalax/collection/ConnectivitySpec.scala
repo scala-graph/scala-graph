@@ -20,7 +20,7 @@ class ConnectivitySpec
       new Connectivity[mutable.Graph](mutable.Graph)
     )
 
-final class Connectivity[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G]
 ) extends RefSpec
     with Matchers
@@ -34,7 +34,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, 
     val g = factory(elementsOfDi_1: _*)
 
     def `there exists no pair of mutually reachable nodes`: Unit =
-      given(g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(g) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
         g.nodes.toList.combinations(2) foreach {
           case List(a, b) => List(a pathTo b, b pathTo a) should contain(None)
           case _          => fail()
@@ -42,7 +42,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, 
       }
 
     def `evaluating strong components from any node yields single-node components`: Unit =
-      given(g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(g) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
         g.nodes foreach { n =>
           val components = n.innerNodeTraverser.strongComponents
           components foreach (_.nodes should have size 1)
@@ -50,7 +50,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, 
       }
 
     def `evaluating all strong components yields a component for every node`: Unit =
-      given(g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(g) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
         g.strongComponentTraverser().size shouldBe g.order
       }
   }
@@ -61,14 +61,14 @@ final class Connectivity[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, 
       factory('a' ~> 'b', 'b' ~> 'c', 'c' ~> 'd', 'd' ~> 'a', 'd' ~> 'e', 'c' ~> 'e', 'e' ~> 'c'),
       factory('f' ~> 'g', 'g' ~> 'f', 'g' ~> 'h', 'h' ~> 'j', 'j' ~> 'i', 'i' ~> 'g', 'i' ~> 'f', 'f' ~> 'i')
     )
-    val sccExpectedG: Vector[Graph[Char, DiEdge[Char]]] = sccExpected // for IntelliJ
+    val sccExpectedG: Vector[AnyGraph[Char, DiEdge[Char]]] = sccExpected // for IntelliJ
 
     assert(sccExpected.size == 2)
     assert(sccExpectedG(0).intersect(sccExpectedG(1)).isEmpty)
 
     def `each is detected as such`: Unit =
       sccExpected.foreach(g =>
-        given(g) { case g: Graph[Char, DiEdge[Char]] => // `annotated for IntelliJ
+        given(g) { case g: AnyGraph[Char, DiEdge[Char]] => // `annotated for IntelliJ
           g.strongComponentTraverser() should have size 1
         }
       )
@@ -105,7 +105,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, 
 
   object `Having two weak components` {
     def `weak components are detected, fix #57`: Unit =
-      given(factory(11 ~> 12, 13 ~> 14)) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(factory(11 ~> 12, 13 ~> 14)) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
         g.componentTraverser() should have size 2
       }
   }

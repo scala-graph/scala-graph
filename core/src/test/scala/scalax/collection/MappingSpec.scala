@@ -16,7 +16,7 @@ class MappingSpec
       new Mapping[mutable.Graph](mutable.Graph)
     )
 
-private class Mapping[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+private class Mapping[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {

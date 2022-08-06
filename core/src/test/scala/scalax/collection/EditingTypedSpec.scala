@@ -42,7 +42,7 @@ private class EditingTypedEdges extends RefSpec with Matchers {
     outer.toString should startWith(s"$madrid ~> $rio ++ ")
 }
 
-private class EditingTyped[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {
@@ -52,7 +52,7 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
     def `edge methods`: Unit = {
 
       // TODO get apply/from work with Flight
-      val g: Graph[Airport, Flight] =
+      val g: AnyGraph[Airport, Flight] =
         factory.from[Airport, Flight](Nil, edges = outer :: Nil) // `annotated for IntelliJ
 
       val e = g.edges.head
@@ -93,7 +93,7 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
     }
 
     def `extractor`: Unit = {
-      val g: Graph[Airport, Flight] = factory.empty[Airport, Flight]
+      val g: AnyGraph[Airport, Flight] = factory.empty[Airport, Flight]
 
       g.nodes foreach { case g.InnerNode(inner, Airport(code)) =>
         code -> inner.outDegree

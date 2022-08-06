@@ -2,7 +2,7 @@ package scalax.collection.mutable
 
 import scala.collection.mutable.Cloneable
 
-import scalax.collection.{Graph => AnyGraph, GraphOps => AnyGraphOps}
+import scalax.collection.{AnyGraph => AnyGraph, GraphOps => AnyGraphOps}
 import scalax.collection.generic.Edge
 
 trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] with Graph[X, Y]]

@@ -25,7 +25,7 @@ import scalax.collection.mutable.Builder
   *         This parameter is meant be used as an alternative or in addition to `edgeStreams`.
   * @author Peter Empen
   */
-trait GraphCompanion[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]] {
+trait GraphCompanion[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]] {
 
   /** Type of configuration required for a specific `Graph` companion. */
   type Config <: GraphConfig
@@ -84,7 +84,7 @@ trait GraphCompanion[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
 }
 
 /** `GraphCompanion` extended to work with `CoreConfig`. */
-trait GraphCoreCompanion[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]] extends GraphCompanion[CC] {
+trait GraphCoreCompanion[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]] extends GraphCompanion[CC] {
 
   type Config = CoreConfig
 

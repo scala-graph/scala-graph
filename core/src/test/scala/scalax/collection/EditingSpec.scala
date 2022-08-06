@@ -13,10 +13,6 @@ import scalax.collection.OuterImplicits._
 class EditingSpec
     extends Suites(
       new EditingEdges,
-      new Editing[Graph](new ConfigWrapper[Graph] {
-        val companion = Graph
-        val config    = Graph.defaultConfig
-      }),
       new Editing[immutable.Graph](new ConfigWrapper[immutable.Graph] {
         val companion = immutable.Graph
         val config    = immutable.Graph.defaultConfig
@@ -179,7 +175,7 @@ private class EditingMutable extends RefSpec with Matchers {
   }
 }
 
-private class Editing[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: ConfigWrapper[CC])
+private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](val factory: ConfigWrapper[CC])
     extends RefSpec
     with Matchers {
 
@@ -286,11 +282,11 @@ private class Editing[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
       g.elementCount shouldEqual 3
       'A' to 'C' map (_.toString) foreach (g.contains(_) shouldEqual true)
 
-      val (gBefore, gAfter) = (Graph(1, 2 ~ 3), Graph(0, 1 ~ 2, 2 ~ 3))
+      val (gBefore, gAfter) = (factory(1, 2 ~ 3), factory(0, 1 ~ 2, 2 ~ 3))
       gBefore ++ (edges = List(1 ~ 2, 2 ~ 3), isolatedNodes = List(0)) shouldEqual gAfter
 
-      gBefore union Graph(0, 1 ~ 2) shouldEqual gAfter
-      gBefore union Graph[Int, UnDiEdge](0) union Graph(1 ~ 2) shouldEqual gAfter
+      gBefore union factory(0, 1 ~ 2) shouldEqual gAfter
+      gBefore union factory[Int, UnDiEdge](0) union factory(1 ~ 2) shouldEqual gAfter
     }
 
     private val gUnDi  = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
@@ -370,7 +366,7 @@ private class Editing[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
     }
 
     def `filter ` : Unit = {
-      val g: Graph[Int, DiEdge[Int]] = factory(2 ~> 3, 3 ~> 1, 5)
+      val g: AnyGraph[Int, DiEdge[Int]] = factory(2 ~> 3, 3 ~> 1, 5)
       g filter (_ > 1) should be(factory(2 ~> 3, 5))
       g filter (_ < 2) should be(factory(1))
       g filter (_ < 2) should be(factory(1))

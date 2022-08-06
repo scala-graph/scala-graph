@@ -54,7 +54,7 @@ private class LabeledEdges extends RefSpec with Matchers {
   }
 }
 
-private class EditingLabeledEdges[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+private class EditingLabeledEdges[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G]
 ) extends RefSpec
     with Matchers {

@@ -1,12 +1,11 @@
 package scalax.collection
 
-import scala.collection.{Iterable => AnyIterable}
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.immutable.Iterable
 import scala.util.chaining._
 
 import scalax.collection.generic._
-import scalax.collection.generic.{GraphCompanion, GraphCoreCompanion}
+import scalax.collection.generic.GraphCompanion
 import scalax.collection.config.GraphConfig
 import scalax.collection.mutable.Builder
 
@@ -25,7 +24,7 @@ import scalax.collection.mutable.Builder
   * @define CONTGRAPH The `Graph` instance that contains `this`
   * @author Peter Empen
   */
-trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] with Graph[X, Y]]
+trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] with AnyGraph[X, Y]]
     extends GraphBase[N, E, CC]
     with GraphTraversal[N, E]
     with GraphDegree[N, E, CC] {
@@ -104,7 +103,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
     * The second is true because of duplicate elimination and undirected edge equivalence.
     */
   override def equals(that: Any): Boolean = that match {
-    case that: Graph[N, E] =>
+    case that: AnyGraph[N, E] =>
       (this eq that) ||
       this.order == that.order &&
       this.size == that.size && {
@@ -382,34 +381,9 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   }
 }
 
-/** The main trait for immutable graphs bundling the functionality of traits concerned with
-  * specific aspects.
+/** Bundled functionality for mutable or immutable graphs.
   *
   * @tparam N the type of the nodes (vertices) in this graph.
-  * @tparam E the kind of the edges in this graph.
-  * @author Peter Empen
+  * @tparam E the type of the edges in this graph.
   */
-trait Graph[N, E <: Edge[N]] extends GraphLike[N, E, Graph] {
-  override def empty: Graph[N, E] = Graph.empty[N, E]
-}
-
-/** The main companion object for immutable graphs.
-  *
-  * @author Peter Empen
-  */
-object Graph extends GraphCoreCompanion[Graph] {
-
-  override def newBuilder[N, E <: Edge[N]](implicit config: Config) =
-    scalax.collection.immutable.Graph.newBuilder[N, E](config)
-
-  def empty[N, E <: Edge[N]](implicit config: Config = defaultConfig): Graph[N, E] =
-    scalax.collection.immutable.Graph.empty[N, E](config)
-
-  def from[N, E <: Edge[N]](nodes: AnyIterable[N], edges: AnyIterable[E])(implicit
-      config: Config = defaultConfig
-  ): Graph[N, E] =
-    scalax.collection.immutable.Graph.from[N, E](nodes, edges)(config)
-
-  def from[N, E[X] <: Edge[X]](edges: AnyIterable[E[N]]) =
-    scalax.collection.immutable.Graph.from[N, E[N]](Nil, edges)(defaultConfig)
-}
+trait AnyGraph[N, E <: Edge[N]] extends GraphLike[N, E, AnyGraph]

@@ -29,7 +29,7 @@ class TraversalSpec
       new Traversal[mutable.Graph](mutable.Graph)
     )
 
-final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G]
 ) extends RefSpec
     with Matchers
@@ -173,13 +173,13 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     given(Di_1.g) { g =>
       def innerNode(outer: Int) = g get outer
 
-      innerNode(1).outerNodeTraverser.toGraph should equal(factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
+      innerNode(1).outerNodeTraverser.to(factory) should equal(factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
 
-      innerNode(2).outerNodeTraverser(anyConnected).toGraph should equal(
+      innerNode(2).outerNodeTraverser(anyConnected).to(factory) should equal(
         factory(1 ~> 2, 2 ~> 3, 4 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3)
       )
 
-      innerNode(3).outerNodeTraverser(predecessors).toGraph should equal(factory(4 ~> 3, 1 ~> 3, 2 ~> 3, 1 ~> 2))
+      innerNode(3).outerNodeTraverser(predecessors).to(factory) should equal(factory(4 ~> 3, 1 ~> 3, 2 ~> 3, 1 ~> 2))
     }
   }
 

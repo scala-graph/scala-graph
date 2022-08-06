@@ -1,7 +1,7 @@
 package scalax.collection
 package immutable
 
-import scalax.collection.{Graph => AnyGraph}
+import scalax.collection.{AnyGraph => AnyGraph}
 import scalax.collection.generic.Edge
 import scalax.collection.mutable.ArraySet
 

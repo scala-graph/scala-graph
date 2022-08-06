@@ -122,7 +122,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     concat[N2, E2](edges)(e)
 
   /** Computes the union between this graph and `that` graph. */
-  @inline final def union[N2 >: N, E2 >: E <: Edge[N2]](that: Graph[N2, E2]): CC[N2, E2] =
+  @inline final def union[N2 >: N, E2 >: E <: Edge[N2]](that: AnyGraph[N2, E2]): CC[N2, E2] =
     concat(that.nodes.outerIterator, that.edges.outerIterator)
 
   /** Whether the given outer node is contained in this graph. */
@@ -185,19 +185,19 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
   protected def removedAll(isolatedNodes: IterableOnce[N], edges: IterableOnce[E]): CC[N, E]
 
   /** Computes a new graph that is the difference of this graph and `that` graph. */
-  final def diff(that: Graph[N, E]): CC[N, E] = removedAll(that.nodes.outerIterator, that.edges.outerIterator)
+  final def diff(that: AnyGraph[N, E]): CC[N, E] = removedAll(that.nodes.outerIterator, that.edges.outerIterator)
 
   /** Alias for `diff`. */
-  @inline final def &~(that: Graph[N, E]): CC[N, E] = this diff that
+  @inline final def &~(that: AnyGraph[N, E]): CC[N, E] = this diff that
 
   /** Computes the intersection between this graph and `that` graph. */
-  final def intersect(that: Graph[N, E]): CC[N, E] = this filter (n => that(n.outer), e => that(e.outer))
+  final def intersect(that: AnyGraph[N, E]): CC[N, E] = this filter (n => that(n.outer), e => that(e.outer))
 
   /** Alias for `intersect`. */
-  @inline final def &(that: Graph[N, E]): CC[N, E] = this intersect that
+  @inline final def &(that: AnyGraph[N, E]): CC[N, E] = this intersect that
 
   /** Alias for `union`. */
-  @inline final def |(that: Graph[N, E]): CC[N, E] = this union that
+  @inline final def |(that: AnyGraph[N, E]): CC[N, E] = this union that
 
   /** $mapNodes
     * The type parameter `E` of this graph is required to be generic meaning that `E` accepts ends of `Any` type.

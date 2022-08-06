@@ -5,7 +5,7 @@ import scalax.collection.generic.GraphCompanion
 
 /** Enables to transparently pass `GraphCompanion` objects with non-default configuration parameters to specs.
   */
-trait ConfigWrapper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]] {
+trait ConfigWrapper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]] {
   val companion: GraphCompanion[CC]
   implicit val config: companion.Config
 

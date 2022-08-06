@@ -6,11 +6,11 @@ import org.scalatest.exceptions.TestFailedException
 
 import scalax.collection.generic.Edge
 import scalax.collection.generic.GraphCoreCompanion
-import scalax.collection.{Graph, GraphLike}
+import scalax.collection.{AnyGraph, GraphLike}
 
 /** Scalatest support for graph visualization in case of failures.
   */
-trait Visualizer[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]] extends Drawable {
+trait Visualizer[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]] extends Drawable {
 
   def factory: GraphCoreCompanion[G]
 
@@ -27,7 +27,7 @@ trait Visualizer[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]] exte
     catch {
       case ex: TestFailedException =>
         makeImage(
-          graph: Graph[N, E],
+          graph: AnyGraph[N, E],
           path = "log/",
           name = (ex.failedCodeFileName match {
             case Some(fileName) => fileName

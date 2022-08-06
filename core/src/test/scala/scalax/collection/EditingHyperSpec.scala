@@ -19,7 +19,7 @@ class EditingHyperSpec
       new EditingHyperMutable
     )
 
-private class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
+private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
     val factory: GraphCoreCompanion[CC]
 ) extends RefSpec
     with Matchers {

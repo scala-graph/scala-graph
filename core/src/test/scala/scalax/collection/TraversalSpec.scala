@@ -23,7 +23,7 @@ class TraversalSpec
   * by the Graph factory and passed to the constructor.
   * It allows the same tests to be run for mutable and immutable Graphs.
   */
-final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
+final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
     val factory: GraphCoreCompanion[G]
 ) extends RefSpec
     with Matchers
@@ -36,7 +36,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
   val anyConnected = Parameters(direction = AnyConnected)
 
   def `find successors in a tiny graph`: Unit =
-    given(factory(1 ~> 2)) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(factory(1 ~> 2)) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       val (n1, n2) = (g get 1, g get 2)
 
       List(1, 3) foreach { i =>
@@ -47,7 +47,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     }
 
   def `find predecessors in a tiny graph`: Unit =
-    given(factory(1 ~> 2)) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(factory(1 ~> 2)) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       val (n1, n2) = (g get 1, g get 2)
 
       1 to 3 foreach { i =>
@@ -58,7 +58,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     }
 
   def `find connected nodes by predicate in a tiny graph`: Unit =
-    given(factory(1 ~> 2)) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(factory(1 ~> 2)) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       val (n1, n2) = (g get 1, g get 2)
 
       List(1, 3) foreach { i =>
@@ -73,7 +73,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
   object UnDi_1 extends TGraph(factory.from(elementsOfMixed_1))
 
   def `find successors in a mid-size graph`: Unit =
-    given(Di_1.g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(Di_1.g) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       def n(outer: Int) = g.get(outer)
 
       List(0, 3, 7) foreach { i =>
@@ -84,7 +84,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     }
 
   def `find predecessors in a mid-size graph`: Unit =
-    given(Di_1.g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(Di_1.g) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       def n(outer: Int) = g.get(outer)
 
       List(0, 3, 5) foreach { i =>
@@ -95,7 +95,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     }
 
   def `find connected nodes by predicate`: Unit =
-    given(Di_1.g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(Di_1.g) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       def n(outer: Int) = g get outer
 
       List(0, 3) foreach { i =>
@@ -106,7 +106,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     }
 
   def `find path to a successor`: Unit =
-    given(factory(1, 2 ~ 3, 3 ~ 4, 5 ~ 6, 6 ~ 1)) { case g: Graph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+    given(factory(1, 2 ~ 3, 3 ~ 4, 5 ~ 6, 6 ~ 1)) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
       val n1 = g get 1
       n1 pathUntil (_ == n1) shouldBe None
 
@@ -126,14 +126,14 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     }
 
   def `find path to a successor in a minimalistic graph`: Unit =
-    given(factory(0 ~ 1, 1 ~ 2)) { case g: Graph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+    given(factory(0 ~ 1, 1 ~ 2)) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
       def n(outer: Int) = g get outer
       for (i <- 0 to 2)
         (n(0) pathTo n(i)).get.length shouldBe i
     }
 
   def `assert fix_110409 of shortestPathTo`: Unit =
-    given(factory(0 ~ 1, 1 ~ 2, 2 ~ 3)) { case g: Graph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+    given(factory(0 ~ 1, 1 ~ 2, 2 ~ 3)) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
       def n(outer: Int) = g get outer
       (n(0) shortestPathTo n(0)).get.length shouldBe 0
       (n(0) shortestPathTo n(3)).get.nodes.toList shouldBe List(0, 1, 2, 3)
@@ -141,20 +141,20 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     }
 
   def `traverser to graph`: Unit =
-    given(Di_1.g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(Di_1.g) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       def innerNode(outer: Int) = g get outer
 
-      innerNode(1).outerNodeTraverser.toGraph should equal(factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
+      innerNode(1).outerNodeTraverser.to(factory) should equal(factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
 
-      innerNode(2).outerNodeTraverser(anyConnected).toGraph should equal(
+      innerNode(2).outerNodeTraverser(anyConnected).to(factory) should equal(
         factory(1 ~> 2, 2 ~> 3, 4 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3)
       )
 
-      innerNode(3).outerNodeTraverser(predecessors).toGraph should equal(factory(4 ~> 3, 1 ~> 3, 2 ~> 3, 1 ~> 2))
+      innerNode(3).outerNodeTraverser(predecessors).to(factory) should equal(factory(4 ~> 3, 1 ~> 3, 2 ~> 3, 1 ~> 2))
     }
 
   def `traverser with an extended visitor`: Unit =
-    given(UnDi_1.g) { case g: Graph[Int, AnyEdge[Int]] => // `annotated for IntelliJ
+    given(UnDi_1.g) { case g: AnyGraph[Int, AnyEdge[Int]] => // `annotated for IntelliJ
       import g.ExtendedNodeVisitor
       def n(outer: Int) = g get outer
 
@@ -184,7 +184,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
       val expectedSumLayer2ExclGt4 = 9
     }
     import UnDi_1._
-    given(g) { case g: Graph[Int, AnyEdge[Int]] => // `annotated for IntelliJ
+    given(g) { case g: AnyGraph[Int, AnyEdge[Int]] => // `annotated for IntelliJ
       def n(outer: Int) = g get outer
 
       val bfs_4 = n(4).outerNodeTraverser
@@ -204,7 +204,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
   }
 
   def `DownUp traverser`: Unit =
-    given(Di_1.g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(Di_1.g) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       def innerNode(outer: Int) = g get outer
       var stack                 = List.empty[Int]
 
@@ -220,7 +220,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
 
   def `DownUp traverser for computing braces`: Unit = {
     val root = "A"
-    given(factory(root ~> "B1", root ~> "B2")) { case g: Graph[String, DiEdge[String]] => // `annotated for IntelliJ
+    given(factory(root ~> "B1", root ~> "B2")) { case g: AnyGraph[String, DiEdge[String]] => // `annotated for IntelliJ
       val innerRoot = g get root
       val result = innerRoot.innerNodeDownUpTraverser.foldLeft(ListBuffer.empty[String]) { (buf, param) =>
         param match {
@@ -261,7 +261,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
         nBA ~> Leaf("BA2", 11),
         nBA ~> Leaf("BA3", 12)
       )
-    ) { case g: Graph[Elem, DiEdge[Elem]] => // `annotated for IntelliJ
+    ) { case g: AnyGraph[Elem, DiEdge[Elem]] => // `annotated for IntelliJ
       (g get root).innerNodeDownUpTraverser foreach { case (down, node) =>
         if (!down)
           node.outer match {
@@ -293,7 +293,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
       val expectedSumLayer1AnyConnectedWith_2 = 6
     }
     import DDi_1._
-    given(DDi_1.g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(DDi_1.g) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       def n(outer: Int) = g get outer
 
       val maxDepth_1 = Parameters(maxDepth = 1)
@@ -340,7 +340,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
         4 ~> 41,
         4 ~> 43
       )
-    ) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    ) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       val root         = g get 0
       val nodeOrdering = g.NodeOrdering(Ordering.Int.compare(_, _))
 
@@ -359,13 +359,13 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     }
 
   def `map Traverser result`: Unit =
-    given(Di_1.g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(Di_1.g) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       val t = g.nodes.head.outerNodeTraverser
       t map (_ + 1) shouldBe (t.toList map (_ + 1))
     }
 
   def `traverser for inner elements`: Unit =
-    given(Di_1.g) { case g: Graph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    given(Di_1.g) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
       val t = g.nodes.head.innerElemTraverser
 
       def nodePred(n: g.NodeT) = n.degree > 1

@@ -8,6 +8,7 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.edges._
 import scalax.collection.generic.{Edge, EdgeCompanionBase, GraphCompanion}
+import scalax.collection.immutable.Graph
 import scalax.collection.mutable.{Graph => MGraph}
 /* TODO L
 import scalax.collection.edges.labeled._
@@ -24,7 +25,7 @@ class RandomGraphSpec extends RefSpec with Matchers {
   /** Creates a `RandomGraph` generator that produces a graph
     *  with a constant order, constant `NodeDegreeRange` and a single edge type.
     */
-  def generator[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def generator[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
       edgeCompanion: EdgeCompanionBase,
       gCompanion: GraphCompanion[G],
       connected: Boolean
@@ -40,10 +41,10 @@ class RandomGraphSpec extends RefSpec with Matchers {
       val graphConfig = graphCompanion.defaultConfig
     }
 
-  def checkOrder(g: Graph[Int, DiEdge[Int]])(implicit metrics: Metrics[Int]): Unit =
+  def checkOrder(g: AnyGraph[Int, DiEdge[Int]])(implicit metrics: Metrics[Int]): Unit =
     g.order should be(metrics.order)
 
-  def checkSize(g: Graph[Int, DiEdge[Int]])(implicit metrics: Metrics[Int]): Unit = {
+  def checkSize(g: AnyGraph[Int, DiEdge[Int]])(implicit metrics: Metrics[Int]): Unit = {
     import metrics._
     val totalDegree = g.totalDegree
     val deviation   = totalDegree - expectedTotalDegree
@@ -59,7 +60,8 @@ class RandomGraphSpec extends RefSpec with Matchers {
 
   object `disconnected random graph` {
     implicit val metrics: Metrics[Int] = normal
-    val g                              = generator[Int, DiEdge[Int], Graph](DiEdge, Graph, false).draw
+
+    val g = generator[Int, DiEdge[Int], Graph](DiEdge, Graph, false).draw
 
     def `should have expected size`: Unit =
       checkOrder(g)
@@ -68,7 +70,8 @@ class RandomGraphSpec extends RefSpec with Matchers {
 
   object `connected random graph` {
     implicit val metrics: Metrics[Int] = normal
-    val g                              = generator[Int, DiEdge[Int], MGraph](DiEdge, MGraph, true).draw
+
+    val g = generator[Int, DiEdge[Int], MGraph](DiEdge, MGraph, true).draw
 
     def `should have expected size`: Unit =
       checkOrder(g)

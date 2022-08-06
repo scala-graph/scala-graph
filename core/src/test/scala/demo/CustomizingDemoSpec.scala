@@ -3,10 +3,11 @@ package demo
 import java.time.DayOfWeek._
 import java.time.LocalTime
 
-import scalax.collection.Graph
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import scalax.collection.generic._
+import scalax.collection.immutable.Graph
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 

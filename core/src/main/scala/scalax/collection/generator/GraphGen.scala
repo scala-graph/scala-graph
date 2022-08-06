@@ -30,7 +30,7 @@ import scalax.collection.generic.GraphCompanion
   *
   * @author Peter Empen
   */
-class GraphGen[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+class GraphGen[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
     val graphCompanion: GraphCompanion[G],
     val order: Int,
     nodeGen: Gen[N],
@@ -89,7 +89,7 @@ class GraphGen[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike
   */
 object GraphGen {
 
-  def apply[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def apply[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       order: Int,
       nodeGen: Gen[N],
@@ -110,7 +110,7 @@ object GraphGen {
       labelFactory
     )
 
-  def fromMetrics[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def fromMetrics[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       metrics: Metrics[N],
       edgeCompanions: Set[EdgeCompanionBase]
@@ -156,7 +156,7 @@ object GraphGen {
     *
     *  @param graphCompanion $COMPANION
     */
-  def tinyConnectedIntDi[G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def tinyConnectedIntDi[G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G]
   ): Arbitrary[G[Int, DiEdge[Int]]] =
     diGraph[Int, G](graphCompanion, TinyInt)
@@ -166,7 +166,7 @@ object GraphGen {
     *
     * @param graphCompanion $COMPANION
     */
-  def smallConnectedIntDi[G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def smallConnectedIntDi[G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G]
   ): Arbitrary[G[Int, DiEdge[Int]]] =
     diGraph[Int, G](graphCompanion, SmallInt)
@@ -177,7 +177,7 @@ object GraphGen {
     * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
-  def diGraph[N, G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def diGraph[N, G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       metrics: Metrics[N]
   )(implicit nodeTag: ClassTag[N]): Arbitrary[G[N, DiEdge[N]]] =
@@ -191,7 +191,7 @@ object GraphGen {
     * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
-  def unDiGraph[N, G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
+  def unDiGraph[N, G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GraphCompanion[G],
       metrics: Metrics[N]
   )(implicit nodeTag: ClassTag[N]): Arbitrary[G[N, UnDiEdge[N]]] =

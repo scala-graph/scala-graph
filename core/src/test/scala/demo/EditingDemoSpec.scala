@@ -1,10 +1,9 @@
 package demo
 
-import scalax.collection.Graph
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import scalax.collection.generic._
-import scalax.collection.immutable
+import scalax.collection.immutable.Graph
 import scalax.collection.mutable
 
 import org.scalatest.matchers.should.Matchers
@@ -48,7 +47,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
     }
 
     def `adding ` : Unit = {
-      val g = immutable.Graph(1, 2 ~ 3)
+      val g = Graph(1, 2 ~ 3)
       g + 1 shouldBe g
       g + 0 shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
       g + 0 ~ 1 shouldBe Graph(0, 1, 2, 3, 0 ~ 1, 2 ~ 3)
@@ -66,8 +65,8 @@ final class EditingDemoSpec extends RefSpec with Matchers {
     }
 
     def `union, diff, intersect ` : Unit = {
-      val g = immutable.Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
-      val h = immutable.Graph(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
+      val g = Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
+      val h = Graph(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
 
       g union h shouldBe Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5, 3 ~ 4, 4 ~ 6, 5 ~ 6)
       g diff h shouldBe Graph(1 ~ 2)

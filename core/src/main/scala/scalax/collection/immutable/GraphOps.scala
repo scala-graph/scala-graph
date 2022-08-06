@@ -1,6 +1,6 @@
 package scalax.collection.immutable
 
-import scalax.collection.{Graph => AnyGraph}
+import scalax.collection.{AnyGraph => AnyGraph}
 import scalax.collection.generic.Edge
 import scalax.collection.GraphLike
 

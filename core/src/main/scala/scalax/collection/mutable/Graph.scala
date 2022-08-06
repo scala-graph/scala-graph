@@ -7,7 +7,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.math.max
 import scala.util.chaining._
 
-import scalax.collection.{Graph => AnyGraph, GraphLike => AnyGraphLike}
+import scalax.collection.{AnyGraph => AnyGraph, GraphLike => AnyGraphLike}
 import scalax.collection.generic.{AnyEdge, Edge}
 import scalax.collection.generic.{GraphCompanion, MutableGraphCompanion}
 import scalax.collection.config._

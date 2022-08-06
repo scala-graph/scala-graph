@@ -3,10 +3,8 @@ package hyperedges
 package ordered.multilabeled
 
 import scalax.collection.generic.{
-  AbstractDiHyperEdge, ExtendedKey, ExtendedKeyBySingleLabel, LDiHyperEdgeToString, MultiLEdgeToString,
-  OrderedEndpoints, SingleLabel
+  AbstractDiHyperEdge, ExtendedKeyBySingleLabel, LDiHyperEdgeToString, MultiLEdgeToString, OrderedEndpoints, SingleLabel
 }
-import scalax.collection.hyperedges.DiHyperEdge
 
 /** Template for generic directed, ordered multi-hyperedges with a single `label` field.
   * To support multigraphs, equality is based on `sources`, `targets` and the `label` field.

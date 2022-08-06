@@ -9,7 +9,7 @@ import scala.collection.mutable.{ArrayBuffer, ExtHashSet}
 import scala.util.Random
 
 import scalax.collection.generic.Edge
-import scalax.collection.{Graph => AnyGraph}
+import scalax.collection.{AnyGraph => AnyGraph}
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 
