@@ -71,9 +71,7 @@ class GraphGen[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphL
       connected,
       weightFactory map (f => () => nonFailingWeights.get.draw),
       labelFactory map (f => () => nonFailingLabels.get.draw)
-    ) {
-      val graphConfig = graphCompanion.defaultConfig
-    }
+    )
   }
 
   def apply: Gen[G[N, E]] = Gen.const(0) map (_ => generator.draw)

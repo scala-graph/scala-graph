@@ -82,9 +82,7 @@ class StateSpec extends RefSpec with Matchers {
           NodeDegreeRange(0, 2),
           Set(DiEdge),
           false
-        ) {
-          val graphConfig = graphCompanion.defaultConfig
-        }.draw
+        ).draw
 
       val rootNodes = List.fill(50)(g.nodes.draw(r))
       for {

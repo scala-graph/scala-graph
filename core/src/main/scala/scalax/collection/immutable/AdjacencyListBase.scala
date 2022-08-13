@@ -21,7 +21,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
     extends GraphLike[N, E, CC] {
   selfGraph: CC[N, E] =>
 
-  protected type Config <: GraphConfig with AdjacencyListArrayConfig
+  implicit override def config: GraphConfig with AdjacencyListArrayConfig
 
   type NodeT <: AdjacendyListBaseInnerNode
   trait AdjacendyListBaseInnerNode extends GraphInnerNode {

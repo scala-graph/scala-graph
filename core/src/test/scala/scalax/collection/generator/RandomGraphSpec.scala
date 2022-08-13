@@ -35,9 +35,7 @@ class RandomGraphSpec extends RefSpec with Matchers {
       metrics.nodeDegrees,
       Set(edgeCompanion),
       connected
-    ) {
-      val graphConfig = graphCompanion.defaultConfig
-    }
+    )
 
   def checkOrder(g: AnyGraph[Int, DiEdge[Int]])(implicit metrics: Metrics[Int]): Unit =
     g.order should be(metrics.order)

@@ -29,7 +29,7 @@ import edge.WLBase.{WLEdgeCompanion, WLHyperEdgeCompanion}
   *
   * @author Peter Empen
   */
-abstract class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
     val graphCompanion: GenericGraphFactory[G],
     val order: Int,
     nodeFactory: => N,
@@ -42,7 +42,7 @@ abstract class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y]
   require(order > 0)
   if (connected) require(nodeDegree.min >= 2)
 
-  implicit val graphConfig: graphCompanion.Config
+  implicit val graphConfig = graphCompanion.defaultConfig
 
   protected val doTrace                       = false
   protected def trace(str: => String): Unit   = if (doTrace) print(str)
@@ -391,9 +391,7 @@ object RandomGraph {
       connected,
       weightFactory,
       labelFactory
-    ) {
-      val graphConfig = graphCompanion.defaultConfig
-    }
+    )
 
   def fromMetrics[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
       graphCompanion: GenericGraphFactory[G],
@@ -407,9 +405,7 @@ object RandomGraph {
       metrics.nodeDegrees,
       edgeCompanions,
       metrics.connected
-    ) {
-      val graphConfig = graphCompanion.defaultConfig
-    }
+    )
 
   /** Template for `Metrics` with `connected` set to `true`
     *  and some lazy values useful for checking the metrics of generated graphs.

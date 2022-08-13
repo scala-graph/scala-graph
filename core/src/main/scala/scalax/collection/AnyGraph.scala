@@ -42,8 +42,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
 
   /** The companion object of `CC`. */
   val companion: Factory[CC]
-  protected type Config <: GraphConfig
-  implicit def config: companion.Config with Config
+  implicit def config: GraphConfig
 
   /** Ensures sorted nodes/edges unless this `Graph` has more than 100 elements.
     * See also `asSortedString` and `toSortedString`.

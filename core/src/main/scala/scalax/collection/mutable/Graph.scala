@@ -55,7 +55,7 @@ class Builder[N, E <: Edge[N], +CC[N, E <: Edge[N]] <: AnyGraphLike[N, E, CC] wi
 )(implicit config: GraphConfig)
     extends BuilderImpl[N, E] {
 
-  def result: CC[N, E] = companion.fromSpecific[N, E](nodes, edges)(config.asInstanceOf[companion.Config])
+  def result: CC[N, E] = companion.fromSpecific[N, E](nodes, edges)(config)
 }
 
 /** Trait with common mutable Graph methods.
@@ -167,13 +167,13 @@ trait Graph[N, E <: Edge[N]] extends AnyGraph[N, E] with GraphLike[N, E, Graph] 
   */
 object Graph extends MutableFactory[Graph] {
 
-  def empty[N, E <: Edge[N]](implicit config: Config = defaultConfig): Graph[N, E] =
-    new DefaultGraphImpl[N, E]()(config)
+  def empty[N, E <: Edge[N]](implicit config: GraphConfig = defaultConfig): Graph[N, E] =
+    new DefaultGraphImpl[N, E]()(coreConfig(config))
 
   override def from[N, E <: Edge[N]](nodes: Iterable[N] = Nil, edges: Iterable[E])(implicit
-      config: Config = defaultConfig
+      config: GraphConfig = defaultConfig
   ): Graph[N, E] =
-    DefaultGraphImpl.from[N, E](nodes, edges)(config)
+    DefaultGraphImpl.from[N, E](nodes, edges)(coreConfig(config))
 
   override def from[N, E[X] <: Edge[X]](edges: Iterable[E[N]]): Graph[N, E[N]] =
     DefaultGraphImpl.from[N, E[N]](Nil, edges)(defaultConfig)
@@ -181,12 +181,11 @@ object Graph extends MutableFactory[Graph] {
 
 @SerialVersionUID(74L)
 class DefaultGraphImpl[N, E <: Edge[N]](iniNodes: Iterable[N] = Set[N](), iniEdges: Iterable[E] = Set[E]())(implicit
-    override val config: DefaultGraphImpl.Config with AdjacencyListArrayConfig
+    override val config: GraphConfig with AdjacencyListArrayConfig
 ) extends Graph[N, E]
     with AdjacencyListGraph[N, E, DefaultGraphImpl]
     with GraphTraversalImpl[N, E] {
   final override val companion = DefaultGraphImpl
-  protected type Config = DefaultGraphImpl.Config
 
   @inline final protected def newNodeSet: NodeSetT = new AdjacencyListNodeSet
 
@@ -228,13 +227,13 @@ class DefaultGraphImpl[N, E <: Edge[N]](iniNodes: Iterable[N] = Set[N](), iniEdg
 
 object DefaultGraphImpl extends MutableFactory[DefaultGraphImpl] {
 
-  def empty[N, E <: Edge[N]](implicit config: Config = defaultConfig) =
-    new DefaultGraphImpl[N, E]()(config)
+  def empty[N, E <: Edge[N]](implicit config: GraphConfig = defaultConfig) =
+    new DefaultGraphImpl[N, E]()(coreConfig(config))
 
   override def from[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
-      config: Config = defaultConfig
+      config: GraphConfig = defaultConfig
   ) =
-    new DefaultGraphImpl[N, E](nodes, edges)(config)
+    new DefaultGraphImpl[N, E](nodes, edges)(coreConfig(config))
 
   override def from[N, E[X] <: Edge[X]](edges: Iterable[E[N]]) =
     new DefaultGraphImpl[N, E[N]](Nil, edges)(defaultConfig)
