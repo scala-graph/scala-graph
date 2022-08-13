@@ -2,24 +2,21 @@ package demo
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
-import scalax.collection.immutable.Graph
 
 import java.time.DayOfWeek._
 import java.time.LocalTime
 
-/** Includes the examples given on [[http://www.scala-graph.org/guides/core-customizing.html
-  *  Customizing Graphs]].
-  */
 class FlightDemoSpec extends RefSpec with Matchers {
 
   object `demonstrating how to` {
 
     def `work with the Flight typed edge`: Unit = {
-      import scalax.collection.labeled.aviation._
-
       import scala.concurrent.duration._
+
+      import scalax.collection.labeled.aviation._
+      import scalax.collection.labeled.aviation.immutable._
+      import scalax.collection.labeled.aviation.immutable.FlightGraph.OuterImplicits._
 
       val amsterdam = Airport("AMS")
       val hamburg   = Airport("HAM")
@@ -27,7 +24,7 @@ class FlightDemoSpec extends RefSpec with Matchers {
       val london    = Airport("LHR")
       val mexico    = Airport("MEX")
 
-      val g /* TODO : Graph[Airport, Flight]*/ = Graph(
+      val g = FlightGraph(
         hamburg ~> amsterdam + ("KL 1776", List(
           MONDAY   -> LocalTime.of(17, 50),
           SATURDAY -> LocalTime.of(17, 40)

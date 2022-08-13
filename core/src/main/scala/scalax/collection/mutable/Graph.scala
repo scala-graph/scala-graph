@@ -177,11 +177,6 @@ object Graph extends MutableFactory[Graph] {
 
   override def from[N, E[X] <: Edge[X]](edges: Iterable[E[N]]): Graph[N, E[N]] =
     DefaultGraphImpl.from[N, E[N]](Nil, edges)(defaultConfig)
-
-  /*
-  def fromTyped[N, E <: Edge[N]](edges: Iterable[E]): Graph[N, E] =
-    DefaultGraphImpl.from[N, E](Nil, edges)(defaultConfig)
-   */
 }
 
 @SerialVersionUID(74L)
@@ -243,9 +238,4 @@ object DefaultGraphImpl extends MutableFactory[DefaultGraphImpl] {
 
   override def from[N, E[X] <: Edge[X]](edges: Iterable[E[N]]) =
     new DefaultGraphImpl[N, E[N]](Nil, edges)(defaultConfig)
-
-  /*
-  override def fromTyped[N, E <: Edge[N]](edges: Iterable[E]) =
-    new DefaultGraphImpl[N, E](Nil, edges)(defaultConfig)
-   */
 }

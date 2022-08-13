@@ -9,14 +9,14 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.edges.DiEdge
 import scalax.collection.generic._
-import scalax.collection.generic.GenericGraphCoreFactory
+
 import scalax.collection.labeled.aviation._
 
 class EditingTypedSpec
     extends Suites(
       new EditingTypedEdges,
-      new EditingTyped[scalax.collection.immutable.Graph](scalax.collection.immutable.Graph),
-      new EditingTyped[scalax.collection.mutable.Graph](scalax.collection.mutable.Graph)
+      new EditingTyped(immutable.FlightGraph, scalax.collection.immutable.Graph),
+      new EditingTyped(mutable.FlightGraph, scalax.collection.mutable.Graph)
     )
 
 private object Samples {
@@ -41,8 +41,9 @@ private class EditingTypedEdges extends RefSpec with Matchers {
     outer.toString should startWith(s"$madrid ~> $rio ++ ")
 }
 
-private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
-    val factory: GenericGraphCoreFactory[CC]
+private class EditingTyped[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
+    typedFactory: TypedGraphCoreFactory[Airport, Flight, CC],
+    genericFactory: GenericGraphCoreFactory[CC]
 ) extends RefSpec
     with Matchers {
   import Samples._
@@ -51,8 +52,8 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
     def `edge methods`: Unit = {
 
       // TODO get apply/from work with Flight
-      val g: AnyGraph[Airport, Flight] =
-        factory.from[Airport, Flight](Nil, edges = outer :: Nil) // `annotated for IntelliJ
+      val g: AnyFlightGraph =
+        typedFactory.from(Nil, edges = outer :: Nil) // `annotated for IntelliJ
 
       val e = g.edges.head
       e.ends.head.getClass should be(g.nodes.head.getClass)
@@ -77,7 +78,7 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
 
       outer_1 should not equal outer_2
 
-      val g = factory.from(outer_1 :: outer_2 :: Nil)
+      val g = typedFactory.from(outer_1 :: outer_2 :: Nil)
       g.edges.toList match {
         case inner_1 :: inner_2 :: Nil =>
           inner_1 should not equal inner_2
@@ -95,7 +96,7 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
     }
 
     def `extractor ` : Unit = {
-      val g: AnyGraph[Airport, Flight] = factory.empty[Airport, Flight]
+      val g: AnyFlightGraph = typedFactory.empty
 
       g.nodes foreach { case g.InnerNode(inner, Airport(code)) =>
         code -> inner.outDegree
@@ -112,27 +113,27 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
     }
 
     def `concat adding a generic edge`: Unit = {
-      val g: AnyGraph[Airport, Flight] = factory.empty
+      val g: AnyFlightGraph = typedFactory.empty
 
-      g ++ List(outer) shouldBe factory.from(outer :: Nil)
-      "g ++ List(outer): AnyGraph[Airport, Flight]" should compile
+      g ++ List(outer) shouldBe typedFactory.from(outer :: Nil)
+      "g ++ List(outer): AnyFlightGraph" should compile
 
       val diEdge  = DiEdge(outer._1, outer._2)
       val widened = g ++ List(diEdge)
-      "widened: AnyGraph[Airport, Flight]" shouldNot compile
+      "widened: AnyFlightGraph" shouldNot compile
       "widened: AnyGraph[Airport, DiEdge[Airport]]" shouldNot compile
       "widened: AnyGraph[Airport, AnyDiEdge[Airport] with EdgeMapper with DiEdgeToString with Product with Serializable]" should compile
     }
 
     def `concat adding a typed edge`: Unit = {
-      val g: AnyGraph[Airport, DiEdge[Airport]] = factory.empty
-      val diEdge                                = DiEdge(outer._1, outer._2)
+      val g: AnyGraph[Airport, DiEdge[Airport]] = genericFactory.empty
 
-      g ++ List(diEdge) shouldBe factory.from(diEdge :: Nil)
+      val diEdge = DiEdge(outer._1, outer._2)
+      g ++ List(diEdge) shouldBe genericFactory.from(diEdge :: Nil)
       "g ++ List(diEdge): AnyGraph[Airport, DiEdge[Airport]]" should compile
 
       val widened = g ++ List(outer)
-      "widened: AnyGraph[Airport, Flight]" shouldNot compile
+      "widened: AnyFlightGraph" shouldNot compile
       "widened: AnyGraph[Airport, DiEdge[Airport]]" shouldNot compile
       "widened: AnyGraph[Airport, AnyDiEdge[Airport] with EdgeMapper with DiEdgeToString with Product with Serializable]" should compile
     }

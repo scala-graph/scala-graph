@@ -221,8 +221,10 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
         fra ~> svx + ("LH 1480", Nil, 4.hours + 35.minutes),
         prg ~> svx + ("U6 902", Nil, 4.hours + 25.minutes)
       )
+
     def flight(flightNo: String) = flights.find(_.flightNo == flightNo).get
-    val g                        = factory.from[Airport, Flight](Set.empty, flights)
+
+    val g = factory.from[Airport, Flight](Set.empty, flights)
 
     given(g) { g =>
       val shp1 = (g get jfc).withSubgraph(edges = _.airline != "UN") shortestPathTo (g get dme)
