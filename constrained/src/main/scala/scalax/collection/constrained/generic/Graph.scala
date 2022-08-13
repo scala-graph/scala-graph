@@ -6,7 +6,7 @@ import scala.collection.mutable.Builder
 import scala.reflect.ClassTag
 
 import scalax.collection.GraphPredef.{Edge, InParam, Param}
-import scalax.collection.generic.GraphCompanion
+import scalax.collection.generic.Factory
 import scalax.collection.mutable.ArraySet
 import scalax.collection.config.GraphConfig
 
@@ -15,7 +15,7 @@ import config.ConstrainedConfig
 
 /** Methods common to `Graph` companion objects in the constrained module. */
 trait GraphConstrainedCompanion[+GC[N, E] <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, GC]]
-    extends GraphCompanion[GC] {
+    extends Factory[GC] {
   type Config = ConstrainedConfig
   def defaultConfig = ConstrainedConfig()
 

@@ -5,14 +5,14 @@ import scala.util.{Failure, Success}
 import org.scalatest.exceptions.TestFailedException
 
 import scalax.collection.generic.Edge
-import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.generic.GenericGraphCoreFactory
 import scalax.collection.{AnyGraph, GraphLike}
 
 /** Scalatest support for graph visualization in case of failures.
   */
 trait Visualizer[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]] extends Drawable {
 
-  def factory: GraphCoreCompanion[G]
+  def factory: GenericGraphCoreFactory[G]
 
   final def given[N, E <: Edge[N]](graph: G[N, E])(test: G[N, E] => Unit): Unit = {
 

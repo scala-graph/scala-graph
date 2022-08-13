@@ -40,8 +40,9 @@ private trait CycleMatcher[N, E <: Edge[N]] {
     }
 }
 
-private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](val factory: GraphCoreCompanion[CC])
-    extends RefSpec
+private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
+    val factory: GenericGraphCoreFactory[CC]
+) extends RefSpec
     with Matchers
     with Visualizer[CC] {
 

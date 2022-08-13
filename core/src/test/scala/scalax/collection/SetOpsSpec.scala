@@ -8,7 +8,7 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
-import scalax.collection.generic.{AnyEdge, Edge, GraphCoreCompanion}
+import scalax.collection.generic.{AnyEdge, Edge, GenericGraphCoreFactory}
 
 import scalax.collection.visualization.Visualizer
 
@@ -22,7 +22,7 @@ class SetOpsSpec
 
 protected trait SetOpExamples[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]] {
 
-  protected def factory: GraphCoreCompanion[CC]
+  protected def factory: GenericGraphCoreFactory[CC]
 
   protected val gEdges = Set(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
   protected val hEdges = Set(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
@@ -40,7 +40,7 @@ protected trait SetOpExamples[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLi
 }
 
 private class SetOps[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC]
+    val factory: GenericGraphCoreFactory[CC]
 ) extends RefSpec
     with Matchers
     with SetOpExamples[CC]

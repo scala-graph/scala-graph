@@ -2,12 +2,10 @@ package scalax.collection
 package generator
 
 import scala.reflect.ClassTag
-
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-
 import scalax.collection.edges._
-import scalax.collection.generic.{Edge, EdgeCompanionBase, GraphCompanion}
+import scalax.collection.generic.{Edge, EdgeCompanionBase, GenericGraphFactory}
 import scalax.collection.immutable.Graph
 import scalax.collection.mutable.{Graph => MGraph}
 /* TODO L
@@ -27,7 +25,7 @@ class RandomGraphSpec extends RefSpec with Matchers {
     */
   def generator[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
       edgeCompanion: EdgeCompanionBase,
-      gCompanion: GraphCompanion[G],
+      gCompanion: GenericGraphFactory[G],
       connected: Boolean
   )(implicit nodeTag: ClassTag[N], metrics: Metrics[N]) =
     new RandomGraph[N, E, G](

@@ -279,7 +279,7 @@ trait DiHyperEdgeCompanion[+E[N] <: AbstractDiHyperEdge[N]] extends EdgeCompanio
     apply(OneOrMore.fromUnsafe(sources), OneOrMore.fromUnsafe(targets))
 }
 
-trait AnyEdge[+N] extends Edge[N] { this: Eq =>
+trait AnyEdge[+N] extends Edge[N] {
 
   final override def node(n: Int): N = (n: @switch) match {
     case 0 => _1

@@ -8,7 +8,7 @@ import org.scalatest.Suites
 import scalax.collection.OuterImplicits._
 import scalax.collection.generic._
 import scalax.collection.hyperedges._
-import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.generic.GenericGraphCoreFactory
 
 import MappingHyperSpec._
 
@@ -20,7 +20,7 @@ class MappingHyperSpec
 
 object MappingHyperSpec {
   private class Common[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
-      val factory: GraphCoreCompanion[CC]
+      val factory: GenericGraphCoreFactory[CC]
   ) extends RefSpec
       with Matchers {
 

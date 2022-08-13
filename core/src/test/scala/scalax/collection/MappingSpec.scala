@@ -8,7 +8,7 @@ import org.scalatest.refspec.RefSpec
 import scalax.collection.edges._
 import scalax.collection.generic._
 import scalax.collection.OuterImplicits._
-import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.generic.GenericGraphCoreFactory
 
 class MappingSpec
     extends Suites(
@@ -17,7 +17,7 @@ class MappingSpec
     )
 
 private class Mapping[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC]
+    val factory: GenericGraphCoreFactory[CC]
 ) extends RefSpec
     with Matchers {
 

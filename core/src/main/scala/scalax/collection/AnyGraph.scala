@@ -5,7 +5,7 @@ import scala.collection.immutable.Iterable
 import scala.util.chaining._
 
 import scalax.collection.generic._
-import scalax.collection.generic.GraphCompanion
+import scalax.collection.generic.Factory
 import scalax.collection.config.GraphConfig
 import scalax.collection.mutable.Builder
 
@@ -40,8 +40,8 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   def isMixed: Boolean    = edges.size > 0 && edges.hasMixedEdges
   def isMulti: Boolean    = edges.size > 0 && edges.hasAnyMultiEdge
 
-  /** The companion object of `This`. */
-  val companion: GraphCompanion[CC]
+  /** The companion object of `CC`. */
+  val companion: Factory[CC]
   protected type Config <: GraphConfig
   implicit def config: companion.Config with Config
 

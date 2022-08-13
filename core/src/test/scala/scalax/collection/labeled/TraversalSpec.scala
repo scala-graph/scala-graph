@@ -14,7 +14,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import Data._
 import OuterImplicits._
 //import generator.GraphGen
-import generic.{AnyEdge, Edge, GraphCoreCompanion}
+import generic.{AnyEdge, Edge, GenericGraphCoreFactory}
 import edges._
 import edges.labeled._
 import edges.multilabeled._
@@ -30,7 +30,7 @@ class TraversalSpec
     )
 
 final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
-    val factory: GraphCoreCompanion[G]
+    val factory: GenericGraphCoreFactory[G]
 ) extends RefSpec
     with Matchers
     with ScalaCheckPropertyChecks

@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
-import scalax.collection.generic.{AnyEdge, Edge, GraphCoreCompanion}
+import scalax.collection.generic.{AnyEdge, Edge, GenericGraphCoreFactory}
 
 import org.scalatest._
 
@@ -24,7 +24,7 @@ class SerializableSpec
 /** Tests standard java serialization.
   */
 final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC]
+    val factory: GenericGraphCoreFactory[CC]
 ) extends AnyFlatSpec
     with Matchers
     with BeforeAndAfterEach

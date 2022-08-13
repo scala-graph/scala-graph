@@ -5,7 +5,7 @@ import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import scalax.collection.Data.shuffleNotEqual
-import scalax.collection.generic.{Edge, GraphCoreCompanion}
+import scalax.collection.generic.{Edge, GenericGraphCoreFactory}
 
 /** Editing hypergraphs with labeled edges including support for multi-hypergraphs.
   */
@@ -478,7 +478,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
 }
 
 private class EditingLabeledHyperEdges[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
-    val factory: GraphCoreCompanion[G]
+    val factory: GenericGraphCoreFactory[G]
 ) extends RefSpec
     with Matchers {
 

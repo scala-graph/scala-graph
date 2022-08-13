@@ -11,7 +11,7 @@ import scalax.collection.edges._
 import scalax.collection.generic._
 import scalax.collection.generator.RandomGraph.IntFactory
 import scalax.collection.generator._
-import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.generic.GenericGraphCoreFactory
 import scalax.collection.visualization.Visualizer
 
 class ConnectivitySpec
@@ -21,7 +21,7 @@ class ConnectivitySpec
     )
 
 final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
-    val factory: GraphCoreCompanion[G]
+    val factory: GenericGraphCoreFactory[G]
 ) extends RefSpec
     with Matchers
     with ScalaCheckPropertyChecks

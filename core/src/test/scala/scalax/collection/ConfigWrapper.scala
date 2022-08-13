@@ -1,12 +1,11 @@
 package scalax.collection
 
-import scalax.collection.generic._
-import scalax.collection.generic.GraphCompanion
+import scalax.collection.generic.{Edge, GenericGraphFactory}
 
 /** Enables to transparently pass `GraphCompanion` objects with non-default configuration parameters to specs.
   */
 trait ConfigWrapper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]] {
-  val companion: GraphCompanion[CC]
+  val companion: GenericGraphFactory[CC]
   implicit val config: companion.Config
 
   def empty[N, E <: Edge[N]](implicit config: companion.Config): CC[N, E] = companion.empty[N, E]

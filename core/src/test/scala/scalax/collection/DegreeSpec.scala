@@ -16,7 +16,7 @@ class DegreeSpec
       new Degree[mutable.Graph](mutable.Graph)
     )
 
-class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val factory: GraphCoreCompanion[CC])
+class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val factory: GenericGraphCoreFactory[CC])
     extends RefSpec
     with Matchers
     with Visualizer[CC] {

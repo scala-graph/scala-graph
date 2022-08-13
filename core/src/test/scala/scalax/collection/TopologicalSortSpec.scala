@@ -9,7 +9,7 @@ import scalax.collection.OuterImplicits._
 import scalax.collection.GraphTraversal.Parameters._
 import scalax.collection.GraphTraversal._
 import scalax.collection.edges._
-import scalax.collection.generic.{Edge, GraphCoreCompanion}
+import scalax.collection.generic.{Edge, GenericGraphCoreFactory}
 import scalax.collection.visualization.Visualizer
 
 class TopologicalSortSpec
@@ -19,7 +19,7 @@ class TopologicalSortSpec
     )
 
 final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
-    val factory: GraphCoreCompanion[G]
+    val factory: GenericGraphCoreFactory[G]
 ) extends RefSpec
     with Matchers
     with ScalaCheckPropertyChecks

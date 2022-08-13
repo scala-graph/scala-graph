@@ -4,7 +4,7 @@ import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import scalax.collection.edges.{DiEdge, UnDiEdge}
-import scalax.collection.generic.{Edge, GraphCoreCompanion}
+import scalax.collection.generic.{Edge, GenericGraphCoreFactory}
 
 /** Editing non-hypergraphs with labeled edges, in particular, editing multigraphs.
   */
@@ -55,7 +55,7 @@ private class LabeledEdges extends RefSpec with Matchers {
 }
 
 private class EditingLabeledEdges[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
-    val factory: GraphCoreCompanion[G]
+    val factory: GenericGraphCoreFactory[G]
 ) extends RefSpec
     with Matchers {
 
