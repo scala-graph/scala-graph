@@ -2,13 +2,12 @@ package scalax.collection
 
 import java.time.DayOfWeek._
 import java.time.LocalTime
-
 import scala.concurrent.duration._
-
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
 
+import scalax.collection.edges.DiEdge
 import scalax.collection.generic._
 import scalax.collection.generic.GenericGraphCoreFactory
 import scalax.collection.labeled.aviation._
@@ -57,14 +56,14 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
 
       val e = g.edges.head
       e.ends.head.getClass should be(g.nodes.head.getClass)
-      e.departure should be(madrid)
-      e.destination should be(rio)
-      e.flightNo should be(flightNo)
-      e should be(outer)
+      e.departure shouldBe madrid
+      e.destination shouldBe rio
+      e.flightNo shouldBe flightNo
+      e shouldBe outer
       e.## should be(outer.##)
 
       val eqFlight = Flight(madrid, rio, flightNo, Nil, outer.duration + 1.minute)
-      e should be(eqFlight)
+      e shouldBe eqFlight
       e.## should be(eqFlight.##)
 
       val neFlight = Flight(madrid, rio, flightNo + "x", outer.departures, outer.duration)
@@ -85,14 +84,17 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
           inner_1 should equal(outer_1)
         case _ => fail()
       }
+
+      outer shouldNot equal(DiEdge(madrid, rio))
+      DiEdge(madrid, rio) shouldNot equal(outer)
     }
 
     def `infix constructor`: Unit = {
       import scalax.collection.edges.DiEdgeImplicits
-      madrid ~> rio + (flightNo, outer.departures, outer.duration) should be(outer)
+      madrid ~> rio + (flightNo, outer.departures, outer.duration) shouldBe outer
     }
 
-    def `extractor`: Unit = {
+    def `extractor ` : Unit = {
       val g: AnyGraph[Airport, Flight] = factory.empty[Airport, Flight]
 
       g.nodes foreach { case g.InnerNode(inner, Airport(code)) =>
@@ -107,6 +109,17 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
       g.edges.outerIterator foreach { case Flight(from, to, no, _, _) =>
         (from.code, to.code, no)
       }
+    }
+
+    def `concat ` : Unit = {
+      val g: AnyGraph[Airport, Flight] = factory.empty
+
+      g ++ List(outer) shouldBe factory.from(outer :: Nil)
+      "g ++ List(outer): AnyGraph[Airport, Flight]" should compile
+
+      val widened = g ++ List(DiEdge(madrid, rio))
+      "widened: AnyGraph[Airport, Flight]" shouldNot compile
+      "widened: AnyGraph[Airport, DiEdge[Airport]]" shouldNot compile
     }
   }
 }

@@ -9,7 +9,7 @@ sealed protected[collection] trait Eq { this: Edge[_] =>
       (this eq that) ||
       (that canEqual this) &&
       this.isDirected == that.isDirected &&
-      this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed] &&
+      this.isInstanceOf[ExtendedKey] == that.isInstanceOf[ExtendedKey] &&
       equals(that)
     case _ => false
   }
@@ -177,8 +177,6 @@ case object Sequence extends CollectionKind(true, true)
 
 /** Marks (directed) hyperedge endpoints to have a significant order. */
 protected[collection] trait OrderedEndpoints
-
-protected[collection] trait Keyed // TODO check usage
 
 /** Mixin for multi-edge support.
   *
