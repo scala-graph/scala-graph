@@ -56,7 +56,7 @@ class Descriptor[N](
 ) {
   def requireUniqueTypeIds(descriptors: Iterable[TypeId]) {
     def duplicateTypeId =
-      (namedNodeDescriptors.map(_.typeId).toList).sorted sliding 2 find
+      namedNodeDescriptors.map(_.typeId).toList.sorted sliding 2 find
         (strings => if (strings.size == 2) strings.head == strings.tail else false)
     val duplNodeTypeId = duplicateTypeId
     require(duplNodeTypeId.isEmpty, "Duplicate typeId found: " + duplNodeTypeId.get.head)
