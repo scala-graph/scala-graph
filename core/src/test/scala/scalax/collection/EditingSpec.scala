@@ -251,13 +251,14 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       val n = o map (g.nodes find _ getOrElse g.nodes.head)
 
       val less = g.nodes - n(3)
+      g.order shouldBe 3
       less should have size 2
       less should contain(n(1))
       less.find(_ == n(1)).get.edges should have size 1
       less should contain(n(2))
       less.find(_ == n(2)).get.edges should have size 2
 
-      val restored = less + n(3)
+      val restored = less.toSet + n(3)
       restored should have size 3
       restored should contain(n(3))
       restored.find(_ == n(1)).get.edges should have size 1

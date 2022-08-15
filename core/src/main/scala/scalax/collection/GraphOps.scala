@@ -65,7 +65,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     protected[collection] def asNodeT: NodeT
   }
   object InnerNode {
-    def unapply(node: InnerNode): Option[(NodeT, N)] = Some(node.asNodeT, node.outer)
+    def unapply(node: InnerNode): Some[(NodeT, N)] = Some(node.asNodeT, node.outer)
   }
 
   type EdgeT <: InnerEdge
@@ -77,7 +77,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     protected[collection] def asEdgeT: EdgeT
   }
   object InnerEdge {
-    def unapply(edge: InnerEdge): Option[(EdgeT, E)] = Some(edge.asEdgeT, edge.outer)
+    def unapply(edge: InnerEdge): Some[(EdgeT, E)] = Some(edge.asEdgeT, edge.outer)
   }
 
   /** Iterator over all inner nodes and edges. */

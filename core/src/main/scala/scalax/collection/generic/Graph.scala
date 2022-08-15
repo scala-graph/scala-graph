@@ -38,8 +38,8 @@ sealed trait Factory[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       config: GraphConfig
   ): CC[N, E] =
     this match {
-      case gC: GenericGraphFactory[CC]             => gC.from[N, E](nodes, edges)(config)
-      case tC: generic.TypedGraphFactory[N, E, CC] => tC.from(nodes, edges)(config)
+      case gC: GenericGraphFactory[CC]                                   => gC.from[N, E](nodes, edges)(config)
+      case tC: generic.TypedGraphFactory[N @unchecked, E @unchecked, CC] => tC.from(nodes, edges)(config)
     }
 
   final protected def coreConfig(config: GraphConfig): GraphConfig with AdjacencyListArrayConfig =
