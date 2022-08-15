@@ -167,7 +167,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual hE
       }
       hE match {
-        case Several(n1 :: n2 :: n3 :: _) + label =>
+        case Several(n1, n2, n3 :: _) + label =>
           val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
@@ -206,7 +206,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual hE
       }
       hE match {
-        case Several(n1 :: n2 :: n3 :: _) + label =>
+        case Several(n1, n2, n3 :: _) + label =>
           val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
@@ -248,7 +248,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case Several(s1 :: s2 :: _) :~~> Several(t1 :: t2 :: _) + label =>
+        case Several(s1, s2, _) :~~> Several(t1, t2, _) + label =>
           val reconstructed = MyDiHyperEdge(
             Several.fromUnsafe(List(s1, s2)),
             Several.fromUnsafe(List(t1, t2)),
@@ -294,7 +294,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case Several(s1 :: s2 :: sRest) :~~> Several(t1 :: t2 :: tRest) + label =>
+        case Several(s1, s2, sRest) :~~> Several(t1, t2, tRest) + label =>
           val reconstructed = MyDiHyperEdge(
             Several.fromUnsafe(List(s1, s2) ++ sRest),
             Several.fromUnsafe(List(t1, t2) ++ tRest),
@@ -302,7 +302,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           )
           "reconstructed: MyDiHyperEdge[Char]" should compile
           reconstructed shouldEqual diHE
-        case OneOrMore(_) :~~> OneOrMore(_) + _ => fail("Needed for exhaustiveness but should not happen")
+        case OneOrMore(_, _) :~~> OneOrMore(_, _) + _ => fail("Needed for exhaustiveness but should not happen")
       }
     }
   }
@@ -337,7 +337,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual hE
       }
       hE match {
-        case Several(n1 :: n2 :: n3 :: _) ++ label =>
+        case Several(n1, n2, n3 :: _) ++ label =>
           val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
@@ -376,7 +376,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual hE
       }
       hE match {
-        case Several(n1 :: n2 :: n3 :: _) ++ label =>
+        case Several(n1, n2, n3 :: _) ++ label =>
           val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
@@ -417,7 +417,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case Several(s1 :: s2 :: _) :~~> Several(t1 :: t2 :: _) ++ label =>
+        case Several(s1, s2, _) :~~> Several(t1, t2, _) ++ label =>
           val reconstructed = MyDiHyperEdge(
             Several.fromUnsafe(List(s1, s2)),
             Several.fromUnsafe(List(t1, t2)),
@@ -463,7 +463,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case Several(s1 :: s2 :: sRest) :~~> Several(t1 :: t2 :: tRest) ++ label =>
+        case Several(s1, s2, sRest) :~~> Several(t1, t2, tRest) ++ label =>
           val reconstructed = MyDiHyperEdge(
             Several.fromUnsafe(List(s1, s2) ++ sRest),
             Several.fromUnsafe(List(t1, t2) ++ tRest),
@@ -471,7 +471,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           )
           "reconstructed: MyDiHyperEdge[Char]" should compile
           reconstructed shouldEqual diHE
-        case OneOrMore(_) :~~> OneOrMore(_) ++ _ => fail("Needed for exhaustiveness but should not happen")
+        case OneOrMore(_, _) :~~> OneOrMore(_, _) ++ _ => fail("Needed for exhaustiveness but should not happen")
       }
     }
   }

@@ -118,8 +118,8 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
   }
 
   def `match hyperedge`: Unit = {
-    val HyperEdge(Several(Seq(n1, n2, n3))) = 1 ~~ 2 ~~ 3
-    n1 + n2 + n3 shouldBe 6
+    val HyperEdge(Several(n1, n2, more)) = 1 ~~ 2 ~~ 3
+    n1 + n2 + more.head shouldBe 6
   }
 
   def `match directed hyperedge`: Unit = {
@@ -128,7 +128,7 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
     val target  = One(count)
     val diHyper = sources ~~> target
 
-    val OneOrMore(Seq(s1, _)) ~~> (t @ One(c)) = diHyper
+    val OneOrMore(s1, _) ~~> (t @ One(c)) = diHyper
     s1 shouldBe sources.head
     c shouldBe count
     t shouldBe target

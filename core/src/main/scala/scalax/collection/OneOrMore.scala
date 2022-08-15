@@ -40,10 +40,10 @@ object OneOrMore {
       )
     )
 
-  def unapply[N](oneOrMore: OneOrMore[N]): Option[Seq[N]] =
+  def unapply[N](oneOrMore: OneOrMore[N]): Some[(N, Seq[N])] =
     Some(oneOrMore match {
-      case s: Several[N] => s.iterator.toSeq
-      case One(_1)       => _1 :: Nil
+      case s: Several[N] => (s._1, s._2 +: s.more.toSeq)
+      case One(_1)       => (_1, Nil)
     })
 }
 
@@ -118,6 +118,4 @@ object Several {
         s"'iterable' must have at least two elements but it has ${iterable.size}."
       )
     )
-
-  def unapply[N](several: Several[N]): Option[Seq[N]] = Some(several.toSeq)
 }

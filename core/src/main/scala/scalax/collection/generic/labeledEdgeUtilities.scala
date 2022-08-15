@@ -7,7 +7,7 @@ trait SingleLabel[L] { this: Edge[_] with LEdgeToString =>
 }
 
 object SingleLabel {
-  def unapply[L](edge: Edge[_] with SingleLabel[L]): Option[L] = Some(edge.label)
+  def unapply[L](edge: Edge[_] with SingleLabel[L]): Some[L] = Some(edge.label)
 }
 
 trait ExtendedKeyBySingleLabel extends ExtendedKey { this: Edge[_] with SingleLabel[_] =>
@@ -18,43 +18,43 @@ trait ExtendedKeyBySingleLabel extends ExtendedKey { this: Edge[_] with SingleLa
   * It is to be combined with `:~` or `:~>` like `case a :~ b % w`.
   */
 case object % {
-  def unapply[N](nw: (N, Double)): Option[(N, Double)] = Some(nw._1, nw._2)
+  def unapply[N](nw: (N, Double)): Some[(N, Double)] = Some(nw._1, nw._2)
 }
 
 trait UnapplyLabeledEdge[N, E <: Edge[N], L] {
-  def unapply(edge: E): Option[(N, (N, L))] = Some(edge._1 -> (edge._2, label(edge)))
+  def unapply(edge: E): Some[(N, (N, L))] = Some(edge._1 -> (edge._2, label(edge)))
   protected def label(edge: E): L
 }
 
 trait UnapplyLabel[N, L] {
-  def unapply(rest: (N, L)): Option[(N, L)] = Some(rest)
+  def unapply(rest: (N, L)): Some[(N, L)] = Some(rest)
 }
 
 trait UnapplyGenericLabeledEdge[E[X] <: AnyEdge[X], L] {
-  def unapply[N](edge: E[N] with SingleLabel[L]): Option[(N, (N, L))] = Some(edge._1 -> (edge._2, label(edge)))
-  protected def label[N](edge: E[N] with SingleLabel[L]): L           = edge.label
+  def unapply[N](edge: E[N] with SingleLabel[L]): Some[(N, (N, L))] = Some(edge._1 -> (edge._2, label(edge)))
+  protected def label[N](edge: E[N] with SingleLabel[L]): L         = edge.label
 }
 
 trait UnapplyGenericLabeledHyperEdge[E[X] <: AbstractHyperEdge[X], L] {
-  def unapply[N](hyperedge: E[N] with SingleLabel[L]): Option[(Several[N], L)] =
+  def unapply[N](hyperedge: E[N] with SingleLabel[L]): Some[(Several[N], L)] =
     Some(hyperedge.ends, label(hyperedge))
 
   protected def label[N](edge: E[N] with SingleLabel[L]): L = edge.label
 }
 
 trait UnapplyGenericLabeledDiHyperEdge[E[X] <: AbstractDiHyperEdge[X], L] {
-  def unapply[N](diHyperedge: E[N] with SingleLabel[L]): Option[(OneOrMore[N], (OneOrMore[N], L))] =
+  def unapply[N](diHyperedge: E[N] with SingleLabel[L]): Some[(OneOrMore[N], (OneOrMore[N], L))] =
     Some(diHyperedge.sources -> (diHyperedge.targets, label(diHyperedge)))
 
   protected def label[N](edge: E[N] with SingleLabel[L]): L = edge.label
 }
 
 trait UnapplyGenericLabel[L] {
-  def unapply[N](rest: (N, L)): Option[(N, L)] = Some(rest)
+  def unapply[N](rest: (N, L)): Some[(N, L)] = Some(rest)
 }
 
 trait UnapplyGenericHyperLabel[L] {
-  def unapply[N](rest: (OneOrMore[N], L)): Option[(OneOrMore[N], L)] = Some(rest)
+  def unapply[N](rest: (OneOrMore[N], L)): Some[(OneOrMore[N], L)] = Some(rest)
 }
 
 trait ExtendedKeyByWeight extends ExtendedKey { this: Edge[_] =>
