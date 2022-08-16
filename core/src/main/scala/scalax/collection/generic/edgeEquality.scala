@@ -129,11 +129,11 @@ protected[collection] trait EqDi[+N] extends Eq {
   this: AnyDiEdge[N] =>
 
   @inline final protected def diBaseEquals(n1: Any, n2: Any): Boolean =
-    this._1 == n1 &&
-      this._2 == n2
+    this.source == n1 &&
+      this.target == n2
 
   final override protected def baseEquals(other: Edge[_]): Boolean = other match {
-    case edge: AnyDiEdge[_]                           => diBaseEquals(edge._1, edge._2)
+    case edge: AnyDiEdge[_]                           => diBaseEquals(edge.source, edge.target)
     case hyper: AnyDiHyperEdge[_] if hyper.arity == 2 => diBaseEquals(hyper.sources.head, hyper.targets.head)
     case _                                            => false
   }

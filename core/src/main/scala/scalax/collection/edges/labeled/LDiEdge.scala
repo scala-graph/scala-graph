@@ -13,5 +13,5 @@ abstract class LDiEdge[+N, L] extends AnyDiEdge[N] with SingleLabel[L] with LDiE
   */
 abstract class LDiEdgeInfixConstructor[N, L, CC[X] <: Edge[X] with SingleLabel[L]](apply: (N, N, L) => CC[N]) {
   def edge: DiEdge[N]
-  def +(label: L): CC[N] = apply(edge._1, edge._2, label)
+  def +(label: L): CC[N] = apply(edge.source, edge.target, label)
 }

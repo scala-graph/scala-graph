@@ -7,7 +7,7 @@ import scalax.collection.generic.{AbstractGenericDiEdge, DiEdgeToString, EdgeCom
 @SerialVersionUID(55)
 final case class DiEdge[+N](source: N, target: N) extends AbstractGenericDiEdge[N, DiEdge] with DiEdgeToString {
 
-  def map[NN](node_1: NN, node_2: NN): DiEdge[NN] = copy[NN](node_1, node_2)
+  def map[NN](source: NN, target: NN): DiEdge[NN] = copy[NN](source, target)
 }
 
 /** Factory for directed edges.

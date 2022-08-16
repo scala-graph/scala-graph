@@ -118,7 +118,7 @@ private class EditingTyped[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike
       g ++ List(outer) shouldBe typedFactory.from(outer :: Nil)
       "g ++ List(outer): AnyFlightGraph" should compile
 
-      val diEdge  = DiEdge(outer._1, outer._2)
+      val diEdge  = DiEdge(outer.source, outer.target)
       val widened = g ++ List(diEdge)
       "widened: AnyFlightGraph" shouldNot compile
       "widened: AnyGraph[Airport, DiEdge[Airport]]" shouldNot compile
@@ -128,7 +128,7 @@ private class EditingTyped[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike
     def `concat adding a typed edge`: Unit = {
       val g: AnyGraph[Airport, DiEdge[Airport]] = genericFactory.empty
 
-      val diEdge = DiEdge(outer._1, outer._2)
+      val diEdge = DiEdge(outer.source, outer.target)
       g ++ List(diEdge) shouldBe genericFactory.from(diEdge :: Nil)
       "g ++ List(diEdge): AnyGraph[Airport, DiEdge[Airport]]" should compile
 

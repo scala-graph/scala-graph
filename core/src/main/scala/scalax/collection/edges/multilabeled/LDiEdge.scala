@@ -22,5 +22,5 @@ abstract class LDiEdgeInfixConstructor[N, L, CC[X] <: Edge[X] with ExtendedKey](
     apply: (N, N, L) => CC[N]
 ) {
   def edge: DiEdge[N]
-  def ++(label: L): CC[N] = apply(edge._1, edge._2, label)
+  def ++(label: L): CC[N] = apply(edge.source, edge.target, label)
 }
