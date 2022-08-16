@@ -35,13 +35,6 @@ trait UnapplyGenericLabeledEdge[E[X] <: AnyEdge[X], L] {
   protected def label[N](edge: E[N] with SingleLabel[L]): L         = edge.label
 }
 
-trait UnapplyGenericLabeledHyperEdge[E[X] <: AbstractHyperEdge[X], L] {
-  def unapply[N](hyperedge: E[N] with SingleLabel[L]): Some[(Several[N], L)] =
-    Some(hyperedge.ends, label(hyperedge))
-
-  protected def label[N](edge: E[N] with SingleLabel[L]): L = edge.label
-}
-
 trait UnapplyGenericLabeledDiHyperEdge[E[X] <: AbstractDiHyperEdge[X], L] {
   def unapply[N](diHyperedge: E[N] with SingleLabel[L]): Some[(OneOrMore[N], (OneOrMore[N], L))] =
     Some(diHyperedge.sources -> (diHyperedge.targets, label(diHyperedge)))
