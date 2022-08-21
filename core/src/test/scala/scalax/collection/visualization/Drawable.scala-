@@ -129,7 +129,7 @@ trait Drawable {
     * @tparam E type of edge
     * @return container
     */
-  def toContainer[N, E <: Edge[N]](g: AnyGraph[N, E]): Try[Container] = Try {
+  private def toContainer[N, E <: Edge[N]](g: AnyGraph[N, E]): Try[Container] = Try {
 
     val container: Container    = assertedLookup(classOf[Container.Factory]).newContainer
     val loader: ContainerLoader = container.getLoader
