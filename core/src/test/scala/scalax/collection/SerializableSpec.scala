@@ -28,7 +28,8 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
 ) extends AnyFlatSpec
     with Matchers
     with BeforeAndAfterEach
-    with Visualizer[CC] {
+    with IntelliJ[CC]
+    with Visualizer {
   private val factoryName     = factory.getClass.getName
   private val isImmutableTest = factoryName contains "immutable"
 
@@ -44,7 +45,7 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
       val exec = newTest
       exec.save[N, E](g)
       val r = exec.restore[N, E]
-      given(r)(_ should be(g))
+      given(r.asAnyGraph)(_ should equal(g))
       r
     }
   }
@@ -160,38 +161,41 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
 
   "After calling diSuccessors the graph" should work in {
     import Data.elementsOfDi_1
-    given(factory(elementsOfDi_1: _*)) { g =>
-      g.nodes.head.diSuccessors
-      val back = store.test[Int, DiEdge[Int]](g)
-      back should be(g)
-    }
+    val g = factory(elementsOfDi_1: _*)
+    g.nodes.head.diSuccessors
+    store.test[Int, DiEdge[Int]](g)
   }
+
   "After calling pathTo the graph" should work in {
     import Data.elementsOfDi_1
-    given(factory(elementsOfDi_1: _*)) { g =>
-      g.nodes.head.diSuccessors
-      val n = g.nodes.head
-      n.pathTo(n)
-      val back = store.test[Int, DiEdge[Int]](g)
-      back should be(g)
-    }
+    val g = factory(elementsOfDi_1: _*)
+    g.nodes.head.diSuccessors
+    val n = g.nodes.head
+    n.pathTo(n)
+    store.test[Int, DiEdge[Int]](g)
   }
+
   "A deserialized graph" should "be traversable" in {
     import Data.elementsOfDi_1
-    given(factory(elementsOfDi_1: _*)) { g =>
-      val back                             = store.test[Int, DiEdge[Int]](g)
-      def op(g: CC[Int, DiEdge[Int]]): Int = g.nodes.head.outerNodeTraverser.size
-      op(back) should be(op(g))
+    val g    = factory(elementsOfDi_1: _*)
+    val back = store.test[Int, DiEdge[Int]](g)
+    given(g.asAnyGraph) { g =>
+      def op(g: AnyGraph[Int, DiEdge[Int]]): Int = g.nodes.head.outerNodeTraverser.size
+      op(back.asAnyGraph) shouldBe op(g)
     }
   }
+
   "A deserialized graph" should "have the same successors" in {
     import Data.elementsOfDi_1
-    given(factory(elementsOfDi_1: _*)) { g =>
-      def outerSuccessors(g: CC[Int, DiEdge[Int]]) =
-        g.nodes map (innerNode => innerNode.outer -> innerNode.diSuccessors.map(_.outer))
-      val diSuccBefore = outerSuccessors(g)
-      val back         = store.test[Int, DiEdge[Int]](g)
-      outerSuccessors(back) should be(diSuccBefore)
+    val g = factory(elementsOfDi_1: _*)
+
+    def outerSuccessors(g: AnyGraph[Int, DiEdge[Int]]) =
+      g.nodes map (innerNode => innerNode.outer -> innerNode.diSuccessors.map(_.outer))
+
+    val diSuccBefore = outerSuccessors(g.asAnyGraph)
+    val back         = store.test[Int, DiEdge[Int]](g)
+    given(g.asAnyGraph) { g =>
+      outerSuccessors(back.asAnyGraph) shouldBe diSuccBefore
     }
   }
 
@@ -224,7 +228,7 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
 
   "A graph of [Int,WUnDiEdge]" should work in {
     import Data.elementsOfMixed_2
-    given(factory.from(elementsOfMixed_2)) { _ =>
+    given(factory.from(elementsOfMixed_2).asAnyGraph) { _ =>
       (new EdgeByteArray).test[Int, AnyEdge[Int]](elementsOfMixed_2)
     }
   }

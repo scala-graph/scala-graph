@@ -19,9 +19,10 @@ class DegreeSpec
 class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val factory: GenericGraphCoreFactory[CC])
     extends RefSpec
     with Matchers
-    with Visualizer[CC] {
+    with Visualizer
+    with IntelliJ[CC] {
 
-  private val emptyG = factory.empty[Int, DiEdge[Int]]
+  private val emptyG: AnyGraph[Int, DiEdge[Int]] = factory.empty[Int, DiEdge[Int]].asAnyGraph
 
   abstract class TestGraph[N, E <: Edge[N]](override val g: CC[N, E]) extends TGraph(g) {
     def degree(outer: N)                  = node(outer).degree
@@ -51,7 +52,7 @@ class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val
     def `for nodes`: Unit = {
       {
         import UnDi_1._
-        given(g) { _ =>
+        given(g.asAnyGraph) { _ =>
           degree(1) should be(3)
           degree(2) should be(2)
           degree(3) should be(4)
@@ -61,7 +62,7 @@ class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val
       }
       {
         import UnDi_2._
-        given(g) { _ =>
+        given(g.asAnyGraph) { _ =>
           degree(1) should be(4)
           degree(2) should be(5)
           degree(3) should be(3)
@@ -70,15 +71,14 @@ class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val
     }
 
     def `for total graph`: Unit = {
-      emptyG.totalDegree shouldBe 0
-
+      emptyG.totalDegree shouldBe 0;
       {
         import UnDi_1._
-        given(g)(_.totalDegree shouldBe degrees.sum)
+        given(g.asAnyGraph)(_.totalDegree shouldBe degrees.sum)
       }
       {
         import UnDi_2._
-        given(g)(_.totalDegree shouldBe degrees.sum)
+        given(g.asAnyGraph)(_.totalDegree shouldBe degrees.sum)
       }
     }
   }
@@ -88,11 +88,11 @@ class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val
       emptyG.minDegree should be(0);
       {
         import UnDi_1._
-        given(g)(_.minDegree should be(degrees.min))
+        given(g.asAnyGraph)(_.minDegree should be(degrees.min))
       }
       {
         import UnDi_2._
-        given(g)(_.minDegree should be(degrees.min))
+        given(g.asAnyGraph)(_.minDegree should be(degrees.min))
       }
     }
 
@@ -100,11 +100,11 @@ class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val
       emptyG.maxDegree should be(0);
       {
         import UnDi_1._
-        given(g)(_.maxDegree should be(degrees.max))
+        given(g.asAnyGraph)(_.maxDegree should be(degrees.max))
       }
       {
         import UnDi_2._
-        given(g)(_.maxDegree should be(degrees.max))
+        given(g.asAnyGraph)(_.maxDegree should be(degrees.max))
       }
     }
 
@@ -112,11 +112,11 @@ class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val
       emptyG.degreeSeq should be(Seq.empty);
       {
         import UnDi_1._
-        given(g)(_.degreeSeq should be(expectedDegreeSeq))
+        given(g.asAnyGraph)(_.degreeSeq should be(expectedDegreeSeq))
       }
       {
         import UnDi_2._
-        given(g)(_.degreeSeq should be(expectedDegreeSeq))
+        given(g.asAnyGraph)(_.degreeSeq should be(expectedDegreeSeq))
       }
     }
 
@@ -124,11 +124,11 @@ class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val
       emptyG.degreeSet should be(Set.empty);
       {
         import UnDi_1._
-        given(g)(_.degreeSet should be(expectedDegreeSet))
+        given(g.asAnyGraph)(_.degreeSet should be(expectedDegreeSet))
       }
       {
         import UnDi_2._
-        given(g)(_.degreeSet should be(expectedDegreeSet))
+        given(g.asAnyGraph)(_.degreeSet should be(expectedDegreeSet))
       }
     }
 
@@ -136,7 +136,7 @@ class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val
       emptyG.degreeNodeSeq should be(Seq.empty);
       {
         import UnDi_1._
-        given(g) { g =>
+        given(g.asAnyGraph) { g =>
           val ord = new Ordering[g.DegreeNodeSeqEntry] {
             def compare(a: g.DegreeNodeSeqEntry, b: g.DegreeNodeSeqEntry) = {
               def sortKey(e: g.DegreeNodeSeqEntry) = 100 * e._1 + e._2
@@ -156,7 +156,7 @@ class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val
       }
       {
         import UnDi_2._
-        given(g)(_.degreeNodeSeq should be(expectedDegreeNodeSeq))
+        given(g.asAnyGraph)(_.degreeNodeSeq should be(expectedDegreeNodeSeq))
       }
     }
 
@@ -164,14 +164,14 @@ class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val
       emptyG.degreeNodesMap should be(Map.empty);
       {
         import UnDi_1._
-        given(g) { g =>
+        given(g.asAnyGraph) { g =>
           g.degreeNodesMap should be(expectedDegreeNodesMap)
           g.degreeNodesMap(degreeFilter = _ > 3) should be(expectedDegreeGT3NodesMap)
         }
       }
       {
         import UnDi_2._
-        given(g) { g =>
+        given(g.asAnyGraph) { g =>
           g.degreeNodesMap should be(expectedDegreeNodesMap)
         }
       }
@@ -181,11 +181,11 @@ class Degree[CC[N, E <: Edge[N]] <: GraphLike[N, E, CC] with AnyGraph[N, E]](val
       emptyG.degreeCount should be(Map.empty);
       {
         import UnDi_1._
-        given(g)(_.degreeCount should be(expectedDegreeCount))
+        given(g.asAnyGraph)(_.degreeCount should be(expectedDegreeCount))
       }
       {
         import UnDi_2._
-        given(g)(_.degreeCount should be(expectedDegreeCount))
+        given(g.asAnyGraph)(_.degreeCount should be(expectedDegreeCount))
       }
     }
   }

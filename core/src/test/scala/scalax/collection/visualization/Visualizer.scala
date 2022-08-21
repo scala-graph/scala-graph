@@ -5,16 +5,13 @@ import scala.util.{Failure, Success}
 import org.scalatest.exceptions.TestFailedException
 
 import scalax.collection.generic.Edge
-import scalax.collection.generic.GenericGraphCoreFactory
-import scalax.collection.{AnyGraph, GraphLike}
+import scalax.collection.AnyGraph
 
 /** Scalatest support for graph visualization in case of failures.
   */
-trait Visualizer[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]] extends Drawable {
+trait Visualizer extends Drawable {
 
-  def factory: GenericGraphCoreFactory[G]
-
-  final def given[N, E <: Edge[N]](graph: G[N, E])(test: G[N, E] => Unit): Unit = {
+  final def given[N, E <: Edge[N]](graph: AnyGraph[N, E])(test: AnyGraph[N, E] => Unit): Unit = {
 
     def reThrow(ex: TestFailedException, secondLine: String) =
       throw ex.modifyMessage(_.map { testMessage =>
@@ -27,7 +24,7 @@ trait Visualizer[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]] e
     catch {
       case ex: TestFailedException =>
         makeImage(
-          graph: AnyGraph[N, E],
+          graph,
           path = "log/",
           name = (ex.failedCodeFileName match {
             case Some(fileName) => fileName

@@ -34,7 +34,8 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
 ) extends RefSpec
     with Matchers
     with ScalaCheckPropertyChecks
-    with Visualizer[G] {
+    with IntelliJ[G]
+    with Visualizer {
 
   implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
 
@@ -112,7 +113,8 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
 
   // see diagram WUnDi-2.jpg
   val eUnDi_2 = List[AnyEdge[Int]](1 ~ 2 %% 4, 2 ~ 3 %% -1, 1 ~> 3 %% 5, 1 ~ 3 %% 4, 1 ~> 2 %% 3, 2 ~ 2 %% 1)
-  val gUnDi_2 = factory.from[Int, AnyEdge[Int]](Set.empty, eUnDi_2)
+  val gUnDi_2 =
+    factory.from[Int, AnyEdge[Int]](Set.empty, eUnDi_2).asAnyGraph
 
   def `shortestPathTo in UnDi_2`: Unit =
     given(gUnDi_2) { g =>
@@ -195,7 +197,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
         case e: g.InnerEdge => edges += e.asEdgeT
       }
 
-      nodes should be(List(n(2), n(1)))
+      nodes shouldBe List(n(2), n(1))
       edges.toList.sorted(g.BaseInnerEdge.WeightOrdering) shouldBe List(eUnDi_2(1), eUnDi_2(5), eUnDi_2(0))
     }
 
@@ -226,7 +228,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
 
     val g = factory.from[Airport, Flight](Set.empty, flights)
 
-    given(g) { g =>
+    given(g.asAnyGraph) { g =>
       val shp1 = (g get jfc).withSubgraph(edges = _.airline != "UN") shortestPathTo (g get dme)
       shp1.get.nodes.toList should be(List(jfc, lhr, dme))
       shp1.get.edges.toList should be(List(flight("BA 174"), flight("SU 242")))

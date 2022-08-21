@@ -41,19 +41,18 @@ private class EditingTypedEdges extends RefSpec with Matchers {
     outer.toString should startWith(s"$madrid ~> $rio ++ ")
 }
 
-private class EditingTyped[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
+private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
     typedFactory: TypedGraphCoreFactory[Airport, Flight, CC],
     genericFactory: GenericGraphCoreFactory[CC]
 ) extends RefSpec
-    with Matchers {
+    with Matchers
+    with IntelliJ[CC] {
   import Samples._
 
   object `Custom edge 'Flight'` {
     def `edge methods`: Unit = {
 
-      // TODO get apply/from work with Flight
-      val g: AnyFlightGraph =
-        typedFactory.from(Nil, edges = outer :: Nil) // `annotated for IntelliJ
+      val g = typedFactory.from(Nil, edges = outer :: Nil).asAnyGraph
 
       val e = g.edges.head
       e.ends.head.getClass should be(g.nodes.head.getClass)
@@ -78,7 +77,7 @@ private class EditingTyped[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike
 
       outer_1 should not equal outer_2
 
-      val g = typedFactory.from(outer_1 :: outer_2 :: Nil)
+      val g = typedFactory.from(outer_1 :: outer_2 :: Nil).asAnyGraph
       g.edges.toList match {
         case inner_1 :: inner_2 :: Nil =>
           inner_1 should not equal inner_2
@@ -96,7 +95,7 @@ private class EditingTyped[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike
     }
 
     def `extractor ` : Unit = {
-      val g: AnyFlightGraph = typedFactory.empty
+      val g = typedFactory.empty.asAnyGraph
 
       g.nodes foreach { case g.InnerNode(inner, Airport(code)) =>
         code -> inner.outDegree
@@ -113,7 +112,7 @@ private class EditingTyped[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike
     }
 
     def `concat adding a generic edge`: Unit = {
-      val g: AnyFlightGraph = typedFactory.empty
+      val g = typedFactory.empty.asAnyGraph
 
       g ++ List(outer) shouldBe typedFactory.from(outer :: Nil)
       "g ++ List(outer): AnyFlightGraph" should compile
@@ -126,7 +125,7 @@ private class EditingTyped[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike
     }
 
     def `concat adding a typed edge`: Unit = {
-      val g: AnyGraph[Airport, DiEdge[Airport]] = genericFactory.empty
+      val g = genericFactory.empty[Airport, DiEdge[Airport]].asAnyGraph
 
       val diEdge = DiEdge(outer.source, outer.target)
       g ++ List(diEdge) shouldBe genericFactory.from(diEdge :: Nil)

@@ -23,11 +23,12 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
 ) extends RefSpec
     with Matchers
     with ScalaCheckPropertyChecks
-    with Visualizer[G] {
+    with IntelliJ[G]
+    with Visualizer {
 
   private object Topo {
 
-    class Checker[N, E <: Edge[N]](val graph: G[N, E]) {
+    class Checker[N, E <: Edge[N]](val graph: AnyGraph[N, E]) {
 
       def checkOuterNodes(seq: Iterable[N]): Unit =
         checkInnerNodes(seq map (graph get _))
@@ -84,7 +85,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   }
 
   def `empty graph`: Unit =
-    given(factory.empty[Int, DiEdge[Int]]) {
+    given(factory.empty[Int, DiEdge[Int]].asAnyGraph) {
       _.topologicalSort.fold(
         Topo.unexpectedCycle,
         _ shouldBe empty
@@ -118,10 +119,10 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
       driving_to_work ~> driving_home,
       driving_home ~> gaming,
       listening_to_music
-    )
+    ).asAnyGraph
 
-    given(typicalDay) { case g: AnyGraph[String, DiEdge[String]] => // `annotated for IntelliJ
-      g.topologicalSort.fold(
+    given(typicalDay) {
+      _.topologicalSort.fold(
         Topo.unexpectedCycle,
         order =>
           new Topo.Checker(typicalDay) {
@@ -133,8 +134,8 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
 
   def `connected graph`: Unit = {
     val someOuter @ n0 :: n1 :: n5 :: Nil = 0 :: 1 :: 5 :: Nil
-    val connected                         = factory[Int, DiEdge](n0 ~> n1, 2 ~> 4, 2 ~> n5, n0 ~> 3, n1 ~> 4, 4 ~> 3)
-    given(connected) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+    val connected = factory[Int, DiEdge](n0 ~> n1, 2 ~> 4, 2 ~> n5, n0 ~> 3, n1 ~> 4, 4 ~> 3).asAnyGraph
+    given(connected) { g =>
       g.isMulti shouldBe false
       g.topologicalSort.fold(
         Topo.unexpectedCycle,
@@ -157,7 +158,8 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   def `multi graph`: Unit = {
     import scalax.collection.edges.multilabeled._
 
-    val g = factory(1 ~> 2 %% 0, 1 ~> 2 %% 1)
+    val g = factory(1 ~> 2 %% 0, 1 ~> 2 %% 1).asAnyGraph
+
     g.topologicalSort.fold(
       Topo.unexpectedCycle,
       order =>
@@ -170,8 +172,8 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   def `unconnected graph`: Unit = {
     val expectedLayer_0 @ (_1 :: _3 :: Nil) = List(1, 3)
     val expectedLayer_1 @ (_2 :: _4 :: Nil) = List(2, 4)
-    given(factory(_1 ~> _2, _3 ~> _4)) { g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
-      g.topologicalSort.fold(
+    given(factory(_1 ~> _2, _3 ~> _4)) {
+      _.topologicalSort.fold(
         Topo.unexpectedCycle,
         _.toLayered.toOuter.toList match {
           case (layer_0 :: layer_1 :: Nil) =>
@@ -184,16 +186,16 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   }
 
   def `cyclic graph`: Unit =
-    given(factory(1 ~> 2, 2 ~> 1)) { g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
-      g.topologicalSort.fold(
+    given(factory(1 ~> 2, 2 ~> 1)) {
+      _.topologicalSort.fold(
         identity,
         Topo.unexpectedRight
       )
     }
 
   def `cyclic graph #68`: Unit =
-    given(factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)) { g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
-      g.topologicalSort.fold(
+    given(factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)) {
+      _.topologicalSort.fold(
         identity,
         Topo.unexpectedRight
       )
@@ -201,7 +203,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
 
   /* TODO L
   def `combining with filtered edges by withSubgraph #104`: Unit =
-    given(factory((1 ~+> 3)("a"), (1 ~+> 2)("b"), (2 ~+> 3)("a"))) { g: Graph[Int, ???[Int]] => // `annotated for IntelliJ
+    given(factory((1 ~+> 3)("a"), (1 ~+> 2)("b"), (2 ~+> 3)("a")).asAnyGraph) { g =>
       val n1 = g get 1
       n1.topologicalSort() shouldBe Right
 

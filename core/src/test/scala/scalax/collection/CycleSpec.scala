@@ -44,18 +44,19 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
     val factory: GenericGraphCoreFactory[CC]
 ) extends RefSpec
     with Matchers
-    with Visualizer[CC] {
+    with IntelliJ[CC]
+    with Visualizer {
 
   object `given some directed graphs` extends CycleMatcher[Int, DiEdge[Int]] {
-
-    private val acyclic_1 = factory(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4)
-    private val acyclic_2 = factory(1 ~> 2, 1 ~> 3, 1 ~> 4, 1 ~> 5, 2 ~> 3, 3 ~> 7, 7 ~> 4, 7 ~> 8, 4 ~> 5, 5 ~> 6)
+    private val acyclic_1 = factory(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4).asAnyGraph
+    private val acyclic_2 =
+      factory(1 ~> 2, 1 ~> 3, 1 ~> 4, 1 ~> 5, 2 ~> 3, 3 ~> 7, 7 ~> 4, 7 ~> 8, 4 ~> 5, 5 ~> 6).asAnyGraph
     private val (
       (cyclic_1, cyclicEdge_1),
       (cyclic_21, cyclicEdge_21),
       (cyclic_22, cyclicEdge_22)
     ) = {
-      def makeCyclic(acyclic: CC[Int, DiEdge[Int]], byEdge: DiEdge[Int]) = {
+      def makeCyclic(acyclic: AnyGraph[Int, DiEdge[Int]], byEdge: DiEdge[Int]) = {
         val cyclic = acyclic concat List(byEdge)
         (cyclic, cyclic get byEdge)
       }
@@ -100,23 +101,25 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
       val g = {
         var i, j = 0
         factory.fill(5) { i += 1; j = i + 1; i ~> j }
-      }
+      }.asAnyGraph
+
       def fromEachNode[N, E <: Edge[N]](noCycles: Set[N], cycle: AnyGraph[N, E]#Cycle): Unit =
-        given(cycle.nodes.head.containingGraph.asInstanceOf[CC[N, E]]) {
-          case g: AnyGraph[N, E] => // `annotated for IntelliJ
-            g.nodes foreach { n =>
-              val found = n.findCycle
-              if (noCycles contains n.outer) found should be(None)
-              else (found.get sameAs cycle) should be(true)
-            }
+        given(cycle.nodes.head.containingGraph) {
+          _.nodes foreach { n =>
+            val found = n.findCycle
+            if (noCycles contains n.outer) found should be(None)
+            else (found.get sameAs cycle) should be(true)
+          }
         }
-      given(g concat List(4 ~> 2)) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+
+      given(g concat List(4 ~> 2)) { g =>
         val cycle = g get 3 findCycle
 
         cycle should haveOneNodeSequenceOf(Seq(3, 4, 2, 3))
         fromEachNode(Set(5, 6), cycle get)
       }
-      given(g concat List(5 ~> 2)) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+
+      given(g concat List(5 ~> 2)) { g =>
         val cycle = g get 3 findCycle
 
         cycle should haveOneNodeSequenceOf(Seq(3, 4, 5, 2, 3))
@@ -125,22 +128,22 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
     }
 
     def `the cycle returned by 'findCycleContaining' contains the expected nodes`: Unit = {
-      given(acyclic_1) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(acyclic_1) { g =>
         g.findCycleContaining(g get 1) should be(None)
       }
-      given(cyclic_1) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(cyclic_1) { g =>
         g.findCycleContaining(g get 2) should haveOneNodeSequenceOf(Seq(2, 3, 4, 2))
       }
-      given(acyclic_2) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(acyclic_2) { g =>
         g.findCycleContaining(g get 1) should be(None)
       }
-      given(cyclic_21) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(cyclic_21) { g =>
         def n(outer: Int) = g get outer
 
         g.findCycleContaining(n(1)) should be(None)
         g.findCycleContaining(n(3)) should haveOneNodeSequenceOf(Seq(3, 7, 8, 3))
       }
-      given(cyclic_22) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(cyclic_22) { g =>
         def n(outer: Int) = g get outer
 
         g.findCycleContaining(n(1)) should haveOneNodeSequenceOf(
@@ -160,7 +163,7 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
     }
 
     def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes`: Unit =
-      given(cyclic_22) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(cyclic_22) { g =>
         def n(outer: Int) = g get outer
 
         n(1).withSubgraph(nodes = _ != 3).partOfCycle() should haveOneNodeSequenceOf(
@@ -180,13 +183,13 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
     }
 
     def `the cycle returned by 'findCycleContaining' contains the expected edges`: Unit = {
-      given(cyclic_1) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(cyclic_1) { g =>
         g.findCycleContaining(g get 2).get.edges should contain(cyclicEdge_1)
       }
-      given(cyclic_21) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(cyclic_21) { g =>
         g.findCycleContaining(g get 3).get.edges should contain(cyclicEdge_21)
       }
-      given(cyclic_22) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(cyclic_22) { g =>
         g.findCycleContaining(g get 1).get.edges should contain(cyclicEdge_22)
       }
     }
@@ -202,7 +205,7 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
     def `they are cyclic if they contain a self loop #76`: Unit = {
       val loop = 1 ~> 1
       given(acyclic_1 concat List(loop))(_.isCyclic shouldBe true)
-      given(factory(loop)) { case g: AnyGraph[Int, DiEdge[Int]] => // `annotated for IntelliJ
+      given(factory(loop)) { g =>
         g.findCycle should (be(defined) and beValid)
         g.findCycleContaining(g get 1) should (be(defined) and beValid)
       }
@@ -210,49 +213,48 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
   }
 
   object `given some undirected graphs` extends CycleMatcher[Int, UnDiEdge[Int]] {
-
-    private val unDiAcyclic_1 = factory(1 ~ 2, 2 ~ 3)
+    private val unDiAcyclic_1 = factory(1 ~ 2, 2 ~ 3).asAnyGraph
     private val unDiCyclic_1  = unDiAcyclic_1 concat List(1 ~ 3)
 
-    private val unDiAcyclic_2 = factory(1 ~ 2, 1 ~ 3, 2 ~ 4, 2 ~ 5)
+    private val unDiAcyclic_2 = factory(1 ~ 2, 1 ~ 3, 2 ~ 4, 2 ~ 5).asAnyGraph
     private val unDiCyclic_21 = unDiAcyclic_2 concat List(3 ~ 5)
     private val unDiCyclic_22 = unDiAcyclic_2 concat List(3 ~ 6, 6 ~ 7, 7 ~ 4)
 
     def `the cycle returned by 'findCycle' contains the expected nodes`: Unit = {
-      given(unDiAcyclic_1) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+      given(unDiAcyclic_1) { g =>
         (g get 1 findCycle) shouldBe None
       }
-      given(unDiCyclic_1) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+      given(unDiCyclic_1) { g =>
         (g get 2 findCycle) should haveOneNodeSequenceOf(Seq(2, 3, 1, 2), Seq(2, 1, 3, 2))
       }
-      given(unDiAcyclic_2) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+      given(unDiAcyclic_2) { g =>
         (g get 1 findCycle) should be(None)
       }
-      given(unDiCyclic_21) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+      given(unDiCyclic_21) { g =>
         (g get 1 findCycle) should haveOneNodeSequenceOf(Seq(1, 3, 5, 2, 1), Seq(1, 2, 5, 3, 1))
       }
-      given(unDiCyclic_22) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+      given(unDiCyclic_22) { g =>
         (g get 3 findCycle) should haveOneNodeSequenceOf(Seq(3, 1, 2, 4, 7, 6, 3), Seq(3, 6, 7, 4, 2, 1, 3))
       }
     }
 
     def `the cycle returned by 'findCycleContaining' contains the expected nodes`: Unit = {
-      given(unDiAcyclic_1) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+      given(unDiAcyclic_1) { g =>
         g.findCycleContaining(g get 1) should be(None)
       }
-      given(unDiCyclic_1) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+      given(unDiCyclic_1) { g =>
         g.findCycleContaining(g get 2) should haveOneNodeSequenceOf(Seq(2, 3, 1, 2), Seq(2, 1, 3, 2))
       }
-      given(unDiAcyclic_2) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+      given(unDiAcyclic_2) { g =>
         g.findCycleContaining(g get 1) should be(None)
       }
-      given(unDiCyclic_21) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+      given(unDiCyclic_21) { g =>
         def n(outer: Int) = g get outer
 
         g.findCycleContaining(n(1)) should haveOneNodeSequenceOf(Seq(1, 3, 5, 2, 1), Seq(1, 2, 5, 3, 1))
         g.findCycleContaining(n(4)) should be(None)
       }
-      given(unDiCyclic_22) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+      given(unDiCyclic_22) { g =>
         def n(outer: Int) = g get outer
 
         g.findCycleContaining(n(3)) should haveOneNodeSequenceOf(Seq(3, 1, 2, 4, 7, 6, 3), Seq(3, 6, 7, 4, 2, 1, 3))
@@ -260,10 +262,10 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
       }
     }
     def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes`: Unit = {
-      given(unDiCyclic_21) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+      given(unDiCyclic_21) { g =>
         (g get 1).withSubgraph(nodes = _ != 2).partOfCycle() should be(None)
       }
-      given(unDiCyclic_22) { case g: AnyGraph[Int, UnDiEdge[Int]] => // `annotated for IntelliJ
+      given(unDiCyclic_22) { g =>
         (g get 3).withSubgraph(nodes = _ != 2).partOfCycle() should be(None)
       }
     }
@@ -273,7 +275,7 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
     import scalax.collection.edges.multilabeled._
     val (e1, e2) = (1 ~ 2 %% 0, 1 ~ 2 %% 1)
 
-    val g: AnyGraph[Int, WUnDiEdge[Int]] = factory(e1, e2) // `annotated for IntelliJ
+    val g = factory(e1, e2).asAnyGraph
 
     def `the cycle returned by 'findCycle' contains the expected edges`: Unit = {
       val c = (g get 1).findCycle
@@ -291,7 +293,7 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
 
   object `given some mixed graphs` extends CycleMatcher[Int, AnyEdge[Int]] {
 
-    private val mixed = factory.from(Data.elementsOfMixed_1)
+    private val mixed = factory.from(Data.elementsOfMixed_1).asAnyGraph
 
     def `'findCycle' finds a cycle following any route`: Unit = {
       given(
@@ -306,8 +308,8 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
           12 ~ 13,
           12 ~> 3,
           20 ~> 10
-        )
-      ) { case g: AnyGraph[Int, AnyEdge[Int]] => // `annotated for IntelliJ
+        ).asAnyGraph
+      ) { g =>
         g.findCycle pipe { cycle =>
           cycle should (be(defined) and beValid)
           cycle foreach (_.nodes foreach { n =>
@@ -318,13 +320,13 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
           defined
         ) and beValid)
       }
-      given(mixed.filterNot(_ == 5, _ == 4 ~> 4)) { case g: AnyGraph[Int, AnyEdge[Int]] => // `annotated for IntelliJ
+      given(mixed.filterNot(_ == 5, _ == 4 ~> 4)) { g =>
         (g get 1).findCycle should haveOneNodeSequenceOf(Seq(1, 3, 2, 1))
       }
     }
 
     def `the cycle returned by 'findCycleContaining' contains the expected nodes`: Unit =
-      given(mixed) { case g: AnyGraph[Int, AnyEdge[Int]] => // `annotated for IntelliJ
+      given(mixed) { g =>
         def n(outer: Int) = g get outer
 
         g.findCycleContaining(n(2)) should haveOneNodeSequenceOf(
@@ -350,7 +352,7 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
       }
 
     def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes`: Unit =
-      given(mixed) { case g: AnyGraph[Int, AnyEdge[Int]] => // `annotated for IntelliJ
+      given(mixed) { g =>
         def n(outer: Int) = g get outer
 
         n(2).withSubgraph(edges = _ != DiEdge(1, 3)).partOfCycle should haveOneNodeSequenceOf(
@@ -367,10 +369,10 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
       }
 
     private val cycleEdges = List(1 ~> 2, 1 ~ 2)
-    private val g          = factory.from[Int, AnyEdge](2 ~ 3 +: cycleEdges)
+    private val g          = factory.from[Int, AnyEdge](2 ~ 3 +: cycleEdges).asAnyGraph
 
     def `the cycle returned by 'findCycle' contains the expected edges`: Unit =
-      given(g) { case g: AnyGraph[Int, AnyEdge[Int]] => // `annotated for IntelliJ
+      given(g) { g =>
         g.size should be(3)
         g.nodes foreach { n =>
           val c = n.findCycle
@@ -380,7 +382,7 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
       }
 
     def `the cycle returned by 'findCycleContaining' contains the expected edges`: Unit =
-      given(g) { case g: AnyGraph[Int, AnyEdge[Int]] => // `annotated for IntelliJ
+      given(g) { g =>
         g.nodes.filterNot(_.outer == 3) foreach { n =>
           val c = g.findCycleContaining(g get n)
           (n, c.isDefined) should be((n, true))
