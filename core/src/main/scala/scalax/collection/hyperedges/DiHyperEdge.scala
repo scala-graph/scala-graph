@@ -1,16 +1,13 @@
-package scalax.collection.hyperedges
+package scalax.collection
+package hyperedges
 
-import scala.collection.immutable.Iterable
-import scalax.collection.generic.{AnyDiHyperEdge, DiHyperEdgeCompanion, DiHyperEdgeToString}
+import scalax.collection.generic.{AbstractDiHyperEdge, DiHyperEdgeCompanion, DiHyperEdgeToString}
 
 /** Directed hyperedge with sources and targets having set/bag semantic each.
   */
 @SerialVersionUID(53)
-final case class DiHyperEdge[+N] private (override val sources: Iterable[N], override val targets: Iterable[N])
-    extends AnyDiHyperEdge[N]
+final case class DiHyperEdge[+N](override val sources: OneOrMore[N], override val targets: OneOrMore[N])
+    extends AbstractDiHyperEdge[N](sources, targets)
     with DiHyperEdgeToString
 
-object DiHyperEdge extends DiHyperEdgeCompanion[DiHyperEdge] {
-  protected def apply[N](sources: Iterable[N], targets: Iterable[N]): DiHyperEdge[N] =
-    new DiHyperEdge[N](sources, targets)
-}
+object DiHyperEdge extends DiHyperEdgeCompanion[DiHyperEdge]

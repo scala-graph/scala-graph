@@ -19,8 +19,8 @@ class EditingHyperSpec
       new EditingHyperMutable
     )
 
-private class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC]
+private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
+    val factory: GenericGraphCoreFactory[CC]
 ) extends RefSpec
     with Matchers {
 
@@ -32,7 +32,7 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
 
       HyperEdge.from(List(1)) shouldBe None
       an[IllegalArgumentException] shouldBe thrownBy {
-        HyperEdge.unsafeFrom(List(1))
+        HyperEdge.fromUnsafe(List(1))
       }
 
       val h = HyperEdge(1, 2, 3)
@@ -56,21 +56,18 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
         DiHyperEdge.unsafeFrom(List(1), Nil)
       }
 
-      val sources = List(1, 2)
-      val targets = List(2, 3)
-      val h       = DiHyperEdge(sources.head, sources.tail: _*)(targets.head, targets.tail: _*)
+      val sources = Several(1, 2)
+      val targets = Several(2, 3)
+      val h       = DiHyperEdge(sources, targets)
 
       DiHyperEdge.from(sources, targets) shouldEqual Some(h)
       sources ~~> targets shouldEqual h
       h.arity shouldBe sources.size + targets.size
       h.toString shouldBe "{1, 2} ~~> {2, 3}"
 
-      1 ~~> targets shouldEqual DiHyperEdge(1)(targets.head, targets.tail: _*)
-      sources ~~> 1 shouldEqual DiHyperEdge(sources.head, sources.tail: _*)(1)
-      1 ~~> 1 shouldEqual DiHyperEdge(1)(1)
-      an[IllegalArgumentException] shouldBe thrownBy {
-        Nil ~~> 1
-      }
+      one ~~> targets shouldEqual DiHyperEdge(one, targets)
+      sources ~~> one shouldEqual DiHyperEdge(sources, one)
+      one ~~> one shouldEqual DiHyperEdge(1)(1)
 
       val g = factory[Int, AnyHyperEdge](1, h, 1 ~ 2)
       g.nodes should have size 3
@@ -88,7 +85,13 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
     }
   }
 
-  val hDi = factory(1 ~~> List(1, 5), 1 ~~> List(2, 5), 1 ~~> List(3, 5), 1 ~~> List(4, 9))
+  val one = One(1)
+  val hDi = factory(
+    one ~~> Several(1, 5),
+    one ~~> Several(2, 5),
+    one ~~> Several(3, 5),
+    one ~~> Several(4, 9)
+  )
 
   object `diSuccessors ` {
     def `for DiHyper`: Unit = {
@@ -115,21 +118,20 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
   }
 
   def `match hyperedge`: Unit = {
-    val hyper                      = 1 ~~ 2 ~~ 3
-    val ~~(Seq(n1, n2, n3, _ @_*)) = hyper
-    n1 + n2 + n3 should be(6)
-    // TODO (hyper match { case HyperEdge(n1 ~~ (n2, n3)            => n1 + n2 + n3 }) should be(6)
+    val HyperEdge(Seq(n1, n2, n3)) = 1 ~~ 2 ~~ 3
+    n1 + n2 + n3 shouldBe 6
   }
 
   def `match directed hyperedge`: Unit = {
-    val count               = 3
-    val sources             = List.tabulate(count - 1)(_ + 1)
-    val target              = count
-    val diHyper             = sources ~~> target
-    val ~~>(Seq(s1, _*), _) = diHyper
-    s1 should be(sources.head)
-    val _ ~~> targets = diHyper
-    targets.head should be(target)
+    val count   = 3
+    val sources = Several.fromUnsafe(List.tabulate(count - 1)(_ + 1))
+    val target  = One(count)
+    val diHyper = sources ~~> target
+
+    val Seq(s1, _) ~~> (t @ One(c)) = diHyper
+    s1 shouldBe sources.head
+    c shouldBe count
+    t shouldBe target
   }
 }
 
@@ -142,9 +144,10 @@ private class EditingHyperMutable extends RefSpec with Matchers {
 
   object `mutable graphs with labeled edges` {
     def `'diSuccessors' when directed hypergraph`: Unit = {
-      val (one, two, three, oneOneTwo, oneTwoThree) = (1, 2, 3, 1 ~~> List(1, 2), 1 ~~> List(2, 3))
-      val g                                         = Graph(oneOneTwo, oneTwoThree)
-      val (n1, n2)                                  = (g get one, g get two)
+      val (one, two, three, oneOneTwo, oneTwoThree) = (1, 2, 3, One(1) ~~> Several(1, 2), One(1) ~~> Several(2, 3))
+
+      val g        = Graph(oneOneTwo, oneTwoThree)
+      val (n1, n2) = (g get one, g get two)
 
       n2.diSuccessors shouldBe empty
       n1.diSuccessors should be(Set(two, three))

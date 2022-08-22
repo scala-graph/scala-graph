@@ -21,8 +21,8 @@ trait TraverserImpl[N, E <: Edge[N]] {
   import Visitor._
   import State._
 
-  protected[collection] trait Impl[A, +This <: Traverser[A, This] with Impl[A, This]] extends Traverser[A, This] {
-    thisImpl: This =>
+  protected[collection] trait Impl[A, +CC <: Traverser[A, CC] with Impl[A, CC]] extends Traverser[A, CC] {
+    thisImpl: CC =>
 
     final protected def apply[U](pred: NodePredicate = noNode, visitor: A => U = Visitor.empty): Option[NodeT] =
       Runner[U](pred, visitor)()

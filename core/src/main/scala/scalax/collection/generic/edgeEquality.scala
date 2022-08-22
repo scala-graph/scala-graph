@@ -9,7 +9,7 @@ sealed protected[collection] trait Eq { this: Edge[_] =>
       (this eq that) ||
       (that canEqual this) &&
       this.isDirected == that.isDirected &&
-      this.isInstanceOf[Keyed] == that.isInstanceOf[Keyed] &&
+      this.isInstanceOf[ExtendedKey] == that.isInstanceOf[ExtendedKey] &&
       equals(that)
     case _ => false
   }
@@ -129,11 +129,11 @@ protected[collection] trait EqDi[+N] extends Eq {
   this: AnyDiEdge[N] =>
 
   @inline final protected def diBaseEquals(n1: Any, n2: Any): Boolean =
-    this._1 == n1 &&
-      this._2 == n2
+    this.source == n1 &&
+      this.target == n2
 
   final override protected def baseEquals(other: Edge[_]): Boolean = other match {
-    case edge: AnyDiEdge[_]                           => diBaseEquals(edge._1, edge._2)
+    case edge: AnyDiEdge[_]                           => diBaseEquals(edge.source, edge.target)
     case hyper: AnyDiHyperEdge[_] if hyper.arity == 2 => diBaseEquals(hyper.sources.head, hyper.targets.head)
     case _                                            => false
   }
@@ -178,8 +178,6 @@ case object Sequence extends CollectionKind(true, true)
 /** Marks (directed) hyperedge endpoints to have a significant order. */
 protected[collection] trait OrderedEndpoints
 
-protected[collection] trait Keyed // TODO check usage
-
 /** Mixin for multi-edge support.
   *
   * As a default, hashCode/equality of edges is determined by their participating nodes.
@@ -209,8 +207,4 @@ trait ExtendedKey { this: Edge[_] =>
     })
 
   override def hashCode: Int = super.hashCode + extendKeyBy.map(_.## * 41).sum
-}
-
-object ExtendedKey {
-  def unapply(e: ExtendedKey) = Some(e)
 }

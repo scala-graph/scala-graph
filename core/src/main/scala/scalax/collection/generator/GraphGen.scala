@@ -7,9 +7,8 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.rng.Seed
 import org.scalacheck.util.Buildable._
 
-import scalax.collection.generic._
 import scalax.collection.edges._
-import scalax.collection.generic.GraphCompanion
+import scalax.collection.generic._
 
 /** A `Graph` generator in terms of
   *  [[http://www.scalacheck.org/files/scalacheck_2.10-1.11.3-api/org/scalacheck/Gen$.html org.scalacheck.Gen]].
@@ -30,8 +29,8 @@ import scalax.collection.generic.GraphCompanion
   *
   * @author Peter Empen
   */
-class GraphGen[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-    val graphCompanion: GraphCompanion[G],
+class GraphGen[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+    val graphCompanion: GenericGraphFactory[G],
     val order: Int,
     nodeGen: Gen[N],
     nodeDegrees: NodeDegreeRange,
@@ -72,9 +71,7 @@ class GraphGen[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike
       connected,
       weightFactory map (f => () => nonFailingWeights.get.draw),
       labelFactory map (f => () => nonFailingLabels.get.draw)
-    ) {
-      val graphConfig = graphCompanion.defaultConfig
-    }
+    )
   }
 
   def apply: Gen[G[N, E]] = Gen.const(0) map (_ => generator.draw)
@@ -89,8 +86,8 @@ class GraphGen[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike
   */
 object GraphGen {
 
-  def apply[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-      graphCompanion: GraphCompanion[G],
+  def apply[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GenericGraphFactory[G],
       order: Int,
       nodeGen: Gen[N],
       nodeDegrees: NodeDegreeRange,
@@ -110,8 +107,8 @@ object GraphGen {
       labelFactory
     )
 
-  def fromMetrics[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-      graphCompanion: GraphCompanion[G],
+  def fromMetrics[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GenericGraphFactory[G],
       metrics: Metrics[N],
       edgeCompanions: Set[EdgeCompanionBase]
   )(implicit nodeTag: ClassTag[N]): GraphGen[N, E, G] =
@@ -156,8 +153,8 @@ object GraphGen {
     *
     *  @param graphCompanion $COMPANION
     */
-  def tinyConnectedIntDi[G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-      graphCompanion: GraphCompanion[G]
+  def tinyConnectedIntDi[G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GenericGraphFactory[G]
   ): Arbitrary[G[Int, DiEdge[Int]]] =
     diGraph[Int, G](graphCompanion, TinyInt)
 
@@ -166,8 +163,8 @@ object GraphGen {
     *
     * @param graphCompanion $COMPANION
     */
-  def smallConnectedIntDi[G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-      graphCompanion: GraphCompanion[G]
+  def smallConnectedIntDi[G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GenericGraphFactory[G]
   ): Arbitrary[G[Int, DiEdge[Int]]] =
     diGraph[Int, G](graphCompanion, SmallInt)
 
@@ -177,8 +174,8 @@ object GraphGen {
     * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
-  def diGraph[N, G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-      graphCompanion: GraphCompanion[G],
+  def diGraph[N, G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GenericGraphFactory[G],
       metrics: Metrics[N]
   )(implicit nodeTag: ClassTag[N]): Arbitrary[G[N, DiEdge[N]]] =
     Arbitrary {
@@ -191,8 +188,8 @@ object GraphGen {
     * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
-  def unDiGraph[N, G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-      graphCompanion: GraphCompanion[G],
+  def unDiGraph[N, G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GenericGraphFactory[G],
       metrics: Metrics[N]
   )(implicit nodeTag: ClassTag[N]): Arbitrary[G[N, UnDiEdge[N]]] =
     Arbitrary {

@@ -1,12 +1,11 @@
 package scalax.collection
 
-import scala.collection.{Iterable => AnyIterable}
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.immutable.Iterable
 import scala.util.chaining._
 
 import scalax.collection.generic._
-import scalax.collection.generic.{GraphCompanion, GraphCoreCompanion}
+import scalax.collection.generic.Factory
 import scalax.collection.config.GraphConfig
 import scalax.collection.mutable.Builder
 
@@ -25,26 +24,25 @@ import scalax.collection.mutable.Builder
   * @define CONTGRAPH The `Graph` instance that contains `this`
   * @author Peter Empen
   */
-trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
-    extends GraphBase[N, E, This]
+trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] with AnyGraph[X, Y]]
+    extends GraphBase[N, E, CC]
     with GraphTraversal[N, E]
-    with GraphDegree[N, E, This] {
-  thisGraph: This[N, E] =>
+    with GraphDegree[N, E, CC] {
+  thisGraph: CC[N, E] =>
 
   protected type ThisGraph = thisGraph.type
 
-  def empty: This[N, E]
-  protected[this] def newBuilder: mutable.Builder[N, E, This]
+  def empty: CC[N, E]
+  protected[this] def newBuilder: mutable.Builder[N, E, CC]
 
   def isDirected: Boolean = edges.size > 0 && edges.hasOnlyDiEdges
   def isHyper: Boolean    = edges.size > 0 && edges.hasAnyHyperEdge
   def isMixed: Boolean    = edges.size > 0 && edges.hasMixedEdges
   def isMulti: Boolean    = edges.size > 0 && edges.hasAnyMultiEdge
 
-  /** The companion object of `This`. */
-  val companion: GraphCompanion[This]
-  protected type Config <: GraphConfig
-  implicit def config: companion.Config with Config
+  /** The companion object of `CC`. */
+  val companion: Factory[CC]
+  implicit def config: GraphConfig
 
   /** Ensures sorted nodes/edges unless this `Graph` has more than 100 elements.
     * See also `asSortedString` and `toSortedString`.
@@ -104,7 +102,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
     * The second is true because of duplicate elimination and undirected edge equivalence.
     */
   override def equals(that: Any): Boolean = that match {
-    case that: Graph[N, E] =>
+    case that: AnyGraph[N, E] =>
       (this eq that) ||
       this.order == that.order &&
       this.size == that.size && {
@@ -140,7 +138,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
 
   protected trait NodeBase extends BaseNodeBase with GraphInnerNode {
     this: NodeT =>
-    final def isContaining[N, E <: Edge[N]](g: GraphBase[N, E, This] @uV): Boolean =
+    final def isContaining[N, E <: Edge[N]](g: GraphBase[N, E, CC] @uV): Boolean =
       g eq containingGraph
   }
 
@@ -266,10 +264,10 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
   @inline final def get(node: N): NodeT = nodes get node
   @inline final def get(edge: E): EdgeT = edges.find(edge).get
 
-  def filter(nodeP: NodePredicate = anyNode, edgeP: EdgePredicate = anyEdge): This[N, E] = {
+  def filter(nodeP: NodePredicate = anyNode, edgeP: EdgePredicate = anyEdge): CC[N, E] = {
     import scala.collection.Set
 
-    def build(nodes: Set[NodeT]): This[N, E] = {
+    def build(nodes: Set[NodeT]): CC[N, E] = {
       val b = companion.newBuilder[N, E]
       nodes foreach { case InnerNode(innerN, outerN) =>
         b addOne outerN
@@ -288,46 +286,59 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
 
   final def map[NN, EC[X] <: Edge[X]](
       fNode: NodeT => NN
-  )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E, fallbackMapper: EdgeCompanion[EC]): This[NN, EC[NN]] =
+  )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E): CC[NN, EC[NN]] =
     mapNodes(fNode)(
-      (m: PartialEdgeMapper[N, _], ns: (NN, NN)) => {
-        def toExistingType                                   = m.map.andThen(_.asInstanceOf[EC[NN]])
-        def toWidenedType: PartialFunction[(NN, NN), EC[NN]] = { case (n1, n2) => fallbackMapper(n1, n2) }
-        toExistingType applyOrElse (ns, toWidenedType)
-      },
-      (m: PartialDiHyperEdgeMapper[N, _], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[EC[NN]], // TODO
-      (m: PartialHyperEdgeMapper[N, _], ns: Iterable[NN]) => null.asInstanceOf[EC[NN]]                    // TODO
+      (m: PartialEdgeMapper[EC[NN]], ns: (NN, NN)) => m.map lift ns,
+      (m: PartialDiHyperEdgeMapper[_], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[Option[EC[NN]]], // TODO
+      (m: PartialHyperEdgeMapper[_], ns: Iterable[NN]) => null.asInstanceOf[Option[EC[NN]]]                    // TODO
     )
 
   def mapBounded[NN <: N, EC[X] <: Edge[X]](
       fNode: NodeT => NN
-  )(implicit w1: E <:< PartialMapper, w2: EC[N] =:= E): This[NN, EC[NN]] =
+  )(implicit w1: E <:< PartialMapper, w2: EC[N] =:= E): CC[NN, EC[NN]] =
     mapNodes(fNode)(
-      (m: PartialEdgeMapper[N, _], ns: (NN, NN)) => m.map(ns).asInstanceOf[EC[NN]],
-      (m: PartialDiHyperEdgeMapper[N, _], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[EC[NN]],
-      (m: PartialHyperEdgeMapper[N, _], ns: Iterable[NN]) => null.asInstanceOf[EC[NN]]
+      (m: PartialEdgeMapper[EC[NN]], ns: (NN, NN)) => m.map.lift(ns),
+      (m: PartialDiHyperEdgeMapper[_], s: Iterable[NN], t: Iterable[NN]) => null.asInstanceOf[Option[EC[NN]]],
+      (m: PartialHyperEdgeMapper[_], ns: Iterable[NN]) => null.asInstanceOf[Option[EC[NN]]]
     )
 
   private def mapNodes[NN, EC[X] <: Edge[X]](fNode: NodeT => NN)(
-      mapTypedEdge: (PartialEdgeMapper[N, _], (NN, NN)) => EC[NN],
-      mapTypedDiHyper: (PartialDiHyperEdgeMapper[N, _], Iterable[NN], Iterable[NN]) => EC[NN],
-      mapTypedHyper: (PartialHyperEdgeMapper[N, _], Iterable[NN]) => EC[NN]
-  ): This[NN, EC[NN]] =
+      mapTypedEdge: (PartialEdgeMapper[EC[NN]], (NN, NN)) => Option[EC[NN]],
+      mapTypedDiHyper: (PartialDiHyperEdgeMapper[_], Iterable[NN], Iterable[NN]) => Option[EC[NN]],
+      mapTypedHyper: (PartialHyperEdgeMapper[_], Iterable[NN]) => Option[EC[NN]]
+  ): CC[NN, EC[NN]] =
     mapNodesInBuilder[NN, EC[NN]](fNode) pipe { case (nMap, builder) =>
       edges foreach {
         case InnerEdge(_, outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
           (nMap(n1), nMap(n2)) pipe { case nns @ (nn1, nn2) =>
             outer match {
-              case m: GenericEdgeMapper[N, EC @unchecked]     => builder += m.map(nn1, nn2)
-              case m: PartialEdgeMapper[N, EC[NN] @unchecked] => builder += mapTypedEdge(m, nns)
+              case m: GenericEdgeMapper[EC @unchecked]     => builder += m.map(nn1, nn2)
+              case m: PartialEdgeMapper[EC[NN] @unchecked] => mapTypedEdge(m, nns).map(builder += _)
             }
           }
-        case _ => ??? // TODO
+        case InnerEdge(
+              _,
+              outer @ AbstractDiHyperEdge(sources: OneOrMore[N] @unchecked, targets: OneOrMore[N] @unchecked)
+            ) =>
+          (sources.map(nMap), targets.map(nMap)) pipe { case (nSources, nTargets) =>
+            outer match {
+              case m: GenericDiHyperEdgeMapper[EC @unchecked] => builder += m.map(nSources, nTargets)
+              case m: PartialDiHyperEdgeMapper[EC[NN] @unchecked] =>
+                mapTypedDiHyper(m, nSources, nTargets).map(builder += _)
+            }
+          }
+        case InnerEdge(_, outer @ AbstractHyperEdge(ends: Several[N] @unchecked)) =>
+          ends.map(nMap) pipe { case nns =>
+            outer match {
+              case m: GenericHyperEdgeMapper[EC @unchecked]     => builder += m.map(nns)
+              case m: PartialHyperEdgeMapper[EC[NN] @unchecked] => mapTypedHyper(m, nns).map(builder += _)
+            }
+          }
       }
       builder.result
     }
 
-  private def mapNodesInBuilder[NN, EE <: Edge[NN]](fNode: NodeT => NN): (MMap[N, NN], Builder[NN, EE, This]) = {
+  private def mapNodesInBuilder[NN, EE <: Edge[NN]](fNode: NodeT => NN): (MMap[N, NN], Builder[NN, EE, CC]) = {
     val nMap = MMap.empty[N, NN]
     val b    = companion.newBuilder[NN, EE](config)
     nodes foreach { n =>
@@ -338,10 +349,10 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
     (nMap, b)
   }
 
-  final def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, fEdge: (NN, NN) => EC[NN]): This[NN, EC[NN]] =
+  final def map[NN, EC[X] <: AnyEdge[X]](fNode: NodeT => NN, fEdge: (NN, NN) => EC[NN]): CC[NN, EC[NN]] =
     mapBounded(fNode, fEdge)
 
-  final def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, fEdge: (NN, NN) => EC): This[NN, EC] =
+  final def mapBounded[NN, EC <: AnyEdge[NN]](fNode: NodeT => NN, fEdge: (NN, NN) => EC): CC[NN, EC] =
     mapNodesInBuilder[NN, EC](fNode) pipe { case (nMap, builder) =>
       edges foreach {
         case InnerEdge(_, AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
@@ -369,34 +380,9 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This]
   }
 }
 
-/** The main trait for immutable graphs bundling the functionality of traits concerned with
-  * specific aspects.
+/** Bundled functionality for mutable or immutable graphs.
   *
   * @tparam N the type of the nodes (vertices) in this graph.
-  * @tparam E the kind of the edges in this graph.
-  * @author Peter Empen
+  * @tparam E the type of the edges in this graph.
   */
-trait Graph[N, E <: Edge[N]] extends GraphLike[N, E, Graph] {
-  override def empty: Graph[N, E] = Graph.empty[N, E]
-}
-
-/** The main companion object for immutable graphs.
-  *
-  * @author Peter Empen
-  */
-object Graph extends GraphCoreCompanion[Graph] {
-
-  override def newBuilder[N, E <: Edge[N]](implicit config: Config) =
-    scalax.collection.immutable.Graph.newBuilder[N, E](config)
-
-  def empty[N, E <: Edge[N]](implicit config: Config = defaultConfig): Graph[N, E] =
-    scalax.collection.immutable.Graph.empty[N, E](config)
-
-  def from[N, E <: Edge[N]](nodes: AnyIterable[N], edges: AnyIterable[E])(implicit
-      config: Config = defaultConfig
-  ): Graph[N, E] =
-    scalax.collection.immutable.Graph.from[N, E](nodes, edges)(config)
-
-  def from[N, E[X] <: Edge[X]](edges: AnyIterable[E[N]]) =
-    scalax.collection.immutable.Graph.from[N, E[N]](Nil, edges)(defaultConfig)
-}
+trait AnyGraph[N, E <: Edge[N]] extends GraphLike[N, E, AnyGraph]

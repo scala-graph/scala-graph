@@ -1,46 +1,22 @@
 package demo
 
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.refspec.RefSpec
+import scalax.collection.edges._
+
 import java.time.DayOfWeek._
 import java.time.LocalTime
 
-import scalax.collection.Graph
-import scalax.collection.OuterImplicits._
-import scalax.collection.edges._
-import scalax.collection.generic._
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.refspec.RefSpec
-
-/** Includes the examples given on [[http://www.scala-graph.org/guides/core-customizing.html
-  *  Customizing Graphs]].
-  */
-class CustomizingDemoSpec extends RefSpec with Matchers {
+class FlightDemoSpec extends RefSpec with Matchers {
 
   object `demonstrating how to` {
 
-    def `enrich graphs`: Unit = {
-      implicit class ExtGraph[N, E <: Edge[N]](protected val g: Graph[N, E]) {
-        def foo: String = "bar"
-      }
-      val g = Graph(1 ~ 2)
-      g.foo shouldBe "bar"
-    }
-
-    def `enrich inner nodes`: Unit = {
-      // works for any Graph due to projection type
-      implicit class ExtGraphNode[N, E <: Edge[N]](node: Graph[N, E]#NodeT) {
-        def outOverInDegree: Int = node.outDegree - node.inDegree
-      }
-
-      Graph(1 ~> 2).nodes foreach {
-        case n if n.outer == 1 => n.outOverInDegree shouldBe 1
-        case n if n.outer == 2 => n.outOverInDegree shouldBe -1
-        case _                 => fail()
-      }
-    }
-
-    def `work with a custom edge`: Unit = {
+    def `work with the Flight typed edge`: Unit = {
       import scala.concurrent.duration._
+
       import scalax.collection.labeled.aviation._
+      import scalax.collection.labeled.aviation.immutable._
+      import scalax.collection.labeled.aviation.immutable.FlightGraph.OuterImplicits._
 
       val amsterdam = Airport("AMS")
       val hamburg   = Airport("HAM")
@@ -48,7 +24,7 @@ class CustomizingDemoSpec extends RefSpec with Matchers {
       val london    = Airport("LHR")
       val mexico    = Airport("MEX")
 
-      val g = Graph(
+      val g = FlightGraph(
         hamburg ~> amsterdam + ("KL 1776", List(
           MONDAY   -> LocalTime.of(17, 50),
           SATURDAY -> LocalTime.of(17, 40)

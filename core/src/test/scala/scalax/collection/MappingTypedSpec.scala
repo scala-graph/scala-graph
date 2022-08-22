@@ -9,7 +9,7 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.edges._
 import scalax.collection.generic._
-import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.generic.GenericGraphCoreFactory
 
 class MappingTypedSpec
     extends Suites(
@@ -17,8 +17,8 @@ class MappingTypedSpec
       new MappingTyped[mutable.Graph](mutable.Graph)
     )
 
-private class MappingTyped[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC]
+private class MappingTyped[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
+    val factory: GenericGraphCoreFactory[CC]
 ) extends RefSpec
     with Matchers {
 
@@ -30,20 +30,20 @@ private class MappingTyped[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N,
     private object edges {
       type Connector[+N] = Edge[N, _]
 
-      sealed abstract protected class Edge[+N, +This <: Edge[N, This]](override val source: N, override val target: N)
+      sealed abstract protected class Edge[+N, +CC <: Edge[N, CC]](override val source: N, override val target: N)
           extends AbstractDiEdge[N](source, target)
-          with PartialEdgeMapper[N, This]
+          with PartialEdgeMapper[CC]
 
       case class NodeConnector(override val source: Node, override val target: Node)
           extends Edge[Node, NodeConnector](source, target) {
-        def map[NN]: PartialFunction[(NN, NN), NodeConnector] = { case (node_1: Node, node_2: Node) =>
+        def map[N]: PartialFunction[(N, N), NodeConnector] = { case (node_1: Node, node_2: Node) =>
           copy(node_1, node_2)
         }
       }
 
       case class AConnector(override val source: A, override val target: A)
           extends Edge[A, AConnector](source, target) {
-        def map[NN]: PartialFunction[(NN, NN), AConnector] = { case (node_1: A, node_2: A) =>
+        def map[N]: PartialFunction[(N, N), AConnector] = { case (node_1: A, node_2: A) =>
           copy(node_1, node_2)
         }
       }

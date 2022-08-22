@@ -3,20 +3,16 @@ package scalax.collection
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.Suites
 import org.scalatest.refspec.RefSpec
-
 import scalax.collection.edges._
 import scalax.collection.generic._
 import scalax.collection.OuterImplicits._
+import scalax.collection.config.GraphConfig
 
 /** Editing any kind of non-hypergraph with unlabeled edges including mixed graphs.
   */
 class EditingSpec
     extends Suites(
       new EditingEdges,
-      new Editing[Graph](new ConfigWrapper[Graph] {
-        val companion = Graph
-        val config    = Graph.defaultConfig
-      }),
       new Editing[immutable.Graph](new ConfigWrapper[immutable.Graph] {
         val companion = immutable.Graph
         val config    = immutable.Graph.defaultConfig
@@ -179,13 +175,13 @@ private class EditingMutable extends RefSpec with Matchers {
   }
 }
 
-private class Editing[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](val factory: ConfigWrapper[CC])
+private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](val factory: ConfigWrapper[CC])
     extends RefSpec
     with Matchers {
 
   info("factory = " + factory.companion.getClass)
 
-  implicit private val config: factory.companion.Config = factory.config
+  implicit private val config: GraphConfig = factory.config
 
   private val seq_1_3   = Seq(1, 3)
   private val gInt_1_3  = factory.from(nodes = seq_1_3, Nil)
@@ -255,13 +251,14 @@ private class Editing[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
       val n = o map (g.nodes find _ getOrElse g.nodes.head)
 
       val less = g.nodes - n(3)
+      g.order shouldBe 3
       less should have size 2
       less should contain(n(1))
       less.find(_ == n(1)).get.edges should have size 1
       less should contain(n(2))
       less.find(_ == n(2)).get.edges should have size 2
 
-      val restored = less + n(3)
+      val restored = less.toSet + n(3)
       restored should have size 3
       restored should contain(n(3))
       restored.find(_ == n(1)).get.edges should have size 1
@@ -282,15 +279,18 @@ private class Editing[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
     }
 
     def `concat, ++, union`: Unit = {
+      val diEdge = 1 ~> 2
+      factory.empty[Int, DiEdge[Int]] ++ List(diEdge) shouldBe factory.from(diEdge :: Nil)
+
       val g = gString_A.concat[String, AnyEdge[String]](List("B", "C"), Nil)
       g.elementCount shouldEqual 3
       'A' to 'C' map (_.toString) foreach (g.contains(_) shouldEqual true)
 
-      val (gBefore, gAfter) = (Graph(1, 2 ~ 3), Graph(0, 1 ~ 2, 2 ~ 3))
+      val (gBefore, gAfter) = (factory(1, 2 ~ 3), factory(0, 1 ~ 2, 2 ~ 3))
       gBefore ++ (edges = List(1 ~ 2, 2 ~ 3), isolatedNodes = List(0)) shouldEqual gAfter
 
-      gBefore union Graph(0, 1 ~ 2) shouldEqual gAfter
-      gBefore union Graph[Int, UnDiEdge](0) union Graph(1 ~ 2) shouldEqual gAfter
+      gBefore union factory(0, 1 ~ 2) shouldEqual gAfter
+      gBefore union factory[Int, UnDiEdge](0) union factory(1 ~ 2) shouldEqual gAfter
     }
 
     private val gUnDi  = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
@@ -370,7 +370,7 @@ private class Editing[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
     }
 
     def `filter ` : Unit = {
-      val g: Graph[Int, DiEdge[Int]] = factory(2 ~> 3, 3 ~> 1, 5)
+      val g: AnyGraph[Int, DiEdge[Int]] = factory(2 ~> 3, 3 ~> 1, 5)
       g filter (_ > 1) should be(factory(2 ~> 3, 5))
       g filter (_ < 2) should be(factory(1))
       g filter (_ < 2) should be(factory(1))

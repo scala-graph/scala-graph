@@ -8,7 +8,10 @@ import scalax.collection.generic.Edge
   */
 trait OuterElems[N, E <: Edge[N]] {
 
-  sealed trait OuterElem
+  /* omitting `sealed` resolves "match may not be exhaustive" warnings because compiler adds `outer` reference.
+   * See also https://groups.google.com/g/scala-internals/c/vw8Kek4zlZ8?pli=1
+   */
+  trait OuterElem
 
   /** Wraps any type to be accepted when calling `Graph(...)`. */
   sealed case class OuterNode(node: N) extends OuterElem

@@ -1,5 +1,6 @@
 package scalax.collection.labeled
 
+import scalax.collection.AnyGraph
 import scalax.collection.edges.DiEdge
 import scalax.collection.generic.{UnapplyLabel, UnapplyLabeledEdge}
 
@@ -9,6 +10,22 @@ import scala.concurrent.duration._
 /** Convenience infix constructors and extractors for the `Flight` edge.
   */
 package object aviation {
+
+  type AnyFlightGraph = AnyGraph[Airport, Flight]
+
+  object immutable {
+    import scalax.collection.immutable.{Graph, TypedGraphFactory}
+
+    type FlightGraph = Graph[Airport, Flight]
+    object FlightGraph extends TypedGraphFactory[Airport, Flight]
+  }
+
+  object mutable {
+    import scalax.collection.mutable.{Graph, TypedGraphFactory}
+
+    type FlightGraph = Graph[Airport, Flight]
+    object FlightGraph extends TypedGraphFactory[Airport, Flight]
+  }
 
   /** Facilitates infix constructor `airportA ~> airportB + (flightNo, departures, duration)`
     */

@@ -28,8 +28,8 @@ import generic.AnyOrdering
   *         Nodes being the end of any of these edges will be added to the node set.
   * @author Peter Empen
   */
-trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]]
-    extends GraphOps[N, E, This]
+trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
+    extends GraphOps[N, E, CC]
     with OuterElems[N, E]
     with Serializable { selfGraph =>
 
@@ -235,7 +235,7 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
     def canEqual(that: Any) = true
 
     override def equals(other: Any) = other match {
-      case that: GraphBase[N, E, This]#BaseInnerNode =>
+      case that: GraphBase[N, E, CC]#BaseInnerNode =>
         (this eq that) || (that canEqual this) && this.outer == that.outer
       case thatR: AnyRef =>
         val thisN = this.outer.asInstanceOf[AnyRef]
@@ -404,11 +404,11 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
     }
 
     override def canEqual(that: Any): Boolean =
-      that.isInstanceOf[GraphBase[N, E, This]#BaseInnerEdge] ||
+      that.isInstanceOf[GraphBase[N, E, CC]#BaseInnerEdge] ||
         that.isInstanceOf[Edge[_]]
 
     override def equals(other: Any): Boolean = other match {
-      case that: GraphBase[N, E, This]#BaseInnerEdge =>
+      case that: GraphBase[N, E, CC]#BaseInnerEdge =>
         (this eq that) ||
         (this.outer eq that.outer) ||
         this.outer == that.outer

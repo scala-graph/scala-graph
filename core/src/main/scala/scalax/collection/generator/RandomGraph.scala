@@ -5,9 +5,8 @@ import scala.collection.mutable.{ArrayBuffer, Set => MSet}
 import scala.util.Random
 import scala.reflect.ClassTag
 
-import scalax.collection.generic._
 import scalax.collection.edges._
-import generic.GraphCompanion
+import scalax.collection.generic._
 /* TODO L
 import edge.WBase.{WEdgeCompanion, WHyperEdgeCompanion}
 import edge.LBase.{LEdgeCompanion, LHyperEdgeCompanion}
@@ -30,8 +29,8 @@ import edge.WLBase.{WLEdgeCompanion, WLHyperEdgeCompanion}
   *
   * @author Peter Empen
   */
-abstract class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-    val graphCompanion: GraphCompanion[G],
+class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+    val graphCompanion: GenericGraphFactory[G],
     val order: Int,
     nodeFactory: => N,
     nodeDegree: NodeDegreeRange,
@@ -43,7 +42,7 @@ abstract class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] wi
   require(order > 0)
   if (connected) require(nodeDegree.min >= 2)
 
-  implicit val graphConfig: graphCompanion.Config
+  implicit val graphConfig = graphCompanion.defaultConfig
 
   protected val doTrace                       = false
   protected def trace(str: => String): Unit   = if (doTrace) print(str)
@@ -373,8 +372,8 @@ abstract class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] wi
   */
 object RandomGraph {
 
-  def apply[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-      graphCompanion: GraphCompanion[G],
+  def apply[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GenericGraphFactory[G],
       order: Int,
       nodeFactory: => N,
       nodeDegree: NodeDegreeRange,
@@ -392,12 +391,10 @@ object RandomGraph {
       connected,
       weightFactory,
       labelFactory
-    ) {
-      val graphConfig = graphCompanion.defaultConfig
-    }
+    )
 
-  def fromMetrics[N, E <: Edge[N], G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-      graphCompanion: GraphCompanion[G],
+  def fromMetrics[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GenericGraphFactory[G],
       metrics: Metrics[N],
       edgeCompanions: Set[EdgeCompanionBase]
   )(implicit nodeTag: ClassTag[N]): RandomGraph[N, E, G] =
@@ -408,9 +405,7 @@ object RandomGraph {
       metrics.nodeDegrees,
       edgeCompanions,
       metrics.connected
-    ) {
-      val graphConfig = graphCompanion.defaultConfig
-    }
+    )
 
   /** Template for `Metrics` with `connected` set to `true`
     *  and some lazy values useful for checking the metrics of generated graphs.
@@ -461,8 +456,8 @@ object RandomGraph {
     *
     *  @param graphCompanion $COMPANION
     */
-  def tinyConnectedIntDi[G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-      graphCompanion: GraphCompanion[G]
+  def tinyConnectedIntDi[G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GenericGraphFactory[G]
   ): RandomGraph[Int, DiEdge[Int], G] =
     RandomGraph.fromMetrics[Int, DiEdge[Int], G](graphCompanion, TinyInt, Set(DiEdge))
 
@@ -470,8 +465,8 @@ object RandomGraph {
     *
     *  @param graphCompanion $COMPANION
     */
-  def smallConnectedIntDi[N, G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-      graphCompanion: GraphCompanion[G]
+  def smallConnectedIntDi[N, G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GenericGraphFactory[G]
   ): RandomGraph[Int, DiEdge[Int], G] =
     RandomGraph.fromMetrics[Int, DiEdge[Int], G](graphCompanion, SmallInt, Set(DiEdge))
 
@@ -480,8 +475,8 @@ object RandomGraph {
     * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
-  def diGraph[N, G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-      graphCompanion: GraphCompanion[G],
+  def diGraph[N, G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GenericGraphFactory[G],
       metrics: Metrics[N]
   )(implicit nodeTag: ClassTag[N]): RandomGraph[N, DiEdge[N], G] =
     RandomGraph.fromMetrics[N, DiEdge[N], G](graphCompanion, metrics, Set(DiEdge))
@@ -491,8 +486,8 @@ object RandomGraph {
     * @param graphCompanion $COMPANION
     * @param metrics $METRICS
     */
-  def unDiGraph[N, G[X, Y <: Edge[X]] <: Graph[X, Y] with GraphLike[X, Y, G]](
-      graphCompanion: GraphCompanion[G],
+  def unDiGraph[N, G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, G]](
+      graphCompanion: GenericGraphFactory[G],
       metrics: Metrics[N]
   )(implicit nodeTag: ClassTag[N]): RandomGraph[N, UnDiEdge[N], G] =
     RandomGraph.fromMetrics[N, UnDiEdge[N], G](graphCompanion, metrics, Set(UnDiEdge))

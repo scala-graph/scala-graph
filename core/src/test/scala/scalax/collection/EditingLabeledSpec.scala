@@ -3,19 +3,19 @@ package scalax.collection
 import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-import scalax.collection.generic.{Edge, GraphCoreCompanion}
+import scalax.collection.edges.{DiEdge, UnDiEdge}
+import scalax.collection.generic.{Edge, GenericGraphCoreFactory}
 
 /** Editing non-hypergraphs with labeled edges, in particular, editing multigraphs.
   */
 class EditingLabeledSpec
     extends Suites(
-      new EditingLabeledEdges
-      /* TODO
-      new EditingLabeled[immutable.Graph](immutable.Graph),
-      new EditingLabeled[mutable.Graph](mutable.Graph) */
+      new LabeledEdges,
+      new EditingLabeledEdges[immutable.Graph](immutable.Graph),
+      new EditingLabeledEdges[mutable.Graph](mutable.Graph)
     )
 
-private class EditingLabeledEdges extends RefSpec with Matchers {
+private class LabeledEdges extends RefSpec with Matchers {
 
   def `toString of labeled edge`: Unit = {
     import edges.labeled._
@@ -54,10 +54,186 @@ private class EditingLabeledEdges extends RefSpec with Matchers {
   }
 }
 
-private class EditingLabeled[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
-    val factory: GraphCoreCompanion[G]
+private class EditingLabeledEdges[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
+    val factory: GenericGraphCoreFactory[G]
 ) extends RefSpec
     with Matchers {
+
+  def `generic directed labeled edge`: Unit = {
+    import edges.labeled.LDiEdge
+
+    case class MyEdge[+N](source: N, target: N, label: String) extends LDiEdge[N, String]
+
+    val e = MyEdge(1, 2, "")
+    e shouldEqual DiEdge(1, 2)
+
+    val g = factory.from(e :: Nil)
+    "g.map(_.toString)" shouldNot compile
+  }
+
+  def `generic directed, mappable labeled edge`: Unit = {
+    import edges.labeled._
+
+    case class MyEdge[+N](source: N, target: N, label: String)
+        extends LDiEdge[N, String]
+        with GenericEdgeMapper[MyEdge] {
+      def map[N](source: N, target: N) = copy(source, target)
+    }
+
+    val e = MyEdge(1, 2, "")
+    e shouldEqual DiEdge(1, 2)
+
+    val g = factory.from(e :: Nil)
+    g.map(_.toString).edges.toOuter.head shouldBe MyEdge("1", "2", "")
+
+    import edges.DiEdgeImplicits
+    implicit class MyInfixConstructor[N](val edge: DiEdge[N])
+        extends LDiEdgeInfixConstructor[N, String, MyEdge](MyEdge.apply)
+    1 ~> 2 + "" shouldEqual e
+
+    import generic.{UnapplyGenericLabel, UnapplyGenericLabeledEdge}
+    object :~> extends UnapplyGenericLabeledEdge[MyEdge, String]
+    object +   extends UnapplyGenericLabel[String]
+
+    e match {
+      case n1 :~> n2 + label =>
+        val reconstructed = MyEdge(n1, n2, label)
+        "reconstructed: MyEdge[Int]" should compile
+        reconstructed shouldEqual e
+    }
+  }
+
+  def `generic undirected labeled edge`: Unit = {
+    import edges.labeled.LUnDiEdge
+
+    case class MyEdge[+N](source: N, target: N, label: String) extends LUnDiEdge[N, String]
+
+    val e = MyEdge(1, 2, "")
+    e shouldEqual UnDiEdge(1, 2)
+
+    val g = factory.from(e :: Nil)
+    "g.map(_.toString)" shouldNot compile
+  }
+
+  def `generic undirected, mappable labeled edge`: Unit = {
+    import edges.labeled._
+
+    case class MyEdge[+N](source: N, target: N, label: String)
+        extends LUnDiEdge[N, String]
+        with GenericEdgeMapper[MyEdge] {
+      def map[N](node_1: N, node_2: N) = copy(node_1, node_2)
+    }
+
+    val e = MyEdge(1, 2, "")
+    e shouldEqual UnDiEdge(1, 2)
+
+    val g = factory.from(e :: Nil)
+    g.map(_.toString).edges.toOuter.head shouldBe MyEdge("1", "2", "")
+
+    import edges.UnDiEdgeImplicits
+    implicit class MyInfixConstructor[N](val edge: UnDiEdge[N])
+        extends LUnDiEdgeInfixConstructor[N, String, MyEdge](MyEdge.apply)
+    1 ~ 2 + "" shouldEqual e
+
+    import generic.{UnapplyGenericLabel, UnapplyGenericLabeledEdge}
+    object :~ extends UnapplyGenericLabeledEdge[MyEdge, String]
+    object +  extends UnapplyGenericLabel[String]
+
+    e match {
+      case n1 :~ n2 + label =>
+        val reconstructed = MyEdge(n1, n2, label)
+        "reconstructed: MyEdge[Int]" should compile
+        reconstructed shouldEqual e
+    }
+  }
+
+  def `generic directed labeled multiedge`: Unit = {
+    import edges.multilabeled.LDiEdge
+
+    case class MyEdge[+N](source: N, target: N, label: String) extends LDiEdge[N, String]
+
+    val e = MyEdge(1, 2, "")
+    e shouldNot equal(DiEdge(1, 2))
+
+    val g = factory.from(e :: Nil)
+    "g.map(_.toString)" shouldNot compile
+  }
+
+  def `generic directed, mappable labeled multiedge`: Unit = {
+    import edges.multilabeled._
+
+    case class MyEdge[+N](source: N, target: N, label: String)
+        extends LDiEdge[N, String]
+        with GenericEdgeMapper[MyEdge] {
+      def map[N](source: N, target: N) = copy(source, target)
+    }
+
+    val e = MyEdge(1, 2, "")
+    e shouldNot equal(DiEdge(1, 2))
+
+    val g = factory.from(e :: Nil)
+    g.map(_.toString).edges.toOuter.head shouldBe MyEdge("1", "2", "")
+
+    import edges.DiEdgeImplicits
+    implicit class MyInfixConstructor[N](val edge: DiEdge[N])
+        extends LDiEdgeInfixConstructor[N, String, MyEdge](MyEdge.apply)
+    1 ~> 2 ++ "" shouldEqual e
+
+    import generic.{UnapplyGenericLabel, UnapplyGenericLabeledEdge}
+    object :~> extends UnapplyGenericLabeledEdge[MyEdge, String]
+    object ++  extends UnapplyGenericLabel[String]
+
+    e match {
+      case n1 :~> n2 ++ label =>
+        val reconstructed = MyEdge(n1, n2, label)
+        "reconstructed: MyEdge[Int]" should compile
+        reconstructed shouldEqual e
+    }
+  }
+
+  def `generic undirected labeled multiedge`: Unit = {
+    import edges.multilabeled.LUnDiEdge
+
+    case class MyEdge[+N](source: N, target: N, label: String) extends LUnDiEdge[N, String]
+
+    val e = MyEdge(1, 2, "")
+    e shouldNot equal(UnDiEdge(1, 2))
+
+    val g = factory.from(e :: Nil)
+    "g.map(_.toString)" shouldNot compile
+  }
+
+  def `generic undirected, mappable labeled multiedge`: Unit = {
+    import edges.multilabeled._
+
+    case class MyEdge[+N](source: N, target: N, label: String)
+        extends LUnDiEdge[N, String]
+        with GenericEdgeMapper[MyEdge] {
+      def map[N](node_1: N, node_2: N) = copy(node_1, node_2)
+    }
+
+    val e = MyEdge(1, 2, "")
+    e shouldNot equal(UnDiEdge(1, 2))
+
+    val g = factory.from(e :: Nil)
+    g.map(_.toString).edges.toOuter.head shouldBe MyEdge("1", "2", "")
+
+    import edges.UnDiEdgeImplicits
+    implicit class MyInfixConstructor[N](val edge: UnDiEdge[N])
+        extends LUnDiEdgeInfixConstructor[N, String, MyEdge](MyEdge.apply)
+    1 ~ 2 ++ "" shouldEqual e
+
+    import generic.{UnapplyGenericLabel, UnapplyGenericLabeledEdge}
+    object :~ extends UnapplyGenericLabeledEdge[MyEdge, String]
+    object ++ extends UnapplyGenericLabel[String]
+
+    e match {
+      case n1 :~ n2 ++ label =>
+        val reconstructed = MyEdge(n1, n2, label)
+        "reconstructed: MyEdge[Int]" should compile
+        reconstructed shouldEqual e
+    }
+  }
 
   /* TODO
   def `isMulti ` {

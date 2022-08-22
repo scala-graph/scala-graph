@@ -2,9 +2,9 @@ package scalax.collection
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
 import scalax.collection.generic._
 import scalax.collection.edges._
+import scalax.collection.immutable.Graph
 
 protected trait WalkBehaviors {
   this: AnyFlatSpec with Matchers =>
