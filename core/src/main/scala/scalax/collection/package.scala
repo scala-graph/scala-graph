@@ -74,20 +74,7 @@ package object collection {
 
     /** Optimized Iterator for two known elements and an `Iterable` for further elements.
       */
-    def several[A](_1: A, _2: A, more: IIterable[A]): Iterator[A] = new AbstractIterator[A] {
-      private[this] var i  = 0
-      private[this] val it = more.iterator
-
-      def hasNext: Boolean = i < 2 || it.hasNext
-
-      def next(): A =
-        if (i < 2) {
-          i += 1
-          if (i == 1) _1 else _2
-        } else if (it.hasNext) it.next()
-        else throw new NoSuchElementException
-
-      override val size: Int = 2 + more.size
-    }
+    def several[A](_1: A, _2: A, more: IIterable[A]): Iterator[A] =
+      Iterator.double(_1, _2) ++ more.iterator
   }
 }
