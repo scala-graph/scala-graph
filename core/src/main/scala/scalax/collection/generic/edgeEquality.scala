@@ -1,4 +1,5 @@
-package scalax.collection.generic
+package scalax.collection
+package generic
 
 sealed protected[collection] trait Eq { this: Edge[_] =>
   protected def baseEquals(other: Edge[_]): Boolean
@@ -9,7 +10,7 @@ sealed protected[collection] trait Eq { this: Edge[_] =>
       (this eq that) ||
       (that canEqual this) &&
       this.isDirected == that.isDirected &&
-      this.isInstanceOf[ExtendedKey] == that.isInstanceOf[ExtendedKey] &&
+      this.isInstanceOf[MultiEdge] == that.isInstanceOf[MultiEdge] &&
       equals(that)
     case _ => false
   }
@@ -178,32 +179,32 @@ case object Sequence extends CollectionKind(true, true)
 /** Marks (directed) hyperedge endpoints to have a significant order. */
 protected[collection] trait OrderedEndpoints
 
-/** Mixin for multi-edge support.
+/** Edge mixin for multigraph support.
   *
-  * As a default, hashCode/equality of edges is determined by their participating nodes.
-  * We also say that nodes are always part of the edge key.
+  * As a default, hashCode/equality of edges is determined by their ends.
+  * We say that edge ends are part of the edge key.
   *
-  * Whenever your custom edge needs be a multi-edge, meaning that your graph is allowed to have more than one edge
-  * between the same nodes, the default equality needs be extended by adding further class members to the edge key.
+  * Whenever your custom edge needs to be a multi-edge, meaning that your graph is allowed
+  * to connect some nodes by an instance of this edge even if those nodes are already connected,
+  * the edge key needs be extended by adding at least one more class member, constant or whatsoever to the edge key.
   *
   * For example edges representing flight connections between airports need be multi-edges to allow for different
   * flights between the same airports.
-  * For this purpose, mix in this trait and add some class member like a flight number to the edge key.
   *
   * @author Peter Empen
   */
-trait ExtendedKey { this: Edge[_] =>
+trait MultiEdge { this: Edge[_] =>
 
   /** Each element in this sequence references a class member of the custom edge that will be added to the edge key.
     * The edge ends, like `source` and `target`, are always part of the key so don't add them here.
     * Once you add class members to the edge key they automatically become part of the edge's hashCode/equality.
     */
-  def extendKeyBy: Seq[Any]
+  def extendKeyBy: OneOrMore[Any]
 
   override def equals(other: Any): Boolean =
     super.equals(other) && (other match {
-      case that: ExtendedKey => this.extendKeyBy == that.extendKeyBy
-      case _                 => false
+      case that: MultiEdge => this.extendKeyBy == that.extendKeyBy
+      case _               => false
     })
 
   override def hashCode: Int = super.hashCode + extendKeyBy.map(_.## * 41).sum

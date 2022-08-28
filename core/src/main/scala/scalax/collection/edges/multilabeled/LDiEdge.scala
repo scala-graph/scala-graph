@@ -2,7 +2,7 @@ package scalax.collection.edges.multilabeled
 
 import scalax.collection.edges.DiEdge
 import scalax.collection.generic.{
-  AnyDiEdge, Edge, ExtendedKey, ExtendedKeyBySingleLabel, LDiEdgeToString, MultiLEdgeToString, SingleLabel
+  AnyDiEdge, Edge, ExtendedKeyBySingleLabel, LDiEdgeToString, MultiEdge, MultiLEdgeToString, SingleLabel
 }
 
 /** Template for generic directed multiedges with a single `label` field.
@@ -18,7 +18,7 @@ abstract class LDiEdge[+N, L]
 
 /** Template for an `implicit class` that defines the infix constructor `++` to pass a label like `1 ~> 2 ++ aLabel`.
   */
-abstract class LDiEdgeInfixConstructor[N, L, CC[X] <: Edge[X] with ExtendedKey](
+abstract class LDiEdgeInfixConstructor[N, L, CC[X] <: Edge[X] with MultiEdge](
     apply: (N, N, L) => CC[N]
 ) {
   def edge: DiEdge[N]

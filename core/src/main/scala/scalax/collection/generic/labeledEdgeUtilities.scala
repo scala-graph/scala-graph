@@ -10,8 +10,8 @@ object SingleLabel {
   def unapply[L](edge: Edge[_] with SingleLabel[L]): Some[L] = Some(edge.label)
 }
 
-trait ExtendedKeyBySingleLabel extends ExtendedKey { this: Edge[_] with SingleLabel[_] =>
-  def extendKeyBy: Seq[Any] = label :: Nil
+trait ExtendedKeyBySingleLabel extends MultiEdge { this: Edge[_] with SingleLabel[_] =>
+  def extendKeyBy: OneOrMore[Any] = One(label)
 }
 
 /** Intermediate infix extractor for the "unlabeled part" of a weighted edge.
@@ -50,6 +50,6 @@ trait UnapplyGenericHyperLabel[L] {
   def unapply[N](rest: (OneOrMore[N], L)): Some[(OneOrMore[N], L)] = Some(rest)
 }
 
-trait ExtendedKeyByWeight extends ExtendedKey { this: Edge[_] =>
-  override def extendKeyBy: Seq[Double] = weight :: Nil
+trait ExtendedKeyByWeight extends MultiEdge { this: Edge[_] =>
+  override def extendKeyBy: One[Double] = One(weight)
 }

@@ -1,9 +1,7 @@
 package demo
 
 import scalax.collection.{One, OneOrMore, OrderedSubset, Superset}
-import scalax.collection.generic.{
-  AbstractDiEdge, AbstractDiHyperEdge, AnyDiHyperEdge, DiEdgeToString, DiHyperEdgeToString, ExtendedKey
-}
+import scalax.collection.generic.{AbstractDiEdge, AbstractDiHyperEdge, AnyDiHyperEdge, DiEdgeToString, MultiEdge}
 import scalax.collection.immutable.{Graph, TypedGraphFactory}
 
 import scala.util.chaining._
@@ -33,6 +31,7 @@ object HyperADTDemo extends App {
     * TODO also ensure that
     *   - column names are unique with respect to the table
     *   - sets are not empty whenever appropriate
+    *   - the # of foreign key columns must correspond to the # of primary key columns in the child table
     *   - `CS` of ForeignKey is different from `S`
     */
   final case class TableContext[S <: Set[Column] with Singleton](
@@ -48,13 +47,14 @@ object HyperADTDemo extends App {
 
     protected case class PrimaryKey private (table: outer.table.type, columns: OrderedSubset[Column, S])
         extends AbstractDiHyperEdge(One(table: Table), OneOrMore.fromUnsafe(columns))
-        with ExtendedKey
+        with MultiEdge
         with Connection {
-      val extendKeyBy: Seq[Any] = PrimaryKey.toString
+      def extendKeyBy: OneOrMore[Any] = PrimaryKey.edgeKeyExtension
     }
 
     case object PrimaryKey {
-      def apply(): PrimaryKey = PrimaryKey(table, primaryKeyColumns)
+      def apply(): PrimaryKey      = PrimaryKey(table, primaryKeyColumns)
+      private val edgeKeyExtension = One(PrimaryKey.toString)
     }
 
     def edges: List[Connection] = primaryKeyEdge +: columnEdges
@@ -73,17 +73,19 @@ object HyperADTDemo extends App {
         columns: OrderedSubset[Column, S],
         childTable: TableContext[CS]
     ) extends AbstractDiHyperEdge(One(table: Table), OneOrMore.fromUnsafe(columns))
-        with ExtendedKey
+        with MultiEdge
         with Connection {
-      def extendKeyBy: Seq[Any] = ForeignKey.toString
+      def extendKeyBy: OneOrMore[Any] = ForeignKey.edgeKeyExtension
     }
 
-    object ForeignKey {
+    case object ForeignKey {
       def apply[CS <: Set[Column] with Singleton](
           columns: OrderedSubset[Column, S],
           childTable: TableContext[CS]
       ): ForeignKey[CS] =
         ForeignKey(table, columns, childTable)
+
+      private val edgeKeyExtension = One(this.toString)
     }
   }
 
@@ -121,7 +123,7 @@ object HyperADTDemo extends App {
     Address.edges
       ++: Country.edges
       ++: List(
-        Address.foreignKey(Country.context)(Address.countryCode)
+        Address.foreignKey(childTable = Country.context)(Address.countryCode)
       )
   )
 

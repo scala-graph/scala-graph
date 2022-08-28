@@ -57,7 +57,7 @@ trait LDiHyperEdgeToString extends LEdgeToString with DiHyperEdgeToString { this
 /** Mix in this trait in your labeled edge class if you want to indicate in its `toString` representation
   * that the edge supports multigraphs. Once mixed in, the `labelSeparator` gets `++`.
   */
-trait MultiLEdgeToString { _: LEdgeToString with ExtendedKey =>
+trait MultiLEdgeToString { _: LEdgeToString with MultiEdge =>
 
   override protected def labelSeparator: String = " ++ "
 }
@@ -78,7 +78,7 @@ trait WHyperEdgeToString extends WEdgeToString with HyperEdgeToString { _: AnyHy
 
 trait WDiHyperEdgeToString extends WEdgeToString with DiHyperEdgeToString { _: AnyDiHyperEdge[_] => }
 
-trait MultiWEdgeToString { _: WEdgeToString with ExtendedKey =>
+trait MultiWEdgeToString { _: WEdgeToString with MultiEdge =>
 
   override protected def labelSeparator: String = " %% "
 }
