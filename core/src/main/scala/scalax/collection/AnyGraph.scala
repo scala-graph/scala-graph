@@ -27,7 +27,8 @@ import scalax.collection.mutable.Builder
 trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] with AnyGraph[X, Y]]
     extends GraphBase[N, E, CC]
     with GraphTraversal[N, E]
-    with GraphDegree[N, E, CC] {
+    with GraphDegree[N, E, CC]
+    with ToString[N, E, CC] {
   thisGraph: CC[N, E] =>
 
   protected type ThisGraph = thisGraph.type
@@ -35,59 +36,14 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   def empty: CC[N, E]
   protected[this] def newBuilder: mutable.Builder[N, E, CC]
 
-  def isDirected: Boolean = edges.size > 0 && edges.hasOnlyDiEdges
-  def isHyper: Boolean    = edges.size > 0 && edges.hasAnyHyperEdge
-  def isMixed: Boolean    = edges.size > 0 && edges.hasMixedEdges
-  def isMulti: Boolean    = edges.size > 0 && edges.hasAnyMultiEdge
+  def isDirected: Boolean = edges.nonEmpty && edges.hasOnlyDiEdges
+  def isHyper: Boolean    = edges.nonEmpty && edges.hasAnyHyperEdge
+  def isMixed: Boolean    = edges.nonEmpty && edges.hasMixedEdges
+  def isMulti: Boolean    = edges.nonEmpty && edges.hasAnyMultiEdge
 
   /** The companion object of `CC`. */
   val companion: Factory[CC]
   implicit def config: GraphConfig
-
-  /** Ensures sorted nodes/edges unless this `Graph` has more than 100 elements.
-    * See also `asSortedString` and `toSortedString`.
-    */
-  override def toString: String = if (elementCount <= 100) toSortedString()() else super.toString
-
-  /** Sorts all nodes of this graph by `ordNode` followed by all edges sorted by `ordEdge`
-    * and concatinates their string representation `nodeSeparator` and `edgeSeparator`
-    * respectively.
-    *
-    * @param nodeSeparator to separate nodes by.
-    * @param edgeSeparator to separate edges by.
-    * @param nodesEdgesSeparator to separate nodes from edges by.
-    * @param withNodesEdgesPrefix whether the node and edge set should be prefixed.
-    * @param ordNode the node ordering defaulting to `defaultNodeOrdering`.
-    * @param ordEdge the edge ordering defaulting to `defaultEdgeOrdering`.
-    */
-  def asSortedString(
-      nodeSeparator: String = GraphBase.defaultSeparator,
-      edgeSeparator: String = GraphBase.defaultSeparator,
-      nodesEdgesSeparator: String = GraphBase.defaultSeparator,
-      withNodesEdgesPrefix: Boolean = false
-  )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering) = {
-    val ns =
-      if (withNodesEdgesPrefix) nodes.toSortedString(nodeSeparator)(ordNode)
-      else nodes.asSortedString(nodeSeparator)(ordNode)
-    val es =
-      if (withNodesEdgesPrefix) edges.toSortedString(edgeSeparator)(ordEdge)
-      else edges.asSortedString(edgeSeparator)(ordEdge)
-    ns + (if (ns.length > 0 && es.length > 0) nodesEdgesSeparator
-          else "") +
-    es
-  }
-
-  /** Same as `asSortedString` but additionally prefixed and parenthesized by `stringPrefix`.
-    */
-  def toSortedString(
-      nodeSeparator: String = GraphBase.defaultSeparator,
-      edgeSeparator: String = GraphBase.defaultSeparator,
-      nodesEdgesSeparator: String = GraphBase.defaultSeparator,
-      withNodesEdgesPrefix: Boolean = false
-  )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering) =
-    className +
-      "(" + asSortedString(nodeSeparator, edgeSeparator, nodesEdgesSeparator, withNodesEdgesPrefix)(ordNode, ordEdge) +
-      ")"
 
   /** `Graph` instances are equal if their nodes and edges turned
     * to outer nodes and outer edges are equal. Any `TraversableOnce`
@@ -143,7 +99,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   }
 
   type NodeSetT <: GraphNodeSet
-  trait GraphNodeSet extends NodeSet {
+  trait GraphNodeSet extends NodeSet with ToStringNodeSet {
     protected def copy: NodeSetT
 
     final override def -(node: NodeT): NodeSetT =
@@ -233,7 +189,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   }
 
   type EdgeSetT <: GraphEdgeSet
-  trait GraphEdgeSet extends EdgeSet {
+  trait GraphEdgeSet extends EdgeSet with ToStringEdgeSet {
     def hasOnlyDiEdges: Boolean
     def hasOnlyUnDiEdges: Boolean
     def hasMixedEdges: Boolean

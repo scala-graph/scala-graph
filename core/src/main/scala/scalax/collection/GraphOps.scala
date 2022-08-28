@@ -52,8 +52,6 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
   /** The Sum of the weight of all edges. */
   def totalWeight: Double
 
-  protected def className: String = "Graph"
-
   sealed trait InnerElem
 
   type NodeT <: InnerNode
