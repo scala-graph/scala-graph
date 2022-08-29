@@ -232,8 +232,8 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
     }
 
     def `toString ` : Unit = {
-      gInt_1_3.toString should fullyMatch regex """Graph\([1], [3]\)"""
-      gString_A.toString should fullyMatch regex """Graph\(["A"]\)"""
+      gInt_1_3.toString should fullyMatch regex """Graph\(NodeSet\([1], [3]\), EdgeSet\(\)\)"""
+      gString_A.toString should fullyMatch regex """Graph\(NodeSet\(["A"]\), EdgeSet\(\)\)"""
     }
 
     def `from inner ` : Unit = {

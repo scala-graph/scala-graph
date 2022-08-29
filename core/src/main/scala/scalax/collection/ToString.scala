@@ -17,24 +17,24 @@ protected trait ToString[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y
     *
     * @param nodeSeparator        to separate nodes by.
     * @param edgeSeparator        to separate edges by.
-    * @param nodesEdgesSeparator  to separate nodes from edges by.
-    * @param withNodesEdgesPrefix whether the node and edge set should be prefixed.
+    * @param nodeEdgeSetSeparator  to separate nodes from edges by.
+    * @param withInnerPrefix whether the node and edge set should be prefixed.
     * @param ordNode              the node ordering defaulting to `defaultNodeOrdering`.
     * @param ordEdge              the edge ordering defaulting to `defaultEdgeOrdering`.
     */
   def asSortedString(
       nodeSeparator: String = GraphBase.defaultSeparator,
       edgeSeparator: String = GraphBase.defaultSeparator,
-      nodesEdgesSeparator: String = GraphBase.defaultSeparator,
-      withNodesEdgesPrefix: Boolean = false
+      nodeEdgeSetSeparator: String = GraphBase.defaultSeparator,
+      withInnerPrefix: Boolean = true
   )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering): String = {
     val ns =
-      if (withNodesEdgesPrefix) nodes.toSortedString(nodeSeparator)(ordNode)
+      if (withInnerPrefix) nodes.toSortedString(nodeSeparator)(ordNode)
       else nodes.asSortedString(nodeSeparator)(ordNode)
     val es =
-      if (withNodesEdgesPrefix) edges.toSortedString(edgeSeparator)(ordEdge)
+      if (withInnerPrefix) edges.toSortedString(edgeSeparator)(ordEdge)
       else edges.asSortedString(edgeSeparator)(ordEdge)
-    ns + (if (ns.nonEmpty && es.nonEmpty) nodesEdgesSeparator else "") +
+    ns + (if (ns.nonEmpty && es.nonEmpty) nodeEdgeSetSeparator else "") +
     es
   }
 
@@ -43,14 +43,14 @@ protected trait ToString[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y
   def toSortedString(
       nodeSeparator: String = GraphBase.defaultSeparator,
       edgeSeparator: String = GraphBase.defaultSeparator,
-      nodesEdgesSeparator: String = GraphBase.defaultSeparator,
-      withNodesEdgesPrefix: Boolean = false
+      nodeEdgeSetSeparator: String = GraphBase.defaultSeparator,
+      withInnerPrefix: Boolean = true
   )(implicit
       ordNode: NodeOrdering = defaultNodeOrdering,
       ordEdge: EdgeOrdering = defaultEdgeOrdering
   ): String =
     className +
-      "(" + asSortedString(nodeSeparator, edgeSeparator, nodesEdgesSeparator, withNodesEdgesPrefix)(ordNode, ordEdge) +
+      "(" + asSortedString(nodeSeparator, edgeSeparator, nodeEdgeSetSeparator, withInnerPrefix)(ordNode, ordEdge) +
       ")"
 
   protected trait ToStringNodeSet extends AnySet[NodeT] {
@@ -77,7 +77,7 @@ protected trait ToString[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y
     def toSortedString(separator: String = GraphBase.defaultSeparator)(implicit
         ord: NodeOrdering = defaultNodeOrdering
     ): String =
-      stringPrefix + "(" + asSortedString(separator)(ord) + ")"
+      className + "(" + asSortedString(separator)(ord) + ")"
   }
 
   protected trait ToStringEdgeSet extends AnySet[EdgeT] {
@@ -104,6 +104,6 @@ protected trait ToString[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y
     def toSortedString(separator: String = GraphBase.defaultSeparator)(implicit
         ord: EdgeOrdering = defaultEdgeOrdering
     ): String =
-      stringPrefix + "(" + asSortedString(separator)(ord) + ")"
+      className + "(" + asSortedString(separator)(ord) + ")"
   }
 }
