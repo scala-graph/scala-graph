@@ -99,7 +99,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   }
 
   type NodeSetT <: GraphNodeSet
-  trait GraphNodeSet extends NodeSet with ToStringNodeSet {
+  trait GraphNodeSet extends NodeSet with NodeSetToString {
     protected def copy: NodeSetT
 
     final override def -(node: NodeT): NodeSetT =
@@ -189,7 +189,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   }
 
   type EdgeSetT <: GraphEdgeSet
-  trait GraphEdgeSet extends EdgeSet with ToStringEdgeSet {
+  trait GraphEdgeSet extends EdgeSet with EdgeSetToString {
     def hasOnlyDiEdges: Boolean
     def hasOnlyUnDiEdges: Boolean
     def hasMixedEdges: Boolean
