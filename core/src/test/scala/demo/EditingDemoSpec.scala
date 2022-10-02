@@ -106,7 +106,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
 
       g.edges.foldLeft(0)((sum, e) =>
         e.edge match {
-          case s :~> t + (l: String) if l contains 'A' =>
+          case s :~> t +: (l: String) if l contains 'A' =>
             sum + s.outDegree + t.outDegree
       }) shouldBe 6
     }

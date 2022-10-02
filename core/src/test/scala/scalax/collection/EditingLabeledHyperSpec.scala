@@ -142,7 +142,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     import EditingLabeledHyperSpec.Labeled._
 
     def `meets toString convention`: Unit =
-      hE.toString shouldBe s"${ends mkString " ~~ "} + 1"
+      hE.toString shouldBe s"${ends mkString " ~~ "} :+ 1"
 
     def `meets equality rules`: Unit = {
       hE.copy(label = 9) shouldEqual hE
@@ -153,24 +153,24 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     def `supports infix construction`: Unit = {
       implicit class MyInfixConstructor[N](val hyperedge: HyperEdge[N])
           extends LHyperEdgeInfixConstructor[N, Int, MyHyperEdge](MyHyperEdge.apply)
-      'a' ~~ 'b' ~~ 'c' + 1 shouldEqual hE
+      'a' ~~ 'b' ~~ 'c' :+ 1 shouldEqual hE
     }
 
     def `supports infix extraction`: Unit = {
-      val + = MyHyperEdge
+      val +: = MyHyperEdge
 
       hE match {
-        case ends + label =>
+        case ends +: label =>
           val reconstructed = MyHyperEdge(ends, label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
       }
       hE match {
-        case Seq(n1, n2, n3) + label =>
+        case Seq(n1, n2, n3) +: label =>
           val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
-        case _ + _ => fail()
+        case _ +: _ => fail()
       }
     }
   }
@@ -181,7 +181,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     import EditingLabeledHyperSpec.OrderedLabeled._
 
     def `meets toString convention`: Unit =
-      hE.toString shouldBe s"${ends mkString " ~~ "} + 1"
+      hE.toString shouldBe s"${ends mkString " ~~ "} :+ 1"
 
     def `meets equality rules`: Unit = {
       hE.copy(label = 9) shouldEqual hE
@@ -192,24 +192,24 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     def `supports infix construction`: Unit = {
       implicit class MyInfixConstructor[N](val hyperedge: HyperEdge[N])
           extends LHyperEdgeInfixConstructor[N, Int, MyHyperEdge](MyHyperEdge.apply)
-      'a' ~~ 'b' ~~ 'c' + 1 shouldEqual hE
+      'a' ~~ 'b' ~~ 'c' :+ 1 shouldEqual hE
     }
 
     def `supports infix extraction`: Unit = {
-      val + = MyHyperEdge
+      val +: = MyHyperEdge
 
       hE match {
-        case ends + label =>
+        case ends +: label =>
           val reconstructed = MyHyperEdge(ends, label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
       }
       hE match {
-        case Seq(n1, n2, n3) + label =>
+        case Seq(n1, n2, n3) +: label =>
           val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
-        case _ + _ => fail()
+        case _ +: _ => fail()
       }
     }
   }
@@ -221,7 +221,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
 
     def `meets toString convention`: Unit = {
       def nodesToString(nodes: Iterable[_]) = nodes.mkString("{", ", ", "}")
-      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} + $label"
+      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} :+ $label"
     }
 
     def `meets equality rules`: Unit = {
@@ -233,22 +233,22 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     def `supports infix construction`: Unit = {
       implicit class MyInfixConstructor[N](val diHyperedge: DiHyperEdge[N])
           extends LDiHyperEdgeInfixConstructor[N, Int, MyDiHyperEdge](MyDiHyperEdge.apply)
-      sources ~~> targets + 1 shouldEqual diHE
+      sources ~~> targets :+ 1 shouldEqual diHE
     }
 
     def `supports infix extraction`: Unit = {
       import generic.{UnapplyGenericHyperLabel, UnapplyGenericLabeledDiHyperEdge}
       object :~~> extends UnapplyGenericLabeledDiHyperEdge[MyDiHyperEdge, Int]
-      object +    extends UnapplyGenericHyperLabel[Int]
+      object +:   extends UnapplyGenericHyperLabel[Int]
 
       diHE match {
-        case sources :~~> targets + label =>
+        case sources :~~> targets +: label =>
           val reconstructed = MyDiHyperEdge(sources, targets, label)
           "reconstructed: MyDiHyperEdge[Char]" should compile
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case Seq(s1, s2) :~~> Seq(t1, t2) + label =>
+        case Seq(s1, s2) :~~> Seq(t1, t2) +: label =>
           val reconstructed = MyDiHyperEdge(
             Several.fromUnsafe(List(s1, s2)),
             Several.fromUnsafe(List(t1, t2)),
@@ -256,7 +256,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           )
           "reconstructed: MyDiHyperEdge[Char]" should compile
           reconstructed shouldEqual diHE
-        case _ :~~> _ + _ => fail()
+        case _ :~~> _ +: _ => fail()
       }
     }
   }
@@ -268,7 +268,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
 
     def `meets toString convention`: Unit = {
       def nodesToString(nodes: Iterable[_]) = nodes.mkString("{", ", ", "}")
-      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} + $label"
+      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} :+ $label"
     }
 
     def `meets equality rules`: Unit = {
@@ -280,22 +280,22 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     def `supports infix construction`: Unit = {
       implicit class MyInfixConstructor[N](val diHyperedge: DiHyperEdge[N])
           extends LDiHyperEdgeInfixConstructor[N, Int, MyDiHyperEdge](MyDiHyperEdge.apply)
-      sources ~~> targets + 1 shouldEqual diHE
+      sources ~~> targets :+ 1 shouldEqual diHE
     }
 
     def `supports infix extraction`: Unit = {
       import generic.{UnapplyGenericHyperLabel, UnapplyGenericLabeledDiHyperEdge}
       object :~~> extends UnapplyGenericLabeledDiHyperEdge[MyDiHyperEdge, Int]
-      object +    extends UnapplyGenericHyperLabel[Int]
+      object +:   extends UnapplyGenericHyperLabel[Int]
 
       diHE match {
-        case sources :~~> targets + label =>
+        case sources :~~> targets +: label =>
           val reconstructed = MyDiHyperEdge(sources, targets, label)
           "reconstructed: MyDiHyperEdge[Char]" should compile
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case Several(s1, s2, sRest) :~~> Several(t1, t2, tRest) + label =>
+        case Several(s1, s2, sRest) :~~> Several(t1, t2, tRest) +: label =>
           val reconstructed = MyDiHyperEdge(
             Several.fromUnsafe(List(s1, s2) ++ sRest),
             Several.fromUnsafe(List(t1, t2) ++ tRest),
@@ -303,7 +303,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           )
           "reconstructed: MyDiHyperEdge[Char]" should compile
           reconstructed shouldEqual diHE
-        case _ :~~> _ + _ => fail()
+        case _ :~~> _ +: _ => fail()
       }
     }
   }
@@ -314,7 +314,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     import EditingLabeledHyperSpec.MultiLabeled._
 
     def `meets toString convention`: Unit =
-      hE.toString shouldBe s"${ends mkString " ~~ "} ++ 1"
+      hE.toString shouldBe s"${ends mkString " ~~ "} :++ 1"
 
     def `meets equality rules`: Unit = {
       hE.copy(label = 9) shouldNot equal(hE)
@@ -324,7 +324,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     def `supports infix construction`: Unit = {
       implicit class MyInfixConstructor[N](val hyperedge: HyperEdge[N])
           extends LHyperEdgeInfixConstructor[N, Int, MyHyperEdge](MyHyperEdge.apply)
-      'a' ~~ 'b' ~~ 'c' ++ 1 shouldEqual hE
+      'a' ~~ 'b' ~~ 'c' :++ 1 shouldEqual hE
     }
 
     def `supports infix extraction`: Unit = {
@@ -352,7 +352,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     import EditingLabeledHyperSpec.MultiOrderedLabeled._
 
     def `meets toString convention`: Unit =
-      hE.toString shouldBe s"${ends mkString " ~~ "} ++ 1"
+      hE.toString shouldBe s"${ends mkString " ~~ "} :++ 1"
 
     def `meets equality rules`: Unit = {
       hE.copy(label = 9) shouldNot equal(hE)
@@ -363,7 +363,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     def `supports infix construction`: Unit = {
       implicit class MyInfixConstructor[N](val hyperedge: HyperEdge[N])
           extends LHyperEdgeInfixConstructor[N, Int, MyHyperEdge](MyHyperEdge.apply)
-      'a' ~~ 'b' ~~ 'c' ++ 1 shouldEqual hE
+      'a' ~~ 'b' ~~ 'c' :++ 1 shouldEqual hE
     }
 
     def `supports infix extraction`: Unit = {
@@ -392,7 +392,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
 
     def `meets toString convention`: Unit = {
       def nodesToString(nodes: Iterable[_]) = nodes.mkString("{", ", ", "}")
-      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} ++ $label"
+      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} :++ $label"
     }
 
     def `meets equality rules`: Unit = {
@@ -403,22 +403,22 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     def `supports infix construction`: Unit = {
       implicit class MyInfixConstructor[N](val diHyperedge: DiHyperEdge[N])
           extends LDiHyperEdgeInfixConstructor[N, Int, MyDiHyperEdge](MyDiHyperEdge.apply)
-      sources ~~> targets ++ 1 shouldEqual diHE
+      sources ~~> targets :++ 1 shouldEqual diHE
     }
 
     def `supports infix extraction`: Unit = {
       import generic.{UnapplyGenericHyperLabel, UnapplyGenericLabeledDiHyperEdge}
       object :~~> extends UnapplyGenericLabeledDiHyperEdge[MyDiHyperEdge, Int]
-      object ++   extends UnapplyGenericHyperLabel[Int]
+      object ++:  extends UnapplyGenericHyperLabel[Int]
 
       diHE match {
-        case sources :~~> targets ++ label =>
+        case sources :~~> targets ++: label =>
           val reconstructed = MyDiHyperEdge(sources, targets, label)
           "reconstructed: MyDiHyperEdge[Char]" should compile
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case Several(s1, s2, _) :~~> Several(t1, t2, _) ++ label =>
+        case Several(s1, s2, _) :~~> Several(t1, t2, _) ++: label =>
           val reconstructed = MyDiHyperEdge(
             Several.fromUnsafe(List(s1, s2)),
             Several.fromUnsafe(List(t1, t2)),
@@ -426,7 +426,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           )
           "reconstructed: MyDiHyperEdge[Char]" should compile
           reconstructed shouldEqual diHE
-        case _ :~~> _ ++ _ => fail()
+        case _ :~~> _ ++: _ => fail()
       }
     }
   }
@@ -438,7 +438,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
 
     def `meets toString convention`: Unit = {
       def nodesToString(nodes: Iterable[_]) = nodes.mkString("{", ", ", "}")
-      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} ++ $label"
+      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} :++ $label"
     }
 
     def `meets equality rules`: Unit = {
@@ -450,22 +450,22 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     def `supports infix construction`: Unit = {
       implicit class MyInfixConstructor[N](val diHyperedge: DiHyperEdge[N])
           extends LDiHyperEdgeInfixConstructor[N, Int, MyDiHyperEdge](MyDiHyperEdge.apply)
-      sources ~~> targets ++ 1 shouldEqual diHE
+      sources ~~> targets :++ 1 shouldEqual diHE
     }
 
     def `supports infix extraction`: Unit = {
       import generic.{UnapplyGenericHyperLabel, UnapplyGenericLabeledDiHyperEdge}
       object :~~> extends UnapplyGenericLabeledDiHyperEdge[MyDiHyperEdge, Int]
-      object ++   extends UnapplyGenericHyperLabel[Int]
+      object ++:  extends UnapplyGenericHyperLabel[Int]
 
       diHE match {
-        case sources :~~> targets ++ label =>
+        case sources :~~> targets ++: label =>
           val reconstructed = MyDiHyperEdge(sources, targets, label)
           "reconstructed: MyDiHyperEdge[Char]" should compile
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case Several(s1, s2, sRest) :~~> Several(t1, t2, tRest) ++ label =>
+        case Several(s1, s2, sRest) :~~> Several(t1, t2, tRest) ++: label =>
           val reconstructed = MyDiHyperEdge(
             Several.fromUnsafe(List(s1, s2) ++ sRest),
             Several.fromUnsafe(List(t1, t2) ++ tRest),
@@ -473,7 +473,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           )
           "reconstructed: MyDiHyperEdge[Char]" should compile
           reconstructed shouldEqual diHE
-        case _ :~~> _ ++ _ => fail()
+        case _ :~~> _ ++: _ => fail()
       }
     }
   }

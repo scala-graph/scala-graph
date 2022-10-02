@@ -38,7 +38,7 @@ private class EditingTypedEdges extends RefSpec with Matchers {
   import Samples._
 
   def `toString of typed edge`: Unit =
-    outer.toString should startWith(s"$madrid ~> $rio ++ ")
+    outer.toString should startWith(s"$madrid ~> $rio :++ ")
 }
 
 private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
@@ -91,7 +91,7 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
 
     def `infix constructor`: Unit = {
       import scalax.collection.edges.DiEdgeImplicits
-      madrid ~> rio + (flightNo, outer.departures, outer.duration) shouldBe outer
+      madrid ~> rio :++ (flightNo, outer.departures, outer.duration) shouldBe outer
     }
 
     def `extractor ` : Unit = {

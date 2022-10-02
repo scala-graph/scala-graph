@@ -89,14 +89,14 @@ private class EditingLabeledEdges[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Grap
     import edges.DiEdgeImplicits
     implicit class MyInfixConstructor[N](val edge: DiEdge[N])
         extends LDiEdgeInfixConstructor[N, String, MyEdge](MyEdge.apply)
-    1 ~> 2 + "" shouldEqual e
+    1 ~> 2 :+ "" shouldEqual e
 
     import generic.{UnapplyGenericLabel, UnapplyGenericLabeledEdge}
     object :~> extends UnapplyGenericLabeledEdge[MyEdge, String]
-    object +   extends UnapplyGenericLabel[String]
+    object +:  extends UnapplyGenericLabel[String]
 
     e match {
-      case n1 :~> n2 + label =>
+      case n1 :~> n2 +: label =>
         val reconstructed = MyEdge(n1, n2, label)
         "reconstructed: MyEdge[Int]" should compile
         reconstructed shouldEqual e
@@ -133,14 +133,14 @@ private class EditingLabeledEdges[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Grap
     import edges.UnDiEdgeImplicits
     implicit class MyInfixConstructor[N](val edge: UnDiEdge[N])
         extends LUnDiEdgeInfixConstructor[N, String, MyEdge](MyEdge.apply)
-    1 ~ 2 + "" shouldEqual e
+    1 ~ 2 :+ "" shouldEqual e
 
     import generic.{UnapplyGenericLabel, UnapplyGenericLabeledEdge}
     object :~ extends UnapplyGenericLabeledEdge[MyEdge, String]
-    object +  extends UnapplyGenericLabel[String]
+    object +: extends UnapplyGenericLabel[String]
 
     e match {
-      case n1 :~ n2 + label =>
+      case n1 :~ n2 +: label =>
         val reconstructed = MyEdge(n1, n2, label)
         "reconstructed: MyEdge[Int]" should compile
         reconstructed shouldEqual e
@@ -177,14 +177,14 @@ private class EditingLabeledEdges[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Grap
     import edges.DiEdgeImplicits
     implicit class MyInfixConstructor[N](val edge: DiEdge[N])
         extends LDiEdgeInfixConstructor[N, String, MyEdge](MyEdge.apply)
-    1 ~> 2 ++ "" shouldEqual e
+    1 ~> 2 :++ "" shouldEqual e
 
     import generic.{UnapplyGenericLabel, UnapplyGenericLabeledEdge}
     object :~> extends UnapplyGenericLabeledEdge[MyEdge, String]
-    object ++  extends UnapplyGenericLabel[String]
+    object ++: extends UnapplyGenericLabel[String]
 
     e match {
-      case n1 :~> n2 ++ label =>
+      case n1 :~> n2 ++: label =>
         val reconstructed = MyEdge(n1, n2, label)
         "reconstructed: MyEdge[Int]" should compile
         reconstructed shouldEqual e
@@ -221,14 +221,14 @@ private class EditingLabeledEdges[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Grap
     import edges.UnDiEdgeImplicits
     implicit class MyInfixConstructor[N](val edge: UnDiEdge[N])
         extends LUnDiEdgeInfixConstructor[N, String, MyEdge](MyEdge.apply)
-    1 ~ 2 ++ "" shouldEqual e
+    1 ~ 2 :++ "" shouldEqual e
 
     import generic.{UnapplyGenericLabel, UnapplyGenericLabeledEdge}
-    object :~ extends UnapplyGenericLabeledEdge[MyEdge, String]
-    object ++ extends UnapplyGenericLabel[String]
+    object :~  extends UnapplyGenericLabeledEdge[MyEdge, String]
+    object ++: extends UnapplyGenericLabel[String]
 
     e match {
-      case n1 :~ n2 ++ label =>
+      case n1 :~ n2 ++: label =>
         val reconstructed = MyEdge(n1, n2, label)
         "reconstructed: MyEdge[Int]" should compile
         reconstructed shouldEqual e

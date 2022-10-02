@@ -28,12 +28,10 @@ object CustomDiEdge {
 }
 
 object :~> {
-  def unapply[N](e: CustomDiEdge[N]): Option[(N, (N, L))] =
-    if (e eq null) None else Some(e._1, (e._2, e.label))
+  def unapply[N](e: CustomDiEdge[N]): Some[(N, (N, L))] = Some(e._1, (e._2, e.label))
 }
-object + {
-  def unapply[N](nl: (N, L)): Option[(N, L)] =
-    if (nl eq null) None else Some(nl._1, nl._2)
+object +: {
+  def unapply[N](nl: (N, L)): Some[(N, L)] = Some(nl._1, nl._2)
 }
 
 private object TestCustomLDiEdge {
@@ -42,7 +40,7 @@ private object TestCustomLDiEdge {
   outer.label = None
 
   outer match {
-    case n1 :~> n2 + label =>
+    case n1 :~> n2 +: label =>
   }
 
   import scalax.collection.Graph
@@ -51,6 +49,6 @@ private object TestCustomLDiEdge {
   inner.label = Some(List(1, 2))
 
   inner.edge match {
-    case n1 :~> n2 + label =>
+    case n1 :~> n2 +: label =>
   }
 }

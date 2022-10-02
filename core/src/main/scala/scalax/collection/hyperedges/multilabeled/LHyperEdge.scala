@@ -24,5 +24,5 @@ abstract class LHyperEdgeInfixConstructor[N, L, CC[X] <: AbstractHyperEdge[X] wi
     apply: (Several[N], L) => CC[N]
 ) {
   def hyperedge: HyperEdge[N]
-  def ++(label: L): CC[N] = apply(hyperedge.ends, label)
+  def :++(label: L): CC[N] = apply(hyperedge.ends, label)
 }

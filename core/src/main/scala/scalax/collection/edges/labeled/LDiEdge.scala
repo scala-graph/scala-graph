@@ -9,9 +9,9 @@ import scalax.collection.generic.{AnyDiEdge, Edge, LDiEdgeToString, SingleLabel}
   */
 abstract class LDiEdge[+N, L] extends AnyDiEdge[N] with SingleLabel[L] with LDiEdgeToString
 
-/** Template for an `implicit class` that defines the infix constructor `+` to pass a label like `1 ~> 2 + aLabel`.
+/** Template for an `implicit class` that defines the infix constructor `+` to pass a label like `1 ~> 2 :+ aLabel`.
   */
 abstract class LDiEdgeInfixConstructor[N, L, CC[X] <: Edge[X] with SingleLabel[L]](apply: (N, N, L) => CC[N]) {
   def edge: DiEdge[N]
-  def +(label: L): CC[N] = apply(edge.source, edge.target, label)
+  def :+(label: L): CC[N] = apply(edge.source, edge.target, label)
 }

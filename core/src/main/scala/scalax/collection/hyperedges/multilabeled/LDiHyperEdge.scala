@@ -24,5 +24,5 @@ abstract class LDiHyperEdgeInfixConstructor[N, L, CC[X] <: AbstractDiHyperEdge[X
     apply: (OneOrMore[N], OneOrMore[N], L) => CC[N]
 ) {
   def diHyperedge: DiHyperEdge[N]
-  def ++(label: L): CC[N] = apply(diHyperedge.sources, diHyperedge.targets, label)
+  def :++(label: L): CC[N] = apply(diHyperedge.sources, diHyperedge.targets, label)
 }

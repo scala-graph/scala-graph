@@ -209,19 +209,19 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
 
     val flights: List[Flight] =
       List(
-        jfc ~> dme + ("UN 2222", Nil, 8.hours + 50.minutes),
-        dme ~> svx + ("UN 109", Nil, 2.hours + 15.minutes),
-        jfc ~> lhr + ("BA 174", Nil, 6.hours + 50.minutes),
-        jfc ~> fra + ("LH 400", Nil, 8.hours + 20.minutes),
-        jfc ~> fra + ("UA 8840", Nil, 7.hours + 35.minutes),
-        lhr ~> dme + ("BA 872", Nil, 4.hours),
-        lhr ~> dme + ("SU 242", Nil, 3.hours + 50.minutes),
-        lhr ~> fra + ("LH 903", Nil, 1.hours + 35.minutes),
-        lhr ~> prg + ("BA 860", Nil, 2.hours),
-        fra ~> lhr + ("LH 920", Nil, 1.hours + 35.minutes),
-        fra ~> dme + ("LH 1444", Nil, 3.hours + 10.minutes),
-        fra ~> svx + ("LH 1480", Nil, 4.hours + 35.minutes),
-        prg ~> svx + ("U6 902", Nil, 4.hours + 25.minutes)
+        jfc ~> dme :++ ("UN 2222", Nil, 8.hours + 50.minutes),
+        dme ~> svx :++ ("UN 109", Nil, 2.hours + 15.minutes),
+        jfc ~> lhr :++ ("BA 174", Nil, 6.hours + 50.minutes),
+        jfc ~> fra :++ ("LH 400", Nil, 8.hours + 20.minutes),
+        jfc ~> fra :++ ("UA 8840", Nil, 7.hours + 35.minutes),
+        lhr ~> dme :++ ("BA 872", Nil, 4.hours),
+        lhr ~> dme :++ ("SU 242", Nil, 3.hours + 50.minutes),
+        lhr ~> fra :++ ("LH 903", Nil, 1.hours + 35.minutes),
+        lhr ~> prg :++ ("BA 860", Nil, 2.hours),
+        fra ~> lhr :++ ("LH 920", Nil, 1.hours + 35.minutes),
+        fra ~> dme :++ ("LH 1444", Nil, 3.hours + 10.minutes),
+        fra ~> svx :++ ("LH 1480", Nil, 4.hours + 35.minutes),
+        prg ~> svx :++ ("U6 902", Nil, 4.hours + 25.minutes)
       )
 
     def flight(flightNo: String) = flights.find(_.flightNo == flightNo).get

@@ -27,21 +27,21 @@ package object aviation {
     object FlightGraph extends TypedGraphFactory[Airport, Flight]
   }
 
-  /** Facilitates infix constructor `airportA ~> airportB + (flightNo, departures, duration)`
+  /** Facilitates infix constructor `airportA ~> airportB +: (flightNo, departures, duration)`
     */
   implicit class InfixFlightConstructor(val e: DiEdge[Airport]) extends AnyVal {
 
-    def +(flightNo: String, departures: List[(DayOfWeek, LocalTime)], duration: FiniteDuration) =
+    def :++(flightNo: String, departures: List[(DayOfWeek, LocalTime)], duration: FiniteDuration) =
       Flight(e.source, e.target, flightNo, departures, duration)
   }
 
   type Labels = (String, List[(DayOfWeek, LocalTime)], FiniteDuration)
 
-  /** Allows for pattern `airportA :~> airportB + (flightNo, departures, duration)`
+  /** Allows for pattern `airportA :~> airportB +: (flightNo, departures, duration)`
     */
   object :~> extends UnapplyLabeledEdge[Airport, Flight, Labels] {
     protected def label(edge: Flight): Labels = (edge.flightNo, edge.departures, edge.duration)
   }
 
-  object + extends UnapplyLabel[Airport, Labels]
+  object +: extends UnapplyLabel[Airport, Labels]
 }
