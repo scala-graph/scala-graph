@@ -38,8 +38,7 @@ object TGraphTest extends App {
     val randomSparse = RandomGraph.fromMetrics[Int, UnDiEdge[Int], Graph](Graph, sparse_1000_Int, Set(UnDiEdge))
     val sparseGraph  = randomSparse.draw // Graph[Int,UnDiEdge]
 
-    // obtaining generators for individual graph types
-    // TODO L import scalax.collection.edge.LDiEdge
+    // TODO obtain generators for graphs with typed edges
 
     case class Person(name: String, yearOfBirth: Int)
     object Person {
@@ -117,8 +116,7 @@ object TGraphTest extends App {
     }
     properSparse.check()
 
-    // obtaining Arbitrary instances to generate individual graph types
-    // TODO L import scalax.collection.edge.LDiEdge
+    // TODO obtain Arbitrary instances to generate graphs with typed edges
 
     case class Person(name: String, yearOfBirth: Int)
     object Person {

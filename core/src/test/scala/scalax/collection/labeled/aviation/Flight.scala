@@ -39,7 +39,7 @@ case class Flight(
 
   override def extendKeyBy: OneOrMore[String] = One(flightNo)
 
-  override protected def labelToString: String = s"($flightNo $departures $duration)"
+  override protected def labelToString: String = s"($flightNo, $departures, $duration)"
 
   override def map[N]: PartialFunction[(N, N), Flight] = { case (from: Airport, to: Airport) =>
     copy(from, to)

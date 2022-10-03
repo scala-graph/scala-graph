@@ -23,12 +23,12 @@ object HyperADTDemo extends App {
 
   sealed trait Connection extends AnyDiHyperEdge[Node]
 
-  /** Ensures that
+  /** Ensures by type safety that
     *   - columns cannot be connected to a table multiple times
     *   - primary key columns are an ordered subset of the table's columns
     *   - foreign key columns are an ordered subset of the table's columns
     *   - foreign keys are connected with the primary key of the child table
-    * TODO also ensure that
+    * TODO try to also ensure that
     *   - column names are unique with respect to the table
     *   - sets are not empty whenever appropriate
     *   - the # of foreign key columns must correspond to the # of primary key columns in the child table
