@@ -23,11 +23,10 @@ private class MappingTyped[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike
     with Matchers {
 
   object `when mapping a typed graph you may` {
-    private trait Node
-    private case class A(a: Int)         extends Node { def +(addend: Int): A = A(a + addend)             }
-    private case class B(a: Int, b: Int) extends Node { def +(addend: Int): B = B(a + addend, b + addend) }
+    import MappingTyped._
 
     private object edges {
+      // TODO get rid of this and use mapBounded to upcast
       type Connector[+N] = Edge[N, _]
 
       sealed abstract protected class Edge[+N, +CC <: Edge[N, CC]](override val source: N, override val target: N)
@@ -71,14 +70,14 @@ private class MappingTyped[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike
       }
 
     def `not upcast nodes without passing an edge mapper`: Unit =
-      factory(AConnector(a_1, a_1)) pipe { g =>
+      factory(AConnector(a_1, a_1)) pipe { _ =>
         "g.map(_ => b_0_0): Graph[B, Edge]" shouldNot compile
         "g.map(_.toString)" shouldNot compile
       }
 
     def `upcast nodes to another typed edge if the typed edge mapper is passed`: Unit =
       factory(AConnector(a_1, a_1)) pipe { g =>
-        g.mapBounded[Node, NodeConnector](_ => b_0_0, NodeConnector) pipe { mapped: CC[Node, NodeConnector] =>
+        g.mapBounded[Node, NodeConnector](_ => b_0_0, NodeConnector(_, _)) pipe { mapped: CC[Node, NodeConnector] =>
           mapped.edges.head.outer should ===(NodeConnector(b_0_0, b_0_0))
         }
       }
@@ -88,12 +87,25 @@ private class MappingTyped[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike
         def toString(a: A): String = s"""string-$a"""
 
         def expect[E[N] <: Edge[N]](mapped: CC[String, E[String]], edge: E[String]): Unit = {
+          println(mapped)
           mapped.size should ===(1)
           mapped.edges.head.outer should ===(edge)
         }
 
-        expect(g.map(toString(_), DiEdge[String]), toString(a_1) ~> toString(A(1)))
-        expect(g.map(toString(_), UnDiEdge[String]), toString(a_1) ~ toString(A(1)))
+        expect(g.map(toString(_), DiEdge[String] _), toString(a_1) ~> toString(A(1)))
+        expect(g.map(toString(_), UnDiEdge[String] _), toString(a_1) ~ toString(A(1)))
       }
+  }
+}
+
+private object MappingTyped {
+  private trait Node
+
+  private case class A(a: Int) extends Node {
+    def +(addend: Int): A = A(a + addend)
+  }
+
+  private case class B(a: Int, b: Int) extends Node {
+    def +(addend: Int): B = B(a + addend, b + addend)
   }
 }

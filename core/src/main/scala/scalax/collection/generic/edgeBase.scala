@@ -139,7 +139,7 @@ private[collection] trait InnerEdgeLike[+N] extends Edge[N]
   */
 sealed trait EdgeCompanionBase extends Serializable
 
-/** Template for companion objects of edges having an unconstrained `N` type parameter.
+/** Template for companion objects of generic edges.
   */
 trait EdgeCompanion[+E[N] <: Edge[N]] extends EdgeCompanionBase {
   def apply[N](node_1: N, node_2: N): E[N]
@@ -157,7 +157,7 @@ trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
   def isHyperEdge = true
 
   override def sources: Iterable[N] = ends
-  override def targets: Iterable[N] = sources
+  override def targets: Iterable[N] = ends
 
   override def isAt[M >: N](node: M): Boolean    = ends.iterator contains node
   override def isAt(pred: N => Boolean): Boolean = ends exists pred
@@ -188,11 +188,19 @@ trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = matches(List(p1, p2))
 }
 
+object AnyHyperEdge {
+  def unapply[N](hE: AnyHyperEdge[N]): Some[Iterable[N]] = Some(hE.ends)
+}
+
 abstract class AbstractHyperEdge[+N](val ends: Several[N]) extends AnyHyperEdge[N]
 
 object AbstractHyperEdge {
   def unapply[N](e: AbstractHyperEdge[N]): Some[Several[N]] = Some(e.ends)
 }
+
+abstract class AbstractGenericHyperEdge[+N, +CC[X] <: AbstractGenericHyperEdge[X, CC]](ends: Several[N])
+    extends AbstractHyperEdge[N](ends)
+    with GenericHyperEdgeMapper[CC]
 
 /** The abstract methods of this trait must be implemented by companion objects of non-labeled hyperedges.
   */
@@ -214,14 +222,6 @@ trait HyperEdgeCompanion[+E[N] <: AbstractHyperEdge[N]] extends EdgeCompanionBas
     */
   final def fromUnsafe[N](iterable: Iterable[N]): E[N] =
     apply(Several.fromUnsafe(iterable))
-
-  final protected def atLeastTwoElements(iterable: Iterable[_]): Boolean = {
-    val it = iterable.iterator
-    it.hasNext && {
-      it.next()
-      it.hasNext
-    }
-  }
 
   implicit def thisCompanion: this.type = this
 }
@@ -245,12 +245,22 @@ trait AnyDiHyperEdge[+N] extends AnyHyperEdge[N] with EqDiHyper {
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = (sources exists p1) && (targets exists p2)
 }
 
+object AnyDiHyperEdge {
+  def unapply[N](diH: AnyDiHyperEdge[N]): Some[(Iterable[N], Iterable[N])] = Some(diH.sources, diH.targets)
+}
+
 abstract class AbstractDiHyperEdge[+N](override val sources: OneOrMore[N], override val targets: OneOrMore[N])
     extends AnyDiHyperEdge[N]
 
 object AbstractDiHyperEdge {
   def unapply[N](e: AbstractDiHyperEdge[N]): Some[(OneOrMore[N], OneOrMore[N])] = Some(e.sources, e.targets)
 }
+
+abstract class AbstractGenericDiHyperEdge[+N, +CC[X] <: AbstractGenericDiHyperEdge[X, CC]](
+    sources: OneOrMore[N],
+    targets: OneOrMore[N]
+) extends AbstractDiHyperEdge[N](sources, targets)
+    with GenericDiHyperEdgeMapper[CC]
 
 /** The abstract methods of this trait must be implemented by companion objects of directed, non-labeled hyperedges.
   */
@@ -306,8 +316,8 @@ trait AnyUnDiEdge[+N] extends AnyHyperEdge[N] with AnyEdge[N] with EqUnDi[N] {
   def source: N
   def target: N
 
-  @inline final override def sources: Set[N @uV] = Set(source, target)
-  @inline final override def targets: Set[N @uV] = sources
+  @inline final override def sources: List[N @uV] = List(source, target)
+  @inline final override def targets: List[N @uV] = sources
 
   @inline final override def _1: N = source
   @inline final override def _2: N = target

@@ -21,7 +21,7 @@ private class Mapping[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
 ) extends RefSpec
     with Matchers {
 
-  object `the map of an undirected graph with generic edges` {
+  object `undirected graph with generic edges` {
     private val edge      = 1 ~ 2
     private val originalG = factory(edge)
 
@@ -35,28 +35,41 @@ private class Mapping[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       g.edges.head shouldBe an[g.InnerUnDiEdge]
       (g.edges.head.outer: UnDiEdge[Int]) shouldBe an[UnDiEdge[_]]
     }
-    def `has correctly mapped nodes`: Unit = {
+
+    def `map by nodes`: Unit = {
       val g = originalG map fNode
 
       originalG.nodes zip g.nodes.outerIterator foreach { case (original, mapped) =>
         fNode(original) == mapped
       }
-    }
-    def `has correctly mapped edges`: Unit = {
-      val g = originalG map fNode
-
       g.edges.head should be(UnDiEdge(2, 3))
     }
-    def `may have a new node type`: Unit = {
+
+    def `change node type`: Unit = {
       val g = originalG map (_.toString)
 
       g.nodes.head.outer shouldBe a[String]
       (g.edges.head.outer: UnDiEdge[String]) shouldBe an[UnDiEdge[_]]
-      g.edges.head should be(edge._1.toString ~ edge._2.toString)
+      g.edges.head shouldBe (edge._1.toString ~ edge._2.toString)
     }
-    def `may yield a directed graph`: Unit = {
-      val g = originalG map ({ case originalG.InnerNode(_, i) => i + 1 }, DiEdge[Int])
+
+    def `change edge type`: Unit = {
+      val g = originalG.map(_.outer + 1, (n1: Int, n2: Int) => n1 ~> n2)
       (g: CC[Int, DiEdge[Int]]).edges.head.isDirected shouldBe true
+    }
+
+    def `inspect edges to map`: Unit = {
+      val g =
+        originalG.map(
+          fNode _,
+          (e: originalG.EdgeT, n1: Int, _: Int) => n1 ~> (e.weight.toInt + 2)
+        )
+      (g: CC[Int, DiEdge[Int]]) shouldEqual factory(2 ~> 3)
+    }
+
+    def `change edge ends by permitting implicit node addition`: Unit = {
+      val g = originalG.map(_.outer + 1, (n1: Int, _: Int) => n1 ~> 7)
+      (g: CC[Int, DiEdge[Int]]) shouldEqual factory(3, 2 ~> 7)
     }
   }
 }
