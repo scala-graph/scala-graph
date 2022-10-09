@@ -1,6 +1,5 @@
 package scalax.collection
 
-import scala.collection.immutable.Iterable
 import scalax.collection.generic.{AbstractDiHyperEdgeImplicits, AbstractHyperEdgeImplicits}
 
 package object hyperedges {
@@ -24,19 +23,11 @@ package object hyperedges {
   /** Pattern shortcut enabling `hyperedge match { case ~~(ends) => f(ends) }`. */
   val ~~ = HyperEdge
 
-  /* implicit conversion from `source ~~> targets` to `DiHyperEdge(source, targets)`.
+  /* implicit conversion from `sources ~~> targets` to `DiHyperEdge(source, targets)`.
    */
-  implicit final class DiHyperFromAny[N](override val source: N)
+  implicit final class FromOneOrMore[N](override val sources: OneOrMore[N])
       extends AnyVal
-      with AbstractDiHyperEdgeImplicits.FromAny[N, DiHyperEdge, DiHyperEdge.type] {
-    protected def companion = DiHyperEdge
-  }
-
-  /* implicit conversion from `sources ~~> targets` to `DiHyperEdge(sources, targets)`.
-   */
-  implicit final class DiHyperFromIterable[N](override val sources: Iterable[N])
-      extends AnyVal
-      with AbstractDiHyperEdgeImplicits.FromIterable[N, DiHyperEdge, DiHyperEdge.type] {
+      with AbstractDiHyperEdgeImplicits.FromOneOrMore[N, DiHyperEdge, DiHyperEdge.type] {
     protected def companion = DiHyperEdge
   }
 

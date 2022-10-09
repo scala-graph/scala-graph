@@ -1,6 +1,7 @@
 package scalax
 
 import scala.collection.{AbstractIterable, AbstractIterator, ExtSetMethods}
+import scala.collection.immutable.{Iterable => IIterable}
 
 /** Contains the base traits and objects needed to use '''Graph for Scala'''.
   *
@@ -52,5 +53,28 @@ package object collection {
 
       override val size: Int = 2
     }
+
+    /** Optimized Iterator for one known element and an `Iterable` for further elements.
+      */
+    def oneOrMore[A](_1: A, more: IIterable[A]): Iterator[A] = new AbstractIterator[A] {
+      private[this] var i  = 0
+      private[this] val it = more.iterator
+
+      def hasNext: Boolean = i == 0 || it.hasNext
+
+      def next(): A =
+        if (i == 0) {
+          i += 1
+          _1
+        } else if (it.hasNext) it.next()
+        else throw new NoSuchElementException
+
+      override val size: Int = 1 + more.size
+    }
+
+    /** Optimized Iterator for two known elements and an `Iterable` for further elements.
+      */
+    def several[A](_1: A, _2: A, more: IIterable[A]): Iterator[A] =
+      Iterator.double(_1, _2) ++ more.iterator
   }
 }

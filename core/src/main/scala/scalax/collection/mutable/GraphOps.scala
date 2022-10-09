@@ -2,14 +2,14 @@ package scalax.collection.mutable
 
 import scala.collection.mutable.Cloneable
 
-import scalax.collection.{Graph => AnyGraph, GraphOps => AnyGraphOps}
+import scalax.collection.{AnyGraph => AnyGraph, GraphOps => AnyGraphOps}
 import scalax.collection.generic.Edge
 
-trait GraphOps[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
+trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] with Graph[X, Y]]
     extends Growable[N, E]
     with Shrinkable[N, E]
     with AbstractBuilder[N, E]
-    with Cloneable[This[N, E]] { this: AnyGraphOps[N, E, This] =>
+    with Cloneable[CC[N, E]] { this: AnyGraphOps[N, E, CC] =>
 
   def add(node: N): Boolean
   def add(edge: E): Boolean

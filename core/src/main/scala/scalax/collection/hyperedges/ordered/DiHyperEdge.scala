@@ -1,17 +1,19 @@
-package scalax.collection.hyperedges.ordered
+package scalax.collection
+package hyperedges.ordered
 
-import scala.collection.immutable.Iterable
-import scalax.collection.generic.{AnyDiHyperEdge, DiHyperEdgeCompanion, DiHyperEdgeToString, OrderedEndpoints}
+import scalax.collection.generic.{
+  AbstractGenericDiHyperEdge, DiHyperEdgeCompanion, DiHyperEdgeToString, OrderedEndpoints
+}
 
-/** Directed hyperedge with sources and ends having sequence semantic each.
+/** Directed hyperedge with sources and targets having sequence semantic each.
   */
 @SerialVersionUID(-53)
-final case class DiHyperEdge[+N] private (override val sources: Iterable[N], override val targets: Iterable[N])
-    extends AnyDiHyperEdge[N]
+final case class DiHyperEdge[+N](override val sources: OneOrMore[N], override val targets: OneOrMore[N])
+    extends AbstractGenericDiHyperEdge[N, DiHyperEdge](sources, targets)
     with OrderedEndpoints
-    with DiHyperEdgeToString
+    with DiHyperEdgeToString {
 
-object DiHyperEdge extends DiHyperEdgeCompanion[DiHyperEdge] {
-  protected def apply[N](sources: Iterable[N], targets: Iterable[N]): DiHyperEdge[N] =
-    new DiHyperEdge[N](sources, targets)
+  def map[N](sources: OneOrMore[N], targets: OneOrMore[N]): DiHyperEdge[N] = DiHyperEdge(sources, targets)
 }
+
+object DiHyperEdge extends DiHyperEdgeCompanion[DiHyperEdge]

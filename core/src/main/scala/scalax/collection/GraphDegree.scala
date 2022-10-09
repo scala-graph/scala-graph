@@ -16,8 +16,8 @@ import scalax.collection.generic.Edge
   *         degree functions are `InDegree` and `OutDegree`.
   * @define DEGREEFILTER selects nodes to be included by their degree.
   */
-trait GraphDegree[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]] {
-  this: GraphBase[N, E, This] =>
+trait GraphDegree[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]] {
+  this: GraphBase[N, E, CC] =>
 
   /** Decreasing ordering of nodes with respect to their degree.
     */

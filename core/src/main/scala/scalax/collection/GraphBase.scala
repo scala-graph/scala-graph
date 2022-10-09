@@ -28,8 +28,8 @@ import generic.AnyOrdering
   *         Nodes being the end of any of these edges will be added to the node set.
   * @author Peter Empen
   */
-trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]]
-    extends GraphOps[N, E, This]
+trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
+    extends GraphOps[N, E, CC]
     with OuterElems[N, E]
     with Serializable { selfGraph =>
 
@@ -235,7 +235,7 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
     def canEqual(that: Any) = true
 
     override def equals(other: Any) = other match {
-      case that: GraphBase[N, E, This]#BaseInnerNode =>
+      case that: GraphBase[N, E, CC]#BaseInnerNode =>
         (this eq that) || (that canEqual this) && this.outer == that.outer
       case thatR: AnyRef =>
         val thisN = this.outer.asInstanceOf[AnyRef]
@@ -319,30 +319,6 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
       * @param edges $INEDGES
       */
     protected[collection] def initialize(nodes: AnyIterable[N], edges: AnyIterable[E]): Unit
-    final override protected def className: String = "NodeSet"
-
-    /** Sorts all nodes according to `ord` and concatenates them using `separator`.
-      *
-      * @param separator to separate nodes by.
-      * @param ord custom ordering.
-      * @return sorted and concatenated string representation of this node set.
-      */
-    def asSortedString(separator: String = GraphBase.defaultSeparator)(implicit
-        ord: NodeOrdering = defaultNodeOrdering
-    ): String =
-      toList.sorted(ord) mkString separator
-
-    /** Sorts all nodes according to `ord`, concatenates them using `separator`
-      * and prefixes and parenthesizes the result with `stringPrefix`.
-      *
-      * @param separator to separate nodes by.
-      * @param ord custom ordering.
-      * @return sorted, concatenated and prefixed string representation of this node set.
-      */
-    def toSortedString(separator: String = GraphBase.defaultSeparator)(implicit
-        ord: NodeOrdering = defaultNodeOrdering
-    ): String =
-      stringPrefix + "(" + asSortedString(separator)(ord) + ")"
 
     /** Iterator over this `NodeSet` mapped to outer nodes. */
     @inline final def outerIterator: Iterator[N] = iterator map (_.outer)
@@ -404,11 +380,11 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
     }
 
     override def canEqual(that: Any): Boolean =
-      that.isInstanceOf[GraphBase[N, E, This]#BaseInnerEdge] ||
+      that.isInstanceOf[GraphBase[N, E, CC]#BaseInnerEdge] ||
         that.isInstanceOf[Edge[_]]
 
     override def equals(other: Any): Boolean = other match {
-      case that: GraphBase[N, E, This]#BaseInnerEdge =>
+      case that: GraphBase[N, E, CC]#BaseInnerEdge =>
         (this eq that) ||
         (this.outer eq that.outer) ||
         this.outer == that.outer
@@ -490,32 +466,8 @@ trait GraphBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphBase[X, Y, This]
       * @param edges $INEDGES
       */
     protected[collection] def initialize(edges: AnyIterable[E]): Unit
+
     def contains(node: NodeT): Boolean
-
-    final override protected def className: String = "EdgeSet"
-
-    /** Sorts all edges according to `ord` and concatenates them using `separator`.
-      *
-      * @param separator to separate edges by.
-      * @param ord custom ordering.
-      * @return sorted and concatenated string representation of this edge set.
-      */
-    def asSortedString(separator: String = GraphBase.defaultSeparator)(implicit
-        ord: EdgeOrdering = defaultEdgeOrdering
-    ) =
-      toList.sorted(ord) mkString separator
-
-    /** Sorts all edges according to `ord`, concatenates them using `separator`
-      * and prefixes and parenthesizes the result with `stringPrefix`.
-      *
-      * @param separator to separate edges by.
-      * @param ord custom ordering.
-      * @return sorted, concatenated and prefixed string representation of this edge set.
-      */
-    def toSortedString(separator: String = GraphBase.defaultSeparator)(implicit
-        ord: EdgeOrdering = defaultEdgeOrdering
-    ): String =
-      stringPrefix + "(" + asSortedString(separator)(ord) + ")"
 
     /** Finds the inner edge corresponding to `outerEdge`.
       *

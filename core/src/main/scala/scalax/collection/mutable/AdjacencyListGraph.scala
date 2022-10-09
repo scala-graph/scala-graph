@@ -7,12 +7,12 @@ import scalax.collection.immutable.AdjacencyListBase
 /** Implements an incident list based mutable graph representation.
   * @author Peter Empen
   */
-trait AdjacencyListGraph[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: AdjacencyListGraph[X, Y, This] with Graph[
+trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListGraph[X, Y, CC] with Graph[
   X,
   Y
-]] extends GraphLike[N, E, This]
-    with AdjacencyListBase[N, E, This] {
-  selfGraph: This[N, E] =>
+]] extends GraphLike[N, E, CC]
+    with AdjacencyListBase[N, E, CC] {
+  selfGraph: CC[N, E] =>
 
   type NodeT <: InnerNodeImpl
   abstract class InnerNodeImpl(val outer: N, hints: ArraySet.Hints)

@@ -2,14 +2,12 @@ package scalax.collection
 package immutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
-
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, ExtHashSet}
 import scala.util.Random
-
 import scalax.collection.generic.Edge
-import scalax.collection.{Graph => AnyGraph}
+import scalax.collection.AnyGraph
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 
@@ -19,11 +17,11 @@ import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
   *
   * @author Peter Empen
   */
-trait AdjacencyListBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, Y, This] with AnyGraph[X, Y]]
-    extends GraphLike[N, E, This] {
-  selfGraph: This[N, E] =>
+trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] with AnyGraph[X, Y]]
+    extends GraphLike[N, E, CC] {
+  selfGraph: CC[N, E] =>
 
-  protected type Config <: GraphConfig with AdjacencyListArrayConfig
+  implicit override def config: GraphConfig with AdjacencyListArrayConfig
 
   type NodeT <: AdjacendyListBaseInnerNode
   trait AdjacendyListBaseInnerNode extends GraphInnerNode {
@@ -269,13 +267,13 @@ trait AdjacencyListBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, 
 
   final def concat[N2 >: N, E2 >: E <: Edge[N2]](isolatedNodes: IterableOnce[N2], edges: IterableOnce[E2])(implicit
       e: E2 <:< Edge[N2]
-  ): This[N2, E2] = bulkOp[N2, E2](isolatedNodes, edges, plusPlus)
+  ): CC[N2, E2] = bulkOp[N2, E2](isolatedNodes, edges, plusPlus)
 
   final protected def bulkOp[N2 >: N, E2 >: E <: Edge[N2]](
       nodes: IterableOnce[N2],
       edges: IterableOnce[E2],
-      op: (IterableOnce[N2], IterableOnce[E2]) => This[N2, E2] @uV
-  ): This[N2, E2] =
+      op: (IterableOnce[N2], IterableOnce[E2]) => CC[N2, E2] @uV
+  ): CC[N2, E2] =
     op(nodes, edges)
 
   /** Implements the heart of `++` calling the `from` factory method of the companion object.
@@ -284,18 +282,18 @@ trait AdjacencyListBase[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: GraphLike[X, 
   final protected def plusPlus[N2 >: N, E2 >: E <: Edge[N2]](
       newNodes: IterableOnce[N2],
       newEdges: IterableOnce[E2]
-  ): This[N2, E2] =
-    companion.from[N2, E2](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
+  ): CC[N2, E2] =
+    companion.fromSpecific[N2, E2](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
 
-  def removedAll(isolatedNodes: IterableOnce[N], edges: IterableOnce[E]): This[N, E] =
+  def removedAll(isolatedNodes: IterableOnce[N], edges: IterableOnce[E]): CC[N, E] =
     bulkOp[N, E](isolatedNodes, edges, minusMinus)
 
   /** Implements the heart of `--` calling the `from` factory method of the companion object.
     *  $REIMPLFACTORY
     */
-  final protected def minusMinus(delNodes: IterableOnce[N], delEdges: IterableOnce[E]): This[N, E] = {
+  final protected def minusMinus(delNodes: IterableOnce[N], delEdges: IterableOnce[E]): CC[N, E] = {
     val delNodesEdges = remaining(delNodes.iterator.toSet, delEdges)
-    companion.from[N, E](delNodesEdges._1, delNodesEdges._2)
+    companion.fromSpecific[N, E](delNodesEdges._1, delNodesEdges._2)
   }
 
   /** Calculates the remaining nodes and edges of this graph after subtracting the passed elements.

@@ -24,7 +24,7 @@ trait ConstraintCompanion[+CC[N, E <: Edge[N], G <: Graph[N, E]] <: Constraint[N
   def ||(that: ConstraintCompanion[Constraint]) = new ConstraintCompanionBinaryOp(Or, this, that)
 
   protected[constrained] class PrefixedConstraintCompanion(prefix: Option[String]) extends ConstraintCompanion[CC] {
-    override val stringPrefix: Option[String]                              = prefix
+    override val stringPrefix: Option[String]                          = prefix
     def apply[N, E <: Edge[N], G <: Graph[N, E]](self: G): CC[N, E, G] = thisCompanion[N, E, G](self)
   }
 
@@ -314,8 +314,7 @@ trait Constrained[N, E <: Edge[N], +G <: Graph[N, E]] extends ConstraintMethods[
   * @see ConstraintMethods
   * @author Peter Empen
   */
-abstract class Constraint[N, E <: Edge[N], G <: Graph[N, E]](override val self: G)
-    extends ConstraintMethods[N, E, G] {
+abstract class Constraint[N, E <: Edge[N], G <: Graph[N, E]](override val self: G) extends ConstraintMethods[N, E, G] {
 
   /** Creates a new constraint of the type `ConstraintBinaryOp` with pre- and post-check methods
     * each of which returning `true` if both `this`' ''and'' `that`'s corresponding

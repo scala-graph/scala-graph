@@ -1,19 +1,19 @@
 package scalax.collection
 package immutable
 
-import scalax.collection.{Graph => AnyGraph}
+import scalax.collection.{AnyGraph => AnyGraph}
 import scalax.collection.generic.Edge
 import scalax.collection.mutable.ArraySet
 
 /** Implements an incident list based immutable graph representation.
   * @author Peter Empen
   */
-trait AdjacencyListGraph[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: AdjacencyListGraph[X, Y, This] with Graph[
+trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListGraph[X, Y, CC] with Graph[
   X,
   Y
-]] extends GraphLike[N, E, This]
-    with GraphOps[N, E, This]
-    with AdjacencyListBase[N, E, This] { selfGraph: This[N, E] =>
+]] extends GraphLike[N, E, CC]
+    with GraphOps[N, E, CC]
+    with AdjacencyListBase[N, E, CC] { selfGraph: CC[N, E] =>
 
   type NodeT <: InnerNodeImpl
   abstract class InnerNodeImpl(val outer: N, hints: ArraySet.Hints) extends NodeBase with AdjacendyListBaseInnerNode {
@@ -31,7 +31,7 @@ trait AdjacencyListGraph[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: AdjacencyLis
   type NodeSetT = AdjacencyListNodeSet
   class AdjacencyListNodeSet extends AdjacencyListBaseNodeSet {
     @inline final override protected def minus(node: NodeT): Unit = collection -= node
-    override def +(node: NodeT) =
+    override def +(node: NodeT): NodeSetT =
       if (collection contains node) this
       else { val c = copy; c.collection += node; c }
 
@@ -70,17 +70,17 @@ trait AdjacencyListGraph[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: AdjacencyLis
   }
   override def edges: EdgeSetT
 
-  protected def copy(nodes: Iterable[N], edges: Iterable[E]): This[N, E]
+  protected def copy(nodes: Iterable[N], edges: Iterable[E]): CC[N, E]
 
-  def incl(node: N): This[N, E] =
+  def incl(node: N): CC[N, E] =
     if (this contains node) this
     else copy(nodes.outerIterable concat Iterable(node), edges.toOuter)
 
-  def incl(edge: E): This[N, E] =
+  def incl(edge: E): CC[N, E] =
     if (this contains edge) this
     else copy(nodes.outerIterable, edges.outerIterable concat Iterable(edge))
 
-  def excl(node: N): This[N, E] =
+  def excl(node: N): CC[N, E] =
     nodes find (nf => nf.outer == node) match {
       case Some(nf) =>
         val exclEdges = nf.edges map (_.outer)
@@ -91,11 +91,11 @@ trait AdjacencyListGraph[N, E <: Edge[N], +This[X, Y <: Edge[X]] <: AdjacencyLis
       case None => this
     }
 
-  def excl(edge: E): This[N, E] =
+  def excl(edge: E): CC[N, E] =
     if (this contains edge) copy(nodes.outerIterable, edges.outerIterable.filterNot(_ == edge))
     else this
 
-  final def --(nodes: Iterable[N], edges: Iterable[E]): This[N, E] = bulkOp(nodes, edges, minusMinus)
+  final def --(nodes: Iterable[N], edges: Iterable[E]): CC[N, E] = bulkOp(nodes, edges, minusMinus)
 
-  @inline final def --(that: AnyGraph[N, E]): This[N, E] = this diff that
+  @inline final def --(that: AnyGraph[N, E]): CC[N, E] = this diff that
 }

@@ -37,7 +37,7 @@ trait DiHyperEdgeToString extends EdgeToString { _: AnyDiHyperEdge[_] =>
 sealed protected trait LEdgeToString extends EdgeToString { _: Edge[_] =>
 
   /** The part to be printed after the edge ends and before the label. */
-  protected def labelSeparator: String = " + "
+  protected def labelSeparator: String = " :+ "
 
   /** The part to be printed after the edge ends and the label separator. */
   protected def labelToString: String
@@ -46,20 +46,20 @@ sealed protected trait LEdgeToString extends EdgeToString { _: Edge[_] =>
   override def toString: String = s"$nodesToString$labelSeparator$labelToString"
 }
 
-trait LUnDiEdgeToString extends LEdgeToString with UnDiEdgeToString { _: AnyUnDiEdge[_] => }
+trait LUnDiEdgeToString extends LEdgeToString with UnDiEdgeToString { this: AnyUnDiEdge[_] => }
 
-trait LDiEdgeToString extends LEdgeToString with DiEdgeToString { _: AnyDiEdge[_] => }
+trait LDiEdgeToString extends LEdgeToString with DiEdgeToString { this: AnyDiEdge[_] => }
 
-trait LHyperEdgeToString extends LEdgeToString with HyperEdgeToString { _: AnyHyperEdge[_] => }
+trait LHyperEdgeToString extends LEdgeToString with HyperEdgeToString { this: AbstractHyperEdge[_] => }
 
-trait LDiHyperEdgeToString extends LEdgeToString with DiHyperEdgeToString { _: AnyDiHyperEdge[_] => }
+trait LDiHyperEdgeToString extends LEdgeToString with DiHyperEdgeToString { this: AbstractDiHyperEdge[_] => }
 
 /** Mix in this trait in your labeled edge class if you want to indicate in its `toString` representation
-  * that the edge supports multigraphs. Once mixed in, the `labelSeparator` gets `++`.
+  * that the edge supports multigraphs. Once mixed in, the `labelSeparator` gets `:++`.
   */
-trait MultiLEdgeToString { _: LEdgeToString with ExtendedKey =>
+trait MultiLEdgeToString { _: LEdgeToString with MultiEdge =>
 
-  override protected def labelSeparator: String = " ++ "
+  override protected def labelSeparator: String = " :++ "
 }
 
 sealed protected trait WEdgeToString extends LEdgeToString { _: Edge[_] =>
@@ -78,7 +78,7 @@ trait WHyperEdgeToString extends WEdgeToString with HyperEdgeToString { _: AnyHy
 
 trait WDiHyperEdgeToString extends WEdgeToString with DiHyperEdgeToString { _: AnyDiHyperEdge[_] => }
 
-trait MultiWEdgeToString { _: WEdgeToString with ExtendedKey =>
+trait MultiWEdgeToString { _: WEdgeToString with MultiEdge =>
 
   override protected def labelSeparator: String = " %% "
 }

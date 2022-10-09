@@ -1,13 +1,16 @@
-package scalax.collection.hyperedges
+package scalax.collection
+package hyperedges
 
-import scala.collection.immutable.Iterable
-import scalax.collection.generic.{AnyHyperEdge, HyperEdgeCompanion, HyperEdgeToString}
+import scalax.collection.generic.{AbstractGenericHyperEdge, HyperEdgeCompanion, HyperEdgeToString}
 
 /** Undirected hyperedge with ends having set/bag semantic.
   */
 @SerialVersionUID(52)
-final case class HyperEdge[+N] private (override val ends: Iterable[N]) extends AnyHyperEdge[N] with HyperEdgeToString
+final case class HyperEdge[+N](override val ends: Several[N])
+    extends AbstractGenericHyperEdge[N, HyperEdge](ends)
+    with HyperEdgeToString {
 
-object HyperEdge extends HyperEdgeCompanion[HyperEdge] {
-  protected def apply[N](ends: Iterable[N]): HyperEdge[N] = new HyperEdge[N](ends)
+  def map[N](ends: Several[N]): HyperEdge[N] = copy(ends)
 }
+
+object HyperEdge extends HyperEdgeCompanion[HyperEdge]

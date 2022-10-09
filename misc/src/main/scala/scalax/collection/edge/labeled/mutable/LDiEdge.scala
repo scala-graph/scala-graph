@@ -30,7 +30,7 @@ object :~> {
   def unapply[N, L](e: LDiEdge[N, L]): Option[(N, (N, L))] =
     if (e eq null) None else Some(e._1, (e._2, e.label))
 }
-object + {
+object +: {
   def unapply[N, L](nl: (N, L)): Option[(N, L)] =
     if (nl eq null) None else Some(nl._1, nl._2)
 }
@@ -41,7 +41,7 @@ object DemoLDiEdge extends App {
   outer.label = None
 
   outer match {
-    case n1 :~> n2 + label =>
+    case n1 :~> n2 +: label =>
   }
 
   import scalax.collection.Graph
@@ -55,6 +55,6 @@ object DemoLDiEdge extends App {
   println(s" to [$inner]")
 
   inner.edge match {
-    case _ :~> _ + label => println(s"matched label = $label")
+    case _ :~> _ +: label => println(s"matched label = $label")
   }
 }

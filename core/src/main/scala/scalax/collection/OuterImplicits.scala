@@ -6,7 +6,7 @@ import scala.collection.{AbstractIterable, AbstractIterator, SeqFacade}
 import scalax.collection.generic.Edge
 
 object OuterImplicits {
-  implicit def nodeSetToOuter[N, E <: Edge[N]](nodes: Graph[N, E]#NodeSetT): Iterable[OuterNode[N]] =
+  implicit def nodeSetToOuter[N, E <: Edge[N]](nodes: AnyGraph[N, E]#NodeSetT): Iterable[OuterNode[N]] =
     new AbstractIterable[OuterNode[N]] {
       def iterator = new AbstractIterator[OuterNode[N]] {
         private[this] val it = nodes.iterator
@@ -17,10 +17,10 @@ object OuterImplicits {
       }
     }
 
-  implicit def nodeSetToSeq[N, E <: Edge[N]](nodes: Graph[N, E]#NodeSetT): Seq[Graph[N, E]#NodeT] =
+  implicit def nodeSetToSeq[N, E <: Edge[N]](nodes: AnyGraph[N, E]#NodeSetT): Seq[AnyGraph[N, E]#NodeT] =
     new SeqFacade(nodes)
 
-  implicit def edgeSetToOuter[N, E <: Edge[N]](edges: Graph[N, E]#EdgeSetT): Iterable[OuterEdge[N, E]] =
+  implicit def edgeSetToOuter[N, E <: Edge[N]](edges: AnyGraph[N, E]#EdgeSetT): Iterable[OuterEdge[N, E]] =
     new AbstractIterable[OuterEdge[N, E]] {
       def iterator = new AbstractIterator[OuterEdge[N, E]] {
         private[this] val it = edges.iterator
@@ -31,7 +31,7 @@ object OuterImplicits {
       }
     }
 
-  implicit def edgeSetToSeq[N, E <: Edge[N]](edges: Graph[N, E]#EdgeSetT): Seq[Graph[N, E]#EdgeT] =
+  implicit def edgeSetToSeq[N, E <: Edge[N]](edges: AnyGraph[N, E]#EdgeSetT): Seq[AnyGraph[N, E]#EdgeT] =
     new SeqFacade(edges)
 
   @inline implicit def anyToNode[N](n: N): OuterNode[N] = OuterNode(n)

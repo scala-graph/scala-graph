@@ -8,7 +8,7 @@ import scala.math.{max, min}
 
 import scalax.collection.generic.Edge
 import scalax.collection.mutable.{EqHashMap, EqHashSet}
-import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.generic.GenericGraphCoreFactory
 
 /** Graph-related functionality such as traversals, path finding, cycle detection etc.
   *  All algorithms including breadth-first, depth-first, white-gray-black search and
@@ -676,18 +676,18 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
     *
     * @define UPDATED Creates a new [[FluentProperties]] based on `this` except for an updated
     */
-  abstract protected class FluentProperties[+This <: FluentProperties[This]] {
-    this: This with Properties =>
+  abstract protected class FluentProperties[+C <: FluentProperties[C]] {
+    this: C with Properties =>
 
-    protected def newTraverser: (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => This
+    protected def newTraverser: (NodeT, Parameters, NodePredicate, EdgePredicate, ElemOrdering, Option[Weight]) => C
 
     /** $UPDATED `parameters`. */
-    final def withParameters(parameters: Parameters): This =
+    final def withParameters(parameters: Parameters): C =
       if (this.parameters == parameters) this
       else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
     /** $UPDATED `subgraphNodes` and/or `subgraphEdges`. */
-    final def withSubgraph(nodes: NodePredicate = anyNode, edges: EdgePredicate = anyEdge): This =
+    final def withSubgraph(nodes: NodePredicate = anyNode, edges: EdgePredicate = anyEdge): C =
       if (
         (this.subgraphNodes eq nodes) &&
         (this.subgraphEdges eq edges)
@@ -695,33 +695,33 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
       else newTraverser(root, parameters, nodes, edges, ordering, maxWeight)
 
     /** $UPDATED `ordering`. */
-    final def withOrdering(ordering: ElemOrdering): This =
+    final def withOrdering(ordering: ElemOrdering): C =
       if (this.ordering eq ordering) this
       else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
     /** $UPDATED `kind`. */
-    final def withKind(kind: Kind): This =
+    final def withKind(kind: Kind): C =
       withParameters(parameters.withKind(kind))
 
     /** $UPDATED `direction`. Note that methods returning a Cycle or Path accept only `Successors`. */
-    final def withDirection(direction: Direction): This =
+    final def withDirection(direction: Direction): C =
       withParameters(parameters.withDirection(direction))
 
     /** $UPDATED `maxDepth`. */
-    final def withMaxDepth(maxDepth: Int): This =
+    final def withMaxDepth(maxDepth: Int): C =
       withParameters(parameters.withMaxDepth(maxDepth))
 
     /** $UPDATED `maxWeight`. */
-    def withMaxWeight(maxWeight: Option[Weight]): This =
+    def withMaxWeight(maxWeight: Option[Weight]): C =
       if (this.maxWeight eq maxWeight) this
       else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
     /** $UPDATED `maxWeight` having the given `max` value and the given weight function. */
-    final def withMaxWeight[W: Numeric](max: W, edgeWeight: EdgeT => W): This =
+    final def withMaxWeight[W: Numeric](max: W, edgeWeight: EdgeT => W): C =
       withMaxWeight(Some(Weight(max, edgeWeight)))
 
     /** $UPDATED `maxWeight` having the given `max` and the default weight function returning `edge.weight`. */
-    final def withMaxWeight(max: Long): This =
+    final def withMaxWeight(max: Long): C =
       withMaxWeight(Some(Weight(max)))
 
     final def toInnerElemTraverser(root: NodeT): InnerElemTraverser =
@@ -758,9 +758,9 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
       } else Set.empty
 
     final def to[
-        G[NN, EE <: Edge[NN]] <: Graph[NN, EE] with GraphLike[NN, EE, G]
-    ](factory: GraphCoreCompanion[G]): G[N, E] = thisGraph match {
-      case g: Graph[N, E] =>
+        G[NN, EE <: Edge[NN]] <: AnyGraph[NN, EE] with GraphLike[NN, EE, G]
+    ](factory: GenericGraphCoreFactory[G]): G[N, E] = thisGraph match {
+      case g: AnyGraph[N, E] =>
         factory.from(nodes.map(_.outer), edges.map(_.outer))(factory.defaultConfig)
     }
 
@@ -845,8 +845,8 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
     * @define DUETOSUBG due to withSubgraph settings this path was out of scope.
     * @define VISITORDURING Function to be called for each inner node or inner edge visited during the
     */
-  abstract protected class TraverserMethods[A, +This <: TraverserMethods[A, This]] extends FluentProperties[This] {
-    this: This with Properties =>
+  abstract protected class TraverserMethods[A, +CC <: TraverserMethods[A, CC]] extends FluentProperties[CC] {
+    this: CC with Properties =>
 
     def root: NodeT
 
@@ -854,7 +854,7 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
     protected def edgeVisitor[U](f: A => U): (EdgeT) => U
 
     /** $UPDATED `root`. */
-    final def withRoot(root: NodeT): This =
+    final def withRoot(root: NodeT): CC =
       if (this.root eq root) this
       else newTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
@@ -1061,11 +1061,11 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
     *  Provides methods to refine the properties and to invoke traversals.
     *  Instances will be created by [[innerNodeTraverser]] etc.
     */
-  trait Traverser[A, +This <: Traverser[A, This]]
-      extends TraverserMethods[A, This]
+  trait Traverser[A, +CC <: Traverser[A, CC]]
+      extends TraverserMethods[A, CC]
       with Properties
       with ForeachBasedDetachingIterable[A] {
-    this: This =>
+    this: CC =>
 
     protected def autarkicForeach[U](f: A => U): Unit =
       if (subgraphNodes(root))
@@ -1074,9 +1074,11 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
     /** Completes a traversal and creates a new connected graph populated with the
       *  elements visited.
       */
-    final def toGraph: Graph[N, E] = thisGraph match {
-      case _: Graph[N, E] =>
-        val b = Graph.newBuilder[N, E](Graph.defaultConfig)
+    final def to[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
+        factory: generic.GenericGraphCoreFactory[CC]
+    ): CC[N, E] = thisGraph match {
+      case _: AnyGraph[N, E] =>
+        val b = factory.newBuilder[N, E](factory.defaultConfig)
         b += root
         val edgeTraverser = this match {
           case e: InnerEdgeTraverser => e

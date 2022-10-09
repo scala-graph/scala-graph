@@ -9,14 +9,14 @@ import scala.collection.generic.{Growable, Shrinkable}
 import scala.collection.mutable.Cloneable
 import scala.language.postfixOps
 
-trait GraphLike[N, E <: Edge[N], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, This] with Graph[X, Y]]
-    extends scalax.collection.mutable.GraphLike[N, E, This]
-    with scalax.collection.constrained.GraphLike[N, E, This]
-    with GraphOps[N, E, This]
+trait GraphLike[N, E <: Edge[N], +CC[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, Y, CC] with Graph[X, Y]]
+    extends scalax.collection.mutable.GraphLike[N, E, CC]
+    with scalax.collection.constrained.GraphLike[N, E, CC]
+    with GraphOps[N, E, CC]
     with Growable[Param[N, E]]
     with Shrinkable[Param[N, E]]
     with Cloneable[This[N, E]] {
-  selfGraph: This[N,E] =>
+  selfGraph: CC[N, E] =>
 
   trait NodeSet extends super.NodeSet {
 
@@ -56,7 +56,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X
     def removeGently_?(fake: NodeT): Either[ConstraintViolation, Boolean] = checkedRemove(fake, ripple = false)
   }
 
-  override def +(node: N): This[N, E] = +?(node) getOrElse this
+  override def +(node: N): CC[N, E] = +?(node) getOrElse this
 
   def +?(node: N): Either[ConstraintViolation, This[N, E]] =
     checkedPlus(
@@ -67,7 +67,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X
       edges = Set.empty
     )
 
-  final override protected def +#(e: E[N]): This[N, E] = +#?(e) getOrElse this
+  final override protected def +#(e: E[N]): CC[N, E] = +#?(e) getOrElse this
 
   final protected def +#?(e: E[N]): Either[ConstraintViolation, This[N, E]] =
     checkedPlus(
@@ -122,7 +122,7 @@ trait GraphLike[N, E <: Edge[N], +This[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X
   final def -?(node: N): Either[ConstraintViolation, This[N, E]] =
     checkedMinusNode(node, forced = true, (outer: N, inner: NodeT) => { val c = clone; c -= outer; c })
 
-  final override protected def -#(e: E[N]): This[N, E] = +#?(e) getOrElse this
+  final override protected def -#(e: E[N]): CC[N, E] = +#?(e) getOrElse this
 
   final protected def -#?(e: E[N]): Either[ConstraintViolation, This[N, E]] =
     checkedMinusEdge(e, simple = true, (outer: E[N], inner: EdgeT) => { val c = clone; c -=# outer; c })

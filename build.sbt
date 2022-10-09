@@ -19,25 +19,8 @@ lazy val core = project
       name    := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck"    % "1.15.4",
-        "org.gephi"       % "gephi-toolkit" % "0.9.2" % "test" classifier "all"
-      ),
-      dependencyOverrides ++= {
-        val release                        = "RELEASE123"
-        def netbeansModule(module: String) = "org.netbeans.modules" % module % release % "test"
-        def netbeansApi(module: String)    = "org.netbeans.api"     % module % release % "test"
-        Seq(
-          netbeansModule("org-netbeans-core"),
-          netbeansModule("org-netbeans-core-startup-base"),
-          netbeansModule("org-netbeans-modules-masterfs"),
-          netbeansApi("org-openide-util-lookup"),
-          netbeansApi("org-openide-filesystems"),
-          netbeansApi("org-openide-util-ui"),
-          netbeansApi("org-openide-dialogs"),
-          netbeansApi("org-openide-nodes"),
-          netbeansApi("org-netbeans-api-annotations-common")
-        )
-      }
+        "org.scalacheck" %% "scalacheck" % "1.15.4"
+      )
     )
   )
 
@@ -84,11 +67,6 @@ lazy val misc = project
   )
  */
 
-ThisBuild / resolvers ++= Seq(
-  ("NetBeans" at "http://bits.netbeans.org/nexus/content/groups/netbeans/").withAllowInsecureProtocol(true),
-  "gephi-thirdparty" at "https://raw.github.com/gephi/gephi/mvn-thirdparty-repo/"
-)
-
 val unusedImports = "-Ywarn-unused:imports"
 lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion       := Version.compiler_2_13,
@@ -115,7 +93,7 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   autoAPIMappings    := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
   libraryDependencies ++= Seq(
-    "org.scalatest"     %% "scalatest"       % "3.2.12"   % "test",
-    "org.scalatestplus" %% "scalacheck-1-16" % "3.2.12.0" % "test"
+    "org.scalatest"     %% "scalatest"       % "3.2.13"   % "test",
+    "org.scalatestplus" %% "scalacheck-1-16" % "3.2.13.0" % "test"
   )
 ) ++ GraphSonatype.settings

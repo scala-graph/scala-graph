@@ -3,7 +3,7 @@ package scalax.collection.mutable
 import scala.collection.Util.nextPositivePowerOfTwo
 import scala.collection.mutable.Growable
 
-trait EqHash[A, This <: EqHash[A, This]] {
+trait EqHash[A, C <: EqHash[A, C]] {
   this: IterableOnce[A] with Growable[A] with Equals =>
 
   protected def sizeHint: Int
@@ -18,7 +18,7 @@ trait EqHash[A, This <: EqHash[A, This]] {
     (length / 3, new Array[AnyRef](length))
   }
 
-  def from(other: This): Unit = {
+  def from(other: C): Unit = {
     threshold = other.threshold
     table = other.table.clone
     _size = other._size
@@ -157,7 +157,7 @@ trait EqHash[A, This <: EqHash[A, This]] {
   def containsElem(elem: A): Boolean
 
   override def equals(other: Any): Boolean = other match {
-    case that: EqHash[A, This] with IterableOnce[A] with Equals =>
+    case that: EqHash[A, C] with IterableOnce[A] with Equals =>
       (that canEqual this) &&
       that._size == this._size &&
       that.iterator.forall(containsElem)
