@@ -1,45 +1,54 @@
 package scalax.collection.visualization
 
-import scala.util.{Failure, Success}
-
 import org.scalatest.exceptions.TestFailedException
 
 import scalax.collection.generic.Edge
-import scalax.collection.generic.GraphCoreCompanion
-import scalax.collection.{Graph, GraphLike}
+import scalax.collection.AnyGraph
+import scalax.collection.ToString._
 
 /** Scalatest support for graph visualization in case of failures.
+  *
+  * Drawing is commented out because
+  *   - org.gephi with all it's dependencies is rather heavy
+  *   - managing Gephi releases proved cumbersome over time
+  *   - there was no frequent usage
+  *   - permission to write files needs be additionally configured in the CI.
+  *
+  * However it's intended to add a more lightweight drawing implementation in future.
   */
-trait Visualizer[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]] extends Drawable {
+trait Visualizer /*extends Drawable*/ {
 
-  def factory: GraphCoreCompanion[G]
+  final def given[N, E <: Edge[N]](graph: AnyGraph[N, E])(test: AnyGraph[N, E] => Unit): Unit = {
 
-  final def given[N, E <: Edge[N]](graph: G[N, E])(test: G[N, E] => Unit): Unit = {
-
-    def reThrow(ex: TestFailedException, secondLine: String) =
+    def reThrow(ex: TestFailedException, messageExtension: String) =
       throw ex.modifyMessage(_.map { testMessage =>
         s"""$testMessage
-           |$secondLine
-       """.stripMargin
+           |------------ given ------------
+           |$messageExtension
+           |-------------------------------""".stripMargin
       })
 
     try test(graph)
     catch {
       case ex: TestFailedException =>
+        /*
         makeImage(
-          graph: Graph[N, E],
+          graph,
           path = "log/",
           name = (ex.failedCodeFileName match {
             case Some(fileName) => fileName
-            case None           => "failed_test"
+            case None => "failed_test"
           }) + (ex.failedCodeLineNumber match {
             case Some(number) => "_line" + number.toString
-            case None         => ""
+            case None => ""
           }) + ".png"
         ) match {
           case Success(f) => reThrow(ex, s"The graph image is available at file://${f.getAbsolutePath}")
           case Failure(e) => reThrow(ex, s"Graph image generation failed with `${e.getMessage}`.")
         }
+         */
+        val small = graph.edges.size < 12 && graph.edges.toString.length < 120
+        reThrow(ex, graph.render(if (small) SetsOnSeparateLines() else SetElemsOnSeparateLines()))
     }
   }
 }

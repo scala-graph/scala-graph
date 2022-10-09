@@ -1,7 +1,7 @@
 package scalax.collection
 package immutable
 
-import scalax.collection.{Graph => AnyGraph}
+import scalax.collection.{AnyGraph => AnyGraph}
 import scalax.collection.generic.Edge
 import scalax.collection.mutable.ArraySet
 
@@ -31,7 +31,7 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
   type NodeSetT = AdjacencyListNodeSet
   class AdjacencyListNodeSet extends AdjacencyListBaseNodeSet {
     @inline final override protected def minus(node: NodeT): Unit = collection -= node
-    override def +(node: NodeT) =
+    override def +(node: NodeT): NodeSetT =
       if (collection contains node) this
       else { val c = copy; c.collection += node; c }
 

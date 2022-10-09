@@ -1,7 +1,7 @@
 package scalax.collection
 package generic
 
-import scalax.collection.config.{CoreConfig, GraphConfig}
+import scalax.collection.config.{AdjacencyListArrayConfig, CoreConfig, GraphConfig}
 import scalax.collection.mutable.Builder
 
 /** Methods common to `Graph` companion objects in the core module.
@@ -25,18 +25,34 @@ import scalax.collection.mutable.Builder
   *         This parameter is meant be used as an alternative or in addition to `edgeStreams`.
   * @author Peter Empen
   */
-trait GraphCompanion[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]] {
-
-  /** Type of configuration required for a specific `Graph` companion. */
-  type Config <: GraphConfig
+sealed trait Factory[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]] {
 
   /** The default configuration to be used in absence of a user-supplied configuration. */
-  def defaultConfig: Config
+  def defaultConfig: GraphConfig
 
   protected[this] type Coll = CC[_, Nothing]
 
+  def newBuilder[N, E <: Edge[N]](implicit config: GraphConfig = defaultConfig) = new Builder[N, E, CC](this)
+
+  protected[collection] def fromSpecific[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
+      config: GraphConfig
+  ): CC[N, E] =
+    this match {
+      case gC: GenericGraphFactory[CC]                                   => gC.from[N, E](nodes, edges)(config)
+      case tC: generic.TypedGraphFactory[N @unchecked, E @unchecked, CC] => tC.from(nodes, edges)(config)
+    }
+
+  final protected def coreConfig(config: GraphConfig): GraphConfig with AdjacencyListArrayConfig =
+    config match {
+      case c: AdjacencyListArrayConfig => c
+      case _                           => CoreConfig()
+    }
+}
+
+trait GenericGraphFactory[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]] extends Factory[CC] {
+
   /** Creates an empty `Graph` instance. */
-  def empty[N, E <: Edge[N]](implicit config: Config): CC[N, E]
+  def empty[N, E <: Edge[N]](implicit config: GraphConfig = defaultConfig): CC[N, E]
 
   /** Creates a `Graph` with a node set built from all nodes in `elems` including
     * edge ends and with an edge set containing all edges in `elems`.
@@ -45,8 +61,10 @@ trait GraphCompanion[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
     * @param   elems sequence of nodes and/or edges in an arbitrary order
     * @return  A new graph instance containing the nodes and edges derived from `elems`.
     */
-  def apply[N, E[X] <: Edge[X]](elems: OuterElem[N, E[N]]*)(implicit config: Config = defaultConfig): CC[N, E[N]] =
+  def apply[N, E[X] <: Edge[X]](elems: OuterElem[N, E[N]]*)(implicit config: GraphConfig = defaultConfig): CC[N, E[N]] =
     (newBuilder[N, E[N]] ++= elems).result
+
+  def from[N, E[X] <: Edge[X]](edges: Iterable[E[N]]): CC[N, E[N]]
 
   /** Produces a graph with a node set containing all `nodes` and edge ends in `edges`
     * and with an edge set containing all `edges` but duplicates.
@@ -58,9 +76,9 @@ trait GraphCompanion[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
     * @return  A new graph instance containing `nodes` and all edge ends
     *          and `edges`.
     */
-  def from[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E])(implicit config: Config): CC[N, E]
-
-  def from[N, E[X] <: Edge[X]](edges: Iterable[E[N]]): CC[N, E[N]]
+  def from[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
+      config: GraphConfig = defaultConfig
+  ): CC[N, E]
 
   /** Produces a graph containing the results of some element computation a number of times.
     * $DUPLEXCL
@@ -69,7 +87,9 @@ trait GraphCompanion[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
     * @param   elem the element computation returning nodes or edges `nr` times.
     * @return  A graph that contains the results of `nr` evaluations of `elem`.
     */
-  def fill[N, E <: Edge[N]](nr: Int)(elem: => OuterElem[N, E])(implicit config: Config): CC[N, E] = {
+  def fill[N, E <: Edge[N]](
+      nr: Int
+  )(elem: => OuterElem[N, E])(implicit config: GraphConfig = defaultConfig): CC[N, E] = {
     val gB = newBuilder[N, E]
     // TODO gB.sizeHint(nr)
     var i = 0
@@ -79,42 +99,39 @@ trait GraphCompanion[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC
     }
     gB.result
   }
-
-  def newBuilder[N, E <: Edge[N]](implicit config: Config) = new Builder[N, E, CC](this)
 }
 
-/** `GraphCompanion` extended to work with `CoreConfig`. */
-trait GraphCoreCompanion[+CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]] extends GraphCompanion[CC] {
+trait TypedGraphFactory[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, CC]]
+    extends Factory[CC] {
 
-  type Config = CoreConfig
+  def empty(implicit config: GraphConfig = defaultConfig): CC[N, E]
 
+  def apply(elems: OuterElem[N, E]*)(implicit config: GraphConfig = defaultConfig): CC[N, E] =
+    (newBuilder[N, E] ++= elems).result
+
+  def from(edges: Iterable[E]): CC[N, E]
+
+  def from(nodes: Iterable[N], edges: Iterable[E])(implicit config: GraphConfig = defaultConfig): CC[N, E]
+}
+
+protected trait DefaultConfig[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]] { this: Factory[CC] =>
   def defaultConfig = CoreConfig()
-
-  def empty[N, E <: Edge[N]](implicit config: Config = defaultConfig): CC[N, E]
-
-  override def apply[N, E[X] <: Edge[X]](elems: OuterElem[N, E[N]]*)(implicit
-      config: Config = defaultConfig
-  ): CC[N, E[N]] =
-    super.apply(elems: _*)(config)
-
-  def from[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E])(implicit
-      config: Config = defaultConfig
-  ): CC[N, E]
-
-  def from[N, E[X] <: Edge[X]](edges: Iterable[E[N]]): CC[N, E[N]]
-
-  override def fill[N, E <: Edge[N]](nr: Int)(elem: => OuterElem[N, E])(implicit
-      config: Config = defaultConfig
-  ): CC[N, E] =
-    super.fill(nr)(elem)(config)
 }
 
-trait ImmutableGraphCompanion[+CC[N, E <: Edge[N]] <: immutable.Graph[N, E] with GraphLike[N, E, CC]]
-    extends GraphCoreCompanion[CC]
+trait GenericGraphCoreFactory[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]]
+    extends GenericGraphFactory[CC]
+    with DefaultConfig[CC]
 
-trait MutableGraphCompanion[+CC[N, E <: Edge[N]] <: mutable.Graph[N, E] with mutable.GraphLike[N, E, CC]]
-    extends GraphCoreCompanion[CC] {
+trait TypedGraphCoreFactory[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AnyGraph[X, Y] with GraphLike[X, Y, CC]]
+    extends TypedGraphFactory[N, E, CC]
+    with DefaultConfig[CC]
 
-  override def newBuilder[N, E <: Edge[N]](implicit config: Config) =
+trait ImmutableFactory[+CC[N, E <: Edge[N]] <: immutable.Graph[N, E] with GraphLike[N, E, CC]]
+    extends GenericGraphCoreFactory[CC]
+
+trait MutableFactory[+CC[N, E <: Edge[N]] <: mutable.Graph[N, E] with mutable.GraphLike[N, E, CC]]
+    extends GenericGraphCoreFactory[CC] {
+
+  override def newBuilder[N, E <: Edge[N]](implicit config: GraphConfig) =
     new Builder[N, E, CC](this)(config)
 }

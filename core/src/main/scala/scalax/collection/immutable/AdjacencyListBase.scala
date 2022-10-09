@@ -2,14 +2,12 @@ package scalax.collection
 package immutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
-
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, ExtHashSet}
 import scala.util.Random
-
 import scalax.collection.generic.Edge
-import scalax.collection.{Graph => AnyGraph}
+import scalax.collection.AnyGraph
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 
@@ -23,7 +21,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
     extends GraphLike[N, E, CC] {
   selfGraph: CC[N, E] =>
 
-  protected type Config <: GraphConfig with AdjacencyListArrayConfig
+  implicit override def config: GraphConfig with AdjacencyListArrayConfig
 
   type NodeT <: AdjacendyListBaseInnerNode
   trait AdjacendyListBaseInnerNode extends GraphInnerNode {
@@ -285,7 +283,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
       newNodes: IterableOnce[N2],
       newEdges: IterableOnce[E2]
   ): CC[N2, E2] =
-    companion.from[N2, E2](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
+    companion.fromSpecific[N2, E2](nodes.toOuter ++ newNodes, edges.toOuter ++ newEdges)
 
   def removedAll(isolatedNodes: IterableOnce[N], edges: IterableOnce[E]): CC[N, E] =
     bulkOp[N, E](isolatedNodes, edges, minusMinus)
@@ -295,7 +293,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
     */
   final protected def minusMinus(delNodes: IterableOnce[N], delEdges: IterableOnce[E]): CC[N, E] = {
     val delNodesEdges = remaining(delNodes.iterator.toSet, delEdges)
-    companion.from[N, E](delNodesEdges._1, delNodesEdges._2)
+    companion.fromSpecific[N, E](delNodesEdges._1, delNodesEdges._2)
   }
 
   /** Calculates the remaining nodes and edges of this graph after subtracting the passed elements.

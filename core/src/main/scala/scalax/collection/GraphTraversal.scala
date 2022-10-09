@@ -8,7 +8,7 @@ import scala.math.{max, min}
 
 import scalax.collection.generic.Edge
 import scalax.collection.mutable.{EqHashMap, EqHashSet}
-import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.generic.GenericGraphCoreFactory
 
 /** Graph-related functionality such as traversals, path finding, cycle detection etc.
   *  All algorithms including breadth-first, depth-first, white-gray-black search and
@@ -758,9 +758,9 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
       } else Set.empty
 
     final def to[
-        G[NN, EE <: Edge[NN]] <: Graph[NN, EE] with GraphLike[NN, EE, G]
-    ](factory: GraphCoreCompanion[G]): G[N, E] = thisGraph match {
-      case g: Graph[N, E] =>
+        G[NN, EE <: Edge[NN]] <: AnyGraph[NN, EE] with GraphLike[NN, EE, G]
+    ](factory: GenericGraphCoreFactory[G]): G[N, E] = thisGraph match {
+      case g: AnyGraph[N, E] =>
         factory.from(nodes.map(_.outer), edges.map(_.outer))(factory.defaultConfig)
     }
 
@@ -1074,9 +1074,11 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
     /** Completes a traversal and creates a new connected graph populated with the
       *  elements visited.
       */
-    final def toGraph: Graph[N, E] = thisGraph match {
-      case _: Graph[N, E] =>
-        val b = Graph.newBuilder[N, E](Graph.defaultConfig)
+    final def to[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
+        factory: generic.GenericGraphCoreFactory[CC]
+    ): CC[N, E] = thisGraph match {
+      case _: AnyGraph[N, E] =>
+        val b = factory.newBuilder[N, E](factory.defaultConfig)
         b += root
         val edgeTraverser = this match {
           case e: InnerEdgeTraverser => e

@@ -14,7 +14,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import Data._
 import OuterImplicits._
 //import generator.GraphGen
-import generic.{AnyEdge, Edge, GraphCoreCompanion}
+import generic.{AnyEdge, Edge, GenericGraphCoreFactory}
 import edges._
 import edges.labeled._
 import edges.multilabeled._
@@ -29,12 +29,13 @@ class TraversalSpec
       new Traversal[mutable.Graph](mutable.Graph)
     )
 
-final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
-    val factory: GraphCoreCompanion[G]
+final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
+    val factory: GenericGraphCoreFactory[G]
 ) extends RefSpec
     with Matchers
     with ScalaCheckPropertyChecks
-    with Visualizer[G] {
+    with IntelliJ[G]
+    with Visualizer {
 
   implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
 
@@ -112,7 +113,8 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
 
   // see diagram WUnDi-2.jpg
   val eUnDi_2 = List[AnyEdge[Int]](1 ~ 2 %% 4, 2 ~ 3 %% -1, 1 ~> 3 %% 5, 1 ~ 3 %% 4, 1 ~> 2 %% 3, 2 ~ 2 %% 1)
-  val gUnDi_2 = factory.from[Int, AnyEdge[Int]](Set.empty, eUnDi_2)
+  val gUnDi_2 =
+    factory.from[Int, AnyEdge[Int]](Set.empty, eUnDi_2).asAnyGraph
 
   def `shortestPathTo in UnDi_2`: Unit =
     given(gUnDi_2) { g =>
@@ -173,13 +175,13 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
     given(Di_1.g) { g =>
       def innerNode(outer: Int) = g get outer
 
-      innerNode(1).outerNodeTraverser.toGraph should equal(factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
+      innerNode(1).outerNodeTraverser.to(factory) should equal(factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
 
-      innerNode(2).outerNodeTraverser(anyConnected).toGraph should equal(
+      innerNode(2).outerNodeTraverser(anyConnected).to(factory) should equal(
         factory(1 ~> 2, 2 ~> 3, 4 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3)
       )
 
-      innerNode(3).outerNodeTraverser(predecessors).toGraph should equal(factory(4 ~> 3, 1 ~> 3, 2 ~> 3, 1 ~> 2))
+      innerNode(3).outerNodeTraverser(predecessors).to(factory) should equal(factory(4 ~> 3, 1 ~> 3, 2 ~> 3, 1 ~> 2))
     }
   }
 
@@ -195,7 +197,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
         case e: g.InnerEdge => edges += e.asEdgeT
       }
 
-      nodes should be(List(n(2), n(1)))
+      nodes shouldBe List(n(2), n(1))
       edges.toList.sorted(g.BaseInnerEdge.WeightOrdering) shouldBe List(eUnDi_2(1), eUnDi_2(5), eUnDi_2(0))
     }
 
@@ -207,24 +209,26 @@ final private class Traversal[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N
 
     val flights: List[Flight] =
       List(
-        jfc ~> dme + ("UN 2222", Nil, 8.hours + 50.minutes),
-        dme ~> svx + ("UN 109", Nil, 2.hours + 15.minutes),
-        jfc ~> lhr + ("BA 174", Nil, 6.hours + 50.minutes),
-        jfc ~> fra + ("LH 400", Nil, 8.hours + 20.minutes),
-        jfc ~> fra + ("UA 8840", Nil, 7.hours + 35.minutes),
-        lhr ~> dme + ("BA 872", Nil, 4.hours),
-        lhr ~> dme + ("SU 242", Nil, 3.hours + 50.minutes),
-        lhr ~> fra + ("LH 903", Nil, 1.hours + 35.minutes),
-        lhr ~> prg + ("BA 860", Nil, 2.hours),
-        fra ~> lhr + ("LH 920", Nil, 1.hours + 35.minutes),
-        fra ~> dme + ("LH 1444", Nil, 3.hours + 10.minutes),
-        fra ~> svx + ("LH 1480", Nil, 4.hours + 35.minutes),
-        prg ~> svx + ("U6 902", Nil, 4.hours + 25.minutes)
+        jfc ~> dme :++ ("UN 2222", Nil, 8.hours + 50.minutes),
+        dme ~> svx :++ ("UN 109", Nil, 2.hours + 15.minutes),
+        jfc ~> lhr :++ ("BA 174", Nil, 6.hours + 50.minutes),
+        jfc ~> fra :++ ("LH 400", Nil, 8.hours + 20.minutes),
+        jfc ~> fra :++ ("UA 8840", Nil, 7.hours + 35.minutes),
+        lhr ~> dme :++ ("BA 872", Nil, 4.hours),
+        lhr ~> dme :++ ("SU 242", Nil, 3.hours + 50.minutes),
+        lhr ~> fra :++ ("LH 903", Nil, 1.hours + 35.minutes),
+        lhr ~> prg :++ ("BA 860", Nil, 2.hours),
+        fra ~> lhr :++ ("LH 920", Nil, 1.hours + 35.minutes),
+        fra ~> dme :++ ("LH 1444", Nil, 3.hours + 10.minutes),
+        fra ~> svx :++ ("LH 1480", Nil, 4.hours + 35.minutes),
+        prg ~> svx :++ ("U6 902", Nil, 4.hours + 25.minutes)
       )
-    def flight(flightNo: String) = flights.find(_.flightNo == flightNo).get
-    val g                        = factory.from[Airport, Flight](Set.empty, flights)
 
-    given(g) { g =>
+    def flight(flightNo: String) = flights.find(_.flightNo == flightNo).get
+
+    val g = factory.from[Airport, Flight](Set.empty, flights)
+
+    given(g.asAnyGraph) { g =>
       val shp1 = (g get jfc).withSubgraph(edges = _.airline != "UN") shortestPathTo (g get dme)
       shp1.get.nodes.toList should be(List(jfc, lhr, dme))
       shp1.get.edges.toList should be(List(flight("BA 174"), flight("SU 242")))

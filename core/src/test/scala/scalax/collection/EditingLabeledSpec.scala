@@ -4,7 +4,7 @@ import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import scalax.collection.edges.{DiEdge, UnDiEdge}
-import scalax.collection.generic.{Edge, GraphCoreCompanion}
+import scalax.collection.generic.{Edge, GenericGraphCoreFactory}
 
 /** Editing non-hypergraphs with labeled edges, in particular, editing multigraphs.
   */
@@ -54,8 +54,8 @@ private class LabeledEdges extends RefSpec with Matchers {
   }
 }
 
-private class EditingLabeledEdges[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
-    val factory: GraphCoreCompanion[G]
+private class EditingLabeledEdges[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
+    val factory: GenericGraphCoreFactory[G]
 ) extends RefSpec
     with Matchers {
 
@@ -89,14 +89,14 @@ private class EditingLabeledEdges[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLi
     import edges.DiEdgeImplicits
     implicit class MyInfixConstructor[N](val edge: DiEdge[N])
         extends LDiEdgeInfixConstructor[N, String, MyEdge](MyEdge.apply)
-    1 ~> 2 + "" shouldEqual e
+    1 ~> 2 :+ "" shouldEqual e
 
     import generic.{UnapplyGenericLabel, UnapplyGenericLabeledEdge}
     object :~> extends UnapplyGenericLabeledEdge[MyEdge, String]
-    object +   extends UnapplyGenericLabel[String]
+    object +:  extends UnapplyGenericLabel[String]
 
     e match {
-      case n1 :~> n2 + label =>
+      case n1 :~> n2 +: label =>
         val reconstructed = MyEdge(n1, n2, label)
         "reconstructed: MyEdge[Int]" should compile
         reconstructed shouldEqual e
@@ -133,14 +133,14 @@ private class EditingLabeledEdges[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLi
     import edges.UnDiEdgeImplicits
     implicit class MyInfixConstructor[N](val edge: UnDiEdge[N])
         extends LUnDiEdgeInfixConstructor[N, String, MyEdge](MyEdge.apply)
-    1 ~ 2 + "" shouldEqual e
+    1 ~ 2 :+ "" shouldEqual e
 
     import generic.{UnapplyGenericLabel, UnapplyGenericLabeledEdge}
     object :~ extends UnapplyGenericLabeledEdge[MyEdge, String]
-    object +  extends UnapplyGenericLabel[String]
+    object +: extends UnapplyGenericLabel[String]
 
     e match {
-      case n1 :~ n2 + label =>
+      case n1 :~ n2 +: label =>
         val reconstructed = MyEdge(n1, n2, label)
         "reconstructed: MyEdge[Int]" should compile
         reconstructed shouldEqual e
@@ -177,14 +177,14 @@ private class EditingLabeledEdges[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLi
     import edges.DiEdgeImplicits
     implicit class MyInfixConstructor[N](val edge: DiEdge[N])
         extends LDiEdgeInfixConstructor[N, String, MyEdge](MyEdge.apply)
-    1 ~> 2 ++ "" shouldEqual e
+    1 ~> 2 :++ "" shouldEqual e
 
     import generic.{UnapplyGenericLabel, UnapplyGenericLabeledEdge}
     object :~> extends UnapplyGenericLabeledEdge[MyEdge, String]
-    object ++  extends UnapplyGenericLabel[String]
+    object ++: extends UnapplyGenericLabel[String]
 
     e match {
-      case n1 :~> n2 ++ label =>
+      case n1 :~> n2 ++: label =>
         val reconstructed = MyEdge(n1, n2, label)
         "reconstructed: MyEdge[Int]" should compile
         reconstructed shouldEqual e
@@ -221,14 +221,14 @@ private class EditingLabeledEdges[G[N, E <: Edge[N]] <: Graph[N, E] with GraphLi
     import edges.UnDiEdgeImplicits
     implicit class MyInfixConstructor[N](val edge: UnDiEdge[N])
         extends LUnDiEdgeInfixConstructor[N, String, MyEdge](MyEdge.apply)
-    1 ~ 2 ++ "" shouldEqual e
+    1 ~ 2 :++ "" shouldEqual e
 
     import generic.{UnapplyGenericLabel, UnapplyGenericLabeledEdge}
-    object :~ extends UnapplyGenericLabeledEdge[MyEdge, String]
-    object ++ extends UnapplyGenericLabel[String]
+    object :~  extends UnapplyGenericLabeledEdge[MyEdge, String]
+    object ++: extends UnapplyGenericLabel[String]
 
     e match {
-      case n1 :~ n2 ++ label =>
+      case n1 :~ n2 ++: label =>
         val reconstructed = MyEdge(n1, n2, label)
         "reconstructed: MyEdge[Int]" should compile
         reconstructed shouldEqual e

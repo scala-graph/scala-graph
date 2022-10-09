@@ -19,8 +19,8 @@ class EditingHyperSpec
       new EditingHyperMutable
     )
 
-private class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC]
+private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
+    val factory: GenericGraphCoreFactory[CC]
 ) extends RefSpec
     with Matchers {
 
@@ -118,7 +118,7 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
   }
 
   def `match hyperedge`: Unit = {
-    val HyperEdge(Several(Seq(n1, n2, n3))) = 1 ~~ 2 ~~ 3
+    val HyperEdge(Seq(n1, n2, n3)) = 1 ~~ 2 ~~ 3
     n1 + n2 + n3 shouldBe 6
   }
 
@@ -128,7 +128,7 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, 
     val target  = One(count)
     val diHyper = sources ~~> target
 
-    val OneOrMore(Seq(s1, _)) ~~> (t @ One(c)) = diHyper
+    val Seq(s1, _) ~~> (t @ One(c)) = diHyper
     s1 shouldBe sources.head
     c shouldBe count
     t shouldBe target

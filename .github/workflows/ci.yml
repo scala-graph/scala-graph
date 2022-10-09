@@ -18,5 +18,7 @@ jobs:
                 ~/.sbt
             key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
       - uses: olafurpg/setup-scala@v13
+        with:
+          java-version: adopt@1.11
       - name: Test
         run: sbt ++${{ matrix.scala }} test scalafmtCheckAll

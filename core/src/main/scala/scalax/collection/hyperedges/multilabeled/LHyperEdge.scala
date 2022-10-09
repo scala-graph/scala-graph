@@ -2,7 +2,7 @@ package scalax.collection
 package hyperedges.multilabeled
 
 import scalax.collection.generic.{
-  AbstractHyperEdge, ExtendedKey, ExtendedKeyBySingleLabel, LHyperEdgeToString, MultiLEdgeToString, SingleLabel
+  AbstractHyperEdge, ExtendedKeyBySingleLabel, LHyperEdgeToString, MultiEdge, MultiLEdgeToString, SingleLabel
 }
 import scalax.collection.hyperedges.HyperEdge
 
@@ -20,9 +20,9 @@ abstract class LHyperEdge[+N, L](ends: Several[N])
 /** Template for an `implicit class` that defines the infix constructor `++` to pass a label like
   * `1 ~~ 2 ~~ 3 ++ aLabel`.
   */
-abstract class LHyperEdgeInfixConstructor[N, L, CC[X] <: AbstractHyperEdge[X] with ExtendedKey](
+abstract class LHyperEdgeInfixConstructor[N, L, CC[X] <: AbstractHyperEdge[X] with MultiEdge](
     apply: (Several[N], L) => CC[N]
 ) {
   def hyperedge: HyperEdge[N]
-  def ++(label: L): CC[N] = apply(hyperedge.ends, label)
+  def :++(label: L): CC[N] = apply(hyperedge.ends, label)
 }

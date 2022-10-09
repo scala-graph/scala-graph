@@ -8,7 +8,7 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
-import scalax.collection.generic.{AnyEdge, Edge, GraphCoreCompanion}
+import scalax.collection.generic.{Edge, GenericGraphCoreFactory}
 
 import scalax.collection.visualization.Visualizer
 
@@ -20,9 +20,9 @@ class SetOpsSpec
       new SetOpsMutable
     )
 
-protected trait SetOpExamples[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]] {
+protected trait SetOpExamples[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]] {
 
-  protected def factory: GraphCoreCompanion[CC]
+  protected def factory: GenericGraphCoreFactory[CC]
 
   protected val gEdges = Set(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
   protected val hEdges = Set(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
@@ -39,24 +39,24 @@ protected trait SetOpExamples[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[
   }
 }
 
-private class SetOps[CC[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, CC]](
-    val factory: GraphCoreCompanion[CC]
+private class SetOps[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
+    val factory: GenericGraphCoreFactory[CC]
 ) extends RefSpec
     with Matchers
     with SetOpExamples[CC]
-    with Visualizer[CC] {
+    with IntelliJ[CC]
+    with Visualizer {
 
   def `concat ` : Unit = {
-    // TODO
-    factory(1 ~ 2) concat List(1 ~ 2): Graph[Int, UnDiEdge[Int]]
-    factory(1 ~ 2) concat List(1 ~> 2): Graph[Int, AnyEdge[Int]]
-    factory(1 ~ 2) ++ List(1 ~ 2): Graph[Int, UnDiEdge[Int]]
+    factory(1 ~ 2).asAnyGraph concat List(1 ~ 2)
+    factory(1 ~ 2).asAnyGraph concat List(1 ~> 2)
+    factory(1 ~ 2).asAnyGraph ++ List(1 ~ 2)
 
-    factory(1 ~ 2) concat List("a" ~ "b"): Graph[Any, UnDiEdge[Any]]
-    factory(1 ~ 2) concat (List('x'), List("a" ~ "b")): Graph[Any, UnDiEdge[Any]]
+    factory(1 ~ 2) concat List("a" ~ "b"): AnyGraph[Any, UnDiEdge[Any]]
+    factory(1 ~ 2) concat (List('x'), List("a" ~ "b")): AnyGraph[Any, UnDiEdge[Any]]
 
-    factory(1 ~ 2) concat (List('x'), List('a' ~ 'b')): Graph[AnyVal, UnDiEdge[AnyVal]]
-    factory(1 ~ 2) ++ (List('x'), List('a' ~ 'b')): Graph[AnyVal, UnDiEdge[AnyVal]]
+    factory(1 ~ 2).asAnyGraph concat (List('x'), List('a' ~ 'b'))
+    factory(1 ~ 2).asAnyGraph ++ (List('x'), List('a' ~ 'b'))
   }
 
   def `union ` : Unit =

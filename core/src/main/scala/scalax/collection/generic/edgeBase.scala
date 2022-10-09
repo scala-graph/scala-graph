@@ -130,7 +130,7 @@ sealed trait Edge[+N] extends Equals {
 }
 
 object Edge {
-  def unapply[N](e: Edge[N]): Option[Edge[Any]] = Some(e)
+  def unapply[N](e: Edge[N]): Some[Edge[Any]] = Some(e)
 }
 
 private[collection] trait InnerEdgeLike[+N] extends Edge[N]
@@ -139,7 +139,7 @@ private[collection] trait InnerEdgeLike[+N] extends Edge[N]
   */
 sealed trait EdgeCompanionBase extends Serializable
 
-/** Template for companion objects of edges having an unconstrained `N` type parameter.
+/** Template for companion objects of generic edges.
   */
 trait EdgeCompanion[+E[N] <: Edge[N]] extends EdgeCompanionBase {
   def apply[N](node_1: N, node_2: N): E[N]
@@ -157,7 +157,7 @@ trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
   def isHyperEdge = true
 
   override def sources: Iterable[N] = ends
-  override def targets: Iterable[N] = sources
+  override def targets: Iterable[N] = ends
 
   override def isAt[M >: N](node: M): Boolean    = ends.iterator contains node
   override def isAt(pred: N => Boolean): Boolean = ends exists pred
@@ -188,11 +188,19 @@ trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = matches(List(p1, p2))
 }
 
+object AnyHyperEdge {
+  def unapply[N](hE: AnyHyperEdge[N]): Some[Iterable[N]] = Some(hE.ends)
+}
+
 abstract class AbstractHyperEdge[+N](val ends: Several[N]) extends AnyHyperEdge[N]
 
 object AbstractHyperEdge {
-  def unapply[N](e: AbstractHyperEdge[N]): Option[Several[N]] = if (e eq null) None else Some(e.ends)
+  def unapply[N](e: AbstractHyperEdge[N]): Some[Several[N]] = Some(e.ends)
 }
+
+abstract class AbstractGenericHyperEdge[+N, +CC[X] <: AbstractGenericHyperEdge[X, CC]](ends: Several[N])
+    extends AbstractHyperEdge[N](ends)
+    with GenericHyperEdgeMapper[CC]
 
 /** The abstract methods of this trait must be implemented by companion objects of non-labeled hyperedges.
   */
@@ -202,7 +210,7 @@ trait HyperEdgeCompanion[+E[N] <: AbstractHyperEdge[N]] extends EdgeCompanionBas
 
   def apply[N](node_1: N, node_2: N, moreNodes: N*): E[N] = apply(Several(node_1, node_2, moreNodes))
 
-  final def unapply[N](edge: E[N] @uV): Option[Several[N]] = Some(edge.ends)
+  final def unapply[N](edge: E[N] @uV): Some[Several[N]] = Some(edge.ends)
 
   /** `Some` hyperedge if `ends` contains at least two elements, otherwise `None`.
     */
@@ -214,14 +222,6 @@ trait HyperEdgeCompanion[+E[N] <: AbstractHyperEdge[N]] extends EdgeCompanionBas
     */
   final def fromUnsafe[N](iterable: Iterable[N]): E[N] =
     apply(Several.fromUnsafe(iterable))
-
-  final protected def atLeastTwoElements(iterable: Iterable[_]): Boolean = {
-    val it = iterable.iterator
-    it.hasNext && {
-      it.next()
-      it.hasNext
-    }
-  }
 
   implicit def thisCompanion: this.type = this
 }
@@ -245,13 +245,22 @@ trait AnyDiHyperEdge[+N] extends AnyHyperEdge[N] with EqDiHyper {
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean = (sources exists p1) && (targets exists p2)
 }
 
+object AnyDiHyperEdge {
+  def unapply[N](diH: AnyDiHyperEdge[N]): Some[(Iterable[N], Iterable[N])] = Some(diH.sources, diH.targets)
+}
+
 abstract class AbstractDiHyperEdge[+N](override val sources: OneOrMore[N], override val targets: OneOrMore[N])
     extends AnyDiHyperEdge[N]
 
 object AbstractDiHyperEdge {
-  def unapply[N](e: AbstractDiHyperEdge[N]): Option[(OneOrMore[N], OneOrMore[N])] =
-    if (e eq null) None else Some(e.sources, e.targets)
+  def unapply[N](e: AbstractDiHyperEdge[N]): Some[(OneOrMore[N], OneOrMore[N])] = Some(e.sources, e.targets)
 }
+
+abstract class AbstractGenericDiHyperEdge[+N, +CC[X] <: AbstractGenericDiHyperEdge[X, CC]](
+    sources: OneOrMore[N],
+    targets: OneOrMore[N]
+) extends AbstractDiHyperEdge[N](sources, targets)
+    with GenericDiHyperEdgeMapper[CC]
 
 /** The abstract methods of this trait must be implemented by companion objects of directed, non-labeled hyperedges.
   */
@@ -262,7 +271,7 @@ trait DiHyperEdgeCompanion[+E[N] <: AbstractDiHyperEdge[N]] extends EdgeCompanio
   def apply[N](source_1: N, moreSources: N*)(target_1: N, moreTargets: N*): E[N] =
     apply(OneOrMore(source_1, moreSources: _*), OneOrMore(target_1, moreTargets: _*))
 
-  def unapply[N](edge: E[N] @uV): Option[(OneOrMore[N], OneOrMore[N])] = Some(edge.sources, edge.targets)
+  def unapply[N](edge: E[N] @uV): Some[(OneOrMore[N], OneOrMore[N])] = Some(edge.sources, edge.targets)
 
   /** `Some` directed hyperedge if `sources` and `targets` have at least one element each, otherwise `None`.
     */
@@ -279,7 +288,7 @@ trait DiHyperEdgeCompanion[+E[N] <: AbstractDiHyperEdge[N]] extends EdgeCompanio
     apply(OneOrMore.fromUnsafe(sources), OneOrMore.fromUnsafe(targets))
 }
 
-trait AnyEdge[+N] extends Edge[N] { this: Eq =>
+trait AnyEdge[+N] extends Edge[N] {
 
   final override def node(n: Int): N = (n: @switch) match {
     case 0 => _1
@@ -299,7 +308,7 @@ trait AnyEdge[+N] extends Edge[N] { this: Eq =>
 }
 
 object AnyEdge {
-  def unapply[N](e: AnyEdge[N]): Option[(N, N)] = if (e eq null) None else Some(e._1, e._2)
+  def unapply[N](e: AnyEdge[N]): Some[(N, N)] = Some(e._1, e._2)
 }
 
 trait AnyUnDiEdge[+N] extends AnyHyperEdge[N] with AnyEdge[N] with EqUnDi[N] {
@@ -307,8 +316,8 @@ trait AnyUnDiEdge[+N] extends AnyHyperEdge[N] with AnyEdge[N] with EqUnDi[N] {
   def source: N
   def target: N
 
-  @inline final override def sources: Set[N @uV] = Set(source, target)
-  @inline final override def targets: Set[N @uV] = sources
+  @inline final override def sources: List[N @uV] = List(source, target)
+  @inline final override def targets: List[N @uV] = sources
 
   @inline final override def _1: N = source
   @inline final override def _2: N = target

@@ -3,8 +3,7 @@ package hyperedges
 package ordered.multilabeled
 
 import scalax.collection.generic.{
-  AbstractHyperEdge, ExtendedKey, ExtendedKeyBySingleLabel, LHyperEdgeToString, MultiLEdgeToString, OrderedEndpoints,
-  SingleLabel
+  AbstractHyperEdge, ExtendedKeyBySingleLabel, LHyperEdgeToString, MultiLEdgeToString, OrderedEndpoints, SingleLabel
 }
 
 /** Template for generic undirected multi-hyperedges with ordered `ends` and a single `label` field.

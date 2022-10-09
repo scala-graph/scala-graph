@@ -1,14 +1,14 @@
 package demo
 
-import scalax.collection.Graph
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import scalax.collection.generic._
-import scalax.collection.immutable
+import scalax.collection.immutable.Graph
 import scalax.collection.mutable
-
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
+
+import scala.collection.SortedSet
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-operations.html
   *  Graph Operations]].
@@ -48,7 +48,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
     }
 
     def `adding ` : Unit = {
-      val g = immutable.Graph(1, 2 ~ 3)
+      val g = Graph(1, 2 ~ 3)
       g + 1 shouldBe g
       g + 0 shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
       g + 0 ~ 1 shouldBe Graph(0, 1, 2, 3, 0 ~ 1, 2 ~ 3)
@@ -66,8 +66,8 @@ final class EditingDemoSpec extends RefSpec with Matchers {
     }
 
     def `union, diff, intersect ` : Unit = {
-      val g = immutable.Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
-      val h = immutable.Graph(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
+      val g = Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
+      val h = Graph(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
 
       g union h shouldBe Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5, 3 ~ 4, 4 ~ 6, 5 ~ 6)
       g diff h shouldBe Graph(1 ~ 2)
@@ -97,22 +97,6 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       hE.ends.sum shouldBe 26
     }
 
-    /* TODO
-    def `edge patterns`: Unit = {
-      import scalax.collection.edge.Implicits._
-      val g = Graph((1 ~+> 2)("A"), (1 ~+> 1)("AB"))
-
-      import scalax.collection.edge.LBase._
-      object StringLabel extends LEdgeImplicits[String]
-
-      g.edges.foldLeft(0)((sum, e) =>
-        e.edge match {
-          case s :~> t + (l: String) if l contains 'A' =>
-            sum + s.outDegree + t.outDegree
-      }) shouldBe 6
-    }
-     */
-
     def `neighbors ` : Unit = {
       val g                               = Graph[Int, AnyEdge](0, 1 ~ 3, 3 ~> 2)
       def n(outer: Int): g.NodeT          = g get outer
@@ -138,19 +122,27 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       g filter (edgeP = _.isDirected) should ===(Graph(1, 5, 2, 3, 2 ~> 3))
     }
 
-    /* TODO
     def `measuring ` : Unit = {
-      import scalax.collection.edge.Implicits._
-      val g = Graph(1 ~ 2 % 4, 2 ~ 3 % 2, 1 ~> 3 % 5, 1 ~ 5 % 3, 3 ~ 5 % 2, 3 ~ 4 % 1, 4 ~> 4 % 1, 4 ~> 5 % 0)
+      import scalax.collection.edges.labeled._
+      val g = Graph[Int, AnyEdge](
+        1 ~ 2  % 4,
+        2 ~ 3  % 2,
+        1 ~> 3 % 5,
+        1 ~ 5  % 3,
+        3 ~ 5  % 2,
+        3 ~ 4  % 1,
+        4 ~> 4 % 1,
+        4 ~> 5 % 0
+      )
       g.order shouldBe 5
       g.size shouldBe 8
-      g.size shouldBe 13
       g.totalDegree shouldBe 16
       g.degreeSet shouldBe SortedSet(4, 3, 2)
       g.degreeNodeSeq(g.InDegree) shouldBe List((4, 3), (3, 5), (2, 1), (2, 2), (2, 4))
       g.degreeNodesMap should contain only (2                       -> Set(2), 3 -> Set(5, 1), 4 -> Set(3, 4))
       g.degreeNodesMap(degreeFilter = _ > 3) should contain only (4 -> Set(3, 4))
     }
+
     def `classifying ` : Unit = {
       val g = Graph(1, 2 ~> 3)
       g.isConnected shouldBe false
@@ -164,6 +156,5 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       g.isHyper shouldBe false
       g.isMulti shouldBe false
     }
-     */
   }
 }

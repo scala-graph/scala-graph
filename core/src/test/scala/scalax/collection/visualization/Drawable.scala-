@@ -21,7 +21,7 @@ import org.gephi.preview.types.{DependantColor, EdgeColor}
 import org.gephi.project.api.{ProjectController, Workspace}
 import org.openide.util.Lookup
 
-import scalax.collection.Graph
+import scalax.collection.AnyGraph
 import scalax.collection.generic.{AnyEdge, Edge, SingleLabel}
 
 /** Facilitates drawing any graph as an image.
@@ -44,7 +44,7 @@ trait Drawable {
     * @tparam N type of node
     * @tparam E type of edge
     */
-  def makeImage[N, E <: Edge[N]](g: Graph[N, E], path: String, name: String): Try[File] = {
+  def makeImage[N, E <: Edge[N]](g: AnyGraph[N, E], path: String, name: String): Try[File] = {
 
     def initWorkspace: Workspace = {
       val pc: ProjectController = assertedLookup(classOf[ProjectController])
@@ -129,7 +129,7 @@ trait Drawable {
     * @tparam E type of edge
     * @return container
     */
-  def toContainer[N, E <: Edge[N]](g: Graph[N, E]): Try[Container] = Try {
+  private def toContainer[N, E <: Edge[N]](g: AnyGraph[N, E]): Try[Container] = Try {
 
     val container: Container    = assertedLookup(classOf[Container.Factory]).newContainer
     val loader: ContainerLoader = container.getLoader

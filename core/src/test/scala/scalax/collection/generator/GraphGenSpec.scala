@@ -8,6 +8,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalatest.refspec.RefSpec
 
 import scalax.collection.edges._
+import scalax.collection.immutable.Graph
 
 class GraphGenSpec extends RefSpec with Matchers with ScalaCheckPropertyChecks {
 

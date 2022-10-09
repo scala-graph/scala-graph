@@ -16,9 +16,9 @@ abstract class LUnDiEdge[+N, L]
 
 /** Template for an `implicit class` that defines the infix constructor `++` to pass a label like `1 ~> 2 ++ aLabel`.
   */
-abstract class LUnDiEdgeInfixConstructor[N, L, CC[X] <: Edge[X] with ExtendedKey](
+abstract class LUnDiEdgeInfixConstructor[N, L, CC[X] <: Edge[X] with MultiEdge](
     apply: (N, N, L) => CC[N]
 ) {
   def edge: UnDiEdge[N]
-  def ++(label: L): CC[N] = apply(edge._1, edge._2, label)
+  def :++(label: L): CC[N] = apply(edge._1, edge._2, label)
 }
