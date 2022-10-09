@@ -38,8 +38,8 @@ sealed trait Factory[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       config: GraphConfig
   ): CC[N, E] =
     this match {
-      case gC: GenericGraphFactory[CC]                                   => gC.from[N, E](nodes, edges)(config)
-      case tC: generic.TypedGraphFactory[N @unchecked, E @unchecked, CC] => tC.from(nodes, edges)(config)
+      case gC: GenericGraphFactory[CC] => gC.from[N, E](nodes, edges)(config)
+      case tC: generic.TypedGraphFactory[N @unchecked, E @unchecked, CC @unchecked] => tC.from(nodes, edges)(config)
     }
 
   final protected def coreConfig(config: GraphConfig): GraphConfig with AdjacencyListArrayConfig =
@@ -106,8 +106,10 @@ trait TypedGraphFactory[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AnyGraph[X, Y] 
 
   def empty(implicit config: GraphConfig = defaultConfig): CC[N, E]
 
-  def apply(elems: OuterElem[N, E]*)(implicit config: GraphConfig = defaultConfig): CC[N, E] =
-    (newBuilder[N, E] ++= elems).result
+  def apply[NN <: N, EE <: E with Edge[NN]](elems: OuterElem[NN, EE]*)(implicit
+      config: GraphConfig = defaultConfig
+  ): CC[NN, EE] =
+    (newBuilder[NN, EE] ++= elems).result
 
   def from(edges: Iterable[E]): CC[N, E]
 

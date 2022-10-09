@@ -16,7 +16,7 @@ trait TypedGraphFactory[N, E <: Edge[N]] extends TypedGraphCoreFactory[N, E, Gra
     DefaultGraphImpl.from[N, E](nodes, edges)(config)
 
   object OuterImplicits {
-    @inline implicit def toOuterNode(n: N): OuterNode[N]    = OuterNode(n)
-    @inline implicit def toOuterEdge(e: E): OuterEdge[N, E] = OuterEdge(e)
+    @inline implicit def toOuterNode[NN <: N](n: NN): OuterNode[NN] = OuterNode(n)
+    @inline implicit def toOuterEdge(e: E): OuterEdge[N, E]         = OuterEdge(e)
   }
 }

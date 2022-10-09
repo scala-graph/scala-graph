@@ -1,5 +1,6 @@
 package scalax.collection
 
+import scala.language.implicitConversions
 import scala.util.chaining._
 
 import org.scalatest.matchers.should.Matchers
@@ -7,7 +8,7 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.edges._
 import scalax.collection.generic._
-import scalax.collection.immutable.{Graph, TypedGraphFactory}
+import scalax.collection.immutable.TypedGraphFactory
 
 class MappingTypedSpec extends RefSpec with Matchers {
 
@@ -51,7 +52,6 @@ class MappingTypedSpec extends RefSpec with Matchers {
       }
 
     def `upcast nodes to any type if a generic edge mapper is passed`: Unit =
-      () /* TODO parametrize TypedGraphFactory.apply to allow infering TGraph[A, AConnector]
       TGraph(AConnector(a_1, a_1)) pipe { g =>
         def toString(a: A): String = s"""string-$a"""
 
@@ -59,7 +59,6 @@ class MappingTypedSpec extends RefSpec with Matchers {
         mapped.size shouldBe 1
         mapped.edges.head.outer shouldBe (toString(A(1)) ~ toString(A(1)))
       }
-       */
   }
 }
 
@@ -68,25 +67,23 @@ private object MappingTypedSpec {
   private case class A(a: Int)         extends Node
   private case class B(a: Int, b: Int) extends Node
 
-  sealed abstract private class Edge(source: Node, target: Node)
-      extends AbstractDiEdge[Node](source, target)
-      with PartialMapper
+  sealed private trait Edge extends AnyDiEdge[Node] with PartialMapper
 
   private case class Connector(override val source: Node, override val target: Node)
-      extends Edge(source, target)
-      with PartialEdgeMapper[Connector] {
-    def map[N]: PartialFunction[(N, N), Connector] = { case (source: Node, target: Node) =>
-      copy(source, target)
-    }
+      extends AbstractDiEdge[Node](source, target)
+      with PartialEdgeMapper[Connector]
+      with Edge {
+    def map[N]: PartialFunction[(N, N), Connector] = { case (s: Node, t: Node) => copy(s, t) }
   }
 
   private case class AConnector(override val source: A, override val target: A)
-      extends Edge(source, target)
-      with PartialEdgeMapper[AConnector] {
-    def map[N]: PartialFunction[(N, N), AConnector] = { case (source: A, target: A) =>
-      copy(source, target)
-    }
+      extends AbstractDiEdge[A](source, target)
+      with PartialEdgeMapper[AConnector]
+      with Edge {
+    def map[N]: PartialFunction[(N, N), AConnector] = { case (s: A, t: A) => copy(s, t) }
   }
 
   private object TGraph extends TypedGraphFactory[Node, Edge]
+
+  implicit private def aConnectorToOuterEdge(e: AConnector): OuterEdge[A, AConnector] = OuterEdge(e)
 }
