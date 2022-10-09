@@ -285,7 +285,7 @@ trait ForeachBasedDetachingIterable[+A] extends Iterable[A] {
 
   // Strings
 
-  final override def addString(b: StringBuilder, start: String, sep: String, end: String): StringBuilder = {
+  final override def addString(b: StringBuilder, start: String, sep: String, end: String): b.type = {
     val jsb = b.underlying
     if (start.length != 0) jsb.append(start)
     var first = true
