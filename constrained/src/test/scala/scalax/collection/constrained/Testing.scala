@@ -19,9 +19,9 @@ trait Testing[CC[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, 
     g should ===(before)
   }
 
-  protected type PlainOp[N, E <: Edge[N], A]   = (CC[N, E], A) => CC[N, E]
-  protected type VerboseOp[N, E <: Edge[N], A] = (CC[N, E], A) => Either[ConstraintViolation, CC[N, E]]
-  protected type Results[N, E[+X] <: EdgeLikeIn[X]]      = (CC[N, E], CC[N, E], Either[ConstraintViolation, CC[N, E]])
+  protected type PlainOp[N, E <: Edge[N], A]        = (CC[N, E], A) => CC[N, E]
+  protected type VerboseOp[N, E <: Edge[N], A]      = (CC[N, E], A) => Either[ConstraintViolation, CC[N, E]]
+  protected type Results[N, E[+X] <: EdgeLikeIn[X]] = (CC[N, E], CC[N, E], Either[ConstraintViolation, CC[N, E]])
 
   protected def given[N, E <: Edge[N], A](g: CC[N, E], arg: A): (CC[N, E], A) = (g, arg)
 
