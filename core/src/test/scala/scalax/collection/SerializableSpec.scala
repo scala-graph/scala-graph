@@ -45,7 +45,7 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
       val exec = newTest
       exec.save[N, E](g)
       val r = exec.restore[N, E]
-      given(r.asAnyGraph)(_ should equal(g))
+      withGraph(r.asAnyGraph)(_ should equal(g))
       r
     }
   }
@@ -179,7 +179,7 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
     import Data.elementsOfDi_1
     val g    = factory(elementsOfDi_1: _*)
     val back = store.test[Int, DiEdge[Int]](g)
-    given(g.asAnyGraph) { g =>
+    withGraph(g.asAnyGraph) { g =>
       def op(g: AnyGraph[Int, DiEdge[Int]]): Int = g.nodes.head.outerNodeTraverser.size
       op(back.asAnyGraph) shouldBe op(g)
     }
@@ -194,7 +194,7 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
 
     val diSuccBefore = outerSuccessors(g.asAnyGraph)
     val back         = store.test[Int, DiEdge[Int]](g)
-    given(g.asAnyGraph) { g =>
+    withGraph(g.asAnyGraph) { g =>
       outerSuccessors(back.asAnyGraph) shouldBe diSuccBefore
     }
   }
@@ -228,7 +228,7 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
 
   "A graph of [Int,WUnDiEdge]" should work in {
     import Data.elementsOfMixed_2
-    given(factory.from(elementsOfMixed_2).asAnyGraph) { _ =>
+    withGraph(factory.from(elementsOfMixed_2).asAnyGraph) { _ =>
       (new EdgeByteArray).test[Int, AnyEdge[Int]](elementsOfMixed_2)
     }
   }

@@ -43,13 +43,13 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
   val anyConnected = Parameters(direction = AnyConnected)
 
   def `assert bug 9 of shortestPathTo is fixed`: Unit =
-    given(factory(0 ~> 1 % 3, 0 ~> 2 % 4, 1 ~> 3 % 3, 2 ~> 3 % 1)) { g =>
+    withGraph(factory(0 ~> 1 % 3, 0 ~> 2 % 4, 1 ~> 3 % 3, 2 ~> 3 % 1)) { g =>
       def n(outer: Int) = g get outer
       (n(0) shortestPathTo n(3)).get.nodes.toList should be(List(0, 2, 3))
     }
 
   def `shortestPathTo in WDi_1`: Unit =
-    given(factory(elementsOfWDi_1: _*)) { g =>
+    withGraph(factory(elementsOfWDi_1: _*)) { g =>
       def n(outer: Int) = g get outer
 
       n(5) shortestPathTo n(4) shouldBe None
@@ -62,7 +62,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     }
 
   def `shortestPathTo in WDi_1 using Float`: Unit =
-    given(factory(elementsOfWDi_1: _*)) { g =>
+    withGraph(factory(elementsOfWDi_1: _*)) { g =>
       def n(outer: Int) = g get outer
 
       def weight(e: g.EdgeT): Float         = 0.5f + e.weight.toFloat
@@ -79,7 +79,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     }
 
   def `shortestPathTo in WUnDi_1`: Unit =
-    given(factory(elementsOfWMixed_1: _*)) { g =>
+    withGraph(factory(elementsOfWMixed_1: _*)) { g =>
       def shortestPathNodes(from: Int, to: Int): LazyList[g.NodeT] = {
         def n(value: Int): g.NodeT = g get value
 
@@ -96,14 +96,14 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     }
 
   def `shortestPathTo withMaxDepth`: Unit =
-    given(factory(elementsOfWMixed_1: _*)) { g =>
+    withGraph(factory(elementsOfWMixed_1: _*)) { g =>
       def n(value: Int): g.NodeT = g get value
 
       n(2).innerNodeTraverser.withMaxDepth(2).shortestPathTo(n(5)).get.nodes.toList should be(List(2, 3, 5))
     }
 
   def `shortestPathTo withMaxWeight`: Unit =
-    given(factory(elementsOfWMixed_1: _*)) { g =>
+    withGraph(factory(elementsOfWMixed_1: _*)) { g =>
       def n(value: Int): g.NodeT = g get value
 
       val t = n(2).innerNodeTraverser
@@ -117,7 +117,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     factory.from[Int, AnyEdge[Int]](Set.empty, eUnDi_2).asAnyGraph
 
   def `shortestPathTo in UnDi_2`: Unit =
-    given(gUnDi_2) { g =>
+    withGraph(gUnDi_2) { g =>
       def n(value: Int) = g get value
 
       val p1_3 = n(1).shortestPathTo(n(3)).get
@@ -138,7 +138,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     }
 
   def `traverser withSubgraph`: Unit =
-    given(gUnDi_2) { g =>
+    withGraph(gUnDi_2) { g =>
       def n(value: Int) = g get value
 
       val p2_1_nNE3 = n(2).withSubgraph(nodes = _ != 3).pathTo(n(1)).get
@@ -162,17 +162,17 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
       List[Long](Long.MaxValue, 5, 4, 3, 2, 1, 0).map(max => n(1).withKind(kind).withMaxWeight(max).size) shouldBe
         List(5, 4, 3, 2, 1, 1, 1)
 
-    def `calling DepthFirst`: Unit = given(WMixed_1.g) { _ =>
+    def `calling DepthFirst`: Unit = withGraph(WMixed_1.g) { _ =>
       check(DepthFirst)
     }
-    def `calling BreadthFirst`: Unit = given(WMixed_1.g) { _ =>
+    def `calling BreadthFirst`: Unit = withGraph(WMixed_1.g) { _ =>
       check(BreadthFirst)
     }
   }
 
   def `traverser to graph`: Unit = {
     object Di_1 extends TGraph(factory(elementsOfDi_1: _*))
-    given(Di_1.g) { g =>
+    withGraph(Di_1.g) { g =>
       def innerNode(outer: Int) = g get outer
 
       innerNode(1).outerNodeTraverser.to(factory) should equal(factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
@@ -186,7 +186,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
   }
 
   def `traverser with a visitor`: Unit =
-    given(gUnDi_2) { g =>
+    withGraph(gUnDi_2) { g =>
       def n(value: Int) = g get value
 
       val nodes     = ListBuffer[g.NodeT]()
@@ -228,7 +228,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
 
     val g = factory.from[Airport, Flight](Set.empty, flights)
 
-    given(g.asAnyGraph) { g =>
+    withGraph(g.asAnyGraph) { g =>
       val shp1 = (g get jfc).withSubgraph(edges = _.airline != "UN") shortestPathTo (g get dme)
       shp1.get.nodes.toList should be(List(jfc, lhr, dme))
       shp1.get.edges.toList should be(List(flight("BA 174"), flight("SU 242")))
@@ -263,7 +263,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
       3 ~> 5 % 5,
       3 ~> 7 % 2
     )
-    given(factory(outerEdges: _*)) { g =>
+    withGraph(factory(outerEdges: _*)) { g =>
       val root = g get 1
 
       def edgeOrdering = g EdgeOrdering (g.BaseInnerEdge.WeightOrdering.reverse.compare _)

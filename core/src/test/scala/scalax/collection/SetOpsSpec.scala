@@ -67,8 +67,8 @@ private class SetOps[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, 
 
   def `intersection ` : Unit = {
     val expected = factory(3 ~ 5, 4)
-    given(g intersect h)(_ shouldEqual expected)
-    given(g & h)(_ shouldEqual expected)
+    withGraph(g intersect h)(_ shouldEqual expected)
+    withGraph(g & h)(_ shouldEqual expected)
   }
 }
 

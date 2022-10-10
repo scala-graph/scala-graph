@@ -18,7 +18,7 @@ import scalax.collection.ToString._
   */
 trait Visualizer /*extends Drawable*/ {
 
-  final def given[N, E <: Edge[N]](graph: AnyGraph[N, E])(test: AnyGraph[N, E] => Unit): Unit = {
+  final def withGraph[N, E <: Edge[N]](graph: AnyGraph[N, E])(test: AnyGraph[N, E] => Unit): Unit = {
 
     def reThrow(ex: TestFailedException, messageExtension: String) =
       throw ex.modifyMessage(_.map { testMessage =>

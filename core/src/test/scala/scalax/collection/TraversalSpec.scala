@@ -37,7 +37,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
   val anyConnected = Parameters(direction = AnyConnected)
 
   def `find successors in a tiny graph`: Unit =
-    given(factory(1 ~> 2).asAnyGraph) { g =>
+    withGraph(factory(1 ~> 2).asAnyGraph) { g =>
       val (n1, n2) = (g get 1, g get 2)
 
       List(1, 3) foreach { i =>
@@ -48,7 +48,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     }
 
   def `find predecessors in a tiny graph`: Unit =
-    given(factory(1 ~> 2)) { g =>
+    withGraph(factory(1 ~> 2)) { g =>
       val (n1, n2) = (g get 1, g get 2)
 
       1 to 3 foreach { i =>
@@ -59,7 +59,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     }
 
   def `find connected nodes by predicate in a tiny graph`: Unit =
-    given(factory(1 ~> 2)) { g =>
+    withGraph(factory(1 ~> 2)) { g =>
       val (n1, n2) = (g get 1, g get 2)
 
       List(1, 3) foreach { i =>
@@ -74,7 +74,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
   object UnDi_1 extends TGraph(factory.from(elementsOfMixed_1))
 
   def `find successors in a mid-size graph`: Unit =
-    given(Di_1.g.asAnyGraph) { g =>
+    withGraph(Di_1.g.asAnyGraph) { g =>
       def n(outer: Int) = g.get(outer)
 
       List(0, 3, 7) foreach { i =>
@@ -85,7 +85,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     }
 
   def `find predecessors in a mid-size graph`: Unit =
-    given(Di_1.g.asAnyGraph) { g =>
+    withGraph(Di_1.g.asAnyGraph) { g =>
       def n(outer: Int) = g.get(outer)
 
       List(0, 3, 5) foreach { i =>
@@ -96,7 +96,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     }
 
   def `find connected nodes by predicate`: Unit =
-    given(Di_1.g.asAnyGraph) { g =>
+    withGraph(Di_1.g.asAnyGraph) { g =>
       def n(outer: Int) = g get outer
 
       List(0, 3) foreach { i =>
@@ -107,7 +107,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     }
 
   def `find path to a successor`: Unit =
-    given(factory(1, 2 ~ 3, 3 ~ 4, 5 ~ 6, 6 ~ 1)) { g =>
+    withGraph(factory(1, 2 ~ 3, 3 ~ 4, 5 ~ 6, 6 ~ 1)) { g =>
       val n1 = g get 1
       n1 pathUntil (_ == n1) shouldBe None
 
@@ -127,14 +127,14 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     }
 
   def `find path to a successor in a minimalistic graph`: Unit =
-    given(factory(0 ~ 1, 1 ~ 2)) { g =>
+    withGraph(factory(0 ~ 1, 1 ~ 2)) { g =>
       def n(outer: Int) = g get outer
       for (i <- 0 to 2)
         (n(0) pathTo n(i)).get.length shouldBe i
     }
 
   def `assert fix_110409 of shortestPathTo`: Unit =
-    given(factory(0 ~ 1, 1 ~ 2, 2 ~ 3)) { g =>
+    withGraph(factory(0 ~ 1, 1 ~ 2, 2 ~ 3)) { g =>
       def n(outer: Int) = g get outer
       (n(0) shortestPathTo n(0)).get.length shouldBe 0
       (n(0) shortestPathTo n(3)).get.nodes.toList shouldBe List(0, 1, 2, 3)
@@ -142,7 +142,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     }
 
   def `traverser to graph`: Unit =
-    given(Di_1.g.asAnyGraph) { g =>
+    withGraph(Di_1.g.asAnyGraph) { g =>
       def innerNode(outer: Int) = g get outer
 
       innerNode(1).outerNodeTraverser.to(factory) should equal(factory(1 ~> 2, 2 ~> 3, 3 ~> 5, 1 ~> 5, 1 ~> 3))
@@ -155,7 +155,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     }
 
   def `traverser with an extended visitor`: Unit =
-    given(UnDi_1.g.asAnyGraph) { g =>
+    withGraph(UnDi_1.g.asAnyGraph) { g =>
       import g.ExtendedNodeVisitor
       def n(outer: Int) = g get outer
 
@@ -185,7 +185,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
       val expectedSumLayer2ExclGt4 = 9
     }
     import UnDi_1._
-    given(g.asAnyGraph) { g =>
+    withGraph(g.asAnyGraph) { g =>
       def n(outer: Int) = g get outer
 
       val bfs_4 = n(4).outerNodeTraverser
@@ -205,7 +205,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
   }
 
   def `DownUp traverser`: Unit =
-    given(Di_1.g.asAnyGraph) { g =>
+    withGraph(Di_1.g.asAnyGraph) { g =>
       def innerNode(outer: Int) = g get outer
       var stack                 = List.empty[Int]
 
@@ -221,7 +221,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
 
   def `DownUp traverser for computing braces`: Unit = {
     val root = "A"
-    given(factory(root ~> "B1", root ~> "B2")) { g =>
+    withGraph(factory(root ~> "B1", root ~> "B2")) { g =>
       val innerRoot = g get root
       val result = innerRoot.innerNodeDownUpTraverser.foldLeft(ListBuffer.empty[String]) { (buf, param) =>
         param match {
@@ -250,7 +250,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     val root          = Node("R")
     val (nA, nB, nBA) = (Node("A"), Node("B"), Node("BA"))
 
-    given(
+    withGraph(
       factory[Elem, DiEdge](
         root ~> nA,
         root ~> nB,
@@ -294,7 +294,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
       val expectedSumLayer1AnyConnectedWith_2 = 6
     }
     import DDi_1._
-    given(DDi_1.g.asAnyGraph) { g =>
+    withGraph(DDi_1.g.asAnyGraph) { g =>
       def n(outer: Int) = g get outer
 
       val maxDepth_1 = Parameters(maxDepth = 1)
@@ -322,7 +322,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
   }
 
   def `traverser withOrdering for nodes`: Unit =
-    given(
+    withGraph(
       factory(
         0 ~> 4,
         0 ~> 2,
@@ -360,13 +360,13 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     }
 
   def `map Traverser result`: Unit =
-    given(Di_1.g.asAnyGraph) { g =>
+    withGraph(Di_1.g.asAnyGraph) { g =>
       val t = g.nodes.head.outerNodeTraverser
       t map (_ + 1) shouldBe (t.toList map (_ + 1))
     }
 
   def `traverser for inner elements`: Unit =
-    given(Di_1.g.asAnyGraph) { g =>
+    withGraph(Di_1.g.asAnyGraph) { g =>
       val t = g.nodes.head.innerElemTraverser
 
       def nodePred(n: g.NodeT) = n.degree > 1

@@ -85,7 +85,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   }
 
   def `empty graph`: Unit =
-    given(factory.empty[Int, DiEdge[Int]].asAnyGraph) {
+    withGraph(factory.empty[Int, DiEdge[Int]].asAnyGraph) {
       _.topologicalSort.fold(
         Topo.unexpectedCycle,
         _ shouldBe empty
@@ -121,7 +121,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
       listening_to_music
     ).asAnyGraph
 
-    given(typicalDay) {
+    withGraph(typicalDay) {
       _.topologicalSort.fold(
         Topo.unexpectedCycle,
         order =>
@@ -135,7 +135,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   def `connected graph`: Unit = {
     val someOuter @ n0 :: n1 :: n5 :: Nil = 0 :: 1 :: 5 :: Nil
     val connected = factory[Int, DiEdge](n0 ~> n1, 2 ~> 4, 2 ~> n5, n0 ~> 3, n1 ~> 4, 4 ~> 3).asAnyGraph
-    given(connected) { g =>
+    withGraph(connected) { g =>
       g.isMulti shouldBe false
       g.topologicalSort.fold(
         Topo.unexpectedCycle,
@@ -172,7 +172,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   def `unconnected graph`: Unit = {
     val expectedLayer_0 @ (_1 :: _3 :: Nil) = List(1, 3)
     val expectedLayer_1 @ (_2 :: _4 :: Nil) = List(2, 4)
-    given(factory(_1 ~> _2, _3 ~> _4)) {
+    withGraph(factory(_1 ~> _2, _3 ~> _4)) {
       _.topologicalSort.fold(
         Topo.unexpectedCycle,
         _.toLayered.toOuter.toList match {
@@ -186,7 +186,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   }
 
   def `cyclic graph`: Unit =
-    given(factory(1 ~> 2, 2 ~> 1)) {
+    withGraph(factory(1 ~> 2, 2 ~> 1)) {
       _.topologicalSort.fold(
         identity,
         Topo.unexpectedRight
@@ -194,7 +194,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
     }
 
   def `cyclic graph #68`: Unit =
-    given(factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)) {
+    withGraph(factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)) {
       _.topologicalSort.fold(
         identity,
         Topo.unexpectedRight

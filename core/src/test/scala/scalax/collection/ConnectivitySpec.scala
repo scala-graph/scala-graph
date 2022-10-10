@@ -35,7 +35,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
     val g = factory(elementsOfDi_1: _*).asAnyGraph
 
     def `there exists no pair of mutually reachable nodes`: Unit =
-      given(g) {
+      withGraph(g) {
         _.nodes.toList.combinations(2) foreach {
           case List(a, b) => List(a pathTo b, b pathTo a) should contain(None)
           case _          => fail()
@@ -43,7 +43,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
       }
 
     def `evaluating strong components from any node yields single-node components`: Unit =
-      given(g) {
+      withGraph(g) {
         _.nodes foreach { n =>
           val components = n.innerNodeTraverser.strongComponents
           components foreach (_.nodes should have size 1)
@@ -51,7 +51,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
       }
 
     def `evaluating all strong components yields a component for every node`: Unit =
-      given(g) { g =>
+      withGraph(g) { g =>
         g.strongComponentTraverser().size shouldBe g.order
       }
   }
@@ -70,7 +70,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
 
     def `each is detected as such`: Unit =
       sscExpectedAny.foreach { g =>
-        given(g) {
+        withGraph(g) {
           _.strongComponentTraverser() should have size 1
         }
       }
@@ -88,7 +88,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
         def check(scc: Iterable[connected.Component], expectedSize: Int): Unit = {
           scc should have size expectedSize
           scc foreach { sc =>
-            given(sc.to(factory).asAnyGraph) { g =>
+            withGraph(sc.to(factory).asAnyGraph) { g =>
               sccExpected should contain(g)
               sc.frontierEdges should have size 1
             }
@@ -108,7 +108,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
 
   object `Having two weak components` {
     def `weak components are detected, fix #57`: Unit =
-      given(factory(11 ~> 12, 13 ~> 14)) {
+      withGraph(factory(11 ~> 12, 13 ~> 14)) {
         _.componentTraverser() should have size 2
       }
   }
@@ -129,15 +129,15 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
     val strongComponents = g.strongComponentTraverser().toVector
 
     def `no stack overflow occurs`: Unit =
-      given(g)(_ => strongComponents shouldBe a[Vector[_]])
+      withGraph(g)(_ => strongComponents shouldBe a[Vector[_]])
 
     def `strong components are complete`: Unit =
-      given(g) { _ =>
+      withGraph(g) { _ =>
         strongComponents.foldLeft(Set.empty[g.NodeT])((cum, sc) => cum ++ sc.nodes) shouldBe g.nodes
       }
 
     def `strong components are proper`: Unit =
-      given(g) { _ =>
+      withGraph(g) { _ =>
         val maxProbes = 10
         val arbitraryNodes: Vector[Set[g.NodeT]] = strongComponents map { sc =>
           val nodes = sc.nodes
