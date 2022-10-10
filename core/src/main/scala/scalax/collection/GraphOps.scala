@@ -249,18 +249,12 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     *
     * $mapTyped Otherwise see `map`.
     *
-    * @tparam NN   $mapNN The target node type needs be of type `N` or a subtype of it because
-    *              a supertype would require to replace not just the nodes but also all edges with another edge type.
-    * @tparam EC   $mapEC
     * @param fNode $fNode
     * @return      $mapReturn
     */
   /* @param w1 Ensures that the type parameter `E` of this graph is of type `PartialMapper`.
-   * @param w2 Captures the higher kind of current `E` to determine the return type.
    */
-  def mapBounded[NN <: N, EC[X] <: Edge[X]](
-      fNode: NodeT => NN
-  )(implicit w1: E <:< PartialMapper, w2: EC[N] =:= E, t: ClassTag[EC[NN]]): CC[NN, EC[NN]]
+  def mapBounded(fNode: NodeT => N)(implicit w1: E <:< PartialMapper): CC[N, E]
 
   /** $mapEdges
     *

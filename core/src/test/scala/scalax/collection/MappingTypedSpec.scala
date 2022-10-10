@@ -19,8 +19,7 @@ class MappingTypedSpec extends RefSpec with Matchers {
     private val a_1   = A(1)
     private val b_0_0 = B(0, 0)
 
-    def `map node values without changing node or edge types`: Unit =
-      () /*
+    def `map nodes`: Unit =
       TGraph(Connector(a_1, b_0_0)) pipe { g =>
         g.mapBounded { (n: g.NodeT) =>
           n match {
@@ -29,14 +28,11 @@ class MappingTypedSpec extends RefSpec with Matchers {
           }
         } shouldEqual TGraph(Connector(A(2), B(1, 1)))
       }
-       */
 
     def `downcast nodes`: Unit =
-      () /*
       TGraph(Connector(a_1, b_0_0)) pipe { g =>
         g.mapBounded(_ => b_0_0) should not be empty
       }
-       */
 
     def `not upcast nodes without passing an edge mapper`: Unit =
       TGraph(AConnector(a_1, a_1)) pipe { _ =>
