@@ -47,7 +47,7 @@ trait Visualizer /*extends Drawable*/ {
           case Failure(e) => reThrow(ex, s"Graph image generation failed with `${e.getMessage}`.")
         }
          */
-        val small = graph.edges.size < 12 && graph.edges.toString.length < 120
+        val small = graph.edges.size < 10 && graph.edges.toString.length < 100
         reThrow(ex, graph.render(if (small) SetsOnSeparateLines() else SetElemsOnSeparateLines()))
     }
   }

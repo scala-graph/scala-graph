@@ -28,19 +28,21 @@ protected trait ToString[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y
       edgeSeparator: String = GraphBase.defaultSeparator,
       nodeEdgeSetSeparator: String = GraphBase.defaultSeparator,
       withInnerPrefix: Boolean = true
-  )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering): String = {
-    val sets = {
-      val setStyle: SetStyle = (style match {
-        case s: StyleWithIndent[_] => s.incremented
-        case s                     => s
-      }).toSetStyle
-      List(
-        nodes.render(setStyle, nodeSeparator, withInnerPrefix)(ordNode),
-        edges.render(setStyle, edgeSeparator, withInnerPrefix)(ordEdge)
-      )
+  )(implicit ordNode: NodeOrdering = defaultNodeOrdering, ordEdge: EdgeOrdering = defaultEdgeOrdering): String =
+    if (nodes.isEmpty) s"$className()"
+    else {
+      val sets = {
+        val setStyle: SetStyle = (style match {
+          case s: StyleWithIndent[_] => s.incremented
+          case s                     => s
+        }).toSetStyle
+        List(
+          nodes.render(setStyle, nodeSeparator, withInnerPrefix)(ordNode),
+          edges.render(setStyle, edgeSeparator, withInnerPrefix)(ordEdge)
+        )
+      }
+      sets.prefixed(style, className, nodeEdgeSetSeparator)
     }
-    sets.prefixed(style, className, nodeEdgeSetSeparator)
-  }
 
   protected trait SetToString[A] extends AnySet[A] {
 
