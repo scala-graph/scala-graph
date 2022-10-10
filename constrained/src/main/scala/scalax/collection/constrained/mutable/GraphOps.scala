@@ -10,7 +10,7 @@ import scalax.collection.mutable.{GraphLike => SimpleGraphLike}
    These ops are counterparts of non-constrained mutable graph ops that do not expose constraint violations.
    These enhanced ops bear the same name but a postfix `?` for operator identifiers respectively `_?` for plain identifiers.
 
-   $define Info returns additional information on any potential constraint violation
+   @define Info returns additional information on any potential constraint violation
  */
 trait GraphOps[
     N,
