@@ -61,7 +61,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
     * The second is true because of duplicate elimination and undirected edge equivalence.
     */
   override def equals(that: Any): Boolean = that match {
-    case that: AnyGraph[N, E] =>
+    case that: AnyGraph[N, E] @unchecked =>
       (this eq that) ||
       this.order == that.order &&
       this.size == that.size && {
@@ -308,8 +308,8 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
         case InnerEdge(_, outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
           (nMap(n1), nMap(n2)) pipe { case newEnds =>
             outer match {
-              case pM: PartialEdgeMapper[E] => pM.map[N].lift(newEnds).map(builder.+=)
-              case _                        =>
+              case pM: PartialEdgeMapper[E @unchecked] => pM.map[N].lift(newEnds).map(builder.+=)
+              case _                                   =>
             }
           }
         case InnerEdge(
