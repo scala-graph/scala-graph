@@ -3,6 +3,7 @@ package scalax.collection
 import scala.annotation.{switch, tailrec}
 import scala.collection.{FilterableSet, FilteredSet}
 import scala.collection.mutable.{ArrayBuffer, Map => MMap, PriorityQueue, Queue, Stack}
+import scala.reflect.ClassTag
 
 import scalax.collection.generic.Edge
 import scalax.collection.immutable.SortedArraySet
@@ -123,8 +124,8 @@ trait TraverserImpl[N, E <: Edge[N]] {
           : (Boolean, NodeT => U, ExtendedNodeVisitor[U], EdgeT => U) = {
         val nodeVisitor = thisImpl.nodeVisitor(visitor)
         val extNodeVisitor = visitor match {
-          case ext: ExtendedNodeVisitor[U] => ext
-          case _                           => null
+          case ext: ExtendedNodeVisitor[U @unchecked] => ext
+          case _                                      => null
         }
         (
           isDefined(nodeVisitor),
@@ -159,7 +160,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
         if (parameters.maxDepth > 0) parameters.maxDepth
         else java.lang.Integer.MAX_VALUE
 
-      private[this] def sorted[A <: InnerElem with B, B <: InnerElem: reflect.ClassTag](
+      private[this] def sorted[A <: InnerElem with B, B <: InnerElem: ClassTag](
           set: AnySet[A],
           maxOrEst: Int, // maximum size of set or negative for an estimate
           ordering: Ordering[A]

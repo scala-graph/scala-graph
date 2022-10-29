@@ -28,7 +28,7 @@ sealed protected[collection] trait Eq { this: Edge[_] =>
 protected[collection] object Eq {
   /* Works for both sets and bags.
    */
-  private def nrEqualingNodes(itA: Iterable[_], itB: Iterable[_], bLen: Int): Int = {
+  private def nrEqualingNodes(itA: OneOrMore[_], itB: OneOrMore[_], bLen: Int): Int = {
     var nr   = 0
     val used = new Array[Boolean](bLen)
     for (a <- itA) {
@@ -49,9 +49,9 @@ protected[collection] object Eq {
 
   def equalEnds(
       left: Edge[_],
-      leftEnds: Iterable[_],
+      leftEnds: OneOrMore[_],
       right: Edge[_],
-      rightEnds: Iterable[_]
+      rightEnds: OneOrMore[_]
   ): Boolean = {
     val thisOrdered = left.isInstanceOf[OrderedEndpoints]
     val thatOrdered = right.isInstanceOf[OrderedEndpoints]
@@ -72,7 +72,7 @@ protected[collection] trait EqHyper extends Eq {
   override protected def baseEquals(other: Edge[_]): Boolean = {
     val (thisArity, thatArity) = (arity, other.arity)
     if (thisArity == thatArity)
-      Eq.equalEnds(this, this.ends, other, other.ends)
+      Eq.equalEnds(this, this.ends.toOneOrMore, other, other.ends.toOneOrMore)
     else false
   }
 
@@ -207,5 +207,5 @@ trait MultiEdge { this: Edge[_] =>
       case _               => false
     })
 
-  override def hashCode: Int = super.hashCode + extendKeyBy.map(_.## * 41).sum
+  override def hashCode: Int = super.hashCode + extendKeyBy.map(_.## * 41).iterator.sum
 }

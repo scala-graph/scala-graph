@@ -1,12 +1,10 @@
 package scalax.collection.generic
 
-import scala.collection.immutable.Iterable
-
 sealed protected trait EdgeToString { _: Edge[_] =>
 
   protected def nodesToStringSeparator: String
 
-  protected def nodesToString: String = ends mkString nodesToStringSeparator
+  protected def nodesToString: String = ends.iterator mkString nodesToStringSeparator
 
   /** Implementation in term of the protected method `nodesToString`. */
   override def toString: String = nodesToString
@@ -29,8 +27,8 @@ trait DiHyperEdgeToString extends EdgeToString { _: AnyDiHyperEdge[_] =>
   override protected def nodesToStringSeparator: String = " ~~> "
 
   override protected def nodesToString: String = {
-    def part(nodes: Iterable[_]): String = s"""{${nodes mkString ", "}}"""
-    s"${part(sources)}$nodesToStringSeparator${part(targets)}"
+    def part(nodes: IterableOnce[_]): String = s"""{${nodes.iterator mkString ", "}}"""
+    s"${part(sources.iterator)}$nodesToStringSeparator${part(targets.iterator)}"
   }
 }
 

@@ -1,8 +1,6 @@
 package scalax.collection
 package generic
 
-import scala.collection.immutable.Iterable
-
 sealed protected[collection] trait Mapper
 sealed protected[collection] trait GenericMapper extends Mapper
 trait PartialMapper extends Mapper {
@@ -31,12 +29,12 @@ trait GenericEdgeMapper[+CC[X] <: Edge[X]] extends GenericMapper with EdgeMapper
 }
 
 trait PartialHyperEdgeMapper[+CC <: Edge[_]] extends PartialMapper with HyperEdgeMapper { this: AnyHyperEdge[_] =>
-  def map[N]: PartialFunction[Iterable[N], CC]
+  def map[N]: PartialFunction[Several[N], CC]
 }
 
 trait PartialDiHyperEdgeMapper[+CC <: Edge[_]] extends PartialMapper with DiHyperEdgeMapper {
   this: AnyDiHyperEdge[_] =>
-  def map[N]: PartialFunction[(Iterable[N], Iterable[N]), CC]
+  def map[N]: PartialFunction[(OneOrMore[N], OneOrMore[N]), CC]
 }
 
 trait PartialEdgeMapper[+CC <: Edge[_]] extends PartialMapper with EdgeMapper { this: AnyEdge[_] =>

@@ -1,12 +1,13 @@
 package demo
 
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.refspec.RefSpec
+
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import scalax.collection.generic._
 import scalax.collection.immutable.Graph
 import scalax.collection.mutable
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.refspec.RefSpec
 
 import scala.collection.SortedSet
 
@@ -79,7 +80,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       val uE = 3 ~ 4 // UnDiEdge[Int]
 
       uE._1 * uE._2 shouldBe 12
-      uE.ends.product shouldBe 12
+      uE.ends.iterator.product shouldBe 12
       (uE match {
         case n ~ m => n * m
       }) shouldBe 12
@@ -94,7 +95,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       import scalax.collection.hyperedges._
       val hE = 1 ~~ 2 ~~ 11 ~~ 12 // HyperEdge[Int]
       hE.node(hE.arity - 1) shouldBe 12
-      hE.ends.sum shouldBe 26
+      hE.ends.iterator.sum shouldBe 26
     }
 
     def `neighbors ` : Unit = {

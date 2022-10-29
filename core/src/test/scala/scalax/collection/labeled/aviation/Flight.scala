@@ -1,6 +1,6 @@
 package scalax.collection.labeled.aviation
 
-import scalax.collection.{One, OneOrMore}
+import scalax.collection.OneOrMore
 import scalax.collection.generic.{AbstractDiEdge, LDiEdgeToString, MultiEdge, MultiLEdgeToString, PartialEdgeMapper}
 
 import java.time.{DayOfWeek, LocalTime}
@@ -37,7 +37,7 @@ case class Flight(
 
   def airline: String = flightNo.takeWhile(_.isLetter)
 
-  override def extendKeyBy: OneOrMore[String] = One(flightNo)
+  override def extendKeyBy: OneOrMore[String] = OneOrMore(flightNo)
 
   override protected def labelToString: String = s"($flightNo, $departures, $duration)"
 

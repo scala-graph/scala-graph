@@ -80,7 +80,7 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
       }
 
     final protected[collection] def remove(edge: EdgeT): Boolean =
-      edge.ends.toSet forall (n => collection findElem n exists (_ remove edge))
+      edge.ends.iterator.toSet forall (n => collection findElem n exists (_ remove edge))
 
     @inline final protected[collection] def +=(edge: EdgeT): this.type = { add(edge); this }
     @inline final protected[collection] def -=(edge: EdgeT): this.type = { remove(edge); this }

@@ -96,7 +96,7 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
     System.identityHashCode(k) ^ System.identityHashCode(tab(i + 1))
   }
 
-  override def canEqual(other: Any): Boolean = other.isInstanceOf[EqHashMap[K, V]]
+  override def canEqual(other: Any): Boolean = other.isInstanceOf[EqHashMap[K @unchecked, V @unchecked]]
 
   override def containsElem(elem: (K, V)): Boolean = (index(elem._1): @switch) match {
     case i if i < 0 => false

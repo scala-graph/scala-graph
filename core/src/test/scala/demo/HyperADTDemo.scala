@@ -1,6 +1,7 @@
 package demo
 
-import scalax.collection.{One, OneOrMore, OrderedSubset, Superset}
+import scalax.collection.{OneOrMore, OrderedSubset, Superset}
+import scalax.collection.OneOrMore.one
 import scalax.collection.generic.{AbstractDiEdge, AbstractDiHyperEdge, AnyDiHyperEdge, DiEdgeToString, MultiEdge}
 import scalax.collection.immutable.{Graph, TypedGraphFactory}
 
@@ -46,7 +47,7 @@ object HyperADTDemo extends App {
         with Connection
 
     protected case class PrimaryKey private (table: outer.table.type, columns: OrderedSubset[Column, S])
-        extends AbstractDiHyperEdge(One(table: Table), OneOrMore.fromUnsafe(columns))
+        extends AbstractDiHyperEdge(one(table: Table), OneOrMore.fromUnsafe(columns))
         with MultiEdge
         with Connection {
       def extendKeyBy: OneOrMore[Any] = PrimaryKey.edgeKeyExtension
@@ -54,7 +55,7 @@ object HyperADTDemo extends App {
 
     case object PrimaryKey {
       def apply(): PrimaryKey      = PrimaryKey(table, primaryKeyColumns)
-      private val edgeKeyExtension = One(PrimaryKey.toString)
+      private val edgeKeyExtension = one(PrimaryKey.toString)
     }
 
     def edges: List[Connection] = primaryKeyEdge +: columnEdges
@@ -72,7 +73,7 @@ object HyperADTDemo extends App {
         table: outer.table.type,
         columns: OrderedSubset[Column, S],
         childTable: TableContext[CS]
-    ) extends AbstractDiHyperEdge(One(table: Table), OneOrMore.fromUnsafe(columns))
+    ) extends AbstractDiHyperEdge(one(table: Table), OneOrMore.fromUnsafe(columns))
         with MultiEdge
         with Connection {
       def extendKeyBy: OneOrMore[Any] = ForeignKey.edgeKeyExtension
@@ -85,7 +86,7 @@ object HyperADTDemo extends App {
       ): ForeignKey[CS] =
         ForeignKey(table, columns, childTable)
 
-      private val edgeKeyExtension = One(this.toString)
+      private val edgeKeyExtension = one(this.toString)
     }
   }
 

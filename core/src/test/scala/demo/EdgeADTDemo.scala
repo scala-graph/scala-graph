@@ -1,6 +1,7 @@
 package demo
 
-import scalax.collection.{One, OneOrMore}
+import scalax.collection.OneOrMore
+import scalax.collection.OneOrMore.one
 import scalax.collection.generic.{AbstractDiEdge, AbstractUnDiEdge, AnyEdge, MultiEdge}
 import scalax.collection.immutable.{Graph, TypedGraphFactory}
 
@@ -20,13 +21,13 @@ object EdgeADTDemo {
       extends AbstractDiEdge(from, to)
       with MultiEdge
       with Relation {
-    def extendKeyBy: OneOrMore[Any] = One(discriminator)
+    def extendKeyBy: OneOrMore[Any] = one(discriminator)
   }
-  sealed abstract protected class UnDiRelation(one: Person, another: Person, discriminator: AnyRef)
-      extends AbstractUnDiEdge(one, another)
+  sealed abstract protected class UnDiRelation(person_1: Person, person_2: Person, discriminator: AnyRef)
+      extends AbstractUnDiEdge(person_1, person_2)
       with MultiEdge
       with Relation {
-    def extendKeyBy: OneOrMore[Any] = One(discriminator)
+    def extendKeyBy: OneOrMore[Any] = one(discriminator)
   }
 
   final case class Parent(offspring: Person, parent: Person) extends DiRelation(offspring, parent, Parent)

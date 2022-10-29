@@ -36,13 +36,13 @@ class EqualityHyperSpec extends RefSpec with Matchers {
   def `directed hyperedges, bag like`: Unit = {
     import scalax.collection.hyperedges._
 
-    val sources = Several('A', 'B', 'C')
-    val targets = Several('D', 'D', 'E')
+    val sources = OneOrMore('A', 'B', 'C')
+    val targets = OneOrMore('D', 'D', 'E')
     val dhEdge  = DiHyperEdge(sources, targets)
     dhEdge shouldEqual sources ~~> targets
     dhEdge shouldEqual sources.reverse ~~> targets.reverse
 
-    dhEdge.ends should contain theSameElementsAs (sources ++ targets)
+    dhEdge.ends.toList should contain theSameElementsAs (sources ++ targets).toList
 
     val sourcesSize = sources.size
     dhEdge.arity shouldBe sourcesSize + targets.size
@@ -54,13 +54,13 @@ class EqualityHyperSpec extends RefSpec with Matchers {
   def `directed hyperedges, ordered`: Unit = {
     import scalax.collection.hyperedges.ordered._
 
-    val sources = Several('A', 'B', 'C')
-    val targets = Several('D', 'D', 'E')
+    val sources = OneOrMore('A', 'B', 'C')
+    val targets = OneOrMore('D', 'D', 'E')
     val dhEdge  = DiHyperEdge(sources, targets)
     dhEdge shouldEqual sources ~~> targets
     dhEdge shouldNot equal(sources.reverse ~~> targets.reverse)
 
-    dhEdge.ends should contain theSameElementsAs (sources ++ targets)
+    dhEdge.ends.toList should contain theSameElementsAs (sources ++ targets).toList
 
     val sourcesSize = sources.size
     dhEdge.arity shouldBe sourcesSize + targets.size
@@ -69,8 +69,8 @@ class EqualityHyperSpec extends RefSpec with Matchers {
     checkIndices(targets, dhEdge, sourcesSize)
   }
 
-  private def checkIndices(s: Several[_], dhEdge: AbstractDiHyperEdge[_], plus: Int = 0): Unit = {
-    val list = s.toList
+  private def checkIndices(s: OneOrMore[_], dhEdge: AbstractDiHyperEdge[_], plus: Int = 0): Unit = {
+    val list = s.iterator.toList
     for (i <- list.indices) dhEdge.node(i + plus) shouldBe list(i)
   }
 }

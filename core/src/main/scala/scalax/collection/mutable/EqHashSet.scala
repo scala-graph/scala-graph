@@ -65,7 +65,7 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity) extends Set[A]
   override protected def elemHashCode: (Array[AnyRef], Int) => Int =
     (tab, i) => System.identityHashCode(unmaskNull(tab(i)))
 
-  override def canEqual(other: Any): Boolean = other.isInstanceOf[EqHashSet[A]]
+  override def canEqual(other: Any): Boolean = other.isInstanceOf[EqHashSet[A @unchecked]]
 
   override def containsElem(elem: A): Boolean = index(elem) >= 0
 

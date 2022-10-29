@@ -133,7 +133,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
     final def findIncomingFrom(from: NodeT): Option[EdgeT] =
       edges find (isIncomingFrom(_, from))
 
-    final def degree: Int = edges.foldLeft(0)((cum, e) => cum + e.ends.count(_ eq this))
+    final def degree: Int = edges.foldLeft(0)((cum, e) => cum + e.ends.iterator.count(_ eq this))
 
     final def outDegree: Int = edges count (_.hasSource((n: NodeT) => n eq this))
 
@@ -150,7 +150,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
           e.hasTarget(nodeFilter) &&
           (if (includeHooks) true else !e.isLooping)
       if (ignoreMultiEdges && isMulti)
-        (edges filter edgePred).flatMap(_.targets).toSet.size
+        (edges filter edgePred).flatMap(_.targets.iterator).toSet.size
       else
         edges count edgePred
     }
@@ -170,7 +170,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
           e.hasSource(nodeFilter) &&
           (if (includeHooks) true else !e.isLooping)
       if (ignoreMultiEdges && isMulti)
-        (edges filter edgePred).flatMap(_.sources).toSet.size
+        (edges filter edgePred).flatMap(_.sources.iterator).toSet.size
       else
         edges count edgePred
     }
@@ -257,7 +257,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
       val diTargets, unDiTargets = MSet.empty[NodeT]
       // format: off
       di  .exists((e: EdgeT) => e.hasSource((n: NodeT) => n eq node) && ! e.targets.forall(diTargets.add)) ||
-      unDi.exists((e: EdgeT) => (e.node(0) eq node)                  && ! e.ends.drop(1).forall(unDiTargets.add))
+      unDi.exists((e: EdgeT) => (e._1 eq node)                       && ! e.ends.iterator.drop(1).forall(unDiTargets.add))
       // format: on
     }
   }

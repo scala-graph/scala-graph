@@ -7,6 +7,8 @@ import scalax.collection.generic._
 import scalax.collection.edges._
 import scalax.collection.edges.labeled._
 
+import scala.annotation.tailrec
+
 abstract class TGraph[N, E <: Edge[N], G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
     val g: G[N, E]
 ) {
@@ -83,19 +85,31 @@ object Data {
     2 ~ 2  % 1
   )
 
-  def shuffleNotEqual[T, C](xs: IterableOnce[T])(implicit bf: BuildFrom[xs.type, T, C]): C = {
-    def loop(shuffled: C): C =
-      if (shuffled == xs) loop(shuffle(xs))
-      else shuffled
+  def shuffleNotEqual[A, C <: IterableOnce[A]](xs: IterableOnce[A])(implicit bf: BuildFrom[xs.type, A, C]): C =
+    xs match {
+      case _: Iterable[A] =>
+        @tailrec def loop(): C = {
+          val shuffled = shuffle(xs)
+          if (shuffled == xs) loop()
+          else shuffled
+        }
+        loop()
 
-    loop(shuffle(xs))
-  }
+      case it: Iterator[A] =>
+        val source = it.toBuffer
+        @tailrec def loop(): C = {
+          val shuffled = shuffle(source)
+          if (shuffled == source) loop()
+          else shuffled.iterator.asInstanceOf[C]
+        }
+        loop()
+    }
 
-  def shuffleNotEqual[N, C[X] <: OneOrMore[X]](o: C[N]): Several[N] = o match {
-    case One(_)        => throw new IllegalArgumentException("Cannot shuffle one.")
-    case s: Several[N] => shuffleNotEqual(s)
+  def shuffleNotEqual[N, C[X] <: OneOrMore[X]](o: C[N]): OneOrMore[N] = o match {
+    case OneOrMore(_, tail) if tail.isEmpty => throw new IllegalArgumentException("Cannot shuffle single element.")
+    case more                               => OneOrMore.fromUnsafe(shuffleNotEqual(more.iterator))
   }
 
   def shuffleNotEqual[N](s: Several[N]): Several[N] =
-    Several.fromUnsafe(shuffleNotEqual(s.toList))
+    Several.fromUnsafe(shuffleNotEqual(s.iterator))
 }

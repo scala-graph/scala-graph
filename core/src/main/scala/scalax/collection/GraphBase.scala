@@ -1,10 +1,10 @@
 package scalax.collection
 
 import scala.collection.{Iterable => AnyIterable}
-import scala.collection.immutable.Iterable
 import scala.language.implicitConversions
-import scala.util.Random
 import scala.collection.{ExtSetMethods, FilterableSet}
+import scala.util.Random
+import scala.util.chaining._
 
 import scalax.collection.generic._
 import generic.AnyOrdering
@@ -403,31 +403,25 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
 
       val freshNodes = MMap.empty[N, NodeT]
 
-      def inner(ends: Iterable[N]): Iterable[NodeT] = {
-        def mkNode(n: N): NodeT =
-          Option(lookup(n)) getOrElse (
-            freshNodes getOrElse (n, {
-              val newN = newNode(n)
-              freshNodes += n -> newN
-              newN
-            })
+      def mkNode(n: N): NodeT =
+        Option(lookup(n)) getOrElse
+          freshNodes.getOrElse(
+            n,
+            newNode(n).tap(freshNodes += n -> _)
           )
-        ends map mkNode
-      }
 
       outer match {
         case edge: AnyEdge[N] =>
-          val (n_1, n_2) = (edge.node(0), edge.node(1))
+          val AnyEdge(n_1, n_2) = edge
           @inline def inner(n: N): NodeT = {
             val found = lookup(n)
             if (null eq found) newNode(n) else found
           }
           val inner_1 = inner(n_1)
           val inner_2 = if (n_1 == n_2) inner_1 else inner(n_2)
-
           newEdge(outer, inner_1, inner_2)
-        case diHyper: AnyDiHyperEdge[N] => newDiHyperEdge(outer, inner(diHyper.sources), inner(diHyper.targets))
-        case hyper: AnyHyperEdge[N]     => newHyperEdge(outer, inner(hyper.ends))
+        case diHyper: AnyDiHyperEdge[N] => newDiHyperEdge(outer, diHyper.sources map mkNode, diHyper.targets map mkNode)
+        case hyper: AnyHyperEdge[N]     => newHyperEdge(outer, hyper.ends map mkNode)
       }
     }
 
@@ -446,8 +440,8 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
     implicit final def toOuterEdge(edge: EdgeT): E = edge.outer
   }
 
-  protected def newHyperEdge(outer: E, nodes: Iterable[NodeT]): EdgeT
-  protected def newDiHyperEdge(outer: E, sources: Iterable[NodeT], targets: Iterable[NodeT]): EdgeT
+  protected def newHyperEdge(outer: E, nodes: Several[NodeT]): EdgeT
+  protected def newDiHyperEdge(outer: E, sources: OneOrMore[NodeT], targets: OneOrMore[NodeT]): EdgeT
   protected def newEdge(outer: E, node_1: NodeT, node_2: NodeT): EdgeT
 
   final lazy val defaultEdgeOrdering = EdgeOrdering { (a: EdgeT, b: EdgeT) =>
