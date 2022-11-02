@@ -1,6 +1,6 @@
 package demo
 
-import scalax.collection.{OneOrMore, OrderedSubset, Superset}
+import scalax.collection.OneOrMore
 import scalax.collection.OneOrMore.one
 import scalax.collection.generic.{AbstractDiEdge, AbstractDiHyperEdge, AnyDiHyperEdge, DiEdgeToString, MultiEdge}
 import scalax.collection.immutable.{Graph, TypedGraphFactory}

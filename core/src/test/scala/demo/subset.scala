@@ -1,4 +1,4 @@
-package scalax.collection
+package demo
 
 import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
