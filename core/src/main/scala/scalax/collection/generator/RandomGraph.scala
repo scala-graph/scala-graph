@@ -237,7 +237,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
       nrToAdd = order,
       add = add(nodeFactory),
       infiniteMsg = "'nodeFactory' yields too many duplicates.",
-      false
+      gentle = false
     )
 
     private def add(n: N): Boolean =
@@ -324,7 +324,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
     private val edges = MSet.empty[E]
     def outerEdges    = edges
 
-    implicit private val degrees = nodes.degrees
+    implicit private val degrees: Degrees = nodes.degrees
 
     if (connected)
       nodes.sliding2 { (n1, n2) =>
@@ -336,15 +336,15 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
     do {
       val mayFinish = degrees.mayFinish
       added = addExact[E](
-        1,
-        if (edge.isDefined && edges.add(edge.draw)) {
-          edge.setUsed
-        } else {
-          edge = new RandomEdge(weightFactory, labelFactory)
-          false
-        },
+        nrToAdd = 1,
+        add =
+          if (edge.isDefined && edges.add(edge.draw)) edge.setUsed
+          else {
+            edge = new RandomEdge(weightFactory, labelFactory)
+            false
+          },
         "An 'edgeCompanion' returns too many duplicates or the requested node degree is too high.",
-        mayFinish
+        gentle = mayFinish
       )
       if (added) edge = new RandomEdge(weightFactory, labelFactory)
     } while (added && edge.isDefined)

@@ -4,6 +4,7 @@ import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
+import scalax.collection.OneOrMore.{more, one}
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import scalax.collection.hyperedges._
@@ -15,7 +16,6 @@ class EditingHyperSpec
     extends Suites(
       new EditingHyper[immutable.Graph](immutable.Graph),
       new EditingHyper[mutable.Graph](mutable.Graph),
-      new EditingHyperImmutable,
       new EditingHyperMutable
     )
 
@@ -56,18 +56,19 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
         DiHyperEdge.unsafeFrom(List(1), Nil)
       }
 
-      val sources = Several(1, 2)
-      val targets = Several(2, 3)
+      val sources = more(1, 2)
+      val targets = more(2, 3)
       val h       = DiHyperEdge(sources, targets)
 
-      DiHyperEdge.from(sources, targets) shouldEqual Some(h)
+      DiHyperEdge.from(List(1, 2), List(2, 3)) shouldEqual Some(h)
+      DiHyperEdge.from(List(1, 2), Nil) shouldEqual None
       sources ~~> targets shouldEqual h
       h.arity shouldBe sources.size + targets.size
       h.toString shouldBe "{1, 2} ~~> {2, 3}"
 
-      one ~~> targets shouldEqual DiHyperEdge(one, targets)
-      sources ~~> one shouldEqual DiHyperEdge(sources, one)
-      one ~~> one shouldEqual DiHyperEdge(1)(1)
+      single ~~> targets shouldEqual DiHyperEdge(single, targets)
+      sources ~~> single shouldEqual DiHyperEdge(sources, single)
+      single ~~> single shouldEqual DiHyperEdge(1)(1)
 
       val g = factory[Int, AnyHyperEdge](1, h, 1 ~ 2)
       g.nodes should have size 3
@@ -85,12 +86,12 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
     }
   }
 
-  val one = One(1)
+  val single = one(1)
   val hDi = factory(
-    one ~~> Several(1, 5),
-    one ~~> Several(2, 5),
-    one ~~> Several(3, 5),
-    one ~~> Several(4, 9)
+    single ~~> more(1, 5),
+    single ~~> more(2, 5),
+    single ~~> more(3, 5),
+    single ~~> more(4, 9)
   )
 
   object `diSuccessors ` {
@@ -118,25 +119,21 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
   }
 
   def `match hyperedge`: Unit = {
-    val HyperEdge(Seq(n1, n2, n3)) = 1 ~~ 2 ~~ 3
+    val HyperEdge(Several.Seq(n1, n2, n3)) = 1 ~~ 2 ~~ 3
     n1 + n2 + n3 shouldBe 6
   }
 
   def `match directed hyperedge`: Unit = {
     val count   = 3
-    val sources = Several.fromUnsafe(List.tabulate(count - 1)(_ + 1))
-    val target  = One(count)
+    val sources = OneOrMore.fromUnsafe(List.tabulate(count - 1)(_ + 1))
+    val target  = one(count)
     val diHyper = sources ~~> target
 
-    val Seq(s1, _) ~~> (t @ One(c)) = diHyper
+    val OneOrMore.Seq(s1, _*) ~~> (t @ OneOrMore.Seq(c)) = diHyper
     s1 shouldBe sources.head
     c shouldBe count
     t shouldBe target
   }
-}
-
-private class EditingHyperImmutable extends RefSpec with Matchers {
-  // import immutable.Graph
 }
 
 private class EditingHyperMutable extends RefSpec with Matchers {
@@ -144,26 +141,31 @@ private class EditingHyperMutable extends RefSpec with Matchers {
 
   object `mutable graphs with labeled edges` {
     def `'diSuccessors' when directed hypergraph`: Unit = {
-      val (one, two, three, oneOneTwo, oneTwoThree) = (1, 2, 3, One(1) ~~> Several(1, 2), One(1) ~~> Several(2, 3))
-
-      val g        = Graph(oneOneTwo, oneTwoThree)
-      val (n1, n2) = (g get one, g get two)
+      val (_1_to_1_2, _1_to_2_3) = (
+        one(1) ~~> more(1, 2),
+        one(1) ~~> more(2, 3)
+      )
+      val g        = Graph(_1_to_1_2, _1_to_2_3)
+      val (n1, n2) = (g get 1, g get 2)
 
       n2.diSuccessors shouldBe empty
-      n1.diSuccessors should be(Set(two, three))
-      n1 findOutgoingTo n1 should be(Some(oneOneTwo))
+      n1.diSuccessors should be(Set(2, 3))
+      n1 findOutgoingTo n1 should be(Some(_1_to_1_2))
 
-      g subtractOne oneTwoThree // Graph(oneOneTwo)
-      n1.diSuccessors should be(Set(two))
-      n1 findOutgoingTo n1 should be(Some(oneOneTwo))
+      g subtractOne _1_to_2_3
+      g shouldEqual Graph(_1_to_1_2, 3)
+      n1.diSuccessors should be(Set(2))
+      n1 findOutgoingTo n1 should be(Some(_1_to_1_2))
 
-      g subtractOne two // Graph(one)
+      g subtractOne 2
+      g shouldEqual Graph(1, 3)
       n1.diSuccessors shouldBe empty
       n1 findOutgoingTo n1 should be(None)
 
-      g += oneOneTwo // Graph(oneOneTwo)
+      g += _1_to_1_2
+      g shouldEqual Graph(_1_to_1_2, 3)
       n1.diSuccessors should be(Set(2))
-      n1 findOutgoingTo n1 should be(Some(oneOneTwo))
+      n1 findOutgoingTo n1 should be(Some(_1_to_1_2))
     }
   }
 }

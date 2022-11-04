@@ -61,7 +61,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
     * The second is true because of duplicate elimination and undirected edge equivalence.
     */
   override def equals(that: Any): Boolean = that match {
-    case that: AnyGraph[N, E] =>
+    case that: AnyGraph[N, E] @unchecked =>
       (this eq that) ||
       this.order == that.order &&
       this.size == that.size && {
@@ -156,31 +156,31 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
 
   import scala.{SerialVersionUID => S}
   // format: off
-  @S(-901) class InnerHyperEdge       (val ends: Iterable[NodeT], val outer: E) extends Abstract.HyperEdge       (ends) with EdgeT
-  @S(-902) class InnerOrderedHyperEdge(val ends: Iterable[NodeT], val outer: E) extends Abstract.OrderedHyperEdge(ends) with EdgeT
+  @S(-901) class InnerHyperEdge       (val ends: Several[NodeT], val outer: E) extends Abstract.HyperEdge       (ends) with EdgeT
+  @S(-902) class InnerOrderedHyperEdge(val ends: Several[NodeT], val outer: E) extends Abstract.OrderedHyperEdge(ends) with EdgeT
 
-  @S(-903) class InnerDiHyperEdge       (override val sources: Iterable[NodeT], override val targets: Iterable[NodeT], val outer: E) extends Abstract.DiHyperEdge       (sources, targets) with EdgeT
-  @S(-904) class InnerOrderedDiHyperEdge(override val sources: Iterable[NodeT], override val targets: Iterable[NodeT], val outer: E) extends Abstract.OrderedDiHyperEdge(sources, targets) with EdgeT
+  @S(-903) class InnerDiHyperEdge       (override val sources: OneOrMore[NodeT], override val targets: OneOrMore[NodeT], val outer: E) extends Abstract.DiHyperEdge       (sources, targets) with EdgeT
+  @S(-904) class InnerOrderedDiHyperEdge(override val sources: OneOrMore[NodeT], override val targets: OneOrMore[NodeT], val outer: E) extends Abstract.OrderedDiHyperEdge(sources, targets) with EdgeT
 
   @S(-905) class InnerUnDiEdge(val source: NodeT, val target: NodeT, val outer: E) extends Abstract.UnDiEdge(source, target) with EdgeT
   @S(-906) class InnerDiEdge  (val source: NodeT, val target: NodeT, val outer: E) extends Abstract.DiEdge  (source, target) with EdgeT
 
-  @transient object InnerHyperEdge        { def unapply(edge:        InnerHyperEdge): Option[Iterable[NodeT]] = Some(edge.ends) }
-  @transient object InnerOrderedHyperEdge { def unapply(edge: InnerOrderedHyperEdge): Option[Iterable[NodeT]] = Some(edge.ends) }
+  @transient object InnerHyperEdge        { def unapply(edge:        InnerHyperEdge): Option[Several[NodeT]] = Some(edge.ends) }
+  @transient object InnerOrderedHyperEdge { def unapply(edge: InnerOrderedHyperEdge): Option[Several[NodeT]] = Some(edge.ends) }
 
-  @transient object InnerDiHyperEdge        { def unapply(edge:        InnerDiHyperEdge): Option[(Iterable[NodeT], Iterable[NodeT])] = Some(edge.sources, edge.targets) }
-  @transient object InnerOrderedDiHyperEdge { def unapply(edge: InnerOrderedDiHyperEdge): Option[(Iterable[NodeT], Iterable[NodeT])] = Some(edge.sources, edge.targets) }
+  @transient object InnerDiHyperEdge        { def unapply(edge:        InnerDiHyperEdge): Option[(OneOrMore[NodeT], OneOrMore[NodeT])] = Some(edge.sources, edge.targets) }
+  @transient object InnerOrderedDiHyperEdge { def unapply(edge: InnerOrderedDiHyperEdge): Option[(OneOrMore[NodeT], OneOrMore[NodeT])] = Some(edge.sources, edge.targets) }
 
   @transient object InnerUnDiEdge { def unapply(edge: InnerUnDiEdge): Option[(NodeT, NodeT)] = Some(edge.source, edge.target) }
   @transient object InnerDiEdge   { def unapply(edge:   InnerDiEdge): Option[(NodeT, NodeT)] = Some(edge.source, edge.target) }
   // format: on
 
-  final override protected def newHyperEdge(outer: E, nodes: Iterable[NodeT]): EdgeT = outer match {
+  final override protected def newHyperEdge(outer: E, nodes: Several[NodeT]): EdgeT = outer match {
     case _: AnyHyperEdge[N] with OrderedEndpoints => new InnerOrderedHyperEdge(nodes, outer)
     case _: AnyHyperEdge[N]                       => new InnerHyperEdge(nodes, outer)
     case e                                        => throw new MatchError(s"Unexpected HyperEdge $e")
   }
-  protected def newDiHyperEdge(outer: E, sources: Iterable[NodeT], targets: Iterable[NodeT]): EdgeT = outer match {
+  protected def newDiHyperEdge(outer: E, sources: OneOrMore[NodeT], targets: OneOrMore[NodeT]): EdgeT = outer match {
     case _: AnyDiHyperEdge[N] with OrderedEndpoints => new InnerOrderedDiHyperEdge(sources, targets, outer)
     case _: AnyDiHyperEdge[N]                       => new InnerDiHyperEdge(sources, targets, outer)
     case e                                          => throw new MatchError(s"Unexpected DiHyperEdge $e")
@@ -201,7 +201,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   }
 
   final def contains(node: N): Boolean = nodes contains newNode(node)
-  final def contains(edge: E): Boolean = edges contains newHyperEdge(edge, Nil)
+  final def contains(edge: E): Boolean = edges contains newHyperEdge(edge, edge.ends map newNode)
 
   def iterator: Iterator[InnerElem] = nodes.iterator ++ edges.iterator
 
@@ -308,8 +308,8 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
         case InnerEdge(_, outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
           (nMap(n1), nMap(n2)) pipe { case newEnds =>
             outer match {
-              case pM: PartialEdgeMapper[E] => pM.map[N].lift(newEnds).map(builder.+=)
-              case _                        =>
+              case pM: PartialEdgeMapper[E @unchecked] => pM.map[N].lift(newEnds).map(builder.+=)
+              case _                                   =>
             }
           }
         case InnerEdge(
@@ -385,13 +385,13 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
           (nMap(n1), nMap(n2)) pipe { case (nn1, nn2) =>
             fEdge.map(f => builder += f(e, nn1, nn2))
           }
-        case e @ InnerEdge(_, AnyDiHyperEdge(sources: Iterable[N], targets: Iterable[N])) =>
+        case e @ InnerEdge(_, AnyDiHyperEdge(sources: OneOrMore[N], targets: OneOrMore[N])) =>
           (sources.map(nMap), targets.map(nMap)) pipe { case (newSources, newTargets) =>
-            fDiHyperEdge.map(f => builder += f(e, OneOrMore.fromUnsafe(newSources), OneOrMore.fromUnsafe(newTargets)))
+            fDiHyperEdge.map(f => builder += f(e, newSources, newTargets))
           }
-        case e @ InnerEdge(_, AnyHyperEdge(ends: Iterable[N])) =>
+        case e @ InnerEdge(_, AnyHyperEdge(ends: Several[N])) =>
           ends.map(nMap) pipe { newEnds =>
-            builder += fHyperEdge(e, Several.fromUnsafe(newEnds))
+            builder += fHyperEdge(e, newEnds)
           }
       }
       builder.result
@@ -415,9 +415,9 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
           (nMap(n1), nMap(n2)) pipe { case (nn1, nn2) =>
             fEdge.map(f => builder += f(e, nn1, nn2))
           }
-        case e @ InnerEdge(_, AnyDiHyperEdge(sources: Iterable[N], targets: Iterable[N])) =>
+        case e @ InnerEdge(_, AnyDiHyperEdge(sources: OneOrMore[N], targets: OneOrMore[N])) =>
           (sources.map(nMap), targets.map(nMap)) pipe { case (newSources, newTargets) =>
-            builder += fDiHyperEdge(e, OneOrMore.fromUnsafe(newSources), OneOrMore.fromUnsafe(newTargets))
+            builder += fDiHyperEdge(e, newSources, newTargets)
           }
       }
       builder.result

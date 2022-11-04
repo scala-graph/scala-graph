@@ -11,7 +11,7 @@ object SingleLabel {
 }
 
 trait ExtendedKeyBySingleLabel extends MultiEdge { this: Edge[_] with SingleLabel[_] =>
-  def extendKeyBy: OneOrMore[Any] = One(label)
+  def extendKeyBy: OneOrMore[Any] = OneOrMore(label)
 }
 
 /** Intermediate infix extractor for the "unlabeled part" of a weighted edge.
@@ -51,5 +51,5 @@ trait UnapplyGenericHyperLabel[L] {
 }
 
 trait ExtendedKeyByWeight extends MultiEdge { this: Edge[_] =>
-  override def extendKeyBy: One[Double] = One(weight)
+  override def extendKeyBy: OneOrMore[Double] = OneOrMore(weight)
 }

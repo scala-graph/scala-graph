@@ -1,9 +1,10 @@
 package scalax.collection
 
-import scala.collection.immutable.Iterable
 import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
+
+import scalax.collection.OneOrMore.more
 import scalax.collection.Data.shuffleNotEqual
 import scalax.collection.generic.{Edge, GenericGraphCoreFactory}
 
@@ -54,8 +55,8 @@ object EditingLabeledHyperSpec {
       def map[N](sources: OneOrMore[N], targets: OneOrMore[N]): MyDiHyperEdge[N] = copy(sources, targets)
     }
 
-    val sources = Several('a', 'b')
-    val targets = Several('c', 'd')
+    val sources = more('a', 'b')
+    val targets = more('c', 'd')
     val label   = 1
     val diHE    = MyDiHyperEdge(sources, targets, label)
   }
@@ -69,8 +70,8 @@ object EditingLabeledHyperSpec {
       def map[N](sources: OneOrMore[N], targets: OneOrMore[N]): MyDiHyperEdge[N] = copy(sources, targets)
     }
 
-    val sources = Several('a', 'b', 'x')
-    val targets = Several('c', 'd')
+    val sources = more('a', 'b', 'x')
+    val targets = more('c', 'd')
     val label   = 1
     val diHE    = MyDiHyperEdge(sources, targets, label)
   }
@@ -132,9 +133,12 @@ object EditingLabeledHyperSpec {
     val label   = OrderedLabeledDi.label
     val diHE    = MyDiHyperEdge(sources, targets, label)
   }
+
+  def endsToString(ends: OneOrMore[_]) = ends.iterator.mkString("{", ", ", "}")
 }
 
 private class LabeledHyperEdges extends RefSpec with Matchers {
+  import EditingLabeledHyperSpec.endsToString
 
   object `a generic undirected, mappable labeled hyperedge` {
     import hyperedges._
@@ -142,7 +146,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     import EditingLabeledHyperSpec.Labeled._
 
     def `meets toString convention`: Unit =
-      hE.toString shouldBe s"${ends mkString " ~~ "} :+ 1"
+      hE.toString shouldBe s"${ends.iterator mkString " ~~ "} :+ 1"
 
     def `meets equality rules`: Unit = {
       hE.copy(label = 9) shouldEqual hE
@@ -166,8 +170,8 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual hE
       }
       hE match {
-        case Seq(n1, n2, n3) +: label =>
-          val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
+        case Several.Seq(n1, n2, n3) +: label =>
+          val reconstructed = MyHyperEdge(Several(n1, n2, n3 :: Nil), label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
         case _ +: _ => fail()
@@ -181,7 +185,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     import EditingLabeledHyperSpec.OrderedLabeled._
 
     def `meets toString convention`: Unit =
-      hE.toString shouldBe s"${ends mkString " ~~ "} :+ 1"
+      hE.toString shouldBe s"${ends.iterator mkString " ~~ "} :+ 1"
 
     def `meets equality rules`: Unit = {
       hE.copy(label = 9) shouldEqual hE
@@ -205,8 +209,8 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual hE
       }
       hE match {
-        case Seq(n1, n2, n3) +: label =>
-          val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
+        case Several.Seq(n1, n2, n3) +: label =>
+          val reconstructed = MyHyperEdge(Several(n1, n2, n3 :: Nil), label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
         case _ +: _ => fail()
@@ -219,10 +223,8 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     import hyperedges.labeled._
     import EditingLabeledHyperSpec.LabeledDi._
 
-    def `meets toString convention`: Unit = {
-      def nodesToString(nodes: Iterable[_]) = nodes.mkString("{", ", ", "}")
-      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} :+ $label"
-    }
+    def `meets toString convention`: Unit =
+      diHE.toString shouldBe s"${endsToString(sources)} ~~> ${endsToString(targets)} :+ $label"
 
     def `meets equality rules`: Unit = {
       diHE.copy(label = 9) shouldEqual diHE
@@ -248,10 +250,10 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case Seq(s1, s2) :~~> Seq(t1, t2) +: label =>
+        case OneOrMore.Seq(s1, s2, _*) :~~> OneOrMore.Seq(t1, t2, _*) +: label =>
           val reconstructed = MyDiHyperEdge(
-            Several.fromUnsafe(List(s1, s2)),
-            Several.fromUnsafe(List(t1, t2)),
+            more(s1, s2),
+            more(t1, t2),
             label
           )
           "reconstructed: MyDiHyperEdge[Char]" should compile
@@ -266,15 +268,13 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     import hyperedges.ordered.labeled._
     import EditingLabeledHyperSpec.OrderedLabeledDi._
 
-    def `meets toString convention`: Unit = {
-      def nodesToString(nodes: Iterable[_]) = nodes.mkString("{", ", ", "}")
-      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} :+ $label"
-    }
+    def `meets toString convention`: Unit =
+      diHE.toString shouldBe s"${endsToString(sources)} ~~> ${endsToString(targets)} :+ $label"
 
     def `meets equality rules`: Unit = {
       diHE.copy(label = 9) shouldEqual diHE
-      diHE shouldNot equal(DiHyperEdge.unsafeFrom(diHE.sources, diHE.targets))
-      diHE shouldNot equal(DiHyperEdge.unsafeFrom(shuffleNotEqual(diHE.sources), shuffleNotEqual(diHE.targets)))
+      diHE shouldNot equal(DiHyperEdge(diHE.sources, diHE.targets))
+      diHE shouldNot equal(DiHyperEdge(shuffleNotEqual(diHE.sources), shuffleNotEqual(diHE.targets)))
     }
 
     def `supports infix construction`: Unit = {
@@ -295,10 +295,10 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case Several(s1, s2, sRest) :~~> Several(t1, t2, tRest) +: label =>
+        case OneOrMore.Seq(s1, s2, sRest @ _*) :~~> OneOrMore.Seq(t1, t2, tRest @ _*) +: label =>
           val reconstructed = MyDiHyperEdge(
-            Several.fromUnsafe(List(s1, s2) ++ sRest),
-            Several.fromUnsafe(List(t1, t2) ++ tRest),
+            more(s1, s2, sRest: _*),
+            more(t1, t2, tRest: _*),
             label
           )
           "reconstructed: MyDiHyperEdge[Char]" should compile
@@ -314,7 +314,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     import EditingLabeledHyperSpec.MultiLabeled._
 
     def `meets toString convention`: Unit =
-      hE.toString shouldBe s"${ends mkString " ~~ "} :++ 1"
+      hE.toString shouldBe s"${ends.iterator mkString " ~~ "} :++ 1"
 
     def `meets equality rules`: Unit = {
       hE.copy(label = 9) shouldNot equal(hE)
@@ -337,8 +337,8 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual hE
       }
       hE match {
-        case Seq(n1, n2, n3) ++ label =>
-          val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
+        case Several.Seq(n1, n2, n3) ++ label =>
+          val reconstructed = MyHyperEdge(Several(n1, n2, n3 :: Nil), label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
         case _ ++ _ => fail()
@@ -352,7 +352,7 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     import EditingLabeledHyperSpec.MultiOrderedLabeled._
 
     def `meets toString convention`: Unit =
-      hE.toString shouldBe s"${ends mkString " ~~ "} :++ 1"
+      hE.toString shouldBe s"${ends.iterator mkString " ~~ "} :++ 1"
 
     def `meets equality rules`: Unit = {
       hE.copy(label = 9) shouldNot equal(hE)
@@ -376,8 +376,8 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual hE
       }
       hE match {
-        case Seq(n1, n2, n3) ++ label =>
-          val reconstructed = MyHyperEdge(Several.fromUnsafe(n1 :: n2 :: n3 :: Nil), label)
+        case Several.Seq(n1, n2, n3) ++ label =>
+          val reconstructed = MyHyperEdge(Several(n1, n2, n3 :: Nil), label)
           "reconstructed: MyHyperEdge[Char]" should compile
           reconstructed shouldEqual hE
         case _ ++ _ => fail()
@@ -390,10 +390,8 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     import hyperedges.multilabeled._
     import EditingLabeledHyperSpec.MultiLabeledDi._
 
-    def `meets toString convention`: Unit = {
-      def nodesToString(nodes: Iterable[_]) = nodes.mkString("{", ", ", "}")
-      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} :++ $label"
-    }
+    def `meets toString convention`: Unit =
+      diHE.toString shouldBe s"${endsToString(sources)} ~~> ${endsToString(targets)} :++ $label"
 
     def `meets equality rules`: Unit = {
       diHE.copy(label = 9) shouldNot equal(diHE)
@@ -418,10 +416,10 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case Several(s1, s2, _) :~~> Several(t1, t2, _) ++: label =>
+        case OneOrMore.Seq(s1, s2, _*) :~~> OneOrMore.Seq(t1, t2, _*) ++: label =>
           val reconstructed = MyDiHyperEdge(
-            Several.fromUnsafe(List(s1, s2)),
-            Several.fromUnsafe(List(t1, t2)),
+            more(s1, s2),
+            more(t1, t2),
             label
           )
           "reconstructed: MyDiHyperEdge[Char]" should compile
@@ -436,10 +434,8 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
     import hyperedges.ordered.multilabeled._
     import EditingLabeledHyperSpec.MultiOrderedLabeledDi._
 
-    def `meets toString convention`: Unit = {
-      def nodesToString(nodes: Iterable[_]) = nodes.mkString("{", ", ", "}")
-      diHE.toString shouldBe s"${nodesToString(sources)} ~~> ${nodesToString(targets)} :++ $label"
-    }
+    def `meets toString convention`: Unit =
+      diHE.toString shouldBe s"${endsToString(sources)} ~~> ${endsToString(targets)} :++ $label"
 
     def `meets equality rules`: Unit = {
       diHE.copy(label = 9) shouldNot equal(diHE)
@@ -465,10 +461,10 @@ private class LabeledHyperEdges extends RefSpec with Matchers {
           reconstructed shouldEqual diHE
       }
       diHE match {
-        case Several(s1, s2, sRest) :~~> Several(t1, t2, tRest) ++: label =>
+        case OneOrMore.Seq(s1, s2, sRest @ _*) :~~> OneOrMore.Seq(t1, t2, tRest @ _*) ++: label =>
           val reconstructed = MyDiHyperEdge(
-            Several.fromUnsafe(List(s1, s2) ++ sRest),
-            Several.fromUnsafe(List(t1, t2) ++ tRest),
+            more(s1, s2, sRest: _*),
+            more(t1, t2, tRest: _*),
             label
           )
           "reconstructed: MyDiHyperEdge[Char]" should compile

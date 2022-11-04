@@ -157,7 +157,7 @@ trait EqHash[A, C <: EqHash[A, C]] {
   def containsElem(elem: A): Boolean
 
   override def equals(other: Any): Boolean = other match {
-    case that: EqHash[A, C] with IterableOnce[A] with Equals =>
+    case that: EqHash[A @unchecked, C @unchecked] with IterableOnce[A @unchecked] with Equals =>
       (that canEqual this) &&
       that._size == this._size &&
       that.iterator.forall(containsElem)

@@ -5,6 +5,7 @@ import org.scalatest.matchers.should.Matchers
 
 import org.scalatest.Suites
 
+import scalax.collection.OneOrMore.{more, one}
 import scalax.collection.OuterImplicits._
 import scalax.collection.generic._
 import scalax.collection.hyperedges._
@@ -42,21 +43,21 @@ object MappingHyperSpec {
     }
 
     object `generic directed hypergraph` {
-      val g = factory(Several(1, 2) ~~> One(3), One(3) ~~> Several(4, 1))
+      val g = factory(more(1, 2) ~~> one(3), one(3) ~~> more(4, 1))
 
       def `map by identity`: Unit =
         g.map(identity) shouldEqual g
 
       def `map nodes`: Unit =
-        g.map(_.toString) shouldEqual factory(Several("1", "2") ~~> One("3"), One("3") ~~> Several("4", "1"))
+        g.map(_.toString) shouldEqual factory(more("1", "2") ~~> one("3"), one("3") ~~> more("4", "1"))
 
       def `map both nodes and edges`: Unit =
         // increment node values and, mapping edges, add sources to targets ends
         g.mapDiHyper(
           fNode = _.outer + 1,
-          fDiHyperEdge = (newSources: OneOrMore[Int], newTargets: OneOrMore[Int]) =>
-            newSources ~~> Several.fromUnsafe(newTargets ++ newSources)
-        ) shouldEqual factory(Several(2, 3) ~~> Several(4, 2, 3), One(4) ~~> Several(5, 2, 4))
+          fDiHyperEdge =
+            (newSources: OneOrMore[Int], newTargets: OneOrMore[Int]) => newSources ~~> (newTargets ++ newSources)
+        ) shouldEqual factory(more(2, 3) ~~> more(4, 2, 3), one(4) ~~> more(5, 2, 4))
     }
   }
 }
