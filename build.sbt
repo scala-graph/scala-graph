@@ -94,6 +94,6 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
   libraryDependencies ++= Seq(
     "org.scalatest"     %% "scalatest"       % "3.2.14"   % "test",
-    "org.scalatestplus" %% "scalacheck-1-16" % "3.2.13.0" % "test"
+    "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % "test"
   )
 ) ++ GraphSonatype.settings
