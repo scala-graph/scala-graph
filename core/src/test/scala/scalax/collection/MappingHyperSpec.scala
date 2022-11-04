@@ -25,7 +25,7 @@ object MappingHyperSpec {
   ) extends RefSpec
       with Matchers {
 
-    object `generic hypergraph` {
+    object `mapping a generic hypergraph you can` {
       val g = factory(1 ~~ 2 ~~ 3, 3 ~~ 4 ~~ 1)
 
       def `map by identity`: Unit =
@@ -42,7 +42,7 @@ object MappingHyperSpec {
         ) shouldEqual factory(2 ~~ 3, 4 ~~ 5)
     }
 
-    object `generic directed hypergraph` {
+    object `mapping a generic directed hypergraph you can` {
       val g = factory(more(1, 2) ~~> one(3), one(3) ~~> more(4, 1))
 
       def `map by identity`: Unit =

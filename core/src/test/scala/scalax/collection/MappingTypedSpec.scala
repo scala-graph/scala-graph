@@ -12,7 +12,7 @@ import scalax.collection.immutable.TypedGraphFactory
 
 class MappingTypedSpec extends RefSpec with Matchers {
 
-  object `when mapping a typed graph you may` {
+  object `mapping a typed graph you can` {
     import MappingTypedSpec._
     import TGraph.OuterImplicits._
 
@@ -42,8 +42,8 @@ class MappingTypedSpec extends RefSpec with Matchers {
 
     def `upcast nodes to another typed edge if the typed edge mapper is passed`: Unit =
       TGraph(AConnector(a_1, a_1)) pipe { g =>
-        g.mapBounded[Node, Connector](_ => b_0_0, Connector(_, _)) pipe { mapped =>
-          mapped.edges.head.outer should ===(Connector(b_0_0, b_0_0))
+        g.mapBounded[Node, Connector](_ => b_0_0, Connector) pipe { mapped =>
+          mapped.edges.head.outer shouldEqual Connector(b_0_0, b_0_0)
         }
       }
 
@@ -51,9 +51,10 @@ class MappingTypedSpec extends RefSpec with Matchers {
       TGraph(AConnector(a_1, a_1)) pipe { g =>
         def toString(a: A): String = s"""string-$a"""
 
-        val mapped = g.map(n => toString(n.outer), UnDiEdge[String] _)
-        mapped.size shouldBe 1
-        mapped.edges.head.outer shouldBe (toString(A(1)) ~ toString(A(1)))
+        g.map(n => toString(n.outer), UnDiEdge[String] _) pipe { mapped =>
+          mapped.size shouldBe 1
+          mapped.edges.head.outer shouldBe (toString(A(1)) ~ toString(A(1)))
+        }
       }
   }
 }

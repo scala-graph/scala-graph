@@ -21,14 +21,14 @@ private class Mapping[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
 ) extends RefSpec
     with Matchers {
 
-  object `undirected graph with generic edges` {
+  object `mapping a generic undirected graph you can` {
     private val edge      = 1 ~ 2
     private val originalG = factory(edge)
 
-    private def fNode(n: originalG.NodeT) = n.outer + 1
+    private def increment(n: originalG.NodeT) = n.outer + 1
 
-    def `yields another graph`: Unit = {
-      val g = originalG map fNode
+    def `create another graph`: Unit = {
+      val g = originalG map increment
 
       g shouldBe a[CC[Int, UnDiEdge[Int]] @unchecked]
       g.nodes.head.outer shouldBe an[Integer]
@@ -37,37 +37,38 @@ private class Mapping[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
     }
 
     def `map by nodes`: Unit = {
-      val g = originalG map fNode
+      val g = originalG map increment
 
       originalG.nodes zip g.nodes.outerIterator foreach { case (original, mapped) =>
-        fNode(original) == mapped
+        increment(original) == mapped
       }
       g.edges.head should be(UnDiEdge(2, 3))
     }
 
-    def `change node type`: Unit = {
+    def `change the node type`: Unit = {
       val g = originalG map (_.toString)
 
       g.nodes.head.outer shouldBe a[String]
       (g.edges.head.outer: UnDiEdge[String]) shouldBe an[UnDiEdge[_]]
-      g.edges.head shouldBe (edge._1.toString ~ edge._2.toString)
+      g.edges.head.outer shouldBe (edge._1.toString ~ edge._2.toString)
     }
 
-    def `change edge type`: Unit = {
-      val g = originalG.map(_.outer + 1, (n1: Int, n2: Int) => n1 ~> n2)
-      (g: CC[Int, DiEdge[Int]]).edges.head.isDirected shouldBe true
+    def `change the edge type`: Unit = {
+      val g = originalG.map(increment, (n1: Int, n2: Int) => n1 ~> n2)
+      (g: CC[Int, DiEdge[Int]]) shouldEqual factory((edge._1 + 1) ~> (edge._2 + 1))
+      g.isDirected shouldBe true
     }
 
-    def `inspect edges to map`: Unit = {
+    def `inspect the edges to be mapped`: Unit = {
       val g =
         originalG.map(
-          fNode _,
+          increment,
           (e: originalG.EdgeT, n1: Int, _: Int) => n1 ~> (e.weight.toInt + 2)
         )
       (g: CC[Int, DiEdge[Int]]) shouldEqual factory(2 ~> 3)
     }
 
-    def `change edge ends by permitting implicit node addition`: Unit = {
+    def `change edge ends`: Unit = {
       val g = originalG.map(_.outer + 1, (n1: Int, _: Int) => n1 ~> 7)
       (g: CC[Int, DiEdge[Int]]) shouldEqual factory(3, 2 ~> 7)
     }
