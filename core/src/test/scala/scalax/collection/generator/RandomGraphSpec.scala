@@ -2,15 +2,15 @@ package scalax.collection
 package generator
 
 import scala.reflect.ClassTag
+
+import org.scalatest.Ignore
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
+
 import scalax.collection.edges._
 import scalax.collection.generic.{Edge, EdgeCompanionBase, GenericGraphFactory}
 import scalax.collection.immutable.Graph
 import scalax.collection.mutable.{Graph => MGraph}
-/* TODO L
-import scalax.collection.edges.labeled._
- */
 
 class RandomGraphSpec extends RefSpec with Matchers {
 
@@ -73,7 +73,7 @@ class RandomGraphSpec extends RefSpec with Matchers {
   }
 
   object `dense random graph` {
-    def `should have expected size`: Unit = {
+    @Ignore def `should have expected size`: Unit = {
       implicit val dense: Metrics[Int] = new IntFactory {
         val order       = 100
         val nodeDegrees = NodeDegreeRange(55, 90)
@@ -106,11 +106,8 @@ class RandomGraphSpec extends RefSpec with Matchers {
   }
    */
 
-  object IgnoreThis { // TODO
-//  object `huge graph` {
-    println("Not ignored!")
-
-    def `should have expected size`: Unit = {
+  object `huge graph` {
+    @Ignore def `should have expected size`: Unit = {
       implicit val huge: Metrics[Int] = new IntFactory {
         val order       = 100000
         val nodeDegrees = normal.nodeDegrees
