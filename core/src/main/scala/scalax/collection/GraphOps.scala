@@ -302,7 +302,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     */
   /* @param w Witnesses that this graph is defined as a non-hypergraph by its `E` type parameter.
    */
-  def mapBounded[NN, EC <: Edge[NN]](
+  def mapBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
       fEdge: (EdgeT, NN, NN) => EC
   )(implicit w: E <:< AnyEdge[N]): CC[NN, EC]
@@ -314,11 +314,11 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     * This overload has a simplified signature concerning
     * @param fEdge gets passed the ends of the edge after being mapped by `fNode`.
     */
-  final def mapBounded[NN, EC <: Edge[NN]](
+  final def mapBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
       fEdge: (NN, NN) => EC
   )(implicit w: E <:< AnyEdge[N]): CC[NN, EC] =
-    mapBounded(fNode, (_, n1: NN, n2: NN) => fEdge(n1, n2))
+    mapBound(fNode, (_, n1: NN, n2: NN) => fEdge(n1, n2))
 
   /** $mapEdges
     *
@@ -376,7 +376,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     */
   /* @param w Witnesses that this graph is defined as a hypergraph by its `E` type parameter.
    */
-  def mapHyperBounded[NN, EC <: Edge[NN]](
+  def mapHyperBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
       fHyperEdge: (EdgeT, Several[NN]) => EC,
       fDiHyperEdge: Option[(EdgeT, OneOrMore[NN], OneOrMore[NN]) => EC],
@@ -391,13 +391,13 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     * @param fDiHyperEdge Gets only passed the sources and targets of the directed hyperedge after being mapped by `fNode`.
     * @param fEdge        Gets only passed the ends of the edge after being mapped by `fNode`.
     */
-  final def mapHyperBounded[NN, EC <: Edge[NN]](
+  final def mapHyperBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
       fHyperEdge: Several[NN] => EC,
       fDiHyperEdge: Option[(OneOrMore[NN], OneOrMore[NN]) => EC] = None,
       fEdge: Option[(NN, NN) => EC] = None
   )(implicit w: E <:< AnyHyperEdge[N]): CC[NN, EC] =
-    mapHyperBounded(
+    mapHyperBound(
       fNode,
       (_, several: Several[NN]) => fHyperEdge(several),
       fDiHyperEdge.map(f => (_, sources: OneOrMore[NN], targets: OneOrMore[NN]) => f(sources, targets)),
@@ -454,7 +454,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     */
   /* @param w Witnesses that this graph is defined as a directed hypergraph by its `E` type parameter.
    */
-  def mapDiHyperBounded[NN, EC <: Edge[NN]](
+  def mapDiHyperBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
       fDiHyperEdge: (EdgeT, OneOrMore[NN], OneOrMore[NN]) => EC,
       fEdge: Option[(EdgeT, NN, NN) => EC]
@@ -467,12 +467,12 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     * This overload has a simplified signature concerning
     * @param fEdge Gets only passed the ends of the edge after being mapped by `fNode`.
     */
-  final def mapDiHyperBounded[NN, EC <: Edge[NN]](
+  final def mapDiHyperBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
       fDiHyperEdge: (OneOrMore[NN], OneOrMore[NN]) => EC,
       fEdge: Option[(NN, NN) => EC] = None
   )(implicit w: E <:< AnyDiHyperEdge[N]): CC[NN, EC] =
-    mapDiHyperBounded(
+    mapDiHyperBound(
       fNode,
       (_, sources: OneOrMore[NN], targets: OneOrMore[NN]) => fDiHyperEdge(sources, targets),
       fEdge.map(f => (_, n1: NN, n2: NN) => f(n1, n2))

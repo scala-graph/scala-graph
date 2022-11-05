@@ -389,9 +389,9 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   )(implicit
       w: E <:< AnyEdge[N]
   ): CC[NN, EC[NN]] =
-    mapBounded(fNode, fEdge)
+    mapBound(fNode, fEdge)
 
-  final def mapBounded[NN, EC <: Edge[NN]](
+  final def mapBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
       fEdge: (EdgeT, NN, NN) => EC
   )(implicit w: E <:< AnyEdge[N]): CC[NN, EC] =
@@ -410,9 +410,9 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
       fDiHyperEdge: Option[(EdgeT, OneOrMore[NN], OneOrMore[NN]) => EC[NN]],
       fEdge: Option[(EdgeT, NN, NN) => EC[NN]]
   )(implicit w: E <:< AnyHyperEdge[N]): CC[NN, EC[NN]] =
-    mapHyperBounded(fNode, fHyperEdge, fDiHyperEdge, fEdge)
+    mapHyperBound(fNode, fHyperEdge, fDiHyperEdge, fEdge)
 
-  final def mapHyperBounded[NN, EC <: Edge[NN]](
+  final def mapHyperBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
       fHyperEdge: (EdgeT, Several[NN]) => EC,
       fDiHyperEdge: Option[(EdgeT, OneOrMore[NN], OneOrMore[NN]) => EC],
@@ -441,9 +441,9 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
       fDiHyperEdge: (EdgeT, OneOrMore[NN], OneOrMore[NN]) => EC[NN],
       fEdge: Option[(EdgeT, NN, NN) => EC[NN]]
   )(implicit w: E <:< AnyDiHyperEdge[N]): CC[NN, EC[NN]] =
-    mapDiHyperBounded(fNode, fDiHyperEdge, fEdge)
+    mapDiHyperBound(fNode, fDiHyperEdge, fEdge)
 
-  def mapDiHyperBounded[NN, EC <: Edge[NN]](
+  def mapDiHyperBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
       fDiHyperEdge: (EdgeT, OneOrMore[NN], OneOrMore[NN]) => EC,
       fEdge: Option[(EdgeT, NN, NN) => EC]
