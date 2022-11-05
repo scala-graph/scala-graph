@@ -120,6 +120,9 @@ protected trait ShorteningOps[+A, CC[+X] <: NonEmpty[X], SCC[+_] <: Iterable[_]]
   /** Creates a `List` with all elements of this collection that don't satisfy the predicate `p` */
   final def filterNot(p: A => Boolean): SCC[A] = filter(!p(_))
 
+  /** Creates a `List` by applying `f` to all elements of this collection and using the elements of every result. */
+  final def flatMap[B](f: A => IterableOnce[B]): SCC[B] = newEscapingBuilder.result(iterator flatMap f)
+
   /** Creates a `List` with all elements of this collection that satisfy `pf` */
   final def collect[B](pf: PartialFunction[A, B]): SCC[B] = newEscapingBuilder.result(iterator collect pf)
 }
@@ -136,6 +139,10 @@ protected trait ShorteningEitherOps[+A, CC[+X] <: NonEmpty[X], SCC[+_] <: Iterab
 
   /** Same as `filterNot` but $ESCAPING */
   def filterNotEither(p: A => Boolean): Either[SCC[A], CC[A]] = filterEither(!p(_))
+
+  /** Same as `flatMap` but $ESCAPING */
+  final def flatMapEither[B](f: A => IterableOnce[B]): Either[SCC[B], CC[B]] =
+    newConditionalBuilder.result(iterator flatMap f)
 
   /** Same as `collect` but $ESCAPING */
   def collectEither[B](pf: PartialFunction[A, B]): Either[SCC[B], CC[B]] =

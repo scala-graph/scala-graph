@@ -1,8 +1,8 @@
 package scalax.collection
 
-import scalax.collection.generic._
-
 import scala.reflect.ClassTag
+
+import scalax.collection.generic._
 
 /** Operations common to mutable and immutable graphs.
   *
@@ -12,9 +12,15 @@ import scala.reflect.ClassTag
   * @define mapNodes Creates a new graph with nodes mapped by `fNode` and with an untouched edge structure otherwise.
   * @define mapEdges Creates a new graph with nodes and edges that are computed by the supplied mapping functions.
   *
+  * @define flatMapNodes Creates a new graph with nodes returned by `fNode` and an edge structure that remains intact where possible.
+  * @define flatMapEdges Creates a new graph with nodes and edges returned by `fNode` respectively `fEdge`.
+  *
   * @define fNode To apply to all nodes of this graph.
   *               Since the inner node is passed you can also examine the node context.
   *               Call `outer` to get the value of the node.
+  * @define fNodeFlat If `fNode` returns several new nodes with none equaling to the original node,
+  *                   the first new node is accepted to be the result of the node transformation.
+  *                   For more flexibility pass your own edge mapper to the overloaded method.
   * @define fEdge To apply to all edges of this graph.
   *               This function gets passed the existing inner edge and its ends after being mapped by `fNode`.
   *               Since the inner edge is passed you can also examine the edge context.
@@ -231,7 +237,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     * If this graph also contains typed edges, the typed edge's partial `map` function will be called to replace the ends.
     * If the partial function is not defined, there will be an attempt to fall back to a generic edge.
     * If that attempt also fails the edge will be dropped.
-    * So, if you have a mixed graph with generic and typed edges, prefer mapping edges directly to avoid missing edges.
+    * So, if you have a mixed graph with generic and typed edges, prefer mapping edges directly to avoid leaving edges out.
     *
     * @tparam NN   $mapNN
     * @tparam EC   $mapEC
@@ -471,4 +477,36 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
       (_, sources: OneOrMore[NN], targets: OneOrMore[NN]) => fDiHyperEdge(sources, targets),
       fEdge.map(f => (_, n1: NN, n2: NN) => f(n1, n2))
     )
+
+  /** $flatMapNodes
+    *
+    * $mapGeneric Otherwise see `mapBounded`.
+    *
+    * If this graph also contains typed edges, the typed edge's partial `map` function will be called to replace the ends.
+    * If the partial function is not defined, there will be an attempt to fall back to a generic edge.
+    * If that attempt also fails the edge will be dropped.
+    * So, if you have a mixed graph with generic and typed edges, prefer mapping edges directly to avoid leaving edges out.
+    *
+    * @tparam NN $mapNN
+    * @tparam EC $mapEC
+    * @param fNode $fNode $fNodeFlat
+    * @return $mapReturn
+    */
+  /* @param w1    Ensures that the type parameter `E` of this graph is of type `GenericMapper`.
+   * @param w2    Captures the higher kind of current `E` to determine the return type.
+   */
+  def flatMap[NN, EC[X] <: Edge[X]](
+      fNode: NodeT => Seq[NN]
+  )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E, t: ClassTag[EC[NN]]): CC[NN, EC[NN]]
+
+  /** $flatMapNodes
+    *
+    * $mapTyped Otherwise see `map`.
+    *
+    * @param fNode $fNode $fNodeFlat
+    * @return $mapReturn
+    */
+  /* @param w1 Ensures that the type parameter `E` of this graph is of type `PartialMapper`.
+   */
+  def flatMapBound(fNode: NodeT => Seq[N])(implicit w1: E <:< PartialMapper): CC[N, E]
 }

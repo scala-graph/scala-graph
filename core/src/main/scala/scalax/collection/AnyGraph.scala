@@ -4,6 +4,7 @@ import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.immutable.Iterable
 import scala.reflect.ClassTag
 import scala.util.chaining._
+
 import scalax.collection.generic._
 import scalax.collection.generic.Factory
 import scalax.collection.config.GraphConfig
@@ -223,7 +224,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   @inline final def get(node: N): NodeT = nodes get node
   @inline final def get(edge: E): EdgeT = edges.find(edge).get
 
-  def filter(nodeP: NodePredicate = anyNode, edgeP: EdgePredicate = anyEdge): CC[N, E] = {
+  final def filter(nodeP: NodePredicate = anyNode, edgeP: EdgePredicate = anyEdge): CC[N, E] = {
     import scala.collection.Set
 
     def build(nodes: Set[NodeT]): CC[N, E] = {
@@ -246,12 +247,16 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   final def map[NN, EC[X] <: Edge[X]](
       fNode: NodeT => NN
   )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E, t: ClassTag[EC[NN]]): CC[NN, EC[NN]] =
-    mapNodes[NN, EC[NN]](fNode) pipe { case (nMap, builder) =>
+    map(mapNodes[NN, EC[NN]](fNode))
+
+  private def map[NN, EC[X] <: Edge[X]](
+      newNodes: (MMap[N, NN], Builder[NN, EC[NN], CC @uV])
+  )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E, t: ClassTag[EC[NN]]): CC[NN, EC[NN]] = newNodes match {
+    case (nMap, builder) =>
       def validate[E <: Edge[NN]](e: E): Option[EC[NN]] = e match {
         case e if t.runtimeClass.isInstance(e) => Some(e.asInstanceOf[EC[NN]])
         case _                                 => None
       }
-
       edges foreach {
         case InnerEdge(_, outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
           def fallback[A]: (A, A) => AnyEdge[A] = outer match {
@@ -259,12 +264,14 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
             case _               => UnDiEdge.apply
           }
 
-          (nMap(n1), nMap(n2)) pipe { case newEnds @ (nn1, nn2) =>
-            outer match {
-              case gM: GenericEdgeMapper[EC @unchecked] => builder += gM.map(nn1, nn2)
-              case pM: PartialEdgeMapper[EC[NN] @unchecked] =>
-                pM.map[NN].lift(newEnds).fold(validate(fallback(nn1, nn2)))(Some(_)).map(builder.+=)
-            }
+          (nMap get n1, nMap get n2) match {
+            case (Some(nn1), Some(nn2)) =>
+              outer match {
+                case gM: GenericEdgeMapper[EC @unchecked] => builder += gM.map(nn1, nn2)
+                case pM: PartialEdgeMapper[EC[NN] @unchecked] =>
+                  pM.map[NN].lift(nn1, nn2).fold(validate(fallback(nn1, nn2)))(Some(_)).map(builder.+=)
+              }
+            case _ =>
           }
         case InnerEdge(
               _,
@@ -275,15 +282,17 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
             case _                   => DiHyperEdge.apply
           }
 
-          (sources.map(nMap), targets.map(nMap)) pipe { case (newSources, newTargets) =>
-            outer match {
-              case gM: GenericDiHyperEdgeMapper[EC @unchecked] => builder += gM.map(newSources, newTargets)
-              case pM: PartialDiHyperEdgeMapper[EC[NN] @unchecked] =>
-                pM.map[NN]
-                  .lift(newSources, newTargets)
-                  .fold(validate(fallback(newSources, newTargets)))(Some(_))
-                  .map(builder.+=)
-            }
+          (sources.flatMapEither(nMap.get), targets.flatMapEither(nMap.get)) match {
+            case (Right(newSources), Right(newTargets)) =>
+              outer match {
+                case gM: GenericDiHyperEdgeMapper[EC @unchecked] => builder += gM.map(newSources, newTargets)
+                case pM: PartialDiHyperEdgeMapper[EC[NN] @unchecked] =>
+                  pM.map[NN]
+                    .lift(newSources, newTargets)
+                    .fold(validate(fallback(newSources, newTargets)))(Some(_))
+                    .map(builder.+=)
+              }
+            case _ =>
           }
         case InnerEdge(_, outer @ AbstractHyperEdge(ends: Several[N] @unchecked)) =>
           def fallback[A]: Several[A] => AnyHyperEdge[A] = outer match {
@@ -291,47 +300,59 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
             case _                   => HyperEdge.apply
           }
 
-          ends.map(nMap) pipe { newEnds =>
-            outer match {
-              case gM: GenericHyperEdgeMapper[EC @unchecked] => builder += gM.map(newEnds)
-              case pM: PartialHyperEdgeMapper[EC[NN] @unchecked] =>
-                pM.map[NN].lift(newEnds).fold(validate(fallback(newEnds)))(Some(_)).map(builder.+=)
-            }
+          ends.flatMapEither(nMap.get) match {
+            case Right(newEnds) =>
+              outer match {
+                case gM: GenericHyperEdgeMapper[EC @unchecked] => builder += gM.map(newEnds)
+                case pM: PartialHyperEdgeMapper[EC[NN] @unchecked] =>
+                  pM.map[NN].lift(newEnds).fold(validate(fallback(newEnds)))(Some(_)).map(builder.+=)
+              }
+            case _ =>
           }
       }
       builder.result
-    }
+  }
 
-  def mapBounded(fNode: NodeT => N)(implicit w1: E <:< PartialMapper): CC[N, E] =
-    mapNodes[N, E](fNode) pipe { case (nMap, builder) =>
+  final def mapBounded(fNode: NodeT => N)(implicit w1: E <:< PartialMapper): CC[N, E] =
+    mapBound(mapNodes[N, E](fNode))
+
+  private def mapBound(newNodes: (MMap[N, N], Builder[N, E, CC @uV])): CC[N, E] = newNodes match {
+    case (nMap, builder) =>
       edges foreach {
         case InnerEdge(_, outer @ AnyEdge(n1: N @unchecked, n2: N @unchecked)) =>
-          (nMap(n1), nMap(n2)) pipe { case newEnds =>
-            outer match {
-              case pM: PartialEdgeMapper[E @unchecked] => pM.map[N].lift(newEnds).map(builder.+=)
-              case _                                   =>
-            }
+          (nMap get n1, nMap get n2) match {
+            case (Some(nn1), Some(nn2)) =>
+              outer match {
+                case pM: PartialEdgeMapper[E @unchecked] => pM.map[N].lift(nn1, nn2).map(builder.+=)
+                case _                                   =>
+              }
+            case _ =>
           }
         case InnerEdge(
               _,
               outer @ AbstractDiHyperEdge(sources: OneOrMore[N] @unchecked, targets: OneOrMore[N] @unchecked)
             ) =>
-          (sources.map(nMap), targets.map(nMap)) pipe { case (newSources, newTargets) =>
-            outer match {
-              case pM: PartialDiHyperEdgeMapper[E @unchecked] => pM.map[N].lift(newSources, newTargets).map(builder.+=)
-              case _                                          =>
-            }
+          (sources.flatMapEither(nMap.get), targets.flatMapEither(nMap.get)) match {
+            case (Right(newSources), Right(newTargets)) =>
+              outer match {
+                case pM: PartialDiHyperEdgeMapper[E @unchecked] =>
+                  pM.map[N].lift(newSources, newTargets).map(builder.+=)
+                case _ =>
+              }
+            case _ =>
           }
         case InnerEdge(_, outer @ AbstractHyperEdge(ends: Several[N] @unchecked)) =>
-          ends.map(nMap) pipe { newEnds =>
-            outer match {
-              case pM: PartialHyperEdgeMapper[E @unchecked] => pM.map[N].lift(newEnds).map(builder.+=)
-              case _                                        =>
-            }
+          ends.flatMapEither(nMap.get) match {
+            case Right(newEnds) =>
+              outer match {
+                case pM: PartialHyperEdgeMapper[E @unchecked] => pM.map[N].lift(newEnds).map(builder.+=)
+                case _                                        =>
+              }
+            case _ =>
           }
       }
       builder.result
-    }
+  }
 
   private def mapNodes[NN, EE <: Edge[NN]](fNode: NodeT => NN): (MMap[N, NN], Builder[NN, EE, CC]) = {
     val nMap = MMap.empty[N, NN]
@@ -339,7 +360,25 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
     nodes foreach { n =>
       val nn = fNode(n)
       nMap put (n.outer, nn)
-      b addOne nn
+      b += nn
+    }
+    (nMap, b)
+  }
+
+  private def flatMapNodes[NN, EE <: Edge[NN]](fNode: NodeT => Seq[NN]): (MMap[N, NN], Builder[NN, EE, CC]) = {
+    val nMap = MMap.empty[N, NN]
+    val b    = companion.newBuilder[NN, EE](config)
+    nodes foreach { n =>
+      fNode(n) pipe { newNodes =>
+        newNodes.headOption.map { head =>
+          var preserved: Option[NN] = None
+          newNodes foreach { nn =>
+            b += nn
+            if (n.outer == nn) preserved = Some(nn)
+          }
+          nMap put (n.outer, preserved.fold(head)(identity))
+        }
+      }
     }
     (nMap, b)
   }
@@ -373,7 +412,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
   )(implicit w: E <:< AnyHyperEdge[N]): CC[NN, EC[NN]] =
     mapHyperBounded(fNode, fHyperEdge, fDiHyperEdge, fEdge)
 
-  def mapHyperBounded[NN, EC <: Edge[NN]](
+  final def mapHyperBounded[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
       fHyperEdge: (EdgeT, Several[NN]) => EC,
       fDiHyperEdge: Option[(EdgeT, OneOrMore[NN], OneOrMore[NN]) => EC],
@@ -422,6 +461,14 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
       }
       builder.result
     }
+
+  final def flatMap[NN, EC[X] <: Edge[X]](
+      fNode: NodeT => Seq[NN]
+  )(implicit w1: E <:< GenericMapper, w2: EC[N] =:= E, t: ClassTag[EC[NN]]): CC[NN, EC[NN]] =
+    map(flatMapNodes[NN, EC[NN]](fNode))
+
+  final def flatMapBound(fNode: NodeT => Seq[N])(implicit w1: E <:< PartialMapper): CC[N, E] =
+    mapBound(flatMapNodes[N, E](fNode))
 
   final protected def partition(elems: Iterable[OuterElem]): (MSet[N], MSet[E]) = {
     val size = elems.size

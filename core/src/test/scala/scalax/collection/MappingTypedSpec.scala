@@ -31,10 +31,10 @@ class MappingTypedSpec extends RefSpec with Matchers {
 
     def `downcast nodes`: Unit =
       TGraph(Connector(a_1, b_0_0)) pipe { g =>
-        g.mapBounded(_ => b_0_0) should not be empty
+        g.mapBounded(_ => b_0_0) shouldEqual TGraph(Connector(b_0_0, b_0_0))
       }
 
-    def `not upcast nodes without passing an edge mapper`: Unit =
+    def `not upcast nodes when only passing an node mapper`: Unit =
       TGraph(AConnector(a_1, a_1)) pipe { _ =>
         "g.map(_ => b_0_0): Graph[B, Edge]" shouldNot compile
         "g.map(_.toString)" shouldNot compile
@@ -49,12 +49,47 @@ class MappingTypedSpec extends RefSpec with Matchers {
 
     def `upcast nodes to any type if a generic edge mapper is passed`: Unit =
       TGraph(AConnector(a_1, a_1)) pipe { g =>
-        def toString(a: A): String = s"""string-$a"""
+        def stringify(a: A): String = s"""string-$a"""
 
-        g.map(n => toString(n.outer), UnDiEdge[String] _) pipe { mapped =>
+        g.map(n => stringify(n.outer), UnDiEdge[String] _) pipe { mapped =>
           mapped.size shouldBe 1
-          mapped.edges.head.outer shouldBe (toString(A(1)) ~ toString(A(1)))
+          mapped.edges.head.outer shouldBe (stringify(A(1)) ~ stringify(A(1)))
         }
+      }
+  }
+
+  object `flat-mapping a typed graph you can` {
+
+    import MappingTypedSpec._
+    import TGraph.OuterImplicits._
+
+    private val a_1   = A(1)
+    private val b_0_0 = B(0, 0)
+
+    private def incr(a: A) = a.copy(a.a + 1)
+
+    private val g = TGraph(
+      Connector(A(1), B(0, 0)),
+      AConnector(A(1), A(2))
+    )
+
+    def `flat-map nodes`: Unit =
+      g.flatMapBound { (n: g.NodeT) =>
+        n match {
+          case g.InnerNode(_, a: A) => incr(a) :: a :: Nil
+          case g.InnerNode(_, _)    => Nil
+        }
+      } shouldEqual TGraph(AConnector(A(1), A(2)), A(3))
+
+    def `downcast nodes`: Unit =
+      TGraph(Connector(a_1, b_0_0)) pipe { g =>
+        g.flatMapBound(_ => b_0_0 :: Nil) shouldEqual TGraph(Connector(b_0_0, b_0_0))
+      }
+
+    def `not upcast nodes when only passing an node mapper`: Unit =
+      TGraph(AConnector(a_1, a_1)) pipe { _ =>
+        "g.flatMap(_ => b_0_0): Graph[B, Edge]" shouldNot compile
+        "g.flatMap(_.toString)" shouldNot compile
       }
   }
 }
