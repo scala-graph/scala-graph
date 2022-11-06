@@ -15,6 +15,8 @@ import scalax.collection.generic._
   * @define flatMapNodes Creates a new graph with nodes returned by `fNode` and an edge structure that remains intact where possible.
   * @define flatMapEdges Creates a new graph with nodes and edges returned by `fNode` respectively `fEdge`.
   *
+  * @define seeOverload See overload except the parameter
+  *
   * @define fNode To apply to all nodes of this graph.
   *               Since the inner node is passed you can also examine the node context.
   *               Call `outer` to get the value of the node.
@@ -25,9 +27,11 @@ import scalax.collection.generic._
   *               This function gets passed the existing inner edge and its ends after being mapped by `fNode`.
   *               Since the inner edge is passed you can also examine the edge context.
   *               Call `outer` to get the outer edge.
+  * @define simplifiedFEdge has a simplified signature in this overload leaving out the inner edge.
+  *                         This comes in handy whenever you don't need to inspect inner edges.
   * @define fEdgeOption To apply to any directed or undirected edge in this graph.
-  *                     You should supply `Some` unless you are sure that the graph only contains hyperedges.
-  *                     For more details see parameter `fEdge` of `map`.
+  *                     If not present simple edges will be mapped by the mandatory edge mapper.
+  *                     You are recommended supplying `Some` unless you know that the graph does not contain any simple edge.
   * @define fHyperEdge To apply to all hyperedges in this graph.
   *                    This function gets passed the existing inner hyperedge and its ends after being mapped by `fNode`.
   *                    Since the inner hyperedge is passed you can also examine the edge context.
@@ -37,11 +41,12 @@ import scalax.collection.generic._
   *                      Since the inner directed hyperedge is passed you can also examine the edge context.
   *                      Call `outer` to get the outer directed hyperedge.
   * @define fDiHyperEdgeOption To apply to any directed hyperedge in this graph.
-  *                     You should supply `Some` unless you are sure that the graph does not contain any directed hyperedge.
-  *                     For more details see parameter `fDiHyperEdge` of `mapDiHyper`.
+  *                            If not present directed hyperedges will be mapped by the mandatory edge mapper.
+  *                            You are recommended supplying `Some` unless you know that the graph does not contain any directed hyperedge.
   *
   * @define mapNN The node type of the resulting graph which may be unchanged or different from this graph's node type.
-  * @define mapEC The higher kind of the edge type parameter of this graph.
+  * @define mapEC The higher kind of the generic edge type parameter of this graph.
+  * @define mapECTyped The edge type parameter of this graph.
   *
   * @define mapReturn The mapped graph with possibly changed node and edge type parameters.
   */
@@ -272,7 +277,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     * @param fEdge $fEdge
     * @return      $mapReturn
     */
-  /* @param w Witnesses that this graph is defined as a non-hypergraph by its `E` type parameter.
+  /* @param w witnesses that this graph is defined as a non-hypergraph by its `E` type parameter.
    */
   def map[NN, EC[X] <: Edge[X]](
       fNode: NodeT => NN,
@@ -281,8 +286,9 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
 
   /** $mapEdges
     *
-    * This overload has a simplified signature concerning
-    * @param fEdge gets passed the ends of the edge after being mapped by `fNode`.
+    * $seeOverload
+    *
+    * @param fEdge $simplifiedFEdge
     */
   final def map[NN, EC[X] <: Edge[X]](
       fNode: NodeT => NN,
@@ -295,12 +301,12 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     * $mapTyped Otherwise see `map`.
     *
     * @tparam NN $mapNN
-    * @tparam EC $mapEC
+    * @tparam EC $mapECTyped
     * @param fNode $fNode
     * @param fEdge $fEdge
     * @return $mapReturn
     */
-  /* @param w Witnesses that this graph is defined as a non-hypergraph by its `E` type parameter.
+  /* @param w witnesses that this graph is defined as a non-hypergraph by its `E` type parameter.
    */
   def mapBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
@@ -309,10 +315,9 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
 
   /** $mapEdges
     *
-    * $mapTyped Otherwise see `map`.
+    * $seeOverload
     *
-    * This overload has a simplified signature concerning
-    * @param fEdge gets passed the ends of the edge after being mapped by `fNode`.
+    * @param fEdge $simplifiedFEdge
     */
   final def mapBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
@@ -332,7 +337,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     * @param fEdge $fEdgeOption
     * @return $mapReturn
     */
-  /* @param w Witnesses that this graph is defined as a hypergraph by its `E` type parameter.
+  /* @param w witnesses that this graph is defined as a hypergraph by its `E` type parameter.
    */
   def mapHyper[NN, EC[X] <: Edge[X]](
       fNode: NodeT => NN,
@@ -345,9 +350,9 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     *
     * $mapGeneric Otherwise see `mapHyperBound`.
     *
-    * This overload has a simplified signature concerning
-    * @param fDiHyperEdge Gets only passed the sources and targets of the directed hyperedge after being mapped by `fNode`.
-    * @param fEdge        Gets only passed the ends of the edge after being mapped by `fNode`.
+    * $seeOverload
+    *
+    * @param fHyperEdge $simplifiedFEdge
     */
   final def mapHyper[NN, EC[X] <: Edge[X]](
       fNode: NodeT => NN,
@@ -367,14 +372,14 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     * $mapTyped Otherwise see `mapHyper`.
     *
     * @tparam NN $mapNN
-    * @tparam EC $mapEC
+    * @tparam EC $mapECTyped
     * @param fNode $fNode
     * @param fHyperEdge $fHyperEdge
     * @param fDiHyperEdge $fDiHyperEdgeOption
     * @param fEdge $fEdgeOption
     * @return $mapReturn
     */
-  /* @param w Witnesses that this graph is defined as a hypergraph by its `E` type parameter.
+  /* @param w witnesses that this graph is defined as a hypergraph by its `E` type parameter.
    */
   def mapHyperBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
@@ -387,9 +392,9 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     *
     * $mapTyped Otherwise see `mapHyper`.
     *
-    * This overload has a simplified signature concerning
-    * @param fDiHyperEdge Gets only passed the sources and targets of the directed hyperedge after being mapped by `fNode`.
-    * @param fEdge        Gets only passed the ends of the edge after being mapped by `fNode`.
+    * $seeOverload
+    *
+    * @param fHyperEdge $simplifiedFEdge
     */
   final def mapHyperBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
@@ -415,7 +420,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     * @param fEdge $fEdgeOption
     * @return $mapReturn
     */
-  /* @param w Witnesses that this graph is defined as a directed hypergraph by its `E` type parameter.
+  /* @param w witnesses that this graph is defined as a directed hypergraph by its `E` type parameter.
    */
   def mapDiHyper[NN, EC[X] <: Edge[X]](
       fNode: NodeT => NN,
@@ -427,8 +432,9 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     *
     * $mapGeneric Otherwise see `mapDiHyperBound`.
     *
-    * This overload has a simplified signature concerning
-    * @param fEdge Gets only passed the ends of the edge after being mapped by `fNode`.
+    * $seeOverload
+    *
+    * @param fDiHyperEdge $simplifiedFEdge
     */
   final def mapDiHyper[NN, EC[X] <: Edge[X]](
       fNode: NodeT => NN,
@@ -446,13 +452,13 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     * $mapTyped Otherwise see `mapDiHyper`.
     *
     * @tparam NN $mapNN
-    * @tparam EC $mapEC
+    * @tparam EC $mapECTyped
     * @param fNode $fNode
     * @param fDiHyperEdge $fDiHyperEdge
     * @param fEdge $fEdgeOption
     * @return $mapReturn
     */
-  /* @param w Witnesses that this graph is defined as a directed hypergraph by its `E` type parameter.
+  /* @param w witnesses that this graph is defined as a directed hypergraph by its `E` type parameter.
    */
   def mapDiHyperBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
@@ -464,8 +470,9 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     *
     * $mapTyped Otherwise see `mapDiHyper`.
     *
-    * This overload has a simplified signature concerning
-    * @param fEdge Gets only passed the ends of the edge after being mapped by `fNode`.
+    * $seeOverload
+    *
+    * @param fDiHyperEdge $simplifiedFEdge
     */
   final def mapDiHyperBound[NN, EC <: Edge[NN]](
       fNode: NodeT => NN,
@@ -509,4 +516,64 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
   /* @param w1 Ensures that the type parameter `E` of this graph is of type `PartialMapper`.
    */
   def flatMapBound(fNode: NodeT => Seq[N])(implicit w1: E <:< PartialMapper): CC[N, E]
+
+  /** $flatMapEdges
+    *
+    * $mapGeneric Otherwise see `mapBound`.
+    *
+    * @tparam NN $mapNN
+    * @tparam EC $mapEC
+    * @param fNode $fNode
+    * @param fEdge $fEdge
+    * @return $mapReturn
+    */
+  /* @param w witnesses that this graph is defined as a non-hypergraph by its `E` type parameter.
+   */
+  def flatMap[NN, EC[X] <: Edge[X]](
+      fNode: NodeT => Seq[NN],
+      fEdge: (EdgeT, Seq[NN], Seq[NN]) => Seq[EC[NN]]
+  )(implicit w: E <:< AnyEdge[N]): CC[NN, EC[NN]]
+
+  /** $flatMapEdges
+    *
+    * $seeOverload
+    *
+    * @param fEdge $simplifiedFEdge
+    */
+  final def flatMap[NN, EC[X] <: Edge[X]](
+      fNode: NodeT => Seq[NN],
+      fEdge: (Seq[NN], Seq[NN]) => Seq[EC[NN]]
+  )(implicit w: E <:< AnyEdge[N]): CC[NN, EC[NN]] =
+    flatMap(fNode, (_, n1: Seq[NN], n2: Seq[NN]) => fEdge(n1, n2))
+
+  /** $flatMapEdges
+    *
+    * $mapTyped Otherwise see `map`.
+    *
+    * @tparam NN $mapNN
+    * @tparam EC $mapECTyped
+    * @param fNode $fNode
+    * @param fEdge $fEdge
+    * @return $mapReturn
+    */
+  /* @param w witnesses that this graph is defined as a non-hypergraph by its `E` type parameter.
+   */
+  def flatMapBound[NN, EC <: Edge[NN]](
+      fNode: NodeT => Seq[NN],
+      fEdge: (EdgeT, Seq[NN], Seq[NN]) => Seq[EC]
+  )(implicit w: E <:< AnyEdge[N]): CC[NN, EC]
+
+  /** $flatMapEdges
+    *
+    * $mapTyped Otherwise see `map`.
+    *
+    * $seeOverload
+    *
+    * @param fEdge $simplifiedFEdge
+    */
+  final def flatMapBound[NN, EC <: Edge[NN]](
+      fNode: NodeT => Seq[NN],
+      fEdge: (Seq[NN], Seq[NN]) => Seq[EC]
+  )(implicit w: E <:< AnyEdge[N]): CC[NN, EC] =
+    flatMapBound(fNode, (_, n1: Seq[NN], n2: Seq[NN]) => fEdge(n1, n2))
 }

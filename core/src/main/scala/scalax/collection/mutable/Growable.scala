@@ -47,7 +47,7 @@ trait Growable[-N, -E <: Edge[N @uV]] {
   def ++=(xs: Iterable[OuterElem[N, E]]): this.type = { xs foreach addOuter; this }
 
   /** Adds all passed nodes and edges to this graph.
-    * For a graph see also `unionInPlace`.
+    * For a mutable Graph see also `unionInPlace`.
     */
   def ++=(nodes: Iterable[N] = Nil, edges: Iterable[E @uV] = Nil): this.type = {
     nodes foreach addOne

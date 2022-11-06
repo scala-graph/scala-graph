@@ -8,7 +8,7 @@ import org.scalatest.refspec.RefSpec
 
 import scalax.collection.edges._
 import scalax.collection.generic._
-import scalax.collection.immutable.TypedGraphFactory
+import scalax.collection.immutable.{Graph, TypedGraphFactory}
 
 class MappingTypedSpec extends RefSpec with Matchers {
 
@@ -40,7 +40,7 @@ class MappingTypedSpec extends RefSpec with Matchers {
         "g.map(_.toString)" shouldNot compile
       }
 
-    def `upcast nodes to another typed edge if the typed edge mapper is passed`: Unit =
+    def `upcast nodes to another typed edge within the ADT`: Unit =
       TGraph(AConnector(a_1, a_1)) pipe { g =>
         g.mapBound[Node, Connector](_ => b_0_0, Connector) pipe { mapped =>
           mapped.edges.head.outer shouldEqual Connector(b_0_0, b_0_0)
@@ -73,7 +73,7 @@ class MappingTypedSpec extends RefSpec with Matchers {
       AConnector(A(1), A(2))
     )
 
-    def `flat-map nodes`: Unit =
+    def `change and add nodes`: Unit =
       g.flatMapBound { (n: g.NodeT) =>
         n match {
           case g.InnerNode(_, a: A) => incr(a) :: a :: Nil
@@ -90,6 +90,43 @@ class MappingTypedSpec extends RefSpec with Matchers {
       TGraph(AConnector(a_1, a_1)) pipe { _ =>
         "g.flatMap(_ => b_0_0): Graph[B, Edge]" shouldNot compile
         "g.flatMap(_.toString)" shouldNot compile
+      }
+
+    def `upcast and change structure within the ADT`: Unit =
+      TGraph(AConnector(A(1), A(2))) pipe { g =>
+        g.flatMapBound[Node, Connector](
+          fNode = n => List(incr(n.outer), b_0_0),
+          fEdge = (n1s: Seq[Node], n2s: Seq[Node]) =>
+            List(
+              Connector(n2s.head, n1s.head),
+              Connector(n2s.head, b_0_0)
+            )
+        ) pipe { mapped =>
+          mapped.nodes.outerIterable should contain theSameElementsAs List(A(2), A(3), b_0_0)
+          mapped.edges.outerIterable should contain theSameElementsAs List(
+            Connector(A(3), A(2)),
+            Connector(A(3), b_0_0)
+          )
+        }
+      }
+
+    def `upcast and change structure to any type if a generic edge mapper is passed`: Unit =
+      TGraph(AConnector(A(1), A(2))) pipe { g =>
+        def stringify(n: Any): String = s"""string-$n"""
+        g.flatMap(
+          fNode = n => List(stringify(incr(n.outer)), "B"),
+          fEdge = (n1s: Seq[String], n2s: Seq[String]) =>
+            List(
+              n2s.head ~ n1s.head,
+              n2s.head ~ "B"
+            )
+        ) pipe { (mapped: Graph[String, UnDiEdge[String]]) =>
+          mapped.nodes.outerIterable should contain theSameElementsAs List(stringify(A(2)), stringify(A(3)), "B")
+          mapped.edges.outerIterable should contain theSameElementsAs List(
+            stringify(A(3)) ~ stringify(A(2)),
+            stringify(A(3)) ~ "B"
+          )
+        }
       }
   }
 }
