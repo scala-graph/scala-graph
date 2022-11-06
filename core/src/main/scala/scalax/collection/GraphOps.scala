@@ -20,7 +20,7 @@ import scalax.collection.generic._
   *               Call `outer` to get the value of the node.
   * @define fNodeFlat If `fNode` returns several new nodes with none equaling to the original node,
   *                   the first new node is accepted to be the result of the node transformation.
-  *                   For more flexibility pass your own edge mapper to the overloaded method.
+  *                   For more flexibility pass your own edge mapper to the overload.
   * @define fEdge To apply to all edges of this graph.
   *               This function gets passed the existing inner edge and its ends after being mapped by `fNode`.
   *               Since the inner edge is passed you can also examine the edge context.
@@ -232,7 +232,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
 
   /** $mapNodes
     *
-    * $mapGeneric Otherwise see `mapBounded`.
+    * $mapGeneric Otherwise see `mapBound`.
     *
     * If this graph also contains typed edges, the typed edge's partial `map` function will be called to replace the ends.
     * If the partial function is not defined, there will be an attempt to fall back to a generic edge.
@@ -260,11 +260,11 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
     */
   /* @param w1 Ensures that the type parameter `E` of this graph is of type `PartialMapper`.
    */
-  def mapBounded(fNode: NodeT => N)(implicit w1: E <:< PartialMapper): CC[N, E]
+  def mapBound(fNode: NodeT => N)(implicit w1: E <:< PartialMapper): CC[N, E]
 
   /** $mapEdges
     *
-    * $mapGeneric Otherwise see `mapBounded`.
+    * $mapGeneric Otherwise see `mapBound`.
     *
     * @tparam NN   $mapNN
     * @tparam EC   $mapEC
@@ -322,7 +322,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
 
   /** $mapEdges
     *
-    * $mapGeneric Otherwise see `mapHyperBounded`.
+    * $mapGeneric Otherwise see `mapHyperBound`.
     *
     * @tparam NN $mapNN
     * @tparam EC $mapEC
@@ -343,7 +343,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
 
   /** $mapEdges
     *
-    * $mapGeneric Otherwise see `mapHyperBounded`.
+    * $mapGeneric Otherwise see `mapHyperBound`.
     *
     * This overload has a simplified signature concerning
     * @param fDiHyperEdge Gets only passed the sources and targets of the directed hyperedge after being mapped by `fNode`.
@@ -406,7 +406,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
 
   /** $mapEdges
     *
-    * $mapGeneric Otherwise see `mapDiHyperBounded`.
+    * $mapGeneric Otherwise see `mapDiHyperBound`.
     *
     * @tparam NN $mapNN
     * @tparam EC $mapEC
@@ -425,7 +425,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
 
   /** $mapEdges
     *
-    * $mapGeneric Otherwise see `mapDiHyperBounded`.
+    * $mapGeneric Otherwise see `mapDiHyperBound`.
     *
     * This overload has a simplified signature concerning
     * @param fEdge Gets only passed the ends of the edge after being mapped by `fNode`.
@@ -480,7 +480,7 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
 
   /** $flatMapNodes
     *
-    * $mapGeneric Otherwise see `mapBounded`.
+    * $mapGeneric Otherwise see `mapBound`.
     *
     * If this graph also contains typed edges, the typed edge's partial `map` function will be called to replace the ends.
     * If the partial function is not defined, there will be an attempt to fall back to a generic edge.

@@ -21,7 +21,7 @@ class MappingTypedSpec extends RefSpec with Matchers {
 
     def `map nodes`: Unit =
       TGraph(Connector(a_1, b_0_0)) pipe { g =>
-        g.mapBounded { (n: g.NodeT) =>
+        g.mapBound { (n: g.NodeT) =>
           n match {
             case g.InnerNode(_, a: A) => a.copy(a.a + 1)
             case g.InnerNode(_, b: B) => b.copy(b.a + 1, b.b + 1)
@@ -31,7 +31,7 @@ class MappingTypedSpec extends RefSpec with Matchers {
 
     def `downcast nodes`: Unit =
       TGraph(Connector(a_1, b_0_0)) pipe { g =>
-        g.mapBounded(_ => b_0_0) shouldEqual TGraph(Connector(b_0_0, b_0_0))
+        g.mapBound(_ => b_0_0) shouldEqual TGraph(Connector(b_0_0, b_0_0))
       }
 
     def `not upcast nodes when only passing an node mapper`: Unit =
