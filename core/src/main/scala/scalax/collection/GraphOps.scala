@@ -576,4 +576,88 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
       fEdge: (Seq[NN], Seq[NN]) => Seq[EC]
   )(implicit w: E <:< AnyEdge[N]): CC[NN, EC] =
     flatMapBound(fNode, (_, n1: Seq[NN], n2: Seq[NN]) => fEdge(n1, n2))
+
+  /** $flatMapEdges
+    *
+    * $mapGeneric Otherwise see `mapHyperBound`.
+    *
+    * @tparam NN $mapNN
+    * @tparam EC $mapEC
+    * @param fNode        $fNode
+    * @param fHyperEdge   $fHyperEdge
+    * @param fDiHyperEdge $fDiHyperEdgeOption
+    * @param fEdge        $fEdgeOption
+    * @return $mapReturn
+    */
+  /* @param w witnesses that this graph is defined as a hypergraph by its `E` type parameter.
+   */
+  def flatMapHyper[NN, EC[X] <: Edge[X]](
+      fNode: NodeT => Seq[NN],
+      fHyperEdge: (EdgeT, Seq[NN]) => Seq[EC[NN]],
+      fDiHyperEdge: Option[(EdgeT, Seq[NN], Seq[NN]) => Seq[EC[NN]]],
+      fEdge: Option[(EdgeT, Seq[NN], Seq[NN]) => Seq[EC[NN]]]
+  )(implicit w: E <:< AnyHyperEdge[N]): CC[NN, EC[NN]]
+
+  /** $flatMapEdges
+    *
+    * $mapGeneric Otherwise see `flatMapHyperBound`.
+    *
+    * $seeOverload
+    *
+    * @param fHyperEdge $simplifiedFEdge
+    */
+  final def flatMapHyper[NN, EC[X] <: Edge[X]](
+      fNode: NodeT => Seq[NN],
+      fHyperEdge: Seq[NN] => Seq[EC[NN]],
+      fDiHyperEdge: Option[(Seq[NN], Seq[NN]) => Seq[EC[NN]]] = None,
+      fEdge: Option[(Seq[NN], Seq[NN]) => Seq[EC[NN]]] = None
+  )(implicit w: E <:< AnyHyperEdge[N]): CC[NN, EC[NN]] =
+    flatMapHyper(
+      fNode,
+      (_, ends: Seq[NN]) => fHyperEdge(ends),
+      fDiHyperEdge.map(f => (_, sources: Seq[NN], targets: Seq[NN]) => f(sources, targets)),
+      fEdge.map(f => (_, n1s: Seq[NN], n2s: Seq[NN]) => f(n1s, n2s))
+    )
+
+  /** $flatMapEdges
+    *
+    * $mapTyped Otherwise see `flatMapHyper`.
+    *
+    * @tparam NN $mapNN
+    * @tparam EC $mapECTyped
+    * @param fNode        $fNode
+    * @param fHyperEdge   $fHyperEdge
+    * @param fDiHyperEdge $fDiHyperEdgeOption
+    * @param fEdge        $fEdgeOption
+    * @return $mapReturn
+    */
+  /* @param w witnesses that this graph is defined as a hypergraph by its `E` type parameter.
+   */
+  def flatMapHyperBound[NN, EC <: Edge[NN]](
+      fNode: NodeT => Seq[NN],
+      fHyperEdge: (EdgeT, Seq[NN]) => Seq[EC],
+      fDiHyperEdge: Option[(EdgeT, Seq[NN], Seq[NN]) => Seq[EC]],
+      fEdge: Option[(EdgeT, Seq[NN], Seq[NN]) => Seq[EC]]
+  )(implicit w: E <:< AnyHyperEdge[N]): CC[NN, EC]
+
+  /** $flatMapEdges
+    *
+    * $mapTyped Otherwise see `flatMapHyper`.
+    *
+    * $seeOverload
+    *
+    * @param fHyperEdge $simplifiedFEdge
+    */
+  final def flatMapHyperBound[NN, EC <: Edge[NN]](
+      fNode: NodeT => Seq[NN],
+      fHyperEdge: Seq[NN] => Seq[EC],
+      fDiHyperEdge: Option[(Seq[NN], Seq[NN]) => Seq[EC]] = None,
+      fEdge: Option[(Seq[NN], Seq[NN]) => Seq[EC]] = None
+  )(implicit w: E <:< AnyHyperEdge[N]): CC[NN, EC] =
+    flatMapHyperBound(
+      fNode,
+      (_, ends: Seq[NN]) => fHyperEdge(ends),
+      fDiHyperEdge.map(f => (_, sources: Seq[NN], targets: Seq[NN]) => f(sources, targets)),
+      fEdge.map(f => (_, n1s: Seq[NN], n2s: Seq[NN]) => f(n1s, n2s))
+    )
 }

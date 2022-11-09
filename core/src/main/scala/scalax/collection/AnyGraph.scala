@@ -517,9 +517,46 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
         }
         builder.result
     }
+
+  final def flatMapHyper[NN, EC[X] <: Edge[X]](
+      fNode: NodeT => Seq[NN],
+      fHyperEdge: (EdgeT, Seq[NN]) => Seq[EC[NN]],
+      fDiHyperEdge: Option[(EdgeT, Seq[NN], Seq[NN]) => Seq[EC[NN]]],
+      fEdge: Option[(EdgeT, Seq[NN], Seq[NN]) => Seq[EC[NN]]]
+  )(implicit w: E <:< AnyHyperEdge[N]): CC[NN, EC[NN]] =
+    flatMapHyperBound(fNode, fHyperEdge, fDiHyperEdge, fEdge)
+
+  final def flatMapHyperBound[NN, EC <: Edge[NN]](
+      fNode: NodeT => Seq[NN],
+      fHyperEdge: (EdgeT, Seq[NN]) => Seq[EC],
+      fDiHyperEdge: Option[(EdgeT, Seq[NN], Seq[NN]) => Seq[EC]],
+      fEdge: Option[(EdgeT, Seq[NN], Seq[NN]) => Seq[EC]]
+  )(implicit w: E <:< AnyHyperEdge[N]): CC[NN, EC] =
+    flatMapNodes[NN, EC](fNode) match {
+      case (nMap, builder) =>
+        edges foreach {
+          case e @ InnerEdge(AnyEdge(n1: NodeT @unchecked, n2: NodeT @unchecked), _) =>
+            val nn1s = nMap(n1)
+            val nn2s = nMap(n2)
+            builder ++= (edges = fEdge.fold(fHyperEdge(e, nn1s ++ nn2s))(_(e, nn1s, nn2s)))
+
+          case e @ InnerEdge(
+                AnyDiHyperEdge(sources: OneOrMore[NodeT @unchecked], targets: OneOrMore[NodeT @unchecked]),
+                _
+              ) =>
+            val newSources = sources.flatMap(nMap)
+            val newTargets = targets.flatMap(nMap)
+            builder ++= (edges =
+              fDiHyperEdge.fold(fHyperEdge(e, newSources ++ newTargets))(_(e, newSources, newTargets)))
+
+          case e @ InnerEdge(AnyHyperEdge(ends: Several[NodeT @unchecked]), _) =>
+            builder ++= (edges = fHyperEdge(e, ends.flatMap(nMap)))
+        }
+        builder.result
+    }
 }
 
-/** Bundled functionality for mutable or immutable graphs.
+/** Bundled functionality for mutable and immutable graphs alike.
   *
   * @tparam N the type of the nodes (vertices) in this graph.
   * @tparam E the type of the edges in this graph.
