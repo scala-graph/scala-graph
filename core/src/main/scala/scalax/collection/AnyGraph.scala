@@ -554,6 +554,37 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
         }
         builder.result
     }
+
+  final def flatMapDiHyper[NN, EC[X] <: Edge[X]](
+      fNode: NodeT => Seq[NN],
+      fDiHyperEdge: (EdgeT, Seq[NN], Seq[NN]) => Seq[EC[NN]],
+      fEdge: Option[(EdgeT, Seq[NN], Seq[NN]) => Seq[EC[NN]]]
+  )(implicit w: E <:< AnyDiHyperEdge[N]): CC[NN, EC[NN]] =
+    flatMapDiHyperBound(fNode, fDiHyperEdge, fEdge)
+
+  final def flatMapDiHyperBound[NN, EC <: Edge[NN]](
+      fNode: NodeT => Seq[NN],
+      fDiHyperEdge: (EdgeT, Seq[NN], Seq[NN]) => Seq[EC],
+      fEdge: Option[(EdgeT, Seq[NN], Seq[NN]) => Seq[EC]]
+  )(implicit w: E <:< AnyDiHyperEdge[N]): CC[NN, EC] =
+    flatMapNodes[NN, EC](fNode) match {
+      case (nMap, builder) =>
+        edges foreach {
+          case e @ InnerEdge(AnyEdge(n1: NodeT @unchecked, n2: NodeT @unchecked), _) =>
+            val nn1s = nMap(n1)
+            val nn2s = nMap(n2)
+            builder ++= (edges = fEdge.fold(fDiHyperEdge(e, nn1s, nn2s))(_(e, nn1s, nn2s)))
+
+          case e @ InnerEdge(
+                AnyDiHyperEdge(sources: OneOrMore[NodeT @unchecked], targets: OneOrMore[NodeT @unchecked]),
+                _
+              ) =>
+            val newSources = sources.flatMap(nMap)
+            val newTargets = targets.flatMap(nMap)
+            builder ++= (edges = fDiHyperEdge(e, newSources, newTargets))
+        }
+        builder.result
+    }
 }
 
 /** Bundled functionality for mutable and immutable graphs alike.

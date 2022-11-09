@@ -53,7 +53,7 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
 
       DiHyperEdge.from(List(1), Nil) shouldBe None
       an[IllegalArgumentException] shouldBe thrownBy {
-        DiHyperEdge.unsafeFrom(List(1), Nil)
+        DiHyperEdge.fromUnsafe(List(1), Nil)
       }
 
       val sources = more(1, 2)

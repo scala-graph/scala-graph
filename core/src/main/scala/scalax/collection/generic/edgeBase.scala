@@ -283,7 +283,7 @@ trait DiHyperEdgeCompanion[+E[N] <: AbstractDiHyperEdge[N]] extends EdgeCompanio
   /** A directed hyperedge with the supplied `sources` and `targets`.
     * @throws IllegalArgumentException if `sources` or `targets` is empty.
     */
-  final def unsafeFrom[N](sources: Iterable[N], targets: Iterable[N]): E[N] =
+  final def fromUnsafe[N](sources: Iterable[N], targets: Iterable[N]): E[N] =
     apply(OneOrMore.fromUnsafe(sources), OneOrMore.fromUnsafe(targets))
 }
 
