@@ -355,6 +355,12 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
     def draw(random: Random): NodeT
 
     def diff(that: AnySet[NodeT]): AnySet[NodeT] = this.toSet diff that
+
+    /** Same as `foldLeft` except the second parameter of `opNode`.
+      *
+      * @param opNode binary operator that is passed the cumulated value and an outer node.
+      */
+    final def foldLeftOuter[B](z: B)(opNode: (B, N) => B): B = outerIterator.foldLeft(z)(opNode)
   }
 
   /** The node (vertex) set of this `Graph` commonly referred to as V(G).
@@ -368,7 +374,7 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
 
     @inline final override def weight: Double = outer.weight
 
-    /** Finds nodes of this edge which only participate in this edge. */
+    /** The nodes of this edge which only participate in this edge. */
     def privateNodes: Set[NodeT] = ends.filter(_.edges.size == 1).toSet
 
     /** All connecting edges, that is all edges with ends incident with this edge including possible loops. */
@@ -500,6 +506,12 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
     }
 
     def diff(that: AnySet[EdgeT]): AnySet[EdgeT] = this.toSet diff that
+
+    /** Same as `foldLeft` except the second parameter of `opEdge`.
+      *
+      * @param opEdge binary operator that is passed the cumulated value and an outer edge.
+      */
+    final def foldLeftOuter[B](z: B)(opEdge: (B, E) => B): B = outerIterator.foldLeft(z)(opEdge)
   }
 
   /** The edge set of this `Graph` commonly referred to as E(G).

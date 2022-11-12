@@ -24,7 +24,7 @@ import scalax.collection.generic._
   *                   the first new node is accepted to be the result of the node transformation.
   *                   For more flexibility pass your own edge mapper to the overload.
   * @define fEdge To apply to all edges of this graph.
-  *               This function gets passed the current inner edge and its ends after being mapped by `fNode`.
+  *               This function is passed the current inner edge and its ends after being mapped by `fNode`.
   *               Since the inner edge is passed you can also examine its context.
   *               Call `outer` to get the outer edge of type E.
   * @define simplifiedFEdge has a simplified signature in this overload leaving out the inner edge.
@@ -33,11 +33,11 @@ import scalax.collection.generic._
   *                     If not present simple edges will be mapped by the mandatory edge mapper you supply.
   *                     You are recommended supplying `Some` unless you know that the graph does not contain any simple edge.
   * @define fHyperEdge To apply to all hyperedges in this graph.
-  *                    This function gets passed the current inner hyperedge and its ends after being mapped by `fNode`.
+  *                    This function is passed the current inner hyperedge and its ends after being mapped by `fNode`.
   *                    Since the inner hyperedge is passed you can also examine its context.
   *                    Call `outer` to get the outer hyperedge of type E.
   * @define fDiHyperEdge To apply to all directed hyperedges in this graph.
-  *                      This function gets passed the existing inner directed hyperedge and its sources and targets after being mapped by `fNode`.
+  *                      This function is passed the existing inner directed hyperedge and its sources and targets after being mapped by `fNode`.
   *                      Since the inner directed hyperedge is passed you can also examine the edge context.
   *                      Call `outer` to get the outer directed hyperedge of type E.
   * @define fDiHyperEdgeOption To apply to any directed hyperedge in this possibly mixed graph.
@@ -736,4 +736,23 @@ trait GraphOps[N, E <: Edge[N], +CC[X, Y <: Edge[X]]] extends OuterElems[N, E] {
       (_, sources: Seq[NN], targets: Seq[NN]) => fDiHyperEdge(sources, targets),
       fEdge.map(f => (_, n1s: Seq[NN], n2s: Seq[NN]) => f(n1s, n2s))
     )
+
+  /** Applies a node-specific and an edge-specific binary operator to a cumulated value.
+    * First `opNode` is called for all nodes than `opEdge` for all edges.
+    *
+    * @param z  the start value that is passed to `opNode` the first time.
+    * @param opNode the binary operator that is passed the cumulated value and an inner node.
+    * @param opEdge the binary operator that is passed the cumulated value and an inner edge.
+    * @tparam B the result type of the binary operator.
+    * @return the cumulated value.
+    */
+  def foldLeft[B](z: B)(opNode: (B, NodeT) => B, opEdge: (B, EdgeT) => B): B
+
+  /** Same as `foldLeft` except the second parameter of the binary operators.
+    *
+    * @param opNode the binary operator that is passed the cumulated value and an outer node.
+    * @param opEdge the binary operator that is passed the cumulated value and an outer edge.
+    */
+  final def foldLeftOuter[B](z: B)(opNode: (B, N) => B, opEdge: (B, E) => B): B =
+    foldLeft(z)((cum: B, n: NodeT) => opNode(cum, n.outer), (cum: B, e: EdgeT) => opEdge(cum, e.outer))
 }

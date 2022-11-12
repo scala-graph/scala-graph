@@ -415,5 +415,27 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       (unDi match { case UnDiEdge(n1, _) => n1 }) should be(1)
       (unDi match { case n1 ~ n2 => n1 + n2 }) should be(3)
     }
+
+    def `foldLeft, foldLeftOuter ` : Unit = {
+      val g = factory(1 ~> 2, 2 ~> 3, 7)
+
+      val sumOfNodes = 13
+      g.nodes.foldLeft(0)((cum, n) => cum + n.outer) shouldBe sumOfNodes
+      g.nodes.foldLeftOuter(0)((cum, n) => cum + n) shouldBe sumOfNodes
+
+      val edgeProducts = 2 + 6
+      g.edges.foldLeft(0)((cum, e) => cum + e.outer.source * e.outer.target) shouldBe edgeProducts
+      g.edges.foldLeftOuter(0)((cum, e) => cum + e.source * e.target) shouldBe edgeProducts
+
+      val expected = sumOfNodes + edgeProducts
+      g.foldLeft(0)(
+        (cum, n) => cum + n.outer,
+        (cum, e) => cum + e.outer.source * e.outer.target
+      ) shouldBe expected
+      g.foldLeftOuter(0)(
+        (cum, n) => cum + n,
+        (cum, e) => cum + e.source * e.target
+      ) shouldBe expected
+    }
   }
 }

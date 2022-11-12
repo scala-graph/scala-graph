@@ -585,6 +585,9 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
         }
         builder.result
     }
+
+  def foldLeft[B](z: B)(opNode: (B, NodeT) => B, opEdge: (B, EdgeT) => B): B =
+    edges.foldLeft(nodes.foldLeft(z)(opNode))(opEdge)
 }
 
 /** Bundled functionality for mutable and immutable graphs alike.
