@@ -11,16 +11,24 @@ Have fun with Graph for Scala.
 
 Peter
 
-###### Branches:
+## Branches
 
-**1.x** started in 2011 and has evolved by paying high attention to version compatibility to allow little migration effort.
+**1.x** started in 2011. It has evolved by paying high attention to version compatibility.
 
-**2.x** started in 2019 to make some significant improvements that also need new, simplified signatures. Added features include
+**2.x** started in 2019 to make some significant improvements that also need new, simplified signatures.
+New features include
 
 * multiple sources for directed hyperedges
-* easy edge class definition using case classes thus easy definition of edge ADTs
-* improved functional graph handling
+* easy edge class definition using case classes thus easy definition of ADTs of edges
+* improved functional graph handling.
 
-There is still much left to do before 2.0 is ready for shipment.
+Shipment is due shortly after Scala 2.13.11 is published because
+<a href="https://github.com/scala/bug/issues/12623">this fix</a> will help to further simplify user code.
 
-**3.x** is planned to support functional immutability by representing immutable graphs by a persistent data structure.
+## Roadmap
+
+* Complete migration of random graphs for 2.x.
+* Investigate whether and how the JSON module should be retained and migrated to 2.x or dropped. Migrate it if needed.
+* Remove internal <code>State</code> by possibly also changing node references to IDs.
+* Add support for algorithms by enrichment that use fluent properties.
+* Reimplement immutable graphs to be based on a persistent data structure.
