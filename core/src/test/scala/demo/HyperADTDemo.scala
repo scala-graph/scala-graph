@@ -30,6 +30,7 @@ object HyperADTDemo extends App {
     *   - foreign key columns are an ordered subset of the table's columns
     *   - foreign keys are connected with the primary key of the child table
     * TODO try to also ensure that
+    *   - only columns of the same table definition may be added to indexes/foreign keys
     *   - column names are unique with respect to the table
     *   - sets are not empty whenever appropriate
     *   - the # of foreign key columns must correspond to the # of primary key columns in the child table
@@ -58,8 +59,6 @@ object HyperADTDemo extends App {
       private val edgeKeyExtension = one(PrimaryKey.toString)
     }
 
-    def edges: List[Connection] = primaryKeyEdge +: columnEdges
-
     def columnEdges: List[TableColumn] =
       columns.set pipe (set =>
         set.iterator.map { column =>
@@ -68,6 +67,26 @@ object HyperADTDemo extends App {
       )
 
     def primaryKeyEdge: PrimaryKey = PrimaryKey()
+
+    def requiredEdges: List[Connection] = primaryKeyEdge +: columnEdges
+
+    case class Index[CS <: Set[Column] with Singleton] private (
+        table: outer.table.type,
+        columns: OrderedSubset[Column, S]
+    ) extends AbstractDiHyperEdge(one(table: Table), OneOrMore.fromUnsafe(columns))
+        with MultiEdge
+        with Connection {
+      def extendKeyBy: OneOrMore[Any] = Index.edgeKeyExtension
+    }
+
+    case object Index {
+      def apply[CS <: Set[Column] with Singleton](
+          columns: OrderedSubset[Column, S]
+      ): Index[CS] =
+        Index(table, columns)
+
+      private val edgeKeyExtension = one(this.toString)
+    }
 
     case class ForeignKey[CS <: Set[Column] with Singleton] private (
         table: outer.table.type,
@@ -97,7 +116,10 @@ object HyperADTDemo extends App {
 
     final def column(name: String, `type`: DataType): Column = Column(table, name, `type`)
     final lazy val context: TableContext[columns.type]       = TableContext(table, Superset(columns), primaryKeyColumns)
-    final def edges: List[Connection]                        = context.edges
+    final def requiredEdges: List[Connection]                = context.requiredEdges
+
+    final def index[C <: Set[Column] with Singleton](columns: Column*) =
+      context.Index(OrderedSubset(this.columns)(columns: _*))
 
     final def foreignKey[C <: Set[Column] with Singleton](childTable: TableContext[C])(columns: Column*) =
       context.ForeignKey(OrderedSubset(this.columns)(columns: _*), childTable)
@@ -121,10 +143,11 @@ object HyperADTDemo extends App {
   object SqlSchema extends TypedGraphFactory[Node, Connection]
 
   val schema = SqlSchema.from(
-    Address.edges
-      ++: Country.edges
+    Address.requiredEdges
+      ++: Country.requiredEdges
       ++: List(
-        Address.foreignKey(childTable = Country.context)(Address.countryCode)
+        Address.foreignKey(childTable = Country.context)(Address.countryCode),
+        Country.index(Country.countryCode)
       )
   )
 
