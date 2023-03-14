@@ -6,9 +6,7 @@ import org.scalatest.refspec.RefSpec
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import scalax.collection.generic._
-import scalax.collection.immutable.Graph
-import scalax.collection.mutable
-
+import scalax.collection.{immutable, mutable}
 import scala.collection.SortedSet
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-operations.html
@@ -18,55 +16,38 @@ final class EditingDemoSpec extends RefSpec with Matchers {
 
   object `demonstrating ` {
 
-    def `iterating ` : Unit = {
-      val g = Graph(2 ~ 3, 3 ~ 1)
-      g.iterator mkString "," shouldBe "1,2,3,2 ~ 3,3 ~ 1"
-      g.nodes mkString "-" shouldBe "1-2-3"
-      g.edges mkString " " shouldBe "2 ~ 3 3 ~ 1"
+    def `Add and Subtract Elements`(): Unit = {
+      import immutable.Graph
+      val g = Graph(1, 2 ~ 3) // Graph(NodeSet(1, 2, 3), EdgeSet(2 ~ 3))
+      g + 1 shouldBe g
+      g + 0 shouldBe Graph(0, 1, 2 ~ 3)
+      "g + 1.2" shouldNot compile // error: overloaded method...
+      g + 0 ~ 1 shouldBe Graph(0, 1, 0 ~ 1, 2 ~ 3)
+      g ++ List(1 ~ 2, 2 ~ 3) shouldBe Graph(1 ~ 2, 2 ~ 3)
+      g ++ (0 :: Nil, 1 ~ 2 :: 2 ~ 3 :: Nil) shouldBe Graph(0, 1, 1 ~ 2, 2 ~ 3)
+      g - 0 shouldBe g
+      g - 1 shouldBe Graph(2 ~ 3)
+      g - 2 shouldBe Graph(1, 3)
+      g - 2 ~ 3 shouldBe Graph(1, 2, 3)
+      g -- (2 :: Nil, 3 ~ 3 :: Nil) shouldBe Graph(1, 3)
     }
 
-    def `looking up`: Unit = {
-      val g = Graph(1 ~ 2)
-      g find 1 shouldBe Some(1) // Option[g.NodeT]
-      g find 3 shouldBe None    // Option[g.NodeT]
-      g get 1 shouldBe 1        // g.NodeT = 1
-      a[NoSuchElementException] should be thrownBy {
-        g get 3
-      }
-      g find 1 ~ 2 shouldBe Some(1 ~ 2) // Option[g.EdgeT]
-      g find 1 shouldBe Some(1)         // Option[Param[Int,UnDiEdge]]
-
-      val h = mutable.Graph.empty[Int, UnDiEdge[Int]] |= g
-      h addAndGet 5 shouldBe 5 // g.NodeT
+    def `Add Elements to mutable.Graph`(): Unit = {
+      import mutable.Graph
+      (Graph(1, 2 ~ 3) += 0) shouldBe Graph(0, 1, 2 ~ 3)
+      (Graph[Int, AnyEdge](1, 2 ~ 3) += 3 ~> 1) shouldBe Graph[Int, AnyEdge](1, 2 ~ 3, 3 ~> 1)
     }
 
     def `equality ` : Unit = {
-      val g = Graph(1 ~ 2)
+      val g = immutable.Graph(1 ~ 2)
       g get 1 shouldBe 1
       g get 1 ~ 2 shouldBe 2 ~ 1
       g get 1 ~ 2 eq 2 ~ 1 shouldBe false
       g get 1 ~ 2 should not be 2 ~ 2
     }
 
-    def `adding ` : Unit = {
-      val g = Graph(1, 2 ~ 3)
-      g + 1 shouldBe g
-      g + 0 shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
-      g + 0 ~ 1 shouldBe Graph(0, 1, 2, 3, 0 ~ 1, 2 ~ 3)
-      g ++ (edges = List(1 ~ 2, 2 ~ 3)) shouldBe Graph(1, 2, 3, 1 ~ 2, 2 ~ 3)
-      g ++ (edges = List(1 ~ 2, 2 ~ 3), isolatedNodes = List(0)) shouldBe Graph(0, 1, 2, 3, 1 ~ 2, 2 ~ 3)
-      g - 0 shouldBe g
-      g - 1 shouldBe Graph(2, 3, 2 ~ 3)
-      g - 2 shouldBe Graph(1, 3)
-      g - 2 ~ 3 shouldBe Graph(1, 2, 3)
-      g -- (List(2), List(3 ~ 3)) shouldBe Graph(1, 3)
-
-      def h = mutable.Graph.from[Int, AnyEdge[Int]](nodes = g.nodes.outerIterable, edges = g.edges.outerIterable)
-      h addOne 0 shouldBe Graph(0, 1, 2, 3, 2 ~ 3)
-      (h += 3 ~> 1) shouldBe Graph[Int, AnyEdge](1, 2, 3, 2 ~ 3, 3 ~> 1)
-    }
-
     def `union, diff, intersect ` : Unit = {
+      import immutable.Graph
       val g = Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
       val h = Graph(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
 
@@ -99,8 +80,11 @@ final class EditingDemoSpec extends RefSpec with Matchers {
     }
 
     def `neighbors ` : Unit = {
-      val g                               = Graph[Int, AnyEdge](0, 1 ~ 3, 3 ~> 2)
-      def n(outer: Int): g.NodeT          = g get outer
+      import immutable.Graph
+      val g = Graph[Int, AnyEdge](0, 1 ~ 3, 3 ~> 2)
+
+      def n(outer: Int): g.NodeT = g get outer
+
       def e(outer: AnyEdge[Int]): g.EdgeT = g get outer
 
       n(0).diSuccessors shouldBe Set.empty[g.NodeT]
@@ -112,7 +96,9 @@ final class EditingDemoSpec extends RefSpec with Matchers {
     }
 
     def `querying ` : Unit = {
-      val g                      = Graph[Int, AnyEdge](2 ~> 3, 3 ~ 1, 5)
+      import immutable.Graph
+      val g = Graph[Int, AnyEdge](2 ~> 3, 3 ~ 1, 5)
+
       def n(outer: Int): g.NodeT = g get outer
 
       g.nodes filter (_ > 2) shouldBe Set(n(5), n(3))
@@ -124,6 +110,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
     }
 
     def `measuring ` : Unit = {
+      import immutable.Graph
       import scalax.collection.edges.labeled._
       val g = Graph[Int, AnyEdge](
         1 ~ 2  % 4,
@@ -145,6 +132,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
     }
 
     def `classifying ` : Unit = {
+      import immutable.Graph
       val g = Graph(1, 2 ~> 3)
       g.isConnected shouldBe false
       (g + 2 ~> 1).isConnected shouldBe true
