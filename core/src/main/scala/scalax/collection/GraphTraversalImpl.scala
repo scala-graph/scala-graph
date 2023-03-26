@@ -214,40 +214,37 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
     else math.min(o, math.max(o / divisor, min))
   }
 
-  protected type TopoSortSetup = (Buffer[NodeT], MMap[NodeT, Int], Option[NodeT])
+  protected type TopoSortSetup = (Buffer[NodeT], MMap[NodeT, Int])
 
-  /** Calculates in-degrees of nodes spanned by `traversable`.
+  /** Calculates in-degrees of nodes spanned by `nodes`.
     *
     *  @param nodes supplies the nodes for which the degree is to be calculated
     *  @param maybeHandle to be used to mark visited nodes
     *  @param includeAnyway include this node in the resulting list of nodes without predecessors
     *         irrespective of its in degree
     *  @param includeInDegree optionally filters predecessor nodes when calculating the in degree
-    *  @return triple of
-    *          a. nodes without predecessors in the component spanned by `traverser`
+    *  @return tuple of
+    *          a. nodes without predecessors in the component spanned by `nodes`
     *          a. map of visited nodes to their in degrees
-    *          a. size of `traversable`
     */
   final protected def forInDegrees(
       nodes: Iterable[NodeT] with SubgraphProperties,
       maybeHandle: Option[Handle] = None,
       includeAnyway: Option[NodeT] = None,
-      includeInDegree: NodePredicate = anyNode,
-      fillInDegrees: Boolean = true
+      includeInDegree: NodePredicate = anyNode
   ): TopoSortSetup = {
 
     val nodesWithoutPredecessor       = new ArrayBuffer[NodeT](expectedMaxNodes(1000))
-    val nodeInDegrees                 = new EqHashMap[NodeT, Int](if (fillInDegrees) order else 0)
-    var inspectedNode: Option[NodeT]  = None
+    val nodeInDegrees                 = new EqHashMap[NodeT, Int](order)
     def nodeFilter(n: NodeT): Boolean = nodes.subgraphNodes(n) && includeInDegree(n)
     nodes foreach { n =>
       maybeHandle foreach (implicit h => n.visited = true)
       val inDegree = n.inDegree(nodeFilter, nodes.subgraphEdges)
-      if (fillInDegrees) nodeInDegrees put (n, inDegree)
-      if (inDegree == 0 || (n eq includeAnyway.orNull)) nodesWithoutPredecessor += n
-      else inspectedNode = inspectedNode orElse Some(n)
+      nodeInDegrees put (n, inDegree)
+      if (inDegree == 0 || (n eq includeAnyway.orNull))
+        nodesWithoutPredecessor += n
     }
-    (nodesWithoutPredecessor, nodeInDegrees, inspectedNode)
+    (nodesWithoutPredecessor, nodeInDegrees)
   }
 
   protected case class ComponentTraverserImpl(
@@ -307,14 +304,14 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
         None
       }
 
-    final def topologicalSort[U](implicit visitor: InnerElem => U = Visitor.empty): CycleNodeOrTopologicalOrder =
+    final def topologicalSort[U](implicit visitor: InnerElem => U = Visitor.empty): MaybeCycleNodeOrTopologicalOrder =
       innerElemTraverser
         .Runner(noNode, visitor)
         .topologicalSort(forInDegrees(SubgraphProperties(nodes, subgraphNodes, subgraphEdges)))
 
     final def topologicalSortByComponent[U](implicit
         visitor: InnerElem => U = Visitor.empty
-    ): Iterable[CycleNodeOrTopologicalOrder] =
+    ): Iterable[MaybeCycleNodeOrTopologicalOrder] =
       if (order == 0) Nil
       else {
         val topoRunner    = innerElemTraverser.Runner(noNode, visitor)

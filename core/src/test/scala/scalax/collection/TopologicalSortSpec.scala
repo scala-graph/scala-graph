@@ -40,51 +40,60 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
           root: Option[graph.NodeT] = None,
           ignorePredecessors: Boolean = false
       ): Unit = {
+        def predecessors(maybeRoot: Option[graph.NodeT]): Set[graph.NodeT] =
+          maybeRoot.fold(
+            ifEmpty = Set.empty[graph.NodeT]
+          ) { root =>
+            root.innerNodeTraverser().withParameters(Dfs(Predecessors)).toSet - root
+          }
+
+        def checkOrder(seq: OrderedInnerNodes, ignorePredecessorsOf: Option[graph.NodeT]): Unit =
+          seq.foldLeft(predecessors(ignorePredecessorsOf)) { (allowedPredecessors, innerNode) =>
+            if (!innerNode.diPredecessors.forall(allowedPredecessors.contains))
+              fail(s"$innerNode is misplaced in $seq")
+            allowedPredecessors + innerNode
+          }
+
+        def checkCompleteness(
+            seq: OrderedInnerNodes,
+            maybeRoot: Option[graph.NodeT],
+            ignorePredecessors: Boolean
+        ): Unit = {
+          val expected = maybeRoot.fold(
+            ifEmpty = graph.nodes.toSet
+          ) { root =>
+            root.innerNodeTraverser().withParameters(Dfs(AnyConnected)).toSet --
+              (if (ignorePredecessors) predecessors(maybeRoot) else Nil)
+          }
+          val set = seq.toSet
+          if (set != expected)
+            fail(
+              s"Ordering is incomplete when root=$maybeRoot and ignorePredecessors=$ignorePredecessors: expected ${expected} but was ${set}."
+            )
+        }
+
         checkOrder(seq, if (ignorePredecessors) root else None)
-        checkCompletenis(seq, root, ignorePredecessors)
-      }
-
-      private def predecessors(maybeRoot: Option[graph.NodeT]): Set[graph.NodeT] =
-        maybeRoot.fold(
-          ifEmpty = Set.empty[graph.NodeT]
-        ) { root =>
-          root.innerNodeTraverser().withParameters(Dfs(Predecessors)).toSet - root
-        }
-
-      def checkOrder(seq: OrderedInnerNodes, ignorePredecessorsOf: Option[graph.NodeT]): Unit =
-        seq.foldLeft(predecessors(ignorePredecessorsOf)) { (allowedPredecessors, innerNode) =>
-          if (!innerNode.diPredecessors.forall(allowedPredecessors.contains))
-            fail(s"$innerNode is misplaced in $seq")
-          allowedPredecessors + innerNode
-        }
-
-      def checkCompletenis(
-          seq: OrderedInnerNodes,
-          maybeRoot: Option[graph.NodeT],
-          ignorePredecessors: Boolean
-      ): Unit = {
-        val expected = maybeRoot.fold(
-          ifEmpty = graph.nodes.toSet
-        ) { root =>
-          root.innerNodeTraverser().withParameters(Dfs(AnyConnected)).toSet --
-            (if (ignorePredecessors) predecessors(maybeRoot) else Nil)
-        }
-        val set = seq.toSet
-        if (set != expected)
-          fail(
-            s"Ordering is incomplete when root=$maybeRoot and ignorePredecessors=$ignorePredecessors: expected ${expected} but was ${set}."
-          )
+        checkCompleteness(seq, root, ignorePredecessors)
       }
     }
 
-    def unexpectedCycle[N, E <: Edge[N]](cycleNode: AnyGraph[N, E]#NodeT) =
-      fail(s"Unexpected cycle starting at ${cycleNode.outer}")
+    def unexpectedCycle[N, E <: Edge[N]](cycleNode: Option[AnyGraph[N, E]#NodeT]): Nothing =
+      fail(s"Unexpected cycle with contained node $cycleNode")
 
-    def unexpectedRight[N, E <: Edge[N]](order: AnyGraph[N, E]#TopologicalOrder[_]) =
+    def unexpectedRight[N, E <: Edge[N]](order: AnyGraph[N, E]#TopologicalOrder[_]): Nothing =
       fail(s"Cycle expected but topological order ${order.toLayered} found")
+
+    def checkIsCycleNode(g: AnyGraph[Int, DiEdge[Int]])(maybeNode: Option[g.NodeT]): Unit = maybeNode match {
+      case Some(n) => g.findCycleContaining(n) orElse fail(s"Cycle containing node $n expected but none found.")
+      case None =>
+        g.nodes.find(_.inDegree == 0) match {
+          case Some(startingNode) => fail(s"No node with inDegree == 0 expected but node $startingNode found.")
+          case None               =>
+        }
+    }
   }
 
-  def `empty graph`: Unit =
+  def `empty graph`(): Unit =
     withGraph(factory.empty[Int, DiEdge[Int]].asAnyGraph) {
       _.topologicalSort.fold(
         Topo.unexpectedCycle,
@@ -92,7 +101,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
       )
     }
 
-  def `daily activities`: Unit = {
+  def `daily activities`(): Unit = {
 
     object Activities {
       val (coffee, coding, inspiration, shopping, sleeping, supper, gaming) =
@@ -132,7 +141,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
     }
   }
 
-  def `connected graph`: Unit = {
+  def `connected graph`(): Unit = {
     val someOuter @ n0 :: n1 :: n5 :: Nil = 0 :: 1 :: 5 :: Nil
     val connected = factory[Int, DiEdge](n0 ~> n1, 2 ~> 4, 2 ~> n5, n0 ~> 3, n1 ~> 4, 4 ~> 3).asAnyGraph
     withGraph(connected) { g =>
@@ -155,7 +164,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
     }
   }
 
-  def `multi graph`: Unit = {
+  def `multi graph`(): Unit = {
     import scalax.collection.edges.multilabeled._
 
     val g = factory(1 ~> 2 %% 0, 1 ~> 2 %% 1).asAnyGraph
@@ -169,7 +178,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
     )
   }
 
-  def `unconnected graph`: Unit = {
+  def `unconnected graph`(): Unit = {
     val expectedLayer_0 @ (_1 :: _3 :: Nil) = List(1, 3)
     val expectedLayer_1 @ (_2 :: _4 :: Nil) = List(2, 4)
     withGraph(factory(_1 ~> _2, _3 ~> _4)) {
@@ -185,18 +194,35 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
     }
   }
 
-  def `cyclic graph`: Unit =
-    withGraph(factory(1 ~> 2, 2 ~> 1)) {
+  def `minimal cyclic graph`(): Unit =
+    withGraph(factory(1 ~> 2, 2 ~> 1)) { g =>
+      g.topologicalSort.fold(
+        Topo.checkIsCycleNode(g),
+        Topo.unexpectedRight
+      )
+    }
+
+  def `cyclic graph #68`(): Unit =
+    withGraph(factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)) {
       _.topologicalSort.fold(
         identity,
         Topo.unexpectedRight
       )
     }
 
-  def `cyclic graph #68`: Unit =
-    withGraph(factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)) {
-      _.topologicalSort.fold(
-        identity,
+  def `cyclic graphs #264`(): Unit =
+    withGraph(
+      factory(
+        111 ~> 2,
+        2 ~> 111,
+        111 ~> 33
+      ) ++ (for {
+        i <- Range.inclusive(33, 230, step = 10)
+        j = i + 10
+      } yield i ~> j)
+    ) { g =>
+      g.topologicalSort.fold(
+        Topo.checkIsCycleNode(g),
         Topo.unexpectedRight
       )
     }
