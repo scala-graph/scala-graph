@@ -9,10 +9,7 @@ import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.immutable.SortedArraySet
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
 
-/** Default implementation of the graph algorithms to maintain the functionality
-  *  defined by [[GraphTraversal]].
-  *
-  *  @author Peter Empen
+/** Default implementation of the graph algorithms defined in [[GraphTraversal]].
   */
 trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
   thisGraph: GraphTraversalImpl[N, E] =>
@@ -55,7 +52,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
 
     final def topologicalSort[U](
         ignorePredecessors: Boolean = false
-    )(implicit visitor: InnerElem => U = Visitor.empty): CycleNodeOrTopologicalOrder = {
+    )(implicit visitor: InnerElem => U = Visitor.empty): MaybeCycleNodeOrTopologicalOrder = {
       val predecessors: MSet[NodeT] =
         if (ignorePredecessors)
           innerNodeTraverser(root, Parameters.Dfs(Predecessors)).toMSet -= root
@@ -808,13 +805,12 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
       protected[collection] def topologicalSort(
           setup: TopoSortSetup,
           maybeHandle: Option[Handle] = None
-      ): CycleNodeOrTopologicalOrder =
+      ): MaybeCycleNodeOrTopologicalOrder =
         withHandle(maybeHandle) { implicit handle =>
           def nonVisited(node: NodeT) = !node.visited
           val (
             layer_0: Iterable[NodeT],
-            inDegrees: MMap[NodeT, Int],
-            maybeInspectedNode: Option[NodeT]
+            inDegrees: MMap[NodeT, Int]
           ) = setup
           val untilDepth: Int                 = maxDepth
           val estimatedLayers: Int            = expectedMaxNodes(4)
@@ -823,7 +819,7 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
           val maybeCycleNodes                 = MSet.empty[NodeT]
           def emptyBuffer: ArrayBuffer[NodeT] = new ArrayBuffer[NodeT](estimatedNodesPerLayer)
 
-          @tailrec def loop(layer: Int, layerNodes: ArrayBuffer[NodeT]): CycleNodeOrTopologicalOrder = {
+          @tailrec def loop(layer: Int, layerNodes: ArrayBuffer[NodeT]): MaybeCycleNodeOrTopologicalOrder = {
             layers += Layer(layer, layerNodes)
 
             val currentLayerNodes = if (doNodeSort) layerNodes.sorted(nodeOrdering) else layerNodes
@@ -847,22 +843,22 @@ trait TraverserImpl[N, E[+X] <: EdgeLikeIn[X]] {
             }
 
             if (nrEnqueued == 0 || layers.size == untilDepth)
-              maybeCycleNodes.headOption.fold[CycleNodeOrTopologicalOrder](
+              maybeCycleNodes.headOption.fold[MaybeCycleNodeOrTopologicalOrder](
                 Right(new TopologicalOrder(layers, identity))
-              )(Left(_))
+              )(n => Left(Some(n)))
             else
               loop(layer + 1, nextLayerNodes)
           }
 
-          maybeInspectedNode match {
-            case Some(inspectedNode) if layer_0.isEmpty => Left(inspectedNode)
-            case _ =>
-              val startBuffer = layer_0 match {
+          if (layer_0.isEmpty && inDegrees.nonEmpty) Left(None)
+          else
+            loop(
+              layer = 0,
+              layerNodes = layer_0 match {
                 case b: ArrayBuffer[NodeT] => b
                 case t                     => emptyBuffer ++ t
               }
-              loop(0, startBuffer)
-          }
+            )
         }
     }
 
