@@ -111,6 +111,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     def nodes(implicit ordering: NodeOrdering): IndexedSeq[NodeT] =
       if (ordering.isDefined) _nodes sorted ordering
       else _nodes
+
+    def size: Int = _nodes.size
   }
 
   /** The result of a topological sort in the layered view. */
@@ -171,6 +173,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
     def toLayered: LayeredTopologicalOrder[A] =
       new LayeredTopologicalOrder[A](layers, toA)(layerOrdering)
+
+    def nodeCount: Int = layers.foldLeft(0) { case (acc, layer) => acc + layer.size }
   }
 
   /** Layers of a topological order of a graph or of an isolated graph component.
@@ -200,7 +204,8 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
 
   /** Either a `Right` containing a valid topological order or a `Left` containing an optional node on a cycle.
     * `Left` indicates that at least one cycle exists and contains
-    * - `None` if there exists no node without a predecessor and the algorithm has no direct clue about the position of the cycle.
+    * - `None` if, in any of the components, no node without a predecessor exists
+    *   so the algorithm has no direct clue about the position of the cycle.
     *   To get a cycle you need to call `findCycle` for your graph or graph component.
     * - `Some` node otherwise. To get a cycle you can limit the scope of `findCycle` by supplying this node as a starting point.
     */
