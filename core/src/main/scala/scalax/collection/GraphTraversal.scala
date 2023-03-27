@@ -69,8 +69,7 @@ import scalax.collection.generic.GraphCoreCompanion
   *         multigraphs.
   * @define SEEFLUENT See `componentTraverser` for more control by means of `FluentProperties`.
   * @define SORTVISITOR called for each inner node or inner edge visited during the sort.
-  *
-  * @author Peter Empen
+  * @define HOOKSIGNORED Hooks are ignored.
   */
 trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   thisGraph =>
@@ -212,6 +211,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
   type MaybeCycleNodeOrTopologicalOrder = Either[Option[NodeT], TopologicalOrder[NodeT]]
 
   /** Sorts this graph topologically.
+    * $HOOKSIGNORED
     *  @param visitor $SORTVISITOR
     *  $SEEFLUENT
     */
@@ -219,6 +219,7 @@ trait GraphTraversal[N, E[+X] <: EdgeLikeIn[X]] extends GraphBase[N, E] {
     componentTraverser().topologicalSort(visitor)
 
   /** Sorts every isolated component of this graph topologically.
+    * $HOOKSIGNORED
     *  @param visitor $SORTVISITOR
     *  $SEEFLUENT
     */
