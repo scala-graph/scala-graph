@@ -85,7 +85,9 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
     def unexpectedRight[N, E[+X] <: EdgeLikeIn[X]](order: Graph[N, E]#TopologicalOrder[_]) =
       fail(s"Cycle expected but topological order ${order.toLayered} found")
 
-    def checkIsCycleNode(g: Graph[Int, DiEdge])(maybeNode: Option[g.NodeT], expectedDefined: Boolean): Unit =
+    def checkIsCycleNode(
+        g: Graph[Int, DiEdge]
+    )(maybeNode: Option[g.NodeT], expectedDefined: Boolean): Unit =
       (maybeNode, expectedDefined) match {
         case (Some(n), true) =>
           g.findCycleContaining(n) orElse fail(s"Cycle containing node $n expected but none found.")
