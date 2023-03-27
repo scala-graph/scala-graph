@@ -308,6 +308,10 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       innerElemTraverser
         .Runner(noNode, visitor)
         .topologicalSort(forInDegrees(SubgraphProperties(nodes, subgraphNodes, subgraphEdges)))
+        .flatMap {
+          case sort if sort.nodeCount < nodes.size => Left(None) // some component has no starting node
+          case sort                                => Right(sort)
+        }
 
     final def topologicalSortByComponent[U](implicit
         visitor: InnerElem => U = Visitor.empty

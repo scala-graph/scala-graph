@@ -83,14 +83,16 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
     def unexpectedRight[N, E <: Edge[N]](order: AnyGraph[N, E]#TopologicalOrder[_]): Nothing =
       fail(s"Cycle expected but topological order ${order.toLayered} found")
 
-    def checkIsCycleNode(g: AnyGraph[Int, DiEdge[Int]])(maybeNode: Option[g.NodeT]): Unit = maybeNode match {
-      case Some(n) => g.findCycleContaining(n) orElse fail(s"Cycle containing node $n expected but none found.")
-      case None =>
-        g.nodes.find(_.inDegree == 0) match {
-          case Some(startingNode) => fail(s"No node with inDegree == 0 expected but node $startingNode found.")
-          case None               =>
-        }
-    }
+    def checkIsCycleNode(
+        g: AnyGraph[Int, DiEdge[Int]]
+    )(maybeNode: Option[g.NodeT], expectedDefined: Boolean): Unit =
+      (maybeNode, expectedDefined) match {
+        case (Some(n), true) =>
+          g.findCycleContaining(n) orElse fail(s"Cycle containing node $n expected but none found.")
+        case (Some(n), false) => fail(s"Unexpected cycle node $n found.")
+        case (None, true)     => fail(s"Cycle node expected but None found.")
+        case (None, false)    =>
+      }
   }
 
   def `empty graph`(): Unit =
@@ -197,15 +199,15 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   def `minimal cyclic graph`(): Unit =
     withGraph(factory(1 ~> 2, 2 ~> 1)) { g =>
       g.topologicalSort.fold(
-        Topo.checkIsCycleNode(g),
+        Topo.checkIsCycleNode(g)(_, expectedDefined = false),
         Topo.unexpectedRight
       )
     }
 
   def `cyclic graph #68`(): Unit =
-    withGraph(factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)) {
-      _.topologicalSort.fold(
-        identity,
+    withGraph(factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)) { g =>
+      g.topologicalSort.fold(
+        Topo.checkIsCycleNode(g)(_, expectedDefined = true),
         Topo.unexpectedRight
       )
     }
@@ -222,9 +224,24 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
       } yield i ~> j)
     ) { g =>
       g.topologicalSort.fold(
-        Topo.checkIsCycleNode(g),
+        Topo.checkIsCycleNode(g)(_, expectedDefined = false),
         Topo.unexpectedRight
       )
+    }
+
+  def `cyclic unconnected graph`(): Unit =
+    withGraph(factory(11100 ~> 2, 6 ~> 7, 2 ~> 11100, 3 ~> 4)) { g =>
+      g.topologicalSort.fold(
+        Topo.checkIsCycleNode(g)(_, expectedDefined = false),
+        Topo.unexpectedRight
+      )
+    }
+
+  def `cyclic unconnected graph by component`(): Unit =
+    withGraph(factory(11100 ~> 2, 6 ~> 7, 2 ~> 11100, 3 ~> 4)) { g =>
+      val r = g.topologicalSortByComponent
+      r.size shouldBe 3
+      r.count(_.isLeft) shouldBe 1
     }
 
   /* TODO L
