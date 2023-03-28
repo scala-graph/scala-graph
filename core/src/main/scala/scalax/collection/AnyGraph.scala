@@ -547,7 +547,8 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
             val newSources = sources.flatMap(nMap)
             val newTargets = targets.flatMap(nMap)
             builder ++= (edges =
-              fDiHyperEdge.fold(fHyperEdge(e, newSources ++ newTargets))(_(e, newSources, newTargets)))
+              fDiHyperEdge.fold(fHyperEdge(e, newSources ++ newTargets))(_(e, newSources, newTargets))
+            )
 
           case e @ InnerEdge(AnyHyperEdge(ends: Several[NodeT @unchecked]), _) =>
             builder ++= (edges = fHyperEdge(e, ends.flatMap(nMap)))
