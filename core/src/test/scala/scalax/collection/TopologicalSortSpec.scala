@@ -244,13 +244,14 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
       r.count(_.isLeft) shouldBe 1
     }
 
-  /* TODO L
-  def `combining with filtered edges by withSubgraph #104`: Unit =
-    given(factory((1 ~+> 3)("a"), (1 ~+> 2)("b"), (2 ~+> 3)("a")).asAnyGraph) { g =>
-      val n1 = g get 1
-      n1.topologicalSort() shouldBe Right
+  def `with filtered edges #104`: Unit = {
+    import scalax.collection.edges.labeled._
 
-      n1.withSubgraph(edges = _.label == "a")
+    withGraph(factory(1 ~> 3 % 1, 1 ~> 2 % 2, 2 ~> 3 % 1)) { g =>
+      val n1 = g get 1
+      n1.topologicalSort().isRight shouldBe true
+
+      n1.withSubgraph(edges = _.weight == 1)
         .topologicalSort()
         .fold(
           Topo.unexpectedCycle,
@@ -260,5 +261,5 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
             }
         )
     }
-   */
+  }
 }
