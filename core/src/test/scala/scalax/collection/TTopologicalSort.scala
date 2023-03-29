@@ -241,7 +241,7 @@ private class TTopologicalSort[G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with 
       r.count(_.isLeft) shouldBe 1
     }
 
-  def `combining with filtered edges by withSubgraph #104`(): Unit =
+  def `with filtered edges #104`(): Unit =
     given(factory((1 ~+> 3)("a"), (1 ~+> 2)("b"), (2 ~+> 3)("a"))) { g =>
       val n1 = g get 1
       n1.topologicalSort() should be('isRight)
