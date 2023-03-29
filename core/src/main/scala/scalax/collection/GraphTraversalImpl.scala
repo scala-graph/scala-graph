@@ -306,7 +306,7 @@ trait GraphTraversalImpl[N, E[+X] <: EdgeLikeIn[X]]
         .Runner(noNode, visitor)
         .topologicalSort(forInDegrees(SubgraphProperties(nodes, subgraphNodes, subgraphEdges)))
         .flatMap {
-          case sort if sort.nodeCount < nodes.size => Left(None) // some component has no starting node
+          case sort if sort.nodeCount < nodes.size => Left(TopologicalSortFailure(Set.empty))
           case sort                                => Right(sort)
         }
 
