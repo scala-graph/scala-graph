@@ -837,14 +837,16 @@ trait TraverserImpl[N, E <: Edge[N]] {
             }
 
             if (nrEnqueued == 0 || layers.size == untilDepth)
-              maybeCycleNodes.headOption.fold[MaybeCycleNodeOrTopologicalOrder](
+              if (maybeCycleNodes.isEmpty)
                 Right(new TopologicalOrder(layers, identity))
-              )(n => Left(Some(n)))
+              else
+                Left(TopologicalSortFailure(maybeCycleNodes.toSet))
             else
               loop(layer + 1, nextLayerNodes)
           }
 
-          if (layer_0.isEmpty && inDegrees.nonEmpty) Left(None)
+          if (layer_0.isEmpty && inDegrees.nonEmpty)
+            Left(TopologicalSortFailure(Set.empty))
           else
             loop(
               layer = 0,

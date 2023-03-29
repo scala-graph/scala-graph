@@ -200,14 +200,35 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
     def toLayered: LayeredTopologicalOrder[A] = this
   }
 
-  /** Either a `Right` containing a valid topological order or a `Left` containing an optional node on a cycle.
-    * `Left` indicates that at least one cycle exists and contains
-    * - `None` if, in any of the components, no node without a predecessor exists
-    *   so the algorithm has no direct clue about the position of the cycle.
-    *   To get a cycle you need to call `findCycle` for your graph or graph component.
-    * - `Some` node otherwise. To get a cycle you can limit the scope of `findCycle` by supplying this node as a starting point.
+  /** Failure result of a topological sort with a possible hint of candidate cycle nodes.
+    *
+    * @param candidateCycleNodes
+    * - If the set is not empty, at least one of the candidate nodes lies on a cycle.
+    * - An empty set is only returned if, in any of the components, no node without a predecessor exists
+    *   so the algorithm was stopped before any cycle node could have been determined.
     */
-  type MaybeCycleNodeOrTopologicalOrder = Either[Option[NodeT], TopologicalOrder[NodeT]]
+  case class TopologicalSortFailure private[collection] (candidateCycleNodes: Set[NodeT]) {
+
+    /** Finds a cycle based on `candidateCycleNodes`.
+      * Should always return `Some`. `None` would indicate an internal issue related to the preceding topological sort.
+      */
+    def cycle: Option[Cycle] =
+      if (candidateCycleNodes.isEmpty) findCycle
+      else {
+        val it = candidateCycleNodes.iterator
+        @tailrec def loop: Option[Cycle] =
+          if (it.hasNext)
+            it.next().findCycle match {
+              case None => loop
+              case some => some
+            }
+          else None
+
+        loop
+      }
+  }
+
+  type MaybeCycleNodeOrTopologicalOrder = Either[TopologicalSortFailure, TopologicalOrder[NodeT]]
 
   /** Sorts this graph topologically.
     * $HOOKSIGNORED

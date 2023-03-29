@@ -77,21 +77,21 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
       }
     }
 
-    def unexpectedCycle[N, E <: Edge[N]](cycleNode: Option[AnyGraph[N, E]#NodeT]): Nothing =
-      fail(s"Unexpected cycle with contained node $cycleNode")
+    def unexpectedCycle[N, E <: Edge[N]](cycleNode: AnyGraph[N, E]#TopologicalSortFailure): Nothing =
+      fail(s"Unexpected cycle with candidate cycle nodes $cycleNode")
 
     def unexpectedRight[N, E <: Edge[N]](order: AnyGraph[N, E]#TopologicalOrder[_]): Nothing =
       fail(s"Cycle expected but topological order ${order.toLayered} found")
 
-    def checkIsCycleNode(
+    def checkCycleHint(
         g: AnyGraph[Int, DiEdge[Int]]
-    )(maybeNode: Option[g.NodeT], expectedDefined: Boolean): Unit =
-      (maybeNode, expectedDefined) match {
-        case (Some(n), true) =>
-          g.findCycleContaining(n) orElse fail(s"Cycle containing node $n expected but none found.")
-        case (Some(n), false) => fail(s"Unexpected cycle node $n found.")
-        case (None, true)     => fail(s"Cycle node expected but None found.")
-        case (None, false)    =>
+    )(hint: g.TopologicalSortFailure, expectedDefined: Boolean): Unit =
+      (hint.candidateCycleNodes, expectedDefined) match {
+        case (ns, true) if ns.nonEmpty =>
+          hint.cycle orElse fail(s"Cycle containing any of $ns expected but none found.")
+        case (ns, false) if ns.nonEmpty => fail(s"Unexpected cycle node hints $ns found.")
+        case (_, true)                  => fail(s"Non-empty cycle node hint expected.")
+        case (_, false)                 =>
       }
   }
 
@@ -199,7 +199,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   def `minimal cyclic graph`(): Unit =
     withGraph(factory(1 ~> 2, 2 ~> 1)) { g =>
       g.topologicalSort.fold(
-        Topo.checkIsCycleNode(g)(_, expectedDefined = false),
+        Topo.checkCycleHint(g)(_, expectedDefined = false),
         Topo.unexpectedRight
       )
     }
@@ -207,7 +207,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   def `cyclic graph #68`(): Unit =
     withGraph(factory(0 ~> 7, 4 ~> 7, 7 ~> 3, 3 ~> 4, 0 ~> 5)) { g =>
       g.topologicalSort.fold(
-        Topo.checkIsCycleNode(g)(_, expectedDefined = true),
+        Topo.checkCycleHint(g)(_, expectedDefined = true),
         Topo.unexpectedRight
       )
     }
@@ -224,7 +224,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
       } yield i ~> j)
     ) { g =>
       g.topologicalSort.fold(
-        Topo.checkIsCycleNode(g)(_, expectedDefined = false),
+        Topo.checkCycleHint(g)(_, expectedDefined = false),
         Topo.unexpectedRight
       )
     }
@@ -232,7 +232,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   def `cyclic unconnected graph`(): Unit =
     withGraph(factory(11100 ~> 2, 6 ~> 7, 2 ~> 11100, 3 ~> 4)) { g =>
       g.topologicalSort.fold(
-        Topo.checkIsCycleNode(g)(_, expectedDefined = false),
+        Topo.checkCycleHint(g)(_, expectedDefined = false),
         Topo.unexpectedRight
       )
     }
@@ -242,6 +242,14 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
       val r = g.topologicalSortByComponent
       r.size shouldBe 3
       r.count(_.isLeft) shouldBe 1
+    }
+
+  def `proper cycle node out of multiple hints`(): Unit =
+    withGraph(factory(0 ~> 11, 0 ~> 20, 1 ~> 20, 11 ~> 20, 11 ~> 30, 30 ~> 11)) { g =>
+      g.topologicalSort.fold(
+        Topo.checkCycleHint(g)(_, expectedDefined = true),
+        Topo.unexpectedRight
+      )
     }
 
   def `with filtered edges #104`: Unit = {
