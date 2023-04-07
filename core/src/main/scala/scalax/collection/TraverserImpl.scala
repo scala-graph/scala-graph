@@ -52,7 +52,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
 
     final def topologicalSort[U](
         ignorePredecessors: Boolean = false
-    )(implicit visitor: InnerElem => U = Visitor.empty): MaybeCycleNodeOrTopologicalOrder = {
+    )(implicit visitor: InnerElem => U = Visitor.empty): TopologicalSort = {
       val predecessors: MSet[NodeT] =
         if (ignorePredecessors)
           innerNodeTraverser(root, Parameters.Dfs(Predecessors)).to(MSet) -= root
@@ -799,7 +799,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
       protected[collection] def topologicalSort(
           setup: TopoSortSetup,
           maybeHandle: Option[Handle] = None
-      ): MaybeCycleNodeOrTopologicalOrder =
+      ): TopologicalSort =
         withHandle(maybeHandle) { implicit handle =>
           def nonVisited(node: NodeT) = !node.visited
           val (
@@ -813,7 +813,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
           val maybeCycleNodes                 = MSet.empty[NodeT]
           def emptyBuffer: ArrayBuffer[NodeT] = new ArrayBuffer[NodeT](estimatedNodesPerLayer)
 
-          @tailrec def loop(layer: Int, layerNodes: ArrayBuffer[NodeT]): MaybeCycleNodeOrTopologicalOrder = {
+          @tailrec def loop(layer: Int, layerNodes: ArrayBuffer[NodeT]): TopologicalSort = {
             layers += Layer(layer, layerNodes)
 
             val currentLayerNodes = if (doNodeSort) layerNodes.sorted(nodeOrdering) else layerNodes

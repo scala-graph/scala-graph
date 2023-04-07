@@ -252,7 +252,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
       )
     }
 
-  def `with filtered edges #104`: Unit = {
+  def `with filtered edges #104`(): Unit = {
     import scalax.collection.edges.labeled._
 
     withGraph(factory(1 ~> 3 % 1, 1 ~> 2 % 2, 2 ~> 3 % 1)) { g =>

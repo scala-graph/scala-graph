@@ -304,7 +304,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
         None
       }
 
-    final def topologicalSort[U](implicit visitor: InnerElem => U = Visitor.empty): MaybeCycleNodeOrTopologicalOrder =
+    final def topologicalSort[U](implicit visitor: InnerElem => U = Visitor.empty): TopologicalSort =
       innerElemTraverser
         .Runner(noNode, visitor)
         .topologicalSort(forInDegrees(SubgraphProperties(nodes, subgraphNodes, subgraphEdges)))
@@ -315,7 +315,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
 
     final def topologicalSortByComponent[U](implicit
         visitor: InnerElem => U = Visitor.empty
-    ): Iterable[MaybeCycleNodeOrTopologicalOrder] =
+    ): Iterable[TopologicalSort] =
       if (order == 0) Nil
       else {
         val topoRunner    = innerElemTraverser.Runner(noNode, visitor)

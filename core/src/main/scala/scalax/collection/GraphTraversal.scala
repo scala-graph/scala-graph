@@ -228,14 +228,14 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
       }
   }
 
-  type MaybeCycleNodeOrTopologicalOrder = Either[TopologicalSortFailure, TopologicalOrder[NodeT]]
+  type TopologicalSort = Either[TopologicalSortFailure, TopologicalOrder[NodeT]]
 
   /** Sorts this graph topologically.
     * $HOOKSIGNORED
     *  @param visitor $SORTVISITOR
     *  $SEEFLUENT
     */
-  final def topologicalSort[U](implicit visitor: InnerElem => U = empty): MaybeCycleNodeOrTopologicalOrder =
+  final def topologicalSort[U](implicit visitor: InnerElem => U = empty): TopologicalSort =
     componentTraverser().topologicalSort(visitor)
 
   /** Sorts every isolated component of this graph topologically.
@@ -245,7 +245,7 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
     */
   final def topologicalSortByComponent[U](implicit
       visitor: InnerElem => U = empty
-  ): Iterable[MaybeCycleNodeOrTopologicalOrder] =
+  ): Iterable[TopologicalSort] =
     componentTraverser().topologicalSortByComponent(visitor)
 
   @inline final protected def defaultPathSize: Int = min(256, nodes.size * 2)
@@ -815,12 +815,12 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
     def findCycle[U](implicit visitor: InnerElem => U = Visitor.empty): Option[Cycle]
 
     /** See [[GraphTraversal#topologicalSort]]. */
-    def topologicalSort[U](implicit visitor: InnerElem => U = Visitor.empty): MaybeCycleNodeOrTopologicalOrder
+    def topologicalSort[U](implicit visitor: InnerElem => U = Visitor.empty): TopologicalSort
 
     /** See [[GraphTraversal#topologicalSortByComponent]]. */
     def topologicalSortByComponent[U](implicit
         visitor: InnerElem => U = Visitor.empty
-    ): Iterable[MaybeCycleNodeOrTopologicalOrder]
+    ): Iterable[TopologicalSort]
   }
 
   /** Creates a [[ComponentTraverser]] responsible for invoking graph traversal methods in all
@@ -1072,7 +1072,7 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
       */
     def topologicalSort[U](ignorePredecessors: Boolean = false)(implicit
         visitor: InnerElem => U = empty
-    ): MaybeCycleNodeOrTopologicalOrder
+    ): TopologicalSort
 
     /** Determines the weak component that contains this node.
       *  $SEEFLUENT
