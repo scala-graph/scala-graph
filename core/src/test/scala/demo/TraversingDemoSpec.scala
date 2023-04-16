@@ -43,26 +43,26 @@ final class TraversingDemoSpec extends RefSpec with Matchers {
         (n(1) pathUntil (_.outDegree >= 3)).get,
         List[Outer](1, 1 ~> 3 % 5, 3)
       )
-      val spO = n(3) shortestPathTo n(1)
-      val sp  = spO.get
-      validatePath(sp, List[Outer](3, 3 ~ 4 % 1, 4, 4 ~> 5 % 0, 5, 1 ~ 5 % 3, 1))
-      sp.nodes.toList should be(List(3, 4, 5, 1))
-      sp.weight shouldBe 4
+      val maybeP = n(3) shortestPathTo n(1)
+      val p      = maybeP.get
+      validatePath(p, List[Outer](3, 3 ~ 4 % 1, 4, 4 ~> 5 % 0, 5, 1 ~ 5 % 3, 1))
+      p.nodes.toList should be(List(3, 4, 5, 1))
+      p.weight shouldBe 4
 
       def negWeight(e: g.EdgeT): Double = 5.5f - e.weight
-      val spNO                          = n(3) shortestPathTo (n(1), negWeight)
-      val spN                           = spNO.get
-      validatePath(sp, List[Outer](3, 2 ~ 3 % 2, 2, 1 ~> 2 % 4, 1))
-      spN.nodes.toList shouldBe List(3, 2, 1)
-      spN.weight shouldBe 6
+      val maybeNegP                     = n(3).shortestPathTo(n(1), negWeight)
+      val negP                          = maybeNegP.get
+      validatePath(negP, List[Outer](3, 2 ~ 3 % 2, 2, 1 ~> 2 % 4, 1))
+      negP.nodes.toList shouldBe List(3, 2, 1)
+      negP.weight shouldBe 6
 
-      val pO1 = n(4).withSubgraph(nodes = _ < 4) pathTo n(2)
-      validatePath(pO1.get, List[Outer](4, 3 ~ 4 % 1, 3, 2 ~ 3 % 2, 2))
-      pO1.map(_.nodes).get.toList shouldBe List(4, 3, 2)
+      val maybeSubgraphP1 = n(4).withSubgraph(nodes = _ < 4) pathTo n(2)
+      validatePath(maybeSubgraphP1.get, List[Outer](4, 3 ~ 4 % 1, 3, 2 ~ 3 % 2, 2))
+      maybeSubgraphP1.map(_.nodes).get.toList shouldBe List(4, 3, 2)
 
-      val pO2 = n(4).withSubgraph(edges = _.weight != 2) pathTo n(2)
-      validatePath(pO2.get, List[Outer](4, 4 ~> 5 % 0, 5, 1 ~ 5 % 3, 1, 1 ~ 2 % 4, 2))
-      pO2.map(_.nodes).get.toList shouldBe List(4, 5, 1, 2)
+      val maybeSubgraphP2 = n(4).withSubgraph(edges = _.weight != 2) pathTo n(2)
+      validatePath(maybeSubgraphP2.get, List[Outer](4, 4 ~> 5 % 0, 5, 1 ~ 5 % 3, 1, 1 ~ 2 % 4, 2))
+      maybeSubgraphP2.map(_.nodes).get.toList shouldBe List(4, 5, 1, 2)
     }
 
     def `cycle detection`: Unit = {
@@ -156,8 +156,8 @@ final class TraversingDemoSpec extends RefSpec with Matchers {
           case None        => Some(n)
         }
       )
-      maybeCycle.get.sameElements(List(2, 2 ~> 3, 3, 3 ~> 4, 4, 4 ~> 2, 2)) shouldBe true
-      center.get shouldBe 2
+      maybeCycle.map(_.sameElements(List(2, 2 ~> 3, 3, 3 ~> 4, 4, 4 ~> 2, 2))) shouldBe Some(true)
+      center shouldBe Some(2)
     }
 
     def `weak component traverser`: Unit = {
