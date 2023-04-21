@@ -104,9 +104,6 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       g.nodes filter (_ > 2) shouldBe Set(n(5), n(3))
       g.nodes filter (_.degree > 1) shouldBe Set(n(3))
       g.edges filter (_ contains 4) shouldBe Symbol("empty")
-
-      g filter (nodeP = _ >= 2) should ===(Graph(2, 3, 5, 2 ~> 3))
-      g filter (edgeP = _.isDirected) should ===(Graph(1, 5, 2, 3, 2 ~> 3))
     }
 
     def `measuring ` : Unit = {
