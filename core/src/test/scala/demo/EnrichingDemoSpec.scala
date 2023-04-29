@@ -8,9 +8,6 @@ import scalax.collection.immutable.Graph
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
-/** Includes the examples given on [[http://www.scala-graph.org/guides/core-customizing.html
-  *  Customizing Graphs]].
-  */
 class EnrichingDemoSpec extends RefSpec with Matchers {
 
   object `demonstrating how to` {
@@ -25,7 +22,7 @@ class EnrichingDemoSpec extends RefSpec with Matchers {
 
     def `enrich inner nodes`: Unit = {
       // works for any Graph due to projection type
-      implicit class ExtGraphNode[N, E <: Edge[N]](node: Graph[N, E]#NodeT) {
+      implicit class ExtInnerNode[N, E <: Edge[N]](node: Graph[N, E]#NodeT) {
         def outOverInDegree: Int = node.outDegree - node.inDegree
       }
 

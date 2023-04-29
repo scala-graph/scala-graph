@@ -1,20 +1,28 @@
 Welcome to the ''Graph for Scala'' API reference.
-Some suggested navigation entry points:
+Some suggested entry points:
 
-  - '''graph editing''':
-    - operators of [[scalax.collection.Graph `Graph`]]
-    - or the operators of [[scalax.collection.mutable.Graph `mutable.Graph`]] and its inner nodes.
+  - '''Graph editing''':
+    - operators of [[scalax.collection.AnyGraph `AnyGraph`]]
+    - operators of [[scalax.collection.immutable.Graph `immutable.Graph`]] and its inner nodes
+    - operators of [[scalax.collection.mutable.Graph `mutable.Graph`]] and its inner nodes.
 
-  - '''predefined edges''':
-    - classes in the [[scalax.collection.GraphEdge$ `GraphEdge`]] object
-    - classes in the [[scalax.collection.edge.package `edge`]] package
-    - implicit members of the [[scalax.collection.GraphPredef$ `GraphPredef`]] object and
-    - operators in the accompanying [[scalax.collection.edge.Implicits$ `Implicits`]] object.
+  - '''Predefined edges''':
+    - classes in the [[scalax.collection.edges `edges`]] package and its subpackages
+    - classes in the [[scalax.collection.hyperedges `hyperedges`]] package and its subpackages.
 
-  - '''graph traversal''':
+  - '''Custom edge toolbox''':
+    - abstract classes in the [[scalax.collection.edges.labeled `labeled edges`]] package
+    - abstract classes in the [[scalax.collection.edges.multilabeled `multilabeled edges`]] package
+    - abstract classes in the [[scalax.collection.hyperedges.labeled `labeled hyperedges`]] package
+    - abstract classes in the [[scalax.collection.hyperedges.multilabeled `multilabeled hyperedges`]] package
+    - abstract classes in the [[scalax.collection.hyperedges.ordered.labeled `ordered labeled hyperedges`]] package
+    - abstract classes in the [[scalax.collection.hyperedges.ordered.multilabeled `ordered multilabeled hyperedges`]] object
+    - traits in the [[scalax.collection.generic `generic`]] package.
+
+  - '''Graph traversal''':
     - methods of [[scalax.collection.GraphTraversal `GraphTraversal`]] and [[http://www.scala-graph.org/api/core/api/#scalax.collection.GraphTraversal$TraverserInnerNode `TraverserInnerNode`]].
 
-  - '''random graphs'''
+  - '''Random graphs'''
     [[scalax.collection.generator.RandomGraph `RandomGraph`]].
 
   - '''Scalacheck graph generators'''
