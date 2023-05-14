@@ -4,19 +4,20 @@ package io.dot
 import scala.annotation.tailrec
 import scala.collection.mutable.{Set => MSet, StringBuilder}
 
-import GraphEdge.{DiEdge, Edge}
+import OuterImplicits._
+import edges.DiEdge
+import generic.Edge
 
 /** Contains methods to transform `graph` to the DOT language.
   *
   * @define RESP1 a user-supplied function responsible for determining which (sub)graph
   * @define RESP2 should be assigned to and for transforming the passed
-  * @define NORMALLY Normally, this method will be called internally by `toDot`
-  *         but it may also be used for test purposes.
+  * @define NORMALLY Normally, this method will be called internally but it may also be called for test purposes.
   */
-class Export[N, E <: Edge[N]](graph: Graph[N, E]) {
+trait Export[N, E <: Edge[N]] extends Any {
+  this: Graph2DotExport[N, E] =>
 
-  /** Creates a DOT string by calling the node and edge transformers for the elements
-    * of `graph`.
+  /** Creates a DOT string by calling the node and edge transformers for the elements of `graph`.
     *
     * @param dotRoot attributes of the root DOT graph.
     * @param edgeTransformer $RESP1 the edge $RESP2 inner edge to a `DotEdgeStmt`.
@@ -44,7 +45,7 @@ class Export[N, E <: Edge[N]](graph: Graph[N, E]) {
   }
 
   /** Builds the AST for `graph` employing `dotRoot` and the supplied transformers.
-    *  $NORMALLY
+    * $NORMALLY
     */
   def toAST(
       dotRoot: DotRootGraph,
@@ -55,6 +56,7 @@ class Export[N, E <: Edge[N]](graph: Graph[N, E]) {
   ): (DotAST, DotCluster) = {
     val root           = DotCluster(dotRoot)
     val dotAST: DotAST = DotAST(root)
+
     @tailrec def connectClusters(node: dotAST.NodeT): Unit = {
       def conn(ancestor: DotGraph): dotAST.NodeT = {
         val ancestorNode                                                     = dotAST addAndGet DotCluster(ancestor)
@@ -71,7 +73,7 @@ class Export[N, E <: Edge[N]](graph: Graph[N, E]) {
       }
     }
 
-    /* First we visit all edges because they have precedence over nodes when deciding
+    /* First, visit all edges because they have precedence over nodes when deciding
        on which (sub)graph they should be assigned to.
      */
     val visitedCNodes = MSet.empty[graph.NodeT]
@@ -102,8 +104,9 @@ class Export[N, E <: Edge[N]](graph: Graph[N, E]) {
           dotEdge(edge, dotGraph, edgeStmt)
         }
     }
-    visitedCNodes.clear
-    /* Second we process all isolated nodes.
+    visitedCNodes.clear()
+
+    /* Second, process all isolated nodes.
      */
     iNodeTransformer foreach { visitor =>
       graph.nodes foreach { node =>
@@ -125,12 +128,14 @@ class Export[N, E <: Edge[N]](graph: Graph[N, E]) {
     */
   def format(dotRoot: DotRootGraph, dotAST: DotAST, root: DotCluster, spacing: Spacing): String = {
     val res    = new StringBuilder(graph.size * 20)
-    val edgeOp = if (dotRoot.isDirected) "->" else "--"
+    val edgeOp = if (dotRoot.directed) "->" else "--"
     var level  = 0
+
     def indent(ofGraph: Boolean): Unit =
       if (ofGraph)
-        for (i <- 0 until level)
+        for (_ <- 0 until level)
           res append Indent(spacing.indent)
+
     def separate(ofGraph: Boolean): Unit = {
       val sep =
         if (ofGraph) spacing.graphAttrSeparator
@@ -138,23 +143,25 @@ class Export[N, E <: Edge[N]](graph: Graph[N, E]) {
       res append sep
       indent(ofGraph)
     }
+
     (dotAST get root).innerNodeDownUpTraverser foreach {
       case (true, cluster) =>
         def format(kv: DotAttr): String = s"${kv.name} = ${kv.value}"
-        def outStmtList(stmtList: Seq[DotAttrStmt]) {
+
+        def outStmtList(stmtList: Seq[DotAttrStmt]): Unit =
           stmtList foreach { case DotAttrStmt(t, attrs) =>
             separate(true)
             res append t.toString
             res append s" [${attrs map format mkString ", "}]"
           }
-        }
-        def outIdList(kvList: Seq[DotAttr]) {
+
+        def outIdList(kvList: Seq[DotAttr]): Unit =
           kvList foreach { attr =>
             separate(true)
             res append format(attr)
           }
-        }
-        def outAttrList(attrList: Seq[DotAttr]) {
+
+        def outAttrList(attrList: Seq[DotAttr]): Unit =
           if (attrList.nonEmpty) {
             res append " ["
             attrList foreach { attr =>
@@ -167,8 +174,9 @@ class Export[N, E <: Edge[N]](graph: Graph[N, E]) {
             res delete (res.size - 2, res.size)
             res append ']'
           }
-        }
-        val head = cluster.dotGraph.headToString
+
+        def head = cluster.dotGraph.headToString
+
         val (graphStmtList, graphKvList) = cluster.dotGraph match {
           case DotRootGraph(_, _, _, attrStmts, kvList) =>
             indent(true)
@@ -179,6 +187,7 @@ class Export[N, E <: Edge[N]](graph: Graph[N, E]) {
             res append head
             (attrStmts, kvList)
         }
+
         level += 1
         outStmtList(graphStmtList)
         outIdList(graphKvList)
@@ -187,15 +196,16 @@ class Export[N, E <: Edge[N]](graph: Graph[N, E]) {
           separate(true)
           val attrList = dotStmt match {
             case DotNodeStmt(nodeId, attrList) =>
-              res append s"${nodeId()}"
+              res append s"${nodeId.id}"
               attrList
             case DotEdgeStmt(node_1Id, node_2Id, attrList) =>
-              res append s"${node_1Id()} $edgeOp ${node_2Id()}"
+              res append s"${node_1Id.id} $edgeOp ${node_2Id.id}"
               attrList
           }
           outAttrList(attrList)
         }
-      case up =>
+
+      case _ =>
         level -= 1
         separate(true)
         res append '}'

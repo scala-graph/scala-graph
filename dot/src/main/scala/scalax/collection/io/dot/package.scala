@@ -1,30 +1,27 @@
 package scalax.collection
 package io
 
-import language.implicitConversions
-import mutable.{Graph => MGraph}
+import scala.language.implicitConversions
 
-import GraphEdge.{DiEdge, Edge}
+import edges.DiEdge
+import immutable.Graph
+import generic.Edge
 
-/** Enables to export `Graph` instances to the DOT language by means of user-defined
-  * edge and node transformers. Transformers may enrich the DOT structure with arbitrary
-  * DOT attributes and also establish subgraph relationships.
+/** Enables to export `Graph` instances to the DOT language by means of user-defined edge and node transformers.
+  * Transformers may enrich the DOT structure with arbitrary DOT attributes and also establish subgraph relationships.
   *
-  * As a starting point when reading the API, please refer to
-  * [[scalax.collection.io.dot.Export]]`.toDot`.
+  * As a starting point, please refer to [[scalax.collection.io.dot.Export]]`.toDot`.
   *
-  * See also the
-  * [[http://www.scala-graph.org/guides/dot Graph for Scala DOT User Guide]].
+  * See also the [[http://www.scala-graph.org/guides/dot Graph for Scala DOT User Guide]].
   *
   * @author Peter Empen
   */
 package object dot {
-  protected[dot] type DotAST = MGraph[DotCluster, DiEdge[DotCluster]]
-  protected[dot] def DotAST = MGraph
+  protected[dot] type DotAST = mutable.Graph[DotCluster, DiEdge[DotCluster]]
+  protected[dot] def DotAST = mutable.Graph
 
   /** Enables to call `<g>.toDot` with `<g>` being a `Graph` instance. */
-  implicit def graph2DotExport[N, E <: Edge[N]](graph: Graph[N, E]): Export[N, E] =
-    new Export[N, E](graph)
+  implicit class Graph2DotExport[N, E <: Edge[N]](val graph: Graph[N, E]) extends AnyVal with Export[N, E]
 
   type NodeTransformer[N, E <: Edge[N]]      = Graph[N, E]#NodeT => Option[(DotGraph, DotNodeStmt)]
   type EdgeTransformer[N, E <: Edge[N]]      = Graph[N, E]#EdgeT => Option[(DotGraph, DotEdgeStmt)]

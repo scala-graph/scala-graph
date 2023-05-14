@@ -24,6 +24,16 @@ lazy val core = project
     )
   )
 
+lazy val dot = project
+  .in(file("dot"))
+  .dependsOn(core)
+  .settings(
+    defaultSettings ++ Seq(
+      name    := "Graph DOT",
+      version := Version.dot
+    )
+  )
+
 /*
 lazy val constrained = project
   .in(file("constrained"))
@@ -32,16 +42,6 @@ lazy val constrained = project
     defaultSettings ++ Seq(
       name := "Graph Constrained",
       version := Version.constrained
-    )
-  )
-
-lazy val dot = project
-  .in(file("dot"))
-  .dependsOn(core)
-  .settings(
-    defaultSettings ++ Seq(
-      name := "Graph DOT",
-      version := Version.dot
     )
   )
 
