@@ -34,6 +34,17 @@ lazy val dot = project
     )
   )
 
+lazy val json = project
+  .in(file("json"))
+  .dependsOn(core)
+  .settings(
+    defaultSettings ++ Seq(
+      name                                 := "Graph JSON",
+      version                              := Version.json,
+      libraryDependencies += "net.liftweb" %% "lift-json" % "3.5.0"
+    )
+  )
+
 /*
 lazy val constrained = project
   .in(file("constrained"))
@@ -42,17 +53,6 @@ lazy val constrained = project
     defaultSettings ++ Seq(
       name := "Graph Constrained",
       version := Version.constrained
-    )
-  )
-
-lazy val json = project
-  .in(file("json"))
-  .dependsOn(core)
-  .settings(
-    defaultSettings ++ Seq(
-      name := "Graph JSON",
-      version := Version.json,
-      libraryDependencies += "net.liftweb" %% "lift-json" % "3.4.0"
     )
   )
 

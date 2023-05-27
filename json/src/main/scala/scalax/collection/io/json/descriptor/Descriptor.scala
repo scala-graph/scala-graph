@@ -1,7 +1,6 @@
 package scalax.collection.io.json
 package descriptor
 
-import language.existentials
 import reflect.ClassTag
 
 import error.JsonGraphError._
@@ -50,14 +49,14 @@ abstract class TypeId(val typeId: String)
 class Descriptor[N](
     val defaultNodeDescriptor: NodeDescriptor[N],
     val defaultEdgeDescriptor: GenEdgeDescriptor[N],
-    namedNodeDescriptors: Iterable[NodeDescriptor[N]] = Seq.empty[NodeDescriptor[N]],
-    namedEdgeDescriptors: Iterable[GenEdgeDescriptor[N]] = Seq.empty[GenEdgeDescriptor[N]],
+    namedNodeDescriptors: Iterable[NodeDescriptor[N]] = Nil,
+    namedEdgeDescriptors: Iterable[GenEdgeDescriptor[N]] = Nil,
     val sectionIds: SectionId = DefaultSectionId
 ) {
-  def requireUniqueTypeIds(descriptors: Iterable[TypeId]) {
+  private def requireUniqueTypeIds(descriptors: Iterable[TypeId]): Unit = {
     def duplicateTypeId =
       namedNodeDescriptors.map(_.typeId).toList.sorted sliding 2 find
-        (strings => if (strings.size == 2) strings.head == strings.tail else false)
+        (strings => if (strings.size == 2) strings.head == strings.tail.head else false)
     val duplNodeTypeId = duplicateTypeId
     require(duplNodeTypeId.isEmpty, "Duplicate typeId found: " + duplNodeTypeId.get.head)
   }
@@ -104,11 +103,11 @@ class Descriptor[N](
   protected var lastNodeDescriptor: (Class[_], NodeDescriptor[N]) = (classOf[Null], null)
 
   def nodeDescriptor(node: N): NodeDescriptor[N] = {
-    val clazz = node match {
+    val clazz: Option[Class[_]] = node match {
       case r: AnyRef => Some(r.getClass)
       case _         => None
     }
-    if (clazz.filter(_ == lastNodeDescriptor._1).isDefined)
+    if (clazz.contains(lastNodeDescriptor._1))
       lastNodeDescriptor._2
     else {
       val descr =
@@ -130,7 +129,7 @@ class Descriptor[N](
     val className       = clazz.getName
     val classNameLength = className.length
     edgeDescriptors find { d =>
-      val dClassName       = d.edgeManifest.runtimeClass.getName
+      val dClassName       = d.classTag.runtimeClass.getName
       val dClassNameLength = dClassName.length
       dClassName == (if (dClassNameLength < classNameLength)
                        className substring (0, dClassNameLength)

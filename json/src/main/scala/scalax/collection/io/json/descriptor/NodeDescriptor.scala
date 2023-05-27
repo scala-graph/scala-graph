@@ -5,8 +5,7 @@ import net.liftweb.json._
 
 import error.JsonGraphError._
 
-/** Provides information on how to extract node data from a JValue and how to
-  * decompose the node to a JValue.
+/** Determines how to extract node data from a JValue and how to decompose the node to a JValue.
   *
   * @tparam N type of nodes described with this descriptor which either the same type or
   *           a subtype of the node type parameter of the targeted graph.
@@ -25,11 +24,13 @@ abstract class NodeDescriptor[+N](
     furtherManifests: List[Manifest[_]] = Nil
 )(implicit nodeManifest: Manifest[N])
     extends TypeId(typeId) {
-  val manifests = nodeManifest :: furtherManifests
-  implicit val formats = Serialization.formats(
+
+  val manifests: Seq[Manifest[_]] = nodeManifest :: furtherManifests
+  implicit val formats: Formats = Serialization.formats(
     if (extraClasses.isEmpty) NoTypeHints
     else new ShortTypeHints(extraClasses)
   ) ++ customSerializers
+
   def extract(jsonNode: JValue): N = jsonNode.extract[N]
   def decompose(node: Any): JValue = Extraction.decompose(node)
 
@@ -42,7 +43,7 @@ abstract class NodeDescriptor[+N](
     * @param node a node of type `N` for which its unique id is to be returned.
     *             You can safely match `node` to the actual type argument `N`.
     */
-  def id(node: Any): String
+  def id[B >: N](node: B): String
 }
 
 /** Node descriptor extracting a String from any JValue and decomposing nodes
@@ -66,6 +67,6 @@ object StringNodeDescriptor extends NodeDescriptor[String] {
     if (jsonNode.children.nonEmpty) mkString(jsonNode.children)
     else throw err(EmptyNodeFieldList)
   }
-  override def decompose(node: Any): JValue = JArray(List(super.decompose(node.toString)))
-  override def id(node: Any)                = node.toString
+  override def decompose(node: Any): JValue     = JArray(List(super.decompose(node.toString)))
+  override def id[B >: String](node: B): String = node.toString
 }

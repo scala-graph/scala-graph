@@ -1,70 +1,22 @@
-package scalax.collection.io.edge
+package scalax.collection
+package io.edge
 
 object Types {
-  type EdgeNodeIds      = (String, String)
-  type HyperEdgeNodeIds = List[String]
+  type SeveralNodeIds   = Several[String]
+  type OneOrMoreNodeIds = OneOrMore[String]
 }
 import Types._
-import scalax.collection.generic.NodeProduct
 
-sealed abstract class Parameters(nodeIds: Product)
-class EdgeParameters(val n1: String, val n2: String) extends Parameters((n1, n2))
-object EdgeParameters {
-  def unapply(p: EdgeParameters): Option[EdgeNodeIds] = Some((p.n1, p.n2))
-}
+sealed trait Parameters
 
-class WEdgeParameters(val n1: String, val n2: String, val weight: Double) extends Parameters((n1, n2))
-object WEdgeParameters {
-  def unapply(p: WEdgeParameters): Option[(EdgeNodeIds, Double)] = Some((p.n1, p.n2), p.weight)
-}
+case class EdgeParameters(n1: String, n2: String) extends Parameters
 
-class LEdgeParameters[L](val n1: String, val n2: String, val label: L) extends Parameters((n1, n2))
-object LEdgeParameters {
-  def unapply[L](p: LEdgeParameters[L]): Option[(EdgeNodeIds, L)] = Some((p.n1, p.n2), p.label)
-}
+case class LEdgeParameters[L](n1: String, n2: String, label: L) extends Parameters
 
-class WLEdgeParameters[L](val n1: String, val n2: String, val weight: Double, val label: L) extends Parameters((n1, n2))
-object WLEdgeParameters {
-  def unapply[L](p: WLEdgeParameters[L]): Option[(EdgeNodeIds, Double, L)] =
-    Some((p.n1, p.n2), p.weight, p.label)
-}
-class CEdgeParameters[P <: Product](val n1: String, val n2: String, val attributes: P) extends Parameters((n1, n2))
-object CEdgeParameters {
-  def unapply[A <: Product](p: CEdgeParameters[A]): Option[(EdgeNodeIds, A)] =
-    Some((p.n1, p.n2), p.attributes)
-}
+case class HyperEdgeParameters(nodeIds: SeveralNodeIds) extends Parameters
 
-class HyperEdgeParameters(val nodeIds: HyperEdgeNodeIds, val endpointsKind: String)
-    extends Parameters(NodeProduct(nodeIds))
-object HyperEdgeParameters {
-  def unapply(p: HyperEdgeParameters): Option[(HyperEdgeNodeIds, String)] =
-    Some((p.nodeIds, p.endpointsKind.toString))
-}
-class WHyperEdgeParameters(val nodeIds: HyperEdgeNodeIds, val endpointsKind: String, val weight: Double)
-    extends Parameters(NodeProduct(nodeIds))
-object WHyperEdgeParameters {
-  def unapply(p: WHyperEdgeParameters): Option[(HyperEdgeNodeIds, String, Double)] =
-    Some(p.nodeIds, p.endpointsKind, p.weight)
-}
-class LHyperEdgeParameters[L](val nodeIds: HyperEdgeNodeIds, val endpointsKind: String, val label: L)
-    extends Parameters(NodeProduct(nodeIds))
-object LHyperEdgeParameters {
-  def unapply[L](p: LHyperEdgeParameters[L]): Option[(HyperEdgeNodeIds, String, L)] =
-    Some(p.nodeIds, p.endpointsKind.toString, p.label)
-}
-class WLHyperEdgeParameters[L](
-    val nodeIds: HyperEdgeNodeIds,
-    val endpointsKind: String,
-    val weight: Double,
-    val label: L
-) extends Parameters(NodeProduct(nodeIds))
-object WLHyperEdgeParameters {
-  def unapply[L](p: WLHyperEdgeParameters[L]): Option[(HyperEdgeNodeIds, String, Double, L)] =
-    Some(p.nodeIds, p.endpointsKind.toString, p.weight, p.label)
-}
-class CHyperEdgeParameters[P <: Product](val nodeIds: HyperEdgeNodeIds, val endpointsKind: String, val attributes: P)
-    extends Parameters(NodeProduct(nodeIds))
-object CHyperEdgeParameters {
-  def unapply[A <: Product](p: CHyperEdgeParameters[A]): Option[(HyperEdgeNodeIds, String, A)] =
-    Some(p.nodeIds, p.endpointsKind.toString, p.attributes)
-}
+case class LHyperEdgeParameters[L](nodeIds: SeveralNodeIds, label: L) extends Parameters
+
+case class DiHyperEdgeParameters(sources: OneOrMoreNodeIds, targets: OneOrMoreNodeIds) extends Parameters
+
+case class LDiHyperEdgeParameters[L](sources: OneOrMoreNodeIds, targets: OneOrMoreNodeIds, label: L) extends Parameters
