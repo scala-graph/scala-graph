@@ -32,10 +32,8 @@ class Export[N, E <: Edge[N]](
       def jField: JField = JField(descr.typeId, JArray(jNodes))
 
       def jValue: JValue =
-        if (descr eq descriptor.defaultNodeDescriptor)
-          JArray(jNodes)
-        else
-          JObject(List(jField))
+        if (descriptor.hasSingleNodeDescriptor) JArray(jNodes)
+        else JObject(List(jField))
     }
 
     JField(
@@ -58,14 +56,14 @@ class Export[N, E <: Edge[N]](
 
     case class EdgeValues(classEdges: (Class[_ <: E], Set[E])) {
       val (descr, jEdges: List[JValue]) = descriptor.edgeDescriptor(classEdges._1) match {
-        case d: EdgeDescriptorBase[N, E] =>
+        case d: EdgeDescriptorBase[N @unchecked, E @unchecked] =>
           (d, (for (edge <- classEdges._2) yield d.decompose(edge)).toList)
       }
 
       def jArray: JArray = JArray(jEdges)
       def jField: JField = JField(descr.typeId, jArray)
       def jValue: JValue =
-        if (descr eq descriptor.defaultEdgeDescriptor) jArray
+        if (descriptor.hasSingleEdgeDescriptor) jArray
         else JObject(List(jField))
     }
 

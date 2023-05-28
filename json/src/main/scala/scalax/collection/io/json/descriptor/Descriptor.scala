@@ -23,7 +23,7 @@ class SectionId(val nodesId: String, val edgesId: String) {
 }
 
 /** The default section id's `"nodes"` and `"edges"`. */
-object DefaultSectionId extends SectionId("nodes", "edges")
+object DefaultSectionIds extends SectionId("nodes", "edges")
 
 object Defaults {
   val defaultId = "(default)"
@@ -36,7 +36,7 @@ abstract class TypeId(val typeId: String)
   * `fromJson` and `toJson`.
   *
   * @param defaultNodeDescriptor the only or default node descriptor accepting/producing a
-  *        flat node list, that is a node list without a node typeId.
+  *        flat node list, that is a node list without `typeId`s.
   * @param defaultEdgeDescriptor the only or default edge descriptor accepting/producing a
   *        flat edge list, that is an edge list without an edge typeId.
   * @param namedNodeDescriptors further optional node descriptors accepting/producing named
@@ -46,69 +46,48 @@ abstract class TypeId(val typeId: String)
   * @param sectionIds denotes node/edge sections in a JSON text defaulting to `"nodes"`
   *        and `"edges"`.
   */
-class Descriptor[N](
-    val defaultNodeDescriptor: NodeDescriptor[N],
-    val defaultEdgeDescriptor: GenEdgeDescriptor[N],
-    namedNodeDescriptors: Iterable[NodeDescriptor[N]] = Nil,
-    namedEdgeDescriptors: Iterable[GenEdgeDescriptor[N]] = Nil,
-    val sectionIds: SectionId = DefaultSectionId
+final class Descriptor[N](
+    nodeDescriptors: String Map NodeDescriptor[N],
+    edgeDescriptors: String Map GenEdgeDescriptor[N],
+    val sectionIds: SectionId = DefaultSectionIds
 ) {
-  private def requireUniqueTypeIds(descriptors: Iterable[TypeId]): Unit = {
-    def duplicateTypeId =
-      namedNodeDescriptors.map(_.typeId).toList.sorted sliding 2 find
-        (strings => if (strings.size == 2) strings.head == strings.tail.head else false)
-    val duplNodeTypeId = duplicateTypeId
-    require(duplNodeTypeId.isEmpty, "Duplicate typeId found: " + duplNodeTypeId.get.head)
-  }
-  requireUniqueTypeIds(namedNodeDescriptors)
-  requireUniqueTypeIds(namedEdgeDescriptors)
+  require(nodeDescriptors.nonEmpty, "At least one NodeDescriptor expected.")
+  require(edgeDescriptors.nonEmpty, "At least one EdgeDescriptor expected.")
 
-  protected val nodeDescriptors = Seq(defaultNodeDescriptor) ++ namedNodeDescriptors
-  protected val edgeDescriptors = Seq(defaultEdgeDescriptor) ++ namedEdgeDescriptors
+  val hasSingleNodeDescriptor: Boolean = nodeDescriptors.size == 1
+  val hasSingleEdgeDescriptor: Boolean = edgeDescriptors.size == 1
 
-  def nodeDescriptor(typeId: String): Option[NodeDescriptor[N]] =
-    if (
-      typeId == defaultId ||
-      typeId == defaultNodeDescriptor.typeId
-    )
-      Some(defaultNodeDescriptor)
-    else
-      namedNodeDescriptors find (_.typeId == typeId)
+  private def headOrGet[A](typeId: String, map: String Map A): Option[A] =
+    if (typeId == defaultId) map.values.headOption
+    else map get typeId
 
-  def edgeDescriptor(typeId: String): Option[GenEdgeDescriptor[N]] =
-    if (
-      typeId == defaultId ||
-      typeId == defaultEdgeDescriptor.typeId
-    )
-      Some(defaultEdgeDescriptor)
-    else
-      namedEdgeDescriptors find (_.typeId == typeId)
+  def nodeDescriptor(typeId: String): Option[NodeDescriptor[N]]    = headOrGet(typeId, nodeDescriptors)
+  def edgeDescriptor(typeId: String): Option[GenEdgeDescriptor[N]] = headOrGet(typeId, edgeDescriptors)
 
-  protected lazy val nodeDescriptorsByManifest: Map[ClassTag[_], NodeDescriptor[N]] = {
+  private lazy val nodeDescriptorsByManifest: Map[ClassTag[_], NodeDescriptor[N]] = {
     val ret = collection.mutable.Map.empty[ClassTag[_], NodeDescriptor[N]]
     for {
-      descr <- nodeDescriptors
+      descr <- nodeDescriptors.valuesIterator
       manifests = descr.manifests
       m <- manifests
     } ret += m -> descr
     ret.toMap
   }
 
-  final protected def classManifest(any: Any): ClassTag[_] =
+  private def classManifest(any: Any): ClassTag[_] =
     ClassTag(any match {
       case r: AnyRef => r.getClass
       case v         => v.asInstanceOf[AnyRef].getClass
     })
 
-  protected var lastNodeDescriptor: (Class[_], NodeDescriptor[N]) = (classOf[Null], null)
+  private var lastNodeDescriptor: (Class[_], NodeDescriptor[N]) = (classOf[Null], null)
 
   def nodeDescriptor(node: N): NodeDescriptor[N] = {
     val clazz: Option[Class[_]] = node match {
       case r: AnyRef => Some(r.getClass)
       case _         => None
     }
-    if (clazz.contains(lastNodeDescriptor._1))
-      lastNodeDescriptor._2
+    if (clazz.contains(lastNodeDescriptor._1)) lastNodeDescriptor._2
     else {
       val descr =
         nodeDescriptorsByManifest
@@ -128,7 +107,7 @@ class Descriptor[N](
   def edgeDescriptor(clazz: Class[_]): GenEdgeDescriptor[N] = {
     val className       = clazz.getName
     val classNameLength = className.length
-    edgeDescriptors find { d =>
+    edgeDescriptors.valuesIterator find { d =>
       val dClassName       = d.classTag.runtimeClass.getName
       val dClassNameLength = dClassName.length
       dClassName == (if (dClassNameLength < classNameLength)
@@ -137,4 +116,25 @@ class Descriptor[N](
                        className)
     } getOrElse (throw err(NoEdgeDescr, clazz.getName))
   }
+}
+
+object Descriptor {
+  def simple[N](
+      nodeDescriptor: NodeDescriptor[N],
+      edgeDescriptor: GenEdgeDescriptor[N],
+      sectionIds: SectionId = DefaultSectionIds
+  ) = new Descriptor[N](
+    Map(nodeDescriptor.typeId -> nodeDescriptor),
+    Map(edgeDescriptor.typeId -> edgeDescriptor),
+    sectionIds
+  )
+
+  def apply[N](
+      nodeDescriptors: NodeDescriptor[N]*
+  )(edgeDescriptors: GenEdgeDescriptor[N]*)(sectionIds: SectionId = DefaultSectionIds) =
+    new Descriptor[N](
+      nodeDescriptors.iterator.map(d => d.typeId -> d).toMap,
+      edgeDescriptors.iterator.map(d => d.typeId -> d).toMap,
+      sectionIds
+    )
 }

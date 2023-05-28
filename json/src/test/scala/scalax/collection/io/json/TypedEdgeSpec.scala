@@ -51,7 +51,7 @@ private class CustomEdge[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N,
         { case JString(mod) => KeyModifier.withName(mod) },
         { case mod: KeyModifier => JString(mod.toString) }
       )
-      new Descriptor[String](
+      Descriptor.simple[String](
         StringNodeDescriptor,
         new LEdgeDescriptor[String, Transition, (Char, KeyModifier)](
           (
@@ -98,7 +98,7 @@ private class CustomEdge[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N,
       )
 
       private val descriptor: Descriptor[String] =
-        new Descriptor[String](
+        Descriptor.simple[String](
           StringNodeDescriptor,
           new LHyperEdgeDescriptor[String, WLHyperEdge, (Double, String)](
             (ends: Several[String], label: (Double, String)) => WLHyperEdge(ends, label._1, label._2),
@@ -138,7 +138,7 @@ private class CustomEdge[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N,
       )
 
       private val descriptor: Descriptor[String] =
-        new Descriptor[String](
+        Descriptor.simple[String](
           StringNodeDescriptor,
           new LDiHyperEdgeDescriptor[String, WLDiHyperEdge, (Double, String)](
             (sources: OneOrMore[String], targets: OneOrMore[String], label: (Double, String)) =>

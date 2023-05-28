@@ -30,7 +30,7 @@ private class DefaultSerialization[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
       }""".filterNot(_.isWhitespace)
 
     def descriptor(extClasses: List[Class[_]]) =
-      new Descriptor[Node](
+      Descriptor.simple[Node](
         new NodeDescriptor[Node](extraClasses = extClasses) {
           def id[B >: Node](node: B): String = node.toString
         },
@@ -55,6 +55,6 @@ private class DefaultSerialization[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
 }
 
 trait Ext
-case class Node(val i: Int, val e: Ext)
+case class Node(i: Int, e: Ext)
 // library user extension
 case class CExt(i: Int) extends Ext

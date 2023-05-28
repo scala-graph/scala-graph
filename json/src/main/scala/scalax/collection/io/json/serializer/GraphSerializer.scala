@@ -2,8 +2,6 @@ package scalax.collection
 package io.json
 package serializer
 
-import scala.reflect.classTag
-
 import net.liftweb.json._
 
 import scalax.collection.config.CoreConfig
@@ -24,9 +22,10 @@ final class GraphSerializer[N, E <: Edge[N]](descriptor: Descriptor[N])(implicit
       }
   }
 
-  override def serialize(implicit format: Formats) = { case graph: AnyGraph[N, E] =>
-    val `export` = new exp.Export(graph, descriptor)
-    import `export`._
-    jsonAST(List(jsonASTNodes, jsonASTEdges))
+  override def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
+    case graph: AnyGraph[N @unchecked, E @unchecked] =>
+      val `export` = new exp.Export(graph, descriptor)
+      import `export`._
+      jsonAST(List(jsonASTNodes, jsonASTEdges))
   }
 }

@@ -25,6 +25,8 @@ package object json {
   type Descriptor[N]     = descriptor.Descriptor[N]
   type NodeDescriptor[N] = descriptor.NodeDescriptor[N]
 
+  val Descriptor = descriptor.Descriptor
+
   type EdgeDescriptorBase[N, E <: Edge[N]]    = descriptor.EdgeDescriptorBase[N, E]
   type EdgeDescriptor[N, E <: AnyEdge[N]]     = descriptor.EdgeDescriptor[N, E]
   type LEdgeDescriptor[N, E <: AnyEdge[N], L] = descriptor.LEdgeDescriptor[N, E, L]

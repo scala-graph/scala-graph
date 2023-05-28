@@ -33,7 +33,7 @@ private class Serialize[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
           ["B", "A", 2.0],
         ]
       }""".filterNot(_.isWhitespace)
-    val descriptor = new Descriptor[String](
+    val descriptor = Descriptor.simple[String](
       StringNodeDescriptor,
       WDi.descriptor[String]()
     )

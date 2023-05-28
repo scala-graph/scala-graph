@@ -50,14 +50,12 @@ class Json[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
             }
           }""".filterNot(_.isWhitespace)
         val descriptor =
-          new Descriptor[String](
-            StringNodeDescriptor,
+          Descriptor[String](
+            StringNodeDescriptor
+          )(
             UnDi.descriptor[String](Some(new EdgeSerializer)),
-            namedEdgeDescriptors = Seq[GenEdgeDescriptor[String]](
-              UnDi.descriptor[String](),
-              MultiWDi.descriptor[String]()
-            )
-          )
+            MultiWDi.descriptor[String]()
+          )()
         val graph = factory[String, AnyEdge](
           "A" ~ "B",
           "A" ~> "B" %% 3,
@@ -164,11 +162,8 @@ class Json[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
               ["B", "A", 200.0]
             ]
           }""".filterNot(_.isWhitespace)
-        val descriptor = new Descriptor[String](
-          StringNodeDescriptor,
-          WDi.descriptor[String]()
-        )
-        val graph = factory("A" ~> "B" % 100, "B" ~> "A" % 200)
+        val descriptor = Descriptor.simple[String](StringNodeDescriptor, WDi.descriptor[String]())
+        val graph      = factory("A" ~> "B" % 100, "B" ~> "A" % 200)
       }
       import Fixture._
 
@@ -188,10 +183,8 @@ class Json[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
         def `on exporting`(): Unit = {
           val g = factory(OneOrMore("B") ~~> OneOrMore("A", "C"))
           val descriptor =
-            new Descriptor[String](
-              StringNodeDescriptor,
-              DiHyper.descriptor[String]()
-            )
+            Descriptor.simple[String](StringNodeDescriptor, DiHyper.descriptor[String]())
+
           val exp = new Export[String, DiHyperEdge[String]](g, descriptor)
           val n   = exp.jsonASTNodes
           val e   = exp.jsonASTEdges

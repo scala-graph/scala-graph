@@ -48,9 +48,9 @@ class JsonDemoSpec extends RefSpec with Matchers {
 
   object `JSON import/export requires that` {
     def `proper node descriptors are passed`(): Unit = {
-      val quickJson = new Descriptor[Library](
-        defaultNodeDescriptor = authorDescriptor,
-        defaultEdgeDescriptor = DiHyper.descriptor[Library]()
+      val quickJson = Descriptor.simple[Library](
+        nodeDescriptor = authorDescriptor,
+        edgeDescriptor = DiHyper.descriptor[Library]()
       )
       val caught =
         intercept[scalax.collection.io.json.error.JsonGraphError.JsonGraphException] {
@@ -59,11 +59,8 @@ class JsonDemoSpec extends RefSpec with Matchers {
       caught.msg should be("""No 'NodeDescriptor' capable of processing type "demo.Book" found.""")
     }
     def `proper edge descriptors are passed`(): Unit = {
-      val quickJson = new Descriptor[Library](
-        defaultNodeDescriptor = authorDescriptor,
-        defaultEdgeDescriptor = DiHyper.descriptor[Library](),
-        namedNodeDescriptors = Seq(bookDescriptor)
-      )
+      val quickJson =
+        Descriptor[Library](authorDescriptor, bookDescriptor)(DiHyper.descriptor[Library]())()
       val caught =
         intercept[scalax.collection.io.json.error.JsonGraphError.JsonGraphException] {
           library.toJson(quickJson)
@@ -76,13 +73,13 @@ class JsonDemoSpec extends RefSpec with Matchers {
 
   object `When choosing JSON format based on JSON objects` {
     private object Named {
-      val descriptor = new Descriptor[Library](
-        defaultNodeDescriptor = authorDescriptor,
-        defaultEdgeDescriptor = DiHyper.descriptor[Library](),
-        namedNodeDescriptors = Seq(bookDescriptor),
-        namedEdgeDescriptors = Seq(Di.descriptor[Library]())
-      )
+      val descriptor =
+        Descriptor[Library](
+          authorDescriptor,
+          bookDescriptor
+        )(DiHyper.descriptor[Library](), Di.descriptor[Library]())()
     }
+
     def `export works fine`(): Unit = {
       val exported = library.toJson(Named.descriptor)
 
@@ -132,8 +129,9 @@ class JsonDemoSpec extends RefSpec with Matchers {
 
     private object PositionedNodeDescriptor {
       import net.liftweb.json._
-      final class AuthorSerializer
-          extends CustomSerializer[Author](formats =>
+
+      private class AuthorSerializer
+          extends CustomSerializer[Author](_ =>
             (
               { case JArray(JString(surName) :: JString(firstName) :: Nil) =>
                 Author(surName, firstName)
@@ -148,8 +146,9 @@ class JsonDemoSpec extends RefSpec with Matchers {
           case Author(surName, firstName) => "" + surName(0) + firstName(0)
         }
       }
-      final class BookSerializer
-          extends CustomSerializer[Book](formats =>
+
+      private class BookSerializer
+          extends CustomSerializer[Book](_ =>
             (
               { case JArray(JString(title) :: JString(isbn) :: Nil) => Book(title, isbn) },
               { case Book(title, isbn) =>
@@ -167,12 +166,13 @@ class JsonDemoSpec extends RefSpec with Matchers {
     private object Positioned {
       import scalax.collection.io.json.serializer.EdgeSerializer
 
-      val descriptor = new Descriptor[Library](
-        defaultNodeDescriptor = PositionedNodeDescriptor.author,
-        defaultEdgeDescriptor = DiHyper.descriptor[Library](),
-        namedNodeDescriptors = Seq(PositionedNodeDescriptor.book),
-        namedEdgeDescriptors = Seq(Di.descriptor[Library](Some(new EdgeSerializer)))
-      )
+      val descriptor = Descriptor[Library](
+        PositionedNodeDescriptor.author,
+        PositionedNodeDescriptor.book
+      )(
+        DiHyper.descriptor[Library](),
+        Di.descriptor[Library](Some(new EdgeSerializer))
+      )()
     }
 
     def `export works fine`(): Unit = {
