@@ -5,25 +5,27 @@ import reflect.ClassTag
 
 import error.JsonGraphError._
 
-/** Contains string constants to denote node/edge sections in a JSON text.
+/** Contains string constants that are used as JSON keys to denote the node and edge sections in the JSON text.
   *
-  * An individual instance of this class may be passed to `Descriptor` if
-  * non-default section id's are to be used.
+  * An individual instance of this class may be passed to `Descriptor` if non-default section id's are to be used.
   */
-class SectionId(val nodesId: String, val edgesId: String) {
+case class SectionKeys(nodesId: String = "nodes", edgesId: String = "edges") {
 
   /** Returns whether `id` is one of `nodesId` or `edgesId` of this `SectionId`. */
-  def contains(id: String) = isNodes(id) || isEdges(id)
+  def contains(id: String): Boolean = isNodes(id) || isEdges(id)
 
   /** Returns whether `id` equals to `nodesId` of this `SectionId`. */
-  def isNodes(id: String) = id == nodesId
+  def isNodes(id: String): Boolean = id == nodesId
 
   /** Returns whether `id` equals to `edgesId` of this `SectionId`. */
-  def isEdges(id: String) = id == edgesId
+  def isEdges(id: String): Boolean = id == edgesId
 }
 
-/** The default section id's `"nodes"` and `"edges"`. */
-object DefaultSectionIds extends SectionId("nodes", "edges")
+object SectionKeys {
+
+  /** The default section keys, namely `"nodes"` and `"edges"`. */
+  val default = SectionKeys()
+}
 
 object Defaults {
   val defaultId = "(default)"
@@ -32,24 +34,18 @@ import Defaults._
 
 abstract class TypeId(val typeId: String)
 
-/** Top level descriptor to be passed to Graph/JSON conversion methods, in particular to
-  * `fromJson` and `toJson`.
+/** Top level descriptor to be passed to Graph/JSON conversion methods, in particular to `fromJson` and `toJson`.
   *
-  * @param defaultNodeDescriptor the only or default node descriptor accepting/producing a
-  *        flat node list, that is a node list without `typeId`s.
-  * @param defaultEdgeDescriptor the only or default edge descriptor accepting/producing a
-  *        flat edge list, that is an edge list without an edge typeId.
-  * @param namedNodeDescriptors further optional node descriptors accepting/producing named
-  *        node lists, that is node lists with an explicit node typeId.
-  * @param namedEdgeDescriptors further optional edge descriptors accepting/producing named
-  *        edge lists, that is edge lists with an explicit edge typeId.
-  * @param sectionIds denotes node/edge sections in a JSON text defaulting to `"nodes"`
-  *        and `"edges"`.
+  * @param nodeDescriptors non-empty `Map` of type Ids to `NodeDscriptor`s.
+  * @param edgeDescriptors non-empty `Map` of type Ids to `EdgeDscriptor`s.
+  * @param sectionKeys the JSON keys to denote node and edge sections in the JSON text.
+  * @tparam N the type of graph nodes.
+  * @throws `IllegalArgumentException` if any of the descriptor maps is empty.
   */
 final class Descriptor[N](
     nodeDescriptors: String Map NodeDescriptor[N],
     edgeDescriptors: String Map GenEdgeDescriptor[N],
-    val sectionIds: SectionId = DefaultSectionIds
+    val sectionKeys: SectionKeys = SectionKeys.default
 ) {
   require(nodeDescriptors.nonEmpty, "At least one NodeDescriptor expected.")
   require(edgeDescriptors.nonEmpty, "At least one EdgeDescriptor expected.")
@@ -119,22 +115,34 @@ final class Descriptor[N](
 }
 
 object Descriptor {
+
+  /** Creates a `Descriptor` with a single `NodeDescriptor` and a single `EdgeDescriptor`.
+    *
+    * @param sectionKeys the JSON keys to denote node and edge sections in the JSON text.
+    * @tparam N the type of nodes
+    */
   def simple[N](
       nodeDescriptor: NodeDescriptor[N],
       edgeDescriptor: GenEdgeDescriptor[N],
-      sectionIds: SectionId = DefaultSectionIds
+      sectionKeys: SectionKeys = SectionKeys.default
   ) = new Descriptor[N](
     Map(nodeDescriptor.typeId -> nodeDescriptor),
     Map(edgeDescriptor.typeId -> edgeDescriptor),
-    sectionIds
+    sectionKeys
   )
 
+  /** Creates a `Descriptor` with any number of `NodeDescriptor`s and `EdgeDescriptor`s with distinct type Ids.
+    *
+    * @param sectionKeys the JSON keys to denote node and edge sections in the JSON text.
+    * @tparam N the type of graph nodes.
+    * @throws `IllegalArgumentException` if any of the descriptor parameter lists is empty.
+    */
   def apply[N](
       nodeDescriptors: NodeDescriptor[N]*
-  )(edgeDescriptors: GenEdgeDescriptor[N]*)(sectionIds: SectionId = DefaultSectionIds) =
+  )(edgeDescriptors: GenEdgeDescriptor[N]*)(sectionKeys: SectionKeys = SectionKeys.default) =
     new Descriptor[N](
       nodeDescriptors.iterator.map(d => d.typeId -> d).toMap,
       edgeDescriptors.iterator.map(d => d.typeId -> d).toMap,
-      sectionIds
+      sectionKeys
     )
 }

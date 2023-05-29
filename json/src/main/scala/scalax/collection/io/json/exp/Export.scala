@@ -37,7 +37,7 @@ class Export[N, E <: Edge[N]](
     }
 
     JField(
-      descriptor.sectionIds.nodesId,
+      descriptor.sectionKeys.nodesId,
       classNodesMap.size match {
         case 0 => JNothing
         case 1 => NodeValues(classNodesMap.head).jValue
@@ -68,7 +68,7 @@ class Export[N, E <: Edge[N]](
     }
 
     JField(
-      descriptor.sectionIds.edgesId,
+      descriptor.sectionKeys.edgesId,
       classEdgesMap.size match {
         case 0 => JNothing
         case 1 => EdgeValues(classEdgesMap.head).jValue

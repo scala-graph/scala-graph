@@ -41,11 +41,11 @@ object Parser {
   def parse[N](jsonAST: List[JField], descriptor: Descriptor[N]): Iterable[ElemList] =
     (for (
       JField(name, values) <- jsonAST
-      if descriptor.sectionIds contains name
+      if descriptor.sectionKeys contains name
     )
       yield {
         def makeList(elemTypeId: String, arr: Iterable[JValue]): ElemList =
-          if (descriptor.sectionIds.isNodes(name))
+          if (descriptor.sectionKeys.isNodes(name))
             if (descriptor.nodeDescriptor(elemTypeId).isEmpty)
               throw err(InvalidElemTypeId, elemTypeId)
             else
