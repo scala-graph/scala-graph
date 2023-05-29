@@ -4,37 +4,27 @@ package error
 trait JsonGraphIssue
 object JsonGraphError extends Enumeration with JsonGraphIssue {
   type JsonGraphError = Value
-  val NonObjArrValue, NonArray, InvalidElemTypeId, EmptyNodeFieldList, InsufficientNodes, UnexpectedNodeId,
+  val NonObjArrValue, NonArray, InvalidElemTypeId, EmptyNodeFieldList, LessThan2Nodes, NoNodes, UnexpectedNodeId,
       UnexpectedDescr, UnknownNode, NoNodeDescr, NoEdgeDescr = Value
 
-  def err(errType: JsonGraphError, args: String*) = {
-    val msg = errType match {
-      case m if m == NonObjArrValue =>
-        """"{}" is of JSON type {}. Values of nodes/edges JSON fields must be of type JSON object or array."""
-      case m if m == NonArray =>
-        """"{}" is of JSON type {}. Nodes and edges must be JSON arrays."""
-      case m if m == InvalidElemTypeId =>
-        """The node/edgeTypeId "{}" found in the JSON text is not contained in the descriptor's node/edgeDescriptors."""
-      case m if m == EmptyNodeFieldList =>
-        """Empty node field list detected. Node field lists must contain at leas one field."""
-      case m if m == InsufficientNodes =>
-        """Hyperedge with less than two nodes detected: "{}"."""
-      case m if m == UnexpectedNodeId =>
-        """JSON array of hyperedge node-Ids contains non-string value(s): "{}"."""
-      case m if m == UnexpectedDescr =>
-        """Edge-descriptor "{}" of unexpected type cannot be processed."""
-      case m if m == UnknownNode =>
-        """Edge cannot be created due to missing node with id "{}"."""
-      case m if m == NoNodeDescr =>
-        """No 'NodeDescriptor' capable of processing type "{}" found."""
-      case m if m == NoEdgeDescr =>
-        """No 'EdgeDescriptor' capable of processing type "{}" found."""
-    }
-    val replMsg = replacePlaceholders(msg, args)
-    JsonGraphException(errType, replMsg)
-  }
+  private val messages: Map[JsonGraphError, String] = Map(
+    NonObjArrValue -> """"{}" is of JSON type {}. Values of nodes/edges JSON fields must be of type JSON object or array.""",
+    NonArray -> """"{}" is of JSON type {}. Nodes and edges must be JSON arrays.""",
+    InvalidElemTypeId -> """The node/edgeTypeId "{}" found in the JSON text is not contained in the descriptor's node/edgeDescriptors.""",
+    EmptyNodeFieldList -> """Empty node field list detected. Node field lists must contain at leas one field.""",
+    LessThan2Nodes     -> """Hyperedge with less than two nodes: "{}".""",
+    NoNodes            -> """Directed hyperedge with empty source or target: "{}".""",
+    UnexpectedNodeId   -> """Node-Ids contain non-string value(s): "{}".""",
+    UnexpectedDescr    -> """Edge-descriptor "{}" of unexpected type cannot be processed.""",
+    UnknownNode        -> """Edge cannot be created due to missing node with id "{}".""",
+    NoNodeDescr        -> """No 'NodeDescriptor' capable of processing type "{}" found.""",
+    NoEdgeDescr        -> """No 'EdgeDescriptor' capable of processing type "{}" found."""
+  )
 
-  case class JsonGraphException(val err: JsonGraphError, val msg: String) extends Exception("JSON-Graph error: " + msg)
+  def err(errType: JsonGraphError, args: String*): JsonGraphException =
+    JsonGraphException(errType, replacePlaceholders(messages(errType), args))
+
+  case class JsonGraphException(err: JsonGraphError, msg: String) extends Exception("JSON-Graph error: " + msg)
 }
 object JsonGraphWarning extends Enumeration with JsonGraphIssue {
   type JsonGraphWarning = Value

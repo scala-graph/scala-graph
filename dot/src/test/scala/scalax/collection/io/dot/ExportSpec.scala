@@ -1,51 +1,58 @@
 package scalax.collection
 package io.dot
 
-import language.implicitConversions
 import scala.collection.SortedMap
 
-import OuterImplicits._, GraphEdge._, edge.LDiEdge, edge.Implicits._
-import Indent._
+import scalax.collection.OuterImplicits._
+import scalax.collection.edges.{DiEdge, DiEdgeImplicits, UnDiEdge}
+import scalax.collection.edges.labeled.LDiEdge
+import scalax.collection.hyperedges._
+import scalax.collection.immutable.{Graph, TypedGraphFactory}
+import scalax.collection.io.dot.Indent._
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
-/** Tests [[Export]]. */
-class TExportTest extends RefSpec with Matchers {
+class ExportSpec extends RefSpec with Matchers {
+  import ExportSpec.Lines
 
-  def `Example at http://en.wikipedia.org/wiki/DOT_language will be produced` {
+  def `Example at http://en.wikipedia.org/wiki/DOT_language is produced`(): Unit = {
+    import ExportSpec.wikipedia._
+    import ExportSpec.wikipedia.ExampleGraph.OuterImplicits._
 
-    implicit def toLDiEdge[N](diEdge: DiEdge[N]) = LDiEdge(diEdge._1, diEdge._2)("")
-    val g = Graph[String, LDiEdge](
-      "A1" ~+> "A2" ("f"),
-      "A2" ~+> "A3" ("g"),
-      "A1" ~> "B1",
-      "A1" ~> "B1",
-      "A2" ~+> "B2" ("(g o f)'"),
-      "A3" ~> "B3",
-      "B1" ~> "B3",
-      "B2" ~+> "B3" ("g'")
+    val g = ExampleGraph(
+      "A1" ~> "A2" :+ "f",
+      "A2" ~> "A3" :+ "g",
+      "A1" ~> "B1" :+ "",
+      "A1" ~> "B1" :+ "",
+      "A2" ~> "B2" :+ "(g o f)'",
+      "A3" ~> "B3" :+ "",
+      "B1" ~> "B3" :+ "",
+      "B2" ~> "B3" :+ "g'"
     )
     val root = DotRootGraph(directed = true, id = Some(Id("Wikipedia_Example")))
     val subA = DotSubGraph(ancestor = root, subgraphId = Id("A"), attrList = List(DotAttr(Id("rank"), Id("same"))))
     val subB = DotSubGraph(ancestor = root, subgraphId = Id("B"), attrList = List(DotAttr(Id("rank"), Id("same"))))
-    def edgeTransformer(innerEdge: Graph[String, LDiEdge]#EdgeT): Option[(DotGraph, DotEdgeStmt)] = {
-      val edge  = innerEdge.edge
-      val label = edge.label.asInstanceOf[String]
+
+    def edgeTransformer(innerEdge: ExampleGraph#EdgeT): Option[(DotGraph, DotEdgeStmt)] = {
+      val edge  = innerEdge.outer
+      val label = edge.label
       Some(
         root,
         DotEdgeStmt(
-          NodeId(edge.from.toString),
-          NodeId(edge.to.toString),
+          NodeId(edge.source),
+          NodeId(edge.target),
           if (label.nonEmpty) List(DotAttr(Id("label"), Id(label)))
           else Nil
         )
       )
     }
-    def nodeTransformer(innerNode: Graph[String, LDiEdge]#NodeT): Option[(DotGraph, DotNodeStmt)] =
+
+    def nodeTransformer(innerNode: ExampleGraph#NodeT): Option[(DotGraph, DotNodeStmt)] =
       Some(
-        (if (innerNode.value.head == 'A') subA else subB, DotNodeStmt(NodeId(innerNode.toString), Seq.empty[DotAttr]))
+        (if (innerNode.outer.head == 'A') subA else subB, DotNodeStmt(NodeId(innerNode.toString), Seq.empty[DotAttr]))
       )
+
     val dot = g.toDot(
       dotRoot = root,
       edgeTransformer = edgeTransformer,
@@ -116,46 +123,53 @@ class TExportTest extends RefSpec with Matchers {
       be(expected_2))
   }
 
-  def `DOT headers are covered even in edge cases` {
-    val g = Graph.empty[String, UnDiEdge]
-    val dot = g.toDot(
-      dotRoot = DotRootGraph(
-        directed = false,
-        id = None,
-        attrList = List(DotAttr(Id("attr_1"), Id(""""one"""")), DotAttr(Id("attr_2"), Id("<two>")))
-      ),
-      edgeTransformer = _ => None,
-      spacing = multilineCompatibleSpacing
-    )
-    val expected = """graph {
-                     |  attr_1 = "one"
-                     |  attr_2 = <two>
-                     |}""".stripMargin
-    dot should be(expected)
-  }
+  def `DOT headers are covered even in edge cases`(): Unit =
+    Graph
+      .empty[String, UnDiEdge[String]]
+      .toDot(
+        dotRoot = DotRootGraph(
+          directed = false,
+          id = None,
+          attrList = List(
+            DotAttr(Id("attr_1"), Id(""""one"""")),
+            DotAttr(Id("attr_2"), Id("<two>"))
+          )
+        ),
+        edgeTransformer = _ => None,
+        spacing = multilineCompatibleSpacing
+      ) shouldBe
+      """graph {
+        |  attr_1 = "one"
+        |  attr_2 = <two>
+        |}""".stripMargin
 
-  def `Directed hyperedges may be mapped to multiple directed DOT edges` {
-    val hg   = Graph(1 ~> 2 ~> 3)
+  def `Directed hyperedges may be mapped to multiple directed DOT edges`(): Unit = {
+    val hg   = Graph.from(OneOrMore(1) ~~> OneOrMore(2, 3) :: Nil)
     val root = DotRootGraph(directed = true, id = None)
     val dot = hg.toDot(
       dotRoot = root,
-      edgeTransformer = e => None,
+      edgeTransformer = _ => None,
       hEdgeTransformer = Some { h =>
-        val source = h.edge.source.toString
-        h.edge.targets map (target => (root, DotEdgeStmt(NodeId(source), NodeId(target.toString))))
+        val source = h.outer.sources.head.toString
+        h.outer.targets.toList map (target => (root, DotEdgeStmt(NodeId(source), NodeId(target.toString))))
       },
       spacing = multilineCompatibleSpacing
     )
-    val expected = """digraph {
-                     |  1 -> 2
-                     |  1 -> 3
-                     |}""".stripMargin
-    sortMid(dot) should be(expected)
+
+    Lines(dot) shouldBe Lines(
+      """digraph {
+        |  1 -> 2
+        |  1 -> 3
+        |}""".stripMargin
+    )
   }
 
-  def `Colons (':') in node_id's are handeled correctly` {
-    def struct(i: Int) = s"struct$i"
+  def `Colons in https://www.graphviz.org/doc/info/shapes.html#record are handled correctly`(): Unit = {
     import implicits._, Record._
+    import ExportSpec.records._
+    import ExportSpec.records.RecordGraph.OuterImplicits._
+
+    def struct(i: Int)     = s"struct$i"
     val (f0, f1, f2, here) = ("f0", "f1", "f2", "here")
     val (n1, n2, n3): (Node, Node, Node) = (
       Node(
@@ -177,7 +191,10 @@ class TExportTest extends RefSpec with Matchers {
         )
       )
     )
-    val g = Graph(n1 ~+> n2(Ports(f1, f0)), n1 ~+> n3(Ports(f2, here)))
+    val g = RecordGraph(
+      n1 ~> n2 :+ Ports(f1, f0),
+      n1 ~> n3 :+ Ports(f2, here)
+    )
     val root = DotRootGraph(
       directed = true,
       id = Some("structs"),
@@ -185,38 +202,32 @@ class TExportTest extends RefSpec with Matchers {
     )
     val dot = g.toDot(
       dotRoot = root,
-      edgeTransformer = _.edge match {
-        case LDiEdge(source, target, label) =>
-          def withPort(n: Node, port: String): NodeId = n match {
-            case Node(id, _) => NodeId(id, port)
-          }
-          label match {
-            case Ports(sourcePort, targetPort) =>
-              Some(
-                (root, DotEdgeStmt(withPort(source.value, sourcePort), withPort(target.value, targetPort)))
-              ): Option[(DotGraph, DotEdgeStmt)]
-          }
+      edgeTransformer = _.outer match {
+        case RecordArrow(source, target, ports) =>
+          def withPort(n: Node, port: String) = NodeId(n.id, port)
+          Some(
+            (root, DotEdgeStmt(withPort(source, ports.port_1), withPort(target, ports.port_2)))
+          )
       },
-      cNodeTransformer = Some(_.value match {
-        case Node(id, label) =>
-          Some((root, DotNodeStmt(id, List(DotAttr("label", label.toString)))))
+      cNodeTransformer = Some(_.outer match {
+        case Node(id, label) => Some((root, DotNodeStmt(id, List(DotAttr("label", label.toString)))))
       }),
       spacing = multilineCompatibleSpacing
     )
 
-    val expected = """digraph structs {
-                     |  node [shape = record]
-                     |  struct1 [label = "<f0> left | <f1> mid | <f2> right"]
-                     |  struct1:f1 -> struct2:f0
-                     |  struct1:f2 -> struct3:here
-                     |  struct2 [label = "<f0> one | <f1> two"]
-                     |  struct3 [label = "hello&#92;nworld | {b | {c | <here> d | e} | f} | g | h"]
-                     |}""".stripMargin
-    sortMid(dot) should be(expected)
+    Lines(dot) shouldBe Lines(
+      """digraph structs {
+        |  node [shape = record]
+        |  struct1 [label = "<f0> left | <f1> mid | <f2> right"]
+        |  struct1:f1 -> struct2:f0
+        |  struct1:f2 -> struct3:here
+        |  struct2 [label = "<f0> one | <f1> two"]
+        |  struct3 [label = "hello&#92;nworld | {b | {c | <here> d | e} | f} | g | h"]
+        |}""".stripMargin
+    )
   }
 
-  def `doubly-nested subgraphs #69` {
-    import scalax.collection.Graph
+  def `doubly-nested subgraphs #69`(): Unit = {
     import scalax.collection.edges.DiEdge
     import scalax.collection.io.dot.implicits._
 
@@ -231,18 +242,11 @@ class TExportTest extends RefSpec with Matchers {
     val iNode     = "inode"
     val dot = g.toDot(
       dotRoot = root,
-      edgeTransformer = _.edge match {
-        case _ =>
-          Some((root, DotEdgeStmt("hi", "guys")))
-      },
-      cNodeTransformer = Some { _ =>
-        Some((cSubGraph, DotNodeStmt("cnode")))
-      },
-      iNodeTransformer = Some { _ =>
-        Some((iSubGraph, DotNodeStmt(iNode)))
-      }
+      edgeTransformer = _ => Some((root, DotEdgeStmt("hi", "guys"))),
+      cNodeTransformer = Some(_ => Some((cSubGraph, DotNodeStmt("cnode")))),
+      iNodeTransformer = Some(_ => Some((iSubGraph, DotNodeStmt(iNode))))
     )
-    dot.contains(iNode) should be(true)
+    dot.contains(iNode) shouldBe true
   }
 
   private val multilineCompatibleSpacing = Spacing(
@@ -250,12 +254,41 @@ class TExportTest extends RefSpec with Matchers {
     graphAttrSeparator = new AttrSeparator("""
                                              |""".stripMargin) {}
   )
-
-  private def sortMid(dot: String): String = {
-    val lines = dot.linesWithSeparators.toIterable
-    val mid   = lines.tail.init
-    s"${lines.head}${mid.sorted.mkString}${lines.last}"
-  }
 }
 
-case class Node(id: Id, label: Record.RLabel)
+private object ExportSpec {
+  object wikipedia {
+    case class LDiEdgeOfStrings(source: String, target: String, label: String) extends LDiEdge[String, String]
+
+    implicit class InfixConstructor(val e: DiEdge[String]) extends AnyVal {
+      def :+(label: String) = LDiEdgeOfStrings(e.source, e.target, label)
+    }
+
+    type ExampleGraph = Graph[String, LDiEdgeOfStrings]
+    object ExampleGraph extends TypedGraphFactory[String, LDiEdgeOfStrings]
+  }
+
+  object records {
+    import Record.Ports
+
+    case class Node(id: Id, label: Record.RLabel)
+
+    case class RecordArrow(source: Node, target: Node, label: Ports) extends LDiEdge[Node, Ports]
+
+    implicit class InfixConstructor(val e: DiEdge[Node]) extends AnyVal {
+      def :+(ports: Ports) = RecordArrow(e.source, e.target, ports)
+    }
+
+    type RecordGraph = Graph[Node, RecordArrow]
+    object RecordGraph extends TypedGraphFactory[Node, RecordArrow]
+  }
+
+  case class Lines(head: String, mid: Set[String], tail: String)
+  object Lines {
+    def apply(dot: String): Lines = dot.linesWithSeparators.toList match {
+      case head :: second :: tail =>
+        Lines(head, (second :: tail.init).toSet, tail.last)
+      case _ => throw new IllegalArgumentException("Dot string of at least three lines expected.")
+    }
+  }
+}

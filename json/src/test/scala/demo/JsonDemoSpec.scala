@@ -1,47 +1,56 @@
 package demo
 
 import scalax.collection._
-import scalax.collection.OuterImplicits._, scalax.collection.generic._._
-
+import scalax.collection.OuterImplicits._
+import scalax.collection.edges.DiEdgeImplicits
+import scalax.collection.generic.AnyDiHyperEdge
+import scalax.collection.hyperedges._
+import scalax.collection.immutable.Graph
 import scalax.collection.io.json._
-import scalax.collection.io.json.descriptor.predefined.{Di, DiHyper}
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
-class TJsonDemoTest extends RefSpec with Matchers {
+class JsonDemoSpec extends RefSpec with Matchers {
+
+  import scalax.collection.io.json.descriptor.predefined.{Di, DiHyper}
+
+  // nodes of type Book
   val (programming, inDepth) = (
     Book("Programming in Scala", "978-0-9815316-2-5"),
     Book("Scala in Depth", "978-1-9351827-0-2")
   )
+
+  // nodes of type Author
   val (martin, lex, bill, josh) = (
     Author("Odersky", "Martin"),
     Author("Spoon", "Lex"),
     Author("Venners", "Bill"),
     Author("Suereth", "Joshua D.")
   )
-  /* Directed edges/hyperedges denote book-author-relationships.
-   */
-  val library = Graph[Library, HyperEdge](
-    programming ~> martin ~> lex ~> bill,
+
+  // directed edges/hyperedges to denote book-author relationships
+  val library = Graph[Library, AnyDiHyperEdge](
+    OneOrMore(programming) ~~> OneOrMore(martin, lex, bill),
     inDepth ~> josh
   )
+
   val bookDescriptor = new NodeDescriptor[Book](typeId = "Books") {
-    def id(node: Any) = node match {
+    def id[B >: Book](node: B): String = node match {
       case Book(_, isbn) => isbn
     }
   }
   val authorDescriptor = new NodeDescriptor[Author](typeId = "Authors") {
-    def id(node: Any) = node match {
-      case Author(surName, firstName) => "" + surName(0) + firstName(0)
+    def id[B >: Author](node: B): String = node match {
+      case Author(surName, firstName) => "" + surName.head + firstName.head
     }
   }
 
-  object `When calling JSON import/export ` {
-    def `it is required that proper node descriptors are passed` {
-      val quickJson = new Descriptor[Library](
-        defaultNodeDescriptor = authorDescriptor,
-        defaultEdgeDescriptor = DiHyper.descriptor[Library]()
+  object `JSON import/export requires that` {
+    def `proper node descriptors are passed`(): Unit = {
+      val quickJson = Descriptor.simple[Library](
+        nodeDescriptor = authorDescriptor,
+        edgeDescriptor = DiHyper.descriptor[Library]()
       )
       val caught =
         intercept[scalax.collection.io.json.error.JsonGraphError.JsonGraphException] {
@@ -49,12 +58,9 @@ class TJsonDemoTest extends RefSpec with Matchers {
         }
       caught.msg should be("""No 'NodeDescriptor' capable of processing type "demo.Book" found.""")
     }
-    def `it is required that proper edge descriptors are passed` {
-      val quickJson = new Descriptor[Library](
-        defaultNodeDescriptor = authorDescriptor,
-        defaultEdgeDescriptor = DiHyper.descriptor[Library](),
-        namedNodeDescriptors = Seq(bookDescriptor)
-      )
+    def `proper edge descriptors are passed`(): Unit = {
+      val quickJson =
+        Descriptor[Library](authorDescriptor, bookDescriptor)(DiHyper.descriptor[Library]())()
       val caught =
         intercept[scalax.collection.io.json.error.JsonGraphError.JsonGraphException] {
           library.toJson(quickJson)
@@ -67,14 +73,14 @@ class TJsonDemoTest extends RefSpec with Matchers {
 
   object `When choosing JSON format based on JSON objects` {
     private object Named {
-      val descriptor = new Descriptor[Library](
-        defaultNodeDescriptor = authorDescriptor,
-        defaultEdgeDescriptor = DiHyper.descriptor[Library](),
-        namedNodeDescriptors = Seq(bookDescriptor),
-        namedEdgeDescriptors = Seq(Di.descriptor[Library]())
-      )
+      val descriptor =
+        Descriptor[Library](
+          authorDescriptor,
+          bookDescriptor
+        )(DiHyper.descriptor[Library](), Di.descriptor[Library]())()
     }
-    def `export works fine` {
+
+    def `export works fine`(): Unit = {
       val exported = library.toJson(Named.descriptor)
 
       import net.liftweb.json._
@@ -113,9 +119,9 @@ class TJsonDemoTest extends RefSpec with Matchers {
           }
         }*/
     }
-    def `importing the exported JSON yields an equal graph` {
+    def `importing the exported JSON yields an equal graph`(): Unit = {
       val expLibrary = library.toJson(Named.descriptor)
-      Graph.fromJson[Library, HyperEdge](expLibrary, Named.descriptor) should equal(library)
+      Graph.fromJson[Library, HyperEdge[Library]](expLibrary, Named.descriptor) should equal(library)
     }
   }
 
@@ -123,8 +129,9 @@ class TJsonDemoTest extends RefSpec with Matchers {
 
     private object PositionedNodeDescriptor {
       import net.liftweb.json._
-      final class AuthorSerializer
-          extends CustomSerializer[Author](formats =>
+
+      private class AuthorSerializer
+          extends CustomSerializer[Author](_ =>
             (
               { case JArray(JString(surName) :: JString(firstName) :: Nil) =>
                 Author(surName, firstName)
@@ -135,12 +142,13 @@ class TJsonDemoTest extends RefSpec with Matchers {
             )
           )
       val author = new NodeDescriptor[Author](typeId = "Authors", customSerializers = Seq(new AuthorSerializer)) {
-        def id(node: Any) = node match {
+        def id[B >: Author](node: B): String = node match {
           case Author(surName, firstName) => "" + surName(0) + firstName(0)
         }
       }
-      final class BookSerializer
-          extends CustomSerializer[Book](formats =>
+
+      private class BookSerializer
+          extends CustomSerializer[Book](_ =>
             (
               { case JArray(JString(title) :: JString(isbn) :: Nil) => Book(title, isbn) },
               { case Book(title, isbn) =>
@@ -149,41 +157,47 @@ class TJsonDemoTest extends RefSpec with Matchers {
             )
           )
       val book = new NodeDescriptor[Book](typeId = "Books", customSerializers = Seq(new BookSerializer)) {
-        def id(node: Any) = node match {
+        def id[B >: Book](node: B): String = node match {
           case Book(_, isbn) => isbn
         }
       }
     }
+
     private object Positioned {
-      import scalax.collection.io.json.serializer.{EdgeSerializer, HyperEdgeSerializer}
-      val descriptor = new Descriptor[Library](
-        defaultNodeDescriptor = PositionedNodeDescriptor.author,
-        defaultEdgeDescriptor = DiHyper.descriptor[Library](Some(new HyperEdgeSerializer)),
-        namedNodeDescriptors = Seq(PositionedNodeDescriptor.book),
-        namedEdgeDescriptors = Seq(Di.descriptor[Library](Some(new EdgeSerializer)))
-      )
+      import scalax.collection.io.json.serializer.EdgeSerializer
+
+      val descriptor = Descriptor[Library](
+        PositionedNodeDescriptor.author,
+        PositionedNodeDescriptor.book
+      )(
+        DiHyper.descriptor[Library](),
+        Di.descriptor[Library](Some(new EdgeSerializer))
+      )()
     }
-    def `export works fine` {
+
+    def `export works fine`(): Unit = {
       val exported = library.toJson(Positioned.descriptor)
 
+      /*
       import net.liftweb.json._
-      val pretty = prettyRender(JsonParser.parse(exported))
-      // println(pretty)
-      /*{
+      println(prettyRender(JsonParser.parse(exported)))
+       */
+      /*
+      {
           "nodes":{
             "Books":[["Scala in Depth","978-1-9351827-0-2"],["Programming in Scala","978-0-9815316-2-5"]],
             "Authors":[["Odersky","Martin"],["Spoon","Lex"],["Venners","Bill"],["Suereth","Joshua D."]]
           },
           "edges":{
-            "DiHyperEdge":[["978-0-9815316-2-5","OM","SL","VB"], "Bag"],
+            "DiHyperEdge":[[{ "sources":["978-0-9815316-2-5"] }, { "targets":["OM", "SL", "VB"] }]],
             "DiEdge":[["978-1-9351827-0-2","SJ"]]
           }
         }
        */
     }
-    def `importing the exported JSON yields an equal graph` {
+    def `importing the exported JSON yields an equal graph`(): Unit = {
       val expLibrary = library.toJson(Positioned.descriptor)
-      Graph.fromJson[Library, HyperEdge](expLibrary, Positioned.descriptor) should equal(library)
+      Graph.fromJson[Library, HyperEdge[Library]](expLibrary, Positioned.descriptor) should equal(library)
     }
   }
 }

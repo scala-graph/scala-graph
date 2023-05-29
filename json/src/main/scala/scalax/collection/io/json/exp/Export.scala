@@ -6,20 +6,24 @@ import scala.collection.immutable.Iterable
 
 import net.liftweb.json._
 
-import scalax.collection.OuterImplicits._, scalax.collection.Graph
+import scalax.collection.generic.Edge
+import scalax.collection.AnyGraph
 
 import descriptor._
 
-class Export[N, E <: Edge[N]](graph: Graph[N, E], descriptor: Descriptor[N])(implicit
-    simpleClassNames: Boolean = true
-) {
+class Export[N, E <: Edge[N]](
+    graph: AnyGraph[N, E],
+    descriptor: Descriptor[N]
+)(implicit simpleClassNames: Boolean = true) {
+
   def jsonASTNodes: JField = {
-    def className(a: Any) = {
-      val clazz = a.asInstanceOf[AnyRef].getClass
-      if (simpleClassNames) clazz.getSimpleName
-      else clazz.getName
-    }
-    val classNodesMap = (for (n <- graph.nodes) yield n.value) groupBy className
+    val classNodesMap =
+      graph.nodes.toOuter groupBy { a: Any =>
+        val clazz = a.asInstanceOf[AnyRef].getClass
+        if (simpleClassNames) clazz.getSimpleName
+        else clazz.getName
+      }
+
     case class NodeValues(classNodes: (String, Set[N])) {
       val descr = descriptor.nodeDescriptor(classNodes._2.head)
       val jNodes: List[JValue] =
@@ -28,13 +32,12 @@ class Export[N, E <: Edge[N]](graph: Graph[N, E], descriptor: Descriptor[N])(imp
       def jField: JField = JField(descr.typeId, JArray(jNodes))
 
       def jValue: JValue =
-        if (descr eq descriptor.defaultNodeDescriptor)
-          JArray(jNodes)
-        else
-          JObject(List(jField))
+        if (descriptor.hasSingleNodeDescriptor) JArray(jNodes)
+        else JObject(List(jField))
     }
+
     JField(
-      descriptor.sectionIds.nodesId,
+      descriptor.sectionKeys.nodesId,
       classNodesMap.size match {
         case 0 => JNothing
         case 1 => NodeValues(classNodesMap.head).jValue
@@ -46,25 +49,26 @@ class Export[N, E <: Edge[N]](graph: Graph[N, E], descriptor: Descriptor[N])(imp
       }
     )
   }
+
   def jsonASTEdges: JField = {
-    implicit val descriptor = this.descriptor
-    val classEdgesMap       = (for (e <- graph.edges) yield e.outer) groupBy (_.getClass)
+    implicit val descriptor: Descriptor[N] = this.descriptor
+    val classEdgesMap                      = graph.edges.toOuter groupBy (_.getClass)
+
     case class EdgeValues(classEdges: (Class[_ <: E], Set[E])) {
       val (descr, jEdges: List[JValue]) = descriptor.edgeDescriptor(classEdges._1) match {
-        case d: EdgeDescriptorBase[N, E, _] =>
+        case d: EdgeDescriptorBase[N @unchecked, E @unchecked] =>
           (d, (for (edge <- classEdges._2) yield d.decompose(edge)).toList)
       }
 
       def jArray: JArray = JArray(jEdges)
-
       def jField: JField = JField(descr.typeId, jArray)
-
       def jValue: JValue =
-        if (descr eq descriptor.defaultEdgeDescriptor) jArray
+        if (descriptor.hasSingleEdgeDescriptor) jArray
         else JObject(List(jField))
     }
+
     JField(
-      descriptor.sectionIds.edgesId,
+      descriptor.sectionKeys.edgesId,
       classEdgesMap.size match {
         case 0 => JNothing
         case 1 => EdgeValues(classEdgesMap.head).jValue
@@ -76,6 +80,7 @@ class Export[N, E <: Edge[N]](graph: Graph[N, E], descriptor: Descriptor[N])(imp
       }
     )
   }
+
   def jsonAST(parts: Iterable[JField]): JObject = JObject(parts.toList)
   def jsonText(obj: JObject): String            = compactRender(obj)
 }

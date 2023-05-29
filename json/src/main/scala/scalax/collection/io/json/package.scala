@@ -1,19 +1,16 @@
 package scalax.collection.io
 
 import net.liftweb.json.JValue
+
 import scalax.collection.generic._
-import scalax.collection.OuterImplicits._
-import scalax.collection.edge.LBase._
-import scalax.collection.edge.WBase._
-import scalax.collection.edge.WLBase._
-import scalax.collection.edge._
-import scalax.collection.generic.GraphCoreCompanion
+import scalax.collection.generic.GenericGraphCoreFactory
 import scalax.collection.io.json.imp.JsonList
 import scalax.collection.io.json.imp.Parser.parse
 import scalax.collection.io.json.imp.Stream.createOuterElems
-import scalax.collection.{Graph, GraphLike}
+import scalax.collection.{AnyGraph, GraphLike}
 
-import scala.reflect.ClassTag
+import scalax.collection.config.GraphConfig
+import scalax.collection.config.CoreConfig
 
 /** Facilitates populating graphs with nodes/edges from JSON text
   * and exporting `Graph`instances to JSON text.
@@ -25,59 +22,38 @@ import scala.reflect.ClassTag
   * @author Peter Empen
   */
 package object json {
-<<<<<<< HEAD
-  import scalax.collection.edge._, scalax.collection.edge.WBase._, scalax.collection.edge.LBase._,
-  scalax.collection.edge.WLBase._
-  type Descriptor[N]                                                            = descriptor.Descriptor[N]
-  type NodeDescriptor[N]                                                        = descriptor.NodeDescriptor[N]
-  type EdgeDescriptorBase[N, E <: Edge[N], +C <: EdgeCompanionBase[E]] = descriptor.EdgeDescriptorBase[N, E, C]
-  type EdgeDescriptor[N, E[X] <: UnDiEdge[X], +C <: EdgeCompanion[E]]           = descriptor.EdgeDescriptor[N, E, C]
-  type WEdgeDescriptor[N, E[X] <: UnDiEdge[X] with WEdge[X], +C <: WEdgeCompanion[E]] =
-||||||| merged common ancestors
-  import scalax.collection.edge._, scalax.collection.edge.WBase._, scalax.collection.edge.LBase._,
-  scalax.collection.edge.WLBase._
-  type Descriptor[N]                                                            = descriptor.Descriptor[N]
-  type NodeDescriptor[N]                                                        = descriptor.NodeDescriptor[N]
-  type EdgeDescriptorBase[N, E[X] <: EdgeLikeIn[X], +C <: EdgeCompanionBase[E]] = descriptor.EdgeDescriptorBase[N, E, C]
-  type EdgeDescriptor[N, E[X] <: UnDiEdge[X], +C <: EdgeCompanion[E]]           = descriptor.EdgeDescriptor[N, E, C]
-  type WEdgeDescriptor[N, E[X] <: UnDiEdge[X] with WEdge[X], +C <: WEdgeCompanion[E]] =
-=======
   type Descriptor[N]     = descriptor.Descriptor[N]
   type NodeDescriptor[N] = descriptor.NodeDescriptor[N]
-  type EdgeDescriptorBase[N, E <: Edge[N], +C <: EdgeCompanionBase[E]] =
-    descriptor.EdgeDescriptorBase[N, E, C]
-  type EdgeDescriptor[N, E[+X] <: UnDiEdge[X], +C <: EdgeCompanion[E]] = descriptor.EdgeDescriptor[N, E, C]
-  type WEdgeDescriptor[N, E[+X] <: UnDiEdge[X] with WEdge[X], +C <: WEdgeCompanion[E]] =
->>>>>>> 1.x
+
+  val Descriptor = descriptor.Descriptor
+
+  type EdgeDescriptorBase[N, E <: Edge[N]]    = descriptor.EdgeDescriptorBase[N, E]
+  type EdgeDescriptor[N, E <: AnyEdge[N]]     = descriptor.EdgeDescriptor[N, E]
+  type LEdgeDescriptor[N, E <: AnyEdge[N], L] = descriptor.LEdgeDescriptor[N, E, L]
+
+  type HyperEdgeDescriptor[N, E <: AbstractHyperEdge[N]]     = descriptor.HyperEdgeDescriptor[N, E]
+  type DiHyperEdgeDescriptor[N, E <: AbstractDiHyperEdge[N]] = descriptor.DiHyperEdgeDescriptor[N, E]
+
+  /*
+  type WEdgeDescriptor[N, E[X] <: AnyEdge[X], +C <: EdgeCompanion[E]] =
     descriptor.WEdgeDescriptor[N, E, C]
   type LEdgeDescriptor[N, E[+X] <: UnDiEdge[X] with LEdge[X], +C <: LEdgeCompanion[E], L <: AnyRef] =
     descriptor.LEdgeDescriptor[N, E, C, L]
   type WLEdgeDescriptor[N, E[+X] <: UnDiEdge[X] with WLEdge[X], +C <: WLEdgeCompanion[E], L <: AnyRef] =
     descriptor.WLEdgeDescriptor[N, E, C, L]
-  type HyperEdgeDescriptor[N, E[+X] <: HyperEdge[X], +C <: HyperEdgeCompanion[E]] =
-    descriptor.HyperEdgeDescriptor[N, E, C]
+   */
+  /*
   type WHyperEdgeDescriptor[N, E[+X] <: WHyperEdge[X] with WEdge[X], +C <: WHyperEdgeCompanion[E]] =
     descriptor.WHyperEdgeDescriptor[N, E, C]
   type LHyperEdgeDescriptor[N, E[+X] <: LHyperEdge[X] with LEdge[X], +C <: LHyperEdgeCompanion[E], L <: AnyRef] =
     descriptor.LHyperEdgeDescriptor[N, E, C, L]
   type WLHyperEdgeDescriptor[N, E[+X] <: WLHyperEdge[X] with WLEdge[X], +C <: WLHyperEdgeCompanion[E], L <: AnyRef] =
     descriptor.WLHyperEdgeDescriptor[N, E, C, L]
+   */
 
-<<<<<<< HEAD
-  import imp._, imp.Parser.parse, imp.Stream.createOuterElems
-  import net.liftweb.json.JValue
-
-  implicit final class JsonGraphCoreCompanion[+G[N, E <: Edge[N]] <: Graph[N, E] with GraphLike[N, E, G]](
-||||||| merged common ancestors
-  import imp._, imp.Parser.parse, imp.Stream.createOuterElems
-  import net.liftweb.json.JValue
-
-  implicit final class JsonGraphCoreCompanion[+G[N, E[X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
-=======
-  implicit final class JsonGraphCoreCompanion[+G[N, E[+X] <: EdgeLikeIn[X]] <: Graph[N, E] with GraphLike[N, E, G]](
->>>>>>> 1.x
-      val companion: GraphCoreCompanion[G])
-      extends AnyVal {
+  implicit final class JsonGraphCoreCompanion[+G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
+      val companion: GenericGraphCoreFactory[G]
+  ) extends AnyVal {
 
     /** Creates a new Graph instance and populates it with all nodes/edges found in
       * the node/edge sections of a JSON text.
@@ -86,18 +62,10 @@ package object json {
       * @param descriptor $DESCR
       * @return new `Graph` instance populated from `jsonAST`
       */
-<<<<<<< HEAD
-    def fromJson[N, E <: Edge[N]](jsonAST: JValue, descriptor: Descriptor[N])(
-
-||||||| merged common ancestors
-    def fromJson[N, E[X] <: EdgeLikeIn[X]](jsonAST: JValue, descriptor: Descriptor[N])(
-
-=======
-    def fromJson[N, E[+X] <: EdgeLikeIn[X]](jsonAST: JValue, descriptor: Descriptor[N])(
-
->>>>>>> 1.x
-        config: companion.Config): G[N, E] =
-      fromJson[N, E](parse(jsonAST, descriptor), descriptor)
+    def fromJson[N, E <: Edge[N]](
+        jsonAST: JValue,
+        descriptor: Descriptor[N]
+    )(implicit config: GraphConfig): G[N, E] = fromJson[N, E](parse(jsonAST, descriptor), descriptor)
 
     /** Creates a new Graph instance and populates it with all nodes/edges found in
       * the node/edge sections of a JSON text.
@@ -106,18 +74,10 @@ package object json {
       * @param descriptor $DESCR
       * @return new `Graph` instance populated from `jsonText`
       */
-<<<<<<< HEAD
-    def fromJson[N, E <: Edge[N]](jsonText: String, descriptor: Descriptor[N])(
-
-||||||| merged common ancestors
-    def fromJson[N, E[X] <: EdgeLikeIn[X]](jsonText: String, descriptor: Descriptor[N])(
-
-=======
-    def fromJson[N, E[+X] <: EdgeLikeIn[X]](jsonText: String, descriptor: Descriptor[N])(
-
->>>>>>> 1.x
-        config: companion.Config = companion.defaultConfig): G[N, E] =
-      fromJson[N, E](parse(jsonText, descriptor), descriptor)
+    def fromJson[N, E <: Edge[N]](
+        jsonText: String,
+        descriptor: Descriptor[N]
+    )(implicit config: GraphConfig = CoreConfig()): G[N, E] = fromJson[N, E](parse(jsonText, descriptor), descriptor)
 
     /** Creates a new Graph instance and populates it with all nodes/edges found in
       * `jsonLists`.
@@ -126,29 +86,17 @@ package object json {
       * @param descriptor $DESCR
       * @return new `Graph` instance populated from `jsonText`
       */
-<<<<<<< HEAD
-    def fromJson[N, E <: Edge[N]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N])(
+    def fromJson[N, E <: Edge[N]](
+        jsonLists: Iterable[JsonList],
+        descriptor: Descriptor[N]
+    )(implicit config: GraphConfig): G[N, E] = {
 
-||||||| merged common ancestors
-    def fromJson[N, E[X] <: EdgeLikeIn[X]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N])(
-
-=======
-    def fromJson[N, E[+X] <: EdgeLikeIn[X]](jsonLists: Iterable[JsonList], descriptor: Descriptor[N])(
-
->>>>>>> 1.x
-        config: companion.Config): G[N, E] = {
       val target = createOuterElems[N, E](jsonLists, descriptor)
       companion.from[N, E](nodes = target._1, edges = target._2)(config)
     }
   }
 
-<<<<<<< HEAD
-  implicit final class JsonGraph[N, E <: Edge[N]](val graph: Graph[N, E]) extends AnyVal {
-||||||| merged common ancestors
-  implicit final class JsonGraph[N, E[X] <: EdgeLikeIn[X]](val graph: Graph[N, E]) extends AnyVal {
-=======
-  implicit final class JsonGraph[N, E[+X] <: EdgeLikeIn[X]](val graph: Graph[N, E]) extends AnyVal {
->>>>>>> 1.x
+  implicit final class JsonGraph[N, E <: Edge[N]](val graph: AnyGraph[N, E]) extends AnyVal {
 
     /** Creates a JSON text including all nodes/edges in this graph.
       *
@@ -156,8 +104,8 @@ package object json {
       * @return the JSON text
       */
     def toJson(descriptor: Descriptor[N]): String = {
-      val export = new exp.Export[N, E](graph, descriptor)
-      import export._
+      val `export` = new exp.Export[N, E](graph, descriptor)
+      import `export`._
       jsonText(jsonAST(List(jsonASTNodes, jsonASTEdges)))
     }
   }
@@ -166,16 +114,17 @@ package object json {
     * in `params` one by one. The result is guaranteed not to become longer than
     * `maxLength`.
     */
-  def replacePlaceholders(source: String,
-                          params: Iterable[String],
-                          maxLength: Int = 50,
-                          paramPlaceholder: String = "{}"): String = {
+  def replacePlaceholders(
+      source: String,
+      params: Iterable[String],
+      maxLength: Int = 50,
+      paramPlaceholder: String = "{}"
+  ): String = {
     var target = source
     val it     = params.iterator
     var i      = 0
-    while ({ i = target.indexOfSlice(paramPlaceholder); i >= 0 } &&
-    it.hasNext) {
-      val param = it.next
+    while ({ i = target.indexOfSlice(paramPlaceholder); i >= 0 } && it.hasNext) {
+      val param = it.next()
       target = target patch (i, if (param.length < maxLength) param
       else param.substring(0, maxLength - 3) + "...", 2)
     }

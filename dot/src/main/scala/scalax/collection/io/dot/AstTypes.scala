@@ -9,14 +9,15 @@ sealed trait DotId
 
 /** Verified DOT ID. */
 class Id private[dot] (val id: String, val numeric: Boolean) extends DotId {
-  def apply()           = id
-  override def hashCode = id.hashCode
+  def apply(): String        = id
+  override def hashCode: Int = id.hashCode
   override def equals(other: Any): Boolean = other match {
     case that: Id => that.id == this.id
     case _        => false
   }
   override def toString = id
 }
+
 object Id {
   def apply(id: Long): Id   = new Id(id.toString, true)
   def apply(id: Double): Id = new Id(id.toString, true)
@@ -53,11 +54,8 @@ object Id {
   *    @param id The string representation of this `NodeId`.
   *    @param parts The individual parts of this `NodeId` such as ID and port.
   */
-case class NodeId private[dot] (id: String, parts: Id*) extends DotId {
+case class NodeId private (id: String, parts: Id*) extends DotId
 
-  /** The `id` of this `NodeId`. */
-  def apply() = id
-}
 object NodeId {
   private def single(id: Id) = NodeId(id.id, id)
 
@@ -65,13 +63,14 @@ object NodeId {
   def apply(id: Double): NodeId = single(Id(id))
   def apply(id: String): NodeId = single(Id(id))
 
-  /** Builds the DOT `node_id` by concatinating all parts using colon separators. */
+  /** Builds the DOT `node_id` by concatenating all parts using colon separators. */
   def apply(part_1: Id, optional_parts: Id*): NodeId =
     if (optional_parts.isEmpty) single(part_1)
     else {
       val all = part_1 +: optional_parts
       NodeId(all map (_.id) mkString ":", all: _*)
     }
+
   def unapply(nodeId: NodeId): Option[(String, Seq[Id])] =
     if (nodeId eq null) None else Some((nodeId.id, nodeId.parts))
 }
@@ -92,8 +91,8 @@ sealed trait DotGraph {
   def id: Option[Id]
   def attrStmts: Seq[DotAttrStmt]
   def attrList: Seq[DotAttr]
-  override def hashCode = id.##
-  override def equals(that: Any) = that match {
+  override def hashCode: Int = id.##
+  override def equals(that: Any): Boolean = that match {
     case that: DotRootGraph => this.id == that.id
     case _                  => false
   }
@@ -110,11 +109,11 @@ case class DotRootGraph(
     override val attrStmts: Seq[DotAttrStmt] = Nil,
     override val attrList: Seq[DotAttr] = Nil
 ) extends DotGraph {
-  def headToString = {
+  def headToString: String = {
     val res = new StringBuilder(32)
     if (strict) res append "strict "
     if (directed) res append "di"
-    res append s"graph ${id map (_ + " ") getOrElse ""}{"
+    res append s"graph ${id map (_.toString + " ") getOrElse ""}{"
     res.toString
   }
   override def toString = headToString + attrList.mkString + " }"
@@ -129,8 +128,8 @@ case class DotSubGraph(
     override val attrStmts: Seq[DotAttrStmt] = Nil,
     override val attrList: Seq[DotAttr] = Nil
 ) extends DotGraph {
-  val id           = Some(subgraphId)
-  def headToString = "subgraph %s {".format(id get)
+  val id: Option[Id]       = Some(subgraphId)
+  def headToString: String = "subgraph %s {".format(id get)
 }
 
 /** Represents ''stmt'' of the DOT language grammar.
@@ -147,8 +146,8 @@ case class DotNodeStmt(nodeId: NodeId, attrList: Seq[DotAttr] = Seq()) extends D
 case class DotEdgeStmt(node_1Id: NodeId, node_2Id: NodeId, attrList: Seq[DotAttr] = Seq()) extends DotStmt
 
 protected[dot] case class DotCluster(dotGraph: DotGraph, dotStmts: MutableSet[DotStmt] = MutableSet()) {
-  override def hashCode = dotGraph.id.##
-  override def equals(that: Any) = that match {
+  override def hashCode: Int = dotGraph.id.##
+  override def equals(that: Any): Boolean = that match {
     case that: DotCluster => this.dotGraph.id == that.dotGraph.id
     case _                => false
   }
