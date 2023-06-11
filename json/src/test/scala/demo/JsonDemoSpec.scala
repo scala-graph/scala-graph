@@ -183,7 +183,7 @@ class JsonDemoSpec extends RefSpec with Matchers {
       println(prettyRender(JsonParser.parse(exported)))
        */
       /*
-      {
+        {
           "nodes":{
             "Books":[["Scala in Depth","978-1-9351827-0-2"],["Programming in Scala","978-0-9815316-2-5"]],
             "Authors":[["Odersky","Martin"],["Spoon","Lex"],["Venners","Bill"],["Suereth","Joshua D."]]
