@@ -39,7 +39,7 @@ sealed abstract class EdgeDescriptorBase[N, E <: Edge[N]](
 )(implicit classTag: ClassTag[E])
     extends GenEdgeDescriptor[N](classTag, typeId) {
 
-  implicit protected val formats = Serialization.formats(
+  implicit protected val formats: Formats = Serialization.formats(
     if (extraClasses.isEmpty) NoTypeHints
     else ShortTypeHints(extraClasses)
   ) ++ customSerializer

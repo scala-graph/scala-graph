@@ -41,9 +41,9 @@ class WEdgeSerializer extends Serializer[LEdgeParameters[Double]] {
   */
 abstract class LSerializer[L: Manifest](labelSerializers: Serializer[L]*) {
   object LabelSerialization {
-    implicit val labelFormats = Serialization.formats(NoTypeHints) ++ labelSerializers
-    def extract(json: JValue) = json.extract[L]
-    def decompose(label: L)   = Extraction.decompose(label)
+    implicit val labelFormats: Formats = Serialization.formats(NoTypeHints) ++ labelSerializers
+    def extract(json: JValue)          = json.extract[L]
+    def decompose(label: L)            = Extraction.decompose(label)
   }
 }
 

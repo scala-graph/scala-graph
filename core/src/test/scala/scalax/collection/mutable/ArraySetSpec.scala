@@ -10,7 +10,7 @@ import org.scalatest.refspec.RefSpec
 
 class ArraySetSpec extends RefSpec with Matchers {
 
-  implicit val hints = ArraySet.Hints(
+  implicit val hints: ArraySet.Hints = ArraySet.Hints(
     initialCapacity = 4,
     capacityIncrement = 4,
     hashTableThreshold = 12,

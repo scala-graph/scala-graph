@@ -13,7 +13,8 @@ import scalax.collection.immutable.Graph
 class GraphGenSpec extends RefSpec with Matchers with ScalaCheckPropertyChecks {
 
   final val minSuccessful = 5
-  implicit val config     = PropertyCheckConfiguration(minSuccessful = minSuccessful, maxDiscardedFactor = 1.0)
+  implicit val config: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = minSuccessful, maxDiscardedFactor = 1.0)
 
   object `nr of minimum successful tests` {
     def `should be met`: Unit = {
@@ -63,7 +64,7 @@ class GraphGenSpec extends RefSpec with Matchers with ScalaCheckPropertyChecks {
   }
 
   object `tiny connected graph of [Int,DiEdge]` {
-    implicit val arbitraryGraph = GraphGen.tinyConnectedIntDi[Graph](Graph)
+    implicit val arbitraryGraph: Arbitrary[Graph[Int, DiEdge[Int]]] = GraphGen.tinyConnectedIntDi[Graph](Graph)
 
     def `should conform to tiny metrics`: Unit =
       forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
@@ -72,7 +73,7 @@ class GraphGenSpec extends RefSpec with Matchers with ScalaCheckPropertyChecks {
   }
 
   object `small connected graph of [Int,DiEdge]` {
-    implicit val arbitraryGraph = GraphGen.smallConnectedIntDi[Graph](Graph)
+    implicit val arbitraryGraph: Arbitrary[Graph[Int, DiEdge[Int]]] = GraphGen.smallConnectedIntDi[Graph](Graph)
 
     def `should conform to small metrics`: Unit =
       forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>

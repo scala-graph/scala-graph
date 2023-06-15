@@ -28,7 +28,8 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
     with IntelliJ[G]
     with Visualizer {
 
-  implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
+  implicit val config: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
 
   object `In a weakly connected diGraph` {
     import Data.elementsOfDi_1
