@@ -6,7 +6,7 @@ import scalax.collection.edges._
 /** Includes the examples given on [[http://www.scala-graph.org/guides/test.html
   *  Test Utilities]].
   */
-object TGraphTest extends App {
+object GraphTestDemo extends App {
 
   import scalax.collection.generator._
 
@@ -90,7 +90,7 @@ object TGraphTest extends App {
 
     // obtaining Arbitrary instances for graphs with predefined metrics
     type IntDiGraph = Graph[Int, DiEdge[Int]]
-    implicit val arbitraryTinyGraph = GraphGen.tinyConnectedIntDi[Graph](Graph)
+    implicit val arbitraryTinyGraph: Arbitrary[Graph[Int, DiEdge[Int]]] = GraphGen.tinyConnectedIntDi[Graph](Graph)
 
     val properTiny = forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
       g.order == GraphGen.TinyInt.order
@@ -107,7 +107,7 @@ object TGraphTest extends App {
     }
 
     type IntUnDiGraph = Graph[Int, UnDiEdge[Int]]
-    implicit val arbitrarySparseGraph = Arbitrary {
+    implicit val arbitrarySparseGraph: Arbitrary[Graph[Int, UnDiEdge[Int]]] = Arbitrary {
       GraphGen.fromMetrics[Int, UnDiEdge[Int], Graph](Graph, Sparse_1000_Int, Set(UnDiEdge)).apply
     }
 
@@ -143,7 +143,7 @@ object TGraphTest extends App {
     }
 
     type Mixed = Graph[Person, UnDiEdge[Person]]
-    implicit val arbitraryMixedGraph = Arbitrary {
+    implicit val arbitraryMixedGraph: Arbitrary[Graph[Person, UnDiEdge[Person]]] = Arbitrary {
       GraphGen
         .fromMetrics[Person, UnDiEdge[Person], Graph](Graph, MixedMetrics, Set(UnDiEdge /*, TODO LDiEdge*/ ))
         .apply
@@ -162,7 +162,7 @@ object TGraphTest extends App {
 
     class TGraphGenTest extends RefSpec with Matchers with ScalaCheckPropertyChecks {
 
-      implicit val config =
+      implicit val config: PropertyCheckConfiguration =
         PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
 
       object `generated Tiny graph` {

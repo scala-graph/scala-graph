@@ -41,14 +41,15 @@ class Json[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
             ],
             "edges": { "MultiWDiEdge": [
               ["A", "B", 3.0],
-              ["B", "C", 4.0]]
-            },
+              ["B", "C", 4.0]
+            ]},
             "X": 1,
             "edges": { "UnDiEdge": [
               {"n1":"X", "n2":"Y"},
-              {"n1":"Y", "n2":"A"}]
-            }
+              {"n1":"Y", "n2":"A"}
+            ]}
           }""".filterNot(_.isWhitespace)
+
         val descriptor =
           Descriptor[String](
             StringNodeDescriptor
@@ -56,6 +57,7 @@ class Json[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
             UnDi.descriptor[String](Some(new EdgeSerializer)),
             MultiWDi.descriptor[String]()
           )()
+
         val graph = factory[String, AnyEdge](
           "A" ~ "B",
           "A" ~> "B" %% 3,

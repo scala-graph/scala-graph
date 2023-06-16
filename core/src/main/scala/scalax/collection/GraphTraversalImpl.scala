@@ -730,7 +730,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       GraphTraversalImpl[N, E] // scalafix warning not correct, see https://github.com/scalacenter/scalafix/issues/969
 
     override def equals(other: Any): Boolean = other match {
-      case that: AnyGraph#Path =>
+      case that: AnyGraph#Path @unchecked =>
         (this eq that) ||
         that.toArray[AnyGraph#InnerElem].sameElements(toArray[InnerElem])
       case _ => false

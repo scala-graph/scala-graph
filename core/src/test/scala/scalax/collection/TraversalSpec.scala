@@ -31,7 +31,8 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     with IntelliJ[G]
     with Visualizer {
 
-  implicit val config = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
+  implicit val config: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
 
   val predecessors = Parameters(direction = Predecessors)
   val anyConnected = Parameters(direction = AnyConnected)

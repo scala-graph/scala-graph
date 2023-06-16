@@ -5,6 +5,7 @@ import scala.collection.mutable.{ArrayBuffer, Set => MSet}
 import scala.util.Random
 import scala.reflect.ClassTag
 
+import scalax.collection.config.GraphConfig
 import scalax.collection.edges._
 import scalax.collection.generic._
 /* TODO L
@@ -42,7 +43,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
   require(order > 0)
   if (connected) require(nodeDegree.min >= 2)
 
-  implicit val graphConfig = graphCompanion.defaultConfig
+  implicit val graphConfig: GraphConfig = graphCompanion.defaultConfig
 
   protected val doTrace                       = false
   protected def trace(str: => String): Unit   = if (doTrace) print(str)
