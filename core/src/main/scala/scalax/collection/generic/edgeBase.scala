@@ -199,6 +199,11 @@ abstract class AbstractGenericHyperEdge[+N, +CC[X] <: AbstractGenericHyperEdge[X
     extends AbstractHyperEdge[N](ends)
     with GenericHyperEdgeMapper[CC]
 
+abstract class AbstractUnlabeledGenericHyperEdge[+N, +CC[X] <: AbstractUnlabeledGenericHyperEdge[X, CC]](
+    ends: Several[N]
+) extends AbstractHyperEdge[N](ends)
+    with GenericUnlabeledHyperEdgeMapper[CC]
+
 /** The abstract methods of this trait must be implemented by companion objects of non-labeled hyperedges.
   */
 trait HyperEdgeCompanion[+E[N] <: AbstractHyperEdge[N]] extends EdgeCompanionBase {
@@ -260,6 +265,12 @@ abstract class AbstractGenericDiHyperEdge[+N, +CC[X] <: AbstractGenericDiHyperEd
     targets: OneOrMore[N]
 ) extends AbstractDiHyperEdge[N](sources, targets)
     with GenericDiHyperEdgeMapper[CC]
+
+abstract class AbstractGenericUnlabeledDiHyperEdge[+N, +CC[X] <: AbstractGenericUnlabeledDiHyperEdge[X, CC]](
+    sources: OneOrMore[N],
+    targets: OneOrMore[N]
+) extends AbstractDiHyperEdge[N](sources, targets)
+    with GenericUnlabeledDiHyperEdgeMapper[CC]
 
 /** The abstract methods of this trait must be implemented by companion objects of directed, non-labeled hyperedges.
   */
@@ -350,6 +361,10 @@ trait AbstractGenericUnDiEdge[+N, +CC[X] <: AbstractGenericUnDiEdge[X, CC]]
     extends AnyUnDiEdge[N]
     with GenericEdgeMapper[CC]
 
+trait AbstractGenericUnlabeledUnDiEdge[+N, +CC[X] <: AbstractGenericUnlabeledUnDiEdge[X, CC]]
+    extends AnyUnDiEdge[N]
+    with GenericUnlabeledEdgeMapper[CC]
+
 trait AnyDiEdge[+N] extends AnyDiHyperEdge[N] with AnyEdge[N] with EqDi[N] {
 
   final override def ends: Several[N] = super[AnyEdge].ends
@@ -381,6 +396,10 @@ trait AnyDiEdge[+N] extends AnyDiHyperEdge[N] with AnyEdge[N] with EqDi[N] {
 abstract class AbstractDiEdge[+N](val source: N, val target: N) extends AnyDiEdge[N]
 
 trait AbstractGenericDiEdge[+N, +CC[X] <: AbstractGenericDiEdge[X, CC]] extends AnyDiEdge[N] with GenericEdgeMapper[CC]
+
+trait AbstractGenericUnlabeledDiEdge[+N, +CC[X] <: AbstractGenericUnlabeledDiEdge[X, CC]]
+    extends AnyDiEdge[N]
+    with GenericUnlabeledEdgeMapper[CC]
 
 private[collection] object Abstract {
 
