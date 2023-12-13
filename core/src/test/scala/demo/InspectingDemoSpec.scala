@@ -42,8 +42,8 @@ class InspectingDemoSpec extends RefSpec with Matchers {
 
     def `Inspect Edge Ends`(): Unit = {
       val unDiEdge = 3 ~ 4 // UnDiEdge[Int]
-      unDiEdge._1 * unDiEdge._2      // Int = 12
-      unDiEdge.ends.iterator.product // Int = 12
+      unDiEdge.node1 * unDiEdge.node2 // Int = 12
+      unDiEdge.ends.iterator.product  // Int = 12
       unDiEdge match {
         case n ~ m => n * m // Int = 12
       }

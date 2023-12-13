@@ -60,7 +60,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
     def `endpoints ` : Unit = {
       val uE = 3 ~ 4 // UnDiEdge[Int]
 
-      uE._1 * uE._2 shouldBe 12
+      uE.node1 * uE.node2 shouldBe 12
       uE.ends.iterator.product shouldBe 12
       (uE match {
         case n ~ m => n * m

@@ -22,7 +22,7 @@ case object % {
 }
 
 trait UnapplyLabeledEdge[N, E <: Edge[N], L] {
-  def unapply(edge: E): Some[(N, (N, L))] = Some(edge._1 -> (edge._2, label(edge)))
+  def unapply(edge: E): Some[(N, (N, L))] = Some(edge.node1 -> (edge.node2, label(edge)))
   protected def label(edge: E): L
 }
 
@@ -31,7 +31,7 @@ trait UnapplyLabel[N, L] {
 }
 
 trait UnapplyGenericLabeledEdge[E[X] <: AnyEdge[X], L] {
-  def unapply[N](edge: E[N] with SingleLabel[L]): Some[(N, (N, L))] = Some(edge._1 -> (edge._2, label(edge)))
+  def unapply[N](edge: E[N] with SingleLabel[L]): Some[(N, (N, L))] = Some(edge.node1 -> (edge.node2, label(edge)))
   protected def label[N](edge: E[N] with SingleLabel[L]): L         = edge.label
 }
 

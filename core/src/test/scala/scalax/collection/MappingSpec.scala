@@ -39,13 +39,13 @@ class MappingSpec extends RefSpec with Matchers {
 
       g.nodes.head.outer shouldBe a[String]
       (g.edges.head.outer: UnDiEdge[String]) shouldBe an[UnDiEdge[_]]
-      g.edges.head.outer shouldBe (edge._1.toString ~ edge._2.toString)
+      g.edges.head.outer shouldBe (edge.node1.toString ~ edge.node2.toString)
     }
 
     def `change the edge type`: Unit = {
       val g = originalG.map(increment, (n1: Int, n2: Int) => n1 ~> n2)
 
-      (g: Graph[Int, DiEdge[Int]]) shouldEqual Graph((edge._1 + 1) ~> (edge._2 + 1))
+      (g: Graph[Int, DiEdge[Int]]) shouldEqual Graph((edge.node1 + 1) ~> (edge.node2 + 1))
       g.isDirected shouldBe true
     }
 
@@ -81,12 +81,12 @@ class MappingSpec extends RefSpec with Matchers {
 
     def `add nodes`: Unit = {
       val g = originalG flatMap (n => List(n.outer, -n.outer))
-      g shouldBe Graph(edge, -edge._1, -edge._2)
+      g shouldBe Graph(edge, -edge.node1, -edge.node2)
     }
 
     def `change the node type`: Unit = {
       val g = originalG flatMap (n => List(n.outer.toString, (-n.outer).toString))
-      g shouldBe Graph(edge._1.toString ~ edge._2.toString, (-edge._1).toString, (-edge._2).toString)
+      g shouldBe Graph(edge.node1.toString ~ edge.node2.toString, (-edge.node1).toString, (-edge.node2).toString)
     }
 
     def `change the edge type`: Unit = {

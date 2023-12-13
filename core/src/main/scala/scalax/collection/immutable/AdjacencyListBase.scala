@@ -257,7 +257,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
       val diTargets, unDiTargets = MSet.empty[NodeT]
       // format: off
       di  .exists((e: EdgeT) => e.hasSource((n: NodeT) => n eq node) && ! e.targets.forall(diTargets.add)) ||
-      unDi.exists((e: EdgeT) => (e._1 eq node)                       && ! e.ends.iterator.drop(1).forall(unDiTargets.add))
+      unDi.exists((e: EdgeT) => (e.node1 eq node)                    && ! e.ends.iterator.drop(1).forall(unDiTargets.add))
       // format: on
     }
   }
