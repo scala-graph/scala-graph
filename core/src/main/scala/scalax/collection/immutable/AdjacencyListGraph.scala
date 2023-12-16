@@ -33,7 +33,7 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
     @inline final override protected def minus(node: NodeT): Unit = collection -= node
     override def +(node: NodeT): NodeSetT =
       if (collection contains node) this
-      else { val c = copy; c.collection += node; c }
+      else { val c = this.copy; c.collection += node; c }
 
     protected[AdjacencyListGraph] def add(edge: EdgeT): Boolean = {
       var added = false

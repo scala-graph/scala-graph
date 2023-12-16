@@ -49,8 +49,8 @@ protected trait ToString[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y
     /** Sorts all nodes according to `ord`, concatenates them using `separator`,
       * and prefixes and parenthesizes the result unless `prefix` is blank.
       */
-    def render(style: SetStyle, separator: String = GraphBase.defaultSeparator, prefix: String = className)(implicit
-        ord: Ordering[A]
+    def render(style: SetStyle, separator: String = GraphBase.defaultSeparator, prefix: String = this.className)(
+        implicit ord: Ordering[A]
     ): String =
       toList.sorted.prefixed(style, prefix, separator)
 
@@ -60,7 +60,7 @@ protected trait ToString[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y
     def render(style: SetStyle, separator: String, withPrefix: Boolean)(implicit
         ord: Ordering[A]
     ): String =
-      render(style, separator, if (withPrefix) className else "")
+      render(style, separator, if (withPrefix) this.className else "")
   }
 
   protected trait NodeSetToString extends SetToString[NodeT] {
@@ -76,7 +76,7 @@ object ToString {
   sealed trait Style {
     def toSetStyle: SetStyle = this match {
       case s: SetStyle            => s
-      case s: SetsOnSeparateLines => SingleLine
+      case _: SetsOnSeparateLines => SingleLine
     }
   }
   sealed trait StyleWithIndent[C <: StyleWithIndent[C]] extends Style {

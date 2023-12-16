@@ -476,7 +476,7 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
     def find(outerEdge: E): Option[EdgeT]
 
     /** The maximum arity of all edges in this edge set. */
-    def maxArity: Int = if (size == 0) 0 else max(BaseInnerEdge.ArityOrdering).arity
+    def maxArity: Int = if (this.isEmpty) 0 else max(BaseInnerEdge.ArityOrdering).arity
 
     /** `Iterator` over this `EdgeSet` mapped to outer edges. */
     @inline final def outerIterator: Iterator[E] = iterator map (_.outer)

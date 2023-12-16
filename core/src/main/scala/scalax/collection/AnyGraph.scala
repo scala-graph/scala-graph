@@ -133,7 +133,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
     ): Boolean = {
       def minusNodeTrue = { minusNode(node); true }
       def minusAllTrue  = { minusEdges(node); minusNodeTrue }
-      if (contains(node))
+      if (this contains node)
         if (node.edges.isEmpty) minusNodeTrue
         else if (rippleDelete) minusAllTrue
         else if (node.hasOnlyHooks) minusAllTrue

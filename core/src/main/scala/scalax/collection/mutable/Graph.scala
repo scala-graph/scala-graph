@@ -106,20 +106,20 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
     protected def minusEdges(node: NodeT): Unit
 
     override def clear(): Unit                          = this foreach -=
-    override def diff(that: AnySet[NodeT]): MSet[NodeT] = clone().filterInPlace(n => !that(n))
+    override def diff(that: AnySet[NodeT]): MSet[NodeT] = this.clone.filterInPlace(n => !that(n))
   }
 
   type EdgeSetT <: GraphLikeEdgeSet
   trait GraphLikeEdgeSet extends MSet[EdgeT] with GraphEdgeSet {
     @inline final def addOne(edge: EdgeT)      = { add(edge); this }
-    @inline final def subtractOne(edge: EdgeT) = { remove(edge); this }
+    @inline final def subtractOne(edge: EdgeT) = { this remove edge; this }
 
     /** Same as `upsert` at graph level. */
     def upsert(edge: EdgeT): Boolean
     def removeWithNodes(edge: EdgeT): Boolean
 
     override def clear(): Unit                          = this foreach -=
-    override def diff(that: AnySet[EdgeT]): MSet[EdgeT] = clone().filterInPlace(n => !that(n))
+    override def diff(that: AnySet[EdgeT]): MSet[EdgeT] = this.clone.filterInPlace(n => !that(n))
   }
   def edges: EdgeSetT
 
