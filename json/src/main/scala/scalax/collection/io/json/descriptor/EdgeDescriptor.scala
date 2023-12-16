@@ -83,7 +83,7 @@ class EdgeDescriptor[N, E <: AnyEdge[N]](
   def extract(jsonEdge: JValue): EdgeParameters = jsonEdge.extract[EdgeParameters]
 
   protected def toParameters(edge: E)(implicit descriptor: Descriptor[N]) = {
-    val (n1, n2) = (edge._1, edge._2)
+    val (n1, n2) = (edge.node1, edge.node2)
     EdgeParameters(descriptor.nodeDescriptor(n1) id n1, descriptor.nodeDescriptor(n2) id n2)
   }
 }
@@ -112,8 +112,8 @@ abstract class LEdgeDescriptor[N, E <: AnyEdge[N], L](
 
   protected def toParameters(edge: E)(implicit descriptor: Descriptor[N]) =
     LEdgeParameters(
-      descriptor.nodeDescriptor(edge._1) id edge._1,
-      descriptor.nodeDescriptor(edge._2) id edge._2,
+      descriptor.nodeDescriptor(edge.node1) id edge.node1,
+      descriptor.nodeDescriptor(edge.node2) id edge.node2,
       label(edge)
     )
 }

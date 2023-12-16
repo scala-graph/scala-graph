@@ -402,7 +402,7 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       g filter (_ < 2) should be(factory(1))
       g filter (_ < 2) should be(factory(1))
       g filter (_ >= 2) should be(factory(2 ~> 3, 5))
-      g filter (edgeP = _._1 == 2) should be(factory(1, 5, 2 ~> 3))
+      g filter (edgeP = _.node1 == 2) should be(factory(1, 5, 2 ~> 3))
       g filter (nodeP = _ <= 3, edgeP = _ contains 2) should be(factory(1, 2 ~> 3))
     }
 

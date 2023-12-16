@@ -24,10 +24,10 @@ sealed trait Edge[+N] extends Equals {
   def ends: Several[N]
 
   /** The first node of this edge. */
-  def _1: N
+  def node1: N
 
   /** The second node of this edge. */
-  def _2: N
+  def node2: N
 
   /** The n'th node of this edge.
     * @throws IllegalArgumentException if `n` does not meet `0 <= n < arity`.
@@ -143,8 +143,8 @@ trait EdgeCompanion[+E[N] <: Edge[N]] extends EdgeCompanionBase {
 
 trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
 
-  def _1: N           = ends.head
-  def _2: N           = ends(1)
+  def node1: N        = ends.head
+  def node2: N        = ends(1)
   def node(n: Int): N = ends(n)
   def arity: Int      = ends.size
 
@@ -230,7 +230,7 @@ trait HyperEdgeCompanion[+E[N] <: AbstractHyperEdge[N]] extends EdgeCompanionBas
 
 trait AnyDiHyperEdge[+N] extends AnyHyperEdge[N] with EqDiHyper {
 
-  override def _1: N            = sources.head
+  override def node1: N         = sources.head
   override def ends: Several[N] = Several.fromUnsafe(sources.iterator ++ targets.iterator)
 
   override def arity: Int = sources.size + targets.size
@@ -301,24 +301,24 @@ trait DiHyperEdgeCompanion[+E[N] <: AbstractDiHyperEdge[N]] extends EdgeCompanio
 trait AnyEdge[+N] extends Edge[N] {
 
   final override def node(n: Int): N = (n: @switch) match {
-    case 0 => _1
-    case 1 => _2
+    case 0 => node1
+    case 1 => node2
     case _ => throw new NoSuchElementException
   }
 
   @inline final override def arity: Int  = 2
   @inline final override def isHyperEdge = false
 
-  def isLooping: Boolean = _1 == _2
+  def isLooping: Boolean = node1 == node2
 
-  def ends: Several[N] = Several(_1, _2)
+  def ends: Several[N] = Several(node1, node2)
 
-  @inline final override def isAt[M >: N](node: M): Boolean    = this._1 == node || this._2 == node
-  @inline final override def isAt(pred: N => Boolean): Boolean = pred(this._1) || pred(this._2)
+  @inline final override def isAt[M >: N](node: M): Boolean    = this.node1 == node || this.node2 == node
+  @inline final override def isAt(pred: N => Boolean): Boolean = pred(this.node1) || pred(this.node2)
 }
 
 object AnyEdge {
-  def unapply[N](e: AnyEdge[N]): Some[(N, N)] = Some(e._1, e._2)
+  def unapply[N](e: AnyEdge[N]): Some[(N, N)] = Some(e.node1, e.node2)
 }
 
 trait AnyUnDiEdge[+N] extends AnyHyperEdge[N] with AnyEdge[N] with EqUnDi[N] {
@@ -329,8 +329,8 @@ trait AnyUnDiEdge[+N] extends AnyHyperEdge[N] with AnyEdge[N] with EqUnDi[N] {
   @inline final override def sources: OneOrMore[N] = OneOrMore(source, target)
   @inline final override def targets: OneOrMore[N] = sources
 
-  @inline final override def _1: N = source
-  @inline final override def _2: N = target
+  @inline final override def node1: N = source
+  @inline final override def node2: N = target
 
   final override def isLooping: Boolean = super[AnyEdge].isLooping
 
@@ -347,8 +347,8 @@ trait AnyUnDiEdge[+N] extends AnyHyperEdge[N] with AnyEdge[N] with EqUnDi[N] {
 
   override def matches[M >: N](n1: M, n2: M): Boolean = unDiBaseEquals(n1, n2)
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean =
-    p1(this._1) && p2(this._2) ||
-      p1(this._2) && p2(this._1)
+    p1(this.node1) && p2(this.node2) ||
+      p1(this.node2) && p2(this.node1)
 }
 
 object AnyUnDiEdge {
@@ -372,8 +372,8 @@ trait AnyDiEdge[+N] extends AnyDiHyperEdge[N] with AnyEdge[N] with EqDi[N] {
   def source: N
   def target: N
 
-  @inline final override def _1: N = source
-  @inline final override def _2: N = target
+  @inline final override def node1: N = source
+  @inline final override def node2: N = target
 
   final override def isLooping: Boolean = super[AnyEdge].isLooping
 

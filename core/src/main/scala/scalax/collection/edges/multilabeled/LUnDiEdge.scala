@@ -20,5 +20,5 @@ abstract class LUnDiEdgeInfixConstructor[N, L, CC[X] <: Edge[X] with MultiEdge](
     apply: (N, N, L) => CC[N]
 ) {
   def edge: UnDiEdge[N]
-  def :++(label: L): CC[N] = apply(edge._1, edge._2, label)
+  def :++(label: L): CC[N] = apply(edge.node1, edge.node2, label)
 }

@@ -15,5 +15,5 @@ final case class WUnDiEdge[+N](source: N, target: N, override val weight: Double
 /** Infix extractor for weighted undirected edges to be combined with `%` like `case a :~ b % w`.
   */
 object :~ {
-  def unapply[N](e: WUnDiEdge[N]): Some[(N, (N, Double))] = Some(e._1, (e._2, e.weight))
+  def unapply[N](e: WUnDiEdge[N]): Some[(N, (N, Double))] = Some(e.node1, (e.node2, e.weight))
 }

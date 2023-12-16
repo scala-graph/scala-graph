@@ -113,17 +113,17 @@ protected[collection] trait EqUnDi[+N] extends Eq {
   this: AnyUnDiEdge[N] =>
 
   @inline final protected def unDiBaseEquals(n1: Any, n2: Any): Boolean =
-    this._1 == n1 && this._2 == n2 ||
-      this._1 == n2 && this._2 == n1
+    this.node1 == n1 && this.node2 == n2 ||
+      this.node1 == n2 && this.node2 == n1
 
   override protected def baseEquals(other: Edge[_]): Boolean = other match {
-    case edge: AnyEdge[_] => unDiBaseEquals(edge._1, edge._2)
+    case edge: AnyEdge[_] => unDiBaseEquals(edge.node1, edge.node2)
     case hyper: AnyHyperEdge[_] if hyper.isUndirected && hyper.arity == 2 =>
       unDiBaseEquals(hyper.node(0), hyper.node(1))
     case _ => false
   }
 
-  override protected def baseHashCode: Int = _1.## ^ _2.##
+  override protected def baseHashCode: Int = node1.## ^ node2.##
 }
 
 protected[collection] trait EqDi[+N] extends Eq {
@@ -139,7 +139,7 @@ protected[collection] trait EqDi[+N] extends Eq {
     case _                                            => false
   }
 
-  override protected def baseHashCode: Int = 23 * _1.## ^ _2.##
+  override protected def baseHashCode: Int = 23 * node1.## ^ node2.##
 }
 
 /** Defines how to handle the ends of hyperedges, or the source/target ends of directed hyperedges,

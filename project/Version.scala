@@ -8,8 +8,8 @@ object Version {
   private val minor               = 0
   private def version(patch: Int) = s"$major.$minor.$patch$snapshot"
 
-  val highest     = version(0)
-  val core        = version(0)
+  val highest     = version(1)
+  val core        = version(1)
   val constrained = version(0)
   val dot         = version(0)
   val json        = version(0)
