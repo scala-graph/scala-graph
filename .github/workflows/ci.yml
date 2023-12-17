@@ -9,15 +9,15 @@ jobs:
         scala: [ "2.13.12" ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v4
       - name: Cache SBT
-        uses: actions/cache@v2.1.6
+        uses: actions/cache@v3
         with:
           path: |
             ~/.ivy2/cache
             ~/.sbt
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
-      - uses: olafurpg/setup-scala@v13
+      - uses: olafurpg/setup-scala@v14
         with:
           java-version: adopt@1.11
       - name: Test
