@@ -10,7 +10,7 @@ lazy val all = project
       publishTo := None
     )
   )
-  .aggregate(core /*, constrained, dot, json*/ )
+  .aggregate(core, coreTestScala3, dot, json)
 
 lazy val core = project
   .in(file("core"))
@@ -20,6 +20,19 @@ lazy val core = project
       version := Version.core,
       libraryDependencies ++= Seq(
         "org.scalacheck" %% "scalacheck" % "1.17.0"
+      )
+    )
+  )
+
+lazy val coreTestScala3 = project
+  .in(file("coreTestScala3"))
+  .dependsOn(core)
+  .settings(
+    Defaults.coreDefaultSettings ++ Seq(
+      scalaVersion       := Version.compiler_3,
+      Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
+      libraryDependencies ++= Seq(
+        "org.scalatest" %% "scalatest" % "3.2.17" % "test"
       )
     )
   )
@@ -46,16 +59,6 @@ lazy val json = project
   )
 
 /*
-lazy val constrained = project
-  .in(file("constrained"))
-  .dependsOn(core % "compile->compile;test->test")
-  .settings(
-    defaultSettings ++ Seq(
-      name := "Graph Constrained",
-      version := Version.constrained
-    )
-  )
-
 lazy val misc = project
   .in(file("misc"))
   .dependsOn(core)
