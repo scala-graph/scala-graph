@@ -21,4 +21,5 @@ jobs:
         with:
           java-version: adopt@1.11
       - name: Test
-        run: sbt ++${{ matrix.scala }} test scalafmtCheckAll
+        run: sbt ++${{ matrix.scala }}    test scalafmtCheckAll
+        run: sbt "project coreTestScala3" test scalafmtCheckAll

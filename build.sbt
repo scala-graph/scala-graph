@@ -10,7 +10,7 @@ lazy val all = project
       publishTo := None
     )
   )
-  .aggregate(core, coreTestScala3, dot, json)
+  .aggregate(core, dot, json)
 
 lazy val core = project
   .in(file("core"))
