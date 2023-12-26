@@ -7,7 +7,7 @@ import scalax.collection.immutable.Graph
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
-/** Directed hyperedge to represents nodes of the network https://adventofcode.com/2023/day/8.
+/** Directed hyperedge to represent nodes of the network https://adventofcode.com/2023/day/8.
   * Each line of the input file like `AAA = (BBB, CCC)` corresponds to one instance.
   */
 case class Fork(source: String, leftTarget: String, rightTarget: String)
