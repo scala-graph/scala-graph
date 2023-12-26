@@ -33,7 +33,8 @@ lazy val coreTestScala3 = project
       Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
       libraryDependencies ++= Seq(
         "org.scalatest" %% "scalatest" % "3.2.17" % "test"
-      )
+      ),
+      scalafmtConfig := baseDirectory.value / ".scalafmt.conf"
     )
   )
 
