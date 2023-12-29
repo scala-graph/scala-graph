@@ -24,33 +24,34 @@ type Wasteland = Graph[String, Fork]
 enum Direction:
   case Left, Right
 
-/** Uses inner node `fork` to navigate to the next node.
+/** The claim is not to be complete but to demonstrate the use-case specific graph walk.
   */
-def target(wasteland: Wasteland, fork: wasteland.NodeT, direction: Direction): Option[wasteland.NodeT] =
-  fork.outgoing.headOption.map { e =>
-    import Direction._
-    direction match
-      case Left  => e.targets(0)
-      case Right => e.targets(1)
-  }
-
-@tailrec def traverse(
-    wasteland: Wasteland,
-    current: wasteland.NodeT,
-    instructions: Iterator[Direction],
-    count: Int
-): Option[Int] =
-  instructions.nextOption match
-    case Some(instruction) =>
-      target(wasteland, current, instruction) match
-        case Some(fork) => traverse(wasteland, fork, instructions, count + 1)
-        case None       => None
-    case None => Some(count)
-
 def solve(wasteland: Wasteland, startingFork: String, instructions: Iterable[Direction]): Either[String, Int] =
+  @tailrec def traverse(
+      current: wasteland.NodeT,
+      instructions: Iterator[Direction],
+      count: Int
+  ): Option[Int] =
+    /** Uses inner node `fork` to navigate to the next node. Thus we can avoid repeated node lookup.
+      */
+    def target(fork: wasteland.NodeT, direction: Direction): Option[wasteland.NodeT] =
+      fork.outgoing.headOption.map { e =>
+        import Direction._
+        direction match
+          case Left  => e.targets(0)
+          case Right => e.targets(1)
+      }
+
+    instructions.nextOption match
+      case Some(instruction) =>
+        target(current, instruction) match
+          case Some(fork) => traverse(fork, instructions, count + 1)
+          case None       => None
+      case None => Some(count)
+
   wasteland.find(startingFork) match
     case Some(root) =>
-      traverse(wasteland, root, instructions.iterator, 0) match
+      traverse(root, instructions.iterator, 0) match
         case Some(count) => Right(count)
         case None        => Left("Node without successors.")
     case None =>
@@ -76,9 +77,9 @@ final class WastelandSpec extends RefSpec with Matchers:
   def instructions(chars: String): Iterable[Direction] =
     import Direction._
     chars.flatMap {
-      case 'L' => Left :: Nil
-      case 'R' => Right :: Nil
-      case _   => Nil
+      case 'L' | 'l' => Left :: Nil
+      case 'R' | 'r' => Right :: Nil
+      case _         => Nil
     }
 
   def `start at A`: Unit =
