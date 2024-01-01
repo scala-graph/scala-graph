@@ -10,9 +10,12 @@ lazy val all = project
       publishTo := None
     )
   )
-  .aggregate(core, dot, json)
+  .aggregate(core.jvm, dot.jvm, json)
 
-lazy val core = project
+// to publish as JS do "project coreJS", "fastOptJS", "package", "publishSigned"
+
+lazy val core =  crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
   .in(file("core"))
   .settings(
     defaultSettings ++ Seq(
@@ -26,7 +29,7 @@ lazy val core = project
 
 lazy val coreTestScala3 = project
   .in(file("coreTestScala3"))
-  .dependsOn(core)
+  .dependsOn(core.jvm)
   .settings(
     Defaults.coreDefaultSettings ++ Seq(
       scalaVersion       := Version.compiler_3,
@@ -38,7 +41,8 @@ lazy val coreTestScala3 = project
     )
   )
 
-lazy val dot = project
+lazy val dot = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
   .in(file("dot"))
   .dependsOn(core)
   .settings(
@@ -50,7 +54,7 @@ lazy val dot = project
 
 lazy val json = project
   .in(file("json"))
-  .dependsOn(core)
+  .dependsOn(core.jvm)
   .settings(
     defaultSettings ++ Seq(
       name                                 := "Graph JSON",
