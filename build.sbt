@@ -14,7 +14,7 @@ lazy val all = project
 
 // to publish as JS do "project coreJS", "fastOptJS", "package", "publishSigned"
 
-lazy val core =  crossProject(JSPlatform, JVMPlatform)
+lazy val core = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("core"))
