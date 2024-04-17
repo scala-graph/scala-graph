@@ -14,7 +14,7 @@ lazy val all = project
 
 // to publish as JS do "project coreJS", "fastOptJS", "package", "publishSigned"
 
-lazy val core =  crossProject(JSPlatform, JVMPlatform)
+lazy val core = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("core"))
@@ -23,7 +23,7 @@ lazy val core =  crossProject(JSPlatform, JVMPlatform)
       name    := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck" % "1.17.0"
+        "org.scalacheck" %% "scalacheck" % "1.17.1"
       )
     )
   )
