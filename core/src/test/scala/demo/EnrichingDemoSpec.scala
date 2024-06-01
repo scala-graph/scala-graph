@@ -16,8 +16,15 @@ class EnrichingDemoSpec extends RefSpec with Matchers {
       implicit class ExtGraph[N, E <: Edge[N]](protected val g: Graph[N, E]) {
         def foo: String = "bar"
       }
-      val g = Graph(1 ~ 2)
-      g.foo shouldBe "bar"
+      Graph(1 ~ 2).foo shouldBe "bar"
+    }
+
+    def `enrich directed graphs`: Unit = {
+      implicit class ExtGraph[N, E <: AnyDiEdge[N]](protected val g: Graph[N, E]) {
+        def foo: String = "bar"
+      }
+      Graph(1 ~> 2).foo shouldBe "bar"
+      "Graph(1 ~ 2).foo" shouldNot typeCheck
     }
 
     def `enrich inner nodes`: Unit = {
