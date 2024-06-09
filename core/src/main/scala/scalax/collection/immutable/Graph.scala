@@ -4,8 +4,7 @@ package immutable
 import java.io.{ObjectInputStream, ObjectOutputStream}
 import scala.collection.Set
 import scalax.collection.AnyGraph
-import scalax.collection.generic.Edge
-import scalax.collection.generic.ImmutableFactory
+import scalax.collection.generic.{Edge, Factory, ImmutableFactory}
 import scalax.collection.config.{AdjacencyListArrayConfig, GraphConfig}
 import scalax.collection.mutable.{ArraySet, Builder}
 
@@ -33,7 +32,7 @@ class DefaultGraphImpl[N, E <: Edge[N]](iniNodes: Iterable[N] = Set[N](), iniEdg
 ) extends Graph[N, E]
     with AdjacencyListGraph[N, E, DefaultGraphImpl]
     with GraphTraversalImpl[N, E] {
-  final override val companion = DefaultGraphImpl
+  final override val companion: Factory[DefaultGraphImpl] = DefaultGraphImpl
 
   @inline final protected def newNodeSet: NodeSetT       = new AdjacencyListNodeSet
   @transient private[this] var _nodes: NodeSetT          = newNodeSet

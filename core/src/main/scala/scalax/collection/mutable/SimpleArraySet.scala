@@ -22,7 +22,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     with IterableFactoryDefaults[A, SimpleArraySet]
     with Serializable {
 
-  override def iterableFactory = SimpleArraySet
+  override def iterableFactory: IterableFactory[SimpleArraySet] = SimpleArraySet
 
   protected[collection] def newNonCheckingBuilder[B] = new SimpleArraySet.NonCheckingBuilder[A, B](this)
   override def clone: ArraySet[A]                    = (newNonCheckingBuilder ++= this).result()
