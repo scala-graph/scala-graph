@@ -25,7 +25,7 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   override def iterableFactory = SimpleArraySet
 
   protected[collection] def newNonCheckingBuilder[B] = new SimpleArraySet.NonCheckingBuilder[A, B](this)
-  override def clone                                 = (newNonCheckingBuilder ++= this).result()
+  override def clone: ArraySet[A]                    = (newNonCheckingBuilder ++= this).result()
   private var nextFree: Int                          = 0
   private var arr: Array[A]                          = _
   private var hashSet: ExtHashSet[A]                 = _
@@ -37,11 +37,11 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   }
   initialize()
 
-  def capacity: Int                   = if (isHash) 0 else arr.length
-  @inline private def isHash: Boolean = arr eq null
-  @inline def isArray: Boolean        = !isHash
-  protected[collection] def array     = arr
-  protected[collection] def set       = hashSet
+  def capacity: Int                      = if (isHash) 0 else arr.length
+  @inline private def isHash: Boolean    = arr eq null
+  @inline def isArray: Boolean           = !isHash
+  protected[collection] def array        = arr
+  protected[collection] def set: MSet[A] = hashSet
 
   def addOne(elem: A) = { add(elem); this }
 

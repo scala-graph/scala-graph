@@ -1,9 +1,8 @@
 package scalax.collection
 
 import scala.annotation.{switch, tailrec}
-import scala.collection.{AbstractIterable, EqSetFacade, IndexedSeq, Seq}
-import scala.collection.mutable.{ArrayBuffer, Buffer, Map => MMap, Stack}
-
+import scala.collection.{AbstractIterable, EqSetFacade, IndexedSeq, Seq, mutable}
+import scala.collection.mutable.{ArrayBuffer, Buffer, Stack, Map => MMap}
 import scalax.collection.generic.Edge
 import scalax.collection.mutable.{EqHashMap, EqHashSet}
 
@@ -122,10 +121,10 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
     )(_ => edges.slice(0, edges.size - 1))
 
     def result(): Walk = new Walk {
-      val nodes     = self.nodes
-      def edges     = resultEdges
-      val startNode = start
-      val endNode   = nodes(nodes.size - 1)
+      val nodes: mutable.Seq[NodeT] = self.nodes
+      def edges: Iterable[EdgeT]    = resultEdges
+      val startNode: NodeT          = start
+      val endNode                   = nodes(nodes.size - 1)
     }
   }
 
@@ -165,10 +164,10 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
     }
 
     override def result(): Path = new Path {
-      val nodes     = self.nodes
-      val edges     = resultEdges
-      val startNode = start
-      val endNode   = nodes(nodes.size - 1)
+      val nodes: mutable.Seq[NodeT] = self.nodes
+      val edges: Iterable[EdgeT]    = resultEdges
+      val startNode: NodeT          = start
+      val endNode                   = nodes(nodes.size - 1)
     }
   }
 
@@ -285,7 +284,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       }
     }
 
-    override def iterator = components.iterator
+    override def iterator: Iterator[Component] = components.iterator
 
     def findCycle[U](implicit visitor: InnerElem => U = Visitor.empty): Option[Cycle] =
       if (order == 0) None
@@ -338,7 +337,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       subgraphEdges: EdgePredicate = anyEdge,
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
-  ) =
+  ): ComponentTraverser =
     ComponentTraverserImpl(null.asInstanceOf[NodeT], parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
   protected case class StrongComponentTraverserImpl(
@@ -375,7 +374,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       subgraphEdges: EdgePredicate = anyEdge,
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
-  ) =
+  ): StrongComponentTraverser =
     StrongComponentTraverserImpl(
       null.asInstanceOf[NodeT],
       parameters,
@@ -410,7 +409,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       subgraphEdges: EdgePredicate = anyEdge,
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
-  ) =
+  ): InnerNodeTraverser =
     InnerNodeTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
   protected case class OuterNodeTraverserImpl(
@@ -440,7 +439,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       subgraphEdges: EdgePredicate = anyEdge,
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
-  ) =
+  ): OuterNodeTraverser =
     OuterNodeTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
   protected case class InnerEdgeTraverserImpl(
@@ -469,7 +468,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       subgraphEdges: EdgePredicate = anyEdge,
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
-  ) =
+  ): InnerEdgeTraverser =
     InnerEdgeTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
   protected case class OuterEdgeTraverserImpl(
@@ -498,7 +497,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       subgraphEdges: EdgePredicate = anyEdge,
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
-  ) =
+  ): OuterEdgeTraverser =
     OuterEdgeTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
   protected case class InnerElemTraverserImpl(
@@ -526,7 +525,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       subgraphEdges: EdgePredicate = anyEdge,
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
-  ) =
+  ): InnerElemTraverser =
     InnerElemTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
   protected case class OuterElemTraverserImpl(
@@ -559,7 +558,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       subgraphEdges: EdgePredicate = anyEdge,
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
-  ) =
+  ): OuterElemTraverser =
     OuterElemTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
   protected trait DownUpTraverser[A, +CC <: DownUpTraverser[A, CC]] extends Impl[A, CC] {
@@ -603,7 +602,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       subgraphEdges: EdgePredicate = anyEdge,
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
-  ) =
+  ): InnerNodeDownUpTraverser =
     InnerNodeDownUpTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
   protected case class OuterNodeDownUpTraverserImpl(
@@ -636,7 +635,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       subgraphEdges: EdgePredicate = anyEdge,
       ordering: ElemOrdering = NoOrdering,
       maxWeight: Option[Weight] = None
-  ) =
+  ): OuterNodeDownUpTraverser =
     OuterNodeDownUpTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
   /** Efficient reverse `foreach` overcoming `Stack`'s deficiency not to overwrite `reverseIterator`.
@@ -659,7 +658,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
 
     // TODO unreachable?
     def reverse: Iterable[NodeT] = new AbstractIterable[NodeT] {
-      override def iterator = ???
+      override def iterator: Iterator[NodeT] = ???
       /* TODO replace foreach with iterator
       def foreach[U](f: NodeT => U): Unit = {
         def fT(elem: S): Unit = f(elem.node)
@@ -742,7 +741,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
     */
   abstract protected class SimpleLazyPath(override val nodes: Iterable[NodeT]) extends LazyPath(nodes) {
 
-    final lazy val edges = {
+    final lazy val edges: Iterable[EdgeT] = {
       val buf = new ArrayBuffer[EdgeT](nodes.size) {
         final override protected def className = "Edges"
       }
@@ -792,7 +791,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
 
     final protected val multi = new EqHashSet[EdgeT](thisGraph.size / 2)
 
-    final lazy val edges = {
+    final lazy val edges: Iterable[EdgeT] = {
       val buf = new ArrayBuffer[EdgeT](nodes.size) {
         final override protected def className = "Edges"
       }

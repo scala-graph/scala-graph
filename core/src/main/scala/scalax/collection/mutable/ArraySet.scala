@@ -2,7 +2,7 @@ package scalax.collection
 package mutable
 
 import scala.collection.mutable.{AbstractSet, GrowableBuilder, SetOps}
-import scala.collection.{ExtSetMethods, IterableFactory, IterableFactoryDefaults, SortedSet}
+import scala.collection.{ExtSetMethods, IterableFactory, IterableFactoryDefaults, SortedSet, mutable}
 
 /** A growable and compactable `mutable.Set` implementation based on `Array` and `mutable.Set`.
   *  It switches to the latter representation as soon as a given threshold for the number of
@@ -82,7 +82,7 @@ object ArraySet extends IterableFactory[ArraySet] {
   def apply[A](elem1: A, elem2: A, elems: A*)(implicit hints: Hints): ArraySet[A] =
     emptyWithHints[A](hints) += elem1 += elem2 ++= elems
 
-  override def newBuilder[A] =
+  override def newBuilder[A]: mutable.Builder[A, ArraySet[A]] =
     new GrowableBuilder[A, ArraySet[A]](SimpleArraySet.empty[A]) {
       override def sizeHint(size: Int) = elems.sizeHint(size)
     }

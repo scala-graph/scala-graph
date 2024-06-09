@@ -1,11 +1,10 @@
 package scalax.collection.immutable
 
 import java.lang.System.arraycopy
-
 import scala.collection.generic.DefaultSerializable
 import scala.collection.immutable.{AbstractSet, Set, SortedSet, SortedSetOps, StrictOptimizedSortedSetOps}
 import scala.collection.mutable.{ArrayBuffer, ReusableBuilder}
-import scala.collection.{SortedIterableFactory, SortedSetFactoryDefaults}
+import scala.collection.{SortedIterableFactory, SortedSetFactoryDefaults, mutable}
 
 @SerialVersionUID(1L)
 class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Array[A]])(implicit
@@ -18,7 +17,7 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
     with DefaultSerializable { self =>
   java.util.Arrays.sort(array.asInstanceOf[Array[AnyRef]], ordering.asInstanceOf[Ordering[Object]])
 
-  override def sortedIterableFactory = SortedArraySet
+  override def sortedIterableFactory: SortedArraySet.type = SortedArraySet
 
   override def incl(elem: A): SortedArraySet[A] =
     if (contains(elem)) this
@@ -98,7 +97,7 @@ object SortedArraySet extends SortedIterableFactory[SortedArraySet] {
   override def from[E](it: IterableOnce[E])(implicit ordering: Ordering[E]): SortedArraySet[E] =
     newBuilder.addAll(it).result()
 
-  override def newBuilder[A](implicit ordering: Ordering[A]) = new ReusableBuilder[A, SortedArraySet[A]] {
+  override def newBuilder[A](implicit ordering: Ordering[A]): mutable.Builder[A, SortedArraySet[A]] = new ReusableBuilder[A, SortedArraySet[A]] {
     val buffer = new ArrayBuffer[AnyRef]
 
     override def clear(): Unit   = buffer.clear()
