@@ -320,7 +320,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       else {
         val topoRunner    = innerElemTraverser.Runner(noNode, visitor)
         val forStartNodes = innerNodeTraverser(root, Parameters.Dfs(AnyConnected))
-        withHandles(2) { handles: Array[Handle] =>
+        withHandles(2) { (handles: Array[Handle]) =>
           val (startNodesHandle, topoHandle) = (Some(handles(0)), Some(handles(1)))
           implicit val handle: State.Handle  = startNodesHandle.get
           for (node <- nodes if !node.visited && subgraphNodes(node))
