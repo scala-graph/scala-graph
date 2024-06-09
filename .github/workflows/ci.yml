@@ -10,16 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Cache SBT
-        uses: actions/cache@v3
+      - name: Set up JDK 17 with SBT caching
+        uses: actions/setup-java@v4
         with:
-          path: |
-            ~/.ivy2/cache
-            ~/.sbt
-          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
-      - uses: olafurpg/setup-scala@v14
-        with:
-          java-version: adopt@1.11
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'sbt'
       - name: Test
         run: |
           sbt ++${{ matrix.scala }} test scalafmtCheckAll
