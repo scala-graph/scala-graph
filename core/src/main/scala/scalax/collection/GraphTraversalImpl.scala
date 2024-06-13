@@ -1,7 +1,7 @@
 package scalax.collection
 
 import scala.annotation.{switch, tailrec}
-import scala.collection.{AbstractIterable, EqSetFacade, IndexedSeq, Seq, mutable}
+import scala.collection.{AbstractIterable, EqSetFacade, IndexedSeq, Seq}
 import scala.collection.mutable.{ArrayBuffer, Buffer, Stack, Map => MMap}
 import scalax.collection.generic.Edge
 import scalax.collection.mutable.{EqHashMap, EqHashSet}
@@ -121,10 +121,10 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
     )(_ => edges.slice(0, edges.size - 1))
 
     def result(): Walk = new Walk {
-      val nodes: mutable.Seq[NodeT] = self.nodes
-      def edges: Iterable[EdgeT]    = resultEdges
-      val startNode: NodeT          = start
-      val endNode                   = nodes(nodes.size - 1)
+      val nodes                  = self.nodes
+      def edges: Iterable[EdgeT] = resultEdges
+      val startNode: NodeT       = start
+      val endNode                = nodes(nodes.size - 1)
     }
   }
 
