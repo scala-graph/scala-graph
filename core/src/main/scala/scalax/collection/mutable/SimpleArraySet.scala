@@ -37,11 +37,11 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   }
   initialize()
 
-  def capacity: Int                      = if (isHash) 0 else arr.length
-  @inline private def isHash: Boolean    = arr eq null
-  @inline def isArray: Boolean           = !isHash
-  protected[collection] def array        = arr
-  protected[collection] def set: MSet[A] = hashSet
+  def capacity: Int                         = if (isHash) 0 else arr.length
+  @inline private def isHash: Boolean       = arr eq null
+  @inline def isArray: Boolean              = !isHash
+  protected[collection] def array: Array[A] = arr
+  protected[collection] def set: MSet[A]    = hashSet
 
   def addOne(elem: A) = { add(elem); this }
 
