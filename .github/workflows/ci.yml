@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 17 with SBT caching
+      - name: JDK with SBT caching
         uses: actions/setup-java@v4
         with:
           java-version: '17'
