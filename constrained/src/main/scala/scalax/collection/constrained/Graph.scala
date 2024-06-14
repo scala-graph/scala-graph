@@ -59,9 +59,7 @@ trait UserConstrainedGraph[N, E <: Edge[N], +G <: Graph[N, E]] { _: Graph[N, E] 
     constraint preSubtract (edge.asInstanceOf[C_EdgeT], simple)
 
   override def preSubtract(nodes: => Set[self.NodeT], edges: => Set[self.EdgeT], simple: Boolean) =
-    constraint preSubtract (nodes.asInstanceOf[Set[C_NodeT]],
-    edges.asInstanceOf[Set[C_EdgeT]],
-    simple)
+    constraint preSubtract (nodes.asInstanceOf[Set[C_NodeT]], edges.asInstanceOf[Set[C_EdgeT]], simple)
 
   override def postSubtract(
       newGraph: G @uV,

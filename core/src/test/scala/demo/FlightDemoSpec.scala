@@ -61,20 +61,36 @@ object FlightDemoSpec {
   /* construct the Graph by supplying edges
    */
   val g = FlightGraph(
-    hamburg ~> amsterdam :++ ("KL 1776", List(
-      MONDAY   -> LocalTime.of(17, 50),
-      SATURDAY -> LocalTime.of(17, 40)
-    ), 50.minutes),
-    hamburg ~> london :++ ("BA 967", List(
-      TUESDAY  -> LocalTime.of(8, 20),
-      SATURDAY -> LocalTime.of(8, 20)
-    ), 1.hour + 10.minutes),
-    london ~> newYork :++ ("UA 921", List(
-      THURSDAY -> LocalTime.of(18, 0)
-    ), 5.hours + 40.minutes),
-    newYork ~> mexico :++ ("VB 101", List(
-      TUESDAY -> LocalTime.of(14, 10),
-      SUNDAY  -> LocalTime.of(14, 20)
-    ), 4.hours + 25.minutes)
+    hamburg ~> amsterdam :++ (
+      "KL 1776",
+      List(
+        MONDAY   -> LocalTime.of(17, 50),
+        SATURDAY -> LocalTime.of(17, 40)
+      ),
+      50.minutes
+    ),
+    hamburg ~> london :++ (
+      "BA 967",
+      List(
+        TUESDAY  -> LocalTime.of(8, 20),
+        SATURDAY -> LocalTime.of(8, 20)
+      ),
+      1.hour + 10.minutes
+    ),
+    london ~> newYork :++ (
+      "UA 921",
+      List(
+        THURSDAY -> LocalTime.of(18, 0)
+      ),
+      5.hours + 40.minutes
+    ),
+    newYork ~> mexico :++ (
+      "VB 101",
+      List(
+        TUESDAY -> LocalTime.of(14, 10),
+        SUNDAY  -> LocalTime.of(14, 20)
+      ),
+      4.hours + 25.minutes
+    )
   )
 }

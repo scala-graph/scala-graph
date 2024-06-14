@@ -43,21 +43,21 @@ class InspectingDemoSpec extends RefSpec with Matchers {
     def `Inspect Edge Ends`(): Unit = {
       val unDiEdge = 3 ~ 4 // UnDiEdge[Int]
       unDiEdge.node1 * unDiEdge.node2 // Int = 12
-      unDiEdge.ends.iterator.product  // Int = 12
+      unDiEdge.ends.iterator.product // Int = 12
       unDiEdge match {
         case n ~ m => n * m // Int = 12
       }
 
       val diEdge = 1 ~> 2 // DiEdge[Int]
       unDiEdge.arity == diEdge.arity // true
-      diEdge.source - diEdge.target  // Int = -1
+      diEdge.source - diEdge.target // Int = -1
       diEdge match {
         case s ~> t => s - t // Int = -1
       }
 
       val hyperEdge = 1 ~~ 2 ~~ 11 ~~ 12 // HyperEdge[Int]
       hyperEdge.ends.get(hyperEdge.arity - 1) // Int = 12
-      hyperEdge.ends.iterator.sum             // Int = 26
+      hyperEdge.ends.iterator.sum // Int = 26
       hyperEdge match {
         case ~~(Several.Seq(n1, n2, _*)) => n1 - n2 // Int = -1
       }
