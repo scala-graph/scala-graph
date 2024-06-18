@@ -164,10 +164,10 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
     }
 
     override def result(): Path = new Path {
-      val nodes: mutable.Seq[NodeT] = self.nodes
-      val edges: Iterable[EdgeT]    = resultEdges
-      val startNode: NodeT          = start
-      val endNode                   = nodes(nodes.size - 1)
+      val nodes: IndexedSeq[NodeT] = self.nodes
+      val edges: IndexedSeq[EdgeT] = resultEdges
+      val startNode: NodeT         = start
+      val endNode                  = nodes(nodes.size - 1)
     }
   }
 
