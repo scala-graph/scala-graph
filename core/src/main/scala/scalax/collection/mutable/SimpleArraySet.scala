@@ -282,5 +282,6 @@ object SimpleArraySet extends IterableFactory[SimpleArraySet] {
   }
 
   override def from[A](source: IterableOnce[A]) = empty ++= source
-  override def newBuilder[A]                    = new GrowableBuilder[A, SimpleArraySet[A]](empty)
+
+  override def newBuilder[A]: GrowableBuilder[A, SimpleArraySet[A]] = new GrowableBuilder[A, SimpleArraySet[A]](empty)
 }
