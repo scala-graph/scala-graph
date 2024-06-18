@@ -121,10 +121,10 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
     )(_ => edges.slice(0, edges.size - 1))
 
     def result(): Walk = new Walk {
-      val nodes                  = self.nodes
-      def edges: Iterable[EdgeT] = resultEdges
-      val startNode: NodeT       = start
-      val endNode                = nodes(nodes.size - 1)
+      val nodes: IndexedSeq[NodeT] = self.nodes
+      def edges: IndexedSeq[EdgeT] = resultEdges
+      val startNode: NodeT         = start
+      val endNode                  = nodes(nodes.size - 1)
     }
   }
 
