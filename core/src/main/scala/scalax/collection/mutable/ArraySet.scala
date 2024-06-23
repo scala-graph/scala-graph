@@ -82,7 +82,7 @@ object ArraySet extends IterableFactory[ArraySet] {
   def apply[A](elem1: A, elem2: A, elems: A*)(implicit hints: Hints): ArraySet[A] =
     emptyWithHints[A](hints) += elem1 += elem2 ++= elems
 
-  override def newBuilder[A] =
+  override def newBuilder[A]: GrowableBuilder[A, ArraySet[A]] =
     new GrowableBuilder[A, ArraySet[A]](SimpleArraySet.empty[A]) {
       override def sizeHint(size: Int) = elems.sizeHint(size)
     }

@@ -8,7 +8,7 @@ import scalax.collection.generic.Edge
 object OuterImplicits {
   implicit def nodeSetToOuter[N, E <: Edge[N]](nodes: AnyGraph[N, E]#NodeSetT): Iterable[OuterNode[N]] =
     new AbstractIterable[OuterNode[N]] {
-      def iterator = new AbstractIterator[OuterNode[N]] {
+      def iterator: Iterator[OuterNode[N]] = new AbstractIterator[OuterNode[N]] {
         private[this] val it = nodes.iterator
 
         def hasNext = it.hasNext
@@ -22,7 +22,7 @@ object OuterImplicits {
 
   implicit def edgeSetToOuter[N, E <: Edge[N]](edges: AnyGraph[N, E]#EdgeSetT): Iterable[OuterEdge[N, E]] =
     new AbstractIterable[OuterEdge[N, E]] {
-      def iterator = new AbstractIterator[OuterEdge[N, E]] {
+      def iterator: Iterator[OuterEdge[N, E]] = new AbstractIterator[OuterEdge[N, E]] {
         private[this] val it = edges.iterator
 
         def hasNext = it.hasNext

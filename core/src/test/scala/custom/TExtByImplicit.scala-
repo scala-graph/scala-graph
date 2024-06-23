@@ -2,9 +2,8 @@ package custom
 
 import language.{implicitConversions, reflectiveCalls}
 
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._
-import scalax.collection.generic._._
+import scalax.collection.immutable.Graph
+import scalax.collection.generic._
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
@@ -34,11 +33,12 @@ class TExtByImplicitTest extends RefSpec with Matchers {
 
       /* Consume enrichment.
        */
-      Graph(1 ~> 2).alwaysTrue should be(true)
+      Graph(1 ~> 2).alwaysTrue shouldBe true
 
       "Graph(1~2~3).alwaysTrue" shouldNot typeCheck
       "Graph(1~2).alwaysTrue" shouldNot typeCheck
     }
+
     /* TODO covariant type X occurs in contravariant position in type [+X] >: scalax.collection.edges.UnDiEdge[X] <: scalax.collection.edges.UnDiEdge[X] of type E
      */
     def `at graph level for a specific edge type` {
@@ -58,6 +58,7 @@ class TExtByImplicitTest extends RefSpec with Matchers {
       "Graph(1~2~3).alwaysTrue" shouldNot typeCheck
       "Graph(1~>2).alwaysTrue" shouldNot typeCheck
     }
+
     def `at node level` {
       /* Provide node enrichment.
        * Note that this way of enrichment is not suitable for methods returning

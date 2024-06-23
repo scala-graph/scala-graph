@@ -22,10 +22,10 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     with IterableFactoryDefaults[A, SimpleArraySet]
     with Serializable {
 
-  override def iterableFactory = SimpleArraySet
+  override def iterableFactory: IterableFactory[SimpleArraySet] = SimpleArraySet
 
   protected[collection] def newNonCheckingBuilder[B] = new SimpleArraySet.NonCheckingBuilder[A, B](this)
-  override def clone                                 = (newNonCheckingBuilder ++= this).result()
+  override def clone: ArraySet[A]                    = (newNonCheckingBuilder ++= this).result()
   private var nextFree: Int                          = 0
   private var arr: Array[A]                          = _
   private var hashSet: ExtHashSet[A]                 = _
@@ -37,11 +37,11 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
   }
   initialize()
 
-  def capacity: Int                   = if (isHash) 0 else arr.length
-  @inline private def isHash: Boolean = arr eq null
-  @inline def isArray: Boolean        = !isHash
-  protected[collection] def array     = arr
-  protected[collection] def set       = hashSet
+  def capacity: Int                         = if (isHash) 0 else arr.length
+  @inline private def isHash: Boolean       = arr eq null
+  @inline def isArray: Boolean              = !isHash
+  protected[collection] def array: Array[A] = arr
+  protected[collection] def set: MSet[A]    = hashSet
 
   def addOne(elem: A) = { add(elem); this }
 
@@ -282,5 +282,6 @@ object SimpleArraySet extends IterableFactory[SimpleArraySet] {
   }
 
   override def from[A](source: IterableOnce[A]) = empty ++= source
-  override def newBuilder[A]                    = new GrowableBuilder[A, SimpleArraySet[A]](empty)
+
+  override def newBuilder[A]: GrowableBuilder[A, SimpleArraySet[A]] = new GrowableBuilder[A, SimpleArraySet[A]](empty)
 }

@@ -185,7 +185,7 @@ class DefaultGraphImpl[N, E <: Edge[N]](iniNodes: Iterable[N] = Set[N](), iniEdg
 ) extends Graph[N, E]
     with AdjacencyListGraph[N, E, DefaultGraphImpl]
     with GraphTraversalImpl[N, E] {
-  final override val companion = DefaultGraphImpl
+  final override val companion: Factory[DefaultGraphImpl] = DefaultGraphImpl
 
   @inline final protected def newNodeSet: NodeSetT = new AdjacencyListNodeSet
 
