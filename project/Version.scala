@@ -1,6 +1,6 @@
 object Version {
   val compiler_2_13 = "2.13.12"
-  val compiler_3 = "3.3.1"
+  val compiler_3    = "3.3.1"
 
   private val isSnapshot = false
   private def snapshot   = if (isSnapshot) "-SNAPSHOT" else ""

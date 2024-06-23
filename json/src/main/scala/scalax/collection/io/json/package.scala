@@ -125,8 +125,12 @@ package object json {
     var i      = 0
     while ({ i = target.indexOfSlice(paramPlaceholder); i >= 0 } && it.hasNext) {
       val param = it.next()
-      target = target patch (i, if (param.length < maxLength) param
-      else param.substring(0, maxLength - 3) + "...", 2)
+      target = target patch (
+        i,
+        if (param.length < maxLength) param
+        else param.substring(0, maxLength - 3) + "...",
+        2
+      )
     }
     target
   }
