@@ -91,7 +91,7 @@ final protected[collection] class ExtBitSet(words: Array[Long]) extends BitSet(w
     elems = newElems
   }
 
-  override protected def writeReplace() = this
+  override protected def writeReplace(): ExtBitSet = this
 }
 
 object ExtBitSet {

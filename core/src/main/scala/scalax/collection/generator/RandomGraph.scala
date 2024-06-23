@@ -137,7 +137,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
     private[this] var isCompact = false
 
     def sliding2(f: (N, N) => Unit): Unit = {
-      nodes sliding 2 foreach { a: Array[N] =>
+      nodes sliding 2 foreach { (a: Array[N]) =>
         f(a(0), a(1))
       }
       f(nodes(order - 1), nodes(0))

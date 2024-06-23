@@ -250,7 +250,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
 
     override def size = nrEdges
 
-    def hasAnyMultiEdge: Boolean = selfGraph.nodes exists { node: NodeT =>
+    def hasAnyMultiEdge: Boolean = selfGraph.nodes exists { (node: NodeT) =>
       val (di: Iterator[EdgeT], unDi: Iterator[EdgeT]) =
         if (selfGraph.isDirected) (node.edges.iterator, Iterator.empty)
         else node.edges.iterator.partition(_.isDirected)
