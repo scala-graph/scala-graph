@@ -14,7 +14,7 @@ lazy val all = project
 
 // to publish as JS do "project coreJS", "fastOptJS", "package", "publishSigned"
 
-lazy val core =  crossProject(JSPlatform, JVMPlatform)
+lazy val core = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("core"))
@@ -36,7 +36,7 @@ lazy val coreTestScala3 = project
       scalaVersion       := Version.compiler_3,
       Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
       libraryDependencies ++= Seq(
-        "org.scalatest" %% "scalatest" % "3.2.17" % "test"
+        "org.scalatest" %% "scalatest" % "3.2.18" % "test"
       ),
       scalafmtConfig := baseDirectory.value / ".scalafmt.conf"
     )
@@ -103,7 +103,7 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   autoAPIMappings    := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
   libraryDependencies ++= Seq(
-    "org.scalatest"     %% "scalatest"       % "3.2.17"   % "test",
+    "org.scalatest"     %% "scalatest"       % "3.2.18"   % "test",
     "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % "test"
   )
 ) ++ GraphSonatype.settings
