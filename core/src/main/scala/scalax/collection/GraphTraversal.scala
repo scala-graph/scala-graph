@@ -1116,7 +1116,7 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
           case e: InnerEdgeTraverser => e
           case _                     => innerEdgeTraverser(root, parameters, subgraphNodes, subgraphEdges, ordering)
         }
-        edgeTraverser foreach { e: EdgeT =>
+        edgeTraverser foreach { (e: EdgeT) =>
           b += e
         }
         b.result
