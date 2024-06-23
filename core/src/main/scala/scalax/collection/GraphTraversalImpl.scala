@@ -2,7 +2,7 @@ package scalax.collection
 
 import scala.annotation.{switch, tailrec}
 import scala.collection.{AbstractIterable, EqSetFacade, IndexedSeq, Seq}
-import scala.collection.mutable.{ArrayBuffer, Buffer, Stack, Map => MMap}
+import scala.collection.mutable.{ArrayBuffer, Buffer, Map => MMap, Stack}
 import scalax.collection.generic.Edge
 import scalax.collection.mutable.{EqHashMap, EqHashSet}
 
