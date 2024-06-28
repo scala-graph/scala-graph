@@ -58,7 +58,7 @@ class EditingImmutable extends RefSpec with Matchers {
       g_1.order should be(1)
 
       val g = gString_A - "A"
-      g.nodes shouldNot contain ("A")
+      g.nodes shouldNot contain("A")
       g should have size 0
       g shouldBe empty
 
@@ -77,8 +77,8 @@ class EditingImmutable extends RefSpec with Matchers {
     def `+ String ` : Unit = {
       val g = gString_A + "B"
       g.elementCount shouldBe 2
-      g.nodes should contain ("A")
-      g.nodes should contain ("B")
+      g.nodes should contain("A")
+      g.nodes should contain("B")
 
       val hString_A = Graph[String, UnDiEdge]("A")
       val h         = hString_A + "A" ~ "C"
@@ -98,7 +98,7 @@ private class EditingMutable extends RefSpec with Matchers {
       g addOne 2
       g.order should be(3)
       for (i <- 1 to 3)
-        g.nodes should contain (i)
+        g.nodes should contain(i)
     }
 
     def `serve -= properly`: Unit = {

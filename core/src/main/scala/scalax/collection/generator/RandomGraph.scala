@@ -70,13 +70,13 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
       val len = labelBuffer.length
       def loop(i: Int): Array[Char] = {
         val c = labelBuffer(i)
-        if (c == endChar) {
+        if (c == endChar)
           if (i > 0) {
             labelBuffer(i) = startChar
             loop(i - 1)
           } else
             Array.fill[Char](len + 1)(startChar)
-        } else {
+        else {
           labelBuffer(i) = (c.toInt + 1).toChar
           labelBuffer
         }

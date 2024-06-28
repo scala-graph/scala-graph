@@ -497,9 +497,9 @@ trait TraverserImpl[N, E <: Edge[N]] {
                       }
                     )
                   }
-                if (stopAt(current, nodeCnt, depth) && (current ne root)) {
+                if (stopAt(current, nodeCnt, depth) && (current ne root))
                   res = Some(current)
-                } else {
+                else {
                   if (depth < untilDepth) {
                     val nextDepth = depth + 1
                     for (n <- filteredNodes(current, nonVisited, cumWeight, true))
