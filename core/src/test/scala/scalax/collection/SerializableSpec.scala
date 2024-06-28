@@ -33,7 +33,7 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
   private val factoryName     = factory.getClass.getName
   private val isImmutableTest = factoryName contains "immutable"
 
-  s"Tests based on ${factoryName}" should "start" in {}
+  s"Tests based on $factoryName" should "start" in {}
 
   trait GraphStore {
     protected trait ExecMethods {

@@ -68,7 +68,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
           val set = seq.toSet
           if (set != expected)
             fail(
-              s"Ordering is incomplete when root=$maybeRoot and ignorePredecessors=$ignorePredecessors: expected ${expected} but was ${set}."
+              s"Ordering is incomplete when root=$maybeRoot and ignorePredecessors=$ignorePredecessors: expected $expected but was $set."
             )
         }
 

@@ -165,12 +165,11 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
         }
         arbitraryNodes.sliding(2) foreach { pairOrSingle =>
           def checkNonBiConnected(ns1: Set[g.NodeT], ns2: Set[g.NodeT]): Unit =
-            if (ns1 ne ns2) {
+            if (ns1 ne ns2)
               ns1 zip ns2 foreach { case (n1, n2) =>
                 (n1 pathTo n2) shouldBe defined
                 (n2 pathTo n1) should not be defined
               }
-            }
 
           pairOrSingle.toList match {
             case List(ns1, ns2) => checkNonBiConnected(ns1, ns2)

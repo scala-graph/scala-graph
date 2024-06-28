@@ -322,9 +322,9 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
             )
               ok(node, count + 1)
             else false
-          } else if (nodesIt.isEmpty && edgesIt.isEmpty) {
+          } else if (nodesIt.isEmpty && edgesIt.isEmpty)
             count > 0
-          } else false
+          else false
 
         ok(startNode, 0)
       }

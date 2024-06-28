@@ -23,7 +23,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       name    := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck" % "1.17.1"
+        "org.scalacheck" %% "scalacheck" % "1.18.0"
       )
     )
   )
@@ -36,7 +36,7 @@ lazy val coreTestScala3 = project
       scalaVersion       := Version.compiler_3,
       Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
       libraryDependencies ++= Seq(
-        "org.scalatest" %% "scalatest" % "3.2.18" % "test"
+        "org.scalatest" %% "scalatest" % "3.2.19" % "test"
       ),
       scalafmtConfig := baseDirectory.value / ".scalafmt.conf"
     )
@@ -103,7 +103,7 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   autoAPIMappings    := true,
   Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
   libraryDependencies ++= Seq(
-    "org.scalatest"     %% "scalatest"       % "3.2.18"   % "test",
+    "org.scalatest"     %% "scalatest"       % "3.2.19"   % "test",
     "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % "test"
   )
 ) ++ GraphSonatype.settings

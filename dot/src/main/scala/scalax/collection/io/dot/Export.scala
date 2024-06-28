@@ -166,9 +166,8 @@ trait Export[N, E <: Edge[N]] extends Any {
             res append " ["
             attrList foreach { attr =>
               res append attr.name
-              if (attr.value().nonEmpty) {
+              if (attr.value().nonEmpty)
                 res append s" = ${attr.value}"
-              }
               res append ", "
             }
             res delete (res.size - 2, res.size)
