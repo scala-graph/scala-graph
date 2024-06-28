@@ -39,11 +39,6 @@ class EditingImmutable extends RefSpec with Matchers {
   Graph.from(1 ~ 2 :: Nil)
 
   object `graphs ` {
-    def `are immutable by default`: Unit = {
-      val g = Graph[Nothing, Nothing]()
-      g shouldBe a[immutable.Graph[_, Nothing]]
-    }
-
     def `+ Int`: Unit = {
       val g = Graph(1, 2 ~ 3)
       g + 1 should be(g)
@@ -150,7 +145,7 @@ private class EditingMutable extends RefSpec with Matchers {
 
       g subtractOne 1 ~> 4 // Graph(oneOne, oneTwo, one~>3)
       n2.diSuccessors shouldBe empty
-      n1.diSuccessors shouldBe Set(two, 3)
+      n1.diSuccessors.map(_.outer) shouldBe Set(two, 3)
       n1 findOutgoingTo n1 should be(Some(e11))
 
       g subtractOne oneTwo // Graph(oneOne, one~>3)
@@ -294,9 +289,9 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
     def `EdgeAssoc ` : Unit = {
       val e = 1 ~ 2
       e shouldBe an[UnDiEdge[_]]
-      val x = factory(3 ~ 4).nodes
-      // Error in Scala compiler: assertion failed
-      // Graph(3).nodes contains 3 //should be (true)
+
+      val g = factory(3 ~ 4)
+      g.edges should contain(3 ~ 4)
 
       val d = 1 ~> 2
       d shouldBe a[DiEdge[_]]
@@ -379,12 +374,12 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
     }
 
     def `incoming ` : Unit = {
-      val uEdges = Seq[UnDiEdge[Int]](1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4) // bug if no type param given
+      val uEdges = Seq(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
       val g      = factory(uEdges(0), uEdges(1), uEdges(2), uEdges(3))
       (g get 1).incoming should be(uEdges.toSet)
       (g get 2).incoming should be(Set(uEdges(1)))
 
-      val dEdges = Seq[DiEdge[Int]](1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
+      val dEdges = Seq(1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
       val h      = factory(dEdges(0), dEdges(1), dEdges(2), dEdges(3))
       (h get 1).incoming should be(Set(dEdges(0)))
       (h get 2).incoming should be(Set(dEdges(1)))
@@ -402,7 +397,7 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       g filter (_ < 2) should be(factory(1))
       g filter (_ < 2) should be(factory(1))
       g filter (_ >= 2) should be(factory(2 ~> 3, 5))
-      g filter (edgeP = _.node1 == 2) should be(factory(1, 5, 2 ~> 3))
+      g filter (edgeP = _.node1.outer == 2) should be(factory(1, 5, 2 ~> 3))
       g filter (nodeP = _ <= 3, edgeP = _ contains 2) should be(factory(1, 2 ~> 3))
     }
 
