@@ -1,0 +1,82 @@
+package scalax.collection.generator
+
+import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import org.scalatest.refspec.RefSpec
+
+import scalax.collection.edges._
+import scalax.collection.immutable.Graph
+
+class GraphGenSpec extends RefSpec with Matchers with ScalaCheckPropertyChecks {
+
+  final val minSuccessful = 5
+  implicit val config: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = minSuccessful, maxDiscardedFactor = 1.0)
+
+  object `nr of minimum successful tests` {
+    def `should be met`: Unit = {
+      var count = 0
+      forAll { (i: Int) =>
+        count += 1
+      }
+      count should be(minSuccessful)
+    }
+  }
+
+  object `outer node set` {
+    val order = 5
+    implicit val arbitraryOuterNodes: Arbitrary[Set[Int]] =
+      new GraphGen[Int, DiEdge[Int], Graph](
+        Graph,
+        order,
+        Gen.choose(0, 10 * order),
+        NodeDegreeRange(1, 4),
+        Set(DiEdge)
+      ).outerNodeSet
+
+    def `should conform to the passed size`: Unit =
+      forAll(arbitrary[Set[Int]]) { (outerNodes: Set[Int]) =>
+        outerNodes should have size order
+      }
+  }
+
+  type IntDiGraph = Graph[Int, DiEdge[Int]]
+
+  def checkMetrics(g: IntDiGraph, metrics: GraphGen.Metrics[Int]): Unit = {
+    import metrics._
+
+    val degrees                 = g.degreeSeq
+    val tolerableMaxExceed: Int = if (g.isHyper) 8 else 1
+
+    g.order should be(order)
+    g.isConnected should be(connected)
+
+    degrees.min should be >= (nodeDegrees.min)
+    degrees.max should be <= (nodeDegrees.max + tolerableMaxExceed)
+
+    g.totalDegree should (
+      be >= (expectedTotalDegree - maxDegreeDeviation) and
+        be <= (expectedTotalDegree + maxDegreeDeviation)
+    )
+  }
+
+  object `tiny connected graph of [Int,DiEdge]` {
+    implicit val arbitraryGraph: Arbitrary[Graph[Int, DiEdge[Int]]] = GraphGen.tinyConnectedIntDi[Graph](Graph)
+
+    def `should conform to tiny metrics`: Unit =
+      forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
+        checkMetrics(g, GraphGen.TinyInt)
+      }
+  }
+
+  object `small connected graph of [Int,DiEdge]` {
+    implicit val arbitraryGraph: Arbitrary[Graph[Int, DiEdge[Int]]] = GraphGen.smallConnectedIntDi[Graph](Graph)
+
+    def `should conform to small metrics`: Unit =
+      forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
+        checkMetrics(g, GraphGen.SmallInt)
+      }
+  }
+}
