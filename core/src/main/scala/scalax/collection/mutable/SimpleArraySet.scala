@@ -225,9 +225,9 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
     }
 
   def sorted(implicit ord: Ordering[A]): SortedSet[A] =
-    if (isHash) {
+    if (isHash)
       SortedSet.from(hashSet)
-    } else {
+    else {
       val newArr: Array[AnyRef] = new Array(nextFree)
       java.lang.System.arraycopy(arr, 0, newArr, 0, nextFree)
       new SortedArraySet(newArr.asInstanceOf[Array[A]])

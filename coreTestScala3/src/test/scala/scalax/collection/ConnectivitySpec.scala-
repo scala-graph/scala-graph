@@ -1,17 +1,16 @@
 package scalax.collection
 
 import scala.util.Random
-import org.scalatest._
+
+import org.scalatest.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-
-import scalax.collection.OuterImplicits._
-import scalax.collection.edges._
-import scalax.collection.generic._
+import scalax.collection.OuterImplicits.*
+import scalax.collection.edges.*
+import scalax.collection.generator.*
 import scalax.collection.generator.RandomGraph.IntFactory
-import scalax.collection.generator._
-import scalax.collection.generic.GenericGraphCoreFactory
+import scalax.collection.generic.*
 import scalax.collection.visualization.Visualizer
 
 class ConnectivitySpec

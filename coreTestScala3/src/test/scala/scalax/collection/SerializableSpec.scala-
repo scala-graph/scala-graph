@@ -1,18 +1,15 @@
 package scalax.collection
 
-import java.io._
+import java.io.*
 
 import scala.util.{Failure, Success, Try}
 
+import org.scalatest.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import scalax.collection.OuterImplicits._
-import scalax.collection.edges._
+import scalax.collection.OuterImplicits.*
+import scalax.collection.edges.*
 import scalax.collection.generic.{AnyEdge, Edge, GenericGraphCoreFactory}
-
-import org.scalatest._
-
 import scalax.collection.visualization.Visualizer
 
 class SerializableSpec
@@ -53,7 +50,7 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
   /** to save and restore graphs to/from files */
   object GraphFile extends GraphStore {
     protected class Exec(filename: String) extends ExecMethods {
-      import FileSerialization._
+      import FileSerialization.*
       def save[N, E <: Edge[N]](g: CC[N, E]): Unit = write(g, filename) recover { case e =>
         fail(s"Couldn't write $g: $e")
       }
@@ -75,7 +72,7 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
   /** to save and restore graphs to/from byte arrays */
   object GraphByteArray extends GraphStore {
     protected class Exec extends ExecMethods {
-      import ByteArraySerialization._
+      import ByteArraySerialization.*
       private var _saved: Array[Byte] = _
 
       def save[N, E <: Edge[N]](g: CC[N, E]): Unit = write(g) match {
@@ -211,7 +208,7 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
   }
 
   class EdgeByteArray extends EdgeStore {
-    import ByteArraySerialization._
+    import ByteArraySerialization.*
     private var _saved: Array[Byte] = _
 
     def save[N, E <: Edge[N]](it: Iterable[OuterElem[N, E]]): Unit = write(it) match {
@@ -358,7 +355,7 @@ protected object ScalaObjectSerialization extends App {
     val inner = Inner
   }
 
-  import ByteArraySerialization._
+  import ByteArraySerialization.*
   def test[A <: Base](my: A): Unit =
     write(my) flatMap { saved =>
       println(s"saved (${saved.length} bytes)=${new String(saved)}")

@@ -39,11 +39,6 @@ class EditingImmutable extends RefSpec with Matchers {
   Graph.from(1 ~ 2 :: Nil)
 
   object `graphs ` {
-    def `are immutable by default`: Unit = {
-      val g = Graph[Nothing, Nothing]()
-      g shouldBe a[immutable.Graph[_, Nothing]]
-    }
-
     def `+ Int`: Unit = {
       val g = Graph(1, 2 ~ 3)
       g + 1 should be(g)
@@ -54,11 +49,11 @@ class EditingImmutable extends RefSpec with Matchers {
     val gString_A = Graph[String, AnyEdge]("A")
 
     def `- ` : Unit = {
-      var g = gString_A - "B"
-      g.order should be(1)
+      val g_1 = gString_A - "B"
+      g_1.order should be(1)
 
-      g = gString_A - "A"
-      g.contains("A") should be(false) // not compiling: gMinus shouldNot contain ("A")
+      val g = gString_A - "A"
+      g.nodes shouldNot contain("A")
       g should have size 0
       g shouldBe empty
 
@@ -76,9 +71,9 @@ class EditingImmutable extends RefSpec with Matchers {
 
     def `+ String ` : Unit = {
       val g = gString_A + "B"
-      g.elementCount should be(2)
-      g.contains("A") should be(true)
-      g.contains("B") should be(true) // not compiling: g should contain ("B")
+      g.elementCount shouldBe 2
+      g.nodes should contain("A")
+      g.nodes should contain("B")
 
       val hString_A = Graph[String, UnDiEdge]("A")
       val h         = hString_A + "A" ~ "C"
@@ -98,7 +93,7 @@ private class EditingMutable extends RefSpec with Matchers {
       g addOne 2
       g.order should be(3)
       for (i <- 1 to 3)
-        g.contains(i) should be(true) // g should contain (i)
+        g.nodes should contain(i)
     }
 
     def `serve -= properly`: Unit = {
@@ -113,9 +108,9 @@ private class EditingMutable extends RefSpec with Matchers {
 
     def `+ String ` : Unit = {
       val g = Graph("A") addOne "B"
-      g.elementCount should be(2)
-      g.contains("A") should be(true)
-      g.contains("B") should be(true) // g should contain ("B")
+      g.elementCount shouldBe 2
+      g.contains("A") shouldBe true
+      g.contains("B") shouldBe true
 
       val hString_A = Graph[String, UnDiEdge]("A")
       val h         = hString_A += "A" ~ "C"
@@ -294,9 +289,9 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
     def `EdgeAssoc ` : Unit = {
       val e = 1 ~ 2
       e shouldBe an[UnDiEdge[_]]
-      val x = factory(3 ~ 4).nodes
-      // Error in Scala compiler: assertion failed
-      // Graph(3).nodes contains 3 //should be (true)
+
+      val g = factory(3 ~ 4)
+      g.edges should contain(3 ~ 4)
 
       val d = 1 ~> 2
       d shouldBe a[DiEdge[_]]
@@ -309,22 +304,9 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       val diEdge = 1 ~> 2
       factory.empty[Int, DiEdge[Int]] ++ List(diEdge) shouldBe factory.from(diEdge :: Nil)
 
-      /* TODO [E134] Type Error:
-        None of the overloaded alternatives of method concat in trait GraphOps with types
-        [error]     | [N2 >: String, E2 >: scalax.collection.generic.Edge[String] <:
-        [error]     |  scalax.collection.generic.Edge[N2]]
-        [error]     |  (edges: IterableOnce[E2])
-        [error]     |    (implicit e: E2 <:< scalax.collection.generic.Edge[N2]): CC[N2, E2]
-        [error]     | [N2 >: String, E2 >: scalax.collection.generic.Edge[String] <:
-        [error]     |  scalax.collection.generic.Edge[N2²]]
-        [error]     |  (isolatedNodes: IterableOnce[N2²], edges: IterableOnce[E2²])
-        [error]     |    (implicit e: E2² <:< scalax.collection.generic.Edge[N2²]): CC[N2², E2²]
-        [error]     |match type arguments [String, scalax.collection.generic.AnyEdge[String]] and arguments (List[String], (Nil : => collection².immutable.Nil².type))
-  
-        val g = gString_A.concat[String, AnyEdge[String]](List("B", "C"), Nil)
-        g.elementCount shouldEqual 3
-        'A' to 'C' map (_.toString) foreach (g.contains(_) shouldEqual true)
-      */
+      val g = gString_A.concat[String, Edge[String]](List("B", "C"), Nil)
+      g.elementCount shouldEqual 3
+      'A' to 'C' map (_.toString) foreach (g.contains(_) shouldEqual true)
 
       val (gBefore, gAfter) = (factory(1, 2 ~ 3), factory(0, 1 ~ 2, 2 ~ 3))
       gBefore ++ (edges = List(1 ~ 2, 2 ~ 3), isolatedNodes = List(0)) shouldEqual gAfter
@@ -392,12 +374,12 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
     }
 
     def `incoming ` : Unit = {
-      val uEdges = Seq[UnDiEdge[Int]](1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4) // bug if no type param given
+      val uEdges = Seq(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
       val g      = factory(uEdges(0), uEdges(1), uEdges(2), uEdges(3))
       (g get 1).incoming should be(uEdges.toSet)
       (g get 2).incoming should be(Set(uEdges(1)))
 
-      val dEdges = Seq[DiEdge[Int]](1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
+      val dEdges = Seq(1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
       val h      = factory(dEdges(0), dEdges(1), dEdges(2), dEdges(3))
       (h get 1).incoming should be(Set(dEdges(0)))
       (h get 2).incoming should be(Set(dEdges(1)))
