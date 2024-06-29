@@ -356,7 +356,7 @@ protected object ScalaObjectSerialization extends App {
   }
 
   import ByteArraySerialization.*
-  def test[A <: Base](my: A): Unit =
+  private def test[A <: Base](my: A): Unit =
     write(my) flatMap { saved =>
       println(s"saved (${saved.length} bytes)=${new String(saved)}")
       println(s"  contains MyVal=${new String(saved) contains "MyVal"}")
