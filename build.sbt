@@ -5,9 +5,10 @@ lazy val all = project
   .in(file("."))
   .settings(
     Seq(
-      name      := "Graph for Scala 2",
-      version   := Version.highest,
-      publishTo := None
+      name               := "Graph for Scala 2",
+      version            := Version.highest,
+      publishTo          := None,
+      crossScalaVersions := Nil
     )
   )
   .aggregate(core.jvm, dot.jvm, json)
@@ -19,7 +20,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("core"))
   .settings(
-    defaultSettings ++ Seq(
+    defaultSettings_2_13 ++ Seq(
       name    := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
@@ -28,17 +29,32 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     )
   )
 
+/*
+lazy val gen = crossProject(JSPlatform, JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .in(file("gen"))
+  .dependsOn(core)
+  .settings(
+    defaultSettings_3 ++ Seq(
+      name    := "Graph Gen",
+      version := Version.gen
+    )
+  )
+ */
+
 lazy val coreTestScala3 = project
   .in(file("coreTestScala3"))
   .dependsOn(core.jvm)
   .settings(
-    Defaults.coreDefaultSettings ++ Seq(
-      scalaVersion       := Version.compiler_3,
-      Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
+    defaultSettings_3 ++ Seq(
       libraryDependencies ++= Seq(
-        "org.scalatest" %% "scalatest" % "3.2.19" % "test"
-      ),
-      scalafmtConfig := baseDirectory.value / ".scalafmt.conf"
+        "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test,
+        "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test exclude (
+          "org.scalacheck",
+          "scalacheck_3"
+        )
+      )
     )
   )
 
@@ -48,7 +64,7 @@ lazy val dot = crossProject(JSPlatform, JVMPlatform)
   .in(file("dot"))
   .dependsOn(core)
   .settings(
-    defaultSettings ++ Seq(
+    defaultSettings_2_13 ++ Seq(
       name    := "Graph DOT",
       version := Version.dot
     )
@@ -58,7 +74,7 @@ lazy val json = project
   .in(file("json"))
   .dependsOn(core.jvm)
   .settings(
-    defaultSettings ++ Seq(
+    defaultSettings_2_13 ++ Seq(
       name                                 := "Graph JSON",
       version                              := Version.json,
       libraryDependencies += "net.liftweb" %% "lift-json" % "3.5.0"
@@ -77,22 +93,49 @@ lazy val misc = project
   )
  */
 
-val unusedImports = "-Ywarn-unused:imports"
-lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
-  scalaVersion       := Version.compiler_2_13,
+val unusedImports = "-Wunused:imports"
+
+lazy val defaultSettings_2_13 = Defaults.coreDefaultSettings ++ Seq(
+  scalaVersion := Version.compiler_2_13,
+  libraryDependencies ++= Seq(
+    "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test,
+    "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
+  ),
+  addCompilerPlugin(scalafixSemanticdb),
+  semanticdbEnabled := true
+) ++ defaultSettings
+
+lazy val defaultSettings_3 = Defaults.coreDefaultSettings ++ Seq(
+  scalaVersion   := Version.compiler_3,
+  scalafmtConfig := baseDirectory.value / ".." / ".scalafmt-scala3.conf"
+) ++ defaultSettings
+
+lazy val defaultSettings = Seq(
   crossScalaVersions := Seq(scalaVersion.value),
-  organization       := "org.scala-graph",
+  organization       := "org.scala-graph"
+) ++
+  defaultCompilerSettings ++
+  defaultTestSettings ++
+  defaultDocSettings ++
+  GraphSonatype.settings
+
+lazy val defaultCompilerSettings = Seq(
   scalacOptions ++= Seq(
     unusedImports,
-    "-Yrangepos",
-    "-Ywarn-unused:privates",
+    "-Wunused:privates",
     "-deprecation",
     "-feature",
     "-language:higherKinds"
   ),
-  Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports),
-  addCompilerPlugin(scalafixSemanticdb),
+  Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports)
+)
+
+lazy val defaultTestSettings = Seq(
   Test / parallelExecution := false,
+  Test / testOptions       := Seq(Tests.Filter(s => s.endsWith("Spec")))
+)
+
+lazy val defaultDocSettings = Seq(
   Compile / doc / scalacOptions ++=
     Opts.doc.title(name.value) ++
       Opts.doc.version(version.value),
@@ -100,10 +143,5 @@ lazy val defaultSettings = Defaults.coreDefaultSettings ++ Seq(
   Compile / doc / scalacOptions ++= (baseDirectory map { d =>
     Seq("-doc-root-content", (d / "rootdoc.txt").getPath)
   }).value,
-  autoAPIMappings    := true,
-  Test / testOptions := Seq(Tests.Filter(s => s.endsWith("Spec"))),
-  libraryDependencies ++= Seq(
-    "org.scalatest"     %% "scalatest"       % "3.2.19"   % "test",
-    "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % "test"
-  )
-) ++ GraphSonatype.settings
+  autoAPIMappings := true
+)
