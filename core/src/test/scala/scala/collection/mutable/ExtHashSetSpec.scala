@@ -2,7 +2,7 @@ package scala.collection.mutable
 
 import scala.math.abs
 import scala.util.Random
-import scala.util.chaining._
+import scala.util.chaining.*
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
@@ -10,7 +10,7 @@ import org.scalatest.refspec.RefSpec
 class ExtHashSetSpec extends RefSpec with Matchers {
 
   object `ExtHashSet works properly in that it` {
-    import ExtHashSetSpec._
+    import ExtHashSetSpec.*
 
     def `draws random elements with uniform distribution if buckets are of equal length`: Unit = {
       val size = 16
