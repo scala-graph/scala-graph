@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalatest.refspec.RefSpec
 
-import scalax.collection.edges._
+import scalax.collection.edges.*
 import scalax.collection.immutable.Graph
 
 class GraphGenSpec extends RefSpec with Matchers with ScalaCheckPropertyChecks {
@@ -66,7 +66,7 @@ class GraphGenSpec extends RefSpec with Matchers with ScalaCheckPropertyChecks {
     implicit val arbitraryGraph: Arbitrary[Graph[Int, DiEdge[Int]]] = GraphGen.tinyConnectedIntDi[Graph](Graph)
 
     def `should conform to tiny metrics`: Unit =
-      forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
+      forAll(arbitrary[IntDiGraph]) { (g: IntDiGraph) =>
         checkMetrics(g, GraphGen.TinyInt)
       }
   }
@@ -75,7 +75,7 @@ class GraphGenSpec extends RefSpec with Matchers with ScalaCheckPropertyChecks {
     implicit val arbitraryGraph: Arbitrary[Graph[Int, DiEdge[Int]]] = GraphGen.smallConnectedIntDi[Graph](Graph)
 
     def `should conform to small metrics`: Unit =
-      forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
+      forAll(arbitrary[IntDiGraph]) { (g: IntDiGraph) =>
         checkMetrics(g, GraphGen.SmallInt)
       }
   }
