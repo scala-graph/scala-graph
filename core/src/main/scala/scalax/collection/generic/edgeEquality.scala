@@ -193,11 +193,11 @@ protected[collection] trait OrderedEndpoints
   *
   * @author Peter Empen
   */
-trait MultiEdge { this: Edge[_] =>
+trait MultiEdge extends Eq { this: Edge[_] =>
 
-  /** Each element in this sequence references a class member of the custom edge that will be added to the edge key.
-    * The edge ends, like `source` and `target`, are always part of the key so don't add them here.
-    * Once you add class members to the edge key they automatically become part of the edge's hashCode/equality.
+  /** Each value, such as a class member, you specify in this non-empty sequence will be added to the edge "key"
+    * which contains the edge `ends`, in terms of a directed edge the `source` and the `target`, by default.
+    * The term "key" refers to how equality of edges is controlled.
     */
   def extendKeyBy: OneOrMore[Any]
 
