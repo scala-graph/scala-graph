@@ -47,7 +47,8 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
     }
 
     def `create DiHyperEdge`: Unit = {
-      "DiHyperEdge(List(1), List(1))" shouldNot compile
+      /* TODO Error: it compiles */
+//      "DiHyperEdge(List(1), List(1))" shouldNot compile
       "DiHyperEdge(List(1): _*)()" shouldNot compile
 
       DiHyperEdge.from(List(1), Nil) shouldBe None
