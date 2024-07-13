@@ -41,29 +41,9 @@ class MappingTypedSpec extends RefSpec with Matchers {
 
     def `upcast nodes to another typed edge within the ADT`: Unit =
       TGraph(AConnector(a_1, a_1)) pipe { g =>
-        /* TODO [E134] Type Error:
-          None of the overloaded alternatives of method mapBound in trait GraphLike with types
-          [error]    | [NN, EC <: scalax.collection.generic.Edge[NN]]
-          [error]    |  (fNode: g.NodeT => NN, fEdge: (g.EdgeT, NN, NN) => EC)
-          [error]    |    (implicit w: scalax.collection.MappingTypedSpec.AConnector <:<
-          [error]    |      scalax.collection.generic.AnyEdge[scalax.collection.MappingTypedSpec.A]):
-          [error]    |      scalax.collection.immutable.Graph[NN, EC]
-          [error]    | (fNode: g.NodeT => scalax.collection.MappingTypedSpec.A)
-          [error]    |  (implicit w1: scalax.collection.MappingTypedSpec.AConnector <:<
-          [error]    |    scalax.collection.generic.PartialMapper):
-          [error]    |    scalax.collection.immutable.Graph[scalax.collection.MappingTypedSpec.A,
-          [error]    |      scalax.collection.MappingTypedSpec.AConnector]
-          [error]    | [NN, EC <: scalax.collection.generic.Edge[NN²]]
-          [error]    |  (fNode: g.NodeT => NN², fEdge: (NN², NN²) => EC²)
-          [error]    |    (implicit w: scalax.collection.MappingTypedSpec.AConnector <:<
-          [error]    |      scalax.collection.generic.AnyEdge[scalax.collection.MappingTypedSpec.A]):
-          [error]    |      scalax.collection.immutable.Graph[NN², EC²]
-          [error]    |match type arguments [scalax.collection.MappingTypedSpec.Node, scalax.collection.MappingTypedSpec.Connector] and arguments (g.NodeT => scalax.collection.MappingTypedSpec.B, scalax.collection.MappingTypedSpec.Connector.type)
-
-          g.mapBound[Node, Connector](_ => b_0_0, Connector) pipe { mapped =>
+          g.mapBound[Node, Connector](_ => b_0_0, Connector.apply) pipe { mapped =>
             mapped.edges.head.outer shouldEqual Connector(b_0_0, b_0_0)
           }
-         */
       }
 
     def `upcast nodes to any type if a generic edge mapper is passed`: Unit =
