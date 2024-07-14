@@ -67,13 +67,6 @@ class InspectingDemoSpec extends RefSpec with Matchers {
       diHyperEdge match {
         case OneOrMore.Seq(_, s2, _*) ~~> OneOrMore(t1, _) => s2 * t1 // Int = 10
       }
-
-      /* TODO above yields warning "match may not be exhaustive. It would fail on the following input: HyperEdge(_)"
-         below does not:
-      val it = Iterable(1, 2)
-      val x = it match {
-        case Seq(i1, _*) => i1
-      } */
     }
 
     def `Inspect Neighbors and Incident Edges`(): Unit = {
