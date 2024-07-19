@@ -82,7 +82,7 @@ class EdgeDescriptor[N, E <: AnyEdge[N]](
 
   def extract(jsonEdge: JValue): EdgeParameters = jsonEdge.extract[EdgeParameters]
 
-  protected def toParameters(edge: E)(implicit descriptor: Descriptor[N]) = {
+  protected def toParameters(edge: E)(implicit descriptor: Descriptor[N]): EdgeParameters = {
     val (n1, n2) = (edge.node1, edge.node2)
     EdgeParameters(descriptor.nodeDescriptor(n1) id n1, descriptor.nodeDescriptor(n2) id n2)
   }
@@ -110,7 +110,7 @@ abstract class LEdgeDescriptor[N, E <: AnyEdge[N], L](
 
   def extract(jsonEdge: JValue): LEdgeParameters[L] = jsonEdge.extract[LEdgeParameters[L]]
 
-  protected def toParameters(edge: E)(implicit descriptor: Descriptor[N]) =
+  protected def toParameters(edge: E)(implicit descriptor: Descriptor[N]): LEdgeParameters[Any] =
     LEdgeParameters(
       descriptor.nodeDescriptor(edge.node1) id edge.node1,
       descriptor.nodeDescriptor(edge.node2) id edge.node2,
@@ -136,7 +136,7 @@ class HyperEdgeDescriptor[N, E <: AbstractHyperEdge[N]](
 
   def extract(jsonEdge: JValue): HyperEdgeParameters = jsonEdge.extract[HyperEdgeParameters]
 
-  protected def toParameters(edge: E)(implicit descriptor: Descriptor[N]) =
+  protected def toParameters(edge: E)(implicit descriptor: Descriptor[N]): HyperEdgeParameters =
     HyperEdgeParameters(nodeIds(edge, descriptor))
 }
 
@@ -160,7 +160,7 @@ abstract class LHyperEdgeDescriptor[N, E <: AbstractHyperEdge[N], L](
 
   def extract(jsonEdge: JValue): LHyperEdgeParameters[L] = jsonEdge.extract[LHyperEdgeParameters[L]]
 
-  protected def toParameters(edge: E)(implicit descriptor: Descriptor[N]) =
+  protected def toParameters(edge: E)(implicit descriptor: Descriptor[N]): LHyperEdgeParameters[Any] =
     LHyperEdgeParameters(nodeIds(edge, descriptor), label(edge))
 }
 

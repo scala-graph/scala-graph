@@ -34,10 +34,10 @@ class InspectingDemoSpec extends RefSpec with Matchers {
       g get 1  // g.NodeT = 1
       a[NoSuchElementException] should be thrownBy {
         g get 3
-      }                     // NoSuchElementException
-      g find 1 ~ 2          // Option[g.EdgeT] = Some(1 ~ 2)
-      g.nodes find (_ == 1) // Option[g.NodeT] = 1
-      g addAndGet 3         // g.NodeT = 3
+      }                           // NoSuchElementException
+      g find 1 ~ 2                // Option[g.EdgeT] = Some(1 ~ 2)
+      g.nodes find (_.outer == 1) // Option[g.NodeT] = 1
+      g addAndGet 3               // g.NodeT = 3
     }
 
     def `Inspect Edge Ends`(): Unit = {

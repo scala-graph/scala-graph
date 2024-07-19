@@ -42,10 +42,10 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
       val (n1, n2) = (g get 1, g get 2)
 
       List(1, 3) foreach { i =>
-        n1 findSuccessor (_ == i) shouldBe empty
+        n1 findSuccessor (n => n.outer == i) shouldBe empty
       }
-      n2 findSuccessor (_ == 1) shouldBe empty
-      n1 findSuccessor (_ == 2) shouldBe Some(n2)
+      n2 findSuccessor (n => n.outer == 1) shouldBe empty
+      n1 findSuccessor (n => n.outer == 2) shouldBe Some(n2)
     }
 
   def `find predecessors in a tiny graph`: Unit =
@@ -53,9 +53,9 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
       val (n1, n2) = (g get 1, g get 2)
 
       1 to 3 foreach { i =>
-        n1 findPredecessor (_ == i) shouldBe empty
+        n1 findPredecessor (n => n.outer == i) shouldBe empty
       }
-      val predecessor = n2 findPredecessor (_ == 1)
+      val predecessor = n2 findPredecessor (n => n.outer == 1)
       predecessor shouldBe Some(n1)
     }
 
@@ -64,10 +64,10 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
       val (n1, n2) = (g get 1, g get 2)
 
       List(1, 3) foreach { i =>
-        n1 findConnected (_ == i) shouldBe empty
+        n1 findConnected (n => n.outer == i) shouldBe empty
       }
-      n1 findConnected (_ == 2) shouldBe Some(n2)
-      n2 findConnected (_ == 1) shouldBe Some(n1)
+      n1 findConnected (n => n.outer == 2) shouldBe Some(n2)
+      n2 findConnected (n => n.outer == 1) shouldBe Some(n1)
     }
 
   import Data._
@@ -79,10 +79,10 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
       def n(outer: Int) = g.get(outer)
 
       List(0, 3, 7) foreach { i =>
-        n(3) findSuccessor (_ == i) shouldBe empty
+        n(3) findSuccessor (n => n.outer == i) shouldBe empty
       }
-      n(2) findSuccessor (_ == 5) shouldBe Some(5)
-      n(3) findSuccessor (_ > 4) shouldBe Some(5)
+      n(2) findSuccessor (n => n.outer == 5) shouldBe Some(5)
+      n(3) findSuccessor (n => n.outer > 4) shouldBe Some(5)
     }
 
   def `find predecessors in a mid-size graph`: Unit =
@@ -90,10 +90,10 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
       def n(outer: Int) = g.get(outer)
 
       List(0, 3, 5) foreach { i =>
-        n(3) findPredecessor (_ == i) shouldBe empty
+        n(3) findPredecessor (n => n.outer == i) shouldBe empty
       }
-      n(3) findPredecessor (_ == 4) shouldBe Some(4)
-      n(3) findPredecessor (_ > 2) shouldBe Some(4)
+      n(3) findPredecessor (n => n.outer == 4) shouldBe Some(4)
+      n(3) findPredecessor (n => n.outer > 2) shouldBe Some(4)
     }
 
   def `find connected nodes by predicate`: Unit =
@@ -101,10 +101,10 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
       def n(outer: Int) = g get outer
 
       List(0, 3) foreach { i =>
-        n(3) findConnected (_ == i) shouldBe empty
+        n(3) findConnected (n => n.outer == i) shouldBe empty
       }
-      n(2) findConnected (_ == 4) shouldBe Some(4)
-      n(3) findConnected (_ > 3) should (be(Some(4)) or be(Some(5)))
+      n(2) findConnected (n => n.outer == 4) shouldBe Some(4)
+      n(3) findConnected (n => n.outer > 3) should (be(Some(4)) or be(Some(5)))
     }
 
   def `find path to a successor`: Unit =
