@@ -1,5 +1,6 @@
-package collection.mutable
+package scala.collection.mutable
 
+import scala.collection.immutable
 import scala.math.abs
 import scala.util.Random
 import scala.util.chaining.*
@@ -38,7 +39,7 @@ class ExtHashSetSpec extends RefSpec with Matchers {
       }
 
       val bucketLengthOfElement: Int Map Int = {
-        val m = Map.empty[Int, Int]
+        val m = immutable.Map.empty[Int, Int]
         buckets foreach { bucket =>
           val len = bucket.length
           bucket foreach (v => m update (v, len))
