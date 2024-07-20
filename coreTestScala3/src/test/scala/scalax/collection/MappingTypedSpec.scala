@@ -41,9 +41,9 @@ class MappingTypedSpec extends RefSpec with Matchers {
 
     def `upcast nodes to another typed edge within the ADT`: Unit =
       TGraph(AConnector(a_1, a_1)) pipe { g =>
-          g.mapBound[Node, Connector](_ => b_0_0, Connector.apply) pipe { mapped =>
-            mapped.edges.head.outer shouldEqual Connector(b_0_0, b_0_0)
-          }
+        g.mapBound[Node, Connector](_ => b_0_0, Connector.apply) pipe { mapped =>
+          mapped.edges.head.outer shouldEqual Connector(b_0_0, b_0_0)
+        }
       }
 
     def `upcast nodes to any type if a generic edge mapper is passed`: Unit =

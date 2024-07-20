@@ -223,7 +223,7 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
       }
   }
 
-  "A graph of [Int,WUnDiEdge]" should work in {
+  "A graph of [Int, AnyEdge[Int]]" should work in {
     import Data.elementsOfMixed_2
     withGraph(factory.from(elementsOfMixed_2).asAnyGraph) { _ =>
       (new EdgeByteArray).test[Int, AnyEdge[Int]](elementsOfMixed_2)
@@ -246,7 +246,7 @@ object ByteArraySerialization {
   }
 
   def readWithCustomClassLoader[A](from: Array[Byte]): Try[A] =
-    read[A](new CustomObjectInputStream(new ByteArrayInputStream(from)))
+    read[A](new CustomObjectInputStream(new ByteArrayInputStream(from), classOf[SerializableSpec].getClassLoader))
 
   def read[A](from: Array[Byte]): Try[A] =
     read(new ObjectInputStream(new ByteArrayInputStream(from)))
@@ -261,26 +261,32 @@ object ByteArraySerialization {
       Failure[A](e)
     }
 
-  // resolves ClassNotFound issue with SBT
-  private val cl = classOf[SerializableSpec].getClassLoader
-  private class CustomObjectInputStream(in: InputStream) extends ObjectInputStream(in) {
+  // resolves ClassNotFoundException
+  private class CustomObjectInputStream(in: InputStream, classLoader: ClassLoader) extends ObjectInputStream(in) {
+    import java.lang.reflect.Proxy
+    import java.lang.reflect.{InvocationHandler, Method}
+
     override def resolveClass(cd: ObjectStreamClass): Class[_] =
       try
-        cl.loadClass(cd.getName())
+        classLoader.loadClass(cd.getName)
       catch {
         case cnf: ClassNotFoundException =>
           super.resolveClass(cd)
       }
-    override def resolveProxyClass(interfaces: Array[String]): Class[_] =
-      try {
-        val ifaces = interfaces map { iface =>
-          cl.loadClass(iface)
-        }
-        java.lang.reflect.Proxy.getProxyClass(cl, ifaces: _*)
-      } catch {
+    override def resolveProxyClass(interfaces: Array[String]): Class[_] = {
+      val classInterfaces = interfaces map classLoader.loadClass
+      try
+        Proxy.newProxyInstance(classLoader, classInterfaces, new DummyInvocationHandler).getClass
+      catch {
         case e: ClassNotFoundException =>
           super.resolveProxyClass(interfaces)
       }
+    }
+
+    private class DummyInvocationHandler extends InvocationHandler {
+      def invoke(proxy: AnyRef, method: Method, args: Array[AnyRef]): AnyRef =
+        throw new NotImplementedError(s"${getClass.getSimpleName} should never be called.")
+    }
   }
 }
 
@@ -314,8 +320,8 @@ object FileSerialization {
 }
 
 // to be serializable, the following classes must be defined at top level
-case class MyNode(val s: List[String]) extends Serializable
-case class MyLabel(val s: String)      extends Serializable
+case class MyNode(s: List[String]) extends Serializable
+case class MyLabel(s: String)      extends Serializable
 
 // examining https://issues.scala-lang.org/browse/SI-5773?jql=text%20~%20%22%40transient%22
 protected object ScalaObjectSerialization extends App {
