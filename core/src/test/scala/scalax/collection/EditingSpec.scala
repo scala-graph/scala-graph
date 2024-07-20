@@ -304,7 +304,7 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       val diEdge = 1 ~> 2
       factory.empty[Int, DiEdge[Int]] ++ List(diEdge) shouldBe factory.from(diEdge :: Nil)
 
-      val g = gString_A.concat[String, AnyEdge[String]](List("B", "C"), Nil)
+      val g = gString_A.concat[String, Edge[String]](List("B", "C"), Nil)
       g.elementCount shouldEqual 3
       'A' to 'C' map (_.toString) foreach (g.contains(_) shouldEqual true)
 

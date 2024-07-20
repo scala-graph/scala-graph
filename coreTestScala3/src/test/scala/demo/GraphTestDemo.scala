@@ -92,7 +92,7 @@ object GraphTestDemo extends App {
     type IntDiGraph = Graph[Int, DiEdge[Int]]
     implicit val arbitraryTinyGraph: Arbitrary[Graph[Int, DiEdge[Int]]] = GraphGen.tinyConnectedIntDi[Graph](Graph)
 
-    val properTiny = forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
+    val properTiny = forAll(arbitrary[IntDiGraph]) { (g: IntDiGraph) =>
       g.order == GraphGen.TinyInt.order
     }
     properTiny.check()
@@ -111,7 +111,7 @@ object GraphTestDemo extends App {
       GraphGen.fromMetrics[Int, UnDiEdge[Int], Graph](Graph, Sparse_1000_Int, Set(UnDiEdge)).apply
     }
 
-    val properSparse = forAll(arbitrary[IntUnDiGraph]) { g: IntUnDiGraph =>
+    val properSparse = forAll(arbitrary[IntUnDiGraph]) { (g: IntUnDiGraph) =>
       g.order == Sparse_1000_Int.order
     }
     properSparse.check()
@@ -149,7 +149,7 @@ object GraphTestDemo extends App {
         .apply
     }
 
-    val properMixedGraph = forAll(arbitrary[Mixed]) { g: Mixed =>
+    val properMixedGraph = forAll(arbitrary[Mixed]) { (g: Mixed) =>
       g.order == MixedMetrics.order
     }
     properMixedGraph.check()
@@ -169,7 +169,7 @@ object GraphTestDemo extends App {
         implicit val arbitraryTinyGraph: Arbitrary[Graph[Int, DiEdge[Int]]] = GraphGen.tinyConnectedIntDi[Graph](Graph)
 
         def `should conform to tiny metrics`: Unit =
-          forAll(arbitrary[IntDiGraph]) { g: IntDiGraph =>
+          forAll(arbitrary[IntDiGraph]) { (g: IntDiGraph) =>
             g.order should equal(GraphGen.TinyInt.order)
           }
       }

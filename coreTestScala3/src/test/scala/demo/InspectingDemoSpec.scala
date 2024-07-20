@@ -33,10 +33,10 @@ class InspectingDemoSpec extends RefSpec with Matchers {
       g get 1  // g.NodeT = 1
       a[NoSuchElementException] should be thrownBy {
         g get 3
-      }                     // NoSuchElementException
-      g find 1 ~ 2          // Option[g.EdgeT] = Some(1 ~ 2)
-      g.nodes find (_ == 1) // Option[g.NodeT] = 1
-      g addAndGet 3         // g.NodeT = 3
+      }                           // NoSuchElementException
+      g find 1 ~ 2                // Option[g.EdgeT] = Some(1 ~ 2)
+      g.nodes find (_.outer == 1) // Option[g.NodeT] = 1
+      g addAndGet 3               // g.NodeT = 3
     }
 
     def `Inspect Edge Ends`(): Unit = {
@@ -67,13 +67,6 @@ class InspectingDemoSpec extends RefSpec with Matchers {
       diHyperEdge match {
         case OneOrMore.Seq(_, s2, _*) ~~> OneOrMore(t1, _) => s2 * t1 // Int = 10
       }
-
-      /* TODO above yields warning "match may not be exhaustive. It would fail on the following input: HyperEdge(_)"
-         below does not:
-      val it = Iterable(1, 2)
-      val x = it match {
-        case Seq(i1, _*) => i1
-      } */
     }
 
     def `Inspect Neighbors and Incident Edges`(): Unit = {

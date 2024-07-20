@@ -40,7 +40,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
 
     def `equality ` : Unit = {
       val g = immutable.Graph(1 ~ 2)
-      g get 1 shouldBe 1
+      (g get 1).outer shouldBe 1
       g get 1 ~ 2 shouldBe 2 ~ 1
       g get 1 ~ 2 eq 2 ~ 1 shouldBe false
       g get 1 ~ 2 should not be 2 ~ 2
@@ -133,7 +133,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       val g = Graph(1, 2 ~> 3)
       g.isConnected shouldBe false
       (g + 2 ~> 1).isConnected shouldBe true
-      (g get 2).findConnected(_ == 3) shouldBe Some(3)
+      (g get 2).findConnected(_.outer == 3) shouldBe Some(3)
       g.isCyclic shouldBe false
       (g + 3 ~> 2).isCyclic shouldBe true
       g.isComplete shouldBe false

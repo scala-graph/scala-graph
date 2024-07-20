@@ -47,8 +47,8 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
     }
 
     def `create DiHyperEdge`: Unit = {
-      "DiHyperEdge(List(1), List(1))" shouldNot compile
-      "DiHyperEdge(List(1): _*)()" shouldNot compile
+      "DiHyperEdge(List(1), List(1)): DiHyperEdge[Int]" shouldNot compile
+      "DiHyperEdge(List(1): _*)(): DiHyperEdge[Int]" shouldNot compile
 
       DiHyperEdge.from(List(1), Nil) shouldBe None
       an[IllegalArgumentException] shouldBe thrownBy {
@@ -123,12 +123,12 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
   }
 
   def `match directed hyperedge`: Unit = {
-    val count   = 3
+    val count   = 4
     val sources = OneOrMore.fromUnsafe(List.tabulate(count - 1)(_ + 1))
     val target  = one(count)
     val diHyper = sources ~~> target
 
-    val OneOrMore.Seq(s1, _*) ~~> (t @ OneOrMore.Seq(c)) = diHyper
+    val OneOrMore.Seq(s1, _*) ~~> (t @ OneOrMore.Seq(c)) = diHyper: @unchecked
     s1 shouldBe sources.head
     c shouldBe count
     t shouldBe target
