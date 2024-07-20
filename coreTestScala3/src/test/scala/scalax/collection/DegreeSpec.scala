@@ -1,13 +1,13 @@
 package scalax.collection
 
+import scala.collection.{SortedMap, SortedSet}
+
 import org.scalatest.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import scalax.collection.edges.*
 import scalax.collection.generic.*
 import scalax.collection.visualization.Visualizer
-
-import scala.collection.{SortedMap, SortedSet}
 
 class DegreeSpec
     extends Suites(
