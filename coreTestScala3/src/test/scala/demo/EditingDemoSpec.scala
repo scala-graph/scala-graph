@@ -1,13 +1,13 @@
 package demo
 
+import scala.collection.SortedSet
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import scalax.collection.OuterImplicits.*
 import scalax.collection.edges.*
 import scalax.collection.generic.*
 import scalax.collection.{immutable, mutable}
-
-import scala.collection.SortedSet
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-operations.html
   *  Graph Operations]].

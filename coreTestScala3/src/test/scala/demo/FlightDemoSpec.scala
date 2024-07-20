@@ -1,12 +1,13 @@
 package demo
 
+import java.time.DayOfWeek.*
+import java.time.{DayOfWeek, LocalTime}
+
+import scala.concurrent.duration.*
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import scalax.collection.edges.*
-
-import java.time.DayOfWeek.*
-import java.time.{DayOfWeek, LocalTime}
-import scala.concurrent.duration.*
 
 class FlightDemoSpec extends RefSpec with Matchers {
 

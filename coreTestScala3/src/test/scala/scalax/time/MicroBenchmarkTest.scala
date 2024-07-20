@@ -1,11 +1,11 @@
 package scalax.time
 
+import scala.collection.immutable.ArraySeq
+import scala.collection.mutable
+
 import org.scalactic.Equality
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-
-import scala.collection.immutable.ArraySeq
-import scala.collection.mutable
 
 /* Intentionally excluded from SBT tests by means of a class name suffix different from "Spec".
  */
