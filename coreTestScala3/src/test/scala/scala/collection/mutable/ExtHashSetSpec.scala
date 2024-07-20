@@ -1,11 +1,12 @@
 package scala.collection.mutable
 
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.refspec.RefSpec
-
+import scala.collection.immutable
 import scala.math.abs
 import scala.util.Random
 import scala.util.chaining.*
+
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.refspec.RefSpec
 
 class ExtHashSetSpec extends RefSpec with Matchers {
 
