@@ -334,7 +334,8 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
 
     var edge  = new RandomEdge(weightFactory, labelFactory)
     var added = false
-    do {
+    var loop = true
+    while(loop) {
       val mayFinish = degrees.mayFinish
       added = addExact[E](
         nrToAdd = 1,
@@ -348,7 +349,8 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
         gentle = mayFinish
       )
       if (added) edge = new RandomEdge(weightFactory, labelFactory)
-    } while (added && edge.isDefined)
+      loop = added && edge.isDefined
+    }
   }
 
   /** Returns a random graph of the specified type and with the metrics passed to the enclosing class.
