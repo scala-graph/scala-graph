@@ -20,7 +20,7 @@ private trait CycleMatcher[N, E <: Edge[N]] {
   protected type C = AnyGraph[N, E]#Cycle
 
   def haveOneNodeSequenceOf(expected: Seq[N]*): Matcher[Option[C]] =
-    Matcher { ns: Option[C] =>
+    Matcher { (ns: Option[C]) =>
       val found: Seq[N] = ns match {
         case None       => Seq()
         case Some(path) => path.nodes.toSeq.map(_.outer).toList
@@ -34,7 +34,7 @@ private trait CycleMatcher[N, E <: Edge[N]] {
     }
 
   def beValid: Matcher[Option[C]] =
-    Matcher { c: Option[C] =>
+    Matcher { (c: Option[C]) =>
       def msg(key: String): String = s"$c $key valid"
       MatchResult(c.get.isValid, msg("is not"), msg("is"))
     }

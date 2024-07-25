@@ -18,7 +18,7 @@ class Export[N, E <: Edge[N]](
 
   def jsonASTNodes: JField = {
     val classNodesMap =
-      graph.nodes.toOuter groupBy { a: Any =>
+      graph.nodes.toOuter groupBy { (a: Any) =>
         val clazz = a.asInstanceOf[AnyRef].getClass
         if (simpleClassNames) clazz.getSimpleName
         else clazz.getName

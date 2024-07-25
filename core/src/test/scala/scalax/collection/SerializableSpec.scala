@@ -337,7 +337,7 @@ protected object ScalaObjectSerialization extends App {
       def d = "MyDef"
       val v = "MyVal"
     }
-    def inner = Inner
+    def inner: Inner.type = Inner
   }
 
   private trait MyTrait extends Base with Serializable {
@@ -346,7 +346,7 @@ protected object ScalaObjectSerialization extends App {
       def d = "MyDef"
       val v = "MyVal"
     }
-    val inner = Inner
+    val inner: Inner.type = Inner
   }
 
   private class MyClass extends Base with Serializable {
@@ -355,7 +355,7 @@ protected object ScalaObjectSerialization extends App {
       def d = "MyDef"
       val v = "MyVal"
     }
-    val inner = Inner
+    val inner: Inner.type = Inner
   }
 
   import ByteArraySerialization._
