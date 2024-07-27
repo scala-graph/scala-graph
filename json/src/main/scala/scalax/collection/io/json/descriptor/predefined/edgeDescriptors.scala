@@ -28,7 +28,7 @@ trait PredefinedEdgeDescriptor extends PredefinedEdgeDescriptorBase {
 }
 
 case object UnDi extends PredefinedEdgeDescriptor {
-  def descriptor[N](customSerializer: Option[Serializer[_ <: Parameters]] = None) =
+  def descriptor[N](customSerializer: Option[Serializer[_ <: Parameters]] = None): EdgeDescriptor[N, UnDiEdge[N]] =
     new EdgeDescriptor[N, UnDiEdge[N]](
       UnDiEdge.apply,
       check[EdgeParameters](customSerializer),
@@ -38,7 +38,9 @@ case object UnDi extends PredefinedEdgeDescriptor {
 }
 
 case object WUnDi extends PredefinedEdgeDescriptor {
-  def descriptor[N](customSerializer: Option[Serializer[_ <: Parameters]] = some.wEdgeSerializer) =
+  def descriptor[N](
+      customSerializer: Option[Serializer[_ <: Parameters]] = some.wEdgeSerializer
+  ): LEdgeDescriptor[N, WUnDiEdge[N], Double] =
     new LEdgeDescriptor[N, WUnDiEdge[N], Double](
       WUnDiEdge.apply,
       Double.MaxValue,
@@ -51,7 +53,9 @@ case object WUnDi extends PredefinedEdgeDescriptor {
 }
 
 case object MultiWUnDi extends PredefinedEdgeDescriptor {
-  override def descriptor[N](customSerializer: Option[Serializer[_ <: Parameters]] = some.wEdgeSerializer) =
+  override def descriptor[N](
+      customSerializer: Option[Serializer[_ <: Parameters]] = some.wEdgeSerializer
+  ): LEdgeDescriptor[N, MultiWUnDiEdge[N], Double] =
     new LEdgeDescriptor[N, MultiWUnDiEdge[N], Double](
       MultiWUnDiEdge.apply,
       Double.MaxValue,
@@ -64,12 +68,16 @@ case object MultiWUnDi extends PredefinedEdgeDescriptor {
 }
 
 case object Di extends PredefinedEdgeDescriptor {
-  override def descriptor[N](customSerializer: Option[Serializer[_ <: Parameters]] = None) =
+  override def descriptor[N](
+      customSerializer: Option[Serializer[_ <: Parameters]] = None
+  ): EdgeDescriptor[N, DiEdge[N]] =
     new EdgeDescriptor[N, DiEdge[N]](DiEdge.apply, check(customSerializer), Nil, caseObjectBasedTypeId)
 }
 
 case object WDi extends PredefinedEdgeDescriptor {
-  override def descriptor[N](customSerializer: Option[Serializer[_ <: Parameters]] = some.wEdgeSerializer) =
+  override def descriptor[N](
+      customSerializer: Option[Serializer[_ <: Parameters]] = some.wEdgeSerializer
+  ): LEdgeDescriptor[N, WDiEdge[N], Double] =
     new LEdgeDescriptor[N, WDiEdge[N], Double](
       WDiEdge.apply,
       Double.MaxValue,
@@ -82,7 +90,9 @@ case object WDi extends PredefinedEdgeDescriptor {
 }
 
 case object MultiWDi extends PredefinedEdgeDescriptor {
-  override def descriptor[N](customSerializer: Option[Serializer[_ <: Parameters]] = some.wEdgeSerializer) =
+  override def descriptor[N](
+      customSerializer: Option[Serializer[_ <: Parameters]] = some.wEdgeSerializer
+  ): LEdgeDescriptor[N, MultiWDiEdge[N], Double] =
     new LEdgeDescriptor[N, MultiWDiEdge[N], Double](
       MultiWDiEdge.apply,
       Double.MaxValue,
@@ -95,7 +105,9 @@ case object MultiWDi extends PredefinedEdgeDescriptor {
 }
 
 case object Hyper extends PredefinedEdgeDescriptor {
-  override def descriptor[N](customSerializer: Option[Serializer[_ <: Parameters]] = some.hyperEdgeSerializer) =
+  override def descriptor[N](
+      customSerializer: Option[Serializer[_ <: Parameters]] = some.hyperEdgeSerializer
+  ): HyperEdgeDescriptor[N, HyperEdge[N]] =
     new HyperEdgeDescriptor[N, HyperEdge[N]](
       HyperEdge.apply,
       check[HyperEdgeParameters](customSerializer),
@@ -105,7 +117,9 @@ case object Hyper extends PredefinedEdgeDescriptor {
 }
 
 case object DiHyper extends PredefinedEdgeDescriptor {
-  override def descriptor[N](customSerializer: Option[Serializer[_ <: Parameters]] = some.diHyperEdgeSerializer) =
+  override def descriptor[N](
+      customSerializer: Option[Serializer[_ <: Parameters]] = some.diHyperEdgeSerializer
+  ): DiHyperEdgeDescriptor[N, DiHyperEdge[N]] =
     new DiHyperEdgeDescriptor[N, DiHyperEdge[N]](DiHyperEdge.apply, check(customSerializer), Nil, caseObjectBasedTypeId)
 }
 

@@ -97,6 +97,9 @@ val unusedImports = "-Wunused:imports"
 
 lazy val defaultSettings_2_13 = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion := Version.compiler_2_13,
+  scalacOptions ++= Seq(
+    "-Xsource:3-cross"
+  ),
   libraryDependencies ++= Seq(
     "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test,
     "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test

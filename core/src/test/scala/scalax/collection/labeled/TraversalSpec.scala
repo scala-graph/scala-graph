@@ -245,7 +245,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
       shp4.get.edges.toList should be(List(flight("UA 8840"), flight("LH 1480")))
 
       val visited = MSet[g.EdgeT]()
-      (g get jfc).innerEdgeTraverser.shortestPathTo(g get lhr) { e: g.EdgeT =>
+      (g get jfc).innerEdgeTraverser.shortestPathTo(g get lhr) { (e: g.EdgeT) =>
         visited += e
       }
       val visitedSorted = visited.toList.sortWith((a: g.EdgeT, b: g.EdgeT) => a.flightNo < b.flightNo)

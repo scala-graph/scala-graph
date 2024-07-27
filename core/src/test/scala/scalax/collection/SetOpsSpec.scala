@@ -11,6 +11,7 @@ import scalax.collection.edges._
 import scalax.collection.generic.{Edge, GenericGraphCoreFactory}
 
 import scalax.collection.visualization.Visualizer
+import scalax.collection.immutable.Graph
 
 class SetOpsSpec
     extends Suites(
@@ -73,12 +74,12 @@ private class SetOps[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, 
 }
 
 private class SetOpsImmutable extends RefSpec with Matchers with SetOpExamples[immutable.Graph] {
-  protected val factory = immutable.Graph
+  protected val factory: Graph.type = immutable.Graph
 
 }
 
 private class SetOpsMutable extends RefSpec with Matchers with SetOpExamples[mutable.Graph] {
-  protected val factory = mutable.Graph
+  protected val factory: mutable.Graph.type = mutable.Graph
 
   private val iH = immutable.Graph.from(hEdges)
 
