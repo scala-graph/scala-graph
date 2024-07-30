@@ -60,14 +60,12 @@ class ConstraintBinaryOp[N, E <: Edge[N], G <: Graph[N, E]](
         case Or                           => rightFollowUp
       }
     if (followUp == Abort) PreCheckResult(Abort)
-    else {
-      if (rightDone) {
-        leftResult match {
-          case r: PreCheckResults => r += (right, rightResult)
-          case _ => new PreCheckResults(min(leftFollowUp, rightFollowUp), left, leftResult) += (right, rightResult)
-        }
-      } else leftResult
-    }
+    else if (rightDone)
+      leftResult match {
+        case r: PreCheckResults => r += (right, rightResult)
+        case _ => new PreCheckResults(min(leftFollowUp, rightFollowUp), left, leftResult) += (right, rightResult)
+      }
+    else leftResult
   }
 
   protected def eval[V <: ConstraintViolation](left: Either[V, G], right: => Either[V, G]): Either[V, G] =

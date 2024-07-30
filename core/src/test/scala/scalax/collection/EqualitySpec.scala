@@ -25,7 +25,7 @@ private class Equality[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E
   private val gInt_1_3  = factory(seq_1_3.toOuterElems[DiEdge[Int]]: _*)
   private val gString_A = factory("A")
 
-  def `Eq ` : Unit = {
+  def `Eq `: Unit = {
     factory[Int, Nothing]() shouldEqual factory[Int, DiEdge]()
     gInt_1_3 shouldEqual factory(1, 3)
     gString_A shouldEqual factory("A")

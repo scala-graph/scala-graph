@@ -6,7 +6,7 @@ import scalax.collection.generic.AbstractDiHyperEdge
 
 class EqualityHyperSpec extends RefSpec with Matchers {
 
-  def `hyperedges, bag like ` : Unit = {
+  def `hyperedges, bag like `: Unit = {
     import scalax.collection.hyperedges.*
 
     val nodes = List('A', 'B', 'C', 'C')
@@ -19,7 +19,7 @@ class EqualityHyperSpec extends RefSpec with Matchers {
       hEdge.node(i) shouldBe nodes(i)
   }
 
-  def `hyperedges, ordered ` : Unit = {
+  def `hyperedges, ordered `: Unit = {
     import scalax.collection.hyperedges.ordered.*
 
     val nodes = List('A', 'B', 'C', 'C')

@@ -45,7 +45,7 @@ private class SetOps[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, 
     with IntelliJ[CC]
     with Visualizer {
 
-  def `concat ` : Unit = {
+  def `concat `: Unit = {
     factory(1 ~ 2).asAnyGraph concat List(1 ~ 2)
     factory(1 ~ 2).asAnyGraph concat List(1 ~> 2)
     factory(1 ~ 2).asAnyGraph ++ List(1 ~ 2)
@@ -57,13 +57,13 @@ private class SetOps[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, 
     factory(1 ~ 2).asAnyGraph ++ (List('x'), List('a' ~ 'b'))
   }
 
-  def `union ` : Unit =
+  def `union `: Unit =
     g union h shouldEqual Expected.g_union_h
 
-  def `difference ` : Unit =
+  def `difference `: Unit =
     g diff h shouldEqual Expected.g_diff_h
 
-  def `intersection ` : Unit = {
+  def `intersection `: Unit = {
     val expected = factory(3 ~ 5, 4)
     withGraph(g intersect h)(_ shouldEqual expected)
     withGraph(g & h)(_ shouldEqual expected)
@@ -80,17 +80,17 @@ private class SetOpsMutable extends RefSpec with Matchers with SetOpExamples[mut
 
   private val iH = immutable.Graph.from(hEdges)
 
-  def `unionInPlace ` : Unit = {
+  def `unionInPlace `: Unit = {
     (g |= h) shouldEqual Expected.g_union_h
     (g |= iH) shouldEqual Expected.g_union_h
   }
 
-  def `--= ` : Unit = {
+  def `--= `: Unit = {
     (g --= h) shouldEqual Expected.g_diff_h
     (g --= iH) shouldEqual Expected.g_diff_h
   }
 
-  def `&= ` : Unit = {
+  def `&= `: Unit = {
     val expected = factory(3 ~ 5, 4)
 
     (g &= h) shouldEqual expected

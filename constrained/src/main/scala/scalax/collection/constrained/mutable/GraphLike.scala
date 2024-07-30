@@ -32,7 +32,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, 
             case Complete => Right(remove)
             case PostCheck =>
               val incidentEdges = node.edges.toIterable
-              if (remove) {
+              if (remove)
                 postSubtract(selfGraph, Set(node), Set.empty[E[N]], preCheckResult).fold(
                   failure => {
                     withoutChecks {
@@ -43,7 +43,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, 
                   },
                   _ => Right(true)
                 )
-              } else Right(false)
+              else Right(false)
             case Abort => Left(preCheckResult)
           }
         }
@@ -98,7 +98,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, 
         if (preCheckResult.abort) Some(preCheckResult)
         else {
           add
-          if (preCheckResult.postCheck) {
+          if (preCheckResult.postCheck)
             postAdd(this, newNodes, newEdges, preCheckResult).fold(
               failure => {
                 withoutChecks {
@@ -109,7 +109,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, 
               },
               _ => None
             )
-          } else None
+          else None
         }
       }
       (elems match {

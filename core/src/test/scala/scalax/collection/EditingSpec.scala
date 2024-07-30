@@ -50,7 +50,7 @@ class EditingImmutable extends RefSpec with Matchers {
 
     val gString_A = Graph[String, AnyEdge]("A")
 
-    def `- ` : Unit = {
+    def `- `: Unit = {
       val g_1 = gString_A - "B"
       g_1.order should be(1)
 
@@ -65,13 +65,13 @@ class EditingImmutable extends RefSpec with Matchers {
       h - 2 should be(Graph(1, 3))
     }
 
-    def `-- ` : Unit = {
+    def `-- `: Unit = {
       val g = Graph(1, 2 ~ 3, 3 ~ 4)
       g -- (List(2), List(3 ~ 3)) should be(Graph(1, 3 ~ 4))
       g -- (List(2), List(3 ~ 4)) should be(Graph(1, 3, 4))
     }
 
-    def `+ String ` : Unit = {
+    def `+ String `: Unit = {
       val g = gString_A + "B"
       g.elementCount shouldBe 2
       g.nodes should contain("A")
@@ -108,7 +108,7 @@ private class EditingMutable extends RefSpec with Matchers {
       g should be(Symbol("empty"))
     }
 
-    def `+ String ` : Unit = {
+    def `+ String `: Unit = {
       val g = Graph("A") addOne "B"
       g.elementCount shouldBe 2
       g.contains("A") shouldBe true
@@ -121,7 +121,7 @@ private class EditingMutable extends RefSpec with Matchers {
       h.elementCount should be(3)
     }
 
-    def `serve -= properly (2)` : Unit = {
+    def `serve -= properly (2)`: Unit = {
       val g = Graph(1 ~ 2, 2 ~ 3)
       g subtractOne 2 should be(Graph(1, 3))
       g.size should be(0)
@@ -185,13 +185,13 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
   private val gString_A = factory("A")
 
   object `graph editing` {
-    def `empty ` : Unit = {
+    def `empty `: Unit = {
       val eg = factory.empty[Nothing, Nothing]
       eg shouldBe empty
       eg should have size 0
     }
 
-    def `apply ` : Unit = {
+    def `apply `: Unit = {
       gInt_1_3 should not be empty
       gInt_1_3.order should be(2)
       gInt_1_3(0) shouldBe false
@@ -207,14 +207,14 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       factory(N1() ~> N2(), N1() ~> N1()): CC[Node, DiEdge[Node]] // should typeCheck
     }
 
-    def `isDirected ` : Unit = {
+    def `isDirected `: Unit = {
       def directed(g: CC[Int, AnyEdge[Int]], expected: Boolean): Unit = g.isDirected should be(expected)
 
       directed(factory(1 ~ 2), false)
       directed(factory(1 ~> 2), true)
     }
 
-    def `from ` : Unit = {
+    def `from `: Unit = {
       val (n_start, n_end) = (11, 20)
       val nodes            = List.range(n_start, n_end)
       val edges            = List[DiEdge[Int]](14 ~> 16, 16 ~> 18, 18 ~> 20, 20 ~> 22)
@@ -223,17 +223,17 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       g.edges.size should be(edges.size)
     }
 
-    def `contains ` : Unit = {
+    def `contains `: Unit = {
       seq_1_3 foreach (n => gInt_1_3 contains n should be(true))
       gInt_1_3.iterator.next() shouldBe a[gInt_1_3.InnerNode]
     }
 
-    def `toString ` : Unit = {
+    def `toString `: Unit = {
       gInt_1_3.toString shouldBe "Graph(NodeSet(1, 3), EdgeSet())"
       gString_A.toString shouldBe """Graph(NodeSet(A), EdgeSet())"""
     }
 
-    def `render ` : Unit = {
+    def `render `: Unit = {
       import ToString._
       gInt_1_3.render(SetElemsOnSeparateLines()) shouldBe
         """Graph(
@@ -260,7 +260,7 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
           |    1 ~ 2)""".stripMargin
     }
 
-    def `from inner ` : Unit = {
+    def `from inner `: Unit = {
       val gn = factory(2, 3)
       factory.from[Int, Nothing](gn.nodes.outerIterable, Nil) should equal(gn)
 
@@ -269,7 +269,7 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       factory.from(g.edges.outerIterable) should equal(g)
     }
 
-    def `NodeSet ` : Unit = {
+    def `NodeSet `: Unit = {
       val o = Vector.range(0, 4)
       val g = factory(o(1) ~ o(2), o(2) ~ o(3))
       val n = o map (g.nodes find _ getOrElse g.nodes.head)
@@ -288,7 +288,7 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       restored.find(_ == n(1)).get.edges should have size 1
     }
 
-    def `EdgeAssoc ` : Unit = {
+    def `EdgeAssoc `: Unit = {
       val e = 1 ~ 2
       e shouldBe an[UnDiEdge[_]]
 
@@ -369,13 +369,13 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       n(1) findOutgoingTo n(1) should be(Some(1 ~> 1))
     }
 
-    def `degree ` : Unit = {
+    def `degree `: Unit = {
       val g = factory(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
       (g get 1).degree should be(5)
       (g get 2).degree should be(1)
     }
 
-    def `incoming ` : Unit = {
+    def `incoming `: Unit = {
       val uEdges = Seq(1 ~ 1, 1 ~ 2, 1 ~ 3, 1 ~ 4)
       val g      = factory(uEdges(0), uEdges(1), uEdges(2), uEdges(3))
       (g get 1).incoming should be(uEdges.toSet)
@@ -393,7 +393,7 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       (g get 1 ~ 2).adjacents should be(Set[AnyEdge[Int]](1 ~> 3, 1 ~ 5, 2 ~ 3))
     }
 
-    def `filter ` : Unit = {
+    def `filter `: Unit = {
       val g: AnyGraph[Int, DiEdge[Int]] = factory(2 ~> 3, 3 ~> 1, 5)
       g filter (_ > 1) should be(factory(2 ~> 3, 5))
       g filter (_ < 2) should be(factory(1))
@@ -403,7 +403,7 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       g filter (nodeP = _ <= 3, edgeP = _ contains 2) should be(factory(1, 2 ~> 3))
     }
 
-    def `match ` : Unit = {
+    def `match `: Unit = {
       val di = 1 ~> 2
       (di match { case DiEdge(src, _) => src }) should be(1)
       (di match { case src ~> trg => src + trg }) should be(3)
@@ -413,7 +413,7 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       (unDi match { case n1 ~ n2 => n1 + n2 }) should be(3)
     }
 
-    def `foldLeft, foldLeftOuter ` : Unit = {
+    def `foldLeft, foldLeftOuter `: Unit = {
       val g = factory(1 ~> 2, 2 ~> 3, 7)
 
       val sumOfNodes = 13
