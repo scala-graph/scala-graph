@@ -38,7 +38,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       (Graph[Int, AnyEdge](1, 2 ~ 3) += 3 ~> 1) shouldBe Graph[Int, AnyEdge](1, 2 ~ 3, 3 ~> 1)
     }
 
-    def `equality ` : Unit = {
+    def `equality `: Unit = {
       val g = immutable.Graph(1 ~ 2)
       (g get 1).outer shouldBe 1
       g get 1 ~ 2 shouldBe 2 ~ 1
@@ -46,7 +46,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       g get 1 ~ 2 should not be 2 ~ 2
     }
 
-    def `union, diff, intersect ` : Unit = {
+    def `union, diff, intersect `: Unit = {
       import immutable.Graph
       val g = Graph(1 ~ 2, 2 ~ 3, 2 ~ 4, 3 ~ 5, 4 ~ 5)
       val h = Graph(3 ~ 4, 3 ~ 5, 4 ~ 6, 5 ~ 6)
@@ -57,7 +57,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       g & h shouldBe Graph(4, 3 ~ 5)
     }
 
-    def `endpoints ` : Unit = {
+    def `endpoints `: Unit = {
       val uE = 3 ~ 4 // UnDiEdge[Int]
 
       uE.node1 * uE.node2 shouldBe 12
@@ -79,7 +79,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       hE.ends.iterator.sum shouldBe 26
     }
 
-    def `neighbors ` : Unit = {
+    def `neighbors `: Unit = {
       import immutable.Graph
       val g = Graph[Int, AnyEdge](0, 1 ~ 3, 3 ~> 2)
 
@@ -95,7 +95,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       n(3) findOutgoingTo n(2) shouldBe Some(e(3 ~> 2))
     }
 
-    def `querying ` : Unit = {
+    def `querying `: Unit = {
       import immutable.Graph
       val g = Graph[Int, AnyEdge](2 ~> 3, 3 ~ 1, 5)
 
@@ -106,7 +106,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       g.edges filter (_ contains 4) shouldBe Symbol("empty")
     }
 
-    def `measuring ` : Unit = {
+    def `measuring `: Unit = {
       import immutable.Graph
       import scalax.collection.edges.labeled.*
       val g = Graph[Int, AnyEdge](
@@ -128,7 +128,7 @@ final class EditingDemoSpec extends RefSpec with Matchers {
       g.degreeNodesMap(degreeFilter = _ > 3) should contain only (4 -> Set(3, 4))
     }
 
-    def `classifying ` : Unit = {
+    def `classifying `: Unit = {
       import immutable.Graph
       val g = Graph(1, 2 ~> 3)
       g.isConnected shouldBe false

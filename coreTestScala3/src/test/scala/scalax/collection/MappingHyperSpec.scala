@@ -67,7 +67,7 @@ class MappingHyperSpec extends RefSpec with Matchers {
              3 -> 4
              4 -> 4, -4
            */
-          if (n.outer % 2 == 0) n.toString :: (-n).toString :: Nil
+          if (n.outer % 2 == 0) n.toString :: -n.toString :: Nil
           else (n.outer + 1).toString :: Nil,
 
         // `fromUnsafe` is fine here because we know that `fNode` returns at least one mapped node
@@ -113,7 +113,7 @@ class MappingHyperSpec extends RefSpec with Matchers {
              3 -> 4
              4 -> 4, -4
            */
-          if (n.outer % 2 == 0) n.toString :: (-n).toString :: Nil
+          if (n.outer % 2 == 0) n.toString :: -n.toString :: Nil
           else (n.outer + 1).toString :: Nil,
         fDiHyperEdge =
           // `fromUnsafe` is fine here because above `fNode` returns at least one mapped node

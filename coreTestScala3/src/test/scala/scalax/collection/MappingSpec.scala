@@ -83,8 +83,8 @@ class MappingSpec extends RefSpec with Matchers {
     }
 
     def `change the node type`: Unit = {
-      val g = originalG flatMap (n => List(n.outer.toString, (-n.outer).toString))
-      g shouldBe Graph(edge.node1.toString ~ edge.node2.toString, (-edge.node1).toString, (-edge.node2).toString)
+      val g = originalG flatMap (n => List(n.outer.toString, -n.outer.toString))
+      g shouldBe Graph(edge.node1.toString ~ edge.node2.toString, -edge.node1.toString, -edge.node2.toString)
     }
 
     def `change the edge type`: Unit = {
