@@ -6,8 +6,10 @@ import org.scalatest.Ignore
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
-import scalax.collection.edges._
+import scalax.collection.AnyGraph
+import scalax.collection.edges.*
 import scalax.collection.generic.{Edge, EdgeCompanionBase, GenericGraphFactory}
+import scalax.collection.GraphLike
 import scalax.collection.immutable.Graph
 import scalax.collection.mutable.{Graph => MGraph}
 

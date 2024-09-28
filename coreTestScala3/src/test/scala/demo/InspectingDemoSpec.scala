@@ -2,13 +2,12 @@ package demo
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-
-import scalax.collection.OuterImplicits._
-import scalax.collection.{OneOrMore, Several}
-import scalax.collection.edges._
+import scalax.collection.OuterImplicits.*
+import scalax.collection.edges.*
 import scalax.collection.generic.AnyEdge
-import scalax.collection.hyperedges._
+import scalax.collection.hyperedges.*
 import scalax.collection.mutable.Graph
+import scalax.collection.{OneOrMore, Several}
 
 class InspectingDemoSpec extends RefSpec with Matchers {
 
@@ -60,7 +59,6 @@ class InspectingDemoSpec extends RefSpec with Matchers {
       hyperEdge.ends.iterator.sum // Int = 26
       hyperEdge match {
         case ~~(Several.Seq(n1, n2, _*)) => n1 - n2 // Int = -1
-        // false positive non-exhausted warning resolved in Scala 3
       }
 
       val diHyperEdge = OneOrMore(1, 2) ~~> OneOrMore(5, 6)
@@ -68,7 +66,6 @@ class InspectingDemoSpec extends RefSpec with Matchers {
       diHyperEdge.targets.iterator.sum // Int = 11
       diHyperEdge match {
         case OneOrMore.Seq(_, s2, _*) ~~> OneOrMore(t1, _) => s2 * t1 // Int = 10
-        // false positive non-exhausted warning resolved in Scala 3
       }
     }
 

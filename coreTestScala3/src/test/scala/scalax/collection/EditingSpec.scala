@@ -304,22 +304,9 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       val diEdge = 1 ~> 2
       factory.empty[Int, DiEdge[Int]] ++ List(diEdge) shouldBe factory.from(diEdge :: Nil)
 
-      /* TODO [E134] Type Error:
-        None of the overloaded alternatives of method concat in trait GraphOps with types
-        [error]     | [N2 >: String, E2 >: scalax.collection.generic.Edge[String] <:
-        [error]     |  scalax.collection.generic.Edge[N2]]
-        [error]     |  (edges: IterableOnce[E2])
-        [error]     |    (implicit e: E2 <:< scalax.collection.generic.Edge[N2]): CC[N2, E2]
-        [error]     | [N2 >: String, E2 >: scalax.collection.generic.Edge[String] <:
-        [error]     |  scalax.collection.generic.Edge[N2²]]
-        [error]     |  (isolatedNodes: IterableOnce[N2²], edges: IterableOnce[E2²])
-        [error]     |    (implicit e: E2² <:< scalax.collection.generic.Edge[N2²]): CC[N2², E2²]
-        [error]     |match type arguments [String, scalax.collection.generic.AnyEdge[String]] and arguments (List[String], (Nil : => collection².immutable.Nil².type))
-
-        val g = gString_A.concat[String, AnyEdge[String]](List("B", "C"), Nil)
-        g.elementCount shouldEqual 3
-        'A' to 'C' map (_.toString) foreach (g.contains(_) shouldEqual true)
-       */
+      val g = gString_A.concat[String, Edge[String]](List("B", "C"), Nil)
+      g.elementCount shouldEqual 3
+      'A' to 'C' map (_.toString) foreach (g.contains(_) shouldEqual true)
 
       val (gBefore, gAfter) = (factory(1, 2 ~ 3), factory(0, 1 ~ 2, 2 ~ 3))
       gBefore ++ (edges = List(1 ~ 2, 2 ~ 3), isolatedNodes = List(0)) shouldEqual gAfter

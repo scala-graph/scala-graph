@@ -4,9 +4,9 @@ import scala.annotation.tailrec
 import scala.collection.BuildFrom
 import scala.util.Random.shuffle
 
-import scalax.collection.edges.*
-import scalax.collection.edges.labeled.*
-import scalax.collection.generic.*
+import scalax.collection.generic._
+import scalax.collection.edges._
+import scalax.collection.edges.labeled._
 
 abstract class TGraph[N, E <: Edge[N], G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, G]](
     val g: G[N, E]

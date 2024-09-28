@@ -1007,7 +1007,7 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
       *         a. there exists no path to such a node
       */
     final def pathTo[U](potentialSuccessor: NodeT)(implicit visitor: A => U = empty): Option[Path] = requireSuccessors {
-      if (potentialSuccessor eq this.root) Some(Path.zero(this.root))
+      if (potentialSuccessor eq TraverserMethods.this.root) Some(Path.zero(TraverserMethods.this.root))
       else pathUntil(_ eq potentialSuccessor)(visitor)
     }
 

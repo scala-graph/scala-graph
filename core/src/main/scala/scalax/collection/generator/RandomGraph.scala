@@ -332,11 +332,9 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
         edges += new RandomEdge(weightFactory, labelFactory).draw(n1, n2)
       }
 
-    var loop = true
-
     var edge  = new RandomEdge(weightFactory, labelFactory)
     var added = false
-
+    var loop  = true
     while (loop) {
       val mayFinish = degrees.mayFinish
       added = addExact[E](

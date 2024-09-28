@@ -1,24 +1,25 @@
 package scalax.collection.labeled
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 //import scala.util.Random
 //import org.scalacheck.Arbitrary.arbitrary
-//import org.scalacheck._
-import org.scalatest._
+//import org.scalacheck.*
+import org.scalatest.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-import Data._
-import OuterImplicits._
+import scalax.collection.Data.*
+import scalax.collection.OuterImplicits.*
 //import generator.GraphGen
-import generic.{AnyEdge, Edge, GenericGraphCoreFactory}
-import edges._
-import edges.labeled._
-import edges.multilabeled._
-import GraphTraversal._
-import visualization.Visualizer
+import scalax.collection.generic.{AnyEdge, Edge, GenericGraphCoreFactory}
+import scalax.collection.edges.*
+import scalax.collection.edges.labeled.*
+import scalax.collection.edges.multilabeled.*
+import scalax.collection.GraphTraversal.*
+import scalax.collection.visualization.Visualizer
+import scalax.collection.{immutable, mutable, AnyGraph, GraphLike, IntelliJ, MSet, TGraph}
 
 import scala.collection.mutable.ListBuffer
 
@@ -141,7 +142,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     withGraph(gUnDi_2) { g =>
       def n(value: Int) = g get value
 
-      val p2_1_nNE3 = n(2).withSubgraph(nodes = _ != 3).pathTo(n(1)).get
+      val p2_1_nNE3 = n(2).withSubgraph(nodes = _.outer != 3).pathTo(n(1)).get
       p2_1_nNE3.nodes.toList should be(List(2, 1))
       p2_1_nNE3.edges.toList should be(List(2 ~ 1 %% 4))
 
@@ -191,7 +192,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
 
       val nodes     = ListBuffer[g.NodeT]()
       val edges     = ListBuffer[g.EdgeT]()
-      val traverser = n(2).innerElemTraverser.withSubgraph(nodes = _ != 3)
+      val traverser = n(2).innerElemTraverser.withSubgraph(nodes = _.outer != 3)
       traverser.pathTo(n(1)) {
         case n: g.InnerNode => nodes += n.asNodeT
         case e: g.InnerEdge => edges += e.asEdgeT
@@ -244,7 +245,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
       shp4.get.edges.toList should be(List(flight("UA 8840"), flight("LH 1480")))
 
       val visited = MSet[g.EdgeT]()
-      (g get jfc).innerEdgeTraverser.shortestPathTo(g get lhr) { e: g.EdgeT =>
+      (g get jfc).innerEdgeTraverser.shortestPathTo(g get lhr) { (e: g.EdgeT) =>
         visited += e
       }
       val visitedSorted = visited.toList.sortWith((a: g.EdgeT, b: g.EdgeT) => a.flightNo < b.flightNo)

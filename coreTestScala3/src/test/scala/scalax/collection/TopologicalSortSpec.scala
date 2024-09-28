@@ -143,7 +143,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   }
 
   def `connected graph`(): Unit = {
-    val someOuter @ n0 :: n1 :: n5 :: Nil = 0 :: 1 :: 5 :: Nil
+    val someOuter @ n0 :: n1 :: n5 :: Nil = 0 :: 1 :: 5 :: Nil: @unchecked
     val connected = factory[Int, DiEdge](n0 ~> n1, 2 ~> 4, 2 ~> n5, n0 ~> 3, n1 ~> 4, 4 ~> 3).asAnyGraph
     withGraph(connected) { g =>
       g.isMulti shouldBe false
@@ -180,8 +180,8 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
   }
 
   def `unconnected graph`(): Unit = {
-    val expectedLayer_0 @ (_1 :: _3 :: Nil) = List(1, 3)
-    val expectedLayer_1 @ (_2 :: _4 :: Nil) = List(2, 4)
+    val expectedLayer_0 @ _1 :: _3 :: Nil = List(1, 3): @unchecked
+    val expectedLayer_1 @ _2 :: _4 :: Nil = List(2, 4): @unchecked
     withGraph(factory(_1 ~> _2, _3 ~> _4)) {
       _.topologicalSort.fold(
         Topo.unexpectedCycle,

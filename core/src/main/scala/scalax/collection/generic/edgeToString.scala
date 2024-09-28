@@ -1,6 +1,6 @@
 package scalax.collection.generic
 
-sealed protected trait EdgeToString { self: Edge[_] =>
+sealed protected trait EdgeToString { e: Edge[_] =>
 
   protected def nodesToStringSeparator: String
 
@@ -10,19 +10,19 @@ sealed protected trait EdgeToString { self: Edge[_] =>
   override def toString: String = nodesToString
 }
 
-trait UnDiEdgeToString extends EdgeToString { self: AnyUnDiEdge[_] =>
+trait UnDiEdgeToString extends EdgeToString { e: AnyUnDiEdge[_] =>
   override protected def nodesToStringSeparator: String = " ~ "
 }
 
-trait DiEdgeToString extends EdgeToString { self: AnyDiEdge[_] =>
+trait DiEdgeToString extends EdgeToString { e: AnyDiEdge[_] =>
   override protected def nodesToStringSeparator: String = " ~> "
 }
 
-trait HyperEdgeToString extends EdgeToString { self: AnyHyperEdge[_] =>
+trait HyperEdgeToString extends EdgeToString { e: AnyHyperEdge[_] =>
   override protected def nodesToStringSeparator: String = " ~~ "
 }
 
-trait DiHyperEdgeToString extends EdgeToString { self: AnyDiHyperEdge[_] =>
+trait DiHyperEdgeToString extends EdgeToString { e: AnyDiHyperEdge[_] =>
 
   override protected def nodesToStringSeparator: String = " ~~> "
 
@@ -32,7 +32,7 @@ trait DiHyperEdgeToString extends EdgeToString { self: AnyDiHyperEdge[_] =>
   }
 }
 
-sealed protected trait LEdgeToString extends EdgeToString { self: Edge[_] =>
+sealed protected trait LEdgeToString extends EdgeToString { e: Edge[_] =>
 
   /** The part to be printed after the edge ends and before the label. */
   protected def labelSeparator: String = " :+ "
@@ -55,12 +55,12 @@ trait LDiHyperEdgeToString extends LEdgeToString with DiHyperEdgeToString { this
 /** Mix in this trait in your labeled edge class if you want to indicate in its `toString` representation
   * that the edge supports multigraphs. Once mixed in, the `labelSeparator` gets `:++`.
   */
-trait MultiLEdgeToString { self: LEdgeToString with MultiEdge =>
+trait MultiLEdgeToString { e: LEdgeToString with MultiEdge =>
 
   override protected def labelSeparator: String = " :++ "
 }
 
-sealed protected trait WEdgeToString extends LEdgeToString { self: Edge[_] =>
+sealed protected trait WEdgeToString extends LEdgeToString { e: Edge[_] =>
 
   override protected def labelSeparator: String = " % "
 
@@ -68,15 +68,15 @@ sealed protected trait WEdgeToString extends LEdgeToString { self: Edge[_] =>
   protected def labelToString: String = weight.toString
 }
 
-trait WUnDiEdgeToString extends WEdgeToString with UnDiEdgeToString { self: AnyUnDiEdge[_] => }
+trait WUnDiEdgeToString extends WEdgeToString with UnDiEdgeToString { e: AnyUnDiEdge[_] => }
 
-trait WDiEdgeToString extends WEdgeToString with DiEdgeToString { self: AnyDiEdge[_] => }
+trait WDiEdgeToString extends WEdgeToString with DiEdgeToString { e: AnyDiEdge[_] => }
 
-trait WHyperEdgeToString extends WEdgeToString with HyperEdgeToString { self: AnyHyperEdge[_] => }
+trait WHyperEdgeToString extends WEdgeToString with HyperEdgeToString { e: AnyHyperEdge[_] => }
 
-trait WDiHyperEdgeToString extends WEdgeToString with DiHyperEdgeToString { self: AnyDiHyperEdge[_] => }
+trait WDiHyperEdgeToString extends WEdgeToString with DiHyperEdgeToString { e: AnyDiHyperEdge[_] => }
 
-trait MultiWEdgeToString { self: WEdgeToString with MultiEdge =>
+trait MultiWEdgeToString { e: WEdgeToString with MultiEdge =>
 
   override protected def labelSeparator: String = " %% "
 }
