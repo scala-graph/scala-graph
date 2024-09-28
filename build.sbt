@@ -24,7 +24,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       name    := "Graph Core",
       version := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck" % "1.18.0"
+        "org.scalacheck" %% "scalacheck" % "1.18.1"
       )
     )
   )
