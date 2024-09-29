@@ -2,9 +2,9 @@ package scalax.collection.visualization
 
 import org.scalatest.exceptions.TestFailedException
 
-import scalax.collection.generic.Edge
 import scalax.collection.AnyGraph
 import scalax.collection.ToString._
+import scalax.collection.generic.Edge
 
 /** Scalatest support for graph visualization in case of failures.
   *

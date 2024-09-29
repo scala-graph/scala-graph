@@ -4,15 +4,13 @@ import java.io._
 
 import scala.util.{Failure, Success, Try}
 
+import org.scalatest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import scalax.collection.generic.{AnyEdge, Edge, GenericGraphCoreFactory}
-
-import org.scalatest._
-
 import scalax.collection.visualization.Visualizer
 
 class SerializableSpec
@@ -343,7 +341,7 @@ protected object ScalaObjectSerialization extends App {
       def d = "MyDef"
       val v = "MyVal"
     }
-    def inner: Inner.type = Inner
+    def inner = Inner
   }
 
   private trait MyTrait extends Base with Serializable {
@@ -352,7 +350,7 @@ protected object ScalaObjectSerialization extends App {
       def d = "MyDef"
       val v = "MyVal"
     }
-    val inner: Inner.type = Inner
+    val inner = Inner
   }
 
   private class MyClass extends Base with Serializable {

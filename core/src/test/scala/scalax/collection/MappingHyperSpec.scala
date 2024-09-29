@@ -1,7 +1,7 @@
 package scalax.collection
 
-import org.scalatest.refspec.RefSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.refspec.RefSpec
 
 import scalax.collection.OneOrMore.{more, one}
 import scalax.collection.OuterImplicits._

@@ -7,8 +7,6 @@ import scalax.collection.edges._
 import scalax.collection.generic._
 import scalax.collection.OuterImplicits._
 import scalax.collection.config.GraphConfig
-import scalax.collection.immutable.Graph
-import scalax.collection.config.CoreConfig
 
 /** Editing any kind of non-hypergraph with unlabeled edges including mixed graphs.
   */
@@ -16,12 +14,12 @@ class EditingSpec
     extends Suites(
       new EditingEdges,
       new Editing[immutable.Graph](new ConfigWrapper[immutable.Graph] {
-        val companion: Graph.type = immutable.Graph
-        val config: CoreConfig    = immutable.Graph.defaultConfig
+        val companion = immutable.Graph
+        val config    = immutable.Graph.defaultConfig
       }),
       new Editing[mutable.Graph](new ConfigWrapper[mutable.Graph] {
-        val companion: mutable.Graph.type = mutable.Graph
-        val config: CoreConfig            = mutable.Graph.defaultConfig
+        val companion = mutable.Graph
+        val config    = mutable.Graph.defaultConfig
       }),
       new EditingImmutable,
       new EditingMutable

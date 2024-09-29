@@ -1,7 +1,7 @@
 package demo
 
-import scalax.collection.mutable.Graph
 import scalax.collection.edges._
+import scalax.collection.mutable.Graph
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/test.html
   *  Test Utilities]].
@@ -157,8 +157,8 @@ object GraphTestDemo extends App {
 
     // Integrating with ScalaTest, limiting the minimum # of successful tests
     import org.scalatest.matchers.should.Matchers
-    import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
     import org.scalatest.refspec.RefSpec
+    import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
     class TGraphGenTest extends RefSpec with Matchers with ScalaCheckPropertyChecks {
 

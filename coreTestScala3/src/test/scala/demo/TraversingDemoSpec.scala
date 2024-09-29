@@ -2,12 +2,13 @@ package demo
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
+
+import scalax.collection.{OuterElem, OuterNode}
 import scalax.collection.OuterImplicits.*
 import scalax.collection.edges.*
 import scalax.collection.edges.labeled.*
 import scalax.collection.generic.AnyEdge
 import scalax.collection.immutable.Graph
-import scalax.collection.{OuterElem, OuterNode}
 
 /** Includes the examples given on [[http://www.scala-graph.org/guides/core-traversing.html
   * Traversing Graphs]].

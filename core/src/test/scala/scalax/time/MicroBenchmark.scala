@@ -1,7 +1,7 @@
 package scalax.time
 
-import scala.language.implicitConversions
 import scala.collection.mutable.ArrayBuffer
+import scala.language.implicitConversions
 
 /** Provides lightweight syntax for simple time measurement and the comparison of results.
   * Not aimed at sophisticated JVM benchmarking.
@@ -35,7 +35,7 @@ object MicroBenchmark {
     def toFloat(x: NanoSecond)                          = x.value.toFloat
     def toDouble(x: NanoSecond)                         = x.value.toDouble
     def compare(x: NanoSecond, y: NanoSecond)           = num.compare(x, y)
-    def parseString(str: String): Nothing               = throw new UnsupportedOperationException
+    def parseString(str: String)                        = throw new UnsupportedOperationException
   }
 
   sealed abstract class MeasurementResult[A](result: A) {

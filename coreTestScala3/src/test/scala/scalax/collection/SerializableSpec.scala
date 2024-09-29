@@ -7,6 +7,7 @@ import scala.util.{Failure, Success, Try}
 import org.scalatest.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
 import scalax.collection.OuterImplicits.*
 import scalax.collection.edges.*
 import scalax.collection.generic.{AnyEdge, Edge, GenericGraphCoreFactory}

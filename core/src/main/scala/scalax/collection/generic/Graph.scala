@@ -30,8 +30,6 @@ sealed trait Factory[+CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
   /** The default configuration to be used in absence of a user-supplied configuration. */
   def defaultConfig: GraphConfig
 
-  protected[this] type Coll = CC[_, Nothing]
-
   def newBuilder[N, E <: Edge[N]](implicit config: GraphConfig = defaultConfig) = new Builder[N, E, CC](this)
 
   protected[collection] def fromSpecific[N, E <: Edge[N]](nodes: Iterable[N], edges: Iterable[E])(implicit

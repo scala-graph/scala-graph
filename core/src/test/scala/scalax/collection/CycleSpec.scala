@@ -166,12 +166,12 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
       withGraph(cyclic_22) { g =>
         def n(outer: Int) = g get outer
 
-        n(1).withSubgraph(nodes = _ != 3).partOfCycle() should haveOneNodeSequenceOf(
+        n(1).withSubgraph(nodes = _.outer != 3).partOfCycle() should haveOneNodeSequenceOf(
           Seq(1, 5, 6, 1),
           Seq(1, 4, 5, 6, 1)
         )
-        n(4).withSubgraph(nodes = _ != 3).partOfCycle() should haveOneNodeSequenceOf(Seq(4, 5, 6, 1, 4))
-        n(2).withSubgraph(nodes = _ != 3).partOfCycle() should be(None)
+        n(4).withSubgraph(nodes = _.outer != 3).partOfCycle() should haveOneNodeSequenceOf(Seq(4, 5, 6, 1, 4))
+        n(2).withSubgraph(nodes = _.outer != 3).partOfCycle() should be(None)
       }
 
     def `the cycle returned by 'findCycle' contains the expected edges`: Unit = {
@@ -263,10 +263,10 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
     }
     def `the cycle returned by 'partOfCycle' combined with fluent properties contains the expected nodes`: Unit = {
       withGraph(unDiCyclic_21) { g =>
-        (g get 1).withSubgraph(nodes = _ != 2).partOfCycle() should be(None)
+        (g get 1).withSubgraph(nodes = _.outer != 2).partOfCycle() should be(None)
       }
       withGraph(unDiCyclic_22) { g =>
-        (g get 3).withSubgraph(nodes = _ != 2).partOfCycle() should be(None)
+        (g get 3).withSubgraph(nodes = _.outer != 2).partOfCycle() should be(None)
       }
     }
   }
@@ -320,7 +320,7 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
           defined
         ) and beValid)
       }
-      withGraph(mixed.filterNot(_ == 5, _ == 4 ~> 4)) { g =>
+      withGraph(mixed.filterNot(_.outer == 5, _.outer == 4 ~> 4)) { g =>
         (g get 1).findCycle should haveOneNodeSequenceOf(Seq(1, 3, 2, 1))
       }
     }
@@ -361,11 +361,11 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
           Seq(2, 3, 5, 1, 2)
         )
         n(2)
-          .withSubgraph(nodes = _ != 5)
+          .withSubgraph(nodes = _.outer != 5)
           .withOrdering(g.BaseInnerEdge.WeightOrdering)
           .partOfCycle should haveOneNodeSequenceOf(Seq(2, 1, 3, 2))
 
-        n(1).withSubgraph(nodes = _ != 5).partOfCycle should haveOneNodeSequenceOf(Seq(1, 3, 2, 1))
+        n(1).withSubgraph(nodes = _.outer != 5).partOfCycle should haveOneNodeSequenceOf(Seq(1, 3, 2, 1))
       }
 
     private val cycleEdges = List(1 ~> 2, 1 ~ 2)

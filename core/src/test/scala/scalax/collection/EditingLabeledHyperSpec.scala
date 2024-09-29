@@ -3,9 +3,8 @@ package scalax.collection
 import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-
-import scalax.collection.OneOrMore.more
 import scalax.collection.Data.shuffleNotEqual
+import scalax.collection.OneOrMore.more
 import scalax.collection.generic.{Edge, GenericGraphCoreFactory}
 
 /** Editing hypergraphs with labeled edges including support for multi-hypergraphs.

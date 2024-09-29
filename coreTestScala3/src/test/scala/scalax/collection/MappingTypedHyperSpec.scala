@@ -3,6 +3,7 @@ package scalax.collection
 import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
+
 import scalax.collection.generic.{Edge, GenericGraphCoreFactory}
 
 class MappingTypedHyperSpec

@@ -1,11 +1,11 @@
 package demo
 
+import scala.util.chaining._
+
 import scalax.collection.OneOrMore
 import scalax.collection.OneOrMore.one
-import scalax.collection.generic.{AbstractDiEdge, AbstractDiHyperEdge, AnyDiHyperEdge, DiEdgeToString, MultiEdge}
+import scalax.collection.generic._
 import scalax.collection.immutable.{Graph, TypedGraphFactory}
-
-import scala.util.chaining._
 
 /** Demonstrates a largely typesafe Hypergraph for SQL schemas with
   *   - `Node`'s representing tables and columns and

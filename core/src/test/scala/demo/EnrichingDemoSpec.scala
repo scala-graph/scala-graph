@@ -1,12 +1,12 @@
 package demo
 
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.refspec.RefSpec
+
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import scalax.collection.generic._
 import scalax.collection.immutable.Graph
-
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.refspec.RefSpec
 
 class EnrichingDemoSpec extends RefSpec with Matchers {
 

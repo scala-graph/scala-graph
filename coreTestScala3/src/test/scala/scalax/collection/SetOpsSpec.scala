@@ -5,6 +5,7 @@ import scala.util.chaining.*
 import org.scalatest.Suites
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
+
 import scalax.collection.OuterImplicits.*
 import scalax.collection.edges.*
 import scalax.collection.generic.{Edge, GenericGraphCoreFactory}
