@@ -6,7 +6,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scala: [ "2.13.15" ]
+        scala: [ "2.13.15", "3.3.0" ]
+        project: [ "core", "dot", "json" ]
+        exclude:
+          - scala: "3.3.0"
+            project: "json"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,5 +22,5 @@ jobs:
           cache: 'sbt'
       - name: Test
         run: |
-          sbt ++${{ matrix.scala }} test scalafmtCheckAll
+          sbt ++${{ matrix.scala }} ${{ matrix.project }}/test scalafmtCheckAll
           sbt "project coreTestScala3" test Test/scalafmt

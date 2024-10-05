@@ -1,16 +1,16 @@
 package scalax.collection
 
-import java.time.DayOfWeek._
+import java.time.DayOfWeek.*
 import java.time.LocalTime
-import scala.concurrent.duration._
-import org.scalatest.matchers.should.Matchers
+
+import scala.concurrent.duration.*
+
 import org.scalatest.Suites
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-
 import scalax.collection.edges.DiEdge
-import scalax.collection.generic._
-
-import scalax.collection.labeled.aviation._
+import scalax.collection.generic.*
+import scalax.collection.labeled.aviation.*
 
 class EditingTypedSpec
     extends Suites(
@@ -35,7 +35,7 @@ private object Samples {
 }
 
 private class EditingTypedEdges extends RefSpec with Matchers {
-  import Samples._
+  import Samples.*
 
   def `toString of typed edge`: Unit =
     outer.toString should startWith(s"$madrid ~> $rio :++ ")
@@ -47,7 +47,7 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
 ) extends RefSpec
     with Matchers
     with IntelliJ[CC] {
-  import Samples._
+  import Samples.*
 
   object `Custom edge 'Flight'` {
     def `edge methods`: Unit = {
@@ -121,7 +121,7 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
       val widened = g ++ List(diEdge)
       "widened: AnyFlightGraph" shouldNot compile
       "widened: AnyGraph[Airport, DiEdge[Airport]]" shouldNot compile
-      "widened: AnyGraph[Airport, AnyDiEdge[Airport] with EdgeMapper with DiEdgeToString with Product with Serializable]" should compile
+      "widened: AnyGraph[Airport, AnyDiEdge[Airport] with EdgeMapper with DiEdgeToString]" should compile
     }
 
     def `concat adding a typed edge`: Unit = {
@@ -134,7 +134,7 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
       val widened = g ++ List(outer)
       "widened: AnyFlightGraph" shouldNot compile
       "widened: AnyGraph[Airport, DiEdge[Airport]]" shouldNot compile
-      "widened: AnyGraph[Airport, AnyDiEdge[Airport] with EdgeMapper with DiEdgeToString with Product with Serializable]" should compile
+      "widened: AnyGraph[Airport, AnyDiEdge[Airport] with EdgeMapper with DiEdgeToString]" should compile
     }
   }
 }
