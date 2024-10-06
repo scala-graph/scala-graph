@@ -6,10 +6,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scala: [ "2.13.15", "3.3.0" ]
+        scala: [ "2.13.15", "3.3.4" ]
         project: [ "core", "dot", "json" ]
         exclude:
-          - scala: "3.3.0"
+          - scala: "3.3.4"
             project: "json"
     runs-on: ubuntu-latest
     steps:
