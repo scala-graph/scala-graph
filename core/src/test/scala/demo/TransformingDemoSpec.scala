@@ -1,13 +1,14 @@
 package demo
 
 import scala.concurrent.duration._
+
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.refspec.RefSpec
+
 import scalax.collection.OuterImplicits._
 import scalax.collection.edges._
 import scalax.collection.generic.AnyEdge
 import scalax.collection.immutable.Graph
-
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.refspec.RefSpec
 
 final class TransformingDemoSpec extends RefSpec with Matchers {
 

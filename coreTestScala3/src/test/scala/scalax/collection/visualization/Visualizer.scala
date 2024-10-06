@@ -1,6 +1,7 @@
 package scalax.collection.visualization
 
 import org.scalatest.exceptions.TestFailedException
+
 import scalax.collection.AnyGraph
 import scalax.collection.ToString.*
 import scalax.collection.generic.Edge

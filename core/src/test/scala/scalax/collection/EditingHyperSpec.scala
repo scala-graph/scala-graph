@@ -129,7 +129,7 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
     val target  = one(count)
     val diHyper = sources ~~> target
 
-    val OneOrMore.Seq(s1, _*) ~~> (t @ OneOrMore.Seq(c)) = diHyper
+    val OneOrMore.Seq(s1, _*) ~~> (t @ OneOrMore.Seq(c)) = diHyper: @unchecked
     s1 shouldBe sources.head
     c shouldBe count
     t shouldBe target

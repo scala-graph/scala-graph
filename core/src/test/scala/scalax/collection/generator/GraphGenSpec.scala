@@ -1,5 +1,4 @@
-package scalax.collection
-package generator
+package scalax.collection.generator
 
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Arbitrary.arbitrary

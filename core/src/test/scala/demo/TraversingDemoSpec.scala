@@ -27,8 +27,8 @@ final class TraversingDemoSpec extends RefSpec with Matchers {
           case _            => throw new IllegalArgumentException
         }
         p.isValid shouldBe true
-        p.startNode == toN(sample.head) shouldBe true
-        p.endNode == toN(sample.last) shouldBe true
+        p.startNode.outer == toN(sample.head) shouldBe true
+        p.endNode.outer == toN(sample.last) shouldBe true
       }
 
       n(1) findSuccessor (_.outDegree > 3) shouldBe None

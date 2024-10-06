@@ -4,6 +4,7 @@ import org.scalatest.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+
 import scalax.collection.GraphTraversal.*
 import scalax.collection.GraphTraversal.Parameters.*
 import scalax.collection.OuterImplicits.*

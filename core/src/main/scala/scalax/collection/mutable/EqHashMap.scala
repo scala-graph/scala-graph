@@ -14,7 +14,7 @@ class EqHashMap[K <: AnyRef, V](_sizeHint: Int = EqHash.defCapacity)
   final protected def step          = 2
 
   def this(other: EqHashMap[K, V]) = {
-    this
+    this()
     from(other)
   }
 
