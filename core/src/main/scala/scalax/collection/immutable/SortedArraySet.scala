@@ -65,23 +65,24 @@ class SortedArraySet[A](array: Array[A] = new Array[AnyRef](0).asInstanceOf[Arra
     if (found == -1) None else Some(found)
   }
 
-  def rangeImpl(from: Option[A], until: Option[A]): SortedArraySet[A] = {
-    if (size == 0 || from == None && until == None) return this
-    val idxFrom = from flatMap (search(_, ordering.lt)) getOrElse 0
-    val idxTill = (until flatMap (e =>
-      search(e, ordering.lt) orElse (
-        if (ordering.gt(e, array(size - 1))) Some(size)
-        else Some(-1)
-      )
-    ) getOrElse size) - 1
-    if (idxFrom > idxTill) empty
+  def rangeImpl(from: Option[A], until: Option[A]): SortedArraySet[A] =
+    if (size == 0 || from == None && until == None) this
     else {
-      val newSize               = idxTill - idxFrom + 1
-      val newArr: Array[AnyRef] = new Array(newSize)
-      arraycopy(array, idxFrom, newArr, 0, newSize)
-      new SortedArraySet(newArr.asInstanceOf[Array[A]])
+      val idxFrom = from flatMap (search(_, ordering.lt)) getOrElse 0
+      val idxTill = (until flatMap (e =>
+        search(e, ordering.lt) orElse (
+          if (ordering.gt(e, array(size - 1))) Some(size)
+          else Some(-1)
+        )
+      ) getOrElse size) - 1
+      if (idxFrom > idxTill) empty
+      else {
+        val newSize               = idxTill - idxFrom + 1
+        val newArr: Array[AnyRef] = new Array(newSize)
+        arraycopy(array, idxFrom, newArr, 0, newSize)
+        new SortedArraySet(newArr.asInstanceOf[Array[A]])
+      }
     }
-  }
 
   def find(elem: A): Option[A] = {
     val i = array.indexOf(elem)

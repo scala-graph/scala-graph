@@ -2,6 +2,7 @@ package scalax.collection.mutable
 
 import scala.collection.Util.nextPositivePowerOfTwo
 import scala.collection.mutable.Growable
+import scala.util.compat.Boundary.boundary
 
 trait EqHash[A, C <: EqHash[A, C]] {
   this: IterableOnce[A] with Growable[A] with Equals =>
@@ -45,15 +46,15 @@ trait EqHash[A, C <: EqHash[A, C]] {
     else nextPositivePowerOfTwo(min)
   }
 
-  protected def index(maskedKey: AnyRef, keyHash: Int, tabLength: Int): Int = {
+  protected def index(maskedKey: AnyRef, keyHash: Int, tabLength: Int): Int = boundary { break =>
     val tab = table
     var i   = keyHash
     while (true) {
       val item = tab(i)
       if (item eq maskedKey)
-        return i
+        break(i)
       else if (item eq null)
-        return ~i
+        break(~i)
       else
         i = nextKeyIndex(i, tabLength)
     }
@@ -120,14 +121,14 @@ trait EqHash[A, C <: EqHash[A, C]] {
     private[this] var lastReturnedIndex = -1
     private[this] var indexValid        = false
 
-    def hasNext: Boolean = {
+    def hasNext: Boolean = boundary { break =>
       val s = step
       var i = index
       while (i < len) {
         if (tab(i) ne null) {
           index = i
           indexValid = true
-          return true
+          break(true)
         }
         i += s
       }
@@ -141,7 +142,7 @@ trait EqHash[A, C <: EqHash[A, C]] {
       indexValid = false
       lastReturnedIndex = index
       index += step
-      return lastReturnedIndex
+      lastReturnedIndex
     }
   }
 

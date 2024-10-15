@@ -4,6 +4,7 @@ import scala.annotation.{switch, tailrec}
 import scala.collection.{FilterableSet, FilteredSet}
 import scala.collection.mutable.{ArrayBuffer, Map => MMap, PriorityQueue, Queue, Stack}
 import scala.reflect.ClassTag
+import scala.util.compat.Boundary.boundary
 
 import scalax.collection.generic.Edge
 import scalax.collection.immutable.SortedArraySet
@@ -425,22 +426,24 @@ trait TraverserImpl[N, E <: Edge[N]] {
           }
 
           visit(root)
-          while (q.nonEmpty) {
-            val Element(prevNode, prevDepth, cumWeight) = q.dequeue()
-            if (prevDepth < untilDepth) {
-              depth = prevDepth + 1
-              for (n <- filteredNodes(prevNode, nonVisited, cumWeight, false)) {
-                visit(n)
-                if (stopAt(n, nodeCnt, depth)) return Some(n)
-                q enqueue Element(
-                  n,
-                  depth,
-                  maxWeight.fold(ifEmpty = 0d)(w => cumWeight + minWeight(prevNode, n, cumWeight))
-                )
+          boundary { break =>
+            while (q.nonEmpty) {
+              val Element(prevNode, prevDepth, cumWeight) = q.dequeue()
+              if (prevDepth < untilDepth) {
+                depth = prevDepth + 1
+                for (n <- filteredNodes(prevNode, nonVisited, cumWeight, false)) {
+                  visit(n)
+                  if (stopAt(n, nodeCnt, depth)) break(Some(n))
+                  q enqueue Element(
+                    n,
+                    depth,
+                    maxWeight.fold(ifEmpty = 0d)(w => cumWeight + minWeight(prevNode, n, cumWeight))
+                  )
+                }
               }
             }
+            None
           }
-          None
         }
 
       @inline protected[collection] def dfs[U](maybeHandle: Option[Handle] = None): Option[NodeT] =
@@ -697,41 +700,45 @@ trait TraverserImpl[N, E <: Edge[N]] {
 
               def mixedCycle(blackSuccessors: Iterable[NodeT]): Option[(NodeT, Stack[CycleStackElem])] =
                 withHandle() { handle =>
-                  val visitedBlackHandle = Some(handle)
-                  for (n <- blackSuccessors)
-                    thisImpl
-                      .withRoot(n)
-                      .withSubgraph(n => subgraphNodes(n) && !isWhite(n) && (n ne current), subgraphEdges)
-                      .pathUntil_(isGray, maybeHandle = visitedBlackHandle)
-                      .foreach { missingPath =>
-                        val start = missingPath.endNode
-                        val shortenedPath = {
-                          var found = false
-                          path takeWhile { case CycleStackElem(n, _) =>
-                            if (n eq start) {
-                              found = true
-                              true
-                            } else !found
+                  boundary { break =>
+                    val visitedBlackHandle = Some(handle)
+                    for (n <- blackSuccessors)
+                      thisImpl
+                        .withRoot(n)
+                        .withSubgraph(n => subgraphNodes(n) && !isWhite(n) && (n ne current), subgraphEdges)
+                        .pathUntil_(isGray, maybeHandle = visitedBlackHandle)
+                        .foreach { missingPath =>
+                          val start = missingPath.endNode
+                          val shortenedPath = {
+                            var found = false
+                            path takeWhile { case CycleStackElem(n, _) =>
+                              if (n eq start) {
+                                found = true
+                                true
+                              } else !found
+                            }
+                          }
+                          if (
+                            mustContain.forall { n =>
+                              missingPath.nodes.exists(_ eq n) ||
+                              shortenedPath.exists { case CycleStackElem(pn, _) => pn eq n }
+                            }
+                          ) {
+                            missingPath.foldLeft(
+                              (missingPath.nodes.head connectionsWith shortenedPath.head.node).head
+                            ) {
+                              case (edge, inner: InnerNode) =>
+                                val n = inner.asInstanceOf[NodeT]
+                                if (isBlack(n))
+                                  shortenedPath.push(new CycleStackElem(n, Set(edge)))
+                                edge
+                              case (_, InnerEdge(e, _)) => e
+                            }
+                            break(Some(start, shortenedPath))
                           }
                         }
-                        if (
-                          mustContain.forall { n =>
-                            missingPath.nodes.exists(_ eq n) ||
-                            shortenedPath.exists { case CycleStackElem(pn, _) => pn eq n }
-                          }
-                        ) {
-                          missingPath.foldLeft((missingPath.nodes.head connectionsWith shortenedPath.head.node).head) {
-                            case (edge, inner: InnerNode) =>
-                              val n = inner.asInstanceOf[NodeT]
-                              if (isBlack(n))
-                                shortenedPath.push(new CycleStackElem(n, Set(edge)))
-                              edge
-                            case (_, InnerEdge(e, _)) => e
-                          }
-                          return Some(start, shortenedPath)
-                        }
-                      }
-                  None
+                    None
+                  }
                 }
 
               def cycle(graySuccessors: Iterable[NodeT]): Option[(NodeT, Stack[CycleStackElem])] =

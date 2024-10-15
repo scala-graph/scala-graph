@@ -9,7 +9,7 @@
  * See the NOTICE file distributed with this work for
  * additional information regarding copyright ownership.
  */
-/* Extended version of https://github.com/scala/scala/blob/2.13.x/src/library/scala/collection/mutable/ExtHashSet.scala
+/* Extended version of https://github.com/scala/scala/blob/2.13.x/src/library/scala/collection/mutable/HashSet.scala
  */
 
 package scala.collection
@@ -105,11 +105,9 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
     }
   }
 
-  override def subtractAll(xs: IterableOnce[A]): this.type = {
-    if (size == 0) {
-      return this
-    }
-
+  override def subtractAll(xs: IterableOnce[A]): this.type =
+    if (size == 0) this
+    else
     xs match {
       case hs: immutable.HashSet[A] =>
         hs.foreachWithHashWhile { (k, h) =>
@@ -119,15 +117,13 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
         this
       case hs: ExtHashSet[A] =>
         val iter = hs.nodeIterator
-        while (iter.hasNext) {
+        while (iter.hasNext && size > 0) {
           val next = iter.next()
           remove(next.key, next.hash)
-          if (size == 0) return this
         }
         this
       case _ => super.subtractAll(xs)
     }
-  }
 
   /** Adds an element to this set
     *
@@ -139,21 +135,29 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
     table(idx) match {
       case null =>
         table(idx) = new Node(elem, hash, null)
+        contentSize += 1
+        true
       case old =>
         var prev: Node[A] = null
         var n = old
-        while((n ne null) && n.hash <= hash) {
-          if(n.hash == hash && elem == n.key) return false
-          prev = n
-          n = n.next
+        var duplicate = false
+        while((n ne null) && !duplicate && n.hash <= hash) {
+          if(n.hash == hash && elem == n.key) duplicate = true
+          else {
+            prev = n
+            n = n.next
+          }
         }
-        if(prev eq null)
-          table(idx) = new Node(elem, hash, old)
-        else
-          prev.next = new Node(elem, hash, prev.next)
+        if (duplicate) false
+        else {
+          if (prev eq null)
+            table(idx) = new Node(elem, hash, old)
+          else
+            prev.next = new Node(elem, hash, prev.next)
+          contentSize += 1
+          true
+        }
     }
-    contentSize += 1
-    true
   }
 
   private[this] def remove(elem: A, hash: Int): Boolean = {
@@ -169,16 +173,18 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
         // find an element that matches
         var prev = nd
         var next = nd.next
-        while((next ne null) && next.hash <= hash) {
+        var found = false
+        while((next ne null) && !found && next.hash <= hash) {
           if(next.hash == hash && next.key == elem) {
             prev.next = next.next
             contentSize -= 1
-            return true
+            found = true
+          } else {
+            prev = next
+            next = next.next
           }
-          prev = next
-          next = next.next
         }
-        false
+        found
     }
   }
 
@@ -194,12 +200,16 @@ final class ExtHashSet[A](initialCapacity: Int, loadFactor: Double)
     def hasNext: Boolean = {
       if(node ne null) true
       else {
-        while(i < len) {
+        var found = false
+        while(!found && i < len) {
           val n = table(i)
           i += 1
-          if(n ne null) { node = n; return true }
+          if(n ne null) {
+            node = n
+            found = true
+          }
         }
-        false
+        found
       }
     }
 

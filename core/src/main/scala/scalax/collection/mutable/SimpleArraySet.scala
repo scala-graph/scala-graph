@@ -1,6 +1,7 @@
 package scalax.collection
 package mutable
 
+import scala.annotation.tailrec
 import scala.collection.mutable.{ExtHashSet, GrowableBuilder}
 import scala.collection.{IterableFactory, IterableFactoryDefaults, SortedSet, StrictOptimizedIterableOps}
 import scala.util.Random
@@ -60,11 +61,9 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
 
   protected[collection] def +=!(elem: A): this.type = {
     if (isHash) hashSet add elem
+    else if (nextFree == capacity && resizedToHash)
+      add(elem)
     else {
-      if (nextFree == capacity)
-        if (resizedToHash) {
-          add(elem); return this
-        }
       arr(nextFree) = elem
       nextFree += 1
     }
@@ -128,20 +127,24 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       resizeArray(capacity, nextFree)
 
   protected def indexOf[B](elem: B, pred: (A, B) => Boolean): Int = {
-    var i = 0
-    while (i < nextFree)
-      if (pred(arr(i), elem)) return i
-      else i += 1
-    -1
+    @tailrec def loop(i: Int): Int =
+      if (i < nextFree)
+        if (pred(arr(i), elem)) i
+        else loop(i + 1)
+      else -1
+
+    loop(0)
   }
 
   /* Optimized 'arr contains c'. */
   protected def indexOf(elem: A): Int = {
-    var i = 0
-    while (i < nextFree)
-      if (arr(i) == elem) return i
-      else i += 1
-    -1
+    @tailrec def loop(i: Int): Int =
+      if (i < nextFree)
+        if (arr(i) == elem) i
+        else loop(i + 1)
+      else -1
+
+    loop(0)
   }
 
   override def contains(elem: A): Boolean =
@@ -157,14 +160,10 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
 
   override def add(elem: A): Boolean =
     if (isHash) hashSet add elem
+    else if (nextFree == capacity && resizedToHash)
+      add(elem)
+    else if (indexOf(elem) >= 0) false
     else {
-      if (nextFree == capacity)
-        if (resizedToHash)
-          return add(elem)
-      var i = 0
-      while (i < nextFree)
-        if (arr(i) == elem) return false
-        else i += 1
       arr(nextFree) = elem
       nextFree += 1
       true

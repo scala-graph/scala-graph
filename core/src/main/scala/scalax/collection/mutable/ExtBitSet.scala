@@ -1,10 +1,12 @@
 package scalax.collection
 package mutable
 
+import java.lang.Long.{bitCount, lowestOneBit => jLowestOneBit, toBinaryString}
+import scala.annotation.tailrec
 import scala.collection.mutable.BitSet
 
 import State.Handle
-import ExtBitSet._
+import ExtBitSet.*
 
 final protected[collection] class ExtBitSet(words: Array[Long]) extends BitSet(words) {
   def this(initWords: Int = incrWords) = this(new Array[Long](initWords))
@@ -22,11 +24,11 @@ final protected[collection] class ExtBitSet(words: Array[Long]) extends BitSet(w
 
   /** All bits of all words. */
   override def toString =
-    (elems map (w => "%64s".format(java.lang.Long.toBinaryString(w)).replace(' ', '0'))).mkString(" ")
+    (elems map (w => "%64s".format(toBinaryString(w)).replace(' ', '0'))).mkString(" ")
 
   /** Summary of the words each of which formatted as <index>:<bitCount>. */
   def summary: String =
-    elems.zipWithIndex.map(zWord => "%2d:%2d" format (zWord._2, java.lang.Long.bitCount(zWord._1))) mkString " "
+    elems.zipWithIndex.map(zWord => "%2d:%2d" format (zWord._2, bitCount(zWord._1))) mkString " "
 
   @inline def apply(idx: Int, mask: Long): Boolean =
     (word(idx) & mask) != 0
@@ -64,23 +66,25 @@ final protected[collection] class ExtBitSet(words: Array[Long]) extends BitSet(w
   }
 
   def onOrFindUnset(other: ExtBitSet): Option[Handle] = {
-    var idx = 0
-    while (idx < nwords) {
-      val or = elems(idx) | other.word(idx)
-      if (or == ~0) idx += 1
-      else return Some(new Handle(idx, java.lang.Long.lowestOneBit(~or)))
-    }
-    None
+    @tailrec def loop(idx: Int): Option[Handle] =
+      if (idx < nwords) {
+        val or = elems(idx) | other.word(idx)
+        if (or == ~0) loop(idx + 1)
+        else Some(new Handle(idx, jLowestOneBit(~or)))
+      } else None
+
+    loop(0)
   }
 
   def lowestOneBit: Option[Handle] = {
-    var idx = 0
-    while (idx < nwords) {
-      val bit = java.lang.Long.lowestOneBit(elems(idx))
-      if (bit == 0) idx += 1
-      else return Some(new Handle(idx, bit))
-    }
-    None
+    @tailrec def loop(idx: Int): Option[Handle] =
+      if (idx < nwords) {
+        val bit = jLowestOneBit(elems(idx))
+        if (bit == 0) loop(idx + 1)
+        else Some(new Handle(idx, bit))
+      } else None
+
+    loop(0)
   }
 
   private def expand(mustHaveIdx: Int): Unit = {

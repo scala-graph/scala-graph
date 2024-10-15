@@ -14,7 +14,8 @@ package scalax.collection
 
 import scala.collection.immutable.VectorBuilder
 import scala.collection.{Factory, Iterable, IterableFactory}
-import scala.util.chaining._
+import scala.util.compat.Boundary.boundary
+import scala.util.chaining.*
 
 /** Substitute for Scala 2.12 `Traversable` to continue support for collections that cannot implement `hasNext`/`next` easily.
   * The methods of Scala 2.13's `IterableOnce` are implemented in terms of `foreach`.
@@ -70,25 +71,29 @@ trait ForeachBasedDetachingIterable[+A] extends Iterable[A] {
 
   final override def head: A = headOption.get
 
-  final override def headOption: Option[A] = {
-    for (x <- this) return Some(x)
-    None
-  }
-
-  final override def find(p: A => Boolean): Option[A] = {
-    for (x <- this)
-      if (p(x)) return Some(x)
-    None
-  }
-
-  final override def collectFirst[B](pf: PartialFunction[A, B]): Option[B] = {
-    val sentinel: A => Any = _ => this
-    for (x <- this) {
-      val r = pf.applyOrElse(x, sentinel)
-      if (r.asInstanceOf[AnyRef] ne sentinel) return Some(r.asInstanceOf[B])
+  final override def headOption: Option[A] =
+    boundary { break =>
+      for (x <- this)
+        break(Some(x))
+      None
     }
-    None
-  }
+
+  final override def find(p: A => Boolean): Option[A] =
+    boundary { break =>
+      for (x <- this)
+        if (p(x)) break(Some(x))
+      None
+    }
+
+  final override def collectFirst[B](pf: PartialFunction[A, B]): Option[B] =
+    boundary { break =>
+      val sentinel: A => Any = _ => this
+      for (x <- this) {
+        val r = pf.applyOrElse(x, sentinel)
+        if (r.asInstanceOf[AnyRef] ne sentinel) break(Some(r.asInstanceOf[B]))
+      }
+      None
+    }
 
   // Subcollections
 
@@ -110,22 +115,25 @@ trait ForeachBasedDetachingIterable[+A] extends Iterable[A] {
   final override def slice(from: Int, until: Int): CC[A] =
     math.max(from, 0) pipe { from =>
       def block(b: Builder[A]): Unit =
-        if (until > from) {
-          var i = 0
-          for (x <- this) {
-            if (i >= from) b += x
-            i += 1
-            if (i >= until) return
+        if (until > from)
+          boundary[Unit] { break =>
+            var i = 0
+            for (x <- this) {
+              if (i >= from) b += x
+              i += 1
+              if (i >= until) break(())
+            }
           }
-        }
       withBuilder(block)
     }
 
   final override def takeWhile(p: A => Boolean): CC[A] = {
     def block(b: Builder[A]): Unit =
-      for (x <- this) {
-        if (!p(x)) return
-        b += x
+      boundary[Unit] { break =>
+        for (x <- this) {
+          if (!p(x)) break(())
+          b += x
+        }
       }
     withBuilder(block)
   }
@@ -168,17 +176,19 @@ trait ForeachBasedDetachingIterable[+A] extends Iterable[A] {
 
   // Element Conditions
 
-  final override def forall(p: A => Boolean): Boolean = {
-    for (x <- this)
-      if (!p(x)) return false
-    true
-  }
+  final override def forall(p: A => Boolean): Boolean =
+    boundary { break =>
+      for (x <- this)
+        if (!p(x)) break(false)
+      true
+    }
 
-  final override def exists(p: A => Boolean): Boolean = {
-    for (x <- this)
-      if (p(x)) return true
-    false
-  }
+  final override def exists(p: A => Boolean): Boolean =
+    boundary { break =>
+      for (x <- this)
+        if (p(x)) break(true)
+      false
+    }
 
   final override def count(p: A => Boolean): Int = {
     var i = 0

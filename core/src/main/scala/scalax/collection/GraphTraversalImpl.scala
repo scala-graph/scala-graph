@@ -3,6 +3,8 @@ package scalax.collection
 import scala.annotation.{switch, tailrec}
 import scala.collection.{AbstractIterable, EqSetFacade, IndexedSeq, Seq}
 import scala.collection.mutable.{ArrayBuffer, Buffer, Map => MMap, Stack}
+import scala.util.compat.Boundary.boundary
+
 import scalax.collection.generic.Edge
 import scalax.collection.mutable.{EqHashMap, EqHashSet}
 
@@ -288,20 +290,21 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
 
     def findCycle[U](implicit visitor: InnerElem => U = Visitor.empty): Option[Cycle] =
       if (order == 0) None
-      else {
-        val traverser = innerElemTraverser
-        withHandles(2) { handles =>
-          implicit val visitedHandle: State.Handle = handles(0)
-          for (node <- nodes if !node.visited && subgraphNodes(node)) {
-            val nodeTraverser: InnerElemTraverserImpl =
-              traverser.withRoot(node) // TODO not sure why this declaration is needed
-            val res = nodeTraverser.Runner(noNode, visitor).dfsWGB(handles)
-            if (res.isDefined)
-              return cycle(res, subgraphEdges)
+      else
+        boundary { break =>
+          val traverser = innerElemTraverser
+          withHandles(2) { handles =>
+            implicit val visitedHandle: State.Handle = handles(0)
+            for (node <- nodes if !node.visited && subgraphNodes(node)) {
+              val nodeTraverser: InnerElemTraverserImpl =
+                traverser.withRoot(node) // TODO not sure why this declaration is needed
+              val res = nodeTraverser.Runner(noNode, visitor).dfsWGB(handles)
+              if (res.isDefined)
+                break(cycle(res, subgraphEdges))
+            }
           }
+          None
         }
-        None
-      }
 
     final def topologicalSort[U](implicit visitor: InnerElem => U = Visitor.empty): TopologicalSort =
       innerElemTraverser

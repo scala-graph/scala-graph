@@ -1,13 +1,14 @@
 package scalax.collection
 package generator
 
+import scala.annotation.tailrec
 import scala.collection.mutable.{ArrayBuffer, Set => MSet}
 import scala.util.Random
 import scala.reflect.ClassTag
 
 import scalax.collection.config.GraphConfig
-import scalax.collection.edges._
-import scalax.collection.generic._
+import scalax.collection.edges.*
+import scalax.collection.generic.*
 /* TODO L
 import edge.WBase.{WEdgeCompanion, WHyperEdgeCompanion}
 import edge.LBase.{LEdgeCompanion, LHyperEdgeCompanion}
@@ -87,27 +88,20 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
   }
 
   private def addExact[A](nrToAdd: Int, add: => Boolean, infiniteMsg: String, gentle: Boolean): Boolean = {
-    val checkInfiniteAt = math.pow(math.log(nrToAdd), 2).ceil.toInt + 10
-    val infiniteFactor  = 5
+    val assumeInfiniteAt = (nrToAdd * 3) + math.log(nrToAdd * 10).ceil.toInt
 
-    var added, lastAdded = 0
-    var trials           = 0
-    while (added < nrToAdd) {
-      if (add) added += 1
+    @tailrec def loop(added: Int, missed: Int): Boolean =
+      if (added < nrToAdd)
+        if (missed > assumeInfiniteAt) {
+          traceln(s"gentle=$gentle, added=$added, missed=$missed, ")
 
-      trials += 1
-      if (trials == checkInfiniteAt) {
-        if ((added - lastAdded) * infiniteFactor < trials) {
-          traceln(s"gentle=$gentle trials=$trials, lastAdded=$lastAdded, added=$added")
-
-          if (gentle) return false
+          if (gentle) false
           else throw new IllegalArgumentException(infiniteMsg)
-        }
-        trials = 0
-        lastAdded = added
-      }
-    }
-    true
+        } else if (add) loop(added + 1, missed)
+        else loop(added, missed + 1)
+      else true
+
+    loop(0, 0)
   }
 
   final protected[RandomGraph] class Degrees {
