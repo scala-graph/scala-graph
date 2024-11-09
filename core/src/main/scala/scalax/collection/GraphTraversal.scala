@@ -512,11 +512,14 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
       *  returns also `true` if the elements of `that` cycle can be shifted and optionally
       *  reversed such that their elements have the same order. For instance, given
       *
-      * `c1 = Cycle(1-2-3-1)`, `c2 = Cycle(2-3-1-2)` and `c3 = Cycle(2-1-3-2)`
+      * `c1 = Cycle(1-2-3-1)`
+      * `c2 = Cycle(2-3-1-2)`
+      * `c3 = Cycle(2-1-3-2)`
       *
       * the following expressions hold:
       *
-      * `c1 != c2`, `c1 != c3` but `c1 sameAs c2` and `c1 sameAs c3`.
+      * `c1 != c2`, `c1 != c3` but
+      * `c1 sameAs c2` and `c1 sameAs c3`.
       */
     final def sameAs(that: GraphTraversal[N, E]#Cycle): Boolean =
       this == that || (that match {
@@ -1428,7 +1431,6 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
   *         the number of consecutive child visits before siblings are visited for DFS.
   *         `0` - the default - indicates that the traversal should have
   *         an unlimited depth.
-  * @author Peter Empen
   */
 object GraphTraversal {
 

@@ -44,9 +44,9 @@ trait TraverserImpl[N, E <: Edge[N]] {
     ): Option[Path] =
       requireSuccessors {
         Runner[U](pred, visitor).dfsStack() match {
-          case (target, path) =>
+          case (target, stack) =>
             target map { _ =>
-              new AnyEdgeLazyPath(new ReverseStackTraversable[DfsInformer.Element](path), subgraphEdges)
+              new AnyEdgeLazyPath(Iterable.from(stack.reverseIterator.map(_.node)), subgraphEdges)
             }
         }
       }

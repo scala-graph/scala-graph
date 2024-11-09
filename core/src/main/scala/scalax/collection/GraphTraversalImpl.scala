@@ -1,7 +1,7 @@
 package scalax.collection
 
 import scala.annotation.{switch, tailrec}
-import scala.collection.{AbstractIterable, EqSetFacade, IndexedSeq, Seq}
+import scala.collection.{mutable, AbstractIterable, EqSetFacade, IndexedSeq, Seq}
 import scala.collection.mutable.{ArrayBuffer, Buffer, Map => MMap, Stack}
 import scala.util.compat.Boundary.boundary
 
@@ -29,7 +29,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
   ): Option[Cycle] =
     maybeStart map { start =>
       new AnyEdgeLazyCycle(
-        new ReverseStackTraversable[DfsElem](stack, None, Array[Option[DfsElem]](None, Some(DfsElem(start)))),
+        new CycleNodes[DfsElem](stack, None, prefix = None, postfix = DfsElem(start)),
         edgeFilter
       )
     }
@@ -37,14 +37,18 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
   final protected def cycle(results: Option[(NodeT, Stack[CycleStackElem])], edgeFilter: EdgePredicate): Option[Cycle] =
     results match {
       case Some((start, stack)) =>
-        val reverse = new ReverseStackTraversable[CycleStackElem](
-          stack,
-          Some((elem: CycleStackElem) => elem.node ne start),
-          Array.fill[Option[CycleStackElem]](2)(Some(CycleStackElem(start)))
-        )
+        val iterable = {
+          val affix = CycleStackElem(start)
+          new CycleNodes[CycleStackElem](
+            stack,
+            Some((elem: CycleStackElem) => elem.node ne start),
+            Some(affix),
+            affix
+          )
+        }
         Some(
-          if (thisGraph.isDirected) new AnyEdgeLazyCycle(reverse, edgeFilter)
-          else new MultiEdgeLazyCycle(reverse, edgeFilter)
+          if (thisGraph.isDirected) new AnyEdgeLazyCycle(iterable, edgeFilter)
+          else new MultiEdgeLazyCycle(iterable, edgeFilter)
         )
       case _ => None
     }
@@ -641,59 +645,38 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
   ): OuterNodeDownUpTraverser =
     OuterNodeDownUpTraverserImpl(root, parameters, subgraphNodes, subgraphEdges, ordering, maxWeight)
 
-  /** Efficient reverse `foreach` overcoming `Stack`'s deficiency not to overwrite `reverseIterator`.
-    */
-  // TODO is this still needed? Stack now _does_ override `reverseIterator`.
-  final protected class ReverseStackTraversable[S <: NodeElement](
-      s: IndexedSeq[S],
-      takeWhile: Option[S => Boolean] = None,
-      enclosed: Array[Option[S]] = Array[Option[S]](None, None)
+  final protected class CycleNodes[S <: NodeElement](
+      stack: mutable.Stack[S],
+      strip: Option[S => Boolean] = None,
+      prefix: Option[S],
+      postfix: S
   ) extends Iterable[NodeT] {
 
     override def iterator = source.map(_.node).iterator
 
     final override protected def className = "Nodes"
 
-    private[this] var _size: Option[Int] = None
-    @inline override val size: Int       = _size getOrElse super.size
-
-    @inline override def last: NodeT = enclosed(1).fold(ifEmpty = s.head.node)(_.node)
-
-    // TODO unreachable?
-    def reverse: Iterable[NodeT] = new AbstractIterable[NodeT] {
-      override def iterator: Iterator[NodeT] = ???
-      /* TODO replace foreach with iterator
-      def foreach[U](f: NodeT => U): Unit = {
-        def fT(elem: S): Unit = f(elem.node)
-        def end(i: Int): Unit = enclosed(i) foreach fT
-        end(1)
-        s foreach fT
-        end(0)
-      }
-       */
+    private val skipCount: Int = strip.fold(ifEmpty = 1) { pred =>
+      val it = stack.reverseIterator
+      var i  = 1
+      while (it.hasNext && pred(it.next())) i += 1
+      i
     }
 
-    private lazy val upper: Int = takeWhile.fold(ifEmpty = s.size) { pred =>
-      var i = s.size - 1
-      while (i >= 0 && pred(s(i))) i -= 1
-      if (i < 0) 0 else i
-    }
+    @inline override val size: Int = stack.size - skipCount + prefix.fold(0)(_ => 1) + 1
+    @inline override val last: NodeT    = postfix.node
 
-    private[GraphTraversalImpl] lazy val source: Iterable[S] = new AbstractIterable[S] {
+    private[GraphTraversalImpl] def source: Iterable[S] = new AbstractIterable[S] {
       override def iterator = {
         val buffer = ArrayBuffer[S]()
         foreach(buffer += _)
         buffer.iterator
       }
+
       override def foreach[U](f: S => U): Unit = {
-        enclosed(0) foreach f
-        var i = upper
-        while (i > 0) {
-          i -= 1
-          f(s(i))
-        }
-        enclosed(1) foreach f
-        if (_size.isEmpty) _size = Some(upper + enclosed.count(_.isDefined))
+        prefix foreach f
+        stack.reverseIterator.drop(skipCount) foreach f
+        f(postfix)
       }
     }
   }
@@ -737,7 +720,8 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
         that.toArray[AnyGraph#InnerElem].sameElements(toArray[InnerElem])
       case _ => false
     }
-    override def hashCode: Int = nodes.## + 27 * edges.##
+
+    final override def hashCode: Int = nodes.## + 27 * edges.##
   }
 
   /** `LazyPath` with deferred edges selection.
@@ -788,7 +772,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
   /** `LazyPath` with edge selection such that there exists no duplicate edge in the path.
     */
   protected class MultiEdgeLazyPath(
-      override val nodes: ReverseStackTraversable[CycleStackElem],
+      override val nodes: CycleNodes[CycleStackElem],
       edgeFilter: EdgePredicate
   ) extends LazyPath(nodes) {
 
@@ -829,7 +813,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       with Cycle
 
   protected class MultiEdgeLazyCycle(
-      override val nodes: ReverseStackTraversable[CycleStackElem],
+      override val nodes: CycleNodes[CycleStackElem],
       edgeFilter: EdgePredicate
   ) extends MultiEdgeLazyPath(nodes, edgeFilter)
       with Cycle
