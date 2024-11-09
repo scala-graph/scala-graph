@@ -176,10 +176,11 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
   }
 
   /** Layers of a topological order of a graph or of an isolated graph component.
-    *  The layers of a topological sort can roughly be defined as follows:
-    *      a. layer 0 contains all nodes having no predecessors,
-    *      a. layer n contains those nodes that have only predecessors in ancestor layers
-    *         with at least one of them contained in layer n - 1
+    *
+    * The layers of a topological sort can roughly be defined as follows:
+    *   a. layer 0 contains all nodes having no predecessors
+    *   a. layer n contains those nodes that have only predecessors in ancestor layers
+    *      with at least one of them contained in layer n - 1
     *  @tparam A one of `NodeT`, `N`
     */
   final class LayeredTopologicalOrder[+A] protected[collection] (
@@ -478,9 +479,9 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
 
   /** Represents a cycle in this graph listing the nodes and connecting edges on it
     *  with the following syntax:
-    *
+    * {{{
     * `cycle ::= ''start-end-node'' { ''edge'' ''node'' } ''edge'' ''start-end-node''`
-    *
+    * }}}
     * All nodes and edges on the path are distinct except the start and end nodes that
     * are equal. A cycle contains at least a start node followed by any number of
     * consecutive pairs of an edge and a node and the end node equaling to the start node.
@@ -511,15 +512,16 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
       *  only if the cycles contain the same elements in the same order, this comparison
       *  returns also `true` if the elements of `that` cycle can be shifted and optionally
       *  reversed such that their elements have the same order. For instance, given
-      *
-      * `c1 = Cycle(1-2-3-1)`
-      * `c2 = Cycle(2-3-1-2)`
-      * `c3 = Cycle(2-1-3-2)`
-      *
+      * {{{
+      * c1 = Cycle(1-2-3-1)
+      * c2 = Cycle(2-3-1-2)
+      * c3 = Cycle(2-1-3-2)
+      * }}}
       * the following expressions hold:
-      *
+      * {{{
       * `c1 != c2`, `c1 != c3` but
-      * `c1 sameAs c2` and `c1 sameAs c3`.
+      * `c1 sameAs c2` and `c1 sameAs c3`
+      *  }}}
       */
     final def sameAs(that: GraphTraversal[N, E]#Cycle): Boolean =
       this == that || (that match {
