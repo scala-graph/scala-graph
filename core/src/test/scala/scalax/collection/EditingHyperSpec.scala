@@ -77,7 +77,7 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
       g.contains(h) shouldBe true
     }
 
-    def `isHyper ` : Unit = {
+    def `isHyper `: Unit = {
       def test(g: CC[Int, AnyHyperEdge[Int]], expected: Boolean): Unit = g.isHyper should be(expected)
 
       test(factory.from[Int, AnyHyperEdge](List(1 ~> 2, 1 ~~ 2 ~~ 3)), true)
