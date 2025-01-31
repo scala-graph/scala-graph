@@ -44,6 +44,17 @@ lazy val coreTestScala3 = project
     )
   )
 
+lazy val concurrent = project
+  .in(file("concurrent"))
+  .settings(
+    defaultSettings_3 ++ Seq(
+      libraryDependencies ++= Seq(
+        "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test,
+        "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
+      )
+    )
+  )
+
 lazy val dot = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
