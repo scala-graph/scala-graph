@@ -3,7 +3,11 @@ package scalax.collection.concurrent
 import scala.math.max
 
 private[concurrent] type Size = Int
-private[concurrent] case class Chunk[A <: AnyRef, C](prefix: C, var size: Size, array: Array[A])
+private[concurrent] case class Chunk[A <: AnyRef, C](prefix: C, var used: Size, array: Array[A]):
+  def elem(globalIndex: Index, chunkSize: Size): A =
+    val i = globalIndex % chunkSize
+    if i < used then array(i)
+    else throw new IndexOutOfBoundsException
 
 /** Growing only, chunked indexed sequence with concurrently mutable chunks.
   * `Vector` elements correspond to a chunk of constant length.
@@ -14,11 +18,11 @@ private[concurrent] case class Chunk[A <: AnyRef, C](prefix: C, var size: Size, 
   */
 final protected[concurrent] class VectorArraySeq[A <: AnyRef, C] private (chunkSize: Size, vector: Vector[Chunk[A, C]]):
 
-  def chunkElem(i: Index): (C, A) = chunk(i) match {
-    case Chunk(prefix, _, array) => (prefix, array(i % chunkSize))
-  }
+  def chunkElem(i: Index): (C, A) =
+    val c = chunk(i)
+    c.prefix -> c.elem(i, chunkSize)
 
-  def elem(i: Index): A = chunk(i).array(i % chunkSize)
+  def elem(i: Index): A = chunk(i).elem(i, chunkSize)
 
   def chunk(i: Index): Chunk[A, C] = vector(i / chunkSize)
 
@@ -33,8 +37,8 @@ final protected[concurrent] class VectorArraySeq[A <: AnyRef, C] private (chunkS
 
 private[concurrent] object VectorArraySeq:
 
-  def empty[A <: AnyRef, C](sizeHint: Int, heavyUtilization: Boolean = false): VectorArraySeq[A, C] =
-    new VectorArraySeq[A, C](chunkSize(sizeHint, heavyUtilization), Vector.empty[Chunk[A, C]])
+  def empty[A <: AnyRef, C](sizeHint: Int, writeIntensive: Boolean = false): VectorArraySeq[A, C] =
+    new VectorArraySeq[A, C](chunkSize(sizeHint, writeIntensive), Vector.empty[Chunk[A, C]])
 
   private[concurrent] val MinChunkSize = 16
 
