@@ -127,6 +127,16 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
       }
     }
 
+    def `cycles may be compared by 'sameAs'`(): Unit = {
+      val g1 = factory(1 ~> 2, 2 ~> 1).asAnyGraph
+      (g1 get 1 findCycle, g1 get 2 findCycle) match {
+        case (Some(c1), Some(c2)) =>
+          c1.startNode shouldNot be (c2.startNode)
+          c1 sameAs c2 shouldBe true
+        case (x, y) => fail(s"Cycles expected, got ($x, $y ) instead.")
+      }
+    }
+
     def `the cycle returned by 'findCycleContaining' contains the expected nodes`: Unit = {
       withGraph(acyclic_1) { g =>
         g.findCycleContaining(g get 1) should be(None)
