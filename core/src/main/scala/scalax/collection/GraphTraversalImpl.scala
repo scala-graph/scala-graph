@@ -663,8 +663,8 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       i
     }
 
-    @inline override val size: Int = stack.size - skipCount + prefix.fold(0)(_ => 1) + 1
-    @inline override val last: NodeT    = postfix.node
+    @inline override val size: Int   = stack.size - skipCount + prefix.fold(0)(_ => 1) + 1
+    @inline override val last: NodeT = postfix.node
 
     private[GraphTraversalImpl] def source: Iterable[S] = new AbstractIterable[S] {
       override def iterator = {

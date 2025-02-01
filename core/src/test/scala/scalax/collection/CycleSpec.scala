@@ -131,7 +131,7 @@ private class Cycle[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, C
       val g1 = factory(1 ~> 2, 2 ~> 1).asAnyGraph
       (g1 get 1 findCycle, g1 get 2 findCycle) match {
         case (Some(c1), Some(c2)) =>
-          c1.startNode shouldNot be (c2.startNode)
+          c1.startNode shouldNot be(c2.startNode)
           c1 sameAs c2 shouldBe true
         case (x, y) => fail(s"Cycles expected, got ($x, $y ) instead.")
       }
