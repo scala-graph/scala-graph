@@ -88,6 +88,8 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
       false
   }
 
+  override def hashCode(): Int = this.nodes.toOuter.## + 31 * this.edges.toOuter.##
+
   type NodeT <: GraphInnerNode
   trait GraphInnerNode extends BaseInnerNode with TraverserInnerNode { this: NodeT =>
 
