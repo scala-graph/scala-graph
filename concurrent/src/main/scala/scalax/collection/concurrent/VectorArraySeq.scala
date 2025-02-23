@@ -1,5 +1,7 @@
 package scalax.collection.concurrent
 
+import java.util.concurrent.locks.ReentrantLock
+
 import scala.math.max
 
 private[concurrent] type Size = Int
@@ -50,16 +52,21 @@ final protected[concurrent] class VectorArraySeq[A, C] private (vector: Vector[C
 
   def lastIndex: Index = size - 1
 
-  /** Adds `elem` to `this` in a thread-safe way or creates new instance with the elements of `this` plus `elem`. */
+  private val appending = new ReentrantLock()
+
+  /** Adds `elem` to `this` or creates new instance with the elements of `this` plus `elem` in a thread-safe way. */
   def appended(elem: A)(implicit chunkPrefix: C): This =
-    vector.lastOption match
-      case Some(last) if last.used < chunkSize && last.prefix == chunkPrefix =>
-        // TODO lock
-        last.array(lastIndex + 1) = elem
-        last.used += 1
-        this
-      case _ =>
-        appended(Chunk(chunkPrefix, elem))
+    appending.lock()
+    try
+      vector.lastOption match
+        case Some(last) if last.used < chunkSize && last.prefix == chunkPrefix =>
+          last.array(size) = elem
+          last.used += 1
+          this
+        case _ =>
+          appended(Chunk(chunkPrefix, elem))
+    finally
+      appending.unlock()
 
   /** Alias for `appended`. */
   inline def :+(elem: A)(implicit chunkPrefix: C): This = appended(elem)

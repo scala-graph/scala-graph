@@ -1,6 +1,9 @@
 package scalax.collection.concurrent
 
-import scala.util.chaining._
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.DurationInt
+import scala.util.chaining.*
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
@@ -8,7 +11,7 @@ import org.scalatest.refspec.RefSpec
 class VectorArraySeqSpec extends RefSpec with Matchers:
   import VectorArraySeq._
 
-  private def tinySeq[A, C] =
+  private def tinyEmptySeq[A, C] =
     VectorArraySeq.empty[A, C](2) tap (_.chunkSize shouldBe MinChunkSize)
 
   def `'chunkSize' based on hints`(): Unit =
@@ -26,13 +29,26 @@ class VectorArraySeqSpec extends RefSpec with Matchers:
       if normal > MinChunkSize then chunkSize(sizeHint, heavyUtilization = true) should (be < normal)
     }
 
-  def `'appended' within chunk, single-threaded`(): Unit =
+  def `'appended' within chunk, single threaded`(): Unit =
     given prefix: Int = 0
     val elem          = 0
-    var seq           = tinySeq[elem.type, Int]
+    var seq           = tinyEmptySeq[elem.type, Int]
     (1 to seq.chunkSize) foreach { i =>
       seq = seq :+ elem
       seq.size shouldBe i
       seq.elem(i - 1) shouldBe elem
     }
     seq.iterator.length shouldBe seq.chunkSize
+
+  def `'appended' within chunk, multi threaded`(): Unit =
+    given prefix: Int = 0
+    var seq           = tinyEmptySeq[Int, Int]
+    val elems         = 1 to seq.chunkSize
+    seq = seq :+ 1
+    Await.ready(
+      Future.traverse(elems.tail)(i => Future(seq :+ i)),
+      1.second
+    )
+    println(seq.trace)
+    seq.iterator.length shouldBe seq.chunkSize
+    seq.iterator.toSet shouldBe elems.toSet
