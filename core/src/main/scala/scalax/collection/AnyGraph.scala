@@ -88,7 +88,13 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
       false
   }
 
-  override def hashCode(): Int = this.nodes.toOuter.## + 31 * this.edges.toOuter.##
+  override def hashCode: Int = {
+    import scala.util.hashing.MurmurHash3.{finalizeHash, mix, mixLast, productSeed}
+    var h = productSeed
+    h = mix(h, this.nodes.##)
+    h = mixLast(h, this.edges.##)
+    finalizeHash(h, 2)
+  }
 
   type NodeT <: GraphInnerNode
   trait GraphInnerNode extends BaseInnerNode with TraverserInnerNode { this: NodeT =>
