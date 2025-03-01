@@ -70,7 +70,7 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
   @inline final def isCustomEdgeFilter(f: EdgePredicate) = f ne anyEdge
 
   type NodeT <: BaseInnerNode with Serializable
-  trait Node          extends Serializable
+  trait Node extends Serializable
   trait BaseInnerNode extends Node with InnerNode {
 
     /** All edges at this node - commonly denoted as E(v).
