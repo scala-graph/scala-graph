@@ -137,7 +137,7 @@ private class EditingMutable extends RefSpec with Matchers {
       g.clear(); directed(false)
     }
 
-    def `serve 'diSuccessors' when directed`: Unit = {
+    def `serve 'diSuccessors', 'outNeighbors' when directed`: Unit = {
       val (one, two, oneOne, oneTwo) = (1, 2, 1 ~> 1, 1 ~> 2)
       val g                          = Graph(oneOne, oneTwo, one ~> 3, one ~> 4)
       val (n1, n2)                   = (g get one, g get two)
@@ -145,19 +145,23 @@ private class EditingMutable extends RefSpec with Matchers {
 
       g subtractOne 1 ~> 4 // Graph(oneOne, oneTwo, one~>3)
       n2.diSuccessors shouldBe empty
-      n1.diSuccessors.map(_.outer) shouldBe Set(two, 3)
+      n1.diSuccessors.map(_.outer) shouldBe Set(one, two, 3)
+      n1.outNeighbors.map(_.outer) shouldBe Set(two, 3)
       n1 findOutgoingTo n1 should be(Some(e11))
 
       g subtractOne oneTwo // Graph(oneOne, one~>3)
-      n1.diSuccessors should be(Set(3))
+      n1.diSuccessors should be(Set(one, 3))
+      n1.outNeighbors should be(Set(3))
       n1 findOutgoingTo n1 should be(Some(e11))
 
       g subtractOne oneOne // Graph(one~>3)
       n1.diSuccessors should be(Set(3))
+      n1.outNeighbors should be(Set(3))
       n1 findOutgoingTo n1 should be(None)
 
       g ++= (edges = List(oneOne, oneTwo)) // Graph(oneOne, oneTwo, one~>3)
-      n1.diSuccessors should be(Set(two, 3))
+      n1.diSuccessors should be(Set(one, two, 3))
+      n1.outNeighbors should be(Set(two, 3))
       n1 findOutgoingTo n1 should be(Some(e11))
     }
 
@@ -319,13 +323,28 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
     private val gDi    = factory(1 ~> 1, 1 ~> 2, 1 ~> 3, 1 ~> 4)
     private val gMixed = factory[Int, AnyEdge](1 ~> 2, 2 ~> 3, 4 ~ 3)
 
+    object `outNeighbors ` {
+      def `for UnDi`: Unit = {
+        (gUnDi get 1).outNeighbors should be(Set(2, 3, 4))
+        (gUnDi get 2).outNeighbors should be(Set(1))
+      }
+      def `for Di`: Unit = {
+        (gDi get 1).outNeighbors should be(Set(2, 3, 4))
+        (gDi get 2).outNeighbors should be(Set.empty)
+      }
+      def `for mixed`: Unit = {
+        (gMixed get 2).outNeighbors should be(Set(3))
+        (gMixed get 3).outNeighbors should be(Set(4))
+      }
+    }
+
     object `diSuccessors ` {
       def `for UnDi`: Unit = {
-        (gUnDi get 1).diSuccessors should be(Set(2, 3, 4))
+        (gUnDi get 1).diSuccessors should be(Set(1, 2, 3, 4))
         (gUnDi get 2).diSuccessors should be(Set(1))
       }
       def `for Di`: Unit = {
-        (gDi get 1).diSuccessors should be(Set(2, 3, 4))
+        (gDi get 1).diSuccessors should be(Set(1, 2, 3, 4))
         (gDi get 2).diSuccessors should be(Set.empty)
       }
       def `for mixed`: Unit = {

@@ -2,10 +2,12 @@ package scalax.collection
 package immutable
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
+
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.{AbstractIterable, AbstractIterator, EqSetFacade}
 import scala.collection.mutable.{ArrayBuffer, ExtHashSet}
 import scala.util.Random
+
 import scalax.collection.generic.Edge
 import scalax.collection.AnyGraph
 import scalax.collection.mutable.{ArraySet, EqHashMap, EqHashSet}
@@ -30,49 +32,53 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
     def edges: ArraySet[EdgeT]
 
     @inline final protected def nodeEqThis = (n: NodeT) => n eq this
-    protected[collection] object Adj extends Serializable { // lazy adjacents
+
+    protected[collection] object Lazy extends Serializable {
       @transient protected[collection] var _aHook: Option[(NodeT, EdgeT)] = _
-      final def aHook: Option[(NodeT, EdgeT)] = {
-        if (_aHook eq null) diSucc
+      @transient private var outN: EqHashMap[NodeT, EdgeT]                = _
+
+      def aHook: Option[(NodeT, EdgeT)] = {
+        if (_aHook eq null) outNeighborsToSomeEdge
         _aHook
       }
 
-      @transient private var _diSucc: EqHashMap[NodeT, EdgeT] = _
-      final def diSucc: EqHashMap[NodeT, EdgeT] =
+      def outNeighborsToSomeEdge: EqHashMap[NodeT, EdgeT] =
         if (edges eq null)
           new EqHashMap[NodeT, EdgeT]
         else {
-          if (_diSucc eq null) {
+          if (outN eq null) {
             val m = new EqHashMap[NodeT, EdgeT](edges.size)
             _aHook = None
             edges foreach { e =>
-              if (e.matches(nodeEqThis, nodeEqThis) && aHook.isEmpty)
+              if (aHook.isEmpty && e.matches(nodeEqThis, nodeEqThis))
                 _aHook = Some(thisNode -> e)
-              addDiSuccessors(e, (n: NodeT) => m put (n, e))
+              addOutNeighbors(e, (n: NodeT) => m put (n, e))
             }
-            _diSucc = m
+            outN = m
           }
-          _diSucc
+          outN
         }
+
+      def diSuccessorsToSomeEdge: EqHashMap[NodeT, EdgeT] =
+        aHook.fold(outNeighborsToSomeEdge)(outNeighborsToSomeEdge.clone += _)
     }
-    import Adj._
+    import Lazy._
 
     final def connectionsWith(other: NodeT) = edges withSetFilter (_.isAt(other))
 
-    final def hasOnlyHooks = diSucc.isEmpty && aHook.isDefined
+    final def hasOnlyHooks = outNeighbors.isEmpty && aHook.isDefined
 
     final def hook: Option[EdgeT] = aHook map (_._2)
 
-    final def isDirectPredecessorOf(that: NodeT): Boolean =
-      diSucc contains that
+    final def isDirectPredecessorOf(that: NodeT): Boolean = diSuccessors contains that
 
     final def isIndependentOf(that: NodeT): Boolean =
       if (this eq that) edges forall (_.nonLooping)
       else edges forall (!_.isAt((_: NodeT) eq that))
 
-    final def hasSuccessors: Boolean = diSuccessors exists (_ ne this)
+    final def hasSuccessors: Boolean = diSuccessors.nonEmpty
 
-    final protected[collection] def addDiSuccessors(edge: EdgeT, add: (NodeT) => Unit): Unit = {
+    final protected[collection] def addOutNeighbors(edge: EdgeT, add: (NodeT) => Unit): Unit = {
       val filter =
         if (edge.isHyperEdge && edge.isDirected) edge.hasSource((_: NodeT) eq this)
         else true
@@ -82,14 +88,14 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
     final def diPredecessors: Set[NodeT] = {
       val m = new EqHashMap[NodeT, EdgeT](edges.size)
       edges foreach { e =>
-        addDiPredecessors(e, (n: NodeT) => m put (n, e))
+        addInNeighbors(e, (n: NodeT) => m put (n, e))
       }
       new EqSet(m)
     }
 
     final def hasPredecessors: Boolean = edges exists (_.hasSource((n: NodeT) => n ne this))
 
-    final protected[collection] def addDiPredecessors(edge: EdgeT, add: NodeT => Unit): Unit =
+    final protected[collection] def addInNeighbors(edge: EdgeT, add: NodeT => Unit): Unit =
       edge.sources foreach (n => if (n ne this) add(n))
 
     final def neighbors: Set[NodeT] = {
@@ -105,6 +111,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
       if (e.isDirected) e.hasSource((_: NodeT) eq this)
       else true
     )
+
     @inline private[this] def isOutgoingTo(e: EdgeT, to: NodeT): Boolean =
       if (e.isDirected)
         e matches ((_: NodeT) eq this, (_: NodeT) eq to)
@@ -115,12 +122,13 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
 
     final def findOutgoingTo(to: NodeT): Option[EdgeT] =
       if (to eq this) aHook map (_._2)
-      else diSucc get to
+      else outNeighborsToSomeEdge get to
 
     final def incoming = edges withSetFilter (e =>
       if (e.isDirected) e.hasTarget((_: NodeT) eq this)
       else true
     )
+
     @inline final private[this] def isIncomingFrom(e: EdgeT, from: NodeT): Boolean =
       if (e.isDirected)
         e matches ((_: NodeT) eq from, (_: NodeT) eq this)

@@ -95,7 +95,8 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
 
   object `diSuccessors ` {
     def `for DiHyper`: Unit = {
-      (hDi get 1).diSuccessors shouldEqual Set(2, 3, 4, 5, 9)
+      (hDi get 1).outNeighbors shouldEqual Set(2, 3, 4, 5, 9)
+      (hDi get 1).diSuccessors shouldEqual Set(1, 2, 3, 4, 5, 9)
       (hDi get 2).diSuccessors shouldEqual Set.empty
       (hDi get 5).diSuccessors shouldEqual Set.empty
     }
@@ -123,7 +124,7 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
   }
 
   def `match directed hyperedge`: Unit = {
-    val count   = 4
+    val count   = 3
     val sources = OneOrMore.fromUnsafe(List.tabulate(count - 1)(_ + 1))
     val target  = one(count)
     val diHyper = sources ~~> target
@@ -148,12 +149,14 @@ private class EditingHyperMutable extends RefSpec with Matchers {
       val (n1, n2) = (g get 1, g get 2)
 
       n2.diSuccessors shouldBe empty
-      n1.diSuccessors should be(Set(2, 3))
+      n1.outNeighbors should be(Set(2, 3))
+      n1.diSuccessors should be(Set(1, 2, 3))
       n1 findOutgoingTo n1 should be(Some(_1_to_1_2))
 
       g subtractOne _1_to_2_3
       g shouldEqual Graph(_1_to_1_2, 3)
-      n1.diSuccessors should be(Set(2))
+      n1.outNeighbors should be(Set(2))
+      n1.diSuccessors should be(Set(1, 2))
       n1 findOutgoingTo n1 should be(Some(_1_to_1_2))
 
       g subtractOne 2
@@ -163,7 +166,8 @@ private class EditingHyperMutable extends RefSpec with Matchers {
 
       g += _1_to_1_2
       g shouldEqual Graph(_1_to_1_2, 3)
-      n1.diSuccessors should be(Set(2))
+      n1.outNeighbors should be(Set(2))
+      n1.diSuccessors should be(Set(1, 2))
       n1 findOutgoingTo n1 should be(Some(_1_to_1_2))
     }
   }

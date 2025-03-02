@@ -108,9 +108,9 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
       */
     def isIndependentOf(that: NodeT): Boolean
 
-    /** All direct successors of this node, also called ''successor set'' or
-      * ''open out-neighborhood'': target nodes of directed incident edges and / or
-      * adjacent nodes of undirected incident edges excluding this node.
+    /** All direct successors of this node, also called ''successor set'':
+      * target nodes of directed incident edges and / or adjacent nodes of undirected incident edges.
+      * This node itself is also included if a loop exists.
       * @return set of all direct successors of this node.
       */
     def diSuccessors: Set[NodeT]
@@ -118,10 +118,12 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
     /** Whether this node has any successors. */
     def hasSuccessors: Boolean
 
-    protected[collection] def addDiSuccessors(edge: EdgeT, add: NodeT => Unit): Unit
+    protected[collection] def addOutNeighbors(edge: EdgeT, add: NodeT => Unit): Unit
 
-    /** Synonym for `diSuccessors`. */
-    @inline final def outNeighbors: Set[NodeT] = diSuccessors
+    /** Like `diSuccessors` except that this node is excluded even if a loop exists.
+      * Also called ''open out-neighborhood''
+      */
+    def outNeighbors: Set[NodeT]
 
     /** All direct predecessors of this node, also called ''predecessor set'' or
       * ''open in-neighborhood'': source nodes of directed incident edges and / or
@@ -133,7 +135,7 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
     /** Whether this node has any predecessors. */
     def hasPredecessors: Boolean
 
-    protected[collection] def addDiPredecessors(edge: EdgeT, add: NodeT => Unit): Unit
+    protected[collection] def addInNeighbors(edge: EdgeT, add: NodeT => Unit): Unit
 
     /** Synonym for `diPredecessors`. */
     @inline final def inNeighbors = diPredecessors
@@ -251,10 +253,10 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
     def apply(node: N)    = newNode(node)
     def unapply(n: NodeT) = Some(n)
 
-    @inline final protected[collection] def addDiSuccessors(node: NodeT, edge: EdgeT, add: NodeT => Unit): Unit =
-      node.addDiSuccessors(edge, add)
-    @inline final protected[collection] def addDiPredecessors(node: NodeT, edge: EdgeT, add: NodeT => Unit): Unit =
-      node.addDiPredecessors(edge, add)
+    @inline final protected[collection] def addOutNeighbors(node: NodeT, edge: EdgeT, add: NodeT => Unit): Unit =
+      node.addOutNeighbors(edge, add)
+    @inline final protected[collection] def addInNeighbors(node: NodeT, edge: EdgeT, add: NodeT => Unit): Unit =
+      node.addInNeighbors(edge, add)
     @inline final protected[collection] def addNeighbors(node: NodeT, edge: EdgeT, add: NodeT => Unit): Unit =
       node.addNeighbors(edge, add)
 
@@ -350,7 +352,7 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
 
     def adjacencyListsToString: String =
       (for (n <- this)
-        yield n.outer.toString + ": " + ((for (a <- n.diSuccessors) yield a.outer) mkString ",")) mkString "\n"
+        yield n.outer.toString + ": " + ((for (a <- n.outNeighbors) yield a.outer) mkString ",")) mkString "\n"
 
     def draw(random: Random): NodeT
 

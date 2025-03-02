@@ -99,8 +99,8 @@ trait TraverserImpl[N, E <: Edge[N]] {
     final protected class Runner[U] private (stopAt: StopCondition, visitor: A => U) {
 
       private[this] val addMethod = parameters.direction match {
-        case Successors   => Node.addDiSuccessors _
-        case Predecessors => Node.addDiPredecessors _
+        case Successors   => Node.addOutNeighbors _
+        case Predecessors => Node.addInNeighbors _
         case AnyConnected => Node.addNeighbors _
       }
 
@@ -279,7 +279,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
         if (withEdgeFiltering)
           filtered(node, nodeFilter, filteredEdges(node.outgoing, cumWeight), reverse)
         else {
-          val succ = node.diSuccessors
+          val succ = node.outNeighbors
           filtered(succ, succ.size, nodeFilter, reverse)
         }
 
