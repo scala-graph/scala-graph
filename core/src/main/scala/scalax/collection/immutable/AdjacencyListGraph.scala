@@ -20,11 +20,6 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
     this: NodeT =>
 
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
-
-    final def outNeighbors: Set[NodeT] = new immutable.EqSet(Lazy.outNeighborsToSomeEdge)
-
-    final def diSuccessors: Set[NodeT] = new immutable.EqSet(Lazy.diSuccessorsToSomeEdge)
-
   }
 
   type NodeSetT = AdjacencyListNodeSet

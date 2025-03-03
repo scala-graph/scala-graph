@@ -34,10 +34,10 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
     @inline final protected def nodeEqThis = (n: NodeT) => n eq this
 
     protected[collection] object Lazy extends Serializable {
-      @transient protected[collection] var _aHook: Option[(NodeT, EdgeT)] = _
-      @transient private var outN: EqHashMap[NodeT, EdgeT]                = _
+      @transient protected[collection] var _aHook: Option[EdgeT] = _
+      @transient private var outN: EqHashMap[NodeT, EdgeT]       = _
 
-      def aHook: Option[(NodeT, EdgeT)] = {
+      def aHook: Option[EdgeT] = {
         if (_aHook eq null) outNeighborsToSomeEdge
         _aHook
       }
@@ -51,7 +51,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
             _aHook = None
             edges foreach { e =>
               if (aHook.isEmpty && e.matches(nodeEqThis, nodeEqThis))
-                _aHook = Some(thisNode -> e)
+                _aHook = Some(e)
               addOutNeighbors(e, (n: NodeT) => m put (n, e))
             }
             outN = m
@@ -59,16 +59,21 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
           outN
         }
 
-      def diSuccessorsToSomeEdge: EqHashMap[NodeT, EdgeT] =
-        aHook.fold(outNeighborsToSomeEdge)(outNeighborsToSomeEdge.clone += _)
+      def diSuccessors: Set[NodeT] = new EqSetFacade(
+        aHook.fold(outNeighborsToSomeEdge.keys)(_ => Iterable.single(thisNode) ++ outNeighborsToSomeEdge.keys)
+      )
     }
-    import Lazy._
+    import Lazy.{aHook, outNeighborsToSomeEdge}
 
     final def connectionsWith(other: NodeT) = edges withSetFilter (_.isAt(other))
 
     final def hasOnlyHooks = outNeighbors.isEmpty && aHook.isDefined
 
-    final def hook: Option[EdgeT] = aHook map (_._2)
+    final def hook: Option[EdgeT] = aHook
+
+    final def outNeighbors: Set[NodeT] = new immutable.EqSet(outNeighborsToSomeEdge)
+
+    final def diSuccessors: Set[NodeT] = Lazy.diSuccessors
 
     final def isDirectPredecessorOf(that: NodeT): Boolean = diSuccessors contains that
 
@@ -121,7 +126,7 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
     final def outgoingTo(to: NodeT) = edges withSetFilter (isOutgoingTo(_, to))
 
     final def findOutgoingTo(to: NodeT): Option[EdgeT] =
-      if (to eq this) aHook map (_._2)
+      if (to eq this) aHook
       else outNeighborsToSomeEdge get to
 
     final def incoming = edges withSetFilter (e =>

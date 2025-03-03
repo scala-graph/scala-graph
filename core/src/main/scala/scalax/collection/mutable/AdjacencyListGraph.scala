@@ -37,20 +37,16 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
 
     final protected def addDiSuccOrHook(edge: EdgeT): Unit = {
       if (edge.matches(nodeEqThis, nodeEqThis) && aHook.isEmpty)
-        _aHook = Some(this -> edge)
+        _aHook = Some(edge)
       addOutNeighbors(edge, (n: NodeT) => outNeighborsToSomeEdge put (n, edge))
     }
-
-    final def diSuccessors: Set[NodeT] = new immutable.EqSet(diSuccessorsToSomeEdge)
-
-    final def outNeighbors: Set[NodeT] = new immutable.EqSet(outNeighborsToSomeEdge)
 
     protected[collection] def remove(edge: EdgeT): Boolean =
       if (edges.remove(edge)) {
         if (selfGraph.edges.initialized) {
 
           def onLooping(): Unit =
-            edges.find((e: EdgeT) => e.isLooping).fold(ifEmpty = _aHook = None)((e: EdgeT) => _aHook = Some(this -> e))
+            edges.find((e: EdgeT) => e.isLooping).fold(ifEmpty = _aHook = None)((e: EdgeT) => _aHook = Some(e))
 
           def onNonLooping(): Unit = edge.targets foreach (t =>
             edges
