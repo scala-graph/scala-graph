@@ -61,7 +61,7 @@ sealed trait Edge[+N] extends Equals {
     */
   def isLooping: Boolean
 
-  /** Same as `! looping`. */
+  /** Same as `! isLooping`. */
   @inline final def nonLooping: Boolean = !isLooping
 
   /** The weight of this edge with a default of 1.
