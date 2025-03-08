@@ -41,7 +41,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
     weightFactory: Option[() => Long] = None,
     labelFactory: Option[() => Any] = None
 )(implicit nodeTag: ClassTag[N]) {
-  require(order > 0)
+  require(order > 0, s"Requested random graph order must be strictly positive, not $order")
   if (connected) require(nodeDegree.min >= 2)
 
   implicit val graphConfig: GraphConfig = graphCompanion.defaultConfig
