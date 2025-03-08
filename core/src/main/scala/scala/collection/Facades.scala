@@ -32,6 +32,7 @@ final class EqSetFacade[A <: AnyRef](i: Iterable[A]) extends immutable.Set[A] {
   def incl(elem: A)         = i.toSet - elem
   def excl(elem: A)         = i.toSet + elem
 
+  override def knownSize: Int    = i.knownSize
   override def size: Int         = i.size
   override def contains(elem: A) = i exists (_ eq elem)
 }

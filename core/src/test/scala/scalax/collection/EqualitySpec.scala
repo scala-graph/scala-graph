@@ -20,12 +20,13 @@ private class Equality[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E
     val factory: GenericGraphCoreFactory[CC]
 ) extends RefSpec
     with Matchers {
+  info(factory.getClass.getPackage.toString)
 
   private val seq_1_3   = Seq(1, 3)
   private val gInt_1_3  = factory(seq_1_3.toOuterElems[DiEdge[Int]]: _*)
   private val gString_A = factory("A")
 
-  def `Eq ` : Unit = {
+  def `Graph equals`: Unit = {
     factory[Int, Nothing]() shouldEqual factory[Int, DiEdge]()
     gInt_1_3 shouldEqual factory(1, 3)
     gString_A shouldEqual factory("A")
@@ -35,6 +36,20 @@ private class Equality[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E
     gString_A shouldNot be(factory("B"))
 
     gInt_1_3 shouldEqual immutable.Graph(1) + 3
+  }
+
+  def `Graph hashCode`(): Unit = {
+    factory(1).hashCode shouldBe factory(1).hashCode
+    factory(1).hashCode shouldNot be(factory(2).hashCode)
+
+    factory(1 ~> 2).hashCode shouldBe factory(1 ~> 2).hashCode
+    factory(1 ~> 2).hashCode shouldNot be(factory(2 ~> 1).hashCode)
+
+    factory(1 ~ 2).hashCode shouldBe factory(1 ~ 2).hashCode
+    factory(1 ~ 2).hashCode shouldNot be(factory(1 ~ 3).hashCode)
+
+    factory(1 ~ 2, 2 ~ 3).hashCode shouldBe factory(1 ~ 2, 2 ~ 3).hashCode
+    factory(1 ~ 2, 2 ~ 3).hashCode shouldNot be(factory(1 ~ 2, 3 ~ 3).hashCode)
   }
 }
 
