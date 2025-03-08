@@ -94,7 +94,7 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
     single ~~> more(4, 9)
   )
 
-  object `diSuccessors ` {
+  object `diSuccessors, outNeighbors` {
     def `for DiHyper`: Unit = {
       (hDi get 1).outNeighbors shouldEqual Set(2, 3, 4, 5, 9)
       (hDi get 1).diSuccessors shouldEqual Set(1, 2, 3, 4, 5, 9)
@@ -103,9 +103,10 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
     }
   }
 
-  object `diPredecessors ` {
+  object `diPredecessors, inNeighbors` {
     def `for DiHyper`: Unit = {
-      (hDi get 1).diPredecessors should be(Set.empty)
+      (hDi get 1).inNeighbors should be(Set.empty)
+      (hDi get 1).diPredecessors should be(Set(1))
       (hDi get 2).diPredecessors should be(Set(1))
       (hDi get 5).diPredecessors should be(Set(1))
     }

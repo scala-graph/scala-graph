@@ -91,17 +91,29 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
     }
 
     final def diPredecessors: Set[NodeT] = {
-      val m = new EqHashMap[NodeT, EdgeT](edges.size)
+      val m         = new EqHashSet[NodeT](edges.size)
+      var selfAdded = false
       edges foreach { e =>
-        addInNeighbors(e, (n: NodeT) => m put (n, e))
+        addInNeighbors(e, m += _)
+        if (!selfAdded)
+          if (e.matches(nodeEqThis, nodeEqThis)) {
+            m += thisNode
+            selfAdded = true
+          }
       }
-      new EqSet(m)
+      new EqSetFacade(m)
     }
 
     final def hasPredecessors: Boolean = edges exists (_.hasSource((n: NodeT) => n ne this))
 
-    final protected[collection] def addInNeighbors(edge: EdgeT, add: NodeT => Unit): Unit =
-      edge.sources foreach (n => if (n ne this) add(n))
+    @inline final protected[collection] def addInNeighbors(edge: EdgeT, add: NodeT => Unit): Unit =
+      edge withSources (n => if (n ne this) add(n))
+
+    def inNeighbors: Set[NodeT] = {
+      val m = new EqHashSet[NodeT](edges.size)
+      edges foreach (addInNeighbors(_, m += _))
+      new EqSetFacade(m)
+    }
 
     final def neighbors: Set[NodeT] = {
       val m = new EqHashSet[NodeT](edges.size)

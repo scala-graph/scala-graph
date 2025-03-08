@@ -292,7 +292,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
         if (withEdgeFiltering)
           filtered(node, nodeFilter, filteredEdges(node.incoming, cumWeight), reverse)
         else
-          filtered(node.diPredecessors, -estimatedNrOfNodes(node), nodeFilter, reverse)
+          filtered(node.inNeighbors, -estimatedNrOfNodes(node), nodeFilter, reverse)
 
       private[this] def filteredNeighbors(
           node: NodeT,

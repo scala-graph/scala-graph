@@ -121,13 +121,13 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
     protected[collection] def addOutNeighbors(edge: EdgeT, add: NodeT => Unit): Unit
 
     /** Like `diSuccessors` except that this node is excluded even if a loop exists.
-      * Also called ''open out-neighborhood''
+      * Also called ''open out-neighborhood''.
       */
     def outNeighbors: Set[NodeT]
 
-    /** All direct predecessors of this node, also called ''predecessor set'' or
-      * ''open in-neighborhood'': source nodes of directed incident edges and / or
-      * adjacent nodes of undirected incident edges excluding this node.
+    /** All direct predecessors of this node, also called ''predecessor set'':
+      * source nodes of directed incident edges and / or adjacent nodes of undirected incident edges.
+      * This node itself is also included if a loop exists.
       * @return set of all direct predecessors of this node.
       */
     def diPredecessors: Set[NodeT]
@@ -137,14 +137,17 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
 
     protected[collection] def addInNeighbors(edge: EdgeT, add: NodeT => Unit): Unit
 
-    /** Synonym for `diPredecessors`. */
-    @inline final def inNeighbors = diPredecessors
+    /** Like `diPredecessors` except that this node is excluded even if a loop exists.
+      * Also called ''open in-neighborhood''.
+      */
+    def inNeighbors: Set[NodeT]
 
     /** All adjacent nodes (direct successors and predecessors) of this node,
       * also called ''open neighborhood'' excluding this node.
       * @return set of all neighbors.
       */
     def neighbors: Set[NodeT]
+
     protected[collection] def addNeighbors(edge: EdgeT, add: NodeT => Unit): Unit
 
     /** All edges outgoing from this node.

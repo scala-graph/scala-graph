@@ -353,19 +353,26 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       }
     }
 
-    object `diPredecessors ` {
-      def `for UnDi`: Unit = {
-        (gUnDi get 1).diPredecessors should be(Set(2, 3, 4))
-        (gUnDi get 2).diSuccessors should be(Set(1))
-      }
+    object `inNeighbors ` {
+      def `for UnDi`: Unit =
+        (gUnDi get 1).inNeighbors should be(Set(2, 3, 4))
       def `for Di`: Unit = {
-        (gDi get 1).diPredecessors should be(Set.empty)
+        (gDi get 1).inNeighbors should be(Set.empty)
+        (gDi get 2).inNeighbors should be(Set(1))
+      }
+      def `for mixed`: Unit =
+        (gMixed get 2).diPredecessors should be(Set(1))
+    }
+
+    object `diPredecessors ` {
+      def `for UnDi`: Unit =
+        (gUnDi get 1).diPredecessors should be(Set(1, 2, 3, 4))
+      def `for Di`: Unit = {
+        (gDi get 1).diPredecessors should be(Set(1))
         (gDi get 2).diPredecessors should be(Set(1))
       }
-      def `for mixed`: Unit = {
+      def `for mixed`: Unit =
         (gMixed get 2).diPredecessors should be(Set(1))
-        (gMixed get 3).diSuccessors should be(Set(4))
-      }
     }
 
     object `neighbors ` {
