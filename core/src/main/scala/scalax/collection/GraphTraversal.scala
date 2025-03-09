@@ -561,7 +561,7 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
     */
   def isComplete = {
     val orderLessOne = order - 1
-    nodes forall (_.diSuccessors.size == orderLessOne)
+    nodes forall (_.outNeighbors.size == orderLessOne)
   }
 
   /** An arbitrary edge between `from` and `to` that is available most efficiently.

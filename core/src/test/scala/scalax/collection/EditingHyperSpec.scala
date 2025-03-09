@@ -77,7 +77,7 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
       g.contains(h) shouldBe true
     }
 
-    def `isHyper ` : Unit = {
+    def `isHyper `: Unit = {
       def test(g: CC[Int, AnyHyperEdge[Int]], expected: Boolean): Unit = g.isHyper should be(expected)
 
       test(factory.from[Int, AnyHyperEdge](List(1 ~> 2, 1 ~~ 2 ~~ 3)), true)
@@ -94,17 +94,19 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
     single ~~> more(4, 9)
   )
 
-  object `diSuccessors ` {
+  object `diSuccessors, outNeighbors` {
     def `for DiHyper`: Unit = {
-      (hDi get 1).diSuccessors shouldEqual Set(2, 3, 4, 5, 9)
+      (hDi get 1).outNeighbors shouldEqual Set(2, 3, 4, 5, 9)
+      (hDi get 1).diSuccessors shouldEqual Set(1, 2, 3, 4, 5, 9)
       (hDi get 2).diSuccessors shouldEqual Set.empty
       (hDi get 5).diSuccessors shouldEqual Set.empty
     }
   }
 
-  object `diPredecessors ` {
+  object `diPredecessors, inNeighbors` {
     def `for DiHyper`: Unit = {
-      (hDi get 1).diPredecessors should be(Set.empty)
+      (hDi get 1).inNeighbors should be(Set.empty)
+      (hDi get 1).diPredecessors should be(Set(1))
       (hDi get 2).diPredecessors should be(Set(1))
       (hDi get 5).diPredecessors should be(Set(1))
     }
@@ -149,12 +151,14 @@ private class EditingHyperMutable extends RefSpec with Matchers {
       val (n1, n2) = (g get 1, g get 2)
 
       n2.diSuccessors shouldBe empty
-      n1.diSuccessors should be(Set(2, 3))
+      n1.outNeighbors should be(Set(2, 3))
+      n1.diSuccessors should be(Set(1, 2, 3))
       n1 findOutgoingTo n1 should be(Some(_1_to_1_2))
 
       g subtractOne _1_to_2_3
       g shouldEqual Graph(_1_to_1_2, 3)
-      n1.diSuccessors should be(Set(2))
+      n1.outNeighbors should be(Set(2))
+      n1.diSuccessors should be(Set(1, 2))
       n1 findOutgoingTo n1 should be(Some(_1_to_1_2))
 
       g subtractOne 2
@@ -164,7 +168,8 @@ private class EditingHyperMutable extends RefSpec with Matchers {
 
       g += _1_to_1_2
       g shouldEqual Graph(_1_to_1_2, 3)
-      n1.diSuccessors should be(Set(2))
+      n1.outNeighbors should be(Set(2))
+      n1.diSuccessors should be(Set(1, 2))
       n1 findOutgoingTo n1 should be(Some(_1_to_1_2))
     }
   }
