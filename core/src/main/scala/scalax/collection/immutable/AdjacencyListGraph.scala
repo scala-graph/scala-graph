@@ -19,13 +19,7 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
   abstract class InnerNodeImpl(val outer: N, hints: ArraySet.Hints) extends NodeBase with AdjacendyListBaseInnerNode {
     this: NodeT =>
 
-    final override val edges: ArraySet[EdgeT]                      = ArraySet.emptyWithHints[EdgeT](hints)
-    @transient protected var _diSuccessors: immutable.EqSet[NodeT] = _
-
-    final def diSuccessors: Set[NodeT] = {
-      if (_diSuccessors eq null) _diSuccessors = new immutable.EqSet(Adj.diSucc)
-      _diSuccessors
-    }
+    final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
   }
 
   type NodeSetT = AdjacencyListNodeSet
