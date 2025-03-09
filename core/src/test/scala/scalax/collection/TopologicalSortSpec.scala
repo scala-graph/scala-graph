@@ -49,7 +49,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
 
         def checkOrder(seq: OrderedInnerNodes, ignorePredecessorsOf: Option[graph.NodeT]): Unit =
           seq.foldLeft(predecessors(ignorePredecessorsOf)) { (allowedPredecessors, innerNode) =>
-            if (!innerNode.diPredecessors.forall(allowedPredecessors.contains))
+            if (!innerNode.inNeighbors.forall(allowedPredecessors.contains))
               fail(s"$innerNode is misplaced in $seq")
             allowedPredecessors + innerNode
           }

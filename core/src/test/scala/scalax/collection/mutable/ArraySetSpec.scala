@@ -114,7 +114,7 @@ class ArraySetSpec extends RefSpec with Matchers {
       sorted.range(-10, -4) shouldBe SortedArraySet.empty[Int]
     }
 
-    def `supports ++` : Unit = {
+    def `supports ++`: Unit = {
       val a = ArraySet.empty[Int]
       val b = ArraySet(1)
       val c = ArraySet(2)
