@@ -15,7 +15,7 @@ Peter
 
 **1.x** started in 2011, is now superseeded by 2.x. It evolved by paying high attention to version compatibility.
 
-**2.x**, the **default** branch, started in 2019 to make some significant improvements that also need new, simplified signatures.
+**2.x**, the **default** branch, started in 2019 to make some significant improvements that also needed new, simplified signatures.
 The new features include
 
 * multiple sources for directed hyperedges
