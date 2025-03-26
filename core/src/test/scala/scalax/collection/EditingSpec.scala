@@ -159,7 +159,7 @@ private class EditingMutable extends RefSpec with Matchers {
       n1.outNeighbors should be(Set(3))
       n1 findOutgoingTo n1 should be(None)
 
-      g ++= (edges = List(oneOne, oneTwo)) // Graph(oneOne, oneTwo, one~>3)
+      g addEdges List(oneOne, oneTwo) // Graph(oneOne, oneTwo, one~>3)
       n1.diSuccessors should be(Set(one, two, 3))
       n1.outNeighbors should be(Set(two, 3))
       n1 findOutgoingTo n1 should be(Some(e11))
@@ -167,7 +167,7 @@ private class EditingMutable extends RefSpec with Matchers {
 
     def `serve ++=, unionInPlace`: Unit = {
       val (gBefore, gAfter) = (Graph(1, 2 ~ 3), Graph(0, 1 ~ 2, 2 ~ 3))
-      (gBefore ++= (0 :: Nil, List(1 ~ 2, 2 ~ 3))) should equal(gAfter)
+      (gBefore addAll (0 :: Nil, List(1 ~ 2, 2 ~ 3))) should equal(gAfter)
       (gBefore |= Graph(0, 1 ~ 2)) should equal(gAfter)
       (gBefore |= Graph[Int, UnDiEdge](0) |= Graph(1 ~ 2)) should equal(gAfter)
     }
@@ -423,8 +423,8 @@ private class Editing[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E,
       g filter (_ < 2) should be(factory(1))
       g filter (_ < 2) should be(factory(1))
       g filter (_ >= 2) should be(factory(2 ~> 3, 5))
-      g filter (edgeP = _.node1.outer == 2) should be(factory(1, 5, 2 ~> 3))
-      g filter (nodeP = _ <= 3, edgeP = _ contains 2) should be(factory(1, 2 ~> 3))
+      g.filter(edgeP = _.node1.outer == 2) should be(factory(1, 5, 2 ~> 3))
+      g.filter(nodeP = _ <= 3, edgeP = _ contains 2) should be(factory(1, 2 ~> 3))
     }
 
     def `match `: Unit = {
