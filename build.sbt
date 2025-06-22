@@ -73,7 +73,7 @@ val unusedImports = "-Wunused:imports"
 
 lazy val defaultSettings_cross = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion       := Version.compiler_2_13,
-  crossScalaVersions := Seq(Version.compiler_2_13, Version.compiler_3_fallback)
+  crossScalaVersions := Seq(Version.compiler_2_13, Version.compiler_3)
 ) ++
   defaultSettings ++
   defaultTestLibSettings

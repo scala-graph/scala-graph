@@ -885,8 +885,6 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
   abstract protected class TraverserMethods[A, +CC <: TraverserMethods[A, CC]] extends FluentProperties[CC] {
     this: CC with Properties =>
 
-    def root: NodeT
-
     protected def nodeVisitor[U](f: A => U): (NodeT) => U
     protected def edgeVisitor[U](f: A => U): (EdgeT) => U
 
