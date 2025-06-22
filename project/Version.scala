@@ -12,5 +12,5 @@ object Version {
   val highest = version(3)
   val core    = version(3)
   val dot     = version(0)
-  val json    = version(0)
+  val json    = version(3)
 }
