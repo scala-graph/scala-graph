@@ -20,7 +20,7 @@ object Stream {
      * referenced by edges; all created nodes are stored in a map prior to passing
      * them to the Graph in order not to loose their id's.
      */
-    val idMap = collection.mutable.Map.empty[String, N]
+    val idMap              = collection.mutable.Map.empty[String, N]
     val nodes: Iterable[N] = {
       val buf = new ArrayBuffer[N](512)
       for {

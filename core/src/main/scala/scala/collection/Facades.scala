@@ -10,7 +10,7 @@ package scala.collection
   */
 final class SeqFacade[+A](i: Iterable[A]) extends immutable.Seq[A] {
   def iterator: Iterator[A] = i.iterator
-  def apply(idx: Int): A = {
+  def apply(idx: Int): A    = {
     val it = iterator
     var i  = 0
     while (i < idx) { it.next(); i += 1 }

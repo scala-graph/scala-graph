@@ -15,7 +15,7 @@ class MicroBenchmarkTest extends RefSpec with Matchers {
 
   object `relativeTimes() reflects` {
     def `relative execution times`: Unit = {
-      val r = 1 to 20
+      val r        = 1 to 20
       val relTimes = relativeTimes(warmUp = 2)(
         r.toList.sorted,
         r.toList.sorted.toArray.toList.sorted,
@@ -30,7 +30,7 @@ class MicroBenchmarkTest extends RefSpec with Matchers {
 
   class FloatTolerance(maxDeviation: Float) extends Equality[Float] {
     private def eq(a: Float, b: Float): Boolean = if (a > b) a < b * maxDeviation else a > b / maxDeviation
-    def areEqual(a: Float, b: Any) = b match {
+    def areEqual(a: Float, b: Any)              = b match {
       case f: Float => eq(a, f)
       case i: Int   => eq(a, i.toFloat)
     }

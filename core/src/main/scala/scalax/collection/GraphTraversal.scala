@@ -216,7 +216,7 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
     def cycle: Option[Cycle] =
       if (candidateCycleNodes.isEmpty) findCycle
       else {
-        val it = candidateCycleNodes.iterator
+        val it                           = candidateCycleNodes.iterator
         @tailrec def loop: Option[Cycle] =
           if (it.hasNext)
             it.next().findCycle match {
@@ -292,7 +292,7 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
       private[this] val firstNode           = nodeIt.next()
       private[this] val edgeIt              = edges.iterator
 
-      def hasNext: Boolean = start || !edgeToFollow || edgeIt.hasNext
+      def hasNext: Boolean  = start || !edgeToFollow || edgeIt.hasNext
       def next(): InnerElem =
         if (start) {
           start = false

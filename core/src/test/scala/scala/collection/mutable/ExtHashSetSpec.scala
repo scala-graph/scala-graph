@@ -64,7 +64,7 @@ class ExtHashSetSpec extends RefSpec with Matchers {
 
     def `is able to upsert elements`: Unit = {
       class MutableElem(val a: Int, var b: Int) {
-        override def hashCode(): Int = a.##
+        override def hashCode(): Int             = a.##
         override def equals(other: Any): Boolean = other match {
           case that: MutableElem => a == that.a
           case _                 => false

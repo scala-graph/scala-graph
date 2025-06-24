@@ -11,7 +11,7 @@ import scalax.collection.immutable.Graph
 
 class GraphGenSpec extends RefSpec with Matchers with ScalaCheckPropertyChecks {
 
-  final val minSuccessful = 5
+  final val minSuccessful                         = 5
   implicit val config: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = minSuccessful, maxDiscardedFactor = 1.0)
 
@@ -26,7 +26,7 @@ class GraphGenSpec extends RefSpec with Matchers with ScalaCheckPropertyChecks {
   }
 
   object `outer node set` {
-    val order = 5
+    val order                                             = 5
     implicit val arbitraryOuterNodes: Arbitrary[Set[Int]] =
       new GraphGen[Int, DiEdge[Int], Graph](
         Graph,

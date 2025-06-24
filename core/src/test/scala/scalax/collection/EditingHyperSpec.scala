@@ -87,7 +87,7 @@ private class EditingHyper[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
   }
 
   val single = one(1)
-  val hDi = factory(
+  val hDi    = factory(
     single ~~> more(1, 5),
     single ~~> more(2, 5),
     single ~~> more(3, 5),

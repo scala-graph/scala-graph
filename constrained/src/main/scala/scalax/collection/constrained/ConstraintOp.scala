@@ -52,7 +52,7 @@ class ConstraintBinaryOp[N, E <: Edge[N], G <: Graph[N, E]](
     var rightDone          = false
     val leftFollowUp       = leftResult.followUp
     lazy val rightFollowUp = { rightDone = true; rightResult.followUp }
-    val followUp =
+    val followUp           =
       operator match {
         case And if leftFollowUp != Abort => min(leftFollowUp, rightFollowUp)
         case And                          => Abort

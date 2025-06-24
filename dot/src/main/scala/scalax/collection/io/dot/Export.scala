@@ -66,7 +66,7 @@ trait Export[N, E <: Edge[N]] extends Any {
       }
       node.outer.dotGraph match {
         case DotSubGraph(ancestor: DotRootGraph, _, _, _) => conn(ancestor)
-        case DotSubGraph(ancestor: DotSubGraph, _, _, _) =>
+        case DotSubGraph(ancestor: DotSubGraph, _, _, _)  =>
           conn(ancestor)
           connectClusters(dotAST addAndGet DotCluster(ancestor))
         case _: DotRootGraph =>

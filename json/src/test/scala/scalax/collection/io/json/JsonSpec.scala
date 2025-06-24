@@ -183,7 +183,7 @@ class Json[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, E, CC]](
 
       object `using default edge descriptors` {
         def `on exporting`(): Unit = {
-          val g = factory(OneOrMore("B") ~~> OneOrMore("A", "C"))
+          val g          = factory(OneOrMore("B") ~~> OneOrMore("A", "C"))
           val descriptor =
             Descriptor.simple[String](StringNodeDescriptor, DiHyper.descriptor[String]())
 

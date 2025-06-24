@@ -276,7 +276,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
         (nMap get n1, nMap get n2) match {
           case (Some(nn1), Some(nn2)) =>
             outer match {
-              case gM: GenericEdgeMapper[EC @unchecked] => builder += gM.map(nn1, nn2)
+              case gM: GenericEdgeMapper[EC @unchecked]     => builder += gM.map(nn1, nn2)
               case pM: PartialEdgeMapper[EC[NN] @unchecked] =>
                 pM.map[NN].lift(nn1, nn2).fold(validate(fallback(nn1, nn2)))(Some(_)).map(builder += _)
             }
@@ -294,7 +294,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
         (sources.flatMapEither(nMap.get), targets.flatMapEither(nMap.get)) match {
           case (Right(newSources), Right(newTargets)) =>
             outer match {
-              case gM: GenericDiHyperEdgeMapper[EC @unchecked] => builder += gM.map(newSources, newTargets)
+              case gM: GenericDiHyperEdgeMapper[EC @unchecked]     => builder += gM.map(newSources, newTargets)
               case pM: PartialDiHyperEdgeMapper[EC[NN] @unchecked] =>
                 pM.map[NN]
                   .lift(newSources, newTargets)
@@ -312,7 +312,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
         ends.flatMapEither(nMap.get) match {
           case Right(newEnds) =>
             outer match {
-              case gM: GenericHyperEdgeMapper[EC @unchecked] => builder += gM.map(newEnds)
+              case gM: GenericHyperEdgeMapper[EC @unchecked]     => builder += gM.map(newEnds)
               case pM: PartialHyperEdgeMapper[EC[NN] @unchecked] =>
                 pM.map[NN].lift(newEnds).fold(validate(fallback(newEnds)))(Some(_)).map(builder += _)
             }

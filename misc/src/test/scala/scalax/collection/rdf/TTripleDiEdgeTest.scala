@@ -12,7 +12,7 @@ class TTripleDiEdgeTest extends RefSpec with Matchers {
   val (subj_1, subj_2) = (IRI("s-1"), IRI("s-2"))
   val pred             = IRI("p-1")
   val (obj_1, obj_2)   = (Label("l-1"), BlankNode(1))
-  val initialTriples = List[Triple[RdfNode]](
+  val initialTriples   = List[Triple[RdfNode]](
     Triple(subj_1, pred, obj_1),
     Triple(subj_2, pred, obj_2)
   )

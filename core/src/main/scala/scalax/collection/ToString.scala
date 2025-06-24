@@ -85,7 +85,7 @@ object ToString {
   }
   sealed trait SetStyle extends Style
 
-  object SingleLine extends SetStyle
+  object SingleLine                                     extends SetStyle
   final case class SetsOnSeparateLines(indent: Int = 0) extends StyleWithIndent[SetsOnSeparateLines] {
     def incremented: SetsOnSeparateLines = copy(indent + 2)
   }

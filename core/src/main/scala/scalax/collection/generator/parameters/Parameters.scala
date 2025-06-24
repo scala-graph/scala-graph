@@ -8,10 +8,10 @@ abstract class RandomRange(min: Int, max: Int, uniform: Boolean) {
   val halfSpan        = span.toFloat / 2
   def mean            = min + (span - 1).toFloat / 2
   private val r, sign = new Random
-  def draw = if (uniform) r.nextInt(span) + min
+  def draw            = if (uniform) r.nextInt(span) + min
   else ((r.nextGaussian() + 1 + min) * halfSpan).toInt
   def drawHalf = {
-    val d = draw
+    val d    = draw
     val even =
       if (d % 2 == 0) d
       else d + (if (sign.nextInt(2) == 1) 1 else -1)

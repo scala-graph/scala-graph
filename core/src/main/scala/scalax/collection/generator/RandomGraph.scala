@@ -52,7 +52,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
 
   final protected[RandomGraph] class DefaultWeightFactory {
     private[this] var weightCount = 0L
-    def apply: () => Long = { () =>
+    def apply: () => Long         = { () =>
       weightCount += 1
       weightCount
     }
@@ -68,7 +68,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
       *  `A, B, ..., AA, AB, ..., BA, BB, ...`.
       */
     def apply: () => Any = { () =>
-      val len = labelBuffer.length
+      val len                       = labelBuffer.length
       def loop(i: Int): Array[Char] = {
         val c = labelBuffer(i)
         if (c == endChar)
@@ -139,7 +139,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
 
     def mayFinish: Boolean = active.toFloat / order < 0.5
 
-    private[this] var idx = 0
+    private[this] var idx               = 0
     def add(node: N, degree: Int): Unit = {
       nodes(idx) = node
       degrees(idx) = degree
@@ -159,7 +159,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
 
       def setUsed: Unit = {
         val drawnCompact = compactIndex >= 0
-        val degreeIdx =
+        val degreeIdx    =
           if (drawnCompact) compacts(compactIndex)(index) - 1
           else index
         if (degreeIdx >= 0) {
@@ -197,7 +197,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
       val empty            = new Drawn(0.asInstanceOf[N], emptyIdx, -1)
     }
 
-    private val r = new Random
+    private val r   = new Random
     def draw: Drawn =
       if (active <= 0) Drawn.empty
       else {
@@ -251,7 +251,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
 
   protected[RandomGraph] class RandomEdge(weightFactory: () => Long, labelFactory: () => Any)(implicit val d: Degrees) {
     private[this] val c = RandomEdge.drawCompanion
-    val degrees = d.draw(
+    val degrees         = d.draw(
       c match {
         case _: EdgeCompanion[_] => 2
         case _                   => 2 + RandomEdge.r.nextInt(5) // TODO use EdgeArityRange instead
@@ -419,7 +419,7 @@ object RandomGraph {
       case _             => false
     }
     lazy val expectedTotalDegree: Int = (order * nodeDegrees.mean).toInt
-    lazy val divisor: Int = {
+    lazy val divisor: Int             = {
       val d = if (isDense) 8 else 22
       if (order > 50) d else d / 6
     }

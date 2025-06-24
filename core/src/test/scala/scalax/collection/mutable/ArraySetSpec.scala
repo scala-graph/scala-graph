@@ -27,7 +27,7 @@ class ArraySetSpec extends RefSpec with Matchers {
       val arr = ArraySet.emptyWithHints[Int]
       arr.capacity shouldBe hints.initialCapacity
 
-      val integers = new IntSequence
+      val integers                                                 = new IntSequence
       def add(numberOfAdditions: Int, expectedCapacity: Int): Unit =
         for (i <- 0 until numberOfAdditions) {
           arr += integers.draw()
@@ -47,15 +47,15 @@ class ArraySetSpec extends RefSpec with Matchers {
     def `may be compacted`: Unit = {
       val integers = new IntSequence
       val toAdd    = hints.initialCapacity + 1
-      val arr = ArraySet.emptyWithHints[Int] ++=
+      val arr      = ArraySet.emptyWithHints[Int] ++=
         (for (i <- 1 to toAdd) yield integers.draw())
       arr.compact()
       arr.capacity shouldBe toAdd
     }
 
     def `may be configured to be represented solely by a HashSet`: Unit = {
-      val edges = new IntSequence
-      val arr   = ArraySet.emptyWithHints[Int](ArraySet.Hints.HashOnly)
+      val edges         = new IntSequence
+      val arr           = ArraySet.emptyWithHints[Int](ArraySet.Hints.HashOnly)
       def check(): Unit = {
         arr.isArray shouldBe false
         arr.capacity shouldBe 0

@@ -3,7 +3,7 @@ package generic
 
 sealed protected[collection] trait Mapper
 sealed protected[collection] trait GenericMapper extends Mapper
-trait PartialMapper extends Mapper {
+trait PartialMapper                              extends Mapper {
   def map[N]: PartialFunction[_, _]
 }
 

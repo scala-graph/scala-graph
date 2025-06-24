@@ -72,7 +72,7 @@ private class CustomEdge[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N,
       )
     }
 
-    def `on import`(): Unit = factory.fromJson[String, Transition](jsonText, descriptor) shouldBe graph
+    def `on import`(): Unit   = factory.fromJson[String, Transition](jsonText, descriptor) shouldBe graph
     def `on reimport`(): Unit =
       factory.fromJson[String, Transition](graph.toJson(descriptor), descriptor) shouldBe graph
   }
@@ -113,7 +113,7 @@ private class CustomEdge[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N,
           }
         )
 
-      def `on import`(): Unit = factory.fromJson[String, WLHyperEdge](jsonText, descriptor) shouldBe graph
+      def `on import`(): Unit   = factory.fromJson[String, WLHyperEdge](jsonText, descriptor) shouldBe graph
       def `on reimport`(): Unit =
         factory.fromJson[String, WLHyperEdge](graph.toJson(descriptor), descriptor) shouldBe graph
     }
@@ -154,7 +154,7 @@ private class CustomEdge[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N,
           }
         )
 
-      def `on import`(): Unit = factory.fromJson[String, WLDiHyperEdge](jsonText, descriptor) shouldBe graph
+      def `on import`(): Unit   = factory.fromJson[String, WLDiHyperEdge](jsonText, descriptor) shouldBe graph
       def `on reimport`(): Unit =
         factory.fromJson[String, WLDiHyperEdge](graph.toJson(descriptor), descriptor) shouldBe graph
     }

@@ -29,7 +29,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, 
         else {
           val preCheckResult = preSubtract(node.asInstanceOf[self.NodeT], ripple)
           preCheckResult.followUp match {
-            case Complete => Right(remove)
+            case Complete  => Right(remove)
             case PostCheck =>
               val incidentEdges = node.edges.toIterable
               if (remove)
@@ -133,10 +133,10 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, 
       (p.toOuterNodes.toSet, p.toOuterEdges.toSet)
     }
     val (innerNodes, innerEdges) = (outerNodes map find flatten, outerEdges map find flatten)
-    val preCheckResult =
+    val preCheckResult           =
       preSubtract(innerNodes.asInstanceOf[Set[self.NodeT]], innerEdges.asInstanceOf[Set[self.EdgeT]], true)
     preCheckResult.followUp match {
-      case Complete => Right(withoutChecks(super.--=(elems)))
+      case Complete  => Right(withoutChecks(super.--=(elems)))
       case PostCheck =>
         val subtractables = (elems filter this.contains).toArray ++ innerNodes.flatMap(_.edges).toIterable
         withoutChecks(super.--=(subtractables))

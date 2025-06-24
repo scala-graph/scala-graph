@@ -88,7 +88,7 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
     @inline final def addOne(node: NodeT): this.type      = { add(node); this }
     @inline final def subtractOne(node: NodeT): this.type = { remove(node); this }
 
-    final protected def minus(node: NodeT): Unit = collection -= node
+    final protected def minus(node: NodeT): Unit      = collection -= node
     final protected def minusEdges(node: NodeT): Unit =
       edges --= node.edges.toList // toList is necessary to avoid failure of -=(node) like in TEdit.test_MinusEq_2
   }

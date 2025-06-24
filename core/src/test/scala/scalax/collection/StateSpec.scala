@@ -52,7 +52,7 @@ class StateSpec extends RefSpec with Matchers {
     }
 
     def `when called deep-recursively`: Unit = {
-      val recurseAt = g.nodes.head
+      val recurseAt                           = g.nodes.head
       def countNodesDeep(recursion: Int): Int = {
         assert(recursion >= 0)
         var nrNodes = 0
@@ -74,7 +74,7 @@ class StateSpec extends RefSpec with Matchers {
       val r     = new Random(10 * order)
 
       def intNodeFactory = r.nextInt()
-      val g =
+      val g              =
         new RandomGraph[Int, DiEdge[Int], Graph](
           Graph,
           order,
