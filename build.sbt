@@ -29,21 +29,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     )
   )
 
-lazy val coreTestScala3 = project
-  .in(file("coreTestScala3"))
-  .dependsOn(core.jvm)
-  .settings(
-    defaultSettings_3 ++ Seq(
-      libraryDependencies ++= Seq(
-        "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test,
-        "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test exclude (
-          "org.scalacheck",
-          "scalacheck_3"
-        )
-      )
-    )
-  )
-
 lazy val dot = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -73,7 +58,7 @@ val unusedImports = "-Wunused:imports"
 
 lazy val defaultSettings_cross = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion       := Version.compiler_2_13,
-  crossScalaVersions := Seq(Version.compiler_2_13, Version.compiler_3_fallback)
+  crossScalaVersions := Seq(Version.compiler_2_13, Version.compiler_3)
 ) ++
   defaultSettings ++
   defaultTestLibSettings
