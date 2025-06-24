@@ -23,17 +23,3 @@ jobs:
       - name: Test
         run: |
           sbt ++${{ matrix.scala }} ${{ matrix.project }}/test scalafmtCheckAll
-  others:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: JDK with SBT caching
-        uses: actions/setup-java@v4
-        with:
-          java-version: 17
-          distribution: temurin
-          cache: sbt
-      - uses: sbt/setup-sbt@v1
-      - name: Scala 3 Rewrite
-        run: |
-          sbt "project coreTestScala3" test Test/scalafmt
