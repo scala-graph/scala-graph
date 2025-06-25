@@ -117,7 +117,7 @@ protected[collection] trait EqUnDi[+N] extends Eq {
       this.node1 == n2 && this.node2 == n1
 
   override protected def baseEquals(other: Edge[_]): Boolean = other match {
-    case edge: AnyEdge[_] => unDiBaseEquals(edge.node1, edge.node2)
+    case edge: AnyEdge[_]                                                 => unDiBaseEquals(edge.node1, edge.node2)
     case hyper: AnyHyperEdge[_] if hyper.isUndirected && hyper.arity == 2 =>
       unDiBaseEquals(hyper.node(0), hyper.node(1))
     case _ => false

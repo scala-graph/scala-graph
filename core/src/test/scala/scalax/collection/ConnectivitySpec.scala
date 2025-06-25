@@ -77,7 +77,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
       }
 
     def `connected by a diEdge yields a graph with the very same two strong components`: Unit = {
-      val r = new Random
+      val r     = new Random
       val union =
         sscExpectedAny.foldLeft(factory.empty[Char, DiEdge[Char]].asAnyGraph)((r, g) => g union r)
       val connectors = {
@@ -85,7 +85,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
         for (i <- 1 to 10) yield pickNode(0) ~> pickNode(1)
       }
       connectors foreach { connector =>
-        val connected = union concat List(connector)
+        val connected                                                          = union concat List(connector)
         def check(scc: Iterable[connected.Component], expectedSize: Int): Unit = {
           scc should have size expectedSize
           scc foreach { sc =>
@@ -139,7 +139,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
 
     def `strong components are proper`: Unit =
       withGraph(g) { _ =>
-        val maxProbes = 10
+        val maxProbes                            = 10
         val arbitraryNodes: Vector[Set[g.NodeT]] = strongComponents map { sc =>
           val nodes = sc.nodes
           if (nodes.size <= maxProbes) nodes

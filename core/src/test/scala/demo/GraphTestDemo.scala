@@ -134,8 +134,8 @@ object GraphTestDemo extends App {
     }
 
     object MixedMetrics extends GraphGen.Metrics[Person] {
-      val order       = PersonData.order
-      val nodeDegrees = PersonData.degrees
+      val order                = PersonData.order
+      val nodeDegrees          = PersonData.degrees
       def nodeGen: Gen[Person] = Gen.resultOf((name: String, year: Int) => Person(name, year))(
         Arbitrary(Person.nameGen),
         Arbitrary(Person.yearOfBirthGen)

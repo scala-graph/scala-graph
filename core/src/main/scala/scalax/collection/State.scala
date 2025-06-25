@@ -47,8 +47,8 @@ protected trait State[N, E <: Edge[N]] {
       dirty.flags = 0L
       if (hasDirtyExt) dirty.flagsExt.clear()
     }
-    val free         = ~(inUse.flags | dirty.flags)
-    val nrDirtyFlags = java.lang.Long.bitCount(dirty.flags)
+    val free              = ~(inUse.flags | dirty.flags)
+    val nrDirtyFlags      = java.lang.Long.bitCount(dirty.flags)
     val newHandle: Handle =
       if (free != 0) {
         val nextFree = java.lang.Long.lowestOneBit(free)
@@ -95,7 +95,7 @@ protected trait State[N, E <: Edge[N]] {
     *  @return The result of the code block executed.
     */
   protected def withHandles[T](nr: Int, reuse: Array[Handle] = Array.empty[Handle])(block: Array[Handle] => T): T = {
-    val newHandlers = reuse isEmpty
+    val newHandlers  = reuse isEmpty
     val theseHandles =
       if (newHandlers) Array.fill(nr)(nextHandle)
       else reuse
@@ -105,8 +105,8 @@ protected trait State[N, E <: Edge[N]] {
   }
 
   trait InnerNodeState {
-    protected[State] var flags: FlagWord     = 0L
-    protected[State] var flagsExt: FlagWords = null
+    protected[State] var flags: FlagWord                                    = 0L
+    protected[State] var flagsExt: FlagWords                                = null
     @inline final protected def withFlagsExt[T](block: (ExtBitSet) => T): T =
       block {
         if (flagsExt eq null) flagsExt = initFlagSet

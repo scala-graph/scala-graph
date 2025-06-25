@@ -101,7 +101,7 @@ class MappingSpec extends RefSpec with Matchers {
     }
 
     def `change edge ends and structure`: Unit = {
-      val source = Graph(1 ~ 2, 3 ~ 3)
+      val source                     = Graph(1 ~ 2, 3 ~ 3)
       val g: Graph[Int, DiEdge[Int]] =
         source.flatMap(
           fNode = increment,

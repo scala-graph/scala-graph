@@ -22,7 +22,7 @@ class EditingTypedSpec
 private object Samples {
   val (madrid, rio) = (Airport("MAD"), Airport("GIG"))
   val flightNo      = "IB 8711"
-  val outer = Flight(
+  val outer         = Flight(
     madrid,
     rio,
     flightNo,

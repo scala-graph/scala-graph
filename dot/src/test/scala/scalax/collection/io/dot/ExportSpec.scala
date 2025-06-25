@@ -92,7 +92,7 @@ class ExportSpec extends RefSpec with Matchers {
       )
     }
     val dot_sorted = {
-      var group = 1
+      var group  = 1
       val groups = {
         val unsortedMap = dot.linesWithSeparators.toList.groupBy { line =>
           group match {
@@ -146,7 +146,7 @@ class ExportSpec extends RefSpec with Matchers {
   def `Directed hyperedges may be mapped to multiple directed DOT edges`(): Unit = {
     val hg   = Graph.from(OneOrMore(1) ~~> OneOrMore(2, 3) :: Nil)
     val root = DotRootGraph(directed = true, id = None)
-    val dot = hg.toDot(
+    val dot  = hg.toDot(
       dotRoot = root,
       edgeTransformer = _ => None,
       hEdgeTransformer = Some { h =>
@@ -169,8 +169,8 @@ class ExportSpec extends RefSpec with Matchers {
     import ExportSpec.records._
     import ExportSpec.records.RecordGraph.OuterImplicits._
 
-    def struct(i: Int)     = s"struct$i"
-    val (f0, f1, f2, here) = ("f0", "f1", "f2", "here")
+    def struct(i: Int)                   = s"struct$i"
+    val (f0, f1, f2, here)               = ("f0", "f1", "f2", "here")
     val (n1, n2, n3): (Node, Node, Node) = (
       Node(
         struct(1),
@@ -231,7 +231,7 @@ class ExportSpec extends RefSpec with Matchers {
     import scalax.collection.edges.DiEdge
     import scalax.collection.io.dot.implicits._
 
-    val g = Graph[Int, DiEdge](1)
+    val g    = Graph[Int, DiEdge](1)
     val root = DotRootGraph(
       directed = true,
       id = Some("structs")
@@ -240,7 +240,7 @@ class ExportSpec extends RefSpec with Matchers {
     val cSubGraph = DotSubGraph(branchDOT, "cluster_chained", attrList = List(DotAttr("label", "Chained")))
     val iSubGraph = DotSubGraph(branchDOT, "cluster_unchained", attrList = List(DotAttr("label", "UnChained")))
     val iNode     = "inode"
-    val dot = g.toDot(
+    val dot       = g.toDot(
       dotRoot = root,
       edgeTransformer = _ => Some((root, DotEdgeStmt("hi", "guys"))),
       cNodeTransformer = Some(_ => Some((cSubGraph, DotNodeStmt("cnode")))),

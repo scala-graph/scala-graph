@@ -70,7 +70,7 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
   @inline final def isCustomEdgeFilter(f: EdgePredicate) = f ne anyEdge
 
   type NodeT <: BaseInnerNode with Serializable
-  trait Node extends Serializable
+  trait Node          extends Serializable
   trait BaseInnerNode extends Node with InnerNode {
 
     /** All edges at this node - commonly denoted as E(v).
@@ -423,7 +423,7 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
 
       outer match {
         case edge: AnyEdge[N] =>
-          val AnyEdge(n_1, n_2) = edge
+          val AnyEdge(n_1, n_2)          = edge
           @inline def inner(n: N): NodeT = {
             val found = lookup(n)
             if (null eq found) newNode(n) else found

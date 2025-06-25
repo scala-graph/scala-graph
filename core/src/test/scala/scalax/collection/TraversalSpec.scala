@@ -224,7 +224,7 @@ final private class Traversal[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLik
     val root = "A"
     withGraph(factory(root ~> "B1", root ~> "B2")) { g =>
       val innerRoot = g get root
-      val result = innerRoot.innerNodeDownUpTraverser.foldLeft(ListBuffer.empty[String]) { (buf, param) =>
+      val result    = innerRoot.innerNodeDownUpTraverser.foldLeft(ListBuffer.empty[String]) { (buf, param) =>
         param match {
           case (down, node) =>
             if (down) buf += (if (node eq innerRoot) "(" else "[") += node.toString

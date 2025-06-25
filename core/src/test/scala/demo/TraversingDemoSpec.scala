@@ -119,7 +119,7 @@ final class TraversingDemoSpec extends RefSpec with Matchers {
       val root      = "A"
       val g         = Graph(root ~> "B1", root ~> "B2")
       val innerRoot = g get root
-      val result = innerRoot.innerNodeDownUpTraverser.foldLeft(ArrayBuffer.empty[String]) { (buf, param) =>
+      val result    = innerRoot.innerNodeDownUpTraverser.foldLeft(ArrayBuffer.empty[String]) { (buf, param) =>
         param match {
           case (down, node) =>
             if (down) buf += (if (node eq innerRoot) "(" else "[") += node.toString
@@ -150,7 +150,7 @@ final class TraversingDemoSpec extends RefSpec with Matchers {
       val g = Graph(1 ~> 2, 1 ~> 3, 2 ~> 3, 3 ~> 4, 4 ~> 2)
 
       var center: Option[g.NodeT] = None
-      val maybeCycle = (g get 4).findCycle(n =>
+      val maybeCycle              = (g get 4).findCycle(n =>
         center = center match {
           case s @ Some(c) => if (n.degree > c.degree) Some(n) else s
           case None        => Some(n)
@@ -166,7 +166,7 @@ final class TraversingDemoSpec extends RefSpec with Matchers {
         (edges(1), edges(5))
       }
       val disconnected = Graph.from(edges = componentEdges._1 ++ componentEdges._2)
-      val sums =
+      val sums         =
         for (component <- disconnected.componentTraverser())
           yield component.nodes.foldLeft(0)((cum, n) => cum + n.outer)
       sums should be(List(6, 18))

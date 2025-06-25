@@ -43,7 +43,7 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
       else {
         val preCheckResult = preAdd(node)
         preCheckResult.followUp match {
-          case Complete => Right(doAdd)
+          case Complete  => Right(doAdd)
           case PostCheck =>
             doAdd
             postAdd(AdjacencyListGraph.this, Set(node.value), Set.empty, preCheckResult).fold(
@@ -71,7 +71,7 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
       else {
         val preCheckResult = preAdd(edge.outer)
         preCheckResult.followUp match {
-          case Complete => Right(added)
+          case Complete  => Right(added)
           case PostCheck =>
             if (added)
               postAdd(selfGraph, Set.empty[N], Set(edge.outer), preCheckResult).fold(
@@ -97,7 +97,7 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
       else {
         val preCheckResult = preSubtract(edge.asInstanceOf[self.EdgeT], !forced)
         preCheckResult.followUp match {
-          case Complete => Right(remove(edge))
+          case Complete  => Right(remove(edge))
           case PostCheck =>
             if (remove(edge))
               postSubtract(selfGraph, Set.empty[N], Set(edge.outer), preCheckResult).fold(
@@ -112,7 +112,7 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
     override def remove(edge: EdgeT): Boolean                       = remove_?(edge) getOrElse false
     def remove_?(edge: EdgeT): Either[ConstraintViolation, Boolean] = checkedRemove(edge, forced = false, super.remove)
 
-    override def removeWithNodes(edge: EdgeT): Boolean = removeWithNodes_?(edge) getOrElse false
+    override def removeWithNodes(edge: EdgeT): Boolean                       = removeWithNodes_?(edge) getOrElse false
     def removeWithNodes_?(edge: EdgeT): Either[ConstraintViolation, Boolean] =
       checkedRemove(edge, forced = true, (e: EdgeT) => withoutChecks(super.removeWithNodes(e)))
   }
