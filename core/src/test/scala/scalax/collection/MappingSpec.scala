@@ -101,7 +101,8 @@ class MappingSpec extends RefSpec with Matchers {
     }
 
     def `change edge ends and structure`: Unit = {
-      val source                     = Graph(1 ~ 2, 3 ~ 3)
+      val source = Graph(1 ~ 2, 3 ~ 3)
+
       val g: Graph[Int, DiEdge[Int]] =
         source.flatMap(
           fNode = increment,
@@ -116,6 +117,7 @@ class MappingSpec extends RefSpec with Matchers {
                   )
               }
         )
+
       g.nodes.outerIterable should contain theSameElementsAs List(2, 3, 4, 11)
       g.edges.outerIterable should contain theSameElementsAs List(2 ~> 11, 3 ~> 11)
     }

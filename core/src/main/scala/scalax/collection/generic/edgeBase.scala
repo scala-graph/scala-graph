@@ -169,7 +169,8 @@ trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
   def withTargets[U](f: N => U): Unit = targets.iterator foreach f
 
   final protected def matches(fList: List[N => Boolean]): Boolean = {
-    val it                                                 = ends.iterator
+    val it = ends.iterator
+
     @tailrec def loop(checks: List[N => Boolean]): Boolean =
       if (checks.isEmpty) true
       else if (!it.hasNext) false

@@ -58,14 +58,18 @@ trait TraverserImpl[N, E <: Edge[N]] {
         if (ignorePredecessors)
           innerNodeTraverser(root, Parameters.Dfs(Predecessors)).to(MSet) -= root
         else MSet.empty
+
       def ignore(n: NodeT): Boolean = if (ignorePredecessors) predecessors contains n else false
-      val inDegrees                 =
+
+      val inDegrees =
         forInDegrees(
           innerNodeTraverser(root, Parameters.Dfs(AnyConnected), n => subgraphNodes(n), subgraphEdges),
           includeInDegree = if (ignorePredecessors) !ignore(_) else anyNode,
           includeAnyway = if (ignorePredecessors) Some(root) else None
         )
+
       val withoutPreds = inDegrees._1.iterator.filterNot(predecessors.contains).toBuffer
+
       Runner(StopCondition.None, Visitor.empty).topologicalSort(inDegrees.copy(_1 = withoutPreds))
     }
 
@@ -167,8 +171,9 @@ trait TraverserImpl[N, E <: Edge[N]] {
           case a: ArraySet[A] => a.sorted(ordering)
           case t              =>
             @inline def newArray(len: Int): Array[A] = new Array[B](len).asInstanceOf[Array[A]]
-            var cnt                                  = 0
-            val arr                                  =
+
+            var cnt = 0
+            val arr =
               if (maxOrEst >= 0) {
                 val arr = newArray(maxOrEst)
                 t foreach { a =>
@@ -188,6 +193,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
                 buf copyToArray arr
                 arr
               }
+
             new SortedArraySet[A](arr)(ordering)
         }
 
@@ -383,7 +389,9 @@ trait TraverserImpl[N, E <: Edge[N]] {
               }
               rec(pq)
             }
+
           rec(qNodes)
+
           def traverseMapNodes(map: MMap[NodeT, NodeT]): Option[Path] =
             map
               .get(potentialSuccessor)
@@ -396,6 +404,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
               ) orElse (
               if (root eq potentialSuccessor) Some(Path.zero(potentialSuccessor)) else None
             )
+
           traverseMapNodes(mapToPred)
         }
 
@@ -600,7 +609,8 @@ trait TraverserImpl[N, E <: Edge[N]] {
                 }
               case (Loop, _) =>
                 if (elem.lowLink == index) {
-                  val componentNodes                        = Set.newBuilder[NodeT]
+                  val componentNodes = Set.newBuilder[NodeT]
+
                   @tailrec def pop(continue: Boolean): Unit = if (continue) {
                     val n = stack.pop().node
                     onStack.remove(n)
@@ -608,6 +618,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
                     pop(n ne current)
                   }
                   pop(true)
+
                   components = new StrongComponentImpl(
                     current,
                     parameters,
@@ -617,9 +628,12 @@ trait TraverserImpl[N, E <: Edge[N]] {
                     componentNodes.result()
                   ) +: components
                 }
+
                 if (doNodeUpVisitor) nodeUpVisitor(current)
+
                 val pred = Level.pop.elem
                 if (Level.nonEmptyStack) loop(Level.stackHead, Up(pred))
+
               case (Up(wElem), _) =>
                 elem.lowLink = math.min(elem.lowLink, wElem.lowLink)
                 loop(level, Loop)

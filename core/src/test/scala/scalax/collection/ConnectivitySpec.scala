@@ -85,7 +85,8 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
         for (i <- 1 to 10) yield pickNode(0) ~> pickNode(1)
       }
       connectors foreach { connector =>
-        val connected                                                          = union concat List(connector)
+        val connected = union concat List(connector)
+
         def check(scc: Iterable[connected.Component], expectedSize: Int): Unit = {
           scc should have size expectedSize
           scc foreach { sc =>
@@ -139,7 +140,8 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
 
     def `strong components are proper`: Unit =
       withGraph(g) { _ =>
-        val maxProbes                            = 10
+        val maxProbes = 10
+
         val arbitraryNodes: Vector[Set[g.NodeT]] = strongComponents map { sc =>
           val nodes = sc.nodes
           if (nodes.size <= maxProbes) nodes
@@ -148,6 +150,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
             nodes.zipWithIndex withFilter { case (_, i) => i % every == 0 } map (_._1)
           }
         }
+
         arbitraryNodes foreach { nodes =>
           def checkBiConnected(n1: g.NodeT, n2: g.NodeT) =
             if (n1 ne n2) {
@@ -163,6 +166,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
             }
           }
         }
+
         arbitraryNodes.sliding(2) foreach { pairOrSingle =>
           def checkNonBiConnected(ns1: Set[g.NodeT], ns2: Set[g.NodeT]): Unit =
             if (ns1 ne ns2)

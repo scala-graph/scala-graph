@@ -167,12 +167,14 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
         includeHooks: Boolean = false,
         ignoreMultiEdges: Boolean = true
     ): Int = {
-      val doEdgeFilter                = isCustomEdgeFilter(edgeFilter)
+      val doEdgeFilter = isCustomEdgeFilter(edgeFilter)
+
       def edgePred(e: EdgeT): Boolean =
         (if (doEdgeFilter) edgeFilter(e) else true) &&
           e.hasSource((n: NodeT) => n eq this) &&
           e.hasTarget(nodeFilter) &&
           (if (includeHooks) true else !e.isLooping)
+
       if (ignoreMultiEdges && isMulti)
         (edges filter edgePred).flatMap(_.targets.iterator).toSet.size
       else
@@ -187,12 +189,14 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
         includeHooks: Boolean = false,
         ignoreMultiEdges: Boolean = true
     ): Int = {
-      val doEdgeFilter                = isCustomEdgeFilter(edgeFilter)
+      val doEdgeFilter = isCustomEdgeFilter(edgeFilter)
+
       def edgePred(e: EdgeT): Boolean =
         (if (doEdgeFilter) edgeFilter(e) else true) &&
           e.hasTarget((n: NodeT) => n eq this) &&
           e.hasSource(nodeFilter) &&
           (if (includeHooks) true else !e.isLooping)
+
       if (ignoreMultiEdges && isMulti)
         (edges filter edgePred).flatMap(_.sources.iterator).toSet.size
       else
@@ -232,12 +236,14 @@ trait AdjacencyListBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y,
       def eq(inner: NodeT, outer: N) = inner.outer == outer
       collection.findElem[N](elem, eq)
     }
-    @inline final def contains(node: NodeT): Boolean                                    = collection contains node
-    @inline final def iterator: Iterator[NodeT]                                         = collection.iterator
-    @inline final override def size: Int                                                = collection.size
-    @inline final def draw(random: Random): NodeT                                       = collection draw random
+    @inline final def contains(node: NodeT): Boolean = collection contains node
+    @inline final def iterator: Iterator[NodeT]      = collection.iterator
+    @inline final override def size: Int             = collection.size
+    @inline final def draw(random: Random): NodeT    = collection draw random
+
     @inline final def findElem[B](toMatch: B, correspond: (NodeT, B) => Boolean): NodeT =
       collection findElem (toMatch, correspond)
+
     protected[collection] def +=(edge: EdgeT): this.type
   }
   protected def newNodeSet: NodeSetT

@@ -423,14 +423,18 @@ trait GraphBase[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphBase[X, Y, CC]]
 
       outer match {
         case edge: AnyEdge[N] =>
-          val AnyEdge(n_1, n_2)          = edge
+          val AnyEdge(n_1, n_2) = edge
+
           @inline def inner(n: N): NodeT = {
             val found = lookup(n)
             if (null eq found) newNode(n) else found
           }
+
           val inner_1 = inner(n_1)
           val inner_2 = if (n_1 == n_2) inner_1 else inner(n_2)
+
           newEdge(outer, inner_1, inner_2)
+
         case diHyper: AnyDiHyperEdge[N] => newDiHyperEdge(outer, diHyper.sources map mkNode, diHyper.targets map mkNode)
         case hyper: AnyHyperEdge[N]     => newHyperEdge(outer, hyper.ends map mkNode)
       }

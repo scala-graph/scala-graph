@@ -688,7 +688,8 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
     final override protected def className = "Nodes"
 
     private lazy val s: Seq[T] = {
-      val stack: Stack[T]           = Stack.empty[T]
+      val stack = Stack.empty[T]
+
       @tailrec def loop(k: T): Unit = {
         val opt = map.get(k)
         if (opt.isDefined) {
@@ -696,6 +697,7 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
           loop(opt.get)
         }
       }
+
       loop(to)
       stack push start
       stack
@@ -784,7 +786,8 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
       }
       val isDiGraph = thisGraph.isDirected
       nodes.source.tail.foldLeft(nodes.head) { (prev: NodeT, elem: CycleStackElem) =>
-        val CycleStackElem(n, conn)                                 = elem
+        val CycleStackElem(n, conn) = elem
+
         def get(edges: Iterable[EdgeT], pred: EdgePredicate): EdgeT = {
           def ok(e: EdgeT): Boolean = !multi.contains(e) && edgeFilter(e) && pred(e)
           if (isDiGraph)
@@ -794,11 +797,13 @@ trait GraphTraversalImpl[N, E <: Edge[N]] extends GraphTraversal[N, E] with Trav
             di.headOption getOrElse unDi.head
           }
         }
+
         val edge = (conn.size: @switch) match {
           case 0 => get(n.edges, (e: EdgeT) => e.hasSource((x: NodeT) => x eq prev))
           case 1 => conn.head
           case _ => get(conn, (e: EdgeT) => e.hasTarget((x: NodeT) => x eq n))
         }
+
         buf += edge
         multi += edge
         n

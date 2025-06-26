@@ -46,16 +46,19 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
 
   implicit val graphConfig: GraphConfig = graphCompanion.defaultConfig
 
-  protected val doTrace                       = false
+  protected val doTrace = false
+
   protected def trace(str: => String): Unit   = if (doTrace) print(str)
   protected def traceln(str: => String): Unit = if (doTrace) println(str)
 
   final protected[RandomGraph] class DefaultWeightFactory {
     private[this] var weightCount = 0L
-    def apply: () => Long         = { () =>
+
+    def apply: () => Long = { () =>
       weightCount += 1
       weightCount
     }
+
     def reset(): Unit = weightCount = 0
   }
 
@@ -68,7 +71,8 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
       *  `A, B, ..., AA, AB, ..., BA, BB, ...`.
       */
     def apply: () => Any = { () =>
-      val len                       = labelBuffer.length
+      val len = labelBuffer.length
+
       def loop(i: Int): Array[Char] = {
         val c = labelBuffer(i)
         if (c == endChar)
@@ -82,6 +86,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
           labelBuffer
         }
       }
+
       labelBuffer = loop(len - 1)
       labelBuffer.mkString
     }
@@ -251,7 +256,8 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
 
   protected[RandomGraph] class RandomEdge(weightFactory: () => Long, labelFactory: () => Any)(implicit val d: Degrees) {
     private[this] val c = RandomEdge.drawCompanion
-    val degrees         = d.draw(
+
+    val degrees = d.draw(
       c match {
         case _: EdgeCompanion[_] => 2
         case _                   => 2 + RandomEdge.r.nextInt(5) // TODO use EdgeArityRange instead

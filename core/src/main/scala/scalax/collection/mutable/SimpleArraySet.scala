@@ -27,9 +27,10 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
 
   protected[collection] def newNonCheckingBuilder[B] = new SimpleArraySet.NonCheckingBuilder[A, B](this)
   override def clone: ArraySet[A]                    = (newNonCheckingBuilder ++= this).result()
-  private var nextFree: Int                          = 0
-  private var arr: Array[A]                          = _
-  private var hashSet: ExtHashSet[A]                 = _
+
+  private var nextFree: Int          = 0
+  private var arr: Array[A]          = _
+  private var hashSet: ExtHashSet[A] = _
 
   private def initialize(): Unit = {
     val capacity = hints.nextCapacity(0)
@@ -78,9 +79,9 @@ final class SimpleArraySet[A](override val hints: ArraySet.Hints)
       new scala.collection.AbstractIterator[A] {
         private[this] var i          = 0
         private[this] var prevElm: A = _
-        def hasNext                  =
-          i < nextFree
-        def next() = {
+
+        def hasNext = i < nextFree
+        def next()  = {
           if (i >= nextFree)
             throw new NoSuchElementException
           prevElm = arr(i)

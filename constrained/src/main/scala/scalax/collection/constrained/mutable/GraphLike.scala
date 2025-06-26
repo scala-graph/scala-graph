@@ -132,9 +132,11 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y[+X] <: EdgeLikeIn[X]] <: GraphLike[X, 
       val p = partition(elems)
       (p.toOuterNodes.toSet, p.toOuterEdges.toSet)
     }
+
     val (innerNodes, innerEdges) = (outerNodes map find flatten, outerEdges map find flatten)
     val preCheckResult           =
       preSubtract(innerNodes.asInstanceOf[Set[self.NodeT]], innerEdges.asInstanceOf[Set[self.EdgeT]], true)
+
     preCheckResult.followUp match {
       case Complete  => Right(withoutChecks(super.--=(elems)))
       case PostCheck =>

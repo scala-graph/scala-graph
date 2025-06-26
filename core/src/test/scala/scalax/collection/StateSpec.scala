@@ -52,7 +52,8 @@ class StateSpec extends RefSpec with Matchers {
     }
 
     def `when called deep-recursively`: Unit = {
-      val recurseAt                           = g.nodes.head
+      val recurseAt = g.nodes.head
+
       def countNodesDeep(recursion: Int): Int = {
         assert(recursion >= 0)
         var nrNodes = 0
@@ -66,6 +67,7 @@ class StateSpec extends RefSpec with Matchers {
         )
         nrNodes
       }
+
       for (i <- 1 to 2) countNodesDeep(aLotOfTimes)
     }
 

@@ -9,12 +9,15 @@ sealed trait DotId
 
 /** Verified DOT ID. */
 class Id private[dot] (val id: String, val numeric: Boolean) extends DotId {
-  def apply(): String                      = id
-  override def hashCode: Int               = id.hashCode
+  def apply(): String = id
+
+  override def hashCode: Int = id.hashCode
+
   override def equals(other: Any): Boolean = other match {
     case that: Id => that.id == this.id
     case _        => false
   }
+
   override def toString = id
 }
 
@@ -38,6 +41,7 @@ object Id {
       else new Id(s""""$id"""", false)
     }
   }
+
   private val quotes                      = List(('"', '"'), ('<', '>'))
   private val rNonWhitespaceString: Regex = {
     val firstChar = "a-zA-Z\u0080-\u00ff_"
@@ -91,11 +95,14 @@ sealed trait DotGraph {
   def id: Option[Id]
   def attrStmts: Seq[DotAttrStmt]
   def attrList: Seq[DotAttr]
-  override def hashCode: Int              = id.##
+
+  override def hashCode: Int = id.##
+
   override def equals(that: Any): Boolean = that match {
     case that: DotRootGraph => this.id == that.id
     case _                  => false
   }
+
   def headToString: String
 }
 
@@ -146,7 +153,8 @@ case class DotNodeStmt(nodeId: NodeId, attrList: Seq[DotAttr] = Seq()) extends D
 case class DotEdgeStmt(node_1Id: NodeId, node_2Id: NodeId, attrList: Seq[DotAttr] = Seq()) extends DotStmt
 
 protected[dot] case class DotCluster(dotGraph: DotGraph, dotStmts: MutableSet[DotStmt] = MutableSet()) {
-  override def hashCode: Int              = dotGraph.id.##
+  override def hashCode: Int = dotGraph.id.##
+
   override def equals(that: Any): Boolean = that match {
     case that: DotCluster => this.dotGraph.id == that.dotGraph.id
     case _                => false

@@ -105,8 +105,9 @@ protected trait State[N, E <: Edge[N]] {
   }
 
   trait InnerNodeState {
-    protected[State] var flags: FlagWord                                    = 0L
-    protected[State] var flagsExt: FlagWords                                = null
+    protected[State] var flags: FlagWord     = 0L
+    protected[State] var flagsExt: FlagWords = null
+
     @inline final protected def withFlagsExt[T](block: (ExtBitSet) => T): T =
       block {
         if (flagsExt eq null) flagsExt = initFlagSet
