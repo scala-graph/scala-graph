@@ -77,7 +77,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
       }
 
     def `connected by a diEdge yields a graph with the very same two strong components`: Unit = {
-      val r = new Random
+      val r     = new Random
       val union =
         sscExpectedAny.foldLeft(factory.empty[Char, DiEdge[Char]].asAnyGraph)((r, g) => g union r)
       val connectors = {
@@ -86,6 +86,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
       }
       connectors foreach { connector =>
         val connected = union concat List(connector)
+
         def check(scc: Iterable[connected.Component], expectedSize: Int): Unit = {
           scc should have size expectedSize
           scc foreach { sc =>
@@ -140,6 +141,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
     def `strong components are proper`: Unit =
       withGraph(g) { _ =>
         val maxProbes = 10
+
         val arbitraryNodes: Vector[Set[g.NodeT]] = strongComponents map { sc =>
           val nodes = sc.nodes
           if (nodes.size <= maxProbes) nodes
@@ -148,6 +150,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
             nodes.zipWithIndex withFilter { case (_, i) => i % every == 0 } map (_._1)
           }
         }
+
         arbitraryNodes foreach { nodes =>
           def checkBiConnected(n1: g.NodeT, n2: g.NodeT) =
             if (n1 ne n2) {
@@ -163,6 +166,7 @@ final class Connectivity[G[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
             }
           }
         }
+
         arbitraryNodes.sliding(2) foreach { pairOrSingle =>
           def checkNonBiConnected(ns1: Set[g.NodeT], ns2: Set[g.NodeT]): Unit =
             if (ns1 ne ns2)

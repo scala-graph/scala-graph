@@ -25,7 +25,7 @@ class Export[N, E <: Edge[N]](
       }
 
     case class NodeValues(classNodes: (String, Set[N])) {
-      val descr = descriptor.nodeDescriptor(classNodes._2.head)
+      val descr                = descriptor.nodeDescriptor(classNodes._2.head)
       val jNodes: List[JValue] =
         (for (node <- classNodes._2) yield descr.decompose(node)).toList
 

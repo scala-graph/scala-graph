@@ -10,7 +10,7 @@ package scala.collection
   */
 final class SeqFacade[+A](i: Iterable[A]) extends immutable.Seq[A] {
   def iterator: Iterator[A] = i.iterator
-  def apply(idx: Int): A = {
+  def apply(idx: Int): A    = {
     val it = iterator
     var i  = 0
     while (i < idx) { it.next(); i += 1 }
@@ -32,6 +32,7 @@ final class EqSetFacade[A <: AnyRef](i: Iterable[A]) extends immutable.Set[A] {
   def incl(elem: A)         = i.toSet - elem
   def excl(elem: A)         = i.toSet + elem
 
+  override def knownSize: Int    = i.knownSize
   override def size: Int         = i.size
   override def contains(elem: A) = i exists (_ eq elem)
 }

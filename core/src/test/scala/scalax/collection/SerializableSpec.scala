@@ -60,8 +60,10 @@ final private class TSerializable[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with Gra
         fail(s"Couldn't read graph: $e")
       }.get
     }
+
     private val tmpDir = System.getProperty("java.io.tmpdir")
     private var cnt    = 0
+
     protected def newTest: Exec = {
       cnt += 1
       new Exec( // include the name of the test method
@@ -293,6 +295,7 @@ object ByteArraySerialization {
 
 object FileSerialization {
   def write(obj: AnyRef, filename: String): Try[File] = write(obj, new File(filename))
+
   def write(obj: AnyRef, file: File): Try[File] = {
     var out: ObjectOutputStream = null
     Try {
@@ -305,7 +308,9 @@ object FileSerialization {
       Failure[File](e)
     }
   }
+
   def read[A](filename: String): Try[A] = read(new File(filename))
+
   def read[A](file: File): Try[A] = {
     var in: ObjectInputStream = null
     Try {

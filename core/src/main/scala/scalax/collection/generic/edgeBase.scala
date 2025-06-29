@@ -61,7 +61,7 @@ sealed trait Edge[+N] extends Equals {
     */
   def isLooping: Boolean
 
-  /** Same as `! looping`. */
+  /** Same as `! isLooping`. */
   @inline final def nonLooping: Boolean = !isLooping
 
   /** The weight of this edge with a default of 1.
@@ -170,6 +170,7 @@ trait AnyHyperEdge[+N] extends Edge[N] with EqHyper {
 
   final protected def matches(fList: List[N => Boolean]): Boolean = {
     val it = ends.iterator
+
     @tailrec def loop(checks: List[N => Boolean]): Boolean =
       if (checks.isEmpty) true
       else if (!it.hasNext) false
@@ -345,7 +346,7 @@ trait AnyUnDiEdge[+N] extends AnyHyperEdge[N] with AnyEdge[N] with EqUnDi[N] {
 
   override def isDirected = false
 
-  override def matches[M >: N](n1: M, n2: M): Boolean = unDiBaseEquals(n1, n2)
+  override def matches[M >: N](n1: M, n2: M): Boolean               = unDiBaseEquals(n1, n2)
   override def matches(p1: N => Boolean, p2: N => Boolean): Boolean =
     p1(this.node1) && p2(this.node2) ||
       p1(this.node2) && p2(this.node1)

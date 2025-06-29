@@ -26,7 +26,7 @@ abstract class NodeDescriptor[+N](
     extends TypeId(typeId) {
 
   val manifests: Seq[Manifest[_]] = nodeManifest :: furtherManifests
-  implicit val formats: Formats = Serialization.formats(
+  implicit val formats: Formats   = Serialization.formats(
     if (extraClasses.isEmpty) NoTypeHints
     else new ShortTypeHints(extraClasses)
   ) ++ customSerializers
@@ -57,7 +57,7 @@ object StringNodeDescriptor extends NodeDescriptor[String] {
         case JInt(_) | JDouble(_) => fld.extract[String]
         case JBool(b)             => b.toString
         case JArray(_)            => "(" + mkString(fld.children) + ")"
-        case JObject(obj) =>
+        case JObject(obj)         =>
           val buf = new StringBuilder("(")
           obj.foldLeft(buf)((buf, o) => buf.append(o.name + "," + mkString(List(o.value))))
           buf.append(")").toString

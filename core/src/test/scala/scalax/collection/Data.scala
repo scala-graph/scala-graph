@@ -96,6 +96,7 @@ object Data {
 
       case it: Iterator[A] =>
         val source = it.toBuffer
+
         @tailrec def loop(): C = {
           val shuffled = shuffle(source)
           if (shuffled == source) loop()

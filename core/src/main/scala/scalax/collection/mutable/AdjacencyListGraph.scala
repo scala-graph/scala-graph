@@ -21,7 +21,7 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
       with AdjacendyListBaseInnerNode { this: NodeT =>
 
     final override val edges: ArraySet[EdgeT] = ArraySet.emptyWithHints[EdgeT](hints)
-    import Adj._
+    import Lazy._
 
     final override protected[collection] def add(edge: EdgeT): Boolean =
       if (super.add(edge)) {
@@ -37,23 +37,23 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
 
     final protected def addDiSuccOrHook(edge: EdgeT): Unit = {
       if (edge.matches(nodeEqThis, nodeEqThis) && aHook.isEmpty)
-        _aHook = Some(this -> edge)
-      addDiSuccessors(edge, (n: NodeT) => diSucc put (n, edge))
+        _aHook = Some(edge)
+      addOutNeighbors(edge, (n: NodeT) => outNeighborsToSomeEdge put (n, edge))
     }
-
-    final def diSuccessors: Set[NodeT] = new immutable.EqSet(diSucc)
 
     protected[collection] def remove(edge: EdgeT): Boolean =
       if (edges.remove(edge)) {
         if (selfGraph.edges.initialized) {
 
           def onLooping(): Unit =
-            edges.find((e: EdgeT) => e.isLooping).fold(ifEmpty = _aHook = None)((e: EdgeT) => _aHook = Some(this -> e))
+            edges.find((e: EdgeT) => e.isLooping).fold(ifEmpty = _aHook = None)((e: EdgeT) => _aHook = Some(e))
 
           def onNonLooping(): Unit = edge.targets foreach (t =>
             edges
               .find((e: EdgeT) => e.hasTarget((n: NodeT) => n eq t))
-              .fold[Unit](ifEmpty = diSucc remove t)((e: EdgeT) => if (e hasSource this) diSucc put (t, e))
+              .fold[Unit](ifEmpty = outNeighborsToSomeEdge remove t)((e: EdgeT) =>
+                if (e hasSource this) outNeighborsToSomeEdge put (t, e)
+              )
           )
 
           if (edge.isHyperEdge)
@@ -88,7 +88,7 @@ trait AdjacencyListGraph[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: AdjacencyListG
     @inline final def addOne(node: NodeT): this.type      = { add(node); this }
     @inline final def subtractOne(node: NodeT): this.type = { remove(node); this }
 
-    final protected def minus(node: NodeT): Unit = collection -= node
+    final protected def minus(node: NodeT): Unit      = collection -= node
     final protected def minusEdges(node: NodeT): Unit =
       edges --= node.edges.toList // toList is necessary to avoid failure of -=(node) like in TEdit.test_MinusEq_2
   }

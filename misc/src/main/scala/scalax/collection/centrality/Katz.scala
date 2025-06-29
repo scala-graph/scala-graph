@@ -41,11 +41,10 @@ object Katz {
         import g.ExtendedNodeVisitor
 
         var weight = 0f
-        n.innerNodeTraverser.withMaxDepth(maxDepth) foreach {
+        n.innerNodeTraverser.withMaxDepth(maxDepth) foreach
           ExtendedNodeVisitor { (node, count, depth, informer) =>
             weight += degrees(node.asInstanceOf[G#NodeT]) * Factor(depth)
           }
-        }
 
         weightBuilder += ((n.asInstanceOf[G#NodeT], weight))
       }

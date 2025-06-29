@@ -176,10 +176,11 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
   }
 
   /** Layers of a topological order of a graph or of an isolated graph component.
-    *  The layers of a topological sort can roughly be defined as follows:
-    *      a. layer 0 contains all nodes having no predecessors,
-    *      a. layer n contains those nodes that have only predecessors in ancestor layers
-    *         with at least one of them contained in layer n - 1
+    *
+    * The layers of a topological sort can roughly be defined as follows:
+    *   a. layer 0 contains all nodes having no predecessors
+    *   a. layer n contains those nodes that have only predecessors in ancestor layers
+    *      with at least one of them contained in layer n - 1
     *  @tparam A one of `NodeT`, `N`
     */
   final class LayeredTopologicalOrder[+A] protected[collection] (
@@ -216,6 +217,7 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
       if (candidateCycleNodes.isEmpty) findCycle
       else {
         val it = candidateCycleNodes.iterator
+
         @tailrec def loop: Option[Cycle] =
           if (it.hasNext)
             it.next().findCycle match {
@@ -291,7 +293,7 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
       private[this] val firstNode           = nodeIt.next()
       private[this] val edgeIt              = edges.iterator
 
-      def hasNext: Boolean = start || !edgeToFollow || edgeIt.hasNext
+      def hasNext: Boolean  = start || !edgeToFollow || edgeIt.hasNext
       def next(): InnerElem =
         if (start) {
           start = false
@@ -478,9 +480,9 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
 
   /** Represents a cycle in this graph listing the nodes and connecting edges on it
     *  with the following syntax:
-    *
+    * {{{
     * `cycle ::= ''start-end-node'' { ''edge'' ''node'' } ''edge'' ''start-end-node''`
-    *
+    * }}}
     * All nodes and edges on the path are distinct except the start and end nodes that
     * are equal. A cycle contains at least a start node followed by any number of
     * consecutive pairs of an edge and a node and the end node equaling to the start node.
@@ -511,12 +513,16 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
       *  only if the cycles contain the same elements in the same order, this comparison
       *  returns also `true` if the elements of `that` cycle can be shifted and optionally
       *  reversed such that their elements have the same order. For instance, given
-      *
-      * `c1 = Cycle(1-2-3-1)`, `c2 = Cycle(2-3-1-2)` and `c3 = Cycle(2-1-3-2)`
-      *
+      * {{{
+      * c1 = Cycle(1-2-3-1)
+      * c2 = Cycle(2-3-1-2)
+      * c3 = Cycle(2-1-3-2)
+      * }}}
       * the following expressions hold:
-      *
-      * `c1 != c2`, `c1 != c3` but `c1 sameAs c2` and `c1 sameAs c3`.
+      * {{{
+      * `c1 != c2`, `c1 != c3` but
+      * `c1 sameAs c2` and `c1 sameAs c3`
+      *  }}}
       */
     final def sameAs(that: GraphTraversal[N, E]#Cycle): Boolean =
       this == that || (that match {
@@ -556,7 +562,7 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
     */
   def isComplete = {
     val orderLessOne = order - 1
-    nodes forall (_.diSuccessors.size == orderLessOne)
+    nodes forall (_.outNeighbors.size == orderLessOne)
   }
 
   /** An arbitrary edge between `from` and `to` that is available most efficiently.
@@ -879,8 +885,6 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
     */
   abstract protected class TraverserMethods[A, +CC <: TraverserMethods[A, CC]] extends FluentProperties[CC] {
     this: CC with Properties =>
-
-    def root: NodeT
 
     protected def nodeVisitor[U](f: A => U): (NodeT) => U
     protected def edgeVisitor[U](f: A => U): (EdgeT) => U
@@ -1428,7 +1432,6 @@ trait GraphTraversal[N, E <: Edge[N]] extends GraphBase[N, E, GraphTraversal] {
   *         the number of consecutive child visits before siblings are visited for DFS.
   *         `0` - the default - indicates that the traversal should have
   *         an unlimited depth.
-  * @author Peter Empen
   */
 object GraphTraversal {
 

@@ -88,6 +88,14 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
       false
   }
 
+  override def hashCode: Int = {
+    import scala.util.hashing.MurmurHash3.{finalizeHash, mix, mixLast, productSeed}
+    var h = productSeed
+    h = mix(h, this.nodes.##)
+    h = mixLast(h, this.edges.##)
+    finalizeHash(h, 2)
+  }
+
   type NodeT <: GraphInnerNode
   trait GraphInnerNode extends BaseInnerNode with TraverserInnerNode { this: NodeT =>
 
@@ -268,7 +276,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
         (nMap get n1, nMap get n2) match {
           case (Some(nn1), Some(nn2)) =>
             outer match {
-              case gM: GenericEdgeMapper[EC @unchecked] => builder += gM.map(nn1, nn2)
+              case gM: GenericEdgeMapper[EC @unchecked]     => builder += gM.map(nn1, nn2)
               case pM: PartialEdgeMapper[EC[NN] @unchecked] =>
                 pM.map[NN].lift(nn1, nn2).fold(validate(fallback(nn1, nn2)))(Some(_)).map(builder += _)
             }
@@ -286,7 +294,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
         (sources.flatMapEither(nMap.get), targets.flatMapEither(nMap.get)) match {
           case (Right(newSources), Right(newTargets)) =>
             outer match {
-              case gM: GenericDiHyperEdgeMapper[EC @unchecked] => builder += gM.map(newSources, newTargets)
+              case gM: GenericDiHyperEdgeMapper[EC @unchecked]     => builder += gM.map(newSources, newTargets)
               case pM: PartialDiHyperEdgeMapper[EC[NN] @unchecked] =>
                 pM.map[NN]
                   .lift(newSources, newTargets)
@@ -304,7 +312,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
         ends.flatMapEither(nMap.get) match {
           case Right(newEnds) =>
             outer match {
-              case gM: GenericHyperEdgeMapper[EC @unchecked] => builder += gM.map(newEnds)
+              case gM: GenericHyperEdgeMapper[EC @unchecked]     => builder += gM.map(newEnds)
               case pM: PartialHyperEdgeMapper[EC[NN] @unchecked] =>
                 pM.map[NN].lift(newEnds).fold(validate(fallback(newEnds)))(Some(_)).map(builder += _)
             }
@@ -394,7 +402,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
     nodes foreach { n =>
       val newNodes = fNode(n)
       nMap put (n, newNodes)
-      b ++= newNodes
+      b addNodes newNodes
     }
     (nMap, b)
   }
@@ -513,7 +521,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
     flatMapNodes[NN, EC](fNode) match {
       case (nMap, builder) =>
         edges foreach { case e @ InnerEdge(AnyEdge(n1: NodeT @unchecked, n2: NodeT @unchecked), _) =>
-          builder ++= (edges = fEdge(e, nMap(n1), nMap(n2)))
+          builder addEdges fEdge(e, nMap(n1), nMap(n2))
         }
         builder.result
     }
@@ -538,7 +546,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
           case e @ InnerEdge(AnyEdge(n1: NodeT @unchecked, n2: NodeT @unchecked), _) =>
             val nn1s = nMap(n1)
             val nn2s = nMap(n2)
-            builder ++= (edges = fEdge.fold(fHyperEdge(e, nn1s ++ nn2s))(_(e, nn1s, nn2s)))
+            builder addEdges fEdge.fold(fHyperEdge(e, nn1s ++ nn2s))(_(e, nn1s, nn2s))
 
           case e @ InnerEdge(
                 AnyDiHyperEdge(sources: OneOrMore[NodeT @unchecked], targets: OneOrMore[NodeT @unchecked]),
@@ -546,12 +554,10 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
               ) =>
             val newSources = sources.flatMap(nMap)
             val newTargets = targets.flatMap(nMap)
-            builder ++= (edges =
-              fDiHyperEdge.fold(fHyperEdge(e, newSources ++ newTargets))(_(e, newSources, newTargets))
-            )
+            builder addEdges fDiHyperEdge.fold(fHyperEdge(e, newSources ++ newTargets))(_(e, newSources, newTargets))
 
           case e @ InnerEdge(AnyHyperEdge(ends: Several[NodeT @unchecked]), _) =>
-            builder ++= (edges = fHyperEdge(e, ends.flatMap(nMap)))
+            builder addEdges fHyperEdge(e, ends.flatMap(nMap))
         }
         builder.result
     }
@@ -574,7 +580,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
           case e @ InnerEdge(AnyEdge(n1: NodeT @unchecked, n2: NodeT @unchecked), _) =>
             val nn1s = nMap(n1)
             val nn2s = nMap(n2)
-            builder ++= (edges = fEdge.fold(fDiHyperEdge(e, nn1s, nn2s))(_(e, nn1s, nn2s)))
+            builder addEdges fEdge.fold(fDiHyperEdge(e, nn1s, nn2s))(_(e, nn1s, nn2s))
 
           case e @ InnerEdge(
                 AnyDiHyperEdge(sources: OneOrMore[NodeT @unchecked], targets: OneOrMore[NodeT @unchecked]),
@@ -582,7 +588,7 @@ trait GraphLike[N, E <: Edge[N], +CC[X, Y <: Edge[X]] <: GraphLike[X, Y, CC] wit
               ) =>
             val newSources = sources.flatMap(nMap)
             val newTargets = targets.flatMap(nMap)
-            builder ++= (edges = fDiHyperEdge(e, newSources, newTargets))
+            builder addEdges fDiHyperEdge(e, newSources, newTargets)
         }
         builder.result
     }

@@ -42,7 +42,7 @@ private class Serialize[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[N, 
   import ContainedGraphFixture._
 
   private object ContainerFixture {
-    val container = Container(0, graph)
+    val container         = Container(0, graph)
     val containerJsonText =
       """{ "i" : 0, "g" : %s}""" filterNot (_.isWhitespace) format graphJsonText
   }

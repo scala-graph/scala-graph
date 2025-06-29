@@ -44,9 +44,9 @@ trait TraverserImpl[N, E <: Edge[N]] {
     ): Option[Path] =
       requireSuccessors {
         Runner[U](pred, visitor).dfsStack() match {
-          case (target, path) =>
+          case (target, stack) =>
             target map { _ =>
-              new AnyEdgeLazyPath(new ReverseStackTraversable[DfsInformer.Element](path), subgraphEdges)
+              new AnyEdgeLazyPath(Iterable.from(stack.reverseIterator.map(_.node)), subgraphEdges)
             }
         }
       }
@@ -58,14 +58,18 @@ trait TraverserImpl[N, E <: Edge[N]] {
         if (ignorePredecessors)
           innerNodeTraverser(root, Parameters.Dfs(Predecessors)).to(MSet) -= root
         else MSet.empty
+
       def ignore(n: NodeT): Boolean = if (ignorePredecessors) predecessors contains n else false
+
       val inDegrees =
         forInDegrees(
           innerNodeTraverser(root, Parameters.Dfs(AnyConnected), n => subgraphNodes(n), subgraphEdges),
           includeInDegree = if (ignorePredecessors) !ignore(_) else anyNode,
           includeAnyway = if (ignorePredecessors) Some(root) else None
         )
+
       val withoutPreds = inDegrees._1.iterator.filterNot(predecessors.contains).toBuffer
+
       Runner(StopCondition.None, Visitor.empty).topologicalSort(inDegrees.copy(_1 = withoutPreds))
     }
 
@@ -99,8 +103,8 @@ trait TraverserImpl[N, E <: Edge[N]] {
     final protected class Runner[U] private (stopAt: StopCondition, visitor: A => U) {
 
       private[this] val addMethod = parameters.direction match {
-        case Successors   => Node.addDiSuccessors _
-        case Predecessors => Node.addDiPredecessors _
+        case Successors   => Node.addOutNeighbors _
+        case Predecessors => Node.addInNeighbors _
         case AnyConnected => Node.addNeighbors _
       }
 
@@ -120,7 +124,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
        */
       private[this] val (doNodeVisitor, nodeVisitor, extNodeVisitor, edgeVisitor)
           : (Boolean, NodeT => U, ExtendedNodeVisitor[U], EdgeT => U) = {
-        val nodeVisitor = thisImpl.nodeVisitor(visitor)
+        val nodeVisitor    = thisImpl.nodeVisitor(visitor)
         val extNodeVisitor = visitor match {
           case ext: ExtendedNodeVisitor[U @unchecked] => ext
           case _                                      => null
@@ -165,9 +169,10 @@ trait TraverserImpl[N, E <: Edge[N]] {
       ): AnySet[A] =
         set match {
           case a: ArraySet[A] => a.sorted(ordering)
-          case t =>
+          case t              =>
             @inline def newArray(len: Int): Array[A] = new Array[B](len).asInstanceOf[Array[A]]
-            var cnt                                  = 0
+
+            var cnt = 0
             val arr =
               if (maxOrEst >= 0) {
                 val arr = newArray(maxOrEst)
@@ -188,6 +193,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
                 buf copyToArray arr
                 arr
               }
+
             new SortedArraySet[A](arr)(ordering)
         }
 
@@ -279,7 +285,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
         if (withEdgeFiltering)
           filtered(node, nodeFilter, filteredEdges(node.outgoing, cumWeight), reverse)
         else {
-          val succ = node.diSuccessors
+          val succ = node.outNeighbors
           filtered(succ, succ.size, nodeFilter, reverse)
         }
 
@@ -292,7 +298,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
         if (withEdgeFiltering)
           filtered(node, nodeFilter, filteredEdges(node.incoming, cumWeight), reverse)
         else
-          filtered(node.diPredecessors, -estimatedNrOfNodes(node), nodeFilter, reverse)
+          filtered(node.inNeighbors, -estimatedNrOfNodes(node), nodeFilter, reverse)
 
       private[this] def filteredNeighbors(
           node: NodeT,
@@ -348,7 +354,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
             }
           }
 
-          var nodeCnt = 0
+          var nodeCnt                                              = 0
           @tailrec def rec(pq: PriorityQueue[PrioQueueElem]): Unit =
             if (pq.nonEmpty && (pq.head.node ne potentialSuccessor)) {
               val PrioQueueElem(node, cumWeight, depth) = pq.dequeue()
@@ -383,7 +389,9 @@ trait TraverserImpl[N, E <: Edge[N]] {
               }
               rec(pq)
             }
+
           rec(qNodes)
+
           def traverseMapNodes(map: MMap[NodeT, NodeT]): Option[Path] =
             map
               .get(potentialSuccessor)
@@ -396,6 +404,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
               ) orElse (
               if (root eq potentialSuccessor) Some(Path.zero(potentialSuccessor)) else None
             )
+
           traverseMapNodes(mapToPred)
         }
 
@@ -464,7 +473,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
           val path: Stack[Element]  = Stack()
           var res: Option[NodeT]    = None
           var nodeCnt               = 0
-          @tailrec def loop: Unit =
+          @tailrec def loop: Unit   =
             if (stack.nonEmpty) {
               val popped @ Element(current, depth, cumWeight) = stack.pop()
               if (depth > 0)
@@ -601,6 +610,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
               case (Loop, _) =>
                 if (elem.lowLink == index) {
                   val componentNodes = Set.newBuilder[NodeT]
+
                   @tailrec def pop(continue: Boolean): Unit = if (continue) {
                     val n = stack.pop().node
                     onStack.remove(n)
@@ -608,6 +618,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
                     pop(n ne current)
                   }
                   pop(true)
+
                   components = new StrongComponentImpl(
                     current,
                     parameters,
@@ -617,9 +628,12 @@ trait TraverserImpl[N, E <: Edge[N]] {
                     componentNodes.result()
                   ) +: components
                 }
+
                 if (doNodeUpVisitor) nodeUpVisitor(current)
+
                 val pred = Level.pop.elem
                 if (Level.nonEmptyStack) loop(Level.stackHead, Up(pred))
+
               case (Up(wElem), _) =>
                 elem.lowLink = math.min(elem.lowLink, wElem.lowLink)
                 loop(level, Loop)
@@ -708,7 +722,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
                         .withSubgraph(n => subgraphNodes(n) && !isWhite(n) && (n ne current), subgraphEdges)
                         .pathUntil_(isGray, maybeHandle = visitedBlackHandle)
                         .foreach { missingPath =>
-                          val start = missingPath.endNode
+                          val start         = missingPath.endNode
                           val shortenedPath = {
                             var found = false
                             path takeWhile { case CycleStackElem(n, _) =>
@@ -771,7 +785,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
                   cycle(successorsByColor(gray)) match {
 
                   case result @ Some(_) => result
-                  case None =>
+                  case None             =>
                     successorsByColor(white) match {
                       case whiteSuccessors if whiteSuccessors.nonEmpty =>
                         for (n <- whiteSuccessors) {

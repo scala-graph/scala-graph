@@ -22,7 +22,7 @@ class EditingTypedSpec
 private object Samples {
   val (madrid, rio) = (Airport("MAD"), Airport("GIG"))
   val flightNo      = "IB 8711"
-  val outer = Flight(
+  val outer         = Flight(
     madrid,
     rio,
     flightNo,
@@ -94,7 +94,7 @@ private class EditingTyped[CC[N, E <: Edge[N]] <: AnyGraph[N, E] with GraphLike[
       madrid ~> rio :++ (flightNo, outer.departures, outer.duration) shouldBe outer
     }
 
-    def `extractor ` : Unit = {
+    def `extractor `: Unit = {
       val g = typedFactory.empty.asAnyGraph
 
       g.nodes foreach { case g.InnerNode(inner, Airport(code)) =>

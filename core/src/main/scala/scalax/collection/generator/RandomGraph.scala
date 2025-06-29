@@ -41,21 +41,24 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
     weightFactory: Option[() => Long] = None,
     labelFactory: Option[() => Any] = None
 )(implicit nodeTag: ClassTag[N]) {
-  require(order > 0)
+  require(order > 0, s"Requested random graph order must be strictly positive, not $order")
   if (connected) require(nodeDegree.min >= 2)
 
   implicit val graphConfig: GraphConfig = graphCompanion.defaultConfig
 
-  protected val doTrace                       = false
+  protected val doTrace = false
+
   protected def trace(str: => String): Unit   = if (doTrace) print(str)
   protected def traceln(str: => String): Unit = if (doTrace) println(str)
 
   final protected[RandomGraph] class DefaultWeightFactory {
     private[this] var weightCount = 0L
+
     def apply: () => Long = { () =>
       weightCount += 1
       weightCount
     }
+
     def reset(): Unit = weightCount = 0
   }
 
@@ -69,6 +72,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
       */
     def apply: () => Any = { () =>
       val len = labelBuffer.length
+
       def loop(i: Int): Array[Char] = {
         val c = labelBuffer(i)
         if (c == endChar)
@@ -82,6 +86,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
           labelBuffer
         }
       }
+
       labelBuffer = loop(len - 1)
       labelBuffer.mkString
     }
@@ -139,7 +144,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
 
     def mayFinish: Boolean = active.toFloat / order < 0.5
 
-    private[this] var idx = 0
+    private[this] var idx               = 0
     def add(node: N, degree: Int): Unit = {
       nodes(idx) = node
       degrees(idx) = degree
@@ -159,7 +164,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
 
       def setUsed: Unit = {
         val drawnCompact = compactIndex >= 0
-        val degreeIdx =
+        val degreeIdx    =
           if (drawnCompact) compacts(compactIndex)(index) - 1
           else index
         if (degreeIdx >= 0) {
@@ -197,7 +202,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
       val empty            = new Drawn(0.asInstanceOf[N], emptyIdx, -1)
     }
 
-    private val r = new Random
+    private val r   = new Random
     def draw: Drawn =
       if (active <= 0) Drawn.empty
       else {
@@ -251,6 +256,7 @@ class RandomGraph[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y] with Gra
 
   protected[RandomGraph] class RandomEdge(weightFactory: () => Long, labelFactory: () => Any)(implicit val d: Degrees) {
     private[this] val c = RandomEdge.drawCompanion
+
     val degrees = d.draw(
       c match {
         case _: EdgeCompanion[_] => 2
@@ -419,7 +425,7 @@ object RandomGraph {
       case _             => false
     }
     lazy val expectedTotalDegree: Int = (order * nodeDegrees.mean).toInt
-    lazy val divisor: Int = {
+    lazy val divisor: Int             = {
       val d = if (isDense) 8 else 22
       if (order > 50) d else d / 6
     }

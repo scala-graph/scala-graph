@@ -55,7 +55,7 @@ class EqHashSet[A <: AnyRef](_sizeHint: Int = EqHash.defCapacity) extends Set[A]
 
   override def remove(elem: A): Boolean = (index(elem): @switch) match {
     case i if i < 0 => false
-    case i =>
+    case i          =>
       _size -= 1
       table(i) = null
       closeDeletion(i)
