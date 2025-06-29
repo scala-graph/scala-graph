@@ -47,10 +47,16 @@ lazy val json = crossProject(JSPlatform, JVMPlatform)
   .in(file("json"))
   .dependsOn(core)
   .settings(
-    defaultSettings_2 ++ Seq(
+    defaultSettings_3 ++ Seq(
       name                                 := "Graph JSON",
       version                              := Version.json,
-      libraryDependencies += "net.liftweb" %% "lift-json" % "3.5.0" // not available for Scala 3
+      {
+        val jsoniterGroup = "com.github.plokhotnyuk.jsoniter-scala"
+        libraryDependencies ++= Seq(
+          jsoniterGroup %% "jsoniter-scala-core" % "2.36.6",
+          jsoniterGroup %% "jsoniter-scala-macros" % "2.36.6"
+        )
+      }
     )
   )
 
