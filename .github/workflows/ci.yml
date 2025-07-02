@@ -6,10 +6,12 @@ jobs:
       fail-fast: false
       matrix:
         scala: [ '2.13.16', '3.3.5' ]
-        project: [ core, dot, json ]
+        project: [ core, dot, jsonLift, jsoniter ]
         exclude:
+          - scala: '2.13.16'
+            project: jsoniter
           - scala: '3.3.5'
-            project: json
+            project: jsonLift
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

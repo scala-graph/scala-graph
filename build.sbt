@@ -11,7 +11,7 @@ lazy val all = project
       crossScalaVersions := Nil
     )
   )
-  .aggregate(core.jvm, dot.jvm, json.jvm)
+  .aggregate(core.jvm, dot.jvm, jsonLift.jvm, jsoniter.jvm)
 
 // to publish as JS run "project coreJS", "fastOptJS", "package", "publishSigned"
 
@@ -41,19 +41,31 @@ lazy val dot = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     )
   )
 
-lazy val json = crossProject(JSPlatform, JVMPlatform)
+lazy val jsonLift = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
-  .in(file("json"))
+  .in(file("jsonLift"))
+  .dependsOn(core)
+  .settings(
+    defaultSettings_2 ++ Seq(
+      name                                 := "Graph lift-json",
+      version                              := Version.jsonLift,
+      libraryDependencies += "net.liftweb" %% "lift-json" % "3.5.0" // not available for Scala 3
+    )
+  )
+
+lazy val jsoniter = crossProject(JSPlatform, JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .in(file("jsoniter"))
   .dependsOn(core)
   .settings(
     defaultSettings_3 ++ Seq(
-      name                                 := "Graph JSON",
-      version                              := Version.json,
-      {
+      name    := "Graph jsoniter",
+      version := Version.jsoniter, {
         val jsoniterGroup = "com.github.plokhotnyuk.jsoniter-scala"
         libraryDependencies ++= Seq(
-          jsoniterGroup %% "jsoniter-scala-core" % "2.36.6",
+          jsoniterGroup %% "jsoniter-scala-core"   % "2.36.6",
           jsoniterGroup %% "jsoniter-scala-macros" % "2.36.6"
         )
       }
