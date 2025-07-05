@@ -93,10 +93,21 @@ lazy val defaultTestLibSettings =
     "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
   )
 
+lazy val defaultTestLibSettings_3 =
+  libraryDependencies ++= Seq(
+    "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test,
+    "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test exclude (
+      "org.scalacheck",
+      "scalacheck_3"
+    )
+  )
+
 lazy val defaultSettings_3 = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion   := Version.compiler_3,
   scalafmtConfig := baseDirectory.value / ".." / ".scalafmt-scala3.conf"
-) ++ defaultSettings
+) ++
+  defaultSettings ++
+  defaultTestLibSettings_3
 
 lazy val defaultSettings = Seq(
   organization := "org.scala-graph",
