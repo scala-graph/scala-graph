@@ -104,7 +104,7 @@ lazy val defaultTestLibSettings_3 =
 
 lazy val defaultSettings_3 = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion   := Version.compiler_3,
-  scalafmtConfig := baseDirectory.value / ".." / ".scalafmt-scala3.conf"
+  scalafmtConfig := baseDirectory.value / "../.." / ".scalafmt-scala3.conf"
 ) ++
   defaultSettings ++
   defaultTestLibSettings_3
