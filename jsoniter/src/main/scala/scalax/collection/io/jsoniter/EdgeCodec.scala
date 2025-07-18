@@ -2,29 +2,24 @@ package scalax.collection.io.jsoniter
 
 import scala.compiletime.summonInline
 import scala.quoted.*
-
 import com.github.plokhotnyuk.jsoniter_scala.core.*
-
 import scalax.collection.generic.Edge
 
 object EdgeCodec:
 
   inline def makePolymorphicWithEmbeddedNodes[E <: Edge[_], Subtypes <: Tuple](
-      onJsonNull: => E,
       discriminatorFieldName: String = "type"
   ): JsonValueCodec[E] =
-    makePolymorphic[E, Subtypes](onJsonNull, discriminatorFieldName)
+    makePolymorphic[E, Subtypes](discriminatorFieldName)
 
-  private inline def makePolymorphic[A, Subtypes <: Tuple](
-      onJsonNull: => A,
+  private inline def makePolymorphic[E, Subtypes <: Tuple](
       discriminatorFieldName: String
-  ): JsonValueCodec[A] =
-    ${ makePolymorphicImpl[A, Subtypes]('onJsonNull, 'discriminatorFieldName) }
+  ): JsonValueCodec[E] =
+    ${ makePolymorphicImpl[E, Subtypes]('discriminatorFieldName) }
 
-  private def makePolymorphicImpl[A: Type, Subtypes <: Tuple: Type](
-      onJsonNull: Expr[A],
+  private def makePolymorphicImpl[E: Type, Subtypes <: Tuple: Type](
       discriminatorExpr: Expr[String]
-  )(using Quotes): Expr[JsonValueCodec[A]] = {
+  )(using Quotes): Expr[JsonValueCodec[E]] = {
     import quotes.reflect.*
 
     def extractTupleTypes(tuple: TypeRepr): List[TypeRepr] = tuple.asType match
@@ -34,21 +29,21 @@ object EdgeCodec:
 
     val subtypes: List[TypeRepr] = extractTupleTypes(TypeRepr.of[Subtypes])
 
-    val entries: List[Expr[(String, JsonValueCodec[_ <: A])]] = subtypes.map { subtype =>
+    val entries: List[Expr[(String, JsonValueCodec[_ <: E])]] = subtypes.map { subtype =>
       val name = subtype.classSymbol.map(_.name).getOrElse("Unknown")
       subtype.asType match {
         case '[s] =>
           val codecExpr = Expr.summon[JsonValueCodec[s]].getOrElse {
             report.errorAndAbort(s"Cannot find JsonValueCodec for ${Type.show[s]}")
           }
-          '{ (${ Expr(name) }, $codecExpr.asInstanceOf[JsonValueCodec[_ <: A]]) }
+          '{ (${ Expr(name) }, $codecExpr.asInstanceOf[JsonValueCodec[_ <: E]]) }
       }
     }
 
-    val decoderMapExpr: Expr[Map[String, JsonValueCodec[_ <: A]]] =
-      '{ Map[String, JsonValueCodec[_ <: A]](${ Expr.ofList(entries) }: _*) }
+    val decoderMapExpr: Expr[Map[String, JsonValueCodec[_ <: E]]] =
+      '{ Map[String, JsonValueCodec[_ <: E]](${ Expr.ofList(entries) }: _*) }
 
-    val encoderExpr: Expr[A => (String, JsonValueCodec[_ <: A])] = {
+    val encoderExpr: Expr[E => (String, JsonValueCodec[_ <: E])] = {
       val cases = subtypes.map { subtype =>
         val typeName = subtype.classSymbol.map(_.name).getOrElse("Unknown")
         subtype.asType match {
@@ -65,8 +60,8 @@ object EdgeCodec:
       val lambdaExpr = Lambda(
         owner = Symbol.spliceOwner,
         tpe = MethodType(List("x"))(
-          _ => List(TypeRepr.of[A]),
-          _ => TypeRepr.of[(String, JsonValueCodec[_ <: A])]
+          _ => List(TypeRepr.of[E]),
+          _ => TypeRepr.of[(String, JsonValueCodec[_ <: E])]
         ),
         rhsFn = (owner, params) => {
           val xRef = params.head.asInstanceOf[Term]
@@ -74,27 +69,25 @@ object EdgeCodec:
         }
       )
 
-      lambdaExpr.asExprOf[A => (String, JsonValueCodec[_ <: A])]
+      lambdaExpr.asExprOf[E => (String, JsonValueCodec[_ <: E])]
     }
 
     '{
-      codecForTrait[A](
+      codecForTrait[E](
         $decoderMapExpr,
         $encoderExpr,
-        $onJsonNull,
         $discriminatorExpr
       )
     }
   }
 
-  private def codecForTrait[T](
-      decoderMap: Map[String, JsonValueCodec[_ <: T]],
-      encoder: T => (String, JsonValueCodec[_ <: T]),
-      onJsonNull: => T,
+  private def codecForTrait[E](
+      decoderMap: Map[String, JsonValueCodec[_ <: E]],
+      encoder: E => (String, JsonValueCodec[_ <: E]),
       discriminatorFieldName: String
-  ): JsonValueCodec[T] = new JsonValueCodec[T] {
+  ): JsonValueCodec[E] = new JsonValueCodec[E] {
 
-    override def decodeValue(in: JsonReader, default: T): T =
+    override def decodeValue(in: JsonReader, default: E): E =
       if in.isNextToken('{') then
         val keyLen = in.readKeyAsCharBuf()
         if in.isCharBufEqualsTo(keyLen, discriminatorFieldName) then
@@ -110,13 +103,13 @@ object EdgeCodec:
         else in.unexpectedKeyError(keyLen)
       else in.objectStartOrNullError()
 
-    override def encodeValue(x: T, out: JsonWriter): Unit =
-      val (discriminator, codec: JsonValueCodec[T @unchecked]) = encoder(x): @unchecked
+    override def encodeValue(edge: E, out: JsonWriter): Unit =
+      val (discriminator, codec: JsonValueCodec[E @unchecked]) = encoder(edge): @unchecked
       out.writeObjectStart()
       out.writeKey(discriminatorFieldName)
       out.writeVal(discriminator)
-      codec.encodeValue(x, out)
+      codec.encodeValue(edge, out)
       out.writeObjectEnd()
 
-    override def nullValue: T = onJsonNull
+    override def nullValue: E = null.asInstanceOf[E]
   }
