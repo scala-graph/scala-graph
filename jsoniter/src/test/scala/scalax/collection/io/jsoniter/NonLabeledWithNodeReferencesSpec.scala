@@ -9,6 +9,7 @@ import scalax.collection.edges.*
 import scalax.collection.immutable.{Graph, TypedGraphFactory}
 
 class NonLabeledWithNodeReferencesSpec extends GraphCodecSpecBase:
+  import util.sameAs
 
   def `verbose Airports connected with edges of type DiEdge`(): Unit = {
     import NonLabeledWithNodeReferencesSpec.Airport
@@ -19,14 +20,14 @@ class NonLabeledWithNodeReferencesSpec extends GraphCodecSpecBase:
     val json     =
       s"""{
         "nodes": [
-          {"code": "LHR", "name": {"EN":"$london_EN",    "GER": "$london_DE"  }},
-          {"code": "AMS", "name": {"EN":"$amsterdam_EN", "ES":  "$amsterdam_ES"}}
+          {"code": "AMS", "name": {"EN": "$amsterdamEn", "ES":  "$amsterdamEs"}},
+          {"code": "LHR", "name": {"EN": "$londonEn",    "GER": "$londonDe"  }}
         ],
         "edges": [
           { "edgeT": "DiEdge", "sourceId": "LHR", "targetId": "AMS" },
           { "edgeT": "DiEdge", "sourceId": "AMS", "targetId": "LHR" }
         ]
-      }""".filterNot(_.isWhitespace)
+      }"""
 
     given nodeCodec: JsonValueCodec[Airport]                          = JsonCodecMaker.make
     given idCodec: JsonValueCodec[String]                             = JsonCodecMaker.make
@@ -41,7 +42,7 @@ class NonLabeledWithNodeReferencesSpec extends GraphCodecSpecBase:
         edgeFactory = Some(DiEdgeWithNodeReferences.diEdgeFactory[Airport])
       )
 
-    writeToString(graph) shouldBe json
+    writeToString(graph) shouldBe sameAs(json)
     readFromString[G](json) shouldBe graph
   }
 
@@ -58,16 +59,16 @@ class NonLabeledWithNodeReferencesSpec extends GraphCodecSpecBase:
     val json =
       s"""{
         "nodes": [
-          {"code": "LHR", "name": {"EN":"$london_EN",    "GER": "$london_DE"   }},
-          {"code": "JFK", "name": {"EN":"$newYork_EN",   "NL":  "$newYork_NL"  }},
-          {"code": "AMS", "name": {"EN":"$amsterdam_EN", "ES":  "$amsterdam_ES"}}
+          {"code": "AMS", "name": {"EN": "$amsterdamEn", "ES":  "$amsterdamEs"}},
+          {"code": "LHR", "name": {"EN": "$londonEn",    "GER": "$londonDe"   }},
+          {"code": "JFK", "name": {"EN": "$newYorkEn",   "NL":  "$newYorkNl"  }}
         ],
         "edges": [
           { "type": "UnDiEdgeWithNodeReferences",  "edgeT": "NonStop", "id1": "LHR", "id2": "AMS" },
           { "type": "UnDiEdgeWithNodeReferences",  "edgeT": "NonStop", "id1": "LHR", "id2": "JFK" },
           { "type": "HyperEdgeWithNodeReferences", "edgeT": "Partnership", "endIds":{"head":"LHR","_2":"AMS","more":["JFK"]} }
         ]
-      }""".filterNot(_.isWhitespace)
+      }"""
 
     given nodeCodec: JsonValueCodec[Airport]                                = JsonCodecMaker.make
     given idCodec: JsonValueCodec[String]                                   = JsonCodecMaker.make
@@ -87,7 +88,7 @@ class NonLabeledWithNodeReferencesSpec extends GraphCodecSpecBase:
         }
       )
 
-    writeToString(graph) shouldBe json
+    writeToString(graph) shouldBe sameAs(json)
     readFromString[Airports](json) shouldBe graph
   }
 
@@ -95,28 +96,28 @@ private object NonLabeledWithNodeReferencesSpec:
 
   case class Airport(code: String, name: Map[String, String])
   object Airport:
-    val (london_EN, london_DE) = ("London_Heathrow_Airport", "Flughafen_London_Heathrow")
-    val london                 = Airport(
+    val (londonEn, londonDe) = ("London Heathrow Airport", "Flughafen London Heathrow")
+    val london               = Airport(
       "LHR",
       Map(
-        "EN"  -> london_EN,
-        "GER" -> london_DE
+        "EN"  -> londonEn,
+        "GER" -> londonDe
       )
     )
-    val (amsterdam_EN, amsterdam_ES) = ("LAmsterdam_Airport_Schiphol", "Aeropuerto_de_Ámsterdam-Schiphol")
-    val amsterdam                    = Airport(
+    val (amsterdamEn, amsterdamEs) = ("LAmsterdam Airport Schiphol", "Aeropuerto de Ámsterdam-Schiphol")
+    val amsterdam                  = Airport(
       "AMS",
       Map(
-        "EN" -> amsterdam_EN,
-        "ES" -> amsterdam_ES
+        "EN" -> amsterdamEn,
+        "ES" -> amsterdamEs
       )
     )
-    val (newYork_EN, newYork_NL) = ("John_F._Kennedy_International_Airport", "Luchthaven_John_F._Kennedy")
-    val newYork                  = Airport(
+    val (newYorkEn, newYorkNl) = ("John F. Kennedy International Airport", "Luchthaven John F. Kennedy")
+    val newYork                = Airport(
       "JFK",
       Map(
-        "EN" -> newYork_EN,
-        "NL" -> newYork_NL
+        "EN" -> newYorkEn,
+        "NL" -> newYorkNl
       )
     )
 

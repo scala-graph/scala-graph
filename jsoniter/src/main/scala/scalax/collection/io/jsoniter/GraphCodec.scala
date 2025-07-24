@@ -111,8 +111,8 @@ object GraphCodec:
     ???
   end labeledWithNodeReferences
 
-  private val Nodes = "nodes"
-  private val Edges = "edges"
+  val Nodes = "nodes"
+  val Edges = "edges"
 
   private def encode[N, E <: Edge[N], G[X, Y <: Edge[X]] <: AnyGraph[X, Y]](
       g: G[N, E],

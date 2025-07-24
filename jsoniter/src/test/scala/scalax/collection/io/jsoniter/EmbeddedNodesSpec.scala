@@ -15,6 +15,7 @@ import scalax.collection.immutable.{Graph, TypedGraphFactory}
 import scala.concurrent.duration.FiniteDuration
 
 class EmbeddedNodesSpec extends GraphCodecSpecBase:
+  import util.sameAs
 
   object `graph of non-labeled edges`:
     def `empty Graph`: Unit = {
@@ -24,7 +25,7 @@ class EmbeddedNodesSpec extends GraphCodecSpecBase:
         """{
           "nodes": [],
           "edges": []
-        }""".filterNot(_.isWhitespace)
+        }"""
 
       given nodeCodec: JsonValueCodec[Int]         = JsonCodecMaker.make
       given edgeCodec: JsonValueCodec[DiEdge[Int]] = JsonCodecMaker.make
@@ -35,7 +36,7 @@ class EmbeddedNodesSpec extends GraphCodecSpecBase:
           onJsonNullFail[G]
         )
 
-      writeToString(graph) shouldBe json
+      writeToString(graph) shouldBe sameAs(json)
       readFromString[G](json) shouldBe graph
     }
 
@@ -60,7 +61,7 @@ class EmbeddedNodesSpec extends GraphCodecSpecBase:
           onJsonNullFail[G]
         )
 
-      writeToString(graph) shouldBe json
+      writeToString(graph) shouldBe sameAs(json)
       readFromString[G](json) shouldBe graph
     }
 
@@ -88,7 +89,7 @@ class EmbeddedNodesSpec extends GraphCodecSpecBase:
             {"type": "$Friends",   "personA": $kateJson, "personB": $johnJson },
             {"type": "$Neighbors", "personA": $johnJson, "personB": $mikeJson }
           ]
-        }""".filterNot(_.isWhitespace)
+        }"""
 
       given nodeCodec: JsonValueCodec[Person]   = JsonCodecMaker.make
       given edgeCodec: JsonValueCodec[Relation] = JsonCodecMaker.make
@@ -99,7 +100,7 @@ class EmbeddedNodesSpec extends GraphCodecSpecBase:
           onJsonNullFail[People]
         )
 
-      writeToString(graph) shouldBe json
+      writeToString(graph) shouldBe sameAs(json)
       readFromString[People](json) shouldBe graph
     }
 
@@ -116,7 +117,7 @@ class EmbeddedNodesSpec extends GraphCodecSpecBase:
             { "type": "UnDiEdge", {"source": "A", "target": "B" }},
             { "type":   "DiEdge", {"source": "B", "target": "C" }}
           ]
-        }""".filterNot(_.isWhitespace)
+        }"""
 
       type G = Graph[String, AnyEdge[String]]
       given nodeCodec: JsonValueCodec[String]             = JsonCodecMaker.make
@@ -131,7 +132,7 @@ class EmbeddedNodesSpec extends GraphCodecSpecBase:
           onJsonNullFail[G]
         )
 
-      writeToString(graph) shouldBe json
+      writeToString(graph) shouldBe sameAs(json)
       readFromString[G](json) shouldBe graph
     }
 
@@ -145,17 +146,17 @@ class EmbeddedNodesSpec extends GraphCodecSpecBase:
       val newYork   = Airport("JFK")
 
       val graph = Flights(
-        Flight(london, amsterdam, "KL_1722", 40.minutes),
-        Flight(london, newYork, "UA_921", 5.hours + 40.minutes)
+        Flight(london, amsterdam, "KL 1722", 40.minutes),
+        Flight(london, newYork, "UA 921", 5.hours + 40.minutes)
       )
       val json =
         """{
-          "nodes": [{"code":"LHR"},{"code":"AMS"},{"code":"JFK"}],
+          "nodes": [{"code": "LHR"},{"code": "AMS"},{"code": "JFK"}],
           "edges": [
-            {"departure":{"code":"LHR"},"destination":{"code":"AMS"},"flightNo":"KL_1722","duration": {"length":  40, "unit": "MINUTES"}},
-            {"departure":{"code":"LHR"},"destination":{"code":"JFK"},"flightNo":"UA_921" ,"duration": {"length": 340, "unit": "MINUTES"}}
+            {"departure": {"code": "LHR"}, "destination": {"code": "AMS"}, "flightNo": "KL 1722", "duration": {"length":  40, "unit": "MINUTES"}},
+            {"departure": {"code": "LHR"}, "destination": {"code": "JFK"}, "flightNo": "UA 921" , "duration": {"length": 340, "unit": "MINUTES"}}
           ]
-        }""".filterNot(_.isWhitespace)
+        }"""
 
       given nodeCodec: JsonValueCodec[Airport]  = JsonCodecMaker.make
       given edgeCodec: JsonValueCodec[Flight]   = JsonCodecMaker.make
@@ -166,7 +167,7 @@ class EmbeddedNodesSpec extends GraphCodecSpecBase:
           onJsonNullFail[Flights]
         )
 
-      writeToString(graph) shouldBe json
+      writeToString(graph) shouldBe sameAs(json)
       readFromString[Flights](json) shouldBe graph
     }
 
