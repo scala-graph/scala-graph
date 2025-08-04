@@ -77,11 +77,11 @@ object GraphCodec:
               case HyperEdgeWithNodeReferences(edgeT, ids) =>
                 hyperEdgeFactory
                   .getOrElse(throw new IllegalArgumentException(s"Missing hyperEdgeFactory."))
-                  .apply(edgeT, ids map node)
+                  .apply(edgeT, Several.fromUnsafe(ids map node))
               case DiHyperEdgeWithNodeReferences(edgeT, sourceIds, targetIds) =>
                 diHyperEdgeFactory
                   .getOrElse(throw new IllegalArgumentException(s"Missing diHyperEdgeFactory."))
-                  .apply(edgeT, sourceIds map node, targetIds map node)
+                  .apply(edgeT, OneOrMore.fromUnsafe(sourceIds map node), OneOrMore.fromUnsafe(targetIds map node))
         }.apply()
 
       override def encodeValue(g: G[N, E], out: JsonWriter): Unit =

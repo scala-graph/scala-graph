@@ -66,7 +66,7 @@ class NonLabeledWithNodeReferencesSpec extends GraphCodecSpecBase:
         "edges": [
           { "type": "UnDiEdgeWithNodeReferences",  "edgeT": "NonStop", "id1": "LHR", "id2": "AMS" },
           { "type": "UnDiEdgeWithNodeReferences",  "edgeT": "NonStop", "id1": "LHR", "id2": "JFK" },
-          { "type": "HyperEdgeWithNodeReferences", "edgeT": "Partnership", "endIds":{"head":"LHR","_2":"AMS","more":["JFK"]} }
+          { "type": "HyperEdgeWithNodeReferences", "edgeT": "Partnership", "endIds": ["LHR","AMS","JFK"] }
         ]
       }"""
 

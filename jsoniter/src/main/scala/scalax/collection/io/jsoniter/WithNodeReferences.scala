@@ -1,8 +1,12 @@
 package scalax.collection.io.jsoniter
+import scala.reflect.ClassTag
 
+import scala.collection.immutable.ArraySeq
 import scalax.collection.{OneOrMore, Several}
 import scalax.collection.generic.{AnyDiEdge, AnyDiHyperEdge, AnyHyperEdge, AnyUnDiEdge}
 
+/** ADT for JSON codecs of non-labeled edges where edge ends are represented by node IDs.
+  */
 sealed trait WithNodeReferences[Id <: AnyVal | String]:
   def edgeT: String
 
@@ -55,15 +59,15 @@ object UnDiEdgeWithNodeReferences:
 
 case class DiHyperEdgeWithNodeReferences[Id <: AnyVal | String](
     edgeT: String,
-    sourceIds: OneOrMore[Id],
-    targetIds: OneOrMore[Id]
+    sourceIds: Iterable[Id],
+    targetIds: Iterable[Id]
 ) extends AnyDiHyperEdgeWithNodeReferences[Id]
 
 object DiHyperEdgeWithNodeReferences:
-  def apply[N, Id <: AnyVal | String](edge: AnyDiHyperEdge[N], id: N => Id): AnyDiHyperEdgeWithNodeReferences[Id] =
+  def apply[N, Id <: AnyVal | String: ClassTag](edge: AnyDiHyperEdge[N], id: N => Id): AnyDiHyperEdgeWithNodeReferences[Id] =
     apply(edge, id, edge.getClass.getSimpleName)
 
-  def apply[N, Id <: AnyVal | String](
+  def apply[N, Id <: AnyVal | String: ClassTag](
       edge: AnyDiHyperEdge[N],
       id: N => Id,
       edgeT: String
@@ -71,10 +75,11 @@ object DiHyperEdgeWithNodeReferences:
     edge match
       case e: AnyDiEdge[N]      => DiEdgeWithNodeReferences(e, id, edgeT)
       case h: AnyDiHyperEdge[N] =>
+        def toIterator(ends: OneOrMore[N]) = ArraySeq.from(ends.iterator map id)
         new DiHyperEdgeWithNodeReferences[Id](
           edgeT,
-          OneOrMore.fromUnsafe(edge.sources.iterator map id),
-          OneOrMore.fromUnsafe(edge.sources.iterator map id)
+          toIterator(edge.sources),
+          toIterator(edge.targets)
         )
 
   import scalax.collection.hyperedges.{ordered, DiHyperEdge}
@@ -87,14 +92,17 @@ object DiHyperEdgeWithNodeReferences:
       ordered.DiHyperEdge(sources, targets)
   }
 
-case class HyperEdgeWithNodeReferences[Id <: AnyVal | String](edgeT: String, endIds: Several[Id])
+case class HyperEdgeWithNodeReferences[Id <: AnyVal | String](edgeT: String, endIds: Iterable[Id])
     extends AnyHyperEdgeWithNodeReferences[Id]
 
 object HyperEdgeWithNodeReferences:
-  def apply[N, Id <: AnyVal | String](edge: AnyHyperEdge[N], id: N => Id): AnyHyperEdgeWithNodeReferences[Id] =
+  def apply[N, Id <: AnyVal | String: ClassTag](
+      edge: AnyHyperEdge[N],
+      id: N => Id
+  ): AnyHyperEdgeWithNodeReferences[Id] =
     apply(edge, id, edge.getClass.getSimpleName)
 
-  def apply[N, Id <: AnyVal | String](
+  def apply[N, Id <: AnyVal | String: ClassTag](
       edge: AnyHyperEdge[N],
       id: N => Id,
       edgeT: String
@@ -104,7 +112,7 @@ object HyperEdgeWithNodeReferences:
       case e: AnyUnDiEdge[N]    => UnDiEdgeWithNodeReferences(e, id, edgeT)
       case h: AnyDiHyperEdge[N] => DiHyperEdgeWithNodeReferences(h, id, edgeT)
       case h: AnyHyperEdge[N]   =>
-        new HyperEdgeWithNodeReferences[Id](edgeT, Several.fromUnsafe(edge.ends.iterator map id))
+        new HyperEdgeWithNodeReferences[Id](edgeT, ArraySeq.from(edge.ends.iterator map id))
 
   import scalax.collection.hyperedges.{ordered, HyperEdge}
   def hyperEdgeFactory[N]: PartialFunction[(String, Several[N]), HyperEdge[N]] = { case ("HyperEdge", ends) =>
