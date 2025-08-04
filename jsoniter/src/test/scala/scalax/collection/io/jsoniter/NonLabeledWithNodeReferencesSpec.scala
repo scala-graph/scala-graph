@@ -2,7 +2,7 @@ package scalax.collection
 package io.jsoniter
 
 import com.github.plokhotnyuk.jsoniter_scala.core.*
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import scalax.collection.OuterImplicits.*
 import scalax.collection.generic.{AbstractHyperEdge, AbstractUnDiEdge, AnyHyperEdge}
 import scalax.collection.edges.*
@@ -64,16 +64,17 @@ class NonLabeledWithNodeReferencesSpec extends GraphCodecSpecBase:
           {"code": "JFK", "name": {"EN": "$newYorkEn",   "NL":  "$newYorkNl"  }}
         ],
         "edges": [
-          { "type": "UnDiEdgeWithNodeReferences",  "edgeT": "NonStop", "id1": "LHR", "id2": "AMS" },
-          { "type": "UnDiEdgeWithNodeReferences",  "edgeT": "NonStop", "id1": "LHR", "id2": "JFK" },
-          { "type": "HyperEdgeWithNodeReferences", "edgeT": "Partnership", "endIds": ["LHR","AMS","JFK"] }
+          { "type": "UnDiR",  "edgeT": "NonStop", "id1": "LHR", "id2": "AMS" },
+          { "type": "UnDiR",  "edgeT": "NonStop", "id1": "LHR", "id2": "JFK" },
+          { "type": "HyperR", "edgeT": "Partnership", "endIds": ["LHR","AMS","JFK"] }
         ]
       }"""
 
     given nodeCodec: JsonValueCodec[Airport]                                = JsonCodecMaker.make
     given idCodec: JsonValueCodec[String]                                   = JsonCodecMaker.make
-    given edgeCodec: JsonValueCodec[AnyHyperEdgeWithNodeReferences[String]] = JsonCodecMaker.make
-    given graphCodec: JsonValueCodec[Airports]                              =
+    given edgeCodec: JsonValueCodec[AnyHyperEdgeWithNodeReferences[String]] =
+      JsonCodecMaker.make(CodecMakerConfig withAdtLeafClassNameMapper AnyHyperEdgeWithNodeReferences.compactClassNames)
+    given graphCodec: JsonValueCodec[Airports] =
       GraphCodec.withNodeReferences(
         _.code,
         HyperEdgeWithNodeReferences.apply,

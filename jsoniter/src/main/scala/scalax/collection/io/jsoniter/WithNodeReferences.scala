@@ -1,6 +1,8 @@
 package scalax.collection.io.jsoniter
-import scala.reflect.ClassTag
 
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+
+import scala.reflect.ClassTag
 import scala.collection.immutable.ArraySeq
 import scalax.collection.{OneOrMore, Several}
 import scalax.collection.generic.{AnyDiEdge, AnyDiHyperEdge, AnyHyperEdge, AnyUnDiEdge}
@@ -13,6 +15,29 @@ sealed trait WithNodeReferences[Id <: AnyVal | String]:
 sealed trait AnyHyperEdgeWithNodeReferences[Id <: AnyVal | String]   extends WithNodeReferences[Id]
 sealed trait AnyDiHyperEdgeWithNodeReferences[Id <: AnyVal | String] extends AnyHyperEdgeWithNodeReferences[Id]
 sealed trait AnyEdgeWithNodeReferences[Id <: AnyVal | String]        extends AnyHyperEdgeWithNodeReferences[Id]
+
+object AnyHyperEdgeWithNodeReferences:
+  inline def compactClassNames(className: String): String =
+    JsonCodecMaker.simpleClassName(className) match
+      case "HyperEdgeWithNodeReferences"   => "HyperR"
+      case "DiHyperEdgeWithNodeReferences" => "DiHyperR"
+      case "UnDiEdgeWithNodeReferences"    => "UnDiR"
+      case "DiEdgeWithNodeReferences"      => "DiR"
+      case x                               => throw new IllegalArgumentException(s"Unexpected className $x")
+
+object AnyDiHyperEdgeWithNodeReferences:
+  inline def compactClassNames(className: String): String =
+    JsonCodecMaker.simpleClassName(className) match
+      case "DiHyperEdgeWithNodeReferences" => "DiHyperR"
+      case "DiEdgeWithNodeReferences"      => "DiR"
+      case x                               => throw new IllegalArgumentException(s"Unexpected className $x")
+
+object AnyEdgeWithNodeReferences:
+  inline def compactClassNames(className: String): String =
+    JsonCodecMaker.simpleClassName(className) match
+      case "UnDiEdgeWithNodeReferences" => "UnDiR"
+      case "DiEdgeWithNodeReferences"   => "DiR"
+      case x                            => throw new IllegalArgumentException(s"Unexpected className $x")
 
 case class DiEdgeWithNodeReferences[Id <: AnyVal | String](edgeT: String, sourceId: Id, targetId: Id)
     extends AnyEdgeWithNodeReferences[Id]
@@ -64,7 +89,10 @@ case class DiHyperEdgeWithNodeReferences[Id <: AnyVal | String](
 ) extends AnyDiHyperEdgeWithNodeReferences[Id]
 
 object DiHyperEdgeWithNodeReferences:
-  def apply[N, Id <: AnyVal | String: ClassTag](edge: AnyDiHyperEdge[N], id: N => Id): AnyDiHyperEdgeWithNodeReferences[Id] =
+  def apply[N, Id <: AnyVal | String: ClassTag](
+      edge: AnyDiHyperEdge[N],
+      id: N => Id
+  ): AnyDiHyperEdgeWithNodeReferences[Id] =
     apply(edge, id, edge.getClass.getSimpleName)
 
   def apply[N, Id <: AnyVal | String: ClassTag](
