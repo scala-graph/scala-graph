@@ -1,6 +1,6 @@
 package scalax.collection.io.jsoniter
 
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 
 import scala.reflect.ClassTag
 import scala.collection.immutable.ArraySeq
@@ -17,27 +17,33 @@ sealed trait AnyDiHyperEdgeWithNodeReferences[Id <: AnyVal | String] extends Any
 sealed trait AnyEdgeWithNodeReferences[Id <: AnyVal | String]        extends AnyHyperEdgeWithNodeReferences[Id]
 
 object AnyHyperEdgeWithNodeReferences:
-  inline def compactClassNames(className: String): String =
-    JsonCodecMaker.simpleClassName(className) match
-      case "HyperEdgeWithNodeReferences"   => "HyperR"
-      case "DiHyperEdgeWithNodeReferences" => "DiHyperR"
-      case "UnDiEdgeWithNodeReferences"    => "UnDiR"
-      case "DiEdgeWithNodeReferences"      => "DiR"
-      case x                               => throw new IllegalArgumentException(s"Unexpected className $x")
+  inline def compactClassNames: CodecMakerConfig =
+    CodecMakerConfig.withAdtLeafClassNameMapper { className =>
+      JsonCodecMaker.simpleClassName(className) match
+        case "HyperEdgeWithNodeReferences"   => "HyperR"
+        case "DiHyperEdgeWithNodeReferences" => "DiHyperR"
+        case "UnDiEdgeWithNodeReferences"    => "UnDiR"
+        case "DiEdgeWithNodeReferences"      => "DiR"
+        case x                               => throw new IllegalArgumentException(s"Unexpected className $x")
+    }
 
 object AnyDiHyperEdgeWithNodeReferences:
-  inline def compactClassNames(className: String): String =
-    JsonCodecMaker.simpleClassName(className) match
-      case "DiHyperEdgeWithNodeReferences" => "DiHyperR"
-      case "DiEdgeWithNodeReferences"      => "DiR"
-      case x                               => throw new IllegalArgumentException(s"Unexpected className $x")
+  inline def compactClassNames(className: String): CodecMakerConfig =
+    CodecMakerConfig.withAdtLeafClassNameMapper { className =>
+      JsonCodecMaker.simpleClassName(className) match
+        case "DiHyperEdgeWithNodeReferences" => "DiHyperR"
+        case "DiEdgeWithNodeReferences"      => "DiR"
+        case x                               => throw new IllegalArgumentException(s"Unexpected className $x")
+    }
 
 object AnyEdgeWithNodeReferences:
-  inline def compactClassNames(className: String): String =
-    JsonCodecMaker.simpleClassName(className) match
-      case "UnDiEdgeWithNodeReferences" => "UnDiR"
-      case "DiEdgeWithNodeReferences"   => "DiR"
-      case x                            => throw new IllegalArgumentException(s"Unexpected className $x")
+  inline def compactClassNames(className: String): CodecMakerConfig =
+    CodecMakerConfig.withAdtLeafClassNameMapper { className =>
+      JsonCodecMaker.simpleClassName(className) match
+        case "UnDiEdgeWithNodeReferences" => "UnDiR"
+        case "DiEdgeWithNodeReferences"   => "DiR"
+        case x                            => throw new IllegalArgumentException(s"Unexpected className $x")
+    }
 
 case class DiEdgeWithNodeReferences[Id <: AnyVal | String](edgeT: String, sourceId: Id, targetId: Id)
     extends AnyEdgeWithNodeReferences[Id]

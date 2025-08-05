@@ -70,11 +70,11 @@ class NonLabeledWithNodeReferencesSpec extends GraphCodecSpecBase:
         ]
       }"""
 
+    import AnyHyperEdgeWithNodeReferences.compactClassNames
     given nodeCodec: JsonValueCodec[Airport]                                = JsonCodecMaker.make
     given idCodec: JsonValueCodec[String]                                   = JsonCodecMaker.make
-    given edgeCodec: JsonValueCodec[AnyHyperEdgeWithNodeReferences[String]] =
-      JsonCodecMaker.make(CodecMakerConfig withAdtLeafClassNameMapper AnyHyperEdgeWithNodeReferences.compactClassNames)
-    given graphCodec: JsonValueCodec[Airports] =
+    given edgeCodec: JsonValueCodec[AnyHyperEdgeWithNodeReferences[String]] = JsonCodecMaker.make(compactClassNames)
+    given graphCodec: JsonValueCodec[Airports]                              =
       GraphCodec.withNodeReferences(
         _.code,
         HyperEdgeWithNodeReferences.apply,
