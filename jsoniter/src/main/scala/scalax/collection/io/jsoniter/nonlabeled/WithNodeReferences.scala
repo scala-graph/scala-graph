@@ -1,11 +1,11 @@
-package scalax.collection.io.jsoniter
+package scalax.collection.io.jsoniter.nonlabeled
+
+import scala.collection.immutable.ArraySeq
+import scala.reflect.ClassTag
 
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-
-import scala.reflect.ClassTag
-import scala.collection.immutable.ArraySeq
-import scalax.collection.{OneOrMore, Several}
 import scalax.collection.generic.{AnyDiEdge, AnyDiHyperEdge, AnyHyperEdge, AnyUnDiEdge}
+import scalax.collection.{OneOrMore, Several}
 
 /** ADT for JSON codecs of non-labeled edges where edge ends are represented by node IDs.
   */
@@ -61,9 +61,8 @@ object DiEdgeWithNodeReferences:
     )
 
   import scalax.collection.edges.DiEdge
-  def diEdgeFactory[N]: PartialFunction[(String, N, N), DiEdge[N]] = { case ("DiEdge", source, target) =>
-    DiEdge(source, target)
-  }
+  def diEdgeFactory[N]: PartialFunction[(String, N, N), DiEdge[N]] =
+    case ("DiEdge", source, target) => DiEdge(source, target)
 
 case class UnDiEdgeWithNodeReferences[Id <: AnyVal | String](edgeT: String, id1: Id, id2: Id)
     extends AnyEdgeWithNodeReferences[Id]

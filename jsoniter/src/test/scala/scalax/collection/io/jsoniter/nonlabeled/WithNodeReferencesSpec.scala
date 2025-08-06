@@ -1,18 +1,19 @@
-package scalax.collection
-package io.jsoniter
+package scalax.collection.io.jsoniter
+package nonlabeled
 
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import scalax.collection.OuterImplicits.*
-import scalax.collection.generic.{AbstractHyperEdge, AbstractUnDiEdge, AnyHyperEdge}
+import scalax.collection.Several
 import scalax.collection.edges.*
+import scalax.collection.generic.{AbstractHyperEdge, AbstractUnDiEdge, AnyHyperEdge}
 import scalax.collection.immutable.{Graph, TypedGraphFactory}
 
-class NonLabeledWithNodeReferencesSpec extends GraphCodecSpecBase:
+class WithNodeReferencesSpec extends GraphCodecSpecBase:
   import util.sameAs
 
   def `verbose Airports connected with edges of type DiEdge`(): Unit = {
-    import NonLabeledWithNodeReferencesSpec.Airport
+    import WithNodeReferencesSpec.Airport
     import Airport.*
 
     type G = Graph[Airport, DiEdge[Airport]]
@@ -47,9 +48,9 @@ class NonLabeledWithNodeReferencesSpec extends GraphCodecSpecBase:
   }
 
   def `mixed graph of verbose Airports and an ADT of edges`(): Unit = {
-    import NonLabeledWithNodeReferencesSpec.Airport
-    import NonLabeledWithNodeReferencesSpec.Mixed.*
+    import WithNodeReferencesSpec.Airport
     import Airport.*
+    import WithNodeReferencesSpec.Mixed.*
 
     val graph: Airports = Airports.from(
       NonStop(london, amsterdam) ::
@@ -93,7 +94,7 @@ class NonLabeledWithNodeReferencesSpec extends GraphCodecSpecBase:
     readFromString[Airports](json) shouldBe graph
   }
 
-private object NonLabeledWithNodeReferencesSpec:
+private object WithNodeReferencesSpec:
 
   case class Airport(code: String, name: Map[String, String])
   object Airport:
