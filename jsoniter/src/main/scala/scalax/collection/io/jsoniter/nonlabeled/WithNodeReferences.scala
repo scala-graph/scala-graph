@@ -28,7 +28,7 @@ object AnyHyperEdgeWithNodeReferences:
     }
 
 object AnyDiHyperEdgeWithNodeReferences:
-  inline def compactClassNames(className: String): CodecMakerConfig =
+  inline def compactClassNames: CodecMakerConfig =
     CodecMakerConfig.withAdtLeafClassNameMapper { className =>
       JsonCodecMaker.simpleClassName(className) match
         case "DiHyperEdgeWithNodeReferences" => "DiHyperR"
@@ -37,7 +37,7 @@ object AnyDiHyperEdgeWithNodeReferences:
     }
 
 object AnyEdgeWithNodeReferences:
-  inline def compactClassNames(className: String): CodecMakerConfig =
+  inline def compactClassNames: CodecMakerConfig =
     CodecMakerConfig.withAdtLeafClassNameMapper { className =>
       JsonCodecMaker.simpleClassName(className) match
         case "UnDiEdgeWithNodeReferences" => "UnDiR"
