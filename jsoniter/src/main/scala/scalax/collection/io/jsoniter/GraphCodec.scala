@@ -32,7 +32,7 @@ object GraphCodec extends GraphCodec:
       override def nullValue: G[N, E] = onJsonNull
   end withEmbeddedNodes
 
-trait GraphCodec:
+protected[jsoniter] trait GraphCodec:
   val Nodes = "nodes"
   val Edges = "edges"
 

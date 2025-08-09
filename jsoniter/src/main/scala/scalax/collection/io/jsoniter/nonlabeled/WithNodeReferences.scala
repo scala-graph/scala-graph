@@ -14,7 +14,9 @@ sealed trait WithNodeReferences[Id <: AnyVal | String]:
 
 sealed trait AnyHyperEdgeWithNodeReferences[Id <: AnyVal | String]   extends WithNodeReferences[Id]
 sealed trait AnyDiHyperEdgeWithNodeReferences[Id <: AnyVal | String] extends AnyHyperEdgeWithNodeReferences[Id]
-sealed trait AnyEdgeWithNodeReferences[Id <: AnyVal | String]        extends AnyHyperEdgeWithNodeReferences[Id]
+sealed trait AnyEdgeWithNodeReferences[Id <: AnyVal | String]        extends AnyHyperEdgeWithNodeReferences[Id]:
+  def id1: Id
+  def id2: Id
 
 object AnyHyperEdgeWithNodeReferences:
   inline def compactClassNames: CodecMakerConfig =
@@ -37,6 +39,9 @@ object AnyDiHyperEdgeWithNodeReferences:
     }
 
 object AnyEdgeWithNodeReferences:
+  def unapply[Id <: AnyVal | String](e: AnyEdgeWithNodeReferences[Id]): (String, Id, Id) =
+    (e.edgeT, e.id1, e.id2)
+
   inline def compactClassNames: CodecMakerConfig =
     CodecMakerConfig.withAdtLeafClassNameMapper { className =>
       JsonCodecMaker.simpleClassName(className) match
@@ -47,7 +52,9 @@ object AnyEdgeWithNodeReferences:
 
 case class DiEdgeWithNodeReferences[Id <: AnyVal | String](edgeT: String, sourceId: Id, targetId: Id)
     extends AnyEdgeWithNodeReferences[Id]
-    with AnyDiHyperEdgeWithNodeReferences[Id]
+    with AnyDiHyperEdgeWithNodeReferences[Id]:
+  def id1: Id = sourceId
+  def id2: Id = targetId
 
 object DiEdgeWithNodeReferences:
   def apply[N, Id <: AnyVal | String](edge: AnyDiEdge[N], id: N => Id): DiEdgeWithNodeReferences[Id] =

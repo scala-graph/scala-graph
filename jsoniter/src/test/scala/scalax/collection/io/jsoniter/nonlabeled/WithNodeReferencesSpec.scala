@@ -94,7 +94,7 @@ class WithNodeReferencesSpec extends GraphCodecSpecBase:
     readFromString[Airports](json) shouldBe graph
   }
 
-private object WithNodeReferencesSpec:
+object WithNodeReferencesSpec:
 
   case class Airport(code: String, name: Map[String, String])
   object Airport:
