@@ -7,6 +7,19 @@ import scalax.collection.generic.Edge
 
 object EdgeCodec:
 
+  /** Macro to generate codec for polymorphic but non-ADT edge type.
+    *
+    * This macro is provided because predefined edges do not build an ADT and
+    * jsoniter-scala does not deal with polymorphic, non-ADT types.
+    * You can invoke this macro by providing the root type along with all subtypes that are used in the Graph.
+    * For instance, provided the node type `String` and a mixed Graph using `DiEdge` and `UnDiEdge`, call
+    *
+    * `EdgeCodec.makePolymorphicWithEmbeddedNodes[AnyEdge[String], (UnDiEdge[String], DiEdge[String])]()`
+    *
+    * @param discriminatorFieldName the key of the JSON discriminator with default `"type"`.
+    * @tparam E the root edge type.
+    * @tparam Subtypes all subtypes of `E` used in the Graph.
+    */
   inline def makePolymorphicWithEmbeddedNodes[E <: Edge[_], Subtypes <: Tuple](
       discriminatorFieldName: String = "type"
   ): JsonValueCodec[E] =
