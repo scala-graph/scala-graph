@@ -5,12 +5,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scala: [ '2.13.16', '3.3.5' ]
+        scala: [ '2.13.16', '3.3.6' ]
         project: [ core, dot, jsonLift, jsoniter ]
         exclude:
           - scala: '2.13.16'
             project: jsoniter
-          - scala: '3.3.5'
+          - scala: '3.3.6'
             project: jsonLift
     runs-on: ubuntu-latest
     steps:
