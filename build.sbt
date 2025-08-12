@@ -65,8 +65,8 @@ lazy val jsoniter = crossProject(JSPlatform, JVMPlatform)
       version := Version.jsoniter, {
         val jsoniterGroup = "com.github.plokhotnyuk.jsoniter-scala"
         libraryDependencies ++= Seq(
-          jsoniterGroup %% "jsoniter-scala-core"   % "2.36.6",
-          jsoniterGroup %% "jsoniter-scala-macros" % "2.36.6"
+          jsoniterGroup %% "jsoniter-scala-core"   % "2.36.7",
+          jsoniterGroup %% "jsoniter-scala-macros" % "2.36.7"
         )
       }
     )
