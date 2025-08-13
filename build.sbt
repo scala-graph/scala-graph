@@ -7,7 +7,6 @@ lazy val all = project
     Seq(
       name               := "Graph for Scala 2",
       version            := Version.highest,
-      publishTo          := None,
       crossScalaVersions := Nil
     )
   )
@@ -110,7 +109,7 @@ lazy val defaultSettings_3 = Defaults.coreDefaultSettings ++ Seq(
   defaultTestLibSettings_3
 
 lazy val defaultSettings = Seq(
-  organization := "org.scala-graph",
+  versionScheme := Some("pvp"),
   libraryDependencies ++= dependingOn(scalaVersion.value)(
     if_2 = Seq(compilerPlugin(scalafixSemanticdb)),
     if_3 = Nil
@@ -122,8 +121,7 @@ lazy val defaultSettings = Seq(
 ) ++
   defaultCompilerSettings ++
   defaultTestSettings ++
-  defaultDocSettings ++
-  GraphSonatype.settings
+  defaultDocSettings
 
 lazy val defaultCompilerSettings = Seq(
   scalacOptions ++= dependingOn(scalaVersion.value)(

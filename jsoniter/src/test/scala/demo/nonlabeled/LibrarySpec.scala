@@ -78,7 +78,7 @@ class LibrarySpec extends RefSpec with Matchers with GraphCodecSpecBase:
     def `toJson yields the expected JSON`(): Unit =
       library.toJson shouldBe sameAs(expectedJson)
 
-    def `fromJson yields the original graph`(): Unit =
+    def `toGraph yields the original graph`(): Unit =
       expectedJson.toGraph[Library] shouldBe library
 
 // --------------------------------- node types of an academic library graph
