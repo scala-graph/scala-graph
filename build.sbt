@@ -20,8 +20,9 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("core"))
   .settings(
     defaultSettings_cross ++ Seq(
-      name    := "Graph Core",
-      version := Version.core,
+      name        := "Graph Core",
+      description := "In-memory graph editing and algorithms with the look and feel of Scala Library collections.",
+      version     := Version.core,
       libraryDependencies ++= Seq(
         "org.scalacheck" %% "scalacheck" % "1.18.1"
       )
@@ -35,8 +36,9 @@ lazy val dot = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .dependsOn(core)
   .settings(
     defaultSettings_cross ++ Seq(
-      name    := "Graph DOT",
-      version := Version.dot
+      name        := "Graph DOT",
+      description := "Configurable DOT export of Graphs provided by graph-core.",
+      version     := Version.dot
     )
   )
 
@@ -47,7 +49,8 @@ lazy val jsonLift = crossProject(JSPlatform, JVMPlatform)
   .dependsOn(core)
   .settings(
     defaultSettings_2 ++ Seq(
-      name                                 := "Graph lift-json",
+      name := "Graph lift-json",
+      description := "Configurable JSON serialization and deserialization of Graphs, provided by graph-core, in terms of lift-json.",
       version                              := Version.jsonLift,
       libraryDependencies += "net.liftweb" %% "lift-json" % "3.5.0" // not available for Scala 3
     )
@@ -60,8 +63,9 @@ lazy val jsoniter = crossProject(JSPlatform, JVMPlatform)
   .dependsOn(core)
   .settings(
     defaultSettings_3 ++ Seq(
-      name    := "Graph jsoniter",
-      version := Version.jsoniter, {
+      name        := "Graph jsoniter",
+      description := "Configurable JSON codecs for Graphs, provided by graph-core, in terms of jsoniter-scala.",
+      version     := Version.jsoniter, {
         val jsoniterGroup = "com.github.plokhotnyuk.jsoniter-scala"
         libraryDependencies ++= Seq(
           jsoniterGroup %% "jsoniter-scala-core"   % "2.36.6",
