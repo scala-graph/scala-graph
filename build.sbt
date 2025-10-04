@@ -7,11 +7,10 @@ lazy val all = project
     Seq(
       name               := "Graph for Scala 2",
       version            := Version.highest,
-      publishTo          := None,
       crossScalaVersions := Nil
     )
   )
-  .aggregate(core.jvm, dot.jvm, json.jvm)
+  .aggregate(core.jvm, dot.jvm, jsonLift.jvm, jsoniter.jvm)
 
 // to publish as JS run "project coreJS", "fastOptJS", "package", "publishSigned"
 
@@ -21,8 +20,9 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("core"))
   .settings(
     defaultSettings_cross ++ Seq(
-      name    := "Graph Core",
-      version := Version.core,
+      name        := "Graph Core",
+      description := "In-memory graph editing and algorithms with the look and feel of Scala Library collections.",
+      version     := Version.core,
       libraryDependencies ++= Seq(
         "org.scalacheck" %% "scalacheck" % "1.18.1"
       )
@@ -47,21 +47,42 @@ lazy val dot = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .dependsOn(core)
   .settings(
     defaultSettings_cross ++ Seq(
-      name    := "Graph DOT",
-      version := Version.dot
+      name        := "Graph DOT",
+      description := "Configurable DOT export of Graphs provided by graph-core.",
+      version     := Version.dot
     )
   )
 
-lazy val json = crossProject(JSPlatform, JVMPlatform)
+lazy val jsonLift = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
-  .in(file("json"))
+  .in(file("jsonLift"))
   .dependsOn(core)
   .settings(
     defaultSettings_2 ++ Seq(
-      name                                 := "Graph JSON",
-      version                              := Version.json,
+      name := "Graph lift-json",
+      description := "Configurable JSON serialization and deserialization of Graphs, provided by graph-core, in terms of lift-json.",
+      version                              := Version.jsonLift,
       libraryDependencies += "net.liftweb" %% "lift-json" % "3.5.0" // not available for Scala 3
+    )
+  )
+
+lazy val jsoniter = crossProject(JSPlatform, JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .in(file("jsoniter"))
+  .dependsOn(core)
+  .settings(
+    defaultSettings_3 ++ Seq(
+      name        := "Graph jsoniter",
+      description := "Configurable JSON codecs for Graphs, provided by graph-core, in terms of jsoniter-scala.",
+      version     := Version.jsoniter, {
+        val jsoniterGroup = "com.github.plokhotnyuk.jsoniter-scala"
+        libraryDependencies ++= Seq(
+          jsoniterGroup %% "jsoniter-scala-core"   % "2.36.6",
+          jsoniterGroup %% "jsoniter-scala-macros" % "2.36.6"
+        )
+      }
     )
   )
 
@@ -86,13 +107,24 @@ lazy val defaultTestLibSettings =
     "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
   )
 
+lazy val defaultTestLibSettings_3 =
+  libraryDependencies ++= Seq(
+    "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test,
+    "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test exclude (
+      "org.scalacheck",
+      "scalacheck_3"
+    )
+  )
+
 lazy val defaultSettings_3 = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion   := Version.compiler_3,
-  scalafmtConfig := baseDirectory.value / ".." / ".scalafmt-scala3.conf"
-) ++ defaultSettings
+  scalafmtConfig := baseDirectory.value / "../.." / ".scalafmt-scala3.conf"
+) ++
+  defaultSettings ++
+  defaultTestLibSettings_3
 
 lazy val defaultSettings = Seq(
-  organization := "org.scala-graph",
+  versionScheme := Some("pvp"),
   libraryDependencies ++= dependingOn(scalaVersion.value)(
     if_2 = Seq(compilerPlugin(scalafixSemanticdb)),
     if_3 = Nil
@@ -104,8 +136,7 @@ lazy val defaultSettings = Seq(
 ) ++
   defaultCompilerSettings ++
   defaultTestSettings ++
-  defaultDocSettings ++
-  GraphSonatype.settings
+  defaultDocSettings
 
 lazy val defaultCompilerSettings = Seq(
   scalacOptions ++= dependingOn(scalaVersion.value)(

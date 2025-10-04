@@ -1,0 +1,4 @@
+/** Export/import <code>Graph</code> objects to/from JSON text via
+  * [[https://github.com/plokhotnyuk/jsoniter-scala/ jsoniter-scala]].
+  */
+package scalax.collection.io.jsoniter

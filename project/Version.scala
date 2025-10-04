@@ -9,8 +9,9 @@ object Version {
   private val minor               = 0
   private def version(patch: Int) = s"$major.$minor.$patch$snapshot"
 
-  val highest = version(3)
-  val core    = version(3)
-  val dot     = version(0)
-  val json    = version(3)
+  val highest  = version(3)
+  val core     = version(3)
+  val dot      = version(0)
+  val jsonLift = version(3)
+  val jsoniter = version(3)
 }
