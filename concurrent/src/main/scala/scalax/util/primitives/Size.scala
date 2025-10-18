@@ -8,11 +8,11 @@ import scala.compiletime.{codeOf, error}
 opaque type Size = Int
 
 object Size extends Validated[Int, Size]:
-  private inline val lower = 1
-  private inline val upper = Int.MaxValue - 8
+  private inline val lowerLimit = 1
+  private inline val upperLimit = Int.MaxValue - 8
 
   protected inline def fromValid(a: Int): Size = a
-  protected inline def valid(a: Int): Boolean  = a >= lower && a <= upper
+  protected inline def valid(a: Int): Boolean  = a >= lowerLimit && a <= upperLimit
   protected inline def errMsgSuffix: String    = " is invalid for Size"
 
   extension (size: Size)
@@ -47,8 +47,8 @@ object Size extends Validated[Int, Size]:
     def gen: Gen = Gen(size)
 
   given Limited[Int, Size] with
-    inline def lowerLimit: Size = 1
-    inline def upperLimit: Size = upper
+    inline def lowerLimit: Size = Size.lowerLimit
+    inline def upperLimit: Size = Size.upperLimit
 
     inline def lt(a: Size, b: Size): Boolean = a < b
 
