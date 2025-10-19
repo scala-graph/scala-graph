@@ -11,7 +11,7 @@ trait Validated[A <: AnyVal, O]:
   protected inline def valid(a: A): Boolean
   protected inline def errMsgSuffix: String
 
-  inline def apply(a: A): O =
+  final inline def apply(a: A): O =
     inline if valid(a) then fromValid(a)
     else error(codeOf(a) + errMsgSuffix + ".")
 
@@ -19,7 +19,7 @@ trait Validated[A <: AnyVal, O]:
     Option.when(valid(a))(fromValid(a))
 
   /** @throws ValueOutOfBoundsException if `a` is not `valid`. */
-  inline def unsafe(a: A): O =
+  final inline def unsafe(a: A): O =
     if valid(a) then fromValid(a)
     else throw new ValueOutOfBoundsException(a, errMsgSuffix)
 
@@ -56,6 +56,14 @@ extension [A <: AnyVal, O](a: O)(using limited: Limited[A, O])
 
   /** @throws LimitOverflowException if the sum exceeds `upperLimit`. */
   inline def +(summand: O): O = limited.added(a, summand)
+
+trait LimitedInt[O] extends Limited[Int, O]:
+  final protected inline def validIncrement(a: Int): Int    = a + 1
+  final protected inline def unsafeAdd(a: Int, b: Int): Int = a + b
+
+trait LimitedLong[O] extends Limited[Long, O]:
+  final protected inline def validIncrement(a: Long): Long = a + 1
+  final protected inline def unsafeAdd(a: Long, b: Long): Long = a + b
 
 private class ValueOutOfBoundsException(value: AnyVal, cause: String) extends Exception(s"Value $value $cause.")
 

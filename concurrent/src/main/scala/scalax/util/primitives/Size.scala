@@ -2,7 +2,6 @@ package scalax.util.primitives
 
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
-import scala.compiletime.{codeOf, error}
 
 /** 32 bit, verified, positive `Int` up to `Int.MaxValue - 8` to support safe array sizes and more. */
 opaque type Size = Int
@@ -16,6 +15,8 @@ object Size extends Validated[Int, Size]:
   protected inline def errMsgSuffix: String    = " is invalid for Size"
 
   extension (size: Size)
+    inline def toInt: Int = size
+
     /** `Iterator` over all `Int`s in { 0, ..., size - 1 } with lazy materialization.
       */
     def indexIterator: Iterator[Int] =
@@ -46,7 +47,7 @@ object Size extends Validated[Int, Size]:
       */
     def gen: Gen = Gen(size)
 
-  given Limited[Int, Size] with
+  given LimitedInt[Size] with
     inline def lowerLimit: Size = Size.lowerLimit
     inline def upperLimit: Size = Size.upperLimit
 
@@ -54,8 +55,6 @@ object Size extends Validated[Int, Size]:
 
     protected[scalax] inline def underlying(a: Size): Int = a
     protected inline def fromValid(a: Int): Size        = a
-    protected inline def validIncrement(a: Int): Int    = a + 1
-    protected inline def unsafeAdd(a: Int, b: Int): Int = a + b
 
   final protected class Gen(limit: Size):
     inline def map[B](f: Int => B): Iterator[B]                   = iterator map f

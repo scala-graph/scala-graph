@@ -1,6 +1,6 @@
 package scalax.collection.concurrent
 
-import scalax.util.primitives.{Limited, Validated}
+import scalax.util.primitives.{LimitedInt, LimitedLong, Validated}
 
 object Version:
   /** 64-bit encoding of two unsigned integers to represent
@@ -47,17 +47,15 @@ object Version:
     protected inline def valid(a: Int): Boolean = a >= lowerLimit && a <= upperLimit
     protected inline def errMsgSuffix: String = " is invalid for BranchId"
 
-    given Limited[Int, BranchId] with
+    given LimitedInt[BranchId] with
       inline def lowerLimit: BranchId = BranchId.lowerLimit
       inline def upperLimit: BranchId = BranchId.upperLimit
 
       inline def lt(a: BranchId, b: BranchId): Boolean = a < b
       protected[scalax] inline def underlying(a: BranchId): Int = a
       protected inline def fromValid(a: Int): BranchId = a
-      protected inline def validIncrement(a: Int): Int = a + 1
-      protected inline def unsafeAdd(a: Int, b: Int): Int = a + b
 
-  extension(branchId: BranchId)(using limited: Limited[Int, BranchId])
+  extension(branchId: BranchId)(using limited: LimitedInt[BranchId])
     protected[concurrent] inline def underlying: Int = limited.underlying(branchId)
 
     inline def <(other: BranchId): Boolean = limited.lt(branchId, other)
@@ -81,17 +79,15 @@ object Version:
     protected inline def valid(a: Long): Boolean = a >= lowerLimit && a <= upperLimit
     protected inline def errMsgSuffix: String = " is invalid for RevisionId"
 
-    given Limited[Long, Revision] with
+    given LimitedLong[Revision] with
       inline def lowerLimit: Revision = Revision.lowerLimit
       inline def upperLimit: Revision = Revision.upperLimit
 
       inline def lt(a: Revision, b: Revision): Boolean = a < b
       protected[scalax] inline def underlying(a: Revision): Long = a
       protected inline def fromValid(a: Long): Revision = a
-      protected inline def validIncrement(a: Long): Long = a + 1
-      protected inline def unsafeAdd(a: Long, b: Long): Long = a + b
 
-  extension(revision: Revision)(using limited: Limited[Long, Revision])
+  extension(revision: Revision)(using limited: LimitedLong[Revision])
     protected[concurrent] inline def underlying: Long = limited.underlying(revision)
 
     inline def <(other: Revision): Boolean = limited.lt(revision, other)

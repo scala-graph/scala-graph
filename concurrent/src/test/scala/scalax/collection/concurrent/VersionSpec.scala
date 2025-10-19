@@ -32,6 +32,8 @@ class VersionSpec extends RefSpec with Matchers with OptionValues:
 
   def `apply, extractors `: Unit =
     "Version(1, 0)" shouldNot compile
+    Version(aBranchId, aRevision)
+    "val v: Long = Version(aBranchId, aRevision)" shouldNot compile
 
     def check(branchId: BranchId, revision: Revision): Unit =
       val version = Version(branchId, revision)
