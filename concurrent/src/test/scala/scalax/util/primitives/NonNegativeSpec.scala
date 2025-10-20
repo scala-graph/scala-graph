@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
 class NonNegativeSpec extends RefSpec with Matchers with OptionValues:
-  private inline val big = 77_777_777
+  private inline val big   = 77_777_777
   private inline val limit = Int.MaxValue - 9
   private inline val above = Int.MaxValue
 

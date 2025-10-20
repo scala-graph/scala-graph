@@ -60,6 +60,6 @@ class VersionSpec extends RefSpec with Matchers with OptionValues:
 
   def `next revision`: Unit =
     val current = Version(aBranchId, aRevision)
-    val next = current.nextRevision
+    val next    = current.nextRevision
     current.branchId shouldBe next.branchId
     next.revision shouldBe aRevision.incr

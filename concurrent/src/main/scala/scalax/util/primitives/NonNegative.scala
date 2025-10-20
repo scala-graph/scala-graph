@@ -13,8 +13,8 @@ object NonNegative extends Validated[Int, NonNegative]:
   private inline val upperLimit = Int.MaxValue - 9
 
   protected inline def fromValid(a: Int): NonNegative = a
-  protected inline def valid(a: Int): Boolean   = a >= lowerLimit && a <= upperLimit
-  protected inline def errMsgSuffix: String     = " is invalid for Index"
+  protected inline def valid(a: Int): Boolean         = a >= lowerLimit && a <= upperLimit
+  protected inline def errMsgSuffix: String           = " is invalid for Index"
 
   extension (nn: NonNegative)
     inline def toInt: Int = nn
@@ -25,7 +25,7 @@ object NonNegative extends Validated[Int, NonNegative]:
         var i: Int = 0
 
         def hasNext: Boolean = i < nn
-        def next(): Int =
+        def next(): Int      =
           val ret = i
           i += 1
           ret
@@ -41,8 +41,8 @@ object NonNegative extends Validated[Int, NonNegative]:
       loop(0)
 
     /** Generator of `Int`s in { 0, ..., n - 1 } with lazy materialization.
-     * Use this as a safe replacement of `Range` that might cause `OutOfMemoryError` for a big `n`.
-     */
+      * Use this as a safe replacement of `Range` that might cause `OutOfMemoryError` for a big `n`.
+      */
     def gen: IndexGen = IndexGen(nn)
 
   given LimitedInt[NonNegative] with
@@ -55,11 +55,11 @@ object NonNegative extends Validated[Int, NonNegative]:
     protected inline def fromValid(a: Int): NonNegative          = a
 
   final protected[primitives] class IndexGen(limit: NonNegative):
-    inline def map[B](f: Int => B): Iterator[B] = iterator map f
+    inline def map[B](f: Int => B): Iterator[B]                   = iterator map f
     inline def flatMap[B](f: Int => IterableOnce[B]): Iterator[B] = iterator flatMap f
-    inline def withFilter(p: Int => Boolean): Iterator[Int] = iterator filter p
-    inline def iterator: Iterator[Int] = limit.indexIterator
-    inline def foreach(f: Int => Unit): Unit = limit foreachIndex f
+    inline def withFilter(p: Int => Boolean): Iterator[Int]       = iterator filter p
+    inline def iterator: Iterator[Int]                            = limit.indexIterator
+    inline def foreach(f: Int => Unit): Unit                      = limit foreachIndex f
 
 type Size = NonNegative
 val Size = NonNegative
