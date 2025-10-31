@@ -16,8 +16,9 @@ object Positive extends Validated[Int, Positive]:
   protected inline def errMsgSuffix: String        = " is not positive"
 
   extension (n: Positive)
-    inline def toInt: Int = n
-    
+    inline def toInt: Int           = n
+    inline def ===(i: Int): Boolean = n == i
+
     private inline def asNonNegative: NonNegative = NonNegative.unsafe(n)
 
     /** `Iterator` over all `Int`s in { 0, ..., n - 1 }. */

@@ -1,8 +1,8 @@
 package scalax.collection.concurrent
+
 import scala.collection.immutable.IntMap
 
 private[concurrent] type HashCode = Int
-protected[concurrent] type Index  = Int
 
 /** Set of versioned elements that can be accessed by index.
   * The index starts with 0 and will be incremented on `incl`.
@@ -12,8 +12,9 @@ protected[concurrent] type Index  = Int
   *           The version family is stored at chunk level.
   * @tparam V type of version stored to each element. Version typically includes branch information.
   */
+/*
 final private[collection] class IndexedVSet[A, F, @specialized(Long) V](
-    elems: VectorArraySeq[(A, HashCode, V), F],
+    elems: VIndexedSeq[(A, HashCode, V), F],
     hashCodeToIndex: IntMap[Set[Index]],
     nextVersion: V => (Option[F], V)
 ):
@@ -28,3 +29,4 @@ final private[collection] class IndexedVSet[A, F, @specialized(Long) V](
 //      if
 //    else
   def excl(elem: A, from: V): IndexedVSet[A, F, V] = ???
+ */

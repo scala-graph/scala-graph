@@ -17,7 +17,9 @@ object NonNegative extends Validated[Int, NonNegative]:
   protected inline def errMsgSuffix: String           = " is invalid for Index"
 
   extension (nn: NonNegative)
-    inline def toInt: Int = nn
+    inline def toInt: Int             = nn
+    inline def ===(i: Int): Boolean   = nn == i
+    inline def +(i: Int): NonNegative = nn + i
 
     /** `Iterator` over all `Int`s in { 0, ..., n - 1 }. */
     def indexIterator: Iterator[Int] =

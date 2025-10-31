@@ -9,10 +9,10 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
 class VectorArraySeqSpec extends RefSpec with Matchers:
-  import VectorArraySeq._
+  import VIndexedSeq._
 
   private def tinyEmptySeq[A, C] =
-    VectorArraySeq.empty[A, C](2) tap (_.chunkSize shouldBe MinChunkSize)
+    VIndexedSeq.empty[A, C](2) tap (_.dimensions shouldBe MinChunkSize)
 
   def `'chunkSize' based on hints`(): Unit =
     List(
@@ -33,22 +33,22 @@ class VectorArraySeqSpec extends RefSpec with Matchers:
     given prefix: Int = 0
     val elem          = 0
     var seq           = tinyEmptySeq[elem.type, Int]
-    (1 to seq.chunkSize) foreach { i =>
+    (1 to seq.dimensions) foreach { i =>
       seq = seq :+ elem
       seq.size shouldBe i
       seq.elem(i - 1) shouldBe elem
     }
-    seq.iterator.length shouldBe seq.chunkSize
+    seq.iterator.length shouldBe seq.dimensions
 
   def `'appended' within chunk, multi threaded`(): Unit =
     given prefix: Int = 0
     var seq           = tinyEmptySeq[Int, Int]
-    val elems         = 1 to seq.chunkSize
+    val elems         = 1 to seq.dimensions
     seq = seq :+ 1
     Await.ready(
       Future.traverse(elems.tail)(i => Future(seq :+ i)),
       1.second
     )
     println(seq.trace)
-    seq.iterator.length shouldBe seq.chunkSize
+    seq.iterator.length shouldBe seq.dimensions
     seq.iterator.toSet shouldBe elems.toSet

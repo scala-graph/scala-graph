@@ -65,6 +65,6 @@ trait LimitedLong[O] extends Limited[Long, O]:
   final protected inline def validIncrement(a: Long): Long     = a + 1
   final protected inline def unsafeAdd(a: Long, b: Long): Long = a + b
 
-private class ValueOutOfBoundsException(value: AnyVal, cause: String) extends Exception(s"Value $value $cause.")
+private[scalax] class ValueOutOfBoundsException(value: AnyVal, cause: String) extends Exception(s"Value $value $cause.")
 
-private object LimitOverflowException extends Exception
+private[scalax] object LimitOverflowException extends Exception
