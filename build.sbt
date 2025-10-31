@@ -29,7 +29,9 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     )
   )
 
-lazy val concurrent = project
+lazy val concurrent = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Pure)
   .in(file("concurrent"))
   .settings(
     defaultSettings_3 ++ Seq(
