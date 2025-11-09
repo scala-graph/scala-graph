@@ -1,14 +1,14 @@
 package scalax.collection.concurrent
 
-import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
+import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 import java.util.concurrent.locks.ReentrantLock
-
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scala.util.chaining.given
-
 import scalax.util.primitives.*
 import scalax.util.primitives.Size.given
+
+import scala.collection.immutable.ArraySeq.unsafeWrapArray
 
 /* TODO */
 type LongSize = Size
@@ -17,15 +17,29 @@ type LongIndex = Index
 val LongIndex = Index
 
 /** Concurrent, growing only, compressed rose tree with leaves of type `Array[A]`.
+  *
+  * For best efficiency, try to minimize the number of nodes. A high number of nodes is only needed
+  * if the expected maximum size of the collection is orders of magnitude greater than the expected minimum size.
+  *
+  * Examples:
+  *   - given an expected size of 1,000 to 10,000 in most cases, you may opt for
+  *     - `initialCapacity` = 1,000
+  *     - `leafCapacity` = 1,000
+  *     - `nodeCapacity` = 20
+  *   - given an expected size of 1,000 to 1,000,000,000, a good choice is to set
+  *     - `initialCapacity` = 5,000
+  *     - `leafCapacity` = 10,000
+  *     - `nodeCapacity` = 1,000.
+  *
   * @param initialCapacity number of elements of type `A` to be allocated for the first leaf.
   *                        This should be the expected minimal size of the collection for a significant amount
   *                        of use cases.
   * @param leafCapacity number of elements of type `A` to be allocated for subsequent leaves.
-  *                       For best efficiency, choose a fairly high size like thousands.
-  *                       For small collections, at least 8 is recommended.
-  * @param nodeCapacity number of elements to be allocated for nodes starting with `2`.
-  *                       For best efficiency, choose a higher capacity like 32 or even hundreds.
-  *                       For small collections, at least 4 is recommended.
+  *                     For best efficiency, choose it to be large like in the thousands.
+  *                     For small collections, at least 8 is recommended.
+  * @param nodeCapacity number of elements to be allocated for nodes, 2 at least.
+  *                     For best efficiency, choose a high capacity, 16 at least.
+  *                     For small collections, at least 4 is recommended.
   * @tparam A type of elements
   */
 final class ArrayTree[A: ClassTag](
@@ -80,7 +94,7 @@ final class ArrayTree[A: ClassTag](
         treeStructure.unlock()
 
     def newLeaf(a: A, parent: Node[A], capacity: PositiveSize = leafCapacity) =
-      Multiple(new Array[A](capacity.toInt), parent) tap (_.append(a))
+      Multiple(capacity, parent)(a)
 
     def ensureNodeAndAppend(
         a: A,
@@ -99,11 +113,7 @@ final class ArrayTree[A: ClassTag](
           case n: Node[A]                => Right(n)        -> depth.incr
           case null                      => Left(exhausted) -> depth
 
-      // after everything is prepared, lock or return immediately if there is already some collision;
-      // within the lock a collision may still be detected
-
-      def newNode(parent: Node[A]) =
-        Node(new Array[Many[A]](leafCapacity.toInt), parent)
+      def newNode(parent: Node[A]) = Node.empty[A](nodeCapacity, parent)
 
       val newSize  = _closedSize + exhaustedLeaf.size
       val newIndex = LongIndex.unsafe(newSize.toInt)
@@ -114,7 +124,7 @@ final class ArrayTree[A: ClassTag](
               if i < distance then loop(i.incr, newNode(parent) tap parent.append)
               else newLeaf(a, parent) tap parent.append
 
-            val root = newNode(null)
+            val root = newNode(null) tap (_ append exhaustedRoot)
             root -> loop(Size(0), root)
 
           if updateTree(pathLeaf, newPath, newSize) then
@@ -172,6 +182,9 @@ final class ArrayTree[A: ClassTag](
           LongIndex.unsafe(_closedSize.toInt + idx.toInt)
   end append
 
+  protected[concurrent] def treeIterator: Iterator[Tree[A]] =
+    ???
+
 object ArrayTree:
   def of[A: ClassTag](expectedMinElements: Size, expectedMaxElements: PositiveSize) =
     // TODO
@@ -200,13 +213,28 @@ object ArrayTree:
 
   sealed protected[concurrent] trait Many[A] extends Tree[A]:
     type E
-    protected def elems: Array[E]
+    protected[concurrent] def elems: Array[E]
     protected[concurrent] var parent: Node[A] | Null
 
     final protected val _used = AtomicInteger(0)
 
     final def capacity: Size = Size.unsafe(elems.length)
     final def size: Size     = Size.unsafe(_used.get)
+
+    protected def equalElems[B](that: Many[_]): Boolean
+
+    final override def equals(other: Any): Boolean = other match
+      case many: Many[_] =>
+        (parent eq null) == (many.parent eq null) && equalElems(many)
+      case _ => false
+
+    protected def elemsHashCode: Int
+
+    override def hashCode: Int =
+      elemsHashCode * (if parent eq null then 1 else 7)
+
+    final protected def commonToString: String =
+      s"${if parent eq null then "no" else "some"} parent, used $size of $capacity elems"
 
     /** Appends `elem` to `this` if there is free space.
       *
@@ -221,18 +249,55 @@ object ArrayTree:
         else append(elem)
       else Exhausted
 
-  final protected[concurrent] case class Multiple[A](
-      protected val elems: Array[A],
+  final protected[concurrent] case class Multiple[A] private (
+      protected[concurrent] val elems: Array[A],
       protected[concurrent] var parent: Node[A] | Null
   ) extends Leaf[A]
-      with Many[A] {
+      with Many[A]:
     type E = A
-  }
 
-  final protected[concurrent] case class Node[A](
-      protected val elems: Array[Many[A]],
+    protected def equalElems[B](that: Many[_]): Boolean =
+      unsafeWrapArray(this.elems) == unsafeWrapArray(that.elems)
+
+    protected def elemsHashCode: Int = unsafeWrapArray(elems).hashCode
+
+    override def toString: String =
+      s"Multiple($commonToString: ${size.indexIterator.map(elems(_).toString) mkString ", "})"
+
+  protected[concurrent] object Multiple:
+    def empty[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null): Multiple[A] =
+      new Multiple[A](new Array(capacity.toInt), parent)
+
+    def apply[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null)(elems: A*): Multiple[A] =
+      empty[A](capacity, parent) tap (elems foreach _.append)
+
+  final protected[concurrent] case class Node[A] private (
+      protected[concurrent] val elems: Array[Many[A]],
       protected[concurrent] var parent: Node[A] | Null
   ) extends Tree[A]
-      with Many[A] {
+      with Many[A]:
     type E = Many[A]
-  }
+
+    protected def equalElems[B](that: Many[_]): Boolean =
+      val _size = size
+
+      def elemsOfSameType: Boolean =
+        if _size === 0 then true
+        else
+          // provided elems of a given instance are always of the same class
+          this.elems(0).getClass == that.elems(0).getClass
+
+      _size == that.size && elemsOfSameType
+
+    protected def elemsHashCode: Int =
+      if size === 0 then 1
+      else elems(0).getClass.getSimpleName.hashCode
+
+    override def toString: String = s"Node($commonToString)"
+
+  protected[concurrent] object Node:
+    def empty[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null): Node[A] =
+      new Node[A](new Array[Many[A]](capacity.toInt), parent)
+
+    def apply[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null)(elems: Many[A]*): Node[A] =
+      empty[A](capacity, parent) tap (elems foreach _.append)

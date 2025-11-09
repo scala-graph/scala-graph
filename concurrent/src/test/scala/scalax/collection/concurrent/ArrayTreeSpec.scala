@@ -12,9 +12,15 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
   import scala.language.implicitConversions
   private given Conversion[Int, PositiveSize] = (i: Int) => PositiveSize.unsafe(i)
 
+  import ArrayTree.*
+
   object `append single threaded`:
     def `returns expected LongIndex, and tree size`: Unit =
-      def check(appendCount: PositiveSize)(initial: PositiveSize, leavesSize: PositiveSize = PositiveSize(2), nodeSize: PositiveSize = PositiveSize(2)): Unit =
+      def check(appendCount: PositiveSize)(
+          initial: PositiveSize,
+          leavesSize: PositiveSize = PositiveSize(2),
+          nodeSize: PositiveSize = PositiveSize(2)
+      ): Unit =
         info(f"$appendCount%2d times to tree($initial, $leavesSize, $nodeSize)")
         val tree = ArrayTree[Int](initial, leavesSize, nodeSize)
         1 to appendCount.toInt foreach { i =>
@@ -32,22 +38,47 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       check(9)(initial = 4)
       check(40)(initial = 1, leavesSize = PositiveSize(5), nodeSize = 5)
 
-/* TODO
     def `has expected tree structure`: Unit =
-      import ArrayTree.*
-      val sample = ArrayTree[Int](1, 4, 2)
-      sample.tree match
-        case null => 0
-        case Single(elem) => elem
-        case Multiple(elems, parent) => elems.length
-        case Node(elems, parent) => elems.length
-*/
+      val leafCapacity = 4
+      val nodeCapacity = 2
+      val sample       = ArrayTree[Int](1, leafCapacity, nodeCapacity)
+      sample.tree shouldBe null
+
+      sample append 1
+      sample.tree shouldBe Single(1)
+
+      sample append 2
+      sample.tree shouldBe Multiple[Int](leafCapacity, null)(1, 2)
+      val multi1 = sample.tree.asInstanceOf[Multiple[Int]]
+
+      3 to 5 foreach sample.append
+      def fakeMulti = Multiple.empty[Int](leafCapacity, null)
+      sample.tree shouldBe Node[Int](nodeCapacity, null)(multi1, fakeMulti)
+      val node1 = sample.tree.asInstanceOf[Node[Int]]
+      node1 match
+        case Node(elems, parent) =>
+          elems(0) should be theSameInstanceAs multi1
+          elems(0) shouldBe Multiple[Int](leafCapacity, multi1.parent)(1, 2, 3, 4)
+          multi1.parent should be theSameInstanceAs sample.tree
+
+          val multi2 = elems(1)
+          multi2 shouldBe Multiple[Int](leafCapacity, multi1.parent)(5)
+
+//      sample.tree match
+//        case null => 0
+//        case Single(elem) => elem
+//        case Multiple(elems, parent) => elems.length
+//        case Node(elems, parent) => elems.length
 
   // TODO Retry
   def `append concurrently`: Unit =
     given ExecutionContext = ExecutionContext.global
 
-    def check(futureCount: Int)(initial: PositiveSize, leavesSize: PositiveSize = PositiveSize(2), nodeSize: PositiveSize = PositiveSize(2)): Unit =
+    def check(futureCount: Int)(
+        initial: PositiveSize,
+        leavesSize: PositiveSize = PositiveSize(2),
+        nodeSize: PositiveSize = PositiveSize(2)
+    ): Unit =
       info(f"$futureCount%2d futures, tree($initial, $leavesSize, $nodeSize)")
       val tree = ArrayTree[Int](initial, leavesSize, nodeSize)
 
