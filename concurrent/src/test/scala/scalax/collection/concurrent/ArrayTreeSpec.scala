@@ -2,6 +2,7 @@ package scalax.collection.concurrent
 
 import scala.concurrent.{ExecutionContext, Future}
 
+import org.scalactic.Prettifier
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
@@ -9,6 +10,8 @@ import org.scalatest.refspec.RefSpec
 import scalax.util.primitives.*
 
 class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
+  implicit val disableDefaultArrayHandling: Prettifier = Prettifier(_.toString)
+
   import scala.language.implicitConversions
   private given Conversion[Int, PositiveSize] = (i: Int) => PositiveSize.unsafe(i)
 
@@ -17,26 +20,26 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
   object `append single threaded`:
     def `returns expected LongIndex, and tree size`: Unit =
       def check(appendCount: PositiveSize)(
-          initial: PositiveSize,
-          leavesSize: PositiveSize = PositiveSize(2),
-          nodeSize: PositiveSize = PositiveSize(2)
+          initialCapacity: PositiveSize,
+          leafCapacity: PositiveSize = PositiveSize(2),
+          nodeCapacity: PositiveSize = PositiveSize(2)
       ): Unit =
-        info(f"$appendCount%2d times to tree($initial, $leavesSize, $nodeSize)")
-        val tree = ArrayTree[Int](initial, leavesSize, nodeSize)
+        info(f"$appendCount%2d times to tree($initialCapacity, $leafCapacity, $nodeCapacity)")
+        val tree = ArrayTree[Int](initialCapacity, leafCapacity, nodeCapacity)
         1 to appendCount.toInt foreach { i =>
           (tree append i).toInt shouldBe i - 1
           tree.size.toInt shouldBe i
         }
         tree.collisions shouldBe 0
 
-      check(2)(initial = 1)
-      check(4)(initial = 4)
-      check(3)(initial = 1)
-      check(3)(initial = 2)
-      check(5)(initial = 4)
-      check(7)(initial = 4)
-      check(9)(initial = 4)
-      check(40)(initial = 1, leavesSize = PositiveSize(5), nodeSize = 5)
+      check(2)(initialCapacity = 1)
+      check(4)(initialCapacity = 4)
+      check(3)(initialCapacity = 1)
+      check(3)(initialCapacity = 2)
+      check(5)(initialCapacity = 4)
+      check(7)(initialCapacity = 4)
+      check(9)(initialCapacity = 4)
+      check(40)(initialCapacity = 1, leafCapacity = PositiveSize(5), nodeCapacity = 5)
 
     def `has expected tree structure`: Unit =
       val leafCapacity = 4
@@ -64,12 +67,6 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
           val multi2 = elems(1)
           multi2 shouldBe Multiple[Int](leafCapacity, multi1.parent)(5)
 
-//      sample.tree match
-//        case null => 0
-//        case Single(elem) => elem
-//        case Multiple(elems, parent) => elems.length
-//        case Node(elems, parent) => elems.length
-
   // TODO Retry
   def `append concurrently`: Unit =
     given ExecutionContext = ExecutionContext.global
@@ -91,3 +88,99 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
 
     check(5)(initial = PositiveSize(5))
     check(10)(initial = PositiveSize(5))
+
+  object `treeIterator, leafCapacity: 2, nodeCapacity: 2`:
+    val defaultLeafCapacity = PositiveSize(2)
+    val defaultNodeCapacity = PositiveSize(2)
+
+    def check(size: PositiveSize)(
+        initialCapacity: PositiveSize,
+        leafCapacity: PositiveSize = defaultLeafCapacity,
+        nodeCapacity: PositiveSize = defaultNodeCapacity
+    )(expected: List[Tree[Int]]): Unit =
+      val tree = ArrayTree[Int](initialCapacity, leafCapacity, nodeCapacity)
+      1 to size.toInt foreach tree.append
+      tree.treeIterator.toList shouldBe expected
+
+    extension (multi: Multiple.type)
+      private def fake: Multiple[Int] =
+        Multiple.empty[Int](defaultLeafCapacity, null)
+
+      private def withNullParent(elems: Int*): Multiple[Int] =
+        Multiple(defaultLeafCapacity, null)(elems*)
+
+      private def withFakeParent(elems: Int*): Multiple[Int] =
+        Multiple(defaultLeafCapacity, Node.fake)(elems*)
+
+    extension (node: Node.type)
+      private def fake: Node[Int] =
+        Node.empty[Int](defaultNodeCapacity, null)
+
+      private def withNullParentAndFakeMulti(size: PositiveSize = defaultNodeCapacity): Node[Int] =
+        Node(defaultNodeCapacity, null)(Array.fill(size.toInt)(Multiple.fake)*)
+
+      private def withNullParentAndFakeNode(size: PositiveSize = defaultNodeCapacity): Node[Int] =
+        Node(defaultNodeCapacity, null)(Array.fill(size.toInt)(Node.fake)*)
+
+      private def withFakeParentAndFakeMulti(size: PositiveSize = defaultNodeCapacity): Node[Int] =
+        Node(defaultNodeCapacity, Node.fake)(Array.fill(size.toInt)(Multiple.fake)*)
+
+      private def withFakeParentAndFakeNode(size: PositiveSize = defaultNodeCapacity): Node[Int] =
+        Node(defaultNodeCapacity, Node.fake)(Array.fill(size.toInt)(Node.fake)*)
+
+    def `size:  1, initialCapacity: 1`: Unit =
+      check(1)(initialCapacity = 1)(Single(1) :: Nil)
+
+    def `size:  2, initialCapacity: 1`: Unit =
+      check(2)(initialCapacity = 1)(Multiple.withNullParent(1, 2) :: Nil)
+
+    def `size:  3, initialCapacity: 1`: Unit =
+      check(3)(initialCapacity = 1)(
+        Node.withNullParentAndFakeMulti() ::
+          Multiple.withFakeParent(1, 2) ::
+          Multiple.withFakeParent(3) ::
+          Nil
+      )
+
+    def `size:  3, initialCapacity: 2`: Unit =
+      check(3)(initialCapacity = 1)(
+        Node.withNullParentAndFakeMulti() ::
+          Multiple.withFakeParent(1, 2) ::
+          Multiple.withFakeParent(3) ::
+          Nil
+      )
+
+    def `size:  5, initialCapacity: 4`: Unit =
+      check(5)(initialCapacity = 4)(
+        Node.withNullParentAndFakeMulti() ::
+          Multiple(4, Node.fake)(1, 2, 3, 4) ::
+          Multiple.withFakeParent(5) ::
+          Nil
+      )
+
+    def `size:  7, initialCapacity: 4`: Unit =
+      check(7)(initialCapacity = 4)(
+        Node.withNullParentAndFakeNode() ::
+          Node.withFakeParentAndFakeMulti() ::
+          Multiple(4, Node.fake)(1, 2, 3, 4) ::
+          Multiple.withFakeParent(5, 6) ::
+          Node.withFakeParentAndFakeMulti(1) ::
+          Multiple.withFakeParent(7) ::
+          Nil
+      )
+
+    def `size: 12, initialCapacity: 4`: Unit =
+      check(12)(initialCapacity = 4)(
+        Node.withNullParentAndFakeNode() ::
+          Node.withFakeParentAndFakeNode() ::
+          Node.withFakeParentAndFakeMulti() ::
+          Multiple(4, Node.fake)(1, 2, 3, 4) ::
+          Multiple.withFakeParent(5, 6) ::
+          Node.withFakeParentAndFakeMulti() ::
+          Multiple.withFakeParent(7, 8) ::
+          Multiple.withFakeParent(9, 10) ::
+          Node.withFakeParentAndFakeNode(1) ::
+          Node.withFakeParentAndFakeMulti(1) ::
+          Multiple.withFakeParent(11, 12) ::
+          Nil
+      )

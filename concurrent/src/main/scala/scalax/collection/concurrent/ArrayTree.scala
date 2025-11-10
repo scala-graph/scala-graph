@@ -8,7 +8,9 @@ import scala.util.chaining.given
 import scalax.util.primitives.*
 import scalax.util.primitives.Size.given
 
+import scala.collection.AbstractIterator
 import scala.collection.immutable.ArraySeq.unsafeWrapArray
+import scala.collection.mutable.Stack
 
 /* TODO */
 type LongSize = Size
@@ -183,7 +185,39 @@ final class ArrayTree[A: ClassTag](
   end append
 
   protected[concurrent] def treeIterator: Iterator[Tree[A]] =
-    ???
+    _tree match
+      case tree: Tree[A] =>
+        val lastSize = size
+        new AbstractIterator[Tree[A]]:
+          private var consumedElems = LongSize(0)
+          private val stack         = Stack.empty[(Node[A], Index)]
+
+          def hasNext: Boolean = consumedElems < lastSize
+
+          def next(): Tree[A] =
+            stack.headOption match
+              case Some(Node(elems, parent) -> i) =>
+                elems(i.toInt) match
+                  case multi: Multiple[A] =>
+                    consumedElems += multi.size
+                    stack.popWhile { case node -> i =>
+                      i.incr == node.size
+                    }
+                    stack.headOption map { case node -> i =>
+                      stack.pop()
+                      stack push node -> i.incr
+                    }
+                    multi
+                  case node: Node[A] =>
+                    stack push node -> Index(0)
+                    node
+              case None if hasNext => // fist call of next()
+                tree match
+                  case single: Single[A]  => consumedElems = consumedElems.incr; single
+                  case multi: Multiple[A] => consumedElems += multi.size; multi
+                  case node: Node[A]      => stack push node -> Index(0); node
+              case None => throw new NoSuchElementException
+      case null => Iterator.empty
 
 object ArrayTree:
   def of[A: ClassTag](expectedMinElements: Size, expectedMaxElements: PositiveSize) =
@@ -274,8 +308,7 @@ object ArrayTree:
   final protected[concurrent] case class Node[A] private (
       protected[concurrent] val elems: Array[Many[A]],
       protected[concurrent] var parent: Node[A] | Null
-  ) extends Tree[A]
-      with Many[A]:
+  ) extends Many[A]:
     type E = Many[A]
 
     protected def equalElems[B](that: Many[_]): Boolean =
@@ -293,7 +326,10 @@ object ArrayTree:
       if size === 0 then 1
       else elems(0).getClass.getSimpleName.hashCode
 
-    override def toString: String = s"Node($commonToString)"
+    override def toString: String =
+      val prefix = s"Node($commonToString)"
+      if size === 0 then prefix
+      else s"$prefix of type ${elems(0).getClass.getSimpleName}"
 
   protected[concurrent] object Node:
     def empty[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null): Node[A] =
