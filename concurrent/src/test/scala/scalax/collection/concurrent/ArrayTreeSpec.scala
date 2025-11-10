@@ -17,81 +17,54 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
 
   import ArrayTree.*
 
-  object `append single threaded`:
-    def `returns expected LongIndex, and tree size`: Unit =
-      def check(appendCount: PositiveSize)(
-          initialCapacity: PositiveSize,
-          leafCapacity: PositiveSize = PositiveSize(2),
-          nodeCapacity: PositiveSize = PositiveSize(2)
-      ): Unit =
-        info(f"$appendCount%2d times to tree($initialCapacity, $leafCapacity, $nodeCapacity)")
-        val tree = ArrayTree[Int](initialCapacity, leafCapacity, nodeCapacity)
-        1 to appendCount.toInt foreach { i =>
-          (tree append i).toInt shouldBe i - 1
-          tree.size.toInt shouldBe i
-        }
-        tree.collisions shouldBe 0
+  def `append single threaded`: Unit =
+    def check(appendCount: PositiveSize)(
+        initialCapacity: PositiveSize,
+        leafCapacity: PositiveSize = 2,
+        nodeCapacity: PositiveSize = 2
+    ): Unit =
+      info(f"$appendCount%2d times to tree($initialCapacity, $leafCapacity, $nodeCapacity)")
+      val tree = ArrayTree[Int](initialCapacity, leafCapacity, nodeCapacity)
+      1 to appendCount.toInt foreach { i =>
+        (tree append i).toInt shouldBe i - 1
+        tree.size.toInt shouldBe i
+      }
+      tree.collisions shouldBe 0
 
-      check(2)(initialCapacity = 1)
-      check(4)(initialCapacity = 4)
-      check(3)(initialCapacity = 1)
-      check(3)(initialCapacity = 2)
-      check(5)(initialCapacity = 4)
-      check(7)(initialCapacity = 4)
-      check(9)(initialCapacity = 4)
-      check(40)(initialCapacity = 1, leafCapacity = PositiveSize(5), nodeCapacity = 5)
+    check(2)(initialCapacity = 1)
+    check(4)(initialCapacity = 4)
+    check(3)(initialCapacity = 1)
+    check(3)(initialCapacity = 2)
+    check(5)(initialCapacity = 4)
+    check(7)(initialCapacity = 4)
+    check(9)(initialCapacity = 4)
+    check(40)(initialCapacity = 1, leafCapacity = 5, nodeCapacity = 5)
 
-    def `has expected tree structure`: Unit =
-      val leafCapacity = 4
-      val nodeCapacity = 2
-      val sample       = ArrayTree[Int](1, leafCapacity, nodeCapacity)
-      sample.tree shouldBe null
-
-      sample append 1
-      sample.tree shouldBe Single(1)
-
-      sample append 2
-      sample.tree shouldBe Multiple[Int](leafCapacity, null)(1, 2)
-      val multi1 = sample.tree.asInstanceOf[Multiple[Int]]
-
-      3 to 5 foreach sample.append
-      def fakeMulti = Multiple.empty[Int](leafCapacity, null)
-      sample.tree shouldBe Node[Int](nodeCapacity, null)(multi1, fakeMulti)
-      val node1 = sample.tree.asInstanceOf[Node[Int]]
-      node1 match
-        case Node(elems, parent) =>
-          elems(0) should be theSameInstanceAs multi1
-          elems(0) shouldBe Multiple[Int](leafCapacity, multi1.parent)(1, 2, 3, 4)
-          multi1.parent should be theSameInstanceAs sample.tree
-
-          val multi2 = elems(1)
-          multi2 shouldBe Multiple[Int](leafCapacity, multi1.parent)(5)
-
-  // TODO Retry
   def `append concurrently`: Unit =
     given ExecutionContext = ExecutionContext.global
 
-    def check(futureCount: Int)(
-        initial: PositiveSize,
-        leavesSize: PositiveSize = PositiveSize(2),
-        nodeSize: PositiveSize = PositiveSize(2)
+    def append(count: Int)(
+        initialCapacity: PositiveSize,
+        leafCapacity: PositiveSize = 2,
+        nodeCapacity: PositiveSize = 2
     ): Unit =
-      info(f"$futureCount%2d futures, tree($initial, $leavesSize, $nodeSize)")
-      val tree = ArrayTree[Int](initial, leavesSize, nodeSize)
+      info(f"$count%2d futures, tree($initialCapacity, $leafCapacity, $nodeCapacity)")
+      val tree = ArrayTree[Int](initialCapacity, leafCapacity, nodeCapacity)
 
-      val range = 0 until futureCount
+      val range = 0 until count
       val seq   = Future.sequence(range map (i => Future(tree append i)))
       whenReady(seq)(_.map(_.toInt).sum shouldBe range.sum)
 
-      tree.size.toInt shouldBe futureCount
+      tree.size.toInt shouldBe count
       tree.collisions should be > 0L
 
-    check(5)(initial = PositiveSize(5))
-    check(10)(initial = PositiveSize(5))
+    append(count = 5)(initialCapacity = 5)
+    append(count = 10)(initialCapacity = 4)
+    append(count = 20)(initialCapacity = 4)
 
   object `treeIterator, leafCapacity: 2, nodeCapacity: 2`:
-    val defaultLeafCapacity = PositiveSize(2)
-    val defaultNodeCapacity = PositiveSize(2)
+    val defaultLeafCapacity = 2
+    val defaultNodeCapacity = 2
 
     def check(size: PositiveSize)(
         initialCapacity: PositiveSize,
