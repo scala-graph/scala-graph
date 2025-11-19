@@ -2,15 +2,15 @@ package scalax.collection.concurrent
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 import java.util.concurrent.locks.ReentrantLock
-import scala.annotation.tailrec
-import scala.reflect.ClassTag
-import scala.util.chaining.given
-import scalax.util.primitives.*
-import scalax.util.primitives.Size.given
 
+import scala.annotation.tailrec
 import scala.collection.AbstractIterator
 import scala.collection.immutable.ArraySeq.unsafeWrapArray
 import scala.collection.mutable.Stack
+import scala.reflect.ClassTag
+import scala.util.chaining.given
+
+import scalax.util.primitives.*
 
 /* TODO */
 type LongSize = Size
@@ -34,8 +34,7 @@ val LongIndex = Index
   *     - `nodeCapacity` = 1,000.
   *
   * @param initialCapacity number of elements of type `A` to be allocated for the first leaf.
-  *                        This should be the expected minimal size of the collection for a significant amount
-  *                        of use cases.
+  *                        This should cover about 10th to 20th percentile.
   * @param leafCapacity number of elements of type `A` to be allocated for subsequent leaves.
   *                     For best efficiency, choose it to be large like in the thousands.
   *                     For small collections, at least 8 is recommended.
@@ -112,23 +111,6 @@ final class ArrayTree[A: ClassTag](
         case idx: Index @unchecked /* must be last case */ =>
           _size.incrementAndGet()
           LongIndex.unsafe(_closedSize.toInt + idx.toInt)
-  /*
-        lastActiveLeaf append a match
-          case Exhausted =>
-            lastActiveLeaf match
-              case Single(elem) =>
-                val leaf = newLeaf(elem, parent = null)
-                leaf append a
-                if updateState(leaf, leaf, LongSize(0)) then LongIndex(1)
-                else append(a)
-              case lastLeaf: Multiple[A] =>
-                ensureNodeAndAppend(a, lastLeaf) match
-                  case Collision                                                 => append(a)
-                  case idx: LongIndex @unchecked /* works only as second case */ => idx
-          case idx: Index @unchecked /* works only as second case */ =>
-            _size.incrementAndGet()
-            LongIndex.unsafe(_closedSize.toInt + idx.toInt)
-   */
   end append
 
   protected[concurrent] def treeIterator: Iterator[Tree[A]] =

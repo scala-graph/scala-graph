@@ -8,19 +8,14 @@ import scala.collection.AbstractIterator
   */
 opaque type NonNegative = Int
 
-object NonNegative extends Validated[Int, NonNegative]:
-  private inline val lowerLimit = 0
-  private inline val upperLimit = Int.MaxValue - 9
+object NonNegative extends LimitedInt[NonNegative]:
+  inline val lowerLimit = 0
+  inline val upperLimit = Int.MaxValue - 9
 
-  protected inline def fromValid(a: Int): NonNegative = a
-  protected inline def valid(a: Int): Boolean         = a >= lowerLimit && a <= upperLimit
-  protected inline def errMsgSuffix: String           = " is invalid for Index"
+  protected inline def valid(a: Int): Boolean = a >= lowerLimit && a <= upperLimit
+  protected inline def errMsgSuffix: String   = " is invalid for Index"
 
   extension (nn: NonNegative)
-    inline def toInt: Int             = nn
-    inline def ===(i: Int): Boolean   = nn == i
-    inline def +(i: Int): NonNegative = nn + i
-
     /** `Iterator` over all `Int`s in { 0, ..., n - 1 }. */
     def indexIterator: Iterator[Int] =
       new AbstractIterator[Int]:
@@ -47,21 +42,14 @@ object NonNegative extends Validated[Int, NonNegative]:
       */
     def gen: IndexGen = IndexGen(nn)
 
-  given LimitedInt[NonNegative] with
-    inline def lowerLimit: NonNegative = NonNegative.lowerLimit
-    inline def upperLimit: NonNegative = NonNegative.upperLimit
-
-    inline def lt(a: NonNegative, b: NonNegative): Boolean = a < b
-
-    protected[scalax] inline def underlying(a: NonNegative): Int = a
-    protected inline def fromValid(a: Int): NonNegative          = a
-
   final protected[primitives] class IndexGen(limit: NonNegative):
     inline def map[B](f: Int => B): Iterator[B]                   = iterator map f
     inline def flatMap[B](f: Int => IterableOnce[B]): Iterator[B] = iterator flatMap f
     inline def withFilter(p: Int => Boolean): Iterator[Int]       = iterator filter p
     inline def iterator: Iterator[Int]                            = limit.indexIterator
     inline def foreach(f: Int => Unit): Unit                      = limit foreachIndex f
+
+//  given Conversion[NonNegative, Int] = (nn: NonNegative) => nn
 
 type Size = NonNegative
 val Size = NonNegative

@@ -7,18 +7,14 @@ import scalax.util.primitives.NonNegative.IndexGen
   */
 opaque type Positive = Int
 
-object Positive extends Validated[Int, Positive]:
-  private inline val lowerLimit = 1
-  private inline val upperLimit = Int.MaxValue - 8
+object Positive extends LimitedInt[Positive]:
+  inline val lowerLimit = 1
+  inline val upperLimit = Int.MaxValue - 8
 
-  protected inline def fromValid(a: Int): Positive = a
-  protected inline def valid(a: Int): Boolean      = a >= lowerLimit && a <= upperLimit
-  protected inline def errMsgSuffix: String        = " is not positive"
+  protected inline def valid(a: Int): Boolean = a >= lowerLimit && a <= upperLimit
+  protected inline def errMsgSuffix: String   = " is not positive"
 
   extension (n: Positive)
-    inline def toInt: Int           = n
-    inline def ===(i: Int): Boolean = n == i
-
     private inline def asNonNegative: NonNegative = NonNegative.unsafe(n)
 
     /** `Iterator` over all `Int`s in { 0, ..., n - 1 }. */
@@ -31,15 +27,6 @@ object Positive extends Validated[Int, Positive]:
       * Use this as a safe replacement of `Range` that might cause `OutOfMemoryError` for a big `n`.
       */
     def gen: IndexGen = IndexGen(asNonNegative)
-
-  given LimitedInt[Positive] with
-    inline def lowerLimit: Positive = Positive.lowerLimit
-    inline def upperLimit: Positive = Positive.upperLimit
-
-    inline def lt(a: Positive, b: Positive): Boolean = a < b
-
-    protected[scalax] inline def underlying(a: Positive): Int = a
-    protected inline def fromValid(a: Int): Positive          = a
 
 type PositiveSize = Positive
 val PositiveSize = Positive

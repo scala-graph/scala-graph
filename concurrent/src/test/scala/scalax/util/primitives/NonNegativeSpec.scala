@@ -4,7 +4,7 @@ import org.scalatest.OptionValues
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
-class NonNegativeSpec extends RefSpec with Matchers with OptionValues:
+class NonNegativeSpec extends RefSpec, Matchers, OptionValues:
   private inline val big   = 77_777_777
   private inline val limit = Int.MaxValue - 9
   private inline val above = Int.MaxValue
@@ -19,10 +19,10 @@ class NonNegativeSpec extends RefSpec with Matchers with OptionValues:
 
   def `from `: Unit =
     NonNegative.from(-1) shouldBe empty
-    NonNegative.from(0).value shouldBe 0
-    NonNegative.from(1).value shouldBe 1
-    NonNegative.from(big).value shouldBe big
-    NonNegative.from(limit).value shouldBe limit
+    NonNegative.from(0).value.toInt shouldBe 0
+    NonNegative.from(1).value.toInt shouldBe 1
+    NonNegative.from(big).value.toInt shouldBe big
+    NonNegative.from(limit).value.toInt shouldBe limit
     NonNegative.from(above) shouldBe empty
 
   def `unsafe `: Unit =

@@ -5,21 +5,22 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
 class VersionSpec extends RefSpec with Matchers with OptionValues:
+  import scala.language.implicitConversions
   import Version.*
 
   def `BranchId `: Unit =
     "BranchId(-1)" shouldNot compile
-    BranchId.from(BranchId.lowerLimit).value shouldBe BranchId.lowerLimit
+    BranchId.from(BranchId.lowerLimit.toInt).value shouldBe BranchId.lowerLimit
     BranchId(777_777)
-    BranchId.from(BranchId.upperLimit).value shouldBe BranchId.upperLimit
-    BranchId.from(BranchId.upperLimit + 1) shouldBe empty
+    BranchId.from(BranchId.upperLimit.toInt).value shouldBe BranchId.upperLimit
+    BranchId.from(BranchId.upperLimit.toInt + 1) shouldBe empty
 
   def `Revision `: Unit =
     "Revision(-1)" shouldNot compile
-    Revision.from(Revision.lowerLimit).value shouldBe Revision.lowerLimit
+    Revision.from(Revision.lowerLimit.toLong).value shouldBe Revision.lowerLimit
     Revision(8_888_888_888L)
-    Revision.from(Revision.upperLimit).value shouldBe Revision.upperLimit
-    Revision.from(Revision.upperLimit + 1) shouldBe empty
+    Revision.from(Revision.upperLimit.toLong).value shouldBe Revision.upperLimit
+    Revision.from(Revision.upperLimit.toLong + 1) shouldBe empty
 
   private val aBranchId   = BranchId(777_777)
   private val maxBranchId = BranchId.max

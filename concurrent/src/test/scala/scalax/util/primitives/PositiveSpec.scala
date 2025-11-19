@@ -20,9 +20,9 @@ class PositiveSpec extends RefSpec with Matchers with OptionValues:
   def `from `: Unit =
     Positive.from(-1) shouldBe empty
     Positive.from(0) shouldBe empty
-    Positive.from(1).value shouldBe 1
-    Positive.from(big).value shouldBe big
-    Positive.from(limit).value shouldBe limit
+    Positive.from(1).value.toInt shouldBe 1
+    Positive.from(big).value.toInt shouldBe big
+    Positive.from(limit).value.toInt shouldBe limit
     Positive.from(above) shouldBe empty
 
   def `unsafe `: Unit =
