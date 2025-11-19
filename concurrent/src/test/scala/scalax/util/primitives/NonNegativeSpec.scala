@@ -11,26 +11,26 @@ class NonNegativeSpec extends RefSpec, Matchers, OptionValues:
 
   def `apply `: Unit =
     "NonNegative(-1)" shouldNot compile
-    NonNegative(0).toInt shouldBe 0
-    NonNegative(1).toInt shouldBe 1
-    NonNegative(big).toInt shouldBe big
-    NonNegative(limit).toInt shouldBe limit
+    NonNegative(0).value shouldBe 0
+    NonNegative(1).value shouldBe 1
+    NonNegative(big).value shouldBe big
+    NonNegative(limit).value shouldBe limit
     "NonNegative(above)" shouldNot compile
 
   def `from `: Unit =
     NonNegative.from(-1) shouldBe empty
-    NonNegative.from(0).value.toInt shouldBe 0
-    NonNegative.from(1).value.toInt shouldBe 1
-    NonNegative.from(big).value.toInt shouldBe big
-    NonNegative.from(limit).value.toInt shouldBe limit
+    NonNegative.from(0).value.value shouldBe 0
+    NonNegative.from(1).value.value shouldBe 1
+    NonNegative.from(big).value.value shouldBe big
+    NonNegative.from(limit).value.value shouldBe limit
     NonNegative.from(above) shouldBe empty
 
   def `unsafe `: Unit =
     a[ValueOutOfBoundsException] shouldBe thrownBy(NonNegative.unsafe(-1))
-    NonNegative.unsafe(0).toInt shouldBe 0
-    NonNegative.unsafe(1).toInt shouldBe 1
-    NonNegative.unsafe(big).toInt shouldBe big
-    NonNegative.unsafe(limit).toInt shouldBe limit
+    NonNegative.unsafe(0).value shouldBe 0
+    NonNegative.unsafe(1).value shouldBe 1
+    NonNegative.unsafe(big).value shouldBe big
+    NonNegative.unsafe(limit).value shouldBe limit
     a[ValueOutOfBoundsException] shouldBe thrownBy(NonNegative.unsafe(above))
 
   def `< `: Unit =

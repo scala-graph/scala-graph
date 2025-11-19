@@ -25,9 +25,9 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     ): Unit =
       info(f"$appendCount%2d times to tree($initialCapacity, $leafCapacity, $nodeCapacity)")
       val tree = ArrayTree[Int](initialCapacity, leafCapacity, nodeCapacity)
-      1 to appendCount.toInt foreach { i =>
-        (tree append i).toInt shouldBe i - 1
-        tree.size.toInt shouldBe i
+      1 to appendCount.value foreach { i =>
+        (tree append i).value shouldBe i - 1
+        tree.size.value shouldBe i
       }
       tree.collisions shouldBe 0
 
@@ -53,9 +53,9 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
 
       val range = 0 until count
       val seq   = Future.sequence(range map (i => Future(tree append i)))
-      whenReady(seq)(_.map(_.toInt).sum shouldBe range.sum)
+      whenReady(seq)(_.map(_.value).sum shouldBe range.sum)
 
-      tree.size.toInt shouldBe count
+      tree.size.value shouldBe count
       if tree.collisions == 0 then info("warning: expected some collisions but none detected")
 
     append(count = 5)(initialCapacity = 5)
@@ -72,7 +72,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         nodeCapacity: PositiveSize = defaultNodeCapacity
     )(expected: List[Tree[Int]]): Unit =
       val tree = ArrayTree[Int](initialCapacity, leafCapacity, nodeCapacity)
-      1 to size.toInt foreach tree.append
+      1 to size.value foreach tree.append
       tree.treeIterator.toList shouldBe expected
 
     extension (multi: Multiple.type)
@@ -90,16 +90,16 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         Node.empty[Int](defaultNodeCapacity, null)
 
       private def withNullParentAndFakeMulti(size: PositiveSize = defaultNodeCapacity): Node[Int] =
-        Node(defaultNodeCapacity, null)(Array.fill(size.toInt)(Multiple.fake)*)
+        Node(defaultNodeCapacity, null)(Array.fill(size.value)(Multiple.fake)*)
 
       private def withNullParentAndFakeNode(size: PositiveSize = defaultNodeCapacity): Node[Int] =
-        Node(defaultNodeCapacity, null)(Array.fill(size.toInt)(Node.fake)*)
+        Node(defaultNodeCapacity, null)(Array.fill(size.value)(Node.fake)*)
 
       private def withFakeParentAndFakeMulti(size: PositiveSize = defaultNodeCapacity): Node[Int] =
-        Node(defaultNodeCapacity, Node.fake)(Array.fill(size.toInt)(Multiple.fake)*)
+        Node(defaultNodeCapacity, Node.fake)(Array.fill(size.value)(Multiple.fake)*)
 
       private def withFakeParentAndFakeNode(size: PositiveSize = defaultNodeCapacity): Node[Int] =
-        Node(defaultNodeCapacity, Node.fake)(Array.fill(size.toInt)(Node.fake)*)
+        Node(defaultNodeCapacity, Node.fake)(Array.fill(size.value)(Node.fake)*)
 
     def `size:  1, initialCapacity: 1`: Unit =
       check(1)(initialCapacity = 1)(Single(1) :: Nil)

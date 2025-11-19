@@ -33,18 +33,20 @@ trait Limited[A <: AnyVal, O]:
     else throw LimitOverflowException
 
   extension (a: O)
+    inline def value: A                 = a.asInstanceOf[A]
+    inline infix def ===(b: A): Boolean = a.asInstanceOf[A] == b
+    inline def <(b: O): Boolean         = lt(a, b)
+    inline infix def +(b: O): O
+
     /** @throws LimitOverflowException if the result exceeds `upperLimit`. */
     inline def incr: O
-    inline def <(b: O): Boolean = lt(a, b)
 
 trait LimitedInt[O] extends Limited[Int, O]:
   final protected inline def unsafeIncrement(a: Int): O = (a + 1).asInstanceOf[O]
   final protected inline def lt(a: O, b: O): Boolean    = a.asInstanceOf[Int] < b.asInstanceOf[Int]
   extension (limited: O)
-    inline def toInt: Int           = limited.asInstanceOf[Int]
-    inline def ===(i: Int): Boolean = limited.asInstanceOf[Int] == i
-    inline infix def +(b: O): O     = unsafeOp(limited.asInstanceOf[Int] + b.asInstanceOf[Int])
-    inline def incr: O              =
+    inline infix def +(b: O): O = unsafeOp(limited.asInstanceOf[Int] + b.asInstanceOf[Int])
+    inline def incr: O          =
       if lt(limited, upperLimit) then unsafeIncrement(limited.asInstanceOf[Int])
       else throw LimitOverflowException
 
@@ -52,10 +54,8 @@ trait LimitedLong[O] extends Limited[Long, O]:
   final protected inline def unsafeIncrement(a: Long): O = (a + 1).asInstanceOf[O]
   final protected inline def lt(a: O, b: O): Boolean     = a.asInstanceOf[Long] < b.asInstanceOf[Long]
   extension (limited: O)
-    inline def toLong: Long          = limited.asInstanceOf[Long]
-    inline def ===(i: Long): Boolean = limited.asInstanceOf[Long] == i
-    inline infix def +(b: O): O      = unsafeOp(limited.asInstanceOf[Long] + b.asInstanceOf[Long])
-    inline def incr: O               =
+    inline infix def +(b: O): O = unsafeOp(limited.asInstanceOf[Long] + b.asInstanceOf[Long])
+    inline def incr: O          =
       if lt(limited, upperLimit) then unsafeIncrement(limited.asInstanceOf[Long])
       else throw LimitOverflowException
 

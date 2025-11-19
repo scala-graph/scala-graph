@@ -12,25 +12,25 @@ class PositiveSpec extends RefSpec with Matchers with OptionValues:
   def `apply `: Unit =
     "Positive(-1)" shouldNot compile
     "Positive(0)" shouldNot compile
-    Positive(1).toInt shouldBe 1
-    Positive(big).toInt shouldBe big
-    Positive(limit).toInt shouldBe limit
+    Positive(1).value shouldBe 1
+    Positive(big).value shouldBe big
+    Positive(limit).value shouldBe limit
     "Positive(above)" shouldNot compile
 
   def `from `: Unit =
     Positive.from(-1) shouldBe empty
     Positive.from(0) shouldBe empty
-    Positive.from(1).value.toInt shouldBe 1
-    Positive.from(big).value.toInt shouldBe big
-    Positive.from(limit).value.toInt shouldBe limit
+    Positive.from(1).value.value shouldBe 1
+    Positive.from(big).value.value shouldBe big
+    Positive.from(limit).value.value shouldBe limit
     Positive.from(above) shouldBe empty
 
   def `unsafe `: Unit =
     a[ValueOutOfBoundsException] shouldBe thrownBy(Positive.unsafe(-1))
     a[ValueOutOfBoundsException] shouldBe thrownBy(Positive.unsafe(0))
-    Positive.unsafe(1).toInt shouldBe 1
-    Positive.unsafe(big).toInt shouldBe big
-    Positive.unsafe(limit).toInt shouldBe limit
+    Positive.unsafe(1).value shouldBe 1
+    Positive.unsafe(big).value shouldBe big
+    Positive.unsafe(limit).value shouldBe limit
     a[ValueOutOfBoundsException] shouldBe thrownBy(Positive.unsafe(above))
 
   def `< `: Unit =

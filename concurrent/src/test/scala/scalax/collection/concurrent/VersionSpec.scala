@@ -10,17 +10,17 @@ class VersionSpec extends RefSpec with Matchers with OptionValues:
 
   def `BranchId `: Unit =
     "BranchId(-1)" shouldNot compile
-    BranchId.from(BranchId.lowerLimit.toInt).value shouldBe BranchId.lowerLimit
+    BranchId.from(BranchId.lowerLimit.value).value shouldBe BranchId.lowerLimit
     BranchId(777_777)
-    BranchId.from(BranchId.upperLimit.toInt).value shouldBe BranchId.upperLimit
-    BranchId.from(BranchId.upperLimit.toInt + 1) shouldBe empty
+    BranchId.from(BranchId.upperLimit.value).value shouldBe BranchId.upperLimit
+    BranchId.from(BranchId.upperLimit.value + 1) shouldBe empty
 
   def `Revision `: Unit =
     "Revision(-1)" shouldNot compile
-    Revision.from(Revision.lowerLimit.toLong).value shouldBe Revision.lowerLimit
+    Revision.from(Revision.lowerLimit.value).value shouldBe Revision.lowerLimit
     Revision(8_888_888_888L)
-    Revision.from(Revision.upperLimit.toLong).value shouldBe Revision.upperLimit
-    Revision.from(Revision.upperLimit.toLong + 1) shouldBe empty
+    Revision.from(Revision.upperLimit.value).value shouldBe Revision.upperLimit
+    Revision.from(Revision.upperLimit.value + 1) shouldBe empty
 
   private val aBranchId   = BranchId(777_777)
   private val maxBranchId = BranchId.max

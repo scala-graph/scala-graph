@@ -110,7 +110,7 @@ final class ArrayTree[A: ClassTag](
             case idx: LongIndex @unchecked /* must be last case */ => idx
         case idx: Index @unchecked /* must be last case */ =>
           _size.incrementAndGet()
-          LongIndex.unsafe(_closedSize.toInt + idx.toInt)
+          LongIndex.unsafe(_closedSize.value + idx.value)
   end append
 
   protected[concurrent] def treeIterator: Iterator[Tree[A]] =
@@ -126,7 +126,7 @@ final class ArrayTree[A: ClassTag](
           def next(): Tree[A] =
             stack.headOption match
               case Some(Node(elems, parent) -> i) =>
-                elems(i.toInt) match
+                elems(i.value) match
                   case multi: Multiple[A] =>
                     consumedElems += multi.size
                     stack.popWhile { case node -> i =>
@@ -263,7 +263,7 @@ object ArrayTree:
         def newNode(parent: Node[A]) = Node.empty[A](nodeCapacity, parent)
 
         val newSize  = closedSize + size
-        val newIndex = LongIndex.unsafe(newSize.toInt)
+        val newIndex = LongIndex.unsafe(newSize.value)
         findExtendable(this, depth = Size(0)) match
           case Left(exhaustedRoot) -> distance =>
             val (newPath, pathLeaf): (Node[A], Multiple[A]) =
@@ -313,7 +313,7 @@ object ArrayTree:
 
   protected[concurrent] object Multiple:
     def empty[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null): Multiple[A] =
-      new Multiple[A](new Array(capacity.toInt), parent)
+      new Multiple[A](new Array(capacity.value), parent)
 
     def apply[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null)(elems: A*): Multiple[A] =
       empty[A](capacity, parent) tap (elems foreach _.append)
@@ -346,7 +346,7 @@ object ArrayTree:
 
   protected[concurrent] object Node:
     def empty[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null): Node[A] =
-      new Node[A](new Array[Many[A]](capacity.toInt), parent)
+      new Node[A](new Array[Many[A]](capacity.value), parent)
 
     def apply[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null)(elems: Many[A]*): Node[A] =
       empty[A](capacity, parent) tap (elems foreach _.append)
