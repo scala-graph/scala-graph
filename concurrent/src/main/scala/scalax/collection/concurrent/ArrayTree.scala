@@ -76,13 +76,16 @@ final class ArrayTree[A: ClassTag](
   private val _collisions = AtomicLong(0)
   def collisions: Long    = _collisions.get
 
-  private val treeStructure = new ReentrantLock
+  private val treeSync = new ReentrantLock
 
   @tailrec def append(a: A): LongIndex =
+    treeSync.lock()
     val lastActiveLeaf = _activeLeaf
+    val lastClosedSize = _closedSize
+    treeSync.unlock()
 
     def updateState(activeLeaf: Leaf[A], tree: Option[Tree[A]], closedSize: LongSize): Boolean =
-      treeStructure.lock()
+      treeSync.lock()
       try
         if _activeLeaf eq lastActiveLeaf then
           _activeLeaf = activeLeaf
@@ -94,9 +97,9 @@ final class ArrayTree[A: ClassTag](
           _collisions.incrementAndGet()
           false
       finally
-        treeStructure.unlock()
+        treeSync.unlock()
 
-    if _tree eq null then
+    if lastActiveLeaf eq null then
       val leaf: Leaf[A] =
         if initialCapacity === 1 then Single(a)
         else Multiple(initialCapacity, parent = null)(a)
@@ -110,43 +113,43 @@ final class ArrayTree[A: ClassTag](
             case idx: LongIndex @unchecked /* must be last case */ => idx
         case idx: Index @unchecked /* must be last case */ =>
           _size.incrementAndGet()
-          LongIndex.unsafe(_closedSize.value + idx.value)
+          lastClosedSize + idx
   end append
 
-  protected[concurrent] def treeIterator: Iterator[Tree[A]] =
-    _tree match
-      case tree: Tree[A] =>
-        val lastSize = size
-        new AbstractIterator[Tree[A]]:
-          private var consumedElems = LongSize(0)
-          private val stack         = Stack.empty[(Node[A], Index)]
+  protected[concurrent] def treeIterator: Iterator[Tree[A]] = _tree match
+    case tree: Tree[A] =>
+      val lastSize = size
+      new AbstractIterator[Tree[A]]:
+        private var consumedElems = LongSize(0)
+        private val stack         = Stack.empty[(Node[A], Index)]
 
-          def hasNext: Boolean = consumedElems < lastSize
+        def hasNext: Boolean = consumedElems < lastSize
 
-          def next(): Tree[A] =
-            stack.headOption match
-              case Some(Node(elems, parent) -> i) =>
-                elems(i.value) match
-                  case multi: Multiple[A] =>
-                    consumedElems += multi.size
-                    stack.popWhile { case node -> i =>
-                      i.incr == node.size
-                    }
-                    stack.headOption map { case node -> i =>
-                      stack.pop()
-                      stack push node -> i.incr
-                    }
-                    multi
-                  case node: Node[A] =>
-                    stack push node -> Index(0)
-                    node
-              case None if hasNext => // fist call of next()
-                tree match
-                  case single: Single[A]  => consumedElems = consumedElems.incr; single
-                  case multi: Multiple[A] => consumedElems += multi.size; multi
-                  case node: Node[A]      => stack push node -> Index(0); node
-              case None => throw new NoSuchElementException
-      case null => Iterator.empty
+        def next(): Tree[A] =
+          stack.headOption match
+            case Some(Node(elems, _) -> i) =>
+              elems(i.value) match
+                case multi: Multiple[A] =>
+                  consumedElems += multi.size
+                  stack.popWhile { case node -> i =>
+                    i.incr == node.size
+                  }
+                  stack.headOption map { case node -> i =>
+                    stack.pop()
+                    stack push node -> i.incr
+                  }
+                  multi
+                case node: Node[A] =>
+                  stack push node -> Index(0)
+                  node
+            case None if hasNext => // first call of next()
+              tree match
+                case single: Single[A]  => consumedElems = consumedElems.incr; single
+                case multi: Multiple[A] => consumedElems += multi.size; multi
+                case node: Node[A]      => stack push node -> Index(0); node
+            case None => throw new NoSuchElementException
+    case null => Iterator.empty
+  end treeIterator
 
 object ArrayTree:
   def of[A: ClassTag](expectedMinElements: Size, expectedMaxElements: PositiveSize) =
@@ -262,8 +265,8 @@ object ArrayTree:
 
         def newNode(parent: Node[A]) = Node.empty[A](nodeCapacity, parent)
 
-        val newSize  = closedSize + size
-        val newIndex = LongIndex.unsafe(newSize.value)
+        val newClosedSize = closedSize + size
+        val newIndex      = LongIndex.unsafe(newClosedSize.value)
         findExtendable(this, depth = Size(0)) match
           case Left(exhaustedRoot) -> distance =>
             val (newPath, pathLeaf): (Node[A], Multiple[A]) =
@@ -274,7 +277,7 @@ object ArrayTree:
               val root = newNode(null) tap (_ append exhaustedRoot)
               root -> loop(Size(0), root)
 
-            if updateState(pathLeaf, Some(newPath), newSize) then
+            if updateState(pathLeaf, Some(newPath), newClosedSize) then
               exhaustedRoot.parent = newPath
               newIndex
             else Collision
@@ -293,7 +296,7 @@ object ArrayTree:
 
               loop(Size(1), extendable, None)
 
-            if updateState(pathLeaf, None, newSize) then
+            if updateState(pathLeaf, None, newClosedSize) then
               extendable append newPath
               newIndex
             else Collision

@@ -48,12 +48,12 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         leafCapacity: PositiveSize = 2,
         nodeCapacity: PositiveSize = 2
     ): Unit =
-      info(f"$count%2d futures, tree($initialCapacity, $leafCapacity, $nodeCapacity)")
-      val tree = ArrayTree[Int](initialCapacity, leafCapacity, nodeCapacity)
-
+      val tree  = ArrayTree[Int](initialCapacity, leafCapacity, nodeCapacity)
       val range = 0 until count
       val seq   = Future.sequence(range map (i => Future(tree append i)))
-      whenReady(seq)(_.map(_.value).sum shouldBe range.sum)
+      withClue(f"$count%2d futures, tree($initialCapacity, $leafCapacity, $nodeCapacity)")(
+        whenReady(seq)(_.map(_.value).sum shouldBe range.sum)
+      )
 
       tree.size.value shouldBe count
       if tree.collisions == 0 then info("warning: expected some collisions but none detected")
@@ -61,6 +61,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     append(count = 5)(initialCapacity = 5)
     append(count = 10)(initialCapacity = 4)
     append(count = 20)(initialCapacity = 4)
+    append(count = 25)(initialCapacity = 3)
 
   object `treeIterator, leafCapacity: 2, nodeCapacity: 2`:
     val defaultLeafCapacity = 2
