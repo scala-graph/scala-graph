@@ -116,20 +116,24 @@ final class ArrayTree[A: ClassTag](
           lastClosedSize + idx
   end append
 
-  protected[concurrent] def treeIterator: Iterator[Tree[A]] = _tree match
+  protected[concurrent] def treeIterator: Iterator[Tree[A]] =
+    treeIteratorWithLevel map (_._1)
+
+  protected[concurrent] def treeIteratorWithLevel: Iterator[(Tree[A], Int)] = _tree match
     case tree: Tree[A] =>
       val lastSize = size
-      new AbstractIterator[Tree[A]]:
+      new AbstractIterator[(Tree[A], Int)]:
         private var consumedElems = LongSize(0)
         private val stack         = Stack.empty[(Node[A], Index)]
 
         def hasNext: Boolean = consumedElems < lastSize
 
-        def next(): Tree[A] =
+        def next(): (Tree[A], Int) =
           stack.headOption match
             case Some(Node(elems, _) -> i) =>
               elems(i.value) match
                 case multi: Multiple[A] =>
+                  val level = stack.size
                   consumedElems += multi.size
                   stack.popWhile { case node -> i =>
                     i.incr == node.size
@@ -138,18 +142,40 @@ final class ArrayTree[A: ClassTag](
                     stack.pop()
                     stack push node -> i.incr
                   }
-                  multi
+                  multi -> level
                 case node: Node[A] =>
                   stack push node -> Index(0)
-                  node
+                  node            -> (stack.size - 1)
             case None if hasNext => // first call of next()
               tree match
-                case single: Single[A]  => consumedElems = consumedElems.incr; single
-                case multi: Multiple[A] => consumedElems += multi.size; multi
-                case node: Node[A]      => stack push node -> Index(0); node
+                case single: Single[A]  => consumedElems = consumedElems.incr; single -> 0
+                case multi: Multiple[A] => consumedElems += multi.size; multi -> 0
+                case node: Node[A]      => stack push node -> Index(0); node -> 0
             case None => throw new NoSuchElementException
     case null => Iterator.empty
-  end treeIterator
+  end treeIteratorWithLevel
+
+  protected[concurrent] def prettifyTree(
+      includeNodes: Boolean,
+      marginSize: NonNegative = NonNegative(2),
+      indentSize: Positive = Positive(2)
+  ): String =
+    val builder                                        = new StringBuilder(8_192)
+    val indent                                         = " " repeat indentSize.value
+    val margin                                         = " " repeat marginSize.value
+    def append(elem: String, level: Int): builder.type =
+      builder append margin
+      builder append indent.repeat(level)
+      builder append elem
+      builder append System.lineSeparator
+
+    val it =
+      if includeNodes then treeIteratorWithLevel
+      else treeIteratorWithLevel.filter(_._1.isInstanceOf[Leaf[A]])
+
+    it.foldLeft(new StringBuilder(8_192 /* TODO */ )) { case (buf, elem -> level) =>
+      append(elem.toString, level)
+    }.toString()
 
 object ArrayTree:
   def of[A: ClassTag](expectedMinElements: Size, expectedMaxElements: PositiveSize) =
