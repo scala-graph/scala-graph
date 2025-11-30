@@ -1,21 +1,33 @@
 package scalax.util.primitives
 
-import scalax.util.primitives.NonNegative.IndexGen
+import scala.compiletime.{codeOf, error}
+
+import scalax.util.primitives.NonNegativeInt.IndexGen
 
 /** 32 bit, verified, positive `Int` up to `Int.MaxValue - 8`.
   * The upper limit counts for maximum array size implementations.
   */
 opaque type Positive = Int
 
-object Positive extends LimitedInt[Positive]:
-  inline val lowerLimit = 1
-  inline val upperLimit = Int.MaxValue - 8
+object Positive extends Limited[Int, Positive]:
+  inline def lowerLimit: Int = 1
+  inline def upperLimit: Int = Int.MaxValue - 8
 
-  protected inline def valid(a: Int): Boolean = a >= lowerLimit && a <= upperLimit
-  protected inline def errMsgSuffix: String   = " is not positive"
+  inline def valid(a: Int): Boolean =
+    a >= lowerLimit && a <= upperLimit
 
+  final inline def apply(i: Int): Positive =
+    inline if valid(i) then i
+    else error(codeOf(i) + " is invalid fpr Positive.")
+
+  private inline given self: Limited[Int, Positive] = Positive
   extension (n: Positive)
-    private inline def asNonNegative: NonNegative = NonNegative.unsafe(n)
+    inline infix def <(b: Positive): Boolean = n < b
+
+    inline def incr: Positive               = LimitedIntImpl.incr(n)
+    infix def +(addend: Positive): Positive = LimitedIntImpl.add(n, addend)
+
+    private inline def asNonNegative: NonNegativeInt = NonNegativeInt.trust(n)
 
     /** `Iterator` over all `Int`s in { 0, ..., n - 1 }. */
     def indexIterator: Iterator[Int] = asNonNegative.indexIterator

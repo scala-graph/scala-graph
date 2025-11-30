@@ -33,6 +33,10 @@ class PositiveSpec extends RefSpec with Matchers with OptionValues:
     Positive.unsafe(limit).value shouldBe limit
     a[ValueOutOfBoundsException] shouldBe thrownBy(Positive.unsafe(above))
 
+  def `trust `: Unit =
+    Positive.trust(-1).value shouldBe -1
+    Positive.trust(1).value shouldBe 1
+
   def `< `: Unit =
     Positive(1) < Positive(1) shouldBe false
     Positive(1) < Positive(big) shouldBe true

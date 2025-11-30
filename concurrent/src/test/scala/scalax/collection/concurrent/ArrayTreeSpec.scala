@@ -172,8 +172,8 @@ object ArrayTreeSpec:
       MatchResult(tree.treeIterator.toList == expected, msg("does not have"), msg("has"))
     }
 
-  def coverRange(expectedIndexes: Range)(using tree: ArrayTree[Int]): Matcher[IndexedSeq[LongIndex]] =
-    Matcher { (indexes: IndexedSeq[LongIndex]) =>
+  def coverRange(expectedIndexes: Range)(using tree: ArrayTree[Int]): Matcher[IndexedSeq[Index]] =
+    Matcher { (indexes: IndexedSeq[Index]) =>
       def msg(key: String): String =
         s"""The actual indexes returned by `append`
            |  ${indexes.map(_.value).sorted mkString ", "}

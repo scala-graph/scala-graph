@@ -10,26 +10,24 @@ class VersionSpec extends RefSpec with Matchers with OptionValues:
 
   def `BranchId `: Unit =
     "BranchId(-1)" shouldNot compile
-    BranchId.from(BranchId.lowerLimit.value).value shouldBe BranchId.lowerLimit
-    BranchId(777_777)
-    BranchId.from(BranchId.upperLimit.value).value shouldBe BranchId.upperLimit
-    BranchId.from(BranchId.upperLimit.value + 1) shouldBe empty
+    BranchId.from(BranchId.lowerLimit).value.value shouldBe BranchId.lowerLimit
+    BranchId(BranchId.upperLimit).value shouldBe BranchId.upperLimit
+    BranchId.from(BranchId.upperLimit + 1) shouldBe empty
 
   def `Revision `: Unit =
     "Revision(-1)" shouldNot compile
-    Revision.from(Revision.lowerLimit.value).value shouldBe Revision.lowerLimit
-    Revision(8_888_888_888L)
-    Revision.from(Revision.upperLimit.value).value shouldBe Revision.upperLimit
-    Revision.from(Revision.upperLimit.value + 1) shouldBe empty
+    Revision.from(Revision.lowerLimit).value.value shouldBe Revision.lowerLimit
+    Revision(Revision.upperLimit).value shouldBe Revision.upperLimit
+    Revision.from(Revision.upperLimit + 1) shouldBe empty
 
   private val aBranchId   = BranchId(777_777)
   private val maxBranchId = BranchId.max
 
-  private val aRevision   = Revision(8_888_888_888L)
+  private val aRevision   = Revision(888_888_888)
   private val maxRevision = Revision.max
 
   def `lengths `: Unit =
-    BranchId.length + Revision.length shouldBe 64
+    BranchId.length + Revision.length shouldBe 60
 
   def `apply, extractors `: Unit =
     "Version(1, 0)" shouldNot compile

@@ -2,20 +2,31 @@ package scalax.util.primitives
 
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
+import scala.compiletime.{codeOf, error}
 
 /** 32 bit, verified, non-negative `Int` up to `Int.MaxValue - 9`.
   * The upper limit counts for maximum array size implementations.
   */
-opaque type NonNegative = Int
+opaque type NonNegativeInt = Int
 
-object NonNegative extends LimitedInt[NonNegative]:
-  inline val lowerLimit = 0
-  inline val upperLimit = Int.MaxValue - 9
+object NonNegativeInt extends Limited[Int, NonNegativeInt]:
+  transparent inline def lowerLimit = 0
+  transparent inline def upperLimit = Int.MaxValue - 9
+  inline def zero: NonNegativeInt   = 0
 
-  protected inline def valid(a: Int): Boolean = a >= lowerLimit && a <= upperLimit
-  protected inline def errMsgSuffix: String   = " is invalid for Index"
+  inline def valid(a: Int): Boolean = a >= lowerLimit && a <= upperLimit
 
-  extension (nn: NonNegative)
+  final inline def apply(i: Int): NonNegativeInt =
+    inline if valid(i) then i
+    else error(codeOf(i) + " is invalid for NonNegativeInt.")
+
+  private inline given self: Limited[Int, NonNegativeInt] = NonNegativeInt
+  extension (nn: NonNegativeInt)
+    inline infix def <(b: NonNegativeInt): Boolean = nn < b
+
+    inline def incr: NonNegativeInt                     = LimitedIntImpl.incr(nn)
+    infix def +(addend: NonNegativeInt): NonNegativeInt = LimitedIntImpl.add(nn, addend)
+
     /** `Iterator` over all `Int`s in { 0, ..., n - 1 }. */
     def indexIterator: Iterator[Int] =
       new AbstractIterator[Int]:
@@ -42,17 +53,15 @@ object NonNegative extends LimitedInt[NonNegative]:
       */
     def gen: IndexGen = IndexGen(nn)
 
-  final protected[primitives] class IndexGen(limit: NonNegative):
+  final protected[primitives] class IndexGen(limit: NonNegativeInt):
     inline def map[B](f: Int => B): Iterator[B]                   = iterator map f
     inline def flatMap[B](f: Int => IterableOnce[B]): Iterator[B] = iterator flatMap f
     inline def withFilter(p: Int => Boolean): Iterator[Int]       = iterator filter p
     inline def iterator: Iterator[Int]                            = limit.indexIterator
     inline def foreach(f: Int => Unit): Unit                      = limit foreachIndex f
 
-//  given Conversion[NonNegative, Int] = (nn: NonNegative) => nn
+type IntSize = NonNegativeInt
+val IntSize = NonNegativeInt
 
-type Size = NonNegative
-val Size = NonNegative
-
-type Index = NonNegative
-val Index = NonNegative
+type IntIndex = NonNegativeInt
+val IntIndex = NonNegativeInt
