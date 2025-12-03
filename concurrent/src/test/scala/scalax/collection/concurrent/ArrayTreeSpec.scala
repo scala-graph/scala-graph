@@ -5,7 +5,7 @@ import scala.util.chaining.scalaUtilChainingOps
 
 import org.scalactic.Prettifier
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.matchers.{MatchResult, Matcher}
+import org.scalatest.matchers.{LazyArg, MatchResult, Matcher}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
 
@@ -32,6 +32,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         (tree append i).value shouldBe i - 1
         tree.size.value shouldBe i
       }
+      if appendCount === 7 then println(tree.prettifyTree(true))
       tree.collisions shouldBe 0
 
     check(2)(initialCapacity = 1)
@@ -78,82 +79,92 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     ): ArrayTree[Int] =
       ArrayTree[Int](initialCapacity, leafCapacity, nodeCapacity) tap (t => 1 to size.value foreach t.append)
 
-    extension (multi: Multiple.type)
-      private def fake: Multiple[Int] =
-        Multiple.empty[Int](defaultLeafCapacity, null)
+    extension (multi: MultiLeaf.type)
+      private def fake: MultiLeaf[Int] =
+        MultiLeaf.empty[Int](defaultLeafCapacity, null)
 
-      private def withNullParent(elems: Int*): Multiple[Int] =
-        Multiple(defaultLeafCapacity, null)(elems*)
+      private def withNullParent(elems: Int*): MultiLeaf[Int] =
+        MultiLeaf(defaultLeafCapacity, null)(elems*)
 
-      private def withFakeParent(elems: Int*): Multiple[Int] =
-        Multiple(defaultLeafCapacity, Node.fake)(elems*)
+      private def withFakeParent(elems: Int*): MultiLeaf[Int] =
+        MultiLeaf(defaultLeafCapacity, LeafParentNode.fake)(elems*)
 
-    extension (node: Node.type)
-      private def fake: Node[Int] =
-        Node.empty[Int](defaultNodeCapacity, null)
+    extension (node: UpperNode.type)
+      private def fake: UpperNode[Int] =
+        UpperNode.empty[Int](defaultNodeCapacity, null)
 
-      private def withNullParentAndFakeMulti(size: PositiveSize = defaultNodeCapacity): Node[Int] =
-        Node(defaultNodeCapacity, null)(Array.fill(size.value)(Multiple.fake)*)
+      private def fullFakeWithNullParent: UpperNode[Int] =
+        UpperNode(defaultNodeCapacity, null)(Array.fill(defaultNodeCapacity)(UpperNode.fake)*)
 
-      private def withNullParentAndFakeNode(size: PositiveSize = defaultNodeCapacity): Node[Int] =
-        Node(defaultNodeCapacity, null)(Array.fill(size.value)(Node.fake)*)
+      private def fullFakeWithFakeParent: UpperNode[Int] =
+        UpperNode(defaultNodeCapacity, UpperNode.fake)(Array.fill(defaultNodeCapacity)(UpperNode.fake)*)
 
-      private def withFakeParentAndFakeMulti(size: PositiveSize = defaultNodeCapacity): Node[Int] =
-        Node(defaultNodeCapacity, Node.fake)(Array.fill(size.value)(Multiple.fake)*)
+      private def fakeWithFakeParent(elemCount: PositiveSize): UpperNode[Int] =
+        UpperNode(defaultNodeCapacity, UpperNode.fake)(Array.fill(elemCount.value)(UpperNode.fake)*)
 
-      private def withFakeParentAndFakeNode(size: PositiveSize = defaultNodeCapacity): Node[Int] =
-        Node(defaultNodeCapacity, Node.fake)(Array.fill(size.value)(Node.fake)*)
+    extension (node: LeafParentNode.type)
+      private def fake: LeafParentNode[Int] =
+        LeafParentNode.empty[Int](defaultNodeCapacity, null)
+
+      private def fullFakeWithNullParent: LeafParentNode[Int] =
+        LeafParentNode(defaultNodeCapacity, null)(Array.fill(defaultNodeCapacity)(MultiLeaf.fake)*)
+
+      private def fullFakeWithFakeParent: LeafParentNode[Int] =
+        LeafParentNode(defaultNodeCapacity, UpperNode.fake)(Array.fill(defaultNodeCapacity)(MultiLeaf.fake)*)
+
+      private def fakeWithFakeParent(elemCount: PositiveSize): LeafParentNode[Int] =
+        LeafParentNode(defaultNodeCapacity, UpperNode.fake)(Array.fill(elemCount.value)(MultiLeaf.fake)*)
 
     def `size:  1, initialCapacity: 1`: Unit =
-      tree(1)(initialCapacity = 1) should equalTree(Single(1))
+      tree(1)(initialCapacity = 1) should equalTree(SingleLeaf(1))
 
     def `size:  2, initialCapacity: 1`: Unit =
-      tree(2)(initialCapacity = 1) should equalTree(Multiple.withNullParent(1, 2))
+      tree(2)(initialCapacity = 1) should equalTree(MultiLeaf.withNullParent(1, 2))
 
     def `size:  3, initialCapacity: 1`: Unit =
       tree(3)(initialCapacity = 1) should equalTree(
-        Node.withNullParentAndFakeMulti(),
-        Multiple.withFakeParent(1, 2),
-        Multiple.withFakeParent(3)
+        LeafParentNode.fullFakeWithNullParent,
+        MultiLeaf.withFakeParent(1, 2),
+        MultiLeaf.withFakeParent(3)
       )
 
     def `size:  3, initialCapacity: 2`: Unit =
       tree(3)(initialCapacity = 1) should equalTree(
-        Node.withNullParentAndFakeMulti(),
-        Multiple.withFakeParent(1, 2),
-        Multiple.withFakeParent(3)
+        LeafParentNode.fullFakeWithNullParent,
+        MultiLeaf.withFakeParent(1, 2),
+        MultiLeaf.withFakeParent(3)
       )
 
     def `size:  5, initialCapacity: 4`: Unit =
       tree(5)(initialCapacity = 4) should equalTree(
-        Node.withNullParentAndFakeMulti(),
-        Multiple(4, Node.fake)(1, 2, 3, 4),
-        Multiple.withFakeParent(5)
+        LeafParentNode.fullFakeWithNullParent,
+        MultiLeaf(4, UpperNode.fake)(1, 2, 3, 4),
+        MultiLeaf.withFakeParent(5)
       )
 
     def `size:  7, initialCapacity: 4`: Unit =
       tree(7)(initialCapacity = 4) should equalTree(
-        Node.withNullParentAndFakeNode(),
-        Node.withFakeParentAndFakeMulti(),
-        Multiple(4, Node.fake)(1, 2, 3, 4),
-        Multiple.withFakeParent(5, 6),
-        Node.withFakeParentAndFakeMulti(1),
-        Multiple.withFakeParent(7)
+        UpperNode.fullFakeWithNullParent,
+        LeafParentNode.fullFakeWithFakeParent,
+        MultiLeaf(4, UpperNode.fake)(1, 2, 3, 4),
+        MultiLeaf.withFakeParent(5, 6),
+        LeafParentNode.fakeWithFakeParent(elemCount = 1),
+        MultiLeaf.withFakeParent(7)
       )
 
     def `size: 12, initialCapacity: 4`: Unit =
       tree(12)(initialCapacity = 4) should equalTree(
-        Node.withNullParentAndFakeNode(),
-        Node.withFakeParentAndFakeNode(),
-        Node.withFakeParentAndFakeMulti(),
-        Multiple(4, Node.fake)(1, 2, 3, 4),
-        Multiple.withFakeParent(5, 6),
-        Node.withFakeParentAndFakeMulti(),
-        Multiple.withFakeParent(7, 8),
-        Multiple.withFakeParent(9, 10),
-        Node.withFakeParentAndFakeNode(1),
-        Node.withFakeParentAndFakeMulti(1),
-        Multiple.withFakeParent(11, 12)
+        UpperNode.fullFakeWithNullParent,
+        UpperNode.fullFakeWithFakeParent,
+        LeafParentNode.fullFakeWithFakeParent,
+        MultiLeaf(4, UpperNode.fake)(1, 2, 3, 4),
+        MultiLeaf.withFakeParent(5, 6),
+        LeafParentNode.fullFakeWithFakeParent,
+        MultiLeaf.withFakeParent(7, 8),
+        MultiLeaf.withFakeParent(9, 10),
+        UpperNode.fakeWithFakeParent(elemCount = 1),
+        LeafParentNode.fakeWithFakeParent(elemCount = 1),
+        MultiLeaf.withFakeParent(11, 12)
       )
 
 object ArrayTreeSpec:
@@ -169,7 +180,12 @@ object ArrayTreeSpec:
            |  ${expected mkString sep}.
          """.stripMargin
 
-      MatchResult(tree.treeIterator.toList == expected, msg("does not have"), msg("has"))
+      MatchResult(
+        tree.treeIterator.toList == expected,
+        "{0}",
+        "{1}",
+        Vector(LazyArg("does not have")(key => msg(key.toString)), LazyArg("has")(key => key.toString))
+      )
     }
 
   def coverRange(expectedIndexes: Range)(using tree: ArrayTree[Int]): Matcher[IndexedSeq[Index]] =

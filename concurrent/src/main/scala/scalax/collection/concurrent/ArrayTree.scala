@@ -44,14 +44,14 @@ final class ArrayTree[A: ClassTag](
 ):
   import ArrayTree.*
 
-  @volatile private var _tree: Tree[A] | Null = _
+  @volatile private var _tree: Tree[A] | Null = null
   private val _size                           = AtomicInteger(0)
 
   /** The last, so probably not yet exhausted `Leaf` or `null`.
     * When extending the tree structure and updating shared values,
     * we always start with checking that this value was not changed concurrently.
     */
-  @volatile private var _activeLeaf: Leaf[A] | Null = _
+  @volatile private var _activeLeaf: Leaf[A] | Null = null
 
   /** Number of elements of type `A` in the tree <b>excluding</b> those in `_activeLeaf`.
     */
@@ -72,7 +72,7 @@ final class ArrayTree[A: ClassTag](
 
   private val treeSync = new ReentrantLock
 
-  @tailrec def append(a: A): Index =
+  @tailrec infix def append(a: A): Index =
     treeSync.lock()
     val lastActiveLeaf = _activeLeaf
     val lastClosedSize = _closedSize
@@ -83,7 +83,7 @@ final class ArrayTree[A: ClassTag](
       try
         if _activeLeaf eq lastActiveLeaf then
           _activeLeaf = activeLeaf
-          tree foreach (_tree = _)
+          tree foreach ((t: Tree[A]) => _tree = t)
           _closedSize = closedSize
           if _size.incrementAndGet() > Size.upperLimit then throw LimitOverflowException
           true
@@ -95,8 +95,8 @@ final class ArrayTree[A: ClassTag](
 
     if lastActiveLeaf eq null then
       val leaf: Leaf[A] =
-        if initialCapacity === 1 then Single(a)
-        else Multiple(initialCapacity, parent = null)(a)
+        if initialCapacity === 1 then SingleLeaf(a)
+        else MultiLeaf(initialCapacity, parent = null)(a)
       if updateState(leaf, Some(leaf), Size.zero) then Index.zero
       else append(a)
     else
@@ -124,27 +124,27 @@ final class ArrayTree[A: ClassTag](
 
         def next(): (Tree[A], Int) =
           stack.headOption match
-            case Some(Node(elems, _) -> i) =>
-              elems(i.value) match
-                case multi: Multiple[A] =>
-                  val level = stack.size
-                  consumedElems += multi.size
-                  stack.popWhile { case node -> i =>
-                    i.incr == node.size
-                  }
-                  stack.headOption map { case node -> i =>
-                    stack.pop()
-                    stack push node -> i.incr
-                  }
-                  multi -> level
-                case node: Node[A] =>
-                  stack push node -> IntIndex.zero
-                  node            -> (stack.size - 1)
+            case Some(UpperNode(elems, _) -> i) =>
+              val node = elems(i.value)
+              stack push node -> IntIndex.zero
+              node            -> (stack.size - 1)
+            case Some(LeafParentNode(elems, _) -> i) =>
+              val leaf  = elems(i.value)
+              val level = stack.size
+              consumedElems += leaf.size
+              stack.popWhile { case node -> i =>
+                i.incr == node.size
+              }
+              stack.headOption map { case node -> i =>
+                stack.pop()
+                stack push node -> i.incr
+              }
+              leaf -> level
             case None if hasNext => // first call of next()
               tree match
-                case single: Single[A]  => consumedElems = consumedElems.incr; single -> 0
-                case multi: Multiple[A] => consumedElems += multi.size; multi -> 0
-                case node: Node[A]      => stack push node -> IntIndex.zero; node -> 0
+                case single: SingleLeaf[A] => consumedElems = consumedElems.incr; single -> 0
+                case multi: MultiLeaf[A]   => consumedElems += multi.size; multi -> 0
+                case node: Node[A]         => stack push node -> IntIndex.zero; node -> 0
             case None => throw new NoSuchElementException
     case null => Iterator.empty
   end treeIteratorWithLevel
@@ -154,10 +154,11 @@ final class ArrayTree[A: ClassTag](
       marginSize: NonNegativeInt = NonNegativeInt(2),
       indentSize: Positive = Positive(2)
   ): String =
-    val builder                                        = new StringBuilder(8_192)
-    val indent                                         = " " repeat indentSize.value
-    val margin                                         = " " repeat marginSize.value
-    def append(elem: String, level: Int): builder.type =
+    val builder = new StringBuilder(8_192)
+    val indent  = " ".repeat(indentSize.value)
+    val margin  = " ".repeat(marginSize.value)
+
+    infix def append(elem: String, level: Int): builder.type =
       builder append margin
       builder append indent.repeat(level)
       builder append elem
@@ -193,7 +194,7 @@ object ArrayTree:
       *
       * @return the index where `a` was inserted, or `Exhausted` if there was no free space.
       */
-    protected[ArrayTree] def append(a: A): IntIndex | Exhausted
+    protected[ArrayTree] infix def append(a: A): IntIndex | Exhausted
 
     /** To be called after `append` has reported `Exhausted`. */
     protected[ArrayTree] def extendTreeAndAppend(
@@ -203,11 +204,11 @@ object ArrayTree:
         updateState: (Leaf[A], Option[Tree[A]], Size) => Boolean
     )(a: A): Index | Collision
 
-  final protected[concurrent] case class Single[A: ClassTag](elem: A) extends Leaf[A]:
+  final protected[concurrent] case class SingleLeaf[A: ClassTag](elem: A) extends Leaf[A]:
     def capacity: IntSize = IntSize(1)
     def size: IntSize     = IntSize(1)
 
-    protected[ArrayTree] def append(a: A): IntIndex | Exhausted = Exhausted
+    protected[ArrayTree] infix def append(a: A): IntIndex | Exhausted = Exhausted
 
     protected[ArrayTree] def extendTreeAndAppend(
         leafCapacity: PositiveSize,
@@ -215,7 +216,7 @@ object ArrayTree:
         closedSize: Size,
         updateState: (Leaf[A], Option[Tree[A]], Size) => Boolean
     )(a: A): Index | Collision =
-      val leaf = Multiple(leafCapacity, parent = null)(elem)
+      val leaf = MultiLeaf(leafCapacity, parent = null)(elem)
       leaf append a
       if updateState(leaf, Some(leaf), Size.zero) then Index(1)
       else Collision
@@ -230,26 +231,35 @@ object ArrayTree:
     final def capacity: IntSize = IntSize.trust(elems.length)
     final def size: IntSize     = IntSize.trust(_used.get)
 
-    protected def equalElems[B](that: Many[_]): Boolean
+    /** To be overridden when comparing element by element. */
+    protected def equalElems[B](that: Many[?]): Boolean = true
 
+    /** Non-traversing equality. Specifically, node references are not compared. */
     final override def equals(other: Any): Boolean = other match
-      case many: Many[_] =>
-        (parent eq null) == (many.parent eq null) && equalElems(many)
+      case many: Many[?] =>
+        this.getClass == many.getClass &&
+        (this.parent eq null) == (many.parent eq null) &&
+        this.size == many.size &&
+        equalElems(many)
       case _ => false
 
-    protected def elemsHashCode: Int
+    /** To be overridden when comparing element by element. */
+    protected def elemsHashCode: Int = size.hashCode
 
-    override def hashCode: Int =
+    final override def hashCode: Int =
       elemsHashCode * (if parent eq null then 1 else 7)
 
     final protected def commonToString: String =
       s"${if parent eq null then "no" else "some"} parent, used $size of $capacity elems"
 
+    /** To be overridden in order to include elements. */
+    override def toString: String = s"${getClass.getSimpleName}($commonToString)"
+
     /** Appends `elem` to `this` if there is free space.
       *
       * @return the index where `elem` was inserted, or `Exhausted` if there was no free space.
       */
-    @tailrec final protected[ArrayTree] def append(elem: E): IntIndex | Exhausted =
+    @tailrec final protected[ArrayTree] infix def append(elem: E): IntIndex | Exhausted =
       val idx = _used.get
       if idx < elems.length then
         if _used.compareAndSet(idx, idx + 1) then
@@ -258,7 +268,7 @@ object ArrayTree:
         else append(elem)
       else Exhausted
 
-  final protected[concurrent] case class Multiple[A: ClassTag] private (
+  final protected[concurrent] case class MultiLeaf[A: ClassTag] private (
       protected[concurrent] val elems: Array[A],
       protected[concurrent] var parent: Node[A] | Null
   ) extends Leaf[A]
@@ -285,19 +295,33 @@ object ArrayTree:
             case n: Node[A]                => Right(n)        -> depth.incr
             case null                      => Left(exhausted) -> depth
 
-        def newLeaf(a: A, parent: Node[A]) = Multiple(leafCapacity, parent)(a)
+        def newLeaf(a: A, parent: Node[A]) = MultiLeaf(leafCapacity, parent)(a)
 
-        def newNode(parent: Node[A]) = Node.empty[A](nodeCapacity, parent)
+        def newNode(upper: Boolean, parent: Node[A] | Null): Node[A] =
+          if upper then UpperNode.empty[A](nodeCapacity, parent)
+          else LeafParentNode.empty[A](nodeCapacity, parent)
 
         val newClosedSize = closedSize + size
         findExtendable(this, depth = IntSize(0)) match
           case Left(exhaustedRoot) -> distance =>
-            val (newPath, pathLeaf): (Node[A], Multiple[A]) =
-              @tailrec def loop(i: IntSize, parent: Node[A] | Null): Multiple[A] =
-                if i < distance then loop(i.incr, newNode(parent) tap parent.append)
-                else newLeaf(a, parent) tap parent.append
+            val (newPath, pathLeaf): (Node[A], MultiLeaf[A]) =
+              @tailrec def loop(i: IntSize, parent: Node[A]): MultiLeaf[A] =
+                parent match
+                  case upper: UpperNode[A] =>
+                    require(i < distance)
+                    val incr = i.incr
+                    loop(incr, newNode(upper = incr < distance, upper) tap upper.append)
+                  case leafParent: LeafParentNode[A] =>
+                    require(i == distance)
+                    newLeaf(a, leafParent) tap leafParent.append
 
-              val root = newNode(null) tap (_ append exhaustedRoot)
+              val root: Node[A] =
+                exhaustedRoot match
+                  case exhaustedNode: Node[A] =>
+                    UpperNode.empty[A](nodeCapacity, null) tap (_ append exhaustedNode)
+                  case exhaustedLeaf: MultiLeaf[A] =>
+                    LeafParentNode.empty[A](nodeCapacity, null) tap (_ append exhaustedLeaf)
+
               root -> loop(IntSize(0), root)
 
             if updateState(pathLeaf, Some(newPath), newClosedSize) then
@@ -306,21 +330,28 @@ object ArrayTree:
             else Collision
 
           case Right(extendable) -> distance =>
-            val (newPath, pathLeaf): (Many[A], Multiple[A]) =
-              @tailrec def loop(i: IntSize, parent: Node[A] | Null, root: Option[Node[A]]): (Many[A], Multiple[A]) =
-                if i < distance then
-                  val n = newNode(parent)
-                  if root.isDefined then parent append n
-                  loop(i.incr, n, root orElse Some(n))
-                else
-                  val l = newLeaf(a, parent)
-                  parent append l
-                  (root getOrElse l) -> l
+            val (newPath, pathLeaf): (Many[A], MultiLeaf[A]) =
+              @tailrec def loop(i: IntSize, parent: Node[A] | Null, root: Option[Node[A]]): (Many[A], MultiLeaf[A]) =
+                parent match
+                  case upper: UpperNode[A] =>
+                    require(i < distance)
+                    val incr = i.incr
+                    val n    = newNode(upper = incr < distance, upper)
+                    if root.isDefined then upper append n
+                    loop(i.incr, n, root orElse Some(n))
+                  case leafParent: LeafParentNode[A] =>
+                    assert(i == distance)
+                    val l = newLeaf(a, leafParent)
+                    leafParent append l
+                    (root getOrElse l) -> l
 
               loop(IntSize(1), extendable, None)
 
             if updateState(pathLeaf, None, newClosedSize) then
-              extendable append newPath
+              (extendable, newPath) match
+                case (upper: UpperNode[A], node: Node[A])                => upper append node
+                case (leafParent: LeafParentNode[A], leaf: MultiLeaf[A]) => leafParent append leaf
+                case _                                                   => assert(false, "unexpected type mismatch")
               newClosedSize
             else Collision
       end ensureNodeAndAppend
@@ -329,50 +360,47 @@ object ArrayTree:
         case Collision                                             => Collision
         case idx: Index @unchecked /* works only as second case */ => idx
 
-    protected def equalElems[B](that: Many[_]): Boolean =
+    override protected def equalElems[B](that: Many[?]): Boolean =
       unsafeWrapArray(this.elems) == unsafeWrapArray(that.elems)
 
-    protected def elemsHashCode: Int = unsafeWrapArray(elems).hashCode
+    override protected def elemsHashCode: Int = unsafeWrapArray(elems).hashCode
 
     override def toString: String =
-      s"Multiple($commonToString: ${size.indexIterator.map(elems(_).toString) mkString ", "})"
+      s"$MultiLeaf($commonToString: ${size.indexIterator.map(elems(_).toString) mkString ", "})"
 
-  protected[concurrent] object Multiple:
-    def empty[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null): Multiple[A] =
-      new Multiple[A](new Array(capacity.value), parent)
+  protected[concurrent] case object MultiLeaf:
+    def empty[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null): MultiLeaf[A] =
+      new MultiLeaf[A](new Array(capacity.value), parent)
 
-    def apply[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null)(elems: A*): Multiple[A] =
+    def apply[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null)(elems: A*): MultiLeaf[A] =
       empty[A](capacity, parent) tap (elems foreach _.append)
 
-  final protected[concurrent] case class Node[A] private (
-      protected[concurrent] val elems: Array[Many[A]],
+  sealed protected[concurrent] trait Node[A] extends Many[A]
+
+  final protected[concurrent] case class UpperNode[A] private (
+      protected[concurrent] val elems: Array[Node[A]],
       protected[concurrent] var parent: Node[A] | Null
-  ) extends Many[A]:
-    type E = Many[A]
+  ) extends Node[A]:
+    type E = Node[A]
 
-    protected def equalElems[B](that: Many[_]): Boolean =
-      val _size = size
+  protected[concurrent] case object UpperNode:
+    def empty[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null): UpperNode[A] =
+      new UpperNode[A](new Array[Node[A]](capacity.value), parent)
 
-      def elemsOfSameType: Boolean =
-        if _size === 0 then true
-        else
-          // provided elems of a given instance are always of the same class
-          this.elems(0).getClass == that.elems(0).getClass
+    def apply[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null)(elems: Node[A]*): UpperNode[A] =
+      empty[A](capacity, parent) tap (elems foreach _.append)
 
-      _size == that.size && elemsOfSameType
+  final protected[concurrent] case class LeafParentNode[A] private (
+      protected[concurrent] val elems: Array[MultiLeaf[A]],
+      protected[concurrent] var parent: Node[A] | Null
+  ) extends Node[A]:
+    type E = MultiLeaf[A]
 
-    protected def elemsHashCode: Int =
-      if size === 0 then 1
-      else elems(0).getClass.getSimpleName.hashCode
+  protected[concurrent] case object LeafParentNode:
+    def empty[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null): LeafParentNode[A] =
+      new LeafParentNode[A](new Array[MultiLeaf[A]](capacity.value), parent)
 
-    override def toString: String =
-      val prefix = s"Node($commonToString)"
-      if size === 0 then prefix
-      else s"$prefix of type ${elems(0).getClass.getSimpleName}"
-
-  protected[concurrent] object Node:
-    def empty[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null): Node[A] =
-      new Node[A](new Array[Many[A]](capacity.value), parent)
-
-    def apply[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null)(elems: Many[A]*): Node[A] =
+    def apply[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null)(
+        elems: MultiLeaf[A]*
+    ): LeafParentNode[A] =
       empty[A](capacity, parent) tap (elems foreach _.append)
