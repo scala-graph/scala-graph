@@ -53,6 +53,16 @@ class PositiveSpec extends RefSpec with Matchers with OptionValues:
     a[LimitOverflowException.type] shouldBe thrownBy(Positive(1) + Positive(limit))
     Positive(big) + Positive(2) shouldBe Positive(big + 2)
 
+  def `* `: Unit =
+    Positive(1) * Positive(2) shouldBe Positive(2)
+    Positive(2) * Positive(1) shouldBe Positive(2)
+    a[LimitOverflowException.type] shouldBe thrownBy(Positive.trust(limit / 2) * Positive(3))
+    Positive(big) * Positive(2) shouldBe Positive(big * 2)
+
+  def `mapValidated `: Unit =
+    Positive(1).mapValidated(_ + 3).value shouldBe Positive(4)
+    Positive(1).mapValidated(_ => -3) shouldBe empty
+
   def `indexIterator `: Unit =
     PositiveSize(3).indexIterator.toList shouldBe List(0, 1, 2)
 

@@ -168,7 +168,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       )
 
 object ArrayTreeSpec:
-  val lineSeparator = System.lineSeparator
+  private val lineSeparator = System.lineSeparator
   private val sep   = s"$lineSeparator  "
 
   def equalTree(expected: Tree[Int]*): Matcher[ArrayTree[Int]] =
@@ -184,7 +184,10 @@ object ArrayTreeSpec:
         tree.treeIterator.toList == expected,
         "{0}",
         "{1}",
-        Vector(LazyArg("does not have")(key => msg(key.toString)), LazyArg("has")(key => key.toString))
+        Vector(
+          LazyArg("does not have")(key => msg(key.toString)),
+          LazyArg("has")(key => key.toString)
+        )
       )
     }
 
@@ -197,5 +200,13 @@ object ArrayTreeSpec:
            |${tree.prettifyTree(includeNodes = true)}
          """.stripMargin
 
-      MatchResult(indexes.map(_.value).sum == expectedIndexes.sum, msg("do not correspond"), msg("correspond"))
+      MatchResult(
+        indexes.map(_.value).sum == expectedIndexes.sum,
+        "{0}",
+        "{1}",
+        Vector(
+          LazyArg("do not correspond")(key => msg(key.toString)),
+          LazyArg("correspond")(key => key.toString)
+        )
+      )
     }

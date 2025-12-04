@@ -151,7 +151,7 @@ final class ArrayTree[A: ClassTag](
 
   protected[concurrent] def prettifyTree(
       includeNodes: Boolean,
-      marginSize: NonNegativeInt = NonNegativeInt(2),
+      marginSize: NonNegative = NonNegative(2),
       indentSize: Positive = Positive(2)
   ): String =
     val builder = new StringBuilder(8_192)

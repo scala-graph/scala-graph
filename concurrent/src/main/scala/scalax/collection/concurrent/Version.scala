@@ -53,15 +53,10 @@ object Version:
       else error(codeOf(i) + " is invalid for BranchId.")
 
     extension (n: BranchId)
-      inline infix def <(b: BranchId): Boolean = n < b
+      inline def <(b: BranchId): Boolean = n < b
 
       inline def incr: BranchId =
         if n < upperLimit then n + 1 else throw LimitOverflowException
-
-      infix def +(addend: BranchId): BranchId =
-        val sum = n + addend
-        if sum > n && sum <= upperLimit then sum
-        else throw LimitOverflowException
 
   /** 32 bit, verified, non-negative `Int` up to `Int.MaxValue`. */
   protected[concurrent] opaque type Revision = Int
@@ -84,12 +79,7 @@ object Version:
       else error(codeOf(i) + " is invalid for Revision with upper limit" + upperLimit)
 
     extension (n: Revision)
-      inline infix def <(b: Revision): Boolean = n < b
+      inline def <(b: Revision): Boolean = n < b
 
       inline def incr: Revision =
         if n < upperLimit then n + 1 else throw LimitOverflowException
-
-      infix def +(addend: Revision): Revision =
-        val sum = n + addend
-        if sum > n && sum <= upperLimit then sum
-        else throw LimitOverflowException

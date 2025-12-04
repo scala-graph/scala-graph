@@ -1,6 +1,6 @@
 package scalax.collection.concurrent
 
-import scala.collection.immutable.IntMap
+//import scala.collection.immutable.IntMap
 
 private[concurrent] type HashCode = Int
 

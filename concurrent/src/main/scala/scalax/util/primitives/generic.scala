@@ -21,27 +21,52 @@ trait Limited[A <: AnyVal, O]:
   final inline def trust(a: A): O = a.asInstanceOf[O]
 
   extension (limited: O)
-    inline def value: A                 = limited.asInstanceOf[A]
-    inline infix def ===(b: A): Boolean = limited.asInstanceOf[A] == b
+    inline def value: A           = limited.asInstanceOf[A]
+    inline def ===(b: A): Boolean = limited.asInstanceOf[A] == b
 
-    infix def <(b: O): Boolean
-
-    /** @throws LimitOverflowException if the result exceeds `upperLimit`. */
-    infix def +(b: O): O
+    def <(b: O): Boolean
 
     /** @throws LimitOverflowException if the result exceeds `upperLimit`. */
     def incr: O
 
 protected object LimitedIntImpl:
   inline def incr[O](a: O)(using lim: Limited[Int, O]): O =
-    if a.value < lim.upperLimit then (a.value + 1).asInstanceOf[O]
+    if a.value < lim.upperLimit then lim.trust(a.value + 1)
     else throw LimitOverflowException
 
-  def add[O](a: O, b: O)(using lim: Limited[Int, O]): O =
+  def addNonNegative[O](a: O, b: O)(using lim: Limited[Int, O]): O = add(a, b, a.value)
+
+  def addPositive[O](a: O, b: O)(using lim: Limited[Int, O]): O = add(a, b, a.incr.value)
+
+  private inline def add[O](a: O, b: O, loweLimit: Int)(using lim: Limited[Int, O]): O =
     val sum = a.value + b.value
-    if sum > a.value && sum <= lim.upperLimit then sum.asInstanceOf[O]
+    if sum >= loweLimit && sum <= lim.upperLimit then lim.trust(sum)
+    else throw LimitOverflowException
+
+  def mulNonNegative[O](a: O, b: O)(using lim: Limited[Int, O]): O =
+    if a === 0 then a
+    else if b === 0 then b
+    else mulPositive(a, b)
+
+  def mulPositive[O](a: O, b: O)(using lim: Limited[Int, O]): O =
+    val product = a.value * b.value
+    if product >= a.value && product <= lim.upperLimit then lim.trust(product)
     else throw LimitOverflowException
 
 private[scalax] class ValueOutOfBoundsException(value: AnyVal, cause: String) extends Exception(s"Value $value $cause.")
 
 private[scalax] object LimitOverflowException extends Exception
+
+trait LimitedArithmetics[A <: AnyVal, O]:
+  this: Limited[A, O] =>
+
+  extension (limited: O)
+    /** @throws LimitOverflowException if the result exceeds `upperLimit`. */
+    def +(b: O): O
+
+    /** @throws LimitOverflowException if the result escapes the `valid` range. */
+    def *(b: O): O
+
+    /** @return the result of `f` as `Some` if valid, otherwise `None`. */
+    def mapValidated(f: A => A): Option[O] =
+      from(f(limited.value))
