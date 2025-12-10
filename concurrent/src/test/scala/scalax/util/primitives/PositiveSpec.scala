@@ -46,17 +46,17 @@ class PositiveSpec extends RefSpec with Matchers with OptionValues:
   def `incr `: Unit =
     Positive(1).incr shouldBe Positive(2)
     Positive(big).incr shouldBe Positive(big + 1)
-    a[LimitOverflowException.type] shouldBe thrownBy(Positive(limit).incr)
+    a[LimitOverflowException] shouldBe thrownBy(Positive(limit).incr)
 
   def `+ `: Unit =
     Positive(1) + Positive(2) shouldBe Positive(3)
-    a[LimitOverflowException.type] shouldBe thrownBy(Positive(1) + Positive(limit))
+    a[LimitOverflowException] shouldBe thrownBy(Positive(1) + Positive(limit))
     Positive(big) + Positive(2) shouldBe Positive(big + 2)
 
   def `* `: Unit =
     Positive(1) * Positive(2) shouldBe Positive(2)
     Positive(2) * Positive(1) shouldBe Positive(2)
-    a[LimitOverflowException.type] shouldBe thrownBy(Positive.trust(limit / 2) * Positive(3))
+    a[LimitOverflowException] shouldBe thrownBy(Positive.trust(limit / 2) * Positive(3))
     Positive(big) * Positive(2) shouldBe Positive(big * 2)
 
   def `mapValidated `: Unit =

@@ -20,13 +20,21 @@ object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, No
     inline if valid(i) then i
     else error(codeOf(i) + " is invalid for NonNegativeInt.")
 
-  private inline given self: Limited[Int, NonNegative] = NonNegative
+  private inline given Limited[Int, NonNegative] = NonNegative
   extension (nn: NonNegative)
-    inline def <(b: NonNegative): Boolean = nn < b
+    inline def <(b: NonNegative): Boolean  = nn < b
+    inline def >(b: NonNegative): Boolean  = nn > b
+    inline def <=(b: NonNegative): Boolean = nn <= b
+    inline def >=(b: NonNegative): Boolean = nn >= b
 
     inline def incr: NonNegative                   = LimitedIntImpl.incr(nn)
+    inline def decr: NonNegative                   = LimitedIntImpl.decr(nn)
     inline def +(addend: NonNegative): NonNegative = LimitedIntImpl.addNonNegative(nn, addend)
     inline def *(factor: NonNegative): NonNegative = LimitedIntImpl.mulNonNegative(nn, factor)
+
+    /** @throws ArithmeticException on division by zero. */
+    inline def /(b: NonNegative): NonNegative = nn / b
+    inline def %(b: NonNegative): NonNegative = nn % b
 
     /** `Iterator` over all `Int`s in { 0, ..., n - 1 }. */
     def indexIterator: Iterator[Int] =
@@ -41,7 +49,7 @@ object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, No
         override def knownSize: Int = nn
 
     /** Calls `f` passing `Int`s in { 0, ..., n - 1 }. */
-    def foreachIndex(f: Int => Unit): Unit =
+    infix def foreachIndex(f: Int => Unit): Unit =
       @tailrec def loop(i: Int): Unit =
         if i < nn then {
           f(i)

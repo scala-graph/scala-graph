@@ -46,18 +46,18 @@ class NonNegativeSpec extends RefSpec, Matchers, OptionValues:
   def `incr `: Unit =
     NonNegative(0).incr shouldBe NonNegative(1)
     NonNegative(big).incr shouldBe NonNegative(big + 1)
-    a[LimitOverflowException.type] shouldBe thrownBy(NonNegative(limit).incr)
+    a[LimitOverflowException] shouldBe thrownBy(NonNegative(limit).incr)
 
   def `+ `: Unit =
     NonNegative(0) + NonNegative(2) shouldBe NonNegative(2)
     NonNegative(2) + NonNegative(0) shouldBe NonNegative(2)
-    a[LimitOverflowException.type] shouldBe thrownBy(NonNegative(1) + NonNegative(limit))
+    a[LimitOverflowException] shouldBe thrownBy(NonNegative(1) + NonNegative(limit))
     NonNegative(big) + NonNegative(2) shouldBe NonNegative(big + 2)
 
   def `* `: Unit =
     NonNegative(0) * NonNegative(2) shouldBe NonNegative(0)
     NonNegative(2) * NonNegative(0) shouldBe NonNegative(0)
-    a[LimitOverflowException.type] shouldBe thrownBy(NonNegative.trust(limit / 2) * NonNegative(3))
+    a[LimitOverflowException] shouldBe thrownBy(NonNegative.trust(limit / 2) * NonNegative(3))
     NonNegative(big) * NonNegative(2) shouldBe NonNegative(big * 2)
 
   def `mapValidated `: Unit =

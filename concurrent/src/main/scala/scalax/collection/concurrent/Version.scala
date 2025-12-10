@@ -1,7 +1,7 @@
 package scalax.collection.concurrent
 
 import scala.compiletime.{codeOf, error}
-import scalax.util.primitives.{LimitOverflowException, Limited}
+import scalax.util.primitives.{Limited, LimitedIntImpl}
 
 object Version:
   /** 64-bit encoding of two unsigned integers to represent
@@ -52,11 +52,12 @@ object Version:
       inline if valid(i) then i
       else error(codeOf(i) + " is invalid for BranchId.")
 
+    private inline given Limited[Int, BranchId] = BranchId
     extension (n: BranchId)
       inline def <(b: BranchId): Boolean = n < b
 
-      inline def incr: BranchId =
-        if n < upperLimit then n + 1 else throw LimitOverflowException
+      inline def incr: BranchId = LimitedIntImpl.incr(n)
+      inline def decr: BranchId = LimitedIntImpl.decr(n)
 
   /** 32 bit, verified, non-negative `Int` up to `Int.MaxValue`. */
   protected[concurrent] opaque type Revision = Int
@@ -78,8 +79,9 @@ object Version:
       inline if valid(i) then i
       else error(codeOf(i) + " is invalid for Revision with upper limit" + upperLimit)
 
+    private inline given Limited[Int, Revision] = Revision
     extension (n: Revision)
       inline def <(b: Revision): Boolean = n < b
 
-      inline def incr: Revision =
-        if n < upperLimit then n + 1 else throw LimitOverflowException
+      inline def incr: Revision = LimitedIntImpl.incr(n)
+      inline def decr: Revision = LimitedIntImpl.decr(n)

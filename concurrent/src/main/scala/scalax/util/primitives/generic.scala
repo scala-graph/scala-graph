@@ -7,6 +7,8 @@ package scalax.util.primitives
 trait Limited[A <: AnyVal, O]:
   def lowerLimit: A
   def upperLimit: A
+  def lowerLimitAsOpaque: O = lowerLimit.asInstanceOf[O]
+  def upperLimitAsOpaque: O = upperLimit.asInstanceOf[O]
 
   def valid(a: A): Boolean
 
@@ -29,19 +31,34 @@ trait Limited[A <: AnyVal, O]:
     /** @throws LimitOverflowException if the result exceeds `upperLimit`. */
     def incr: O
 
-protected object LimitedIntImpl:
+    /** @throws LimitUnderflowException if the result would fall below `lowerLimit`. */
+    def decr: O
+
+    /** @return the result of `f` as `Some` if valid, otherwise `None`. */
+    def mapValidated(f: A => A): Option[O] =
+      from(f(limited.value))
+
+    /** @return the result of `f` as `O` without validation. */
+    def mapTrusted(f: A => A): O =
+      f(limited.value).asInstanceOf[O]
+
+object LimitedIntImpl:
   inline def incr[O](a: O)(using lim: Limited[Int, O]): O =
     if a.value < lim.upperLimit then lim.trust(a.value + 1)
-    else throw LimitOverflowException
+    else throw new LimitOverflowException
+
+  inline def decr[O](a: O)(using lim: Limited[Int, O]): O =
+    if a.value > lim.lowerLimit then lim.trust(a.value - 1)
+    else throw new LimitUnderflowException
 
   def addNonNegative[O](a: O, b: O)(using lim: Limited[Int, O]): O = add(a, b, a.value)
 
   def addPositive[O](a: O, b: O)(using lim: Limited[Int, O]): O = add(a, b, a.incr.value)
 
-  private inline def add[O](a: O, b: O, loweLimit: Int)(using lim: Limited[Int, O]): O =
+  private inline def add[O](a: O, b: O, lowerLimit: Int)(using lim: Limited[Int, O]): O =
     val sum = a.value + b.value
-    if sum >= loweLimit && sum <= lim.upperLimit then lim.trust(sum)
-    else throw LimitOverflowException
+    if sum >= lowerLimit && sum <= lim.upperLimit then lim.trust(sum)
+    else throw new LimitOverflowException
 
   def mulNonNegative[O](a: O, b: O)(using lim: Limited[Int, O]): O =
     if a === 0 then a
@@ -51,22 +68,24 @@ protected object LimitedIntImpl:
   def mulPositive[O](a: O, b: O)(using lim: Limited[Int, O]): O =
     val product = a.value * b.value
     if product >= a.value && product <= lim.upperLimit then lim.trust(product)
-    else throw LimitOverflowException
+    else throw new LimitOverflowException
 
-private[scalax] class ValueOutOfBoundsException(value: AnyVal, cause: String) extends Exception(s"Value $value $cause.")
+final private[scalax] class ValueOutOfBoundsException(value: AnyVal, cause: String)
+    extends Exception(s"Value $value $cause.")
 
-private[scalax] object LimitOverflowException extends Exception
+final private[scalax] class LimitOverflowException  extends Exception
+final private[scalax] class LimitUnderflowException extends Exception
 
 trait LimitedArithmetics[A <: AnyVal, O]:
   this: Limited[A, O] =>
 
   extension (limited: O)
+    def >(b: O): Boolean
+    def <=(b: O): Boolean
+    def >=(b: O): Boolean
+
     /** @throws LimitOverflowException if the result exceeds `upperLimit`. */
     def +(b: O): O
 
     /** @throws LimitOverflowException if the result escapes the `valid` range. */
     def *(b: O): O
-
-    /** @return the result of `f` as `Some` if valid, otherwise `None`. */
-    def mapValidated(f: A => A): Option[O] =
-      from(f(limited.value))

@@ -6,8 +6,9 @@ import java.util.concurrent.locks.ReentrantLock
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
 import scala.collection.immutable.ArraySeq.unsafeWrapArray
-import scala.collection.mutable.Stack
+import scala.collection.mutable.{ArrayBuffer, Stack}
 import scala.reflect.ClassTag
+import scala.util.{Success, Try}
 import scala.util.chaining.given
 
 import scalax.util.primitives.*
@@ -53,8 +54,7 @@ final class ArrayTree[A: ClassTag](
     */
   @volatile private var _activeLeaf: Leaf[A] | Null = null
 
-  /** Number of elements of type `A` in the tree <b>excluding</b> those in `_activeLeaf`.
-    */
+  /** Number of elements of type `A` in the tree <b>excluding</b> those in `_activeLeaf`. */
   @volatile private var _closedSize = Size.zero
 
   @volatile protected[concurrent] def tree: Tree[A] | Null = _tree
@@ -83,9 +83,11 @@ final class ArrayTree[A: ClassTag](
       try
         if _activeLeaf eq lastActiveLeaf then
           _activeLeaf = activeLeaf
-          tree foreach ((t: Tree[A]) => _tree = t)
+          tree foreach { (t: Tree[A]) =>
+            _tree = t
+          }
           _closedSize = closedSize
-          if _size.incrementAndGet() > Size.upperLimit then throw LimitOverflowException
+          if _size.incrementAndGet() > Size.upperLimit then throw new LimitOverflowException
           true
         else
           _collisions.incrementAndGet()
@@ -106,7 +108,7 @@ final class ArrayTree[A: ClassTag](
             case Collision                                     => append(a)
             case idx: Index @unchecked /* must be last case */ => idx
         case idx: IntIndex @unchecked /* must be last case */ =>
-          if _size.incrementAndGet() > Size.upperLimit then throw LimitOverflowException
+          if _size.incrementAndGet() > Size.upperLimit then throw new LimitOverflowException
           lastClosedSize + idx
   end append
 
@@ -224,6 +226,7 @@ object ArrayTree:
   sealed protected[concurrent] trait Many[A] extends Tree[A]:
     type E
     protected[concurrent] def elems: Array[E]
+    // TODO drop redundant `parent`
     protected[concurrent] var parent: Node[A] | Null
 
     final protected val _used = AtomicInteger(0)
@@ -404,3 +407,123 @@ object ArrayTree:
         elems: MultiLeaf[A]*
     ): LeafParentNode[A] =
       empty[A](capacity, parent) tap (elems foreach _.append)
+
+  // TODO further tighten boundaries like `AtLeast2`
+  // TODO optimize by packing fields into primitive
+  case class Config(initialCapacity: PositiveSize, leafCapacity: PositiveSize, nodeCapacity: PositiveSize):
+    import Config.*
+    given PositiveSize = nodeCapacity
+
+    def propagateDown[A, R](root: A, startHeight: Positive, index: Index, leftSide: Boolean = true)(
+        f: (a: A, slot: IntIndex) => A,
+        r: (a: A, slot: IntIndex) => R
+    ): R =
+      if ensureLevels(startHeight) then
+        @tailrec def loop(idxHeight: IntIndex, leftSide: Boolean, a: A, i: IntIndex): R =
+          val (slot, subIndex) = levelCaps(idxHeight.value).slotAndSubIndex(i, leftSide)
+          if idxHeight.value > 0 then loop(idxHeight.decr, leftSide && slot === 0, f(a, slot), subIndex)
+          else r(a, subIndex)
+
+        loop(startHeight.asNonNegative.decr, leftSide, root, index)
+      else throw new IllegalArgumentException("Too high a `startHeight`.")
+
+    // TODO possibly drop
+    /** @param startHeight distance from leaf level 0, typically the level of the tree root node.
+      *                      The level of the passed `LevelCap` is decremented with each call of `f`.
+      * @throws `IllegalArgumentException` if `downFromLevel` could not be reached
+      */
+    def forEachLevelCap(startHeight: Positive)(f: LevelCap => Unit): Unit =
+      if ensureLevels(startHeight) then
+        @tailrec def loop(idxHeight: IntIndex): Unit =
+          f(levelCaps(idxHeight.value))
+          if idxHeight.value > 0 then loop(idxHeight.decr)
+          else ()
+
+        loop(startHeight.asNonNegative.decr)
+      else throw new IllegalArgumentException("Too high a `startHeight`.")
+
+    /** Buffer with precalculated `LevelCap`s to support tree look-ups by index.
+      * 8 levels are calculated in advance. Further levels are added on demand.
+      * Index n corresponds to the tree height with a distance of n + 1 from the bottom, leaf level.
+      */
+    protected[concurrent] val levelCaps: ArrayBuffer[LevelCap] =
+      populateLevelCaps(LevelCap(initialCapacity, leafCapacity), new ArrayBuffer[LevelCap](8))
+
+    /** Add another 8 levels of `LevelCap` at most.
+      * @return Whether any new levels could be added.
+      */
+    protected[concurrent] def extendLevelCaps: Boolean = levelCaps.last match
+      case full: LevelCap.Full =>
+        populateLevelCaps(full.next, levelCaps)
+        true
+      case partial => false
+
+    /** Add 8 levels of `LevelCap`. The number of levels added might be less if capacity is exhausted. */
+    private def populateLevelCaps(sizes: LevelCap, buf: ArrayBuffer[LevelCap]): ArrayBuffer[LevelCap] =
+      @tailrec def loop(level: Int, sizes: LevelCap): ArrayBuffer[LevelCap] =
+        sizes match
+          case full @ LevelCap.Full(initial, subsequent, total) if level < 8 =>
+            buf += full
+            loop(level + 1, full.next)
+          case partial: LevelCap.Partial if level < 8 =>
+            buf += partial
+            buf
+          case _ => buf
+
+      loop(0, sizes)
+
+    @tailrec private def ensureLevels(startHeight: Positive): Boolean =
+      if startHeight.value <= levelCaps.size then true
+      else if extendLevelCaps then ensureLevels(startHeight)
+      else false
+
+  object Config:
+    /** Capacities per tree level. */
+    sealed protected[concurrent] trait LevelCap:
+      def first: PositiveSize
+
+      // TODO optimize return by packing it into primitive
+      def slotAndSubIndex[U](i: IntIndex, leftSide: Boolean): (IntIndex, IntIndex)
+
+      protected def slotAndSubIndex[U](i: IntIndex, leftSide: Boolean, subsequent: PositiveSize): (IntIndex, IntIndex) =
+        if leftSide then
+          if i < first.asNonNegative then IntIndex.zero -> i
+          else
+            val iSubsequent = i.mapTrusted(_ - first.value)
+            iSubsequent.mapTrusted(_ / subsequent.value + 1) -> (iSubsequent % subsequent.asNonNegative)
+        else i.mapTrusted(_ / subsequent.value) -> (i % subsequent.asNonNegative)
+
+    protected[concurrent] object LevelCap:
+
+      /** Fully defined capacities of some tree level.
+        * @param first capacity of the first node
+        * @param subsequent capacity of subsequent nodes
+        * @param total capacity of the level, in other words, capacity of all nodes
+        */
+      protected[concurrent] case class Full(first: PositiveSize, subsequent: PositiveSize, total: PositiveSize)
+          extends LevelCap:
+        def slotAndSubIndex[U](i: IntIndex, leftSide: Boolean): (IntIndex, IntIndex) =
+          slotAndSubIndex(i, leftSide, subsequent)
+
+        def next(using nodeCapacity: PositiveSize): LevelCap =
+          Try(nodeCapacity * subsequent).map(newSubsequent =>
+            (newSubsequent, Try(total + nodeCapacity.decr * newSubsequent))
+          ) match
+            case Success(newSubsequent, Success(newTotal)) => Full(total, newSubsequent, newTotal)
+            case Success(newSubsequent, _)                 => Partial(total, Some(newSubsequent))
+            case _                                         => Partial(total, None)
+
+      /** Partially defined capacities of the highest possible tree level.
+        * This copes with a numeric overflow of `PositiveSize` somewhere within this tree level.
+        */
+      protected[concurrent] case class Partial(first: PositiveSize, subsequent: Option[PositiveSize]) extends LevelCap:
+        def slotAndSubIndex[U](i: IntIndex, leftSide: Boolean): (IntIndex, IntIndex) =
+          subsequent match
+            case Some(s) => slotAndSubIndex(i, leftSide, s)
+            case None    => IntIndex(1) -> i.mapTrusted(_ - first.value)
+
+      // TODO optimize arithmetics by rounding up sizes to power of 2 and shifting
+      def apply(first: PositiveSize, subsequent: PositiveSize)(using nodeCapacity: PositiveSize): LevelCap =
+        Try(first + nodeCapacity.decr * subsequent) match
+          case Success(total) => Full(first, subsequent, total)
+          case _              => Partial(first, Some(subsequent))
