@@ -70,6 +70,15 @@ object LimitedIntImpl:
     if product >= a.value && product <= lim.upperLimit then lim.trust(product)
     else throw new LimitOverflowException
 
+  def subNonNegative[O](a: O, b: O)(using lim: Limited[Int, O]): O = subtract(a, b, a.value)
+
+  def subPositive[O](a: O, b: O)(using lim: Limited[Int, O]): O = subtract(a, b, a.decr.value)
+
+  private inline def subtract[O](a: O, b: O, upperLimit: Int)(using lim: Limited[Int, O]): O =
+    val diff = a.value - b.value
+    if diff >= lim.lowerLimit && diff <= upperLimit then lim.trust(diff)
+    else throw new LimitUnderflowException
+
 final private[scalax] class ValueOutOfBoundsException(value: AnyVal, cause: String)
     extends Exception(s"Value $value $cause.")
 
@@ -89,3 +98,8 @@ trait LimitedArithmetics[A <: AnyVal, O]:
 
     /** @throws LimitOverflowException if the result escapes the `valid` range. */
     def *(b: O): O
+
+    /** @throws LimitUnderflowException if the result falls below `lowerLimit`. */
+    def -(b: O): O
+
+    def /(b: O): O

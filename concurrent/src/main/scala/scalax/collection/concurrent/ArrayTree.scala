@@ -12,37 +12,15 @@ import scala.util.{Success, Try}
 import scala.util.chaining.given
 
 import scalax.util.primitives.*
+import ArrayTree.Config
 
 /** Concurrent, growing only, compressed rose tree with leaves of type `Array[A]`.
   *
-  * For best efficiency, try to minimize the number of nodes. A high number of nodes is only needed
-  * if the expected maximum size of the collection is orders of magnitude greater than the expected minimum size.
-  *
-  * Examples:
-  *   - given an expected size of 1,000 to 10,000 in most cases, you may opt for
-  *     - `initialCapacity` = 1,000
-  *     - `leafCapacity` = 1,000
-  *     - `nodeCapacity` = 20
-  *   - given an expected size of 1,000 to 1,000,000,000, a good choice is to set
-  *     - `initialCapacity` = 5,000
-  *     - `leafCapacity` = 10,000
-  *     - `nodeCapacity` = 1,000.
-  *
-  * @param initialCapacity number of elements of type `A` to be allocated for the first leaf.
-  *                        This should cover about 10th to 20th percentile.
-  * @param leafCapacity number of elements of type `A` to be allocated for subsequent leaves.
-  *                     For best efficiency, choose it to be large like in the thousands.
-  *                     For small collections, at least 8 is recommended.
-  * @param nodeCapacity number of elements to be allocated for nodes, 2 at least.
-  *                     For best efficiency, choose a high capacity, 16 at least.
-  *                     For small collections, at least 4 is recommended.
+  * @param config allows for an optimal setup in terms of speed and memory usage.
   * @tparam A type of elements
   */
-final class ArrayTree[A: ClassTag](
-    val initialCapacity: PositiveSize,
-    val leafCapacity: PositiveSize,
-    val nodeCapacity: PositiveSize
-):
+final class ArrayTree[A: ClassTag](config: Config):
+  import config.*
   import ArrayTree.*
 
   @volatile private var _tree: Tree[A] | Null = null
@@ -57,6 +35,12 @@ final class ArrayTree[A: ClassTag](
   /** Number of elements of type `A` in the tree <b>excluding</b> those in `_activeLeaf`. */
   @volatile private var _closedSize = Size.zero
 
+  /** Number of tree levels. `_tree`, the root node, is always at this level.
+    * This redundant number, it could also be calculated as a function of `config` and `_size`,
+    * is handy for index-based look-ups.
+    */
+  @volatile private var _levels = IntSize.zero
+
   @volatile protected[concurrent] def tree: Tree[A] | Null = _tree
 
   def size: Size = Size.trust(_size.get)
@@ -65,7 +49,29 @@ final class ArrayTree[A: ClassTag](
     case leaf: Leaf[A] => _closedSize + leaf.capacity
     case null          => Size.zero
 
-  // TODO def apply(i: Index): A
+  /** @throws `IndexOutOfBoundsException` if `index` is not less than `size`. */
+  def apply(index: Index): A =
+    if index < size then
+      import config.{withLevelCaps, slotAndSubIndex}
+      _tree match
+        case upper: UpperNode[A] =>
+          withLevelCaps(Positive.trust(_levels.value)) {
+            @tailrec def loop(capIndex: IntIndex, leftSide: Boolean, node: Node[A], i: IntIndex): A =
+              val (slot, subIndex) = slotAndSubIndex(capIndex, i, leftSide)
+              node match
+                case UpperNode(elems, _) =>
+                  loop(capIndex.decr, leftSide && slot === 0, elems(slot.value), subIndex)
+                case LeafParentNode(elems, _) =>
+                  elems(slot.value).elems(subIndex.value)
+
+            loop(_levels.decr, leftSide = true, upper, index)
+          }
+        case LeafParentNode(elems, _) =>
+          val (slot, subIndex) = slotAndSubIndex(IntIndex.zero, index, leftSide = true)
+          elems(slot.value).elems(subIndex.value)
+        case MultiLeaf(elems, _) => elems(index.value)
+        case SingleLeaf(elem)    => elem
+    else throw new IndexOutOfBoundsException
 
   private val _collisions = AtomicLong(0)
   def collisions: Long    = _collisions.get
@@ -85,6 +91,7 @@ final class ArrayTree[A: ClassTag](
           _activeLeaf = activeLeaf
           tree foreach { (t: Tree[A]) =>
             _tree = t
+            if t.isInstanceOf[Node[A]] then _levels = _levels.incr
           }
           _closedSize = closedSize
           if _size.incrementAndGet() > Size.upperLimit then throw new LimitOverflowException
@@ -170,18 +177,17 @@ final class ArrayTree[A: ClassTag](
       if includeNodes then treeIteratorWithLevel
       else treeIteratorWithLevel.filter(_._1.isInstanceOf[Leaf[A]])
 
-    it.foldLeft(new StringBuilder(8_192 /* TODO */ )) { case (buf, elem -> level) =>
-      append(elem.toString, level)
-    }.toString()
+    it.foreach { case elem -> level => append(elem.toString, level) }
+    builder.toString
 
 object ArrayTree:
   /** Indicate that `Size` and `Index` are not necessarily limited to Int. */
-  type Size  = IntSize; private val Size = IntSize
-  type Index = Size; private val Index   = Size
+  type Size  = IntSize; protected[concurrent] val Size = IntSize
+  type Index = Size; protected[concurrent] val Index   = Size
 
   def of[A: ClassTag](expectedMinElements: IntSize, expectedMaxElements: PositiveSize) =
     // TODO
-    new ArrayTree[A](???, ???, ???)
+    new ArrayTree[A](???)
 
   private type Exhausted = -1; private val Exhausted: Exhausted = -1
   private type Collision = -2; private val Collision: Collision = -2
@@ -352,9 +358,9 @@ object ArrayTree:
 
             if updateState(pathLeaf, None, newClosedSize) then
               (extendable, newPath) match
-                case (upper: UpperNode[A], node: Node[A])                => upper append node
-                case (leafParent: LeafParentNode[A], leaf: MultiLeaf[A]) => leafParent append leaf
-                case _                                                   => assert(false, "unexpected type mismatch")
+                case (upper: UpperNode[A], node: Node[A])    => upper append node
+                case (_: LeafParentNode[A], _: MultiLeaf[A]) =>
+                case _                                       => assert(false, "unexpected type mismatch")
               newClosedSize
             else Collision
       end ensureNodeAndAppend
@@ -410,37 +416,39 @@ object ArrayTree:
 
   // TODO further tighten boundaries like `AtLeast2`
   // TODO optimize by packing fields into primitive
-  case class Config(initialCapacity: PositiveSize, leafCapacity: PositiveSize, nodeCapacity: PositiveSize):
+
+  /** In general, try to minimize the number of nodes. A higher number of nodes makes only sense if the collection
+    * size at some high percentile is orders of magnitude greater than its size at some low percentile.
+    *
+    * Examples:
+    *   - Given an evenly distributed size of roughly 1,000 to 10,000, you might opt for
+    *     - `initialCapacity` = 2,500
+    *     - `leafCapacity` = 1,500
+    *     - `nodeCapacity` = 16
+    *   - but with some concern about memory usage due to many instances or other constraints, change the above like
+    *     - `initialCapacity` = 1,800
+    *     - `leafCapacity` = 500
+    *     - `nodeCapacity` = 32.
+    *   - Given a broad distribution of sizes between 1,000 and 1,000,000,000, a good choice would be to set
+    *     - `initialCapacity` = 5,000
+    *     - `leafCapacity` = 2,500
+    *     - `nodeCapacity` = 300.
+    *
+    * @param initialCapacity number of elements of type `A` to be allocated in the first leaf.
+    *                        This should cover between 10th to 40th percentile of size distribution.
+    *                        The more memory usage concerns, the lower percentile is adequate.
+    *                        In case you expect lots of instances with zero or just one element,
+    *                        you can also set it to 1 to save main memory.
+    * @param leafCapacity number of elements of type `A` to be allocated for subsequent leaves.
+    *                     For tiny collections, at least 8 is recommended.
+    *                     For bigger collections, choose a higher value that also fits `nodeCapacity`.
+    * @param nodeCapacity number of elements to be allocated for nodes. 2 at least formally,
+    *                     but even for small collections, at least 4 is recommended.
+    *                     For best efficiency, choose a capacity such that the tree height probably won't exceed 8.
+    */
+  final case class Config(initialCapacity: PositiveSize, leafCapacity: PositiveSize, nodeCapacity: PositiveSize):
     import Config.*
     given PositiveSize = nodeCapacity
-
-    def propagateDown[A, R](root: A, startHeight: Positive, index: Index, leftSide: Boolean = true)(
-        f: (a: A, slot: IntIndex) => A,
-        r: (a: A, slot: IntIndex) => R
-    ): R =
-      if ensureLevels(startHeight) then
-        @tailrec def loop(idxHeight: IntIndex, leftSide: Boolean, a: A, i: IntIndex): R =
-          val (slot, subIndex) = levelCaps(idxHeight.value).slotAndSubIndex(i, leftSide)
-          if idxHeight.value > 0 then loop(idxHeight.decr, leftSide && slot === 0, f(a, slot), subIndex)
-          else r(a, subIndex)
-
-        loop(startHeight.asNonNegative.decr, leftSide, root, index)
-      else throw new IllegalArgumentException("Too high a `startHeight`.")
-
-    // TODO possibly drop
-    /** @param startHeight distance from leaf level 0, typically the level of the tree root node.
-      *                      The level of the passed `LevelCap` is decremented with each call of `f`.
-      * @throws `IllegalArgumentException` if `downFromLevel` could not be reached
-      */
-    def forEachLevelCap(startHeight: Positive)(f: LevelCap => Unit): Unit =
-      if ensureLevels(startHeight) then
-        @tailrec def loop(idxHeight: IntIndex): Unit =
-          f(levelCaps(idxHeight.value))
-          if idxHeight.value > 0 then loop(idxHeight.decr)
-          else ()
-
-        loop(startHeight.asNonNegative.decr)
-      else throw new IllegalArgumentException("Too high a `startHeight`.")
 
     /** Buffer with precalculated `LevelCap`s to support tree look-ups by index.
       * 8 levels are calculated in advance. Further levels are added on demand.
@@ -476,6 +484,17 @@ object ArrayTree:
       if startHeight.value <= levelCaps.size then true
       else if extendLevelCaps then ensureLevels(startHeight)
       else false
+
+    protected[concurrent] def withLevelCaps[R](height: Positive)(body: => R): R =
+      if ensureLevels(height) then body
+      else throw new IllegalArgumentException(s"Internal error: $height is too heigh for $this.")
+
+    protected[concurrent] inline def slotAndSubIndex(
+        capIndex: IntIndex,
+        i: IntIndex,
+        leftSide: Boolean
+    ): (IntIndex, IntIndex) =
+      levelCaps(capIndex.value).slotAndSubIndex(i, leftSide)
 
   object Config:
     /** Capacities per tree level. */

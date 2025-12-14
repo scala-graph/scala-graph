@@ -27,10 +27,11 @@ object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, No
     inline def <=(b: NonNegative): Boolean = nn <= b
     inline def >=(b: NonNegative): Boolean = nn >= b
 
-    inline def incr: NonNegative                   = LimitedIntImpl.incr(nn)
-    inline def decr: NonNegative                   = LimitedIntImpl.decr(nn)
-    inline def +(addend: NonNegative): NonNegative = LimitedIntImpl.addNonNegative(nn, addend)
-    inline def *(factor: NonNegative): NonNegative = LimitedIntImpl.mulNonNegative(nn, factor)
+    inline def incr: NonNegative                       = LimitedIntImpl.incr(nn)
+    inline def decr: NonNegative                       = LimitedIntImpl.decr(nn)
+    inline def +(addend: NonNegative): NonNegative     = LimitedIntImpl.addNonNegative(nn, addend)
+    inline def *(factor: NonNegative): NonNegative     = LimitedIntImpl.mulNonNegative(nn, factor)
+    inline def -(subtrahend: NonNegative): NonNegative = LimitedIntImpl.subNonNegative(nn, subtrahend)
 
     /** @throws ArithmeticException on division by zero. */
     inline def /(b: NonNegative): NonNegative = nn / b
