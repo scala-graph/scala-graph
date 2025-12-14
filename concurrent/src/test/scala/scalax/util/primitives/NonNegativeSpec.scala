@@ -65,12 +65,12 @@ class NonNegativeSpec extends RefSpec, Matchers, OptionValues:
     NonNegative(0).mapValidated(_ => -3) shouldBe empty
 
   def `indexIterator `: Unit =
-    IntSize(3).indexIterator.toList shouldBe List(0, 1, 2)
+    Size(3).indexIterator.toList shouldBe List(0, 1, 2)
 
   def `foreachIndex `: Unit =
     var sum = 0
-    IntSize(4).foreachIndex(sum += _)
+    Size(4).foreachIndex(sum += _)
     sum shouldBe 6
 
   def `gen `: Unit =
-    (for i <- IntSize(3).gen yield i).toArray shouldBe Array(0, 1, 2)
+    (for i <- Size(3).gen yield i).toArray shouldBe Array(0, 1, 2)

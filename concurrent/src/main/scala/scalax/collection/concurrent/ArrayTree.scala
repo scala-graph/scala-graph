@@ -33,30 +33,30 @@ final class ArrayTree[A: ClassTag](config: Config):
   @volatile private var _activeLeaf: Leaf[A] | Null = null
 
   /** Number of elements of type `A` in the tree <b>excluding</b> those in `_activeLeaf`. */
-  @volatile private var _closedSize = Size.zero
+  @volatile private var _closedSize = TSize.zero
 
   /** Number of tree levels. `_tree`, the root node, is always at this level.
     * This redundant number, it could also be calculated as a function of `config` and `_size`,
     * is handy for index-based look-ups.
     */
-  @volatile private var _levels = IntSize.zero
+  @volatile private var _levels = Size.zero
 
   @volatile protected[concurrent] def tree: Tree[A] | Null = _tree
 
-  def size: Size = Size.trust(_size.get)
+  def size: TSize = TSize.trust(_size.get)
 
-  def capacity: Size = _activeLeaf match
+  def capacity: TSize = _activeLeaf match
     case leaf: Leaf[A] => _closedSize + leaf.capacity
-    case null          => Size.zero
+    case null          => TSize.zero
 
   /** @throws `IndexOutOfBoundsException` if `index` is not less than `size`. */
-  def apply(index: Index): A =
+  def apply(index: TIndex): A =
     if index < size then
       import config.{withLevelCaps, slotAndSubIndex}
       _tree match
         case upper: UpperNode[A] =>
           withLevelCaps(Positive.trust(_levels.value)) {
-            @tailrec def loop(capIndex: IntIndex, leftSide: Boolean, node: Node[A], i: IntIndex): A =
+            @tailrec def loop(capIndex: Index, leftSide: Boolean, node: Node[A], i: Index): A =
               val (slot, subIndex) = slotAndSubIndex(capIndex, i, leftSide)
               node match
                 case UpperNode(elems, _) =>
@@ -67,7 +67,7 @@ final class ArrayTree[A: ClassTag](config: Config):
             loop(_levels.decr, leftSide = true, upper, index)
           }
         case LeafParentNode(elems, _) =>
-          val (slot, subIndex) = slotAndSubIndex(IntIndex.zero, index, leftSide = true)
+          val (slot, subIndex) = slotAndSubIndex(Index.zero, index, leftSide = true)
           elems(slot.value).elems(subIndex.value)
         case MultiLeaf(elems, _) => elems(index.value)
         case SingleLeaf(elem)    => elem
@@ -78,13 +78,13 @@ final class ArrayTree[A: ClassTag](config: Config):
 
   private val treeSync = new ReentrantLock
 
-  @tailrec infix def append(a: A): Index =
+  @tailrec infix def append(a: A): TIndex =
     treeSync.lock()
     val lastActiveLeaf = _activeLeaf
     val lastClosedSize = _closedSize
     treeSync.unlock()
 
-    def updateState(activeLeaf: Leaf[A], tree: Option[Tree[A]], closedSize: Size): Boolean =
+    def updateState(activeLeaf: Leaf[A], tree: Option[Tree[A]], closedSize: TSize): Boolean =
       treeSync.lock()
       try
         if _activeLeaf eq lastActiveLeaf then
@@ -94,7 +94,7 @@ final class ArrayTree[A: ClassTag](config: Config):
             if t.isInstanceOf[Node[A]] then _levels = _levels.incr
           }
           _closedSize = closedSize
-          if _size.incrementAndGet() > Size.upperLimit then throw new LimitOverflowException
+          if _size.incrementAndGet() > TSize.upperLimit then throw new LimitOverflowException
           true
         else
           _collisions.incrementAndGet()
@@ -106,16 +106,16 @@ final class ArrayTree[A: ClassTag](config: Config):
       val leaf: Leaf[A] =
         if initialCapacity === 1 then SingleLeaf(a)
         else MultiLeaf(initialCapacity, parent = null)(a)
-      if updateState(leaf, Some(leaf), Size.zero) then Index.zero
+      if updateState(leaf, Some(leaf), TSize.zero) then TIndex.zero
       else append(a)
     else
       lastActiveLeaf append a match
         case Exhausted =>
           lastActiveLeaf.extendTreeAndAppend(leafCapacity, nodeCapacity, _closedSize, updateState)(a) match
-            case Collision                                     => append(a)
-            case idx: Index @unchecked /* must be last case */ => idx
-        case idx: IntIndex @unchecked /* must be last case */ =>
-          if _size.incrementAndGet() > Size.upperLimit then throw new LimitOverflowException
+            case Collision                                      => append(a)
+            case idx: TIndex @unchecked /* must be last case */ => idx
+        case idx: Index @unchecked /* must be last case */ =>
+          if _size.incrementAndGet() > TSize.upperLimit then throw new LimitOverflowException
           lastClosedSize + idx
   end append
 
@@ -126,8 +126,8 @@ final class ArrayTree[A: ClassTag](config: Config):
     case tree: Tree[A] =>
       val lastSize = size
       new AbstractIterator[(Tree[A], Int)]:
-        private var consumedElems = Size.zero
-        private val stack         = Stack.empty[(Node[A], IntIndex)]
+        private var consumedElems = TSize.zero
+        private val stack         = Stack.empty[(Node[A], Index)]
 
         def hasNext: Boolean = consumedElems < lastSize
 
@@ -135,7 +135,7 @@ final class ArrayTree[A: ClassTag](config: Config):
           stack.headOption match
             case Some(UpperNode(elems, _) -> i) =>
               val node = elems(i.value)
-              stack push node -> IntIndex.zero
+              stack push node -> Index.zero
               node            -> (stack.size - 1)
             case Some(LeafParentNode(elems, _) -> i) =>
               val leaf  = elems(i.value)
@@ -153,7 +153,7 @@ final class ArrayTree[A: ClassTag](config: Config):
               tree match
                 case single: SingleLeaf[A] => consumedElems = consumedElems.incr; single -> 0
                 case multi: MultiLeaf[A]   => consumedElems += multi.size; multi -> 0
-                case node: Node[A]         => stack push node -> IntIndex.zero; node -> 0
+                case node: Node[A]         => stack push node -> Index.zero; node -> 0
             case None => throw new NoSuchElementException
     case null => Iterator.empty
   end treeIteratorWithLevel
@@ -181,11 +181,13 @@ final class ArrayTree[A: ClassTag](config: Config):
     builder.toString
 
 object ArrayTree:
-  /** Indicate that `Size` and `Index` are not necessarily limited to Int. */
-  type Size  = IntSize; protected[concurrent] val Size = IntSize
-  type Index = Size; protected[concurrent] val Index   = Size
+  /** Indicate that `ArrayTree`'s size is not necessarily limited to Int.
+    * For the time being it's fine to limit support to Int, though.
+    */
+  type TSize  = Size; protected[concurrent] val TSize   = Size
+  type TIndex = TSize; protected[concurrent] val TIndex = TSize
 
-  def of[A: ClassTag](expectedMinElements: IntSize, expectedMaxElements: PositiveSize) =
+  def of[A: ClassTag](expectedSize20Percentile: Size, expectedSize90percentile: PositiveSize) =
     // TODO
     new ArrayTree[A](???)
 
@@ -193,8 +195,8 @@ object ArrayTree:
   private type Collision = -2; private val Collision: Collision = -2
 
   sealed protected[concurrent] trait Tree[A]:
-    def capacity: IntSize
-    def size: IntSize
+    def capacity: Size
+    def size: Size
     final def exhausted: Boolean = size == capacity
 
   sealed protected[concurrent] trait Leaf[A] extends Tree[A]:
@@ -202,31 +204,31 @@ object ArrayTree:
       *
       * @return the index where `a` was inserted, or `Exhausted` if there was no free space.
       */
-    protected[ArrayTree] infix def append(a: A): IntIndex | Exhausted
+    protected[ArrayTree] infix def append(a: A): Index | Exhausted
 
     /** To be called after `append` has reported `Exhausted`. */
     protected[ArrayTree] def extendTreeAndAppend(
         leafCapacity: PositiveSize,
         nodeCapacity: PositiveSize,
-        closedSize: Size,
-        updateState: (Leaf[A], Option[Tree[A]], Size) => Boolean
-    )(a: A): Index | Collision
+        closedSize: TSize,
+        updateState: (Leaf[A], Option[Tree[A]], TSize) => Boolean
+    )(a: A): TIndex | Collision
 
   final protected[concurrent] case class SingleLeaf[A: ClassTag](elem: A) extends Leaf[A]:
-    def capacity: IntSize = IntSize(1)
-    def size: IntSize     = IntSize(1)
+    def capacity: Size = Size(1)
+    def size: Size     = Size(1)
 
-    protected[ArrayTree] infix def append(a: A): IntIndex | Exhausted = Exhausted
+    protected[ArrayTree] infix def append(a: A): Index | Exhausted = Exhausted
 
     protected[ArrayTree] def extendTreeAndAppend(
         leafCapacity: PositiveSize,
         nodeCapacity: PositiveSize,
-        closedSize: Size,
-        updateState: (Leaf[A], Option[Tree[A]], Size) => Boolean
-    )(a: A): Index | Collision =
+        closedSize: TSize,
+        updateState: (Leaf[A], Option[Tree[A]], TSize) => Boolean
+    )(a: A): TIndex | Collision =
       val leaf = MultiLeaf(leafCapacity, parent = null)(elem)
       leaf append a
-      if updateState(leaf, Some(leaf), Size.zero) then Index(1)
+      if updateState(leaf, Some(leaf), TSize.zero) then TIndex(1)
       else Collision
 
   sealed protected[concurrent] trait Many[A] extends Tree[A]:
@@ -237,8 +239,8 @@ object ArrayTree:
 
     final protected val _used = AtomicInteger(0)
 
-    final def capacity: IntSize = IntSize.trust(elems.length)
-    final def size: IntSize     = IntSize.trust(_used.get)
+    final def capacity: Size = Size.trust(elems.length)
+    final def size: Size     = Size.trust(_used.get)
 
     /** To be overridden when comparing element by element. */
     protected def equalElems[B](that: Many[?]): Boolean = true
@@ -268,12 +270,12 @@ object ArrayTree:
       *
       * @return the index where `elem` was inserted, or `Exhausted` if there was no free space.
       */
-    @tailrec final protected[ArrayTree] infix def append(elem: E): IntIndex | Exhausted =
+    @tailrec final protected[ArrayTree] infix def append(elem: E): Index | Exhausted =
       val idx = _used.get
       if idx < elems.length then
         if _used.compareAndSet(idx, idx + 1) then
           elems(idx) = elem
-          IntIndex.trust(idx)
+          Index.trust(idx)
         else append(elem)
       else Exhausted
 
@@ -287,10 +289,10 @@ object ArrayTree:
     protected[ArrayTree] def extendTreeAndAppend(
         leafCapacity: PositiveSize,
         nodeCapacity: PositiveSize,
-        closedSize: Size,
-        updateState: (Leaf[A], Option[Tree[A]], Size) => Boolean
-    )(a: A): Index | Collision =
-      def ensureNodeAndAppend(a: A): Index | Collision =
+        closedSize: TSize,
+        updateState: (Leaf[A], Option[Tree[A]], TSize) => Boolean
+    )(a: A): TIndex | Collision =
+      def ensureNodeAndAppend(a: A): TIndex | Collision =
         /** Searches for an extendable predecessor of `exhausted`.
           * @return
           *   - either
@@ -298,7 +300,7 @@ object ArrayTree:
           *     - `Left` containing the exhausted root
           *   - the distance of the above from `this` leaf.
           */
-        @tailrec def findExtendable(exhausted: Many[A], depth: IntSize): (Either[Many[A], Node[A]], IntSize) =
+        @tailrec def findExtendable(exhausted: Many[A], depth: Size): (Either[Many[A], Node[A]], Size) =
           exhausted.parent match
             case n: Node[A] if n.exhausted => findExtendable(n, depth.incr)
             case n: Node[A]                => Right(n)        -> depth.incr
@@ -311,10 +313,10 @@ object ArrayTree:
           else LeafParentNode.empty[A](nodeCapacity, parent)
 
         val newClosedSize = closedSize + size
-        findExtendable(this, depth = IntSize(0)) match
+        findExtendable(this, depth = Size(0)) match
           case Left(exhaustedRoot) -> distance =>
             val (newPath, pathLeaf): (Node[A], MultiLeaf[A]) =
-              @tailrec def loop(i: IntSize, parent: Node[A]): MultiLeaf[A] =
+              @tailrec def loop(i: Size, parent: Node[A]): MultiLeaf[A] =
                 parent match
                   case upper: UpperNode[A] =>
                     require(i < distance)
@@ -331,7 +333,7 @@ object ArrayTree:
                   case exhaustedLeaf: MultiLeaf[A] =>
                     LeafParentNode.empty[A](nodeCapacity, null) tap (_ append exhaustedLeaf)
 
-              root -> loop(IntSize(0), root)
+              root -> loop(Size(0), root)
 
             if updateState(pathLeaf, Some(newPath), newClosedSize) then
               exhaustedRoot.parent = newPath
@@ -340,7 +342,7 @@ object ArrayTree:
 
           case Right(extendable) -> distance =>
             val (newPath, pathLeaf): (Many[A], MultiLeaf[A]) =
-              @tailrec def loop(i: IntSize, parent: Node[A] | Null, root: Option[Node[A]]): (Many[A], MultiLeaf[A]) =
+              @tailrec def loop(i: Size, parent: Node[A] | Null, root: Option[Node[A]]): (Many[A], MultiLeaf[A]) =
                 parent match
                   case upper: UpperNode[A] =>
                     require(i < distance)
@@ -354,7 +356,7 @@ object ArrayTree:
                     leafParent append l
                     (root getOrElse l) -> l
 
-              loop(IntSize(1), extendable, None)
+              loop(Size(1), extendable, None)
 
             if updateState(pathLeaf, None, newClosedSize) then
               (extendable, newPath) match
@@ -366,8 +368,8 @@ object ArrayTree:
       end ensureNodeAndAppend
 
       ensureNodeAndAppend(a) match
-        case Collision                                             => Collision
-        case idx: Index @unchecked /* works only as second case */ => idx
+        case Collision                                              => Collision
+        case idx: TIndex @unchecked /* works only as second case */ => idx
 
     override protected def equalElems[B](that: Many[?]): Boolean =
       unsafeWrapArray(this.elems) == unsafeWrapArray(that.elems)
@@ -490,10 +492,10 @@ object ArrayTree:
       else throw new IllegalArgumentException(s"Internal error: $height is too heigh for $this.")
 
     protected[concurrent] inline def slotAndSubIndex(
-        capIndex: IntIndex,
-        i: IntIndex,
+        capIndex: Index,
+        i: Index,
         leftSide: Boolean
-    ): (IntIndex, IntIndex) =
+    ): (Index, Index) =
       levelCaps(capIndex.value).slotAndSubIndex(i, leftSide)
 
   object Config:
@@ -502,11 +504,11 @@ object ArrayTree:
       def first: PositiveSize
 
       // TODO optimize return by packing it into primitive
-      def slotAndSubIndex[U](i: IntIndex, leftSide: Boolean): (IntIndex, IntIndex)
+      def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index)
 
-      protected def slotAndSubIndex[U](i: IntIndex, leftSide: Boolean, subsequent: PositiveSize): (IntIndex, IntIndex) =
+      protected def slotAndSubIndex[U](i: Index, leftSide: Boolean, subsequent: PositiveSize): (Index, Index) =
         if leftSide then
-          if i < first.asNonNegative then IntIndex.zero -> i
+          if i < first.asNonNegative then Index.zero -> i
           else
             val iSubsequent = i.mapTrusted(_ - first.value)
             iSubsequent.mapTrusted(_ / subsequent.value + 1) -> (iSubsequent % subsequent.asNonNegative)
@@ -521,7 +523,7 @@ object ArrayTree:
         */
       protected[concurrent] case class Full(first: PositiveSize, subsequent: PositiveSize, total: PositiveSize)
           extends LevelCap:
-        def slotAndSubIndex[U](i: IntIndex, leftSide: Boolean): (IntIndex, IntIndex) =
+        def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index) =
           slotAndSubIndex(i, leftSide, subsequent)
 
         def next(using nodeCapacity: PositiveSize): LevelCap =
@@ -536,10 +538,10 @@ object ArrayTree:
         * This copes with a numeric overflow of `PositiveSize` somewhere within this tree level.
         */
       protected[concurrent] case class Partial(first: PositiveSize, subsequent: Option[PositiveSize]) extends LevelCap:
-        def slotAndSubIndex[U](i: IntIndex, leftSide: Boolean): (IntIndex, IntIndex) =
+        def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index) =
           subsequent match
             case Some(s) => slotAndSubIndex(i, leftSide, s)
-            case None    => IntIndex(1) -> i.mapTrusted(_ - first.value)
+            case None    => Index(1) -> i.mapTrusted(_ - first.value)
 
       // TODO optimize arithmetics by rounding up sizes to power of 2 and shifting
       def apply(first: PositiveSize, subsequent: PositiveSize)(using nodeCapacity: PositiveSize): LevelCap =

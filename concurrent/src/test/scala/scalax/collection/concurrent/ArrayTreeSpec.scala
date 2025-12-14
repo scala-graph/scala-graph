@@ -182,19 +182,19 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       size.indexIterator foreach tree.append
 
       Range(start = 0, end = size.value - 1, step = 3) foreach { i =>
-        tree(Index.trust(i)) shouldBe i
+        tree(TIndex.trust(i)) shouldBe i
       }
       an[IndexOutOfBoundsException] shouldBe thrownBy(tree(size.asNonNegative))
 
     def `empty tree`: Unit =
       val tree = ArrayTree[Int](initialOneConfig)
-      an[IndexOutOfBoundsException] shouldBe thrownBy(tree(Index(0)))
+      an[IndexOutOfBoundsException] shouldBe thrownBy(tree(TIndex(0)))
 
     def `root SingleLeaf`: Unit =
       val tree = ArrayTree[Int](initialOneConfig)
       tree append 7
-      tree(Index.zero) shouldBe 7
-      an[IndexOutOfBoundsException] shouldBe thrownBy(tree(Index(1)))
+      tree(TIndex.zero) shouldBe 7
+      an[IndexOutOfBoundsException] shouldBe thrownBy(tree(TIndex(1)))
 
     def `root MultiLeaf`: Unit =
       populateAndCheck(smallConfig.initialCapacity)
@@ -269,29 +269,29 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         )
 
       def `index zero`: Unit =
-        propagatedIndexes(startHeight = 1, index = Index.zero) shouldBe ArraySeq(0, 0)
+        propagatedIndexes(startHeight = 1, index = TIndex.zero) shouldBe ArraySeq(0, 0)
 
       def `index below initial capacity`: Unit =
-        val index = Index(99)
+        val index = TIndex(99)
         propagatedIndexes(startHeight = 4, index) shouldBe ArraySeq(0, 0, 0, 0, index)
 
       def `index in first subsequent leaf`: Unit =
-        val index = Index(105)
+        val index = TIndex(105)
         propagatedIndexes(startHeight = 4, index) shouldBe
           ArraySeq(0, 0, 0, 1, index.value - initialCap.value)
 
       def `index in the middle of the tree`: Unit =
-        propagatedIndexes(startHeight = 4, Index(2001)) shouldBe ArraySeq(2, 3, 3, 3, 1)
+        propagatedIndexes(startHeight = 4, TIndex(2001)) shouldBe ArraySeq(2, 3, 3, 3, 1)
 
       def `index in the last leaf`: Unit =
-        propagatedIndexes(startHeight = 4, Index(2648)) shouldBe ArraySeq(3, 3, 3, 3, 8)
+        propagatedIndexes(startHeight = 4, TIndex(2648)) shouldBe ArraySeq(3, 3, 3, 3, 8)
 
-      private def propagatedIndexes[A](startHeight: Positive, index: Index, leftSide: Boolean = true): ArraySeq[Int] =
+      private def propagatedIndexes[A](startHeight: Positive, index: TIndex, leftSide: Boolean = true): ArraySeq[Int] =
         import config.*
         withLevelCaps(startHeight) {
-          val buf = new Array[IntIndex](startHeight.incr.value)
+          val buf = new Array[Index](startHeight.incr.value)
 
-          @tailrec def loop(capIndex: IntIndex, leftSide: Boolean, i: Index, arrayIndex: Int): IntIndex =
+          @tailrec def loop(capIndex: Index, leftSide: Boolean, i: TIndex, arrayIndex: Int): Index =
             val (slot, subIndex) = levelCaps(capIndex.value).slotAndSubIndex(i, leftSide)
             buf(arrayIndex) = slot
             if capIndex.value > 0 then loop(capIndex.decr, leftSide && slot === 0, subIndex, arrayIndex + 1)
@@ -325,8 +325,8 @@ object ArrayTreeSpec:
       )
     }
 
-  def coverRange(expectedIndexes: Range)(using tree: ArrayTree[Int]): Matcher[IndexedSeq[Index]] =
-    Matcher { (indexes: IndexedSeq[Index]) =>
+  def coverRange(expectedIndexes: Range)(using tree: ArrayTree[Int]): Matcher[IndexedSeq[TIndex]] =
+    Matcher { (indexes: IndexedSeq[TIndex]) =>
       def msg(key: String): String =
         s"""The actual indexes returned by `append`
            |  ${indexes.map(_.value).sorted mkString ", "}

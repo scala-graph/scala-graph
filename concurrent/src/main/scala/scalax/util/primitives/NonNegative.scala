@@ -70,8 +70,8 @@ object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, No
     inline def iterator: Iterator[Int]                            = limit.indexIterator
     inline def foreach(f: Int => Unit): Unit                      = limit foreachIndex f
 
-type IntSize = NonNegative
-val IntSize = NonNegative
+type Size = NonNegative
+val Size = NonNegative
 
-type IntIndex = NonNegative
-val IntIndex = NonNegative
+type Index = NonNegative
+val Index = NonNegative
