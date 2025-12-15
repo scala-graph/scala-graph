@@ -80,6 +80,7 @@ final class ArrayTree[A: ClassTag](config: Config):
 
   @tailrec infix def append(a: A): TIndex =
     treeSync.lock()
+    val lastTree       = _tree
     val lastActiveLeaf = _activeLeaf
     val lastClosedSize = _closedSize
     treeSync.unlock()
@@ -111,7 +112,7 @@ final class ArrayTree[A: ClassTag](config: Config):
     else
       lastActiveLeaf append a match
         case Exhausted =>
-          lastActiveLeaf.extendTreeAndAppend(leafCapacity, nodeCapacity, _closedSize, updateState)(a) match
+          lastActiveLeaf.extendTreeAndAppend(lastTree, leafCapacity, nodeCapacity, _closedSize, updateState)(a) match
             case Collision                                      => append(a)
             case idx: TIndex @unchecked /* must be last case */ => idx
         case idx: Index @unchecked /* must be last case */ =>
@@ -122,7 +123,7 @@ final class ArrayTree[A: ClassTag](config: Config):
   protected[concurrent] def treeIterator: Iterator[Tree[A]] =
     treeIteratorWithLevel map (_._1)
 
-  protected[concurrent] def treeIteratorWithLevel: Iterator[(Tree[A], Int)] = _tree match
+  private def treeIteratorWithLevel: Iterator[(Tree[A], Int)] = _tree match
     case tree: Tree[A] =>
       val lastSize = size
       new AbstractIterator[(Tree[A], Int)]:
@@ -187,7 +188,7 @@ object ArrayTree:
   type TSize  = Size; protected[concurrent] val TSize   = Size
   type TIndex = TSize; protected[concurrent] val TIndex = TSize
 
-  def of[A: ClassTag](expectedSize20Percentile: Size, expectedSize90percentile: PositiveSize) =
+  def of[A: ClassTag](expectedSize20thPercentile: Size, expectedSize90thPercentile: PositiveSize) =
     // TODO
     new ArrayTree[A](???)
 
@@ -208,6 +209,7 @@ object ArrayTree:
 
     /** To be called after `append` has reported `Exhausted`. */
     protected[ArrayTree] def extendTreeAndAppend(
+        tree: Tree[A],
         leafCapacity: PositiveSize,
         nodeCapacity: PositiveSize,
         closedSize: TSize,
@@ -221,6 +223,7 @@ object ArrayTree:
     protected[ArrayTree] infix def append(a: A): Index | Exhausted = Exhausted
 
     protected[ArrayTree] def extendTreeAndAppend(
+        tree: Tree[A],
         leafCapacity: PositiveSize,
         nodeCapacity: PositiveSize,
         closedSize: TSize,
@@ -234,6 +237,8 @@ object ArrayTree:
   sealed protected[concurrent] trait Many[A] extends Tree[A]:
     type E
     protected[concurrent] def elems: Array[E]
+    protected[concurrent] def last: E = elems(_used.get - 1)
+
     // TODO drop redundant `parent`
     protected[concurrent] var parent: Node[A] | Null
 
@@ -287,24 +292,48 @@ object ArrayTree:
     type E = A
 
     protected[ArrayTree] def extendTreeAndAppend(
+        tree: Tree[A],
         leafCapacity: PositiveSize,
         nodeCapacity: PositiveSize,
         closedSize: TSize,
         updateState: (Leaf[A], Option[Tree[A]], TSize) => Boolean
     )(a: A): TIndex | Collision =
       def ensureNodeAndAppend(a: A): TIndex | Collision =
-        /** Searches for an extendable predecessor of `exhausted`.
+        /** Searches for the closest extendable predecessor of `exhausted`.
           * @return
           *   - either
           *     - `Right` containing an extendable predecessor `Node` or
           *     - `Left` containing the exhausted root
           *   - the distance of the above from `this` leaf.
           */
+        /*
         @tailrec def findExtendable(exhausted: Many[A], depth: Size): (Either[Many[A], Node[A]], Size) =
+          assert(true)
           exhausted.parent match
             case n: Node[A] if n.exhausted => findExtendable(n, depth.incr)
             case n: Node[A]                => Right(n)        -> depth.incr
             case null                      => Left(exhausted) -> depth
+         */
+        def findExtendable(root: Tree[A], exhausted: Many[A]): (Either[Many[A], Node[A]], Size) =
+          root match
+            case r: Node[A] =>
+              @tailrec def loop(
+                  node: Node[A],
+                  extendable: Option[Node[A]],
+                  distance: Size
+              ): (Either[Many[A], Node[A]], Size) =
+                node match
+                  case u: UpperNode[A] if u.exhausted      => loop(u.last, extendable, distance.incr)
+                  case u: UpperNode[A]                     => loop(u.last, Some(u), Size(1))
+                  case l: LeafParentNode[A] if l.exhausted =>
+                    extendable.map(n => Right(n) -> distance.incr).getOrElse(Left(r) -> distance.incr)
+                  case l: LeafParentNode[A] => Right(l) -> Size(1)
+
+              loop(r, None, Size.zero)
+
+            case l: Leaf[A] =>
+              assert(root eq exhausted)
+              Left(exhausted) -> Size.zero
 
         def newLeaf(a: A, parent: Node[A]) = MultiLeaf(leafCapacity, parent)(a)
 
@@ -313,17 +342,17 @@ object ArrayTree:
           else LeafParentNode.empty[A](nodeCapacity, parent)
 
         val newClosedSize = closedSize + size
-        findExtendable(this, depth = Size(0)) match
+        findExtendable(tree, this) match
           case Left(exhaustedRoot) -> distance =>
             val (newPath, pathLeaf): (Node[A], MultiLeaf[A]) =
               @tailrec def loop(i: Size, parent: Node[A]): MultiLeaf[A] =
                 parent match
                   case upper: UpperNode[A] =>
-                    require(i < distance)
+                    assert(i < distance)
                     val incr = i.incr
                     loop(incr, newNode(upper = incr < distance, upper) tap upper.append)
                   case leafParent: LeafParentNode[A] =>
-                    require(i == distance)
+                    assert(i == distance)
                     newLeaf(a, leafParent) tap leafParent.append
 
               val root: Node[A] =
@@ -345,7 +374,7 @@ object ArrayTree:
               @tailrec def loop(i: Size, parent: Node[A] | Null, root: Option[Node[A]]): (Many[A], MultiLeaf[A]) =
                 parent match
                   case upper: UpperNode[A] =>
-                    require(i < distance)
+                    assert(i < distance)
                     val incr = i.incr
                     val n    = newNode(upper = incr < distance, upper)
                     if root.isDefined then upper append n

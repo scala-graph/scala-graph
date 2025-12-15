@@ -155,6 +155,7 @@ lazy val defaultCompilerSettings = Seq(
     "-feature",
     "-language:higherKinds"
   ),
+  Compile / scalacOptions += "-Xdisable-assertions",
   Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports)
 )
 
