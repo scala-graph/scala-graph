@@ -106,7 +106,7 @@ final class ArrayTree[A: ClassTag](config: Config):
     if lastActiveLeaf eq null then
       val leaf: Leaf[A] =
         if initialCapacity === 1 then SingleLeaf(a)
-        else MultiLeaf(initialCapacity, parent = null)(a)
+        else MultiLeaf(initialCapacity, leftNeighbor = null)(a)
       if updateState(leaf, Some(leaf), TSize.zero) then TIndex.zero
       else append(a)
     else
@@ -229,7 +229,7 @@ object ArrayTree:
         closedSize: TSize,
         updateState: (Leaf[A], Option[Tree[A]], TSize) => Boolean
     )(a: A): TIndex | Collision =
-      val leaf = MultiLeaf(leafCapacity, parent = null)(elem)
+      val leaf = MultiLeaf(leafCapacity, leftNeighbor = null)(elem)
       leaf append a
       if updateState(leaf, Some(leaf), TSize.zero) then TIndex(1)
       else Collision
@@ -280,7 +280,7 @@ object ArrayTree:
 
   final protected[concurrent] case class MultiLeaf[A: ClassTag] private (
       protected[concurrent] val elems: Array[A],
-      protected[concurrent] var parent: Node[A] | Null
+      protected[concurrent] val leftNeighbor: MultiLeaf[A] | Null
   ) extends Leaf[A]
       with Many[A]:
     type E = A
@@ -321,9 +321,9 @@ object ArrayTree:
               assert(root eq exhausted)
               Left(exhausted) -> Size.zero
 
-        def newLeaf(a: A) = MultiLeaf(leafCapacity, null)(a)
+        def newLeaf(a: A) = MultiLeaf(leafCapacity, this)(a)
 
-        def newNode(upper: Boolean, parent: Node[A] | Null): Node[A] =
+        def newNode(upper: Boolean): Node[A] =
           if upper then UpperNode.empty[A](nodeCapacity)
           else LeafParentNode.empty[A](nodeCapacity)
 
@@ -336,7 +336,7 @@ object ArrayTree:
                   case upper: UpperNode[A] =>
                     assert(i < distance)
                     val incr = i.incr
-                    loop(incr, newNode(upper = incr < distance, upper) tap upper.append)
+                    loop(incr, newNode(upper = incr < distance) tap upper.append)
                   case leafParent: LeafParentNode[A] =>
                     assert(i == distance)
                     newLeaf(a) tap leafParent.append
@@ -360,7 +360,7 @@ object ArrayTree:
                   case upper: UpperNode[A] =>
                     assert(i < distance)
                     val incr = i.incr
-                    val n    = newNode(upper = incr < distance, upper)
+                    val n    = newNode(upper = incr < distance)
                     if root.isDefined then upper append n
                     loop(i.incr, n, root orElse Some(n))
                   case leafParent: LeafParentNode[A] =>
@@ -387,24 +387,24 @@ object ArrayTree:
     override protected def equalFields(that: Many[?]): Boolean =
       unsafeWrapArray(this.elems) == unsafeWrapArray(that.elems) &&
         (that match
-          case m: MultiLeaf[?] => this.parent eq m.parent
+          case m: MultiLeaf[?] => (this.leftNeighbor eq null) == (m.leftNeighbor eq null)
           case _               => false)
 
     override protected def fieldsHashCode: Int =
       unsafeWrapArray(elems).hashCode *
-        (if parent eq null then 1 else 7)
+        (if leftNeighbor eq null then 1 else 7)
 
     override def toString: String =
-      val parentToString = (if parent eq null then "No" else "Some") + " parent"
+      val parentToString = (if leftNeighbor eq null then "No" else "Some") + " left neighbor"
       val elemsToString  = size.indexIterator.map(elems(_).toString) mkString ", "
       s"$MultiLeaf($parentToString, $commonToString: $elemsToString)"
 
   protected[concurrent] case object MultiLeaf:
-    def empty[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null): MultiLeaf[A] =
-      new MultiLeaf[A](new Array(capacity.value), parent)
+    def empty[A: ClassTag](capacity: PositiveSize, leftNeighbor: MultiLeaf[A] | Null): MultiLeaf[A] =
+      new MultiLeaf[A](new Array(capacity.value), leftNeighbor)
 
-    def apply[A: ClassTag](capacity: PositiveSize, parent: Node[A] | Null)(elems: A*): MultiLeaf[A] =
-      empty[A](capacity, parent) tap (elems foreach _.append)
+    def apply[A: ClassTag](capacity: PositiveSize, leftNeighbor: MultiLeaf[A] | Null)(elems: A*): MultiLeaf[A] =
+      empty[A](capacity, leftNeighbor) tap (elems foreach _.append)
 
   sealed protected[concurrent] trait Node[A] extends Many[A]
 
