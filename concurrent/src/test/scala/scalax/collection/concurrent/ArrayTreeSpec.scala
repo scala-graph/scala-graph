@@ -92,29 +92,23 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
 
     extension (node: UpperNode.type)
       private def fake: UpperNode[Int] =
-        UpperNode.empty[Int](defaultNodeCapacity, null)
+        UpperNode.empty[Int](defaultNodeCapacity)
 
-      private def fullFakeWithNullParent: UpperNode[Int] =
-        UpperNode(defaultNodeCapacity, null)(Array.fill(defaultNodeCapacity)(UpperNode.fake)*)
+      private def denseFake: UpperNode[Int] =
+        UpperNode(defaultNodeCapacity)(Array.fill(defaultNodeCapacity)(UpperNode.fake)*)
 
-      private def fullFakeWithFakeParent: UpperNode[Int] =
-        UpperNode(defaultNodeCapacity, UpperNode.fake)(Array.fill(defaultNodeCapacity)(UpperNode.fake)*)
-
-      private def fakeWithFakeParent(elemCount: PositiveSize): UpperNode[Int] =
-        UpperNode(defaultNodeCapacity, UpperNode.fake)(Array.fill(elemCount.value)(UpperNode.fake)*)
+      private def sparseFake(elemCount: PositiveSize): UpperNode[Int] =
+        UpperNode(defaultNodeCapacity)(Array.fill(elemCount.value)(UpperNode.fake)*)
 
     extension (node: LeafParentNode.type)
       private def fake: LeafParentNode[Int] =
-        LeafParentNode.empty[Int](defaultNodeCapacity, null)
+        LeafParentNode.empty[Int](defaultNodeCapacity)
 
-      private def fullFakeWithNullParent: LeafParentNode[Int] =
-        LeafParentNode(defaultNodeCapacity, null)(Array.fill(defaultNodeCapacity)(MultiLeaf.fake)*)
+      private def denseFake: LeafParentNode[Int] =
+        LeafParentNode(defaultNodeCapacity)(Array.fill(defaultNodeCapacity)(MultiLeaf.fake)*)
 
-      private def fullFakeWithFakeParent: LeafParentNode[Int] =
-        LeafParentNode(defaultNodeCapacity, UpperNode.fake)(Array.fill(defaultNodeCapacity)(MultiLeaf.fake)*)
-
-      private def fakeWithFakeParent(elemCount: PositiveSize): LeafParentNode[Int] =
-        LeafParentNode(defaultNodeCapacity, UpperNode.fake)(Array.fill(elemCount.value)(MultiLeaf.fake)*)
+      private def sparseFake(elemCount: PositiveSize): LeafParentNode[Int] =
+        LeafParentNode(defaultNodeCapacity)(Array.fill(elemCount.value)(MultiLeaf.fake)*)
 
     def `size:  1, initialCapacity: 1`: Unit =
       tree(1)(initialCapacity = 1) should equalTree(SingleLeaf(1))
@@ -124,48 +118,48 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
 
     def `size:  3, initialCapacity: 1`: Unit =
       tree(3)(initialCapacity = 1) should equalTree(
-        LeafParentNode.fullFakeWithNullParent,
-        MultiLeaf.withFakeParent(1, 2),
-        MultiLeaf.withFakeParent(3)
+        LeafParentNode.denseFake,
+        MultiLeaf.withNullParent(1, 2),
+        MultiLeaf.withNullParent(3)
       )
 
     def `size:  3, initialCapacity: 2`: Unit =
       tree(3)(initialCapacity = 1) should equalTree(
-        LeafParentNode.fullFakeWithNullParent,
-        MultiLeaf.withFakeParent(1, 2),
-        MultiLeaf.withFakeParent(3)
+        LeafParentNode.denseFake,
+        MultiLeaf.withNullParent(1, 2),
+        MultiLeaf.withNullParent(3)
       )
 
     def `size:  5, initialCapacity: 4`: Unit =
       tree(5)(initialCapacity = 4) should equalTree(
-        LeafParentNode.fullFakeWithNullParent,
-        MultiLeaf(4, UpperNode.fake)(1, 2, 3, 4),
-        MultiLeaf.withFakeParent(5)
+        LeafParentNode.denseFake,
+        MultiLeaf(4, null)(1, 2, 3, 4),
+        MultiLeaf.withNullParent(5)
       )
 
     def `size:  7, initialCapacity: 4`: Unit =
       tree(7)(initialCapacity = 4) should equalTree(
-        UpperNode.fullFakeWithNullParent,
-        LeafParentNode.fullFakeWithFakeParent,
-        MultiLeaf(4, UpperNode.fake)(1, 2, 3, 4),
-        MultiLeaf.withFakeParent(5, 6),
-        LeafParentNode.fakeWithFakeParent(elemCount = 1),
-        MultiLeaf.withFakeParent(7)
+        UpperNode.denseFake,
+        LeafParentNode.denseFake,
+        MultiLeaf(4, null)(1, 2, 3, 4),
+        MultiLeaf.withNullParent(5, 6),
+        LeafParentNode.sparseFake(elemCount = 1),
+        MultiLeaf.withNullParent(7)
       )
 
     def `size: 12, initialCapacity: 4`: Unit =
       tree(12)(initialCapacity = 4) should equalTree(
-        UpperNode.fullFakeWithNullParent,
-        UpperNode.fullFakeWithFakeParent,
-        LeafParentNode.fullFakeWithFakeParent,
-        MultiLeaf(4, UpperNode.fake)(1, 2, 3, 4),
-        MultiLeaf.withFakeParent(5, 6),
-        LeafParentNode.fullFakeWithFakeParent,
-        MultiLeaf.withFakeParent(7, 8),
-        MultiLeaf.withFakeParent(9, 10),
-        UpperNode.fakeWithFakeParent(elemCount = 1),
-        LeafParentNode.fakeWithFakeParent(elemCount = 1),
-        MultiLeaf.withFakeParent(11, 12)
+        UpperNode.denseFake,
+        UpperNode.denseFake,
+        LeafParentNode.denseFake,
+        MultiLeaf(4, null)(1, 2, 3, 4),
+        MultiLeaf.withNullParent(5, 6),
+        LeafParentNode.denseFake,
+        MultiLeaf.withNullParent(7, 8),
+        MultiLeaf.withNullParent(9, 10),
+        UpperNode.sparseFake(elemCount = 1),
+        LeafParentNode.sparseFake(elemCount = 1),
+        MultiLeaf.withNullParent(11, 12)
       )
 
   object `apply index`:
