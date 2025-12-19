@@ -11,6 +11,7 @@ import scala.reflect.ClassTag
 import scala.util.{Success, Try}
 import scala.util.chaining.given
 
+import scalax.util.assert
 import scalax.util.primitives.*
 import ArrayTree.Config
 
@@ -44,10 +45,6 @@ final class ArrayTree[A: ClassTag](config: Config):
   @volatile protected[concurrent] def tree: Tree[A] | Null = _tree
 
   def size: TSize = TSize.trust(_size.get)
-
-  def capacity: TSize = _activeLeaf match
-    case leaf: Leaf[A] => _closedSize + leaf.capacity
-    case null          => TSize.zero
 
   /** @throws `IndexOutOfBoundsException` if `index` is not less than `size`. */
   def apply(index: TIndex): A =
