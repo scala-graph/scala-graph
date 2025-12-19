@@ -105,14 +105,14 @@ final class ArrayTree[A: ClassTag](config: Config):
 
     if lastActiveLeaf eq null then
       val leaf: Leaf[A] =
-        if initialCapacity === 1 then SingleLeaf(a)
-        else MultiLeaf(initialCapacity, leftNeighbor = null)(a)
+        if initialCap === 1 then SingleLeaf(a)
+        else MultiLeaf(initialCap, leftNeighbor = null)(a)
       if updateState(leaf, Some(leaf), TSize.zero) then TIndex.zero
       else append(a)
     else
       lastActiveLeaf append a match
         case Exhausted =>
-          lastActiveLeaf.extendTreeAndAppend(lastTree, leafCapacity, nodeCapacity, _closedSize, updateState)(a) match
+          lastActiveLeaf.extendTreeAndAppend(lastTree, leafCap, nodeCap, _closedSize, updateState)(a) match
             case Collision                                      => append(a)
             case idx: TIndex @unchecked /* must be last case */ => idx
         case idx: Index @unchecked /* must be last case */ =>
@@ -188,7 +188,10 @@ object ArrayTree:
   type TSize  = Size; protected[concurrent] val TSize   = Size
   type TIndex = TSize; protected[concurrent] val TIndex = TSize
 
-  def of[A: ClassTag](expectedSize20thPercentile: Size, expectedSize90thPercentile: PositiveSize) =
+  type Capacity = Positive
+  val Capacity = Positive
+
+  def of[A: ClassTag](expectedSize20thPercentile: Positive, expectedSize90thPercentile: Positive) =
     // TODO
     new ArrayTree[A](???)
 
@@ -210,8 +213,8 @@ object ArrayTree:
     /** To be called after `append` has reported `Exhausted`. */
     protected[ArrayTree] def extendTreeAndAppend(
         tree: Tree[A],
-        leafCapacity: PositiveSize,
-        nodeCapacity: PositiveSize,
+        leafCap: Capacity,
+        nodeCap: Capacity,
         closedSize: TSize,
         updateState: (Leaf[A], Option[Tree[A]], TSize) => Boolean
     )(a: A): TIndex | Collision
@@ -224,12 +227,12 @@ object ArrayTree:
 
     protected[ArrayTree] def extendTreeAndAppend(
         tree: Tree[A],
-        leafCapacity: PositiveSize,
-        nodeCapacity: PositiveSize,
+        leafCap: Capacity,
+        nodeCap: Capacity,
         closedSize: TSize,
         updateState: (Leaf[A], Option[Tree[A]], TSize) => Boolean
     )(a: A): TIndex | Collision =
-      val leaf = MultiLeaf(leafCapacity, leftNeighbor = null)(elem)
+      val leaf = MultiLeaf(leafCap, leftNeighbor = null)(elem)
       leaf append a
       if updateState(leaf, Some(leaf), TSize.zero) then TIndex(1)
       else Collision
@@ -287,8 +290,8 @@ object ArrayTree:
 
     protected[ArrayTree] def extendTreeAndAppend(
         tree: Tree[A],
-        leafCapacity: PositiveSize,
-        nodeCapacity: PositiveSize,
+        leafCap: Capacity,
+        nodeCap: Capacity,
         closedSize: TSize,
         updateState: (Leaf[A], Option[Tree[A]], TSize) => Boolean
     )(a: A): TIndex | Collision =
@@ -321,11 +324,11 @@ object ArrayTree:
               assert(root eq exhausted)
               Left(exhausted) -> Size.zero
 
-        def newLeaf(a: A) = MultiLeaf(leafCapacity, this)(a)
+        def newLeaf(a: A) = MultiLeaf(leafCap, this)(a)
 
         def newNode(upper: Boolean): Node[A] =
-          if upper then UpperNode.empty[A](nodeCapacity)
-          else LeafParentNode.empty[A](nodeCapacity)
+          if upper then UpperNode.empty[A](nodeCap)
+          else LeafParentNode.empty[A](nodeCap)
 
         val newClosedSize = closedSize + size
         findExtendable(tree, this) match
@@ -344,9 +347,9 @@ object ArrayTree:
               val root: Node[A] =
                 exhaustedRoot match
                   case exhaustedNode: Node[A] =>
-                    UpperNode.empty[A](nodeCapacity) tap (_ append exhaustedNode)
+                    UpperNode.empty[A](nodeCap) tap (_ append exhaustedNode)
                   case exhaustedLeaf: MultiLeaf[A] =>
-                    LeafParentNode.empty[A](nodeCapacity) tap (_ append exhaustedLeaf)
+                    LeafParentNode.empty[A](nodeCap) tap (_ append exhaustedLeaf)
 
               root -> loop(Size(0), root)
 
@@ -400,11 +403,11 @@ object ArrayTree:
       s"$MultiLeaf($parentToString, $commonToString: $elemsToString)"
 
   protected[concurrent] case object MultiLeaf:
-    def empty[A: ClassTag](capacity: PositiveSize, leftNeighbor: MultiLeaf[A] | Null): MultiLeaf[A] =
-      new MultiLeaf[A](new Array(capacity.value), leftNeighbor)
+    def empty[A: ClassTag](cap: Capacity, leftNeighbor: MultiLeaf[A] | Null): MultiLeaf[A] =
+      new MultiLeaf[A](new Array(cap.value), leftNeighbor)
 
-    def apply[A: ClassTag](capacity: PositiveSize, leftNeighbor: MultiLeaf[A] | Null)(elems: A*): MultiLeaf[A] =
-      empty[A](capacity, leftNeighbor) tap (elems foreach _.append)
+    def apply[A: ClassTag](cap: Capacity, leftNeighbor: MultiLeaf[A] | Null)(elems: A*): MultiLeaf[A] =
+      empty[A](cap, leftNeighbor) tap (elems foreach _.append)
 
   sealed protected[concurrent] trait Node[A] extends Many[A]
 
@@ -414,11 +417,11 @@ object ArrayTree:
     type E = Node[A]
 
   protected[concurrent] case object UpperNode:
-    def empty[A: ClassTag](capacity: PositiveSize): UpperNode[A] =
-      new UpperNode[A](new Array[Node[A]](capacity.value))
+    def empty[A: ClassTag](cap: Capacity): UpperNode[A] =
+      new UpperNode[A](new Array[Node[A]](cap.value))
 
-    def apply[A: ClassTag](capacity: PositiveSize)(elems: Node[A]*): UpperNode[A] =
-      empty[A](capacity) tap (elems foreach _.append)
+    def apply[A: ClassTag](cap: Capacity)(elems: Node[A]*): UpperNode[A] =
+      empty[A](cap) tap (elems foreach _.append)
 
   final protected[concurrent] case class LeafParentNode[A] private (
       protected[concurrent] val elems: Array[MultiLeaf[A]]
@@ -426,11 +429,11 @@ object ArrayTree:
     type E = MultiLeaf[A]
 
   protected[concurrent] case object LeafParentNode:
-    def empty[A: ClassTag](capacity: PositiveSize): LeafParentNode[A] =
-      new LeafParentNode[A](new Array[MultiLeaf[A]](capacity.value))
+    def empty[A: ClassTag](cap: Capacity): LeafParentNode[A] =
+      new LeafParentNode[A](new Array[MultiLeaf[A]](cap.value))
 
-    def apply[A: ClassTag](capacity: PositiveSize)(elems: MultiLeaf[A]*): LeafParentNode[A] =
-      empty[A](capacity) tap (elems foreach _.append)
+    def apply[A: ClassTag](cap: Capacity)(elems: MultiLeaf[A]*): LeafParentNode[A] =
+      empty[A](cap) tap (elems foreach _.append)
 
   // TODO further tighten boundaries like `AtLeast2`
   // TODO optimize by packing fields into primitive
@@ -452,28 +455,28 @@ object ArrayTree:
     *     - `leafCapacity` = 2,500
     *     - `nodeCapacity` = 300.
     *
-    * @param initialCapacity number of elements of type `A` to be allocated in the first leaf.
+    * @param initialCap number of elements of type `A` to be allocated in the first leaf.
     *                        This should cover between 10th to 40th percentile of size distribution.
     *                        The more memory usage concerns, the lower percentile is adequate.
     *                        In case you expect lots of instances with zero or just one element,
     *                        you can also set it to 1 to save main memory.
-    * @param leafCapacity number of elements of type `A` to be allocated for subsequent leaves.
+    * @param leafCap number of elements of type `A` to be allocated for subsequent leaves.
     *                     For tiny collections, at least 8 is recommended.
     *                     For bigger collections, choose a higher value that also fits `nodeCapacity`.
-    * @param nodeCapacity number of elements to be allocated for nodes. 2 at least formally,
+    * @param nodeCap number of elements to be allocated for nodes. 2 at least formally,
     *                     but even for small collections, at least 4 is recommended.
     *                     For best efficiency, choose a capacity such that the tree height probably won't exceed 8.
     */
-  final case class Config(initialCapacity: PositiveSize, leafCapacity: PositiveSize, nodeCapacity: PositiveSize):
+  final case class Config(initialCap: Capacity, leafCap: Capacity, nodeCap: Capacity):
     import Config.*
-    given PositiveSize = nodeCapacity
+    given Capacity = nodeCap
 
     /** Buffer with precalculated `LevelCap`s to support tree look-ups by index.
       * 8 levels are calculated in advance. Further levels are added on demand.
       * Index n corresponds to the tree height with a distance of n + 1 from the bottom, leaf level.
       */
     protected[concurrent] val levelCaps: ArrayBuffer[LevelCap] =
-      populateLevelCaps(LevelCap(initialCapacity, leafCapacity), new ArrayBuffer[LevelCap](8))
+      populateLevelCaps(LevelCap(initialCap, leafCap), new ArrayBuffer[LevelCap](8))
 
     /** Add another 8 levels of `LevelCap` at most.
       * @return Whether any new levels could be added.
@@ -517,12 +520,12 @@ object ArrayTree:
   object Config:
     /** Capacities per tree level. */
     sealed protected[concurrent] trait LevelCap:
-      def first: PositiveSize
+      def first: Capacity
 
       // TODO optimize return by packing it into primitive
       def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index)
 
-      protected def slotAndSubIndex[U](i: Index, leftSide: Boolean, subsequent: PositiveSize): (Index, Index) =
+      protected def slotAndSubIndex[U](i: Index, leftSide: Boolean, subsequent: Capacity): (Index, Index) =
         if leftSide then
           if i < first.asNonNegative then Index.zero -> i
           else
@@ -532,35 +535,34 @@ object ArrayTree:
 
     protected[concurrent] object LevelCap:
 
-      /** Fully defined capacities of some tree level.
+      /** Fully defined capacities for some tree height. The Capacities of the the subtrees are cumulated.
         * @param first capacity of the first node
         * @param subsequent capacity of subsequent nodes
-        * @param total capacity of the level, in other words, capacity of all nodes
+        * @param total the capacity of all nodes for the given height.
         */
-      protected[concurrent] case class Full(first: PositiveSize, subsequent: PositiveSize, total: PositiveSize)
-          extends LevelCap:
+      protected[concurrent] case class Full(first: Capacity, subsequent: Capacity, total: Capacity) extends LevelCap:
         def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index) =
           slotAndSubIndex(i, leftSide, subsequent)
 
-        def next(using nodeCapacity: PositiveSize): LevelCap =
-          Try(nodeCapacity * subsequent).map(newSubsequent =>
-            (newSubsequent, Try(total + nodeCapacity.decr * newSubsequent))
+        def next(using nodeCap: Capacity): LevelCap =
+          Try(nodeCap * subsequent).map(newSubsequent =>
+            (newSubsequent, Try(total + nodeCap.decr * newSubsequent))
           ) match
             case Success(newSubsequent, Success(newTotal)) => Full(total, newSubsequent, newTotal)
             case Success(newSubsequent, _)                 => Partial(total, Some(newSubsequent))
             case _                                         => Partial(total, None)
 
       /** Partially defined capacities of the highest possible tree level.
-        * This copes with a numeric overflow of `PositiveSize` somewhere within this tree level.
+        * This copes with a numeric overflow of `Capacity` somewhere within this tree level.
         */
-      protected[concurrent] case class Partial(first: PositiveSize, subsequent: Option[PositiveSize]) extends LevelCap:
+      protected[concurrent] case class Partial(first: Capacity, subsequent: Option[Capacity]) extends LevelCap:
         def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index) =
           subsequent match
             case Some(s) => slotAndSubIndex(i, leftSide, s)
             case None    => Index(1) -> i.mapTrusted(_ - first.value)
 
       // TODO optimize arithmetics by rounding up sizes to power of 2 and shifting
-      def apply(first: PositiveSize, subsequent: PositiveSize)(using nodeCapacity: PositiveSize): LevelCap =
-        Try(first + nodeCapacity.decr * subsequent) match
+      def apply(first: Capacity, subsequent: Capacity)(using nodeCap: Capacity): LevelCap =
+        Try(first + nodeCap.decr * subsequent) match
           case Success(total) => Full(first, subsequent, total)
           case _              => Partial(first, Some(subsequent))

@@ -24,39 +24,39 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
 
   def `append single threaded`: Unit =
     def check(appendCount: PositiveSize)(
-        initialCapacity: PositiveSize,
-        leafCapacity: PositiveSize = 2,
-        nodeCapacity: PositiveSize = 2
+        initialCap: Capacity,
+        leafCap: Capacity = 2,
+        nodeCap: Capacity = 2
     ): Unit =
-      info(f"$appendCount%2d times to tree($initialCapacity, $leafCapacity, $nodeCapacity)")
-      val tree = ArrayTree[Int](Config(initialCapacity, leafCapacity, nodeCapacity))
+      info(f"$appendCount%2d times to tree($initialCap, $leafCap, $nodeCap)")
+      val tree = ArrayTree[Int](Config(initialCap, leafCap, nodeCap))
       1 to appendCount.value foreach { i =>
         (tree append i).value shouldBe i - 1
         tree.size.value shouldBe i
       }
       tree.collisions shouldBe 0
 
-    check(2)(initialCapacity = 1)
-    check(4)(initialCapacity = 4)
-    check(3)(initialCapacity = 1)
-    check(3)(initialCapacity = 2)
-    check(5)(initialCapacity = 4)
-    check(7)(initialCapacity = 4)
-    check(9)(initialCapacity = 4)
-    check(40)(initialCapacity = 1, leafCapacity = 5, nodeCapacity = 5)
+    check(2)(initialCap = 1)
+    check(4)(initialCap = 4)
+    check(3)(initialCap = 1)
+    check(3)(initialCap = 2)
+    check(5)(initialCap = 4)
+    check(7)(initialCap = 4)
+    check(9)(initialCap = 4)
+    check(40)(initialCap = 1, leafCap = 5, nodeCap = 5)
 
   def `append concurrently`: Unit =
     given ExecutionContext = ExecutionContext.global
 
     def append(count: Int)(
-        initialCapacity: PositiveSize,
-        leafCapacity: PositiveSize = 2,
-        nodeCapacity: PositiveSize = 2
+        initialCap: Capacity,
+        leafCap: Capacity = 2,
+        nodeCap: Capacity = 2
     ): Unit =
-      given tree: ArrayTree[Int] = ArrayTree[Int](Config(initialCapacity, leafCapacity, nodeCapacity))
+      given tree: ArrayTree[Int] = ArrayTree[Int](Config(initialCap, leafCap, nodeCap))
       val range                  = 0 until count
       val seq                    = Future.sequence(range map (i => Future(tree append i)))
-      withClue(f"$count%2d futures, tree($initialCapacity, $leafCapacity, $nodeCapacity)$lineSeparator")(
+      withClue(f"$count%2d futures, tree($initialCap, $leafCap, $nodeCap)$lineSeparator")(
         whenReady(seq) { indexes =>
           indexes should coverRange(range)
           tree.size.value shouldBe count
@@ -64,21 +64,21 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         }
       )
 
-    append(count = 5)(initialCapacity = 5)
-    append(count = 10)(initialCapacity = 4)
-    append(count = 20)(initialCapacity = 4)
-    append(count = 25)(initialCapacity = 3)
+    append(count = 5)(initialCap = 5)
+    append(count = 10)(initialCap = 4)
+    append(count = 20)(initialCap = 4)
+    append(count = 25)(initialCap = 3)
 
   object `treeIterator, leafCapacity: 2, nodeCapacity: 2`:
     val defaultLeafCapacity = 2
     val defaultNodeCapacity = 2
 
     def tree(size: PositiveSize)(
-        initialCapacity: PositiveSize,
-        leafCapacity: PositiveSize = defaultLeafCapacity,
-        nodeCapacity: PositiveSize = defaultNodeCapacity
+        initialCap: Capacity,
+        leafCap: Capacity = defaultLeafCapacity,
+        nodeCap: Capacity = defaultNodeCapacity
     ): ArrayTree[Int] =
-      ArrayTree[Int](Config(initialCapacity, leafCapacity, nodeCapacity)) tap (t => 1 to size.value foreach t.append)
+      ArrayTree[Int](Config(initialCap, leafCap, nodeCap)) tap (t => 1 to size.value foreach t.append)
 
     extension (multi: MultiLeaf.type)
       private def fake: MultiLeaf[Int] =
@@ -108,34 +108,34 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         LeafParentNode(defaultNodeCapacity)(Array.fill(elemCount.value)(MultiLeaf.fake)*)
 
     def `size:  1, initialCapacity: 1`: Unit =
-      tree(1)(initialCapacity = 1) should equalTree(SingleLeaf(1))
+      tree(1)(initialCap = 1) should equalTree(SingleLeaf(1))
 
     def `size:  2, initialCapacity: 1`: Unit =
-      tree(2)(initialCapacity = 1) should equalTree(MultiLeaf.withNullLeftNeighbor(1, 2))
+      tree(2)(initialCap = 1) should equalTree(MultiLeaf.withNullLeftNeighbor(1, 2))
 
     def `size:  3, initialCapacity: 1`: Unit =
-      tree(3)(initialCapacity = 1) should equalTree(
+      tree(3)(initialCap = 1) should equalTree(
         LeafParentNode.denseFake,
         MultiLeaf.withNullLeftNeighbor(1, 2),
         MultiLeaf.withFakeLeftNeighbor(3)
       )
 
     def `size:  3, initialCapacity: 2`: Unit =
-      tree(3)(initialCapacity = 1) should equalTree(
+      tree(3)(initialCap = 1) should equalTree(
         LeafParentNode.denseFake,
         MultiLeaf.withNullLeftNeighbor(1, 2),
         MultiLeaf.withFakeLeftNeighbor(3)
       )
 
     def `size:  5, initialCapacity: 4`: Unit =
-      tree(5)(initialCapacity = 4) should equalTree(
+      tree(5)(initialCap = 4) should equalTree(
         LeafParentNode.denseFake,
         MultiLeaf(4, null)(1, 2, 3, 4),
         MultiLeaf.withFakeLeftNeighbor(5)
       )
 
     def `size:  7, initialCapacity: 4`: Unit =
-      tree(7)(initialCapacity = 4) should equalTree(
+      tree(7)(initialCap = 4) should equalTree(
         UpperNode.denseFake,
         LeafParentNode.denseFake,
         MultiLeaf(4, null)(1, 2, 3, 4),
@@ -145,7 +145,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       )
 
     def `size: 12, initialCapacity: 4`: Unit =
-      tree(12)(initialCapacity = 4) should equalTree(
+      tree(12)(initialCap = 4) should equalTree(
         UpperNode.denseFake,
         UpperNode.denseFake,
         LeafParentNode.denseFake,
@@ -160,8 +160,8 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       )
 
   object `apply index`:
-    val initialOneConfig = Config(initialCapacity = 1, leafCapacity = 10, nodeCapacity = 4)
-    val smallConfig      = Config(initialCapacity = 20, leafCapacity = 10, nodeCapacity = 4)
+    val initialOneConfig = Config(initialCap = 1, leafCap = 10, nodeCap = 4)
+    val smallConfig      = Config(initialCap = 20, leafCap = 10, nodeCap = 4)
 
     private def smallConfigLevelCaps(i: Int): LevelCap.Full =
       smallConfig.levelCaps(i) match
@@ -188,7 +188,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       an[IndexOutOfBoundsException] shouldBe thrownBy(tree(TIndex(1)))
 
     def `root MultiLeaf`: Unit =
-      populateAndCheck(smallConfig.initialCapacity)
+      populateAndCheck(smallConfig.initialCap)
 
     def `root LeafParentNode`: Unit =
       val caps0 = smallConfigLevelCaps(0)
@@ -204,16 +204,16 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
 
     def `initial length`: Unit =
       Config(
-        initialCapacity = 10,
-        leafCapacity = 4,
-        nodeCapacity = 3
+        initialCap = 10,
+        leafCap = 4,
+        nodeCap = 3
       ).levelCaps should have length 8
 
     def `full levelSizes`: Unit =
       Config(
-        initialCapacity = 1000,
-        leafCapacity = 200,
-        nodeCapacity = 4
+        initialCap = 1000,
+        leafCap = 200,
+        nodeCap = 4
       ).levelCaps should contain theSameElementsInOrderAs List(
         Full(1_000, 200, 1_600),
         Full(1_600, 800, 4_000),
@@ -226,7 +226,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       )
 
     def `partial levelSizes`: Unit =
-      val config = Config(PositiveSize(1000), PositiveSize(100), PositiveSize(10))
+      val config = Config(Capacity(1000), Capacity(100), Capacity(10))
       config.levelCaps.last match
         case Full(_, _, total) =>
           config.extendLevelCaps shouldBe true
@@ -235,11 +235,11 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
           fail()
 
     object `propagate index`:
-      val initialCap = PositiveSize(100)
+      val initialCap = Capacity(100)
       val config     = Config(
-        initialCapacity = initialCap,
-        leafCapacity = PositiveSize(10),
-        nodeCapacity = PositiveSize(4)
+        initialCap = initialCap,
+        leafCap = Capacity(10),
+        nodeCap = Capacity(4)
       )
 
       def `illustrate levelCaps of config`: Unit =
