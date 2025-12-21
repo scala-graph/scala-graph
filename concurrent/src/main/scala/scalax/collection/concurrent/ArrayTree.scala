@@ -117,6 +117,32 @@ final class ArrayTree[A: ClassTag](config: Config):
           lastClosedSize + idx
   end append
 
+  def reverseIterator: Iterator[A] =
+    _activeLeaf match
+      case leaf: Leaf[A] if leaf.leftNeighbor eq null => leaf.reverseIterator
+      case multi: MultiLeaf[A]                        =>
+        new AbstractIterator[A]:
+          private var currentLeaf = multi
+          private var currentIt   = multi.reverseIterator
+
+          override def hasNext: Boolean =
+            if currentIt.hasNext then true
+            else
+              currentLeaf.leftNeighbor match
+                case multi: MultiLeaf[A] =>
+                  currentLeaf = multi
+                  currentIt = multi.reverseIterator
+                  currentIt.hasNext
+                case null => false
+
+          override def next(): A =
+            if hasNext then currentIt.next()
+            else throw new NoSuchElementException
+
+          override def knownSize: Int = (_closedSize + multi.size).value
+
+      case _ => Iterator.empty
+
   protected[concurrent] def treeIterator: Iterator[Tree[A]] =
     treeIteratorWithLevel map (_._1)
 
@@ -216,6 +242,10 @@ object ArrayTree:
         updateState: (Leaf[A], Option[Tree[A]], TSize) => Boolean
     )(a: A): TIndex | Collision
 
+    protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null
+
+    protected[ArrayTree] def reverseIterator: Iterator[A]
+
   final protected[concurrent] case class SingleLeaf[A: ClassTag](elem: A) extends Leaf[A]:
     def capacity: Size = Size(1)
     def size: Size     = Size(1)
@@ -233,6 +263,10 @@ object ArrayTree:
       leaf append a
       if updateState(leaf, Some(leaf), TSize.zero) then TIndex(1)
       else Collision
+
+    protected[ArrayTree] def reverseIterator: Iterator[A] = Iterator(elem)
+
+    protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null = null
 
   sealed protected[concurrent] trait Many[A] extends Tree[A]:
     type E
@@ -383,6 +417,19 @@ object ArrayTree:
       ensureNodeAndAppend(a) match
         case Collision                                              => Collision
         case idx: TIndex @unchecked /* works only as second case */ => idx
+
+    protected[ArrayTree] def reverseIterator: Iterator[A] =
+      new AbstractIterator[A]:
+        override val knownSize: Int = _used.get
+        private var remaining       = knownSize
+
+        inline def hasNext: Boolean = remaining > 0
+
+        def next(): A =
+          if hasNext then
+            remaining -= 1
+            elems(remaining)
+          else throw new NoSuchElementException
 
     override protected def equalFields(that: Many[?]): Boolean =
       unsafeWrapArray(this.elems) == unsafeWrapArray(that.elems) &&

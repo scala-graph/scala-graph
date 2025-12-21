@@ -18,6 +18,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
   implicit val disableDefaultArrayHandling: Prettifier = Prettifier(_.toString)
 
   import scala.language.implicitConversions
+  private given Conversion[Int, Size]         = (i: Int) => Size.unsafe(i)
   private given Conversion[Int, PositiveSize] = (i: Int) => PositiveSize.unsafe(i)
 
   import ArrayTreeSpec.*
@@ -70,10 +71,10 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     append(count = 25)(initialCap = 3)
 
   object `treeIterator, leafCapacity: 2, nodeCapacity: 2`:
-    val defaultLeafCapacity = 2
-    val defaultNodeCapacity = 2
+    private val defaultLeafCapacity = 2
+    private val defaultNodeCapacity = 2
 
-    def tree(size: PositiveSize)(
+    private def tree(size: PositiveSize)(
         initialCap: Capacity,
         leafCap: Capacity = defaultLeafCapacity,
         nodeCap: Capacity = defaultNodeCapacity
@@ -291,6 +292,21 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
           buf(startHeight.value) = loop(startHeight.asNonNegative.decr, leftSide, index, 0)
           ArraySeq.ofInt(buf.asInstanceOf[Array[Int]])
         }
+
+  object `reverse iterator`:
+    val config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
+
+    private def check(size: Size): Unit =
+      val tree = ArrayTree[Int](config) tap (t => 1 to size.value foreach t.append)
+      val expected = Array.tabulate(size.value)(n => size.value - n)
+      tree.reverseIterator.toBuffer should contain theSameElementsInOrderAs expected
+
+    def `size:  0`: Unit = check(0)
+    def `size:  1`: Unit = check(1)
+    def `size:  2`: Unit = check(2)
+    def `size:  5`: Unit = check(5)
+    def `size:  10`: Unit = check(5)
+    def `size:  21`: Unit = check(5)
 
 object ArrayTreeSpec:
   private val lineSeparator = System.lineSeparator
