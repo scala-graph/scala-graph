@@ -11,7 +11,6 @@ import scala.reflect.ClassTag
 import scala.util.{Success, Try}
 import scala.util.chaining.given
 
-import scalax.util.assert
 import scalax.util.primitives.*
 import ArrayTree.Config
 

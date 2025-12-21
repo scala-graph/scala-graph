@@ -155,7 +155,6 @@ lazy val defaultCompilerSettings = Seq(
     "-feature",
     "-language:higherKinds"
   ),
-  Compile / scalacOptions += "-Xelide-below 2001",
   Compile / console / scalacOptions := (Compile / scalacOptions).value filterNot (_ eq unusedImports)
 )
 
