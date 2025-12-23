@@ -10,7 +10,7 @@ jobs:
         exclude:
           - scala: '2.13.17'
             project: jsoniter
-          - scala: '3.3.7'
+          - scala: '3.7.4'
             project: jsonLift
     runs-on: ubuntu-latest
     steps:
