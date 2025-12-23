@@ -5,7 +5,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scala: [ '2.13.17', '3.3.7' ]
+        scala: [ '2.13.17', '3.7.4' ]
         project: [ core, dot, jsonLift, jsoniter ]
         exclude:
           - scala: '2.13.17'
