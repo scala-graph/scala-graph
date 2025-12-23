@@ -41,38 +41,29 @@ final class ArrayTree[A: ClassTag](config: Config):
     */
   @volatile private var _levels = Size.zero
 
+  private val _collisions = AtomicLong(0)
+
+  private val treeSync = new ReentrantLock
+
   @volatile protected[concurrent] def tree: Tree[A] | Null = _tree
 
   def size: TSize = TSize.trust(_size.get)
 
+  def collisions: Long = _collisions.get
+
   /** @throws `IndexOutOfBoundsException` if `index` is not less than `size`. */
   def apply(index: TIndex): A =
     if index < size then
-      import config.{withLevelCaps, slotAndSubIndex}
       _tree match
         case upper: UpperNode[A] =>
-          withLevelCaps(Positive.trust(_levels.value)) {
-            @tailrec def loop(capIndex: Index, leftSide: Boolean, node: Node[A], i: Index): A =
-              val (slot, subIndex) = slotAndSubIndex(capIndex, i, leftSide)
-              node match
-                case UpperNode(elems) =>
-                  loop(capIndex.decr, leftSide && slot === 0, elems(slot.value), subIndex)
-                case LeafParentNode(elems) =>
-                  elems(slot.value).elems(subIndex.value)
-
-            loop(_levels.decr, leftSide = true, upper, index)
-          }
+          val (multi, subIndex, _) = leaf(upper, index)
+          multi.elems(subIndex.value)
         case LeafParentNode(elems) =>
-          val (slot, subIndex) = slotAndSubIndex(Index.zero, index, leftSide = true)
+          val (slot, subIndex, _) = slotAndSubIndex(Index.zero, index, leftSide = true)
           elems(slot.value).elems(subIndex.value)
         case MultiLeaf(elems, _) => elems(index.value)
         case SingleLeaf(elem)    => elem
     else throw new IndexOutOfBoundsException
-
-  private val _collisions = AtomicLong(0)
-  def collisions: Long    = _collisions.get
-
-  private val treeSync = new ReentrantLock
 
   @tailrec infix def append(a: A): TIndex =
     treeSync.lock()
@@ -119,28 +110,41 @@ final class ArrayTree[A: ClassTag](config: Config):
   def reverseIterator: Iterator[A] =
     _activeLeaf match
       case leaf: Leaf[A] if leaf.leftNeighbor eq null => leaf.reverseIterator
-      case multi: MultiLeaf[A]                        =>
-        new AbstractIterator[A]:
-          private var currentLeaf = multi
-          private var currentIt   = multi.reverseIterator
+      case multi: MultiLeaf[A]                        => ReverseIterator(multi, _closedSize)
+      case _                                          => Iterator.empty
 
-          override def hasNext: Boolean =
-            if currentIt.hasNext then true
-            else
-              currentLeaf.leftNeighbor match
-                case multi: MultiLeaf[A] =>
-                  currentLeaf = multi
-                  currentIt = multi.reverseIterator
-                  currentIt.hasNext
-                case null => false
+  /** @throws `IndexOutOfBoundsException` if `from` is not less than `size`. */
+  def reverseIterator(from: TIndex): Iterator[A] =
+    if from < size then
+      _tree match
+        case upper: UpperNode[A] =>
+          val (multi, subIndex, leftSize) = leaf(upper, from)
+          ReverseIterator(multi, subIndex, leftSize)
+        case LeafParentNode(elems) =>
+          val (slot, subIndex, leftSize) = slotAndSubIndex(Index.zero, from, leftSide = true)
+          ReverseIterator(elems(slot.value), subIndex, leftSize)
+        case leaf: Leaf[A] => leaf.reverseIterator(from)
+        case null          => Iterator.empty
+    else throw new IndexOutOfBoundsException
 
-          override def next(): A =
-            if hasNext then currentIt.next()
-            else throw new NoSuchElementException
+  private def leaf(root: UpperNode[A], index: TIndex): (MultiLeaf[A], Index, TSize) =
+    withLevelCaps(Positive.trust(_levels.value)) { height =>
+      @tailrec def loop(
+          capIndex: Index,
+          leftSide: Boolean,
+          node: Node[A],
+          i: Index,
+          leftSize: TSize
+      ): (MultiLeaf[A], Index, TSize) =
+        val (slot, subIndex, left) = slotAndSubIndex(capIndex, i, leftSide)
+        node match
+          case UpperNode(elems) =>
+            loop(capIndex.decr, leftSide && slot === 0, elems(slot.value), subIndex, leftSize + left)
+          case LeafParentNode(elems) =>
+            (elems(slot.value), subIndex, leftSize + left)
 
-          override def knownSize: Int = (_closedSize + multi.size).value
-
-      case _ => Iterator.empty
+      loop(height.asNonNegative.decr, leftSide = true, root, index, TSize.zero)
+    }
 
   protected[concurrent] def treeIterator: Iterator[Tree[A]] =
     treeIteratorWithLevel map (_._1)
@@ -244,6 +248,7 @@ object ArrayTree:
     protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null
 
     protected[ArrayTree] def reverseIterator: Iterator[A]
+    protected[ArrayTree] def reverseIterator(from: Index): Iterator[A]
 
   final protected[concurrent] case class SingleLeaf[A: ClassTag](elem: A) extends Leaf[A]:
     def capacity: Size = Size(1)
@@ -264,6 +269,10 @@ object ArrayTree:
       else Collision
 
     protected[ArrayTree] def reverseIterator: Iterator[A] = Iterator(elem)
+
+    protected[ArrayTree] def reverseIterator(from: Index): Iterator[A] =
+      assert(from == Index.zero)
+      reverseIterator
 
     protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null = null
 
@@ -418,17 +427,12 @@ object ArrayTree:
         case idx: TIndex @unchecked /* works only as second case */ => idx
 
     protected[ArrayTree] def reverseIterator: Iterator[A] =
-      new AbstractIterator[A]:
-        override val knownSize: Int = _used.get
-        private var remaining       = knownSize
+      MultiLeaf.ReverseIterator(elems, _used.get - 1)
 
-        inline def hasNext: Boolean = remaining > 0
-
-        def next(): A =
-          if hasNext then
-            remaining -= 1
-            elems(remaining)
-          else throw new NoSuchElementException
+    protected[ArrayTree] def reverseIterator(from: Index): Iterator[A] =
+      val used = _used.get
+      assert(from.value < used)
+      MultiLeaf.ReverseIterator(elems, from.value)
 
     override protected def equalFields(that: Many[?]): Boolean =
       unsafeWrapArray(this.elems) == unsafeWrapArray(that.elems) &&
@@ -451,6 +455,18 @@ object ArrayTree:
 
     def apply[A: ClassTag](cap: Capacity, leftNeighbor: MultiLeaf[A] | Null)(elems: A*): MultiLeaf[A] =
       empty[A](cap, leftNeighbor) tap (elems foreach _.append)
+
+    private[MultiLeaf] class ReverseIterator[A](elems: Array[A], from: Int) extends AbstractIterator[A]:
+      override val knownSize: Int = from + 1
+      private var remaining       = knownSize
+
+      inline def hasNext: Boolean = remaining > 0
+
+      def next(): A =
+        if hasNext then
+          remaining -= 1
+          elems(remaining)
+        else throw new NoSuchElementException
 
   sealed protected[concurrent] trait Node[A] extends Many[A]
 
@@ -477,6 +493,33 @@ object ArrayTree:
 
     def apply[A: ClassTag](cap: Capacity)(elems: MultiLeaf[A]*): LeafParentNode[A] =
       empty[A](cap) tap (elems foreach _.append)
+
+  private class ReverseIterator[A](from: MultiLeaf[A], fromIt: Iterator[A], total: TSize) extends AbstractIterator[A]:
+    private var currentLeaf = from
+    private var currentIt   = fromIt
+
+    override def hasNext: Boolean =
+      if currentIt.hasNext then true
+      else
+        currentLeaf.leftNeighbor match
+          case multi: MultiLeaf[A] =>
+            currentLeaf = multi
+            currentIt = multi.reverseIterator
+            currentIt.hasNext
+          case null => false
+
+    override def next(): A =
+      if hasNext then currentIt.next()
+      else throw new NoSuchElementException
+
+    override val knownSize: Int = total.value
+
+  private object ReverseIterator:
+    private[ArrayTree] def apply[A](from: MultiLeaf[A], leftSize: TSize): ReverseIterator[A] =
+      new ReverseIterator(from, from.reverseIterator, leftSize + from.size)
+
+    private[ArrayTree] def apply[A](from: MultiLeaf[A], fromIndex: Index, leftSize: TSize): ReverseIterator[A] =
+      new ReverseIterator(from, from.reverseIterator(fromIndex), (leftSize + fromIndex).incr)
 
   // TODO further tighten boundaries like `AtLeast2`
   // TODO optimize by packing fields into primitive
@@ -519,7 +562,10 @@ object ArrayTree:
       * Index n corresponds to the tree height with a distance of n + 1 from the bottom, leaf level.
       */
     protected[concurrent] val levelCaps: ArrayBuffer[LevelCap] =
-      populateLevelCaps(LevelCap(initialCap, leafCap), new ArrayBuffer[LevelCap](8))
+      populateLevelCaps(
+        LevelCap(if initialCap > leafCap then initialCap else leafCap, leafCap),
+        new ArrayBuffer[LevelCap](8)
+      )
 
     /** Add another 8 levels of `LevelCap` at most.
       * @return Whether any new levels could be added.
@@ -549,15 +595,15 @@ object ArrayTree:
       else if extendLevelCaps then ensureLevels(startHeight)
       else false
 
-    protected[concurrent] def withLevelCaps[R](height: Positive)(body: => R): R =
-      if ensureLevels(height) then body
+    protected[concurrent] def withLevelCaps[R](height: Positive)(body: Positive => R): R =
+      if ensureLevels(height) then body(height)
       else throw new IllegalArgumentException(s"Internal error: $height is too heigh for $this.")
 
     protected[concurrent] inline def slotAndSubIndex(
         capIndex: Index,
         i: Index,
         leftSide: Boolean
-    ): (Index, Index) =
+    ): (Index, Index, TSize) =
       levelCaps(capIndex.value).slotAndSubIndex(i, leftSide)
 
   object Config:
@@ -566,15 +612,19 @@ object ArrayTree:
       def first: Capacity
 
       // TODO optimize return by packing it into primitive
-      def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index)
+      def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index, TSize)
 
-      protected def slotAndSubIndex[U](i: Index, leftSide: Boolean, subsequent: Capacity): (Index, Index) =
+      protected def slotAndSubIndex[U](i: Index, leftSide: Boolean, subsequent: Capacity): (Index, Index, TSize) =
         if leftSide then
-          if i < first.asNonNegative then Index.zero -> i
+          if i < first.asNonNegative then (Index.zero, i, TSize.zero)
           else
             val iSubsequent = i.mapTrusted(_ - first.value)
-            iSubsequent.mapTrusted(_ / subsequent.value + 1) -> (iSubsequent % subsequent.asNonNegative)
-        else i.mapTrusted(_ / subsequent.value) -> (i % subsequent.asNonNegative)
+            val slot        = iSubsequent.mapTrusted(_ / subsequent.value + 1)
+            val leftSize    = slot.mapTrusted(i => first.value + (i - 1) * subsequent.value)
+            (slot, iSubsequent % subsequent.asNonNegative, leftSize)
+        else
+          val slot = i.mapTrusted(_ / subsequent.value)
+          (slot, i % subsequent.asNonNegative, slot.mapTrusted(_ * subsequent.value))
 
     protected[concurrent] object LevelCap:
 
@@ -584,7 +634,7 @@ object ArrayTree:
         * @param total the capacity of all nodes for the given height.
         */
       protected[concurrent] case class Full(first: Capacity, subsequent: Capacity, total: Capacity) extends LevelCap:
-        def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index) =
+        def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index, TSize) =
           slotAndSubIndex(i, leftSide, subsequent)
 
         def next(using nodeCap: Capacity): LevelCap =
@@ -599,10 +649,10 @@ object ArrayTree:
         * This copes with a numeric overflow of `Capacity` somewhere within this tree level.
         */
       protected[concurrent] case class Partial(first: Capacity, subsequent: Option[Capacity]) extends LevelCap:
-        def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index) =
+        def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index, TSize) =
           subsequent match
             case Some(s) => slotAndSubIndex(i, leftSide, s)
-            case None    => Index(1) -> i.mapTrusted(_ - first.value)
+            case None    => (Index(1), i.mapTrusted(_ - first.value), first.asNonNegative)
 
       // TODO optimize arithmetics by rounding up sizes to power of 2 and shifting
       def apply(first: Capacity, subsequent: Capacity)(using nodeCap: Capacity): LevelCap =
