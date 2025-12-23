@@ -284,7 +284,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
           val buf = new Array[Index](height.incr.value)
 
           @tailrec def loop(capIndex: Index, leftSide: Boolean, i: TIndex, arrayIndex: Int): Index =
-            val (slot, subIndex, _) = levelCaps(capIndex.value).slotAndSubIndex(i, leftSide)
+            val (slot, subIndex, _) = levelCaps(capIndex.value).locate(i, leftSide)
             buf(arrayIndex) = slot
             if capIndex.value > 0 then loop(capIndex.decr, leftSide && slot === 0, subIndex, arrayIndex + 1)
             else subIndex

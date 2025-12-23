@@ -59,7 +59,7 @@ final class ArrayTree[A: ClassTag](config: Config):
           val (multi, subIndex, _) = leaf(upper, index)
           multi.elems(subIndex.value)
         case LeafParentNode(elems) =>
-          val (slot, subIndex, _) = slotAndSubIndex(Index.zero, index, leftSide = true)
+          val (slot, subIndex, _) = locate(Index.zero, index, leftSide = true)
           elems(slot.value).elems(subIndex.value)
         case MultiLeaf(elems, _) => elems(index.value)
         case SingleLeaf(elem)    => elem
@@ -121,7 +121,7 @@ final class ArrayTree[A: ClassTag](config: Config):
           val (multi, subIndex, leftSize) = leaf(upper, from)
           ReverseIterator(multi, subIndex, leftSize)
         case LeafParentNode(elems) =>
-          val (slot, subIndex, leftSize) = slotAndSubIndex(Index.zero, from, leftSide = true)
+          val (slot, subIndex, leftSize) = locate(Index.zero, from, leftSide = true)
           ReverseIterator(elems(slot.value), subIndex, leftSize)
         case leaf: Leaf[A] => leaf.reverseIterator(from)
         case null          => Iterator.empty
@@ -136,7 +136,7 @@ final class ArrayTree[A: ClassTag](config: Config):
           i: Index,
           leftSize: TSize
       ): (MultiLeaf[A], Index, TSize) =
-        val (slot, subIndex, left) = slotAndSubIndex(capIndex, i, leftSide)
+        val (slot, subIndex, left) = locate(capIndex, i, leftSide)
         node match
           case UpperNode(elems) =>
             loop(capIndex.decr, leftSide && slot === 0, elems(slot.value), subIndex, leftSize + left)
@@ -599,22 +599,24 @@ object ArrayTree:
       if ensureLevels(height) then body(height)
       else throw new IllegalArgumentException(s"Internal error: $height is too heigh for $this.")
 
-    protected[concurrent] inline def slotAndSubIndex(
+    protected[concurrent] inline def locate(
         capIndex: Index,
         i: Index,
         leftSide: Boolean
-    ): (Index, Index, TSize) =
-      levelCaps(capIndex.value).slotAndSubIndex(i, leftSide)
+    ): Location =
+      levelCaps(capIndex.value).locate(i, leftSide)
 
   object Config:
+    protected[concurrent] type Location = (slot: Index, subIndex: Index, leftSize: TSize)
+
     /** Capacities per tree level. */
     sealed protected[concurrent] trait LevelCap:
       def first: Capacity
 
       // TODO optimize return by packing it into primitive
-      def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index, TSize)
+      def locate[U](i: Index, leftSide: Boolean): Location
 
-      protected def slotAndSubIndex[U](i: Index, leftSide: Boolean, subsequent: Capacity): (Index, Index, TSize) =
+      protected def locate[U](i: Index, leftSide: Boolean, subsequent: Capacity): Location =
         if leftSide then
           if i < first.asNonNegative then (Index.zero, i, TSize.zero)
           else
@@ -634,8 +636,8 @@ object ArrayTree:
         * @param total the capacity of all nodes for the given height.
         */
       protected[concurrent] case class Full(first: Capacity, subsequent: Capacity, total: Capacity) extends LevelCap:
-        def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index, TSize) =
-          slotAndSubIndex(i, leftSide, subsequent)
+        def locate[U](i: Index, leftSide: Boolean): Location =
+          locate(i, leftSide, subsequent)
 
         def next(using nodeCap: Capacity): LevelCap =
           Try(nodeCap * subsequent).map(newSubsequent =>
@@ -649,9 +651,9 @@ object ArrayTree:
         * This copes with a numeric overflow of `Capacity` somewhere within this tree level.
         */
       protected[concurrent] case class Partial(first: Capacity, subsequent: Option[Capacity]) extends LevelCap:
-        def slotAndSubIndex[U](i: Index, leftSide: Boolean): (Index, Index, TSize) =
+        def locate[U](i: Index, leftSide: Boolean): Location =
           subsequent match
-            case Some(s) => slotAndSubIndex(i, leftSide, s)
+            case Some(s) => locate(i, leftSide, s)
             case None    => (Index(1), i.mapTrusted(_ - first.value), first.asNonNegative)
 
       // TODO optimize arithmetics by rounding up sizes to power of 2 and shifting
