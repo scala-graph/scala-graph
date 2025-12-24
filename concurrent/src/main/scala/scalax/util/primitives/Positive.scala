@@ -37,7 +37,7 @@ object Positive extends Limited[Int, Positive], LimitedArithmetics[Int, Positive
     inline def asNonNegative: NonNegative = NonNegative.trust(n)
 
     /** `Iterator` over all `Int`s in { 0, ..., n - 1 }. */
-    def indexIterator: Iterator[Int] = asNonNegative.indexIterator
+    def indexes: Iterator[Int] = asNonNegative.indexes
 
     /** Calls `f` passing `Int`s in { 0, ..., n - 1 }. */
     inline infix def foreachIndex(f: Int => Unit): Unit = asNonNegative.foreachIndex(f)

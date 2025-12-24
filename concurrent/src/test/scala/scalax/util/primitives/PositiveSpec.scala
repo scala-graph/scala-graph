@@ -64,7 +64,7 @@ class PositiveSpec extends RefSpec with Matchers with OptionValues:
     Positive(1).mapValidated(_ => -3) shouldBe empty
 
   def `indexIterator `: Unit =
-    PositiveSize(3).indexIterator.toList shouldBe List(0, 1, 2)
+    PositiveSize(3).indexes.toList shouldBe List(0, 1, 2)
 
   def `foreachIndex `: Unit =
     var sum = 0

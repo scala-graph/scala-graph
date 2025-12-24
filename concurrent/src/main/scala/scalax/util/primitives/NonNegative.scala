@@ -38,7 +38,7 @@ object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, No
     inline def %(b: NonNegative): NonNegative = nn % b
 
     /** `Iterator` over all `Int`s in { 0, ..., n - 1 }. */
-    def indexIterator: Iterator[Int] =
+    def indexes: Iterator[Int] =
       new AbstractIterator[Int]:
         var i: Int = 0
 
@@ -47,6 +47,16 @@ object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, No
           val ret = i
           i += 1
           ret
+        override def knownSize: Int = nn
+
+    def reverseIndexes: Iterator[NonNegative] =
+      new AbstractIterator[Int]:
+        var i: Int = nn
+
+        def hasNext: Boolean = i > 0
+        def next(): Int      =
+          i -= 1
+          i
         override def knownSize: Int = nn
 
     /** Calls `f` passing `Int`s in { 0, ..., n - 1 }. */
@@ -67,7 +77,7 @@ object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, No
     inline def map[B](f: Int => B): Iterator[B]                   = iterator map f
     inline def flatMap[B](f: Int => IterableOnce[B]): Iterator[B] = iterator flatMap f
     inline def withFilter(p: Int => Boolean): Iterator[Int]       = iterator filter p
-    inline def iterator: Iterator[Int]                            = limit.indexIterator
+    inline def iterator: Iterator[Int]                            = limit.indexes
     inline def foreach(f: Int => Unit): Unit                      = limit foreachIndex f
 
 type Size = NonNegative

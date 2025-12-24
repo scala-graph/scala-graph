@@ -171,7 +171,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
 
     private def populateAndCheck(size: PositiveSize): Unit =
       val tree = ArrayTree[Int](smallConfig)
-      size.indexIterator foreach tree.append
+      size.indexes foreach tree.append
 
       Range(start = 0, end = size.value - 1, step = 3) foreach { i =>
         tree(TIndex.trust(i)) shouldBe i
@@ -298,7 +298,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
 
     private def check(size: Size): Unit =
       val tree     = ArrayTree[Int](config) tap (t => 1 to size.value foreach t.append)
-      val expected = Array.tabulate(size.value)(n => size.value - n)
+      val expected = Array.tabulate(size.value)(size.value - _)
       tree.reverseIterator.toBuffer should contain theSameElementsInOrderAs expected
 
     def `size:  0`: Unit = check(0)
@@ -316,6 +316,37 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       val expectedSize = from.incr.value
       val expected     = Array.tabulate(expectedSize)(expectedSize - _)
       tree.reverseIterator(from).toBuffer should contain theSameElementsInOrderAs expected
+
+    def `size:  1, from  0`: Unit = check(1, 0)
+    def `size:  2, from  1`: Unit = check(2, 1)
+    def `size:  5, from  3`: Unit = check(5, 3)
+    def `size: 10, from  7`: Unit = check(10, 7)
+    def `size: 21, from 11`: Unit = check(21, 11)
+    def `size: 21, from 21`: Unit = an[IndexOutOfBoundsException] shouldBe thrownBy(check(21, 21))
+
+  object `reverse iterator with index`:
+    val config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
+
+    private def check(size: Size): Unit =
+      val tree     = ArrayTree[Int](config) tap (t => 1 to size.value foreach t.append)
+      val expected = Array.tabulate(size.value)(n => (size.value - n) -> (size.value - n - 1))
+      tree.reverseIteratorWithIndex.toBuffer should contain theSameElementsInOrderAs expected
+
+    def `size:  0`: Unit = check(0)
+    def `size:  1`: Unit = check(1)
+    def `size:  2`: Unit = check(2)
+    def `size:  5`: Unit = check(5)
+    def `size: 10`: Unit = check(10)
+    def `size: 21`: Unit = check(21)
+
+  object `reverse iterator from with index`:
+    val config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
+
+    private def check(size: Size, from: TIndex): Unit =
+      val tree         = ArrayTree[Int](config) tap (t => 1 to size.value foreach t.append)
+      val expectedSize = from.incr.value
+      val expected     = Array.tabulate(expectedSize)(n => (expectedSize - n) -> (expectedSize - n - 1))
+      tree.reverseIteratorWithIndex(from).toBuffer should contain theSameElementsInOrderAs expected
 
     def `size:  1, from  0`: Unit = check(1, 0)
     def `size:  2, from  1`: Unit = check(2, 1)
