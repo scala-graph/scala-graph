@@ -27,8 +27,11 @@ object Positive extends Limited[Int, Positive], LimitedArithmetics[Int, Positive
     inline def <=(b: Positive): Boolean = n <= b
     inline def >=(b: Positive): Boolean = n >= b
 
-    inline def incr: Positive                    = LimitedIntImpl.incr(n)
-    inline def decr: Positive                    = LimitedIntImpl.decr(n)
+    inline def incr: Positive        = LimitedIntImpl.incr(n)
+    inline def incrTrusted: Positive = n + 1
+    inline def decr: Positive        = LimitedIntImpl.decr(n)
+    inline def decrTrusted: Positive = n - 1
+
     inline def +(addend: Positive): Positive     = LimitedIntImpl.addPositive(n, addend)
     inline def *(factor: Positive): Positive     = LimitedIntImpl.mulPositive(n, factor)
     inline def -(subtrahend: Positive): Positive = LimitedIntImpl.subPositive(n, subtrahend)

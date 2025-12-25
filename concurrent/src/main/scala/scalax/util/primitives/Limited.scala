@@ -30,9 +30,11 @@ trait Limited[A <: AnyVal, O]:
 
     /** @throws LimitOverflowException if the result exceeds `upperLimit`. */
     def incr: O
+    def incrTrusted: O
 
     /** @throws LimitUnderflowException if the result would fall below `lowerLimit`. */
     def decr: O
+    def decrTrusted: O
 
     /** @return the result of `f` as `Some` if valid, otherwise `None`. */
     def mapValidated(f: A => A): Option[O] =

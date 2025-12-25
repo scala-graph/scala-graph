@@ -39,7 +39,7 @@ final class ArrayTree[A: ClassTag](config: Config):
     * This redundant number, it could also be calculated as a function of `config` and `_size`,
     * is handy for index-based look-ups.
     */
-  @volatile private var _levels = Size.zero
+  @volatile private var _levels = Level.zero
 
   private val _collisions = AtomicLong(0)
 
@@ -166,38 +166,39 @@ final class ArrayTree[A: ClassTag](config: Config):
   protected[concurrent] def treeIterator: Iterator[Tree[A]] =
     treeIteratorWithLevel map (_._1)
 
-  private def treeIteratorWithLevel: Iterator[(Tree[A], Int)] = _tree match
+  private def treeIteratorWithLevel: Iterator[(Tree[A], Level)] = _tree match
     case tree: Tree[A] =>
       val lastSize = size
-      new AbstractIterator[(Tree[A], Int)]:
+      new AbstractIterator[(Tree[A], Level)]:
         private var consumedElems = TSize.zero
-        private val stack         = Stack.empty[(Node[A], Index)]
+        private val stack         = Stack.empty[(Node[A], Level)]
 
         def hasNext: Boolean = consumedElems < lastSize
 
-        def next(): (Tree[A], Int) =
+        def next(): (Tree[A], Level) =
           stack.headOption match
             case Some(UpperNode(elems) -> i) =>
-              val node = elems(i.value)
+              val node       = elems(i.value)
+              val sizeBefore = stack.size
               stack push node -> Index.zero
-              node            -> (stack.size - 1)
+              node            -> Level.trust(sizeBefore)
             case Some(LeafParentNode(elems) -> i) =>
               val leaf  = elems(i.value)
-              val level = stack.size
+              val level = Level.trust(stack.size)
               consumedElems += leaf.size
               stack.popWhile { case node -> i =>
-                i.incr == node.size
+                i.incrTrusted == node.size
               }
               stack.headOption map { case node -> i =>
                 stack.pop()
-                stack push node -> i.incr
+                stack push node -> i.incrTrusted
               }
               leaf -> level
             case None if hasNext => // first call of next()
               tree match
-                case node: Node[A]         => stack push node -> Index.zero; node -> 0
-                case multi: MultiLeaf[A]   => consumedElems += multi.size; multi -> 0
-                case single: SingleLeaf[A] => consumedElems = consumedElems.incr; single -> 0
+                case node: Node[A]         => stack push node -> Index.zero; node -> Level.zero
+                case multi: MultiLeaf[A]   => consumedElems += multi.size; multi -> Level.zero
+                case single: SingleLeaf[A] => consumedElems = consumedElems.incrTrusted; single -> Level.zero
             case None => throw new NoSuchElementException
     case null => Iterator.empty
   end treeIteratorWithLevel
@@ -211,9 +212,9 @@ final class ArrayTree[A: ClassTag](config: Config):
     val indent  = " ".repeat(indentSize.value)
     val margin  = " ".repeat(marginSize.value)
 
-    infix def append(elem: String, level: Int): builder.type =
+    infix def append(elem: String, level: Level): builder.type =
       builder append margin
-      builder append indent.repeat(level)
+      builder append indent.repeat(level.value)
       builder append elem
       builder append System.lineSeparator
 
@@ -233,6 +234,9 @@ object ArrayTree:
 
   type Capacity = Positive
   val Capacity = Positive
+
+  type Level = NonNegative
+  val Level = NonNegative
 
   def of[A: ClassTag](expectedSize20thPercentile: Positive, expectedSize90thPercentile: Positive) =
     // TODO
@@ -378,10 +382,10 @@ object ArrayTree:
                   distance: Size
               ): (Either[Many[A], Node[A]], Size) =
                 node match
-                  case u: UpperNode[A] if u.exhausted      => loop(u.last, extendable, distance.incr)
+                  case u: UpperNode[A] if u.exhausted      => loop(u.last, extendable, distance.incrTrusted)
                   case u: UpperNode[A]                     => loop(u.last, Some(u), Size(1))
                   case l: LeafParentNode[A] if l.exhausted =>
-                    extendable.map(n => Right(n) -> distance.incr).getOrElse(Left(r) -> distance.incr)
+                    extendable.map(n => Right(n) -> distance.incrTrusted).getOrElse(Left(r) -> distance.incrTrusted)
                   case l: LeafParentNode[A] => Right(l) -> Size(1)
 
               loop(r, None, Size.zero)
@@ -404,7 +408,7 @@ object ArrayTree:
                 parent match
                   case upper: UpperNode[A] =>
                     assert(i < distance)
-                    val incr = i.incr
+                    val incr = i.incrTrusted
                     loop(incr, newNode(upper = incr < distance) tap upper.append)
                   case leafParent: LeafParentNode[A] =>
                     assert(i == distance)
@@ -417,7 +421,7 @@ object ArrayTree:
                   case exhaustedLeaf: MultiLeaf[A] =>
                     LeafParentNode.empty[A](nodeCap) tap (_ append exhaustedLeaf)
 
-              root -> loop(Size(0), root)
+              root -> loop(Size.zero, root)
 
             if updateState(pathLeaf, Some(newPath), newClosedSize) then newClosedSize
             else Collision
@@ -428,10 +432,10 @@ object ArrayTree:
                 parent match
                   case upper: UpperNode[A] =>
                     assert(i < distance)
-                    val incr = i.incr
+                    val incr = i.incrTrusted
                     val n    = newNode(upper = incr < distance)
                     if root.isDefined then upper append n
-                    loop(i.incr, n, root orElse Some(n))
+                    loop(i.incrTrusted, n, root orElse Some(n))
                   case leafParent: LeafParentNode[A] =>
                     assert(i == distance)
                     val l = newLeaf(a)
@@ -465,7 +469,7 @@ object ArrayTree:
 
     protected[ArrayTree] inline def reverseIteratorWithIndex(from: Index): Iterator[(A, Index)] =
       assert(from.value < _used.get)
-      MultiLeaf.ReverseIterator(elems, from.value) zip from.incr.reverseIndexes
+      MultiLeaf.ReverseIterator(elems, from.value) zip from.incrTrusted.reverseIndexes
 
     override protected def equalFields(that: Many[?]): Boolean =
       unsafeWrapArray(this.elems) == unsafeWrapArray(that.elems) &&

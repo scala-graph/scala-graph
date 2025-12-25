@@ -56,8 +56,10 @@ object Version:
     extension (n: BranchId)
       inline def <(b: BranchId): Boolean = n < b
 
-      inline def incr: BranchId = LimitedIntImpl.incr(n)
-      inline def decr: BranchId = LimitedIntImpl.decr(n)
+      inline def incr: BranchId        = LimitedIntImpl.incr(n)
+      inline def incrTrusted: BranchId = n + 1
+      inline def decr: BranchId        = LimitedIntImpl.decr(n)
+      inline def decrTrusted: BranchId = n - 1
 
   /** 32 bit, verified, non-negative `Int` up to `Int.MaxValue`. */
   protected[concurrent] opaque type Revision = Int
@@ -83,5 +85,7 @@ object Version:
     extension (n: Revision)
       inline def <(b: Revision): Boolean = n < b
 
-      inline def incr: Revision = LimitedIntImpl.incr(n)
-      inline def decr: Revision = LimitedIntImpl.decr(n)
+      inline def incr: Revision        = LimitedIntImpl.incr(n)
+      inline def incrTrusted: Revision = n + 1
+      inline def decr: Revision        = LimitedIntImpl.decr(n)
+      inline def decrTrusted: Revision = n - 1

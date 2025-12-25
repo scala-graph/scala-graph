@@ -27,8 +27,11 @@ object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, No
     inline def <=(b: NonNegative): Boolean = nn <= b
     inline def >=(b: NonNegative): Boolean = nn >= b
 
-    inline def incr: NonNegative                       = LimitedIntImpl.incr(nn)
-    inline def decr: NonNegative                       = LimitedIntImpl.decr(nn)
+    inline def incr: NonNegative        = LimitedIntImpl.incr(nn)
+    inline def incrTrusted: NonNegative = nn + 1
+    inline def decr: NonNegative        = LimitedIntImpl.decr(nn)
+    inline def decrTrusted: NonNegative = nn - 1
+
     inline def +(addend: NonNegative): NonNegative     = LimitedIntImpl.addNonNegative(nn, addend)
     inline def *(factor: NonNegative): NonNegative     = LimitedIntImpl.mulNonNegative(nn, factor)
     inline def -(subtrahend: NonNegative): NonNegative = LimitedIntImpl.subNonNegative(nn, subtrahend)
