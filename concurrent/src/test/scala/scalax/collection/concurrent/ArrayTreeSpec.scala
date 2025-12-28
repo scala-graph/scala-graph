@@ -355,6 +355,53 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     def `size: 21, from 11`: Unit = check(21, 11)
     def `size: 21, from 21`: Unit = an[IndexOutOfBoundsException] shouldBe thrownBy(check(21, 21))
 
+  def `concurrent integration`: Unit =
+    given ExecutionContext   = ExecutionContext.global
+    val config               = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
+    val tree: ArrayTree[Int] = ArrayTree[Int](config)
+
+    def append(values: Range): IndexedSeq[TIndex] = values map tree.append
+
+    def clue(values: Range, indexes: IndexedSeq[TIndex]) =
+      LazyString(() => s"""
+                          |values: $values, indexes: ${indexes mkString "-"}
+                          |""".stripMargin)
+
+    def appendApply(values: Range): IndexedSeq[TIndex] =
+      val indexes = append(values)
+      withClue(clue(values, indexes)) {
+        indexes.map(tree.apply) shouldBe values
+      }
+      indexes
+
+    def appendIterate(values: Range): IndexedSeq[TIndex] =
+      val indexes = append(values)
+      withClue(clue(values, indexes)) {
+        tree.reverseIterator.filter(values.contains).toIndexedSeq shouldBe values.reverse
+      }
+      indexes
+
+    def appendIterateFrom(values: Range): IndexedSeq[TIndex] =
+      val indexes = append(values)
+      withClue(clue(values, indexes)) {
+        tree.reverseIterator(indexes(3)).filter(values.contains).toList shouldBe values.take(4).reverse
+      }
+      indexes
+
+    val useCases = List(
+      appendApply       -> Range(start = 1, end = 14),
+      appendIterate     -> Range(start = 50, end = 72),
+      appendIterateFrom -> Range(start = 100, end = 119)
+    )
+    val futures = Future.sequence(useCases map { case f -> values =>
+      Future(f(values))
+    })
+    withClue(LazyString(() => tree.prettifyTree(includeNodes = true))) {
+      whenReady(futures) { results =>
+        results.flatten.size shouldBe useCases.map(_._2.size).sum
+      }
+    }
+
 object ArrayTreeSpec:
   private val lineSeparator = System.lineSeparator
   private val sep           = s"$lineSeparator  "
@@ -398,3 +445,7 @@ object ArrayTreeSpec:
         )
       )
     }
+
+  private class LazyString(thunk: () => String):
+    private lazy val value: String = thunk()
+    override def toString: String  = value.toString

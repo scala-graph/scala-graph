@@ -171,9 +171,17 @@ final class ArrayTree[A: ClassTag](config: Config):
       val lastSize = size
       new AbstractIterator[(Tree[A], Level)]:
         private var consumedElems = TSize.zero
-        private val stack         = Stack.empty[(Node[A], Level)]
+        private val stack         = Stack.empty[(Node[A], Index)]
 
-        def hasNext: Boolean = consumedElems < lastSize
+        def hasNext: Boolean =
+          def doneStillCheckForProperSize =
+            if consumedElems < lastSize then
+              // should never happen; println is preferable over Exception in test
+              println(
+                s"!!! mismatch detected in treeIteratorWithLevel: consumedElems=$consumedElems < size=$lastSize !!!"
+              )
+            false
+          stack.nonEmpty || consumedElems == TSize.zero || doneStillCheckForProperSize
 
         def next(): (Tree[A], Level) =
           stack.headOption match
@@ -436,19 +444,22 @@ object ArrayTree:
                     val n    = newNode(upper = incr < distance)
                     if root.isDefined then upper append n
                     loop(i.incrTrusted, n, root orElse Some(n))
-                  case leafParent: LeafParentNode[A] =>
+                  case leafParent: LeafParentNode[A] if leafParent ne extendable =>
                     assert(i == distance)
-                    val l = newLeaf(a)
-                    leafParent append l
-                    (root getOrElse l) -> l
+                    val multi = newLeaf(a)
+                    leafParent append multi
+                    (root getOrElse multi) -> multi
+                  case leafParent: LeafParentNode[A] =>
+                    val multi = newLeaf(a)
+                    (root getOrElse multi) -> multi
 
               loop(Size(1), extendable, None)
 
             if updateState(pathLeaf, None, newClosedSize) then
               (extendable, newPath) match
-                case (upper: UpperNode[A], node: Node[A])    => upper append node
-                case (_: LeafParentNode[A], _: MultiLeaf[A]) =>
-                case _                                       => assert(false, "unexpected type mismatch")
+                case (upper: UpperNode[A], node: Node[A])        => upper append node
+                case (leafP: LeafParentNode[A], m: MultiLeaf[A]) => if leafP eq extendable then leafP append m
+                case _                                           => assert(false, "unexpected type mismatch")
               newClosedSize
             else Collision
       end ensureNodeAndAppend
