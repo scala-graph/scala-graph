@@ -17,17 +17,22 @@ import scala.collection.immutable.ArraySeq
 class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
   implicit val disableDefaultArrayHandling: Prettifier = Prettifier(_.toString)
 
+  /* The following conversions are not recommended in production code,
+   * but they are useful in test by allowing to pass a plain Int instead of a factory method
+   * like `2` instead of `Size(2)`. On invalid values an exception will be thrown on test execution.
+   */
   import scala.language.implicitConversions
   private given Conversion[Int, Size]         = (i: Int) => Size.unsafe(i)
   private given Conversion[Int, PositiveSize] = (i: Int) => PositiveSize.unsafe(i)
+  private given Conversion[Int, Log2Capacity] = (i: Int) => Log2Capacity.powerOf2Unsafe(i)
 
   import ArrayTreeSpec.*
 
   def `append single threaded`: Unit =
     def check(appendCount: PositiveSize)(
         initialCap: Capacity,
-        leafCap: Capacity = 2,
-        nodeCap: Capacity = 2
+        leafCap: Log2Capacity = 2,
+        nodeCap: Log2Capacity = 2
     ): Unit =
       info(f"$appendCount%2d times to tree($initialCap, $leafCap, $nodeCap)")
       val tree = ArrayTree[Int](Config(initialCap, leafCap, nodeCap))
@@ -44,15 +49,15 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     check(5)(initialCap = 4)
     check(7)(initialCap = 4)
     check(9)(initialCap = 4)
-    check(40)(initialCap = 1, leafCap = 5, nodeCap = 5)
+    check(40)(initialCap = 1, leafCap = 4, nodeCap = 4)
 
   def `append concurrently`: Unit =
     given ExecutionContext = ExecutionContext.global
 
     def append(count: Int)(
         initialCap: Capacity,
-        leafCap: Capacity = 2,
-        nodeCap: Capacity = 2
+        leafCap: Log2Capacity = 2,
+        nodeCap: Log2Capacity = 2
     ): Unit =
       given tree: ArrayTree[Int] = ArrayTree[Int](Config(initialCap, leafCap, nodeCap))
       val range                  = 0 until count
@@ -71,39 +76,39 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     append(count = 25)(initialCap = 3)
 
   object `treeIterator, leafCapacity: 2, nodeCapacity: 2`:
-    private val defaultLeafCapacity = 2
-    private val defaultNodeCapacity = 2
+    private val defaultLeafCapacity: Log2Capacity = 2
+    private val defaultNodeCapacity: Log2Capacity = 2
 
     private def tree(size: PositiveSize)(
         initialCap: Capacity,
-        leafCap: Capacity = defaultLeafCapacity,
-        nodeCap: Capacity = defaultNodeCapacity
+        leafCap: Log2Capacity = defaultLeafCapacity,
+        nodeCap: Log2Capacity = defaultNodeCapacity
     ): ArrayTree[Int] =
       ArrayTree[Int](Config(initialCap, leafCap, nodeCap)) tap (t => 1 to size.value foreach t.append)
 
     extension (multi: MultiLeaf.type)
       private def fake: MultiLeaf[Int] =
-        MultiLeaf.empty[Int](defaultLeafCapacity, null)
+        MultiLeaf.empty[Int](defaultLeafCapacity.asPositive, null)
 
       private def withNullLeftNeighbor(elems: Int*): MultiLeaf[Int] =
-        MultiLeaf(defaultLeafCapacity, null)(elems*)
+        MultiLeaf(defaultLeafCapacity.asPositive, null)(elems*)
 
       private def withFakeLeftNeighbor(elems: Int*): MultiLeaf[Int] =
-        MultiLeaf(defaultLeafCapacity, fake)(elems*)
+        MultiLeaf(defaultLeafCapacity.asPositive, fake)(elems*)
 
     extension (node: UpperNode.type)
       private def fake: UpperNode[Int] =
         UpperNode.empty[Int](defaultNodeCapacity)
 
       private def denseFake: UpperNode[Int] =
-        UpperNode(defaultNodeCapacity)(Array.fill(defaultNodeCapacity)(UpperNode.fake)*)
+        UpperNode(defaultNodeCapacity)(Array.fill(defaultNodeCapacity.asInt)(UpperNode.fake)*)
 
       private def sparseFake(elemCount: PositiveSize): UpperNode[Int] =
         UpperNode(defaultNodeCapacity)(Array.fill(elemCount.value)(UpperNode.fake)*)
 
     extension (node: LeafParentNode.type)
       private def denseFake: LeafParentNode[Int] =
-        LeafParentNode(defaultNodeCapacity)(Array.fill(defaultNodeCapacity)(MultiLeaf.fake)*)
+        LeafParentNode(defaultNodeCapacity)(Array.fill(defaultNodeCapacity.asInt)(MultiLeaf.fake)*)
 
       private def sparseFake(elemCount: PositiveSize): LeafParentNode[Int] =
         LeafParentNode(defaultNodeCapacity)(Array.fill(elemCount.value)(MultiLeaf.fake)*)
@@ -161,8 +166,8 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       )
 
   object `apply index`:
-    val initialOneConfig = Config(initialCap = 1, leafCap = 10, nodeCap = 4)
-    val smallConfig      = Config(initialCap = 20, leafCap = 10, nodeCap = 4)
+    val initialOneConfig = Config(initialCap = 1, leafCap = 8, nodeCap = 4)
+    val smallConfig      = Config(initialCap = 20, leafCap = 8, nodeCap = 4)
 
     private def smallConfigLevelCaps(i: Int): LevelCap.Full =
       smallConfig.levelCaps(i) match
@@ -193,11 +198,11 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
 
     def `root LeafParentNode`: Unit =
       val caps0 = smallConfigLevelCaps(0)
-      populateAndCheck(caps0.first + caps0.subsequent)
+      populateAndCheck(caps0.first + caps0.subsequent.asPositive)
 
     def `root UpperNode`: Unit =
       val caps1 = smallConfigLevelCaps(1)
-      populateAndCheck(caps1.first + caps1.subsequent * 3 + 2)
+      populateAndCheck(caps1.first + caps1.subsequent.asPositive * 3 + 2)
 
   object `config `:
     import ArrayTree.Config
@@ -207,76 +212,72 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       Config(
         initialCap = 10,
         leafCap = 4,
-        nodeCap = 3
+        nodeCap = 4
       ).levelCaps should have length 8
 
     def `full levelSizes`: Unit =
       Config(
         initialCap = 1000,
-        leafCap = 200,
+        leafCap = 128,
         nodeCap = 4
       ).levelCaps should contain theSameElementsInOrderAs List(
-        Full(1_000, 200, 1_600),
-        Full(1_600, 800, 4_000),
-        Full(4_000, 3_200, 13_600),
-        Full(13_600, 12_800, 52_000),
-        Full(52_000, 51_200, 205_600),
-        Full(205_600, 204_800, 820_000),
-        Full(820_000, 819_200, 3_277_600),
-        Full(3_277_600, 3_276_800, 13_108_000)
+        Full(1_000, 128, 1_384),
+        Full(1_384, 512, 2_920),
+        Full(2_920, 2_048, 9_064),
+        Full(9_064, 8_192, 33_640),
+        Full(33_640, 32_768, 131_944),
+        Full(131_944, 131_072, 525_160),
+        Full(525_160, 524_288, 2_098_024),
+        Full(2_098_024, 2_097_152, 8_389_480)
       )
 
     def `partial levelSizes`: Unit =
-      val config = Config(Capacity(1000), Capacity(100), Capacity(10))
+      val config = Config(Capacity(1000), 32, 8)
       config.levelCaps.last match
         case Full(_, _, total) =>
-          config.extendLevelCaps shouldBe true
+          config.extendLevelCaps() shouldBe true
           config.levelCaps.last shouldBe a[Partial]
         case p: Partial =>
           fail()
 
     object `propagate index`:
       val initialCap = Capacity(100)
-      val config     = Config(
-        initialCap = initialCap,
-        leafCap = Capacity(10),
-        nodeCap = Capacity(4)
-      )
+      val config     = Config(initialCap = initialCap, leafCap = 8, nodeCap = 4)
 
       def `illustrate levelCaps of config`: Unit =
-        /* height left side     non-left side
+        /* height left side    non-left side
          * ----------------------------------
-         *      5     2_650
-         *      4       730               640
-         *      3       730               640
-         *      2       250               120
-         *      1       130                40
-         *      0       100 10 10 10       10 10 10 10
+         *      5     8.284
+         *      4     2.140            2.048
+         *      3       604              512
+         *      2       220              128
+         *      1       124               32
+         *      0       100 8 8 8    8 8 8 8
          */
         config.levelCaps.take(4) should contain theSameElementsInOrderAs List(
-          Full(100, 10, 130),
-          Full(130, 40, 250),
-          Full(250, 160, 730),
-          Full(730, 640, 2650)
+          Full(100, 8, 124),
+          Full(124, 32, 220),
+          Full(220, 128, 604),
+          Full(604, 512, 2_140)
         )
 
       def `index zero`: Unit =
         propagatedIndexes(startHeight = 1, index = TIndex.zero) shouldBe ArraySeq(0, 0)
 
       def `index below initial capacity`: Unit =
-        val index = TIndex(99)
+        val index = TIndex(97)
         propagatedIndexes(startHeight = 4, index) shouldBe ArraySeq(0, 0, 0, 0, index)
 
       def `index in first subsequent leaf`: Unit =
-        val index = TIndex(105)
+        val index = TIndex(103)
         propagatedIndexes(startHeight = 4, index) shouldBe
           ArraySeq(0, 0, 0, 1, index.value - initialCap.value)
 
       def `index in the middle of the tree`: Unit =
-        propagatedIndexes(startHeight = 4, TIndex(2001)) shouldBe ArraySeq(2, 3, 3, 3, 1)
+        propagatedIndexes(startHeight = 4, TIndex(1200)) shouldBe ArraySeq(2, 0, 2, 2, 4)
 
       def `index in the last leaf`: Unit =
-        propagatedIndexes(startHeight = 4, TIndex(2648)) shouldBe ArraySeq(3, 3, 3, 3, 8)
+        propagatedIndexes(startHeight = 5, TIndex(8276)) shouldBe ArraySeq(3, 3, 3, 3, 3, 0)
 
       private def propagatedIndexes[A](startHeight: Positive, index: TIndex, leftSide: Boolean = true): ArraySeq[Int] =
         import config.*

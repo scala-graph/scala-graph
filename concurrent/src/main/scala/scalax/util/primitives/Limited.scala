@@ -44,11 +44,10 @@ trait Limited[A <: AnyVal, O]:
     def mapTrusted(f: A => A): O =
       f(limited.value).asInstanceOf[O]
 
-final private[scalax] class ValueOutOfBoundsException(value: AnyVal, cause: String)
-    extends Exception(s"Value $value $cause.")
+final class ValueOutOfBoundsException(value: AnyVal, cause: String) extends Exception(s"Value $value $cause.")
 
-final private[scalax] class LimitOverflowException  extends Exception
-final private[scalax] class LimitUnderflowException extends Exception
+final class LimitOverflowException  extends Exception
+final class LimitUnderflowException extends Exception
 
 trait LimitedArithmetics[A <: AnyVal, O]:
   this: Limited[A, O] =>

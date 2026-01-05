@@ -13,8 +13,7 @@ object Positive extends Limited[Int, Positive], LimitedArithmetics[Int, Positive
   inline def lowerLimit: Int = 1
   inline def upperLimit: Int = Int.MaxValue - 8
 
-  inline def valid(a: Int): Boolean =
-    a >= lowerLimit && a <= upperLimit
+  inline def valid(i: Int): Boolean = i >= lowerLimit && i <= upperLimit
 
   final inline def apply(i: Int): Positive =
     inline if valid(i) then i

@@ -40,6 +40,16 @@ object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, No
     inline def /(b: NonNegative): NonNegative = nn / b
     inline def %(b: NonNegative): NonNegative = nn % b
 
+    def fold[B](ifZero: => B, withPositive: Positive => B): B =
+      if nn == zero then ifZero
+      else withPositive(Positive.trust(nn))
+
+    def fold[B](
+        zeroPredicate: NonNegative => Boolean
+    )(withZeroOrMore: NonNegative => B, withPositive: Positive => B): B =
+      if zeroPredicate(nn) then withZeroOrMore(nn)
+      else withPositive(Positive.trust(nn))
+
     /** `Iterator` over all `Int`s in { 0, ..., n - 1 }. */
     def indexes: Iterator[Int] =
       new AbstractIterator[Int]:
