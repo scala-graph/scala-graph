@@ -14,13 +14,22 @@ class PositiveLog2ValueSpec extends RefSpec with Matchers:
   private inline val invalidPowerOf2 = validPowerOf2 - 1
   private inline val abovePowerOf2   = 1 << aboveLog2
 
-  def `log2 `: Unit =
-    "log2(-1)" shouldNot compile
-    "log2(0)" shouldNot compile
-    log2(1).value shouldBe 1
-    log2(bigLog2).value shouldBe bigLog2
-    log2(limitLog2).value shouldBe limitLog2
-    "log2(above)" shouldNot compile
+  def `apply `: Unit =
+    "PositiveLog2Value(-1)" shouldNot compile
+    "PositiveLog2Value(0)" shouldNot compile
+    PositiveLog2Value(1).value shouldBe 1
+    PositiveLog2Value(bigLog2).value shouldBe bigLog2
+    PositiveLog2Value(limitLog2).value shouldBe limitLog2
+    "PositiveLog2Value(above)" shouldNot compile
+
+  def `powerOf2 `: Unit =
+    "powerOf2(-1)" shouldNot compile
+    "powerOf2(0)" shouldNot compile
+    "powerOf2(1)" shouldNot compile
+    powerOf2(2).value shouldBe 1
+    powerOf2(64).value shouldBe 6
+    "powerOf2(44)" shouldNot compile
+    "powerOf2(Int.MaxValue)" shouldNot compile
 
   def `log2Unsafe `: Unit =
     a[ValueOutOfBoundsException] shouldBe thrownBy(log2Unsafe(0))
@@ -38,31 +47,31 @@ class PositiveLog2ValueSpec extends RefSpec with Matchers:
     a[ValueOutOfBoundsException] shouldBe thrownBy(powerOf2Unsafe(abovePowerOf2))
 
   def `asInt `: Unit =
-    log2(bigLog2).asInt shouldBe 1 << bigLog2
+    PositiveLog2Value(bigLog2).asInt shouldBe 1 << bigLog2
 
   def `asPositive `: Unit =
-    log2(1).asPositive shouldBe Positive(2)
+    PositiveLog2Value(1).asPositive shouldBe Positive(2)
 
   def `* `: Unit =
-    log2(4) * log2(2) shouldBe log2(6)
+    PositiveLog2Value(4) * PositiveLog2Value(2) shouldBe PositiveLog2Value(6)
 
     import PositiveLog2ValueOverPositive.`*`
     import PositiveLog2ValueOverNonNegative.`*`
 
-    Positive(3) * log2(1) shouldBe Positive(6)
-    NonNegative(3) * log2(1) shouldBe NonNegative(6)
-    a[LimitOverflowException] shouldBe thrownBy(NonNegative.unsafe(Int.MaxValue - 10) * log2(1))
+    Positive(3) * PositiveLog2Value(1) shouldBe Positive(6)
+    NonNegative(3) * PositiveLog2Value(1) shouldBe NonNegative(6)
+    a[LimitOverflowException] shouldBe thrownBy(NonNegative.unsafe(Int.MaxValue - 10) * PositiveLog2Value(1))
 
   def `/ `: Unit =
     import PositiveLog2ValueOverPositive.`/`
     import PositiveLog2ValueOverNonNegative.`/`
 
-    Positive(3) / log2(1) shouldBe Positive(1)
-    NonNegative(10) / log2(2) shouldBe NonNegative(2)
-    a[LimitUnderflowException] shouldBe thrownBy(Positive(3) / log2(2))
+    Positive(3) / PositiveLog2Value(1) shouldBe Positive(1)
+    NonNegative(10) / PositiveLog2Value(2) shouldBe NonNegative(2)
+    a[LimitUnderflowException] shouldBe thrownBy(Positive(3) / PositiveLog2Value(2))
 
   def `% `: Unit =
     import PositiveLog2ValueOverNonNegative.`%`
 
-    NonNegative(11) % log2(2) shouldBe NonNegative(3)
-    NonNegative(0)  % log2(2) shouldBe NonNegative(0)
+    NonNegative(11) % PositiveLog2Value(2) shouldBe NonNegative(3)
+    NonNegative(0)  % PositiveLog2Value(2) shouldBe NonNegative(0)

@@ -1,38 +1,56 @@
 package scalax.util.primitives
 
 import scala.annotation.targetName
-import scala.compiletime.{codeOf, error}
+import scala.compiletime.{codeOf, constValue, error}
+import scala.compiletime.ops.any.==
+import scala.compiletime.ops.int.*
 
 /** Represents power of 2 `Int` by its base-2 log.
-  * The lowest valid value is `1`, so the lowest valid power of 2 is `2`.
+  * The lowest valid `value` is `1`, which corresponds to the power of 2 number 2.
+  * The highest valid `value` is `30`, which corresponds to the power of 2 number 1,073,741,824.
   */
 opaque type PositiveLog2Value = Byte
 
 object PositiveLog2Value extends Log2Value[PositiveLog2Value]:
-  inline def lowerLimit: Byte        = 1
-  inline def upperLimit: Byte        = 30
-  private inline def notInValidRange = " is not in the valid range for PositiveLog2Value."
+  inline def lowerLimit: Byte = 1
+  inline def upperLimit: Byte = 30
 
-  /* TODO `Byte` in this signature does not work yet when called in `inline if`. */
+  private inline def notInValidRange  = " is not in the range of 1 to 30."
+  private inline def notValidPowerOf2 = " is not a positive power of 2 with a positive log 2."
+
   inline def valid(byte: Byte): Boolean = byte >= lowerLimit && byte <= upperLimit
 
+  inline def apply(byte: Byte): PositiveLog2Value =
+    inline if valid(byte) then byte
+    else error(codeOf(byte) + notInValidRange)
+
   inline def validLog2(byte: Int): Boolean  = byte >= lowerLimit && byte <= upperLimit
-  inline def validPowerOf2(i: Int): Boolean = i > 0 && ((i & (i - 1)) == 0)
+  inline def validPowerOf2(i: Int): Boolean = i > 1 && ((i & (i - 1)) == 0)
 
-  inline def log2(i: Int): PositiveLog2Value =
-    inline if validLog2(i) then i.toByte
-    else error(codeOf(i) + notInValidRange)
+  inline def powerOf2[I <: Int & Singleton](i: I): PositiveLog2Value =
+    type IsPowerOf2[I <: Int] <: Boolean = (I > 1) match
+      case true  => BitwiseAnd[I, I - 1] == 0
+      case false => false
 
-  // TODO `inline def powerOf2(i: Int): PositiveLog2Value` would be nice to have.
+    inline if constValue[IsPowerOf2[I]] then
+      type TrailingZeros[N <: Int] <: Int = N match
+        case 0 | 1 => 0
+        case _     =>
+          (N <= 0) match
+            case true  => 0
+            case false => 1 + TrailingZeros[N / 2]
+
+      constValue[31 - NumberOfLeadingZeros[I]].toByte
+    else error(codeOf(i) + notValidPowerOf2)
 
   inline def log2Unsafe(b: Byte): PositiveLog2Value =
     if validLog2(b) then b
     else throw ValueOutOfBoundsException(b, notInValidRange)
 
-  /** @throws ValueOutOfBoundsException if `i` is not a power of 2 or is not in the valid range. */
+  /** @throws ValueOutOfBoundsException if `i` is not a positive power of 2 or equals to 1. */
   final def powerOf2Unsafe(i: Int): PositiveLog2Value =
     if validPowerOf2(i) then log2Unsafe(Integer.numberOfTrailingZeros(i).toByte)
-    else throw ValueOutOfBoundsException(i, "is not a power of 2.")
+    else throw ValueOutOfBoundsException(i, notValidPowerOf2)
 
   private inline given Log2Value[PositiveLog2Value] = PositiveLog2Value
   extension (k: PositiveLog2Value)
