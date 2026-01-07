@@ -33,13 +33,6 @@ object PositiveLog2Value extends Log2Value[PositiveLog2Value]:
       case false => false
 
     inline if constValue[IsPowerOf2[I]] then
-      type TrailingZeros[N <: Int] <: Int = N match
-        case 0 | 1 => 0
-        case _     =>
-          (N <= 0) match
-            case true  => 0
-            case false => 1 + TrailingZeros[N / 2]
-
       constValue[31 - NumberOfLeadingZeros[I]].toByte
     else error(codeOf(i) + notValidPowerOf2)
 
