@@ -1,6 +1,6 @@
 package scalax.collection.concurrent
 
-import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 
 import scala.annotation.tailrec
@@ -43,15 +43,11 @@ final class ArrayTree[A](using config: Config)(using tag: ClassTag[A]):
     */
   @volatile private var _levels = Level.zero
 
-  private val _collisions = AtomicLong(0)
-
   private val treeSync = new ReentrantLock
 
   @volatile protected[concurrent] def tree: Tree[A] = _tree
 
   def size: TSize = TSize.trust(_size.get)
-
-  def collisions: Long = _collisions.get
 
   /** @throws `IndexOutOfBoundsException` if `index` is not less than `size`. */
   def apply(index: TIndex): A =
@@ -86,9 +82,7 @@ final class ArrayTree[A](using config: Config)(using tag: ClassTag[A]):
           _closedSize = closedSize
           if _size.incrementAndGet() > TSize.upperLimit then throw new LimitOverflowException
           true
-        else
-          _collisions.incrementAndGet()
-          false
+        else false
       finally
         treeSync.unlock()
 

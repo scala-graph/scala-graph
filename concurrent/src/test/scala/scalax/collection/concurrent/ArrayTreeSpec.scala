@@ -41,7 +41,6 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         (tree append i).value shouldBe i - 1
         tree.size.value shouldBe i
       }
-      tree.collisions shouldBe 0
 
     check(2)(initialCap = 1)
     check(4)(initialCap = 4)
@@ -67,7 +66,6 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         whenReady(seq) { indexes =>
           indexes should coverRange(range)
           tree.size.value shouldBe count
-          if tree.collisions == 0 then info("warning: expected some collisions but none detected")
         }
       )
 
