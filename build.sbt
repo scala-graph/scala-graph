@@ -24,7 +24,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       description := "In-memory graph editing and algorithms with the look and feel of Scala Library collections.",
       version     := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck" % "1.18.1"
+        "org.scalacheck" %% "scalacheck" % "1.19.0"
       )
     )
   )
