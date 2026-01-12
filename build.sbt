@@ -24,7 +24,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       description := "In-memory graph editing and algorithms with the look and feel of Scala Library collections.",
       version     := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck" % "1.18.1"
+        "org.scalacheck" %% "scalacheck" % "1.19.0"
       )
     )
   )
@@ -68,8 +68,8 @@ lazy val jsoniter = crossProject(JSPlatform, JVMPlatform)
       version     := Version.jsoniter, {
         val jsoniterGroup = "com.github.plokhotnyuk.jsoniter-scala"
         libraryDependencies ++= Seq(
-          jsoniterGroup %% "jsoniter-scala-core"   % "2.36.6",
-          jsoniterGroup %% "jsoniter-scala-macros" % "2.36.6"
+          jsoniterGroup %% "jsoniter-scala-core"   % "2.36.7",
+          jsoniterGroup %% "jsoniter-scala-macros" % "2.36.7"
         )
       }
     )
