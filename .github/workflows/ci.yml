@@ -5,10 +5,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scala: [ '2.13.17', '3.3.7' ]
+        scala: [ '2.13.18', '3.3.7' ]
         project: [ core, dot, jsonLift, jsoniter ]
         exclude:
-          - scala: '2.13.17'
+          - scala: '2.13.18'
             project: jsoniter
           - scala: '3.3.7'
             project: jsonLift
