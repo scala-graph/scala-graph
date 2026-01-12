@@ -16,9 +16,9 @@ final class TransformingDemoSpec extends RefSpec with Matchers {
     def `Filter your graph`(): Unit = {
       val g = Graph[Int, AnyEdge](2 ~> 3, 3 ~ 1, 5)
 
-      g filter (nodeP = _ >= 2) should ===(Graph(2, 3, 5, 2 ~> 3))
-      g filter (edgeP = _.isDirected) should ===(Graph(1, 5, 2, 3, 2 ~> 3))
-      g filter (nodeP = _ >= 2, edgeP = _.isUndirected) should ===(Graph(2, 3, 5))
+      g.filter(nodeP = _ >= 2) should ===(Graph(2, 3, 5, 2 ~> 3))
+      g.filter(edgeP = _.isDirected) should ===(Graph(1, 5, 2, 3, 2 ~> 3))
+      g.filter(nodeP = _ >= 2, edgeP = _.isUndirected) should ===(Graph(2, 3, 5))
     }
 
     def `Fold your graph`(): Unit = {
