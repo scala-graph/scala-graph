@@ -1,5 +1,5 @@
 object Version {
-  val compiler_2_13 = "2.13.17"
+  val compiler_2_13 = "2.13.18"
   val compiler_3    = "3.7.4"
 
   private val isSnapshot = false
