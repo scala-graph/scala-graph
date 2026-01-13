@@ -32,8 +32,7 @@ object PositiveLog2Value extends Log2Value[PositiveLog2Value]:
       case true  => BitwiseAnd[I, I - 1] == 0
       case false => false
 
-    inline if constValue[IsPowerOf2[I]] then
-      constValue[31 - NumberOfLeadingZeros[I]].toByte
+    inline if constValue[IsPowerOf2[I]] then constValue[31 - NumberOfLeadingZeros[I]].toByte
     else error(codeOf(i) + notValidPowerOf2)
 
   inline def log2Unsafe(b: Byte): PositiveLog2Value =

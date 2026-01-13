@@ -36,7 +36,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     ): Unit =
       info(f"$appendCount%2d times to tree($initialCap, $leafCap, $nodeCap)")
       given Config = Config(initialCap, leafCap, nodeCap)
-      val tree     = ArrayTree[Int]
+      val tree     = ArrayTree.empty[Int]
       1 to appendCount.value foreach { i =>
         (tree append i).value shouldBe i - 1
         tree.size.value shouldBe i
@@ -59,7 +59,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         leafCap: Log2Capacity = 2,
         nodeCap: Log2Capacity = 2
     ): Unit =
-      given tree: ArrayTree[Int] = ArrayTree[Int](using Config(initialCap, leafCap, nodeCap))
+      given tree: ArrayTree[Int] = ArrayTree.empty[Int](using Config(initialCap, leafCap, nodeCap))
       val range                  = 0 until count
       val seq                    = Future.sequence(range map (i => Future(tree append i)))
       withClue(f"$count%2d futures, tree($initialCap, $leafCap, $nodeCap)$lineSeparator")(
@@ -84,7 +84,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         nodeCap: Log2Capacity = defaultNodeCapacity
     ): ArrayTree[Int] =
       given Config = Config(initialCap, leafCap, nodeCap)
-      ArrayTree[Int] tap (t => 1 to size.value foreach t.append)
+      ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
 
     extension (multi: MultiLeaf.type)
       private def fake: MultiLeaf[Int] =
@@ -175,7 +175,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         case _                   => fail()
 
     private def populateAndCheck(size: PositiveSize): Unit =
-      val tree = ArrayTree[Int](using smallConfig)
+      val tree = ArrayTree.empty[Int](using smallConfig)
       size.indexes foreach tree.append
 
       Range(start = 0, end = size.value - 1, step = 3) foreach { i =>
@@ -184,11 +184,11 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       an[IndexOutOfBoundsException] shouldBe thrownBy(tree(size.asNonNegative))
 
     def `empty tree`: Unit =
-      val tree = ArrayTree[Int](using initialOneConfig)
+      val tree = ArrayTree.empty[Int](using initialOneConfig)
       an[IndexOutOfBoundsException] shouldBe thrownBy(tree(TIndex(0)))
 
     def `root SingleLeaf`: Unit =
-      val tree = ArrayTree[Int](using initialOneConfig)
+      val tree = ArrayTree.empty[Int](using initialOneConfig)
       tree append 7
       tree(TIndex.zero) shouldBe 7
       an[IndexOutOfBoundsException] shouldBe thrownBy(tree(TIndex(1)))
@@ -298,7 +298,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     val config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
 
     private def check(size: Size): Unit =
-      val tree     = ArrayTree[Int](using config) tap (t => 1 to size.value foreach t.append)
+      val tree     = ArrayTree.empty[Int](using config) tap (t => 1 to size.value foreach t.append)
       val expected = Array.tabulate(size.value)(size.value - _)
       tree.reverseIterator.toBuffer should contain theSameElementsInOrderAs expected
 
@@ -313,7 +313,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     given Config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
 
     private def check(size: Size, from: TIndex): Unit =
-      val tree         = ArrayTree[Int] tap (t => 1 to size.value foreach t.append)
+      val tree         = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
       val expectedSize = from.incr.value
       val expected     = Array.tabulate(expectedSize)(expectedSize - _)
       tree.reverseIterator(from).toBuffer should contain theSameElementsInOrderAs expected
@@ -329,7 +329,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     given Config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
 
     private def check(size: Size): Unit =
-      val tree     = ArrayTree[Int] tap (t => 1 to size.value foreach t.append)
+      val tree     = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
       val expected = Array.tabulate(size.value)(n => (size.value - n) -> (size.value - n - 1))
       tree.reverseIteratorWithIndex.toBuffer should contain theSameElementsInOrderAs expected
 
@@ -344,7 +344,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     given Config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
 
     private def check(size: Size, from: TIndex): Unit =
-      val tree         = ArrayTree[Int] tap (t => 1 to size.value foreach t.append)
+      val tree         = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
       val expectedSize = from.incr.value
       val expected     = Array.tabulate(expectedSize)(n => (expectedSize - n) -> (expectedSize - n - 1))
       tree.reverseIteratorWithIndex(from).toBuffer should contain theSameElementsInOrderAs expected
@@ -359,7 +359,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
   def `concurrent integration`: Unit =
     given ExecutionContext   = ExecutionContext.global
     given Config             = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
-    val tree: ArrayTree[Int] = ArrayTree[Int]
+    val tree: ArrayTree[Int] = ArrayTree.empty[Int]
 
     def append(values: Range): IndexedSeq[TIndex] = values map tree.append
 
