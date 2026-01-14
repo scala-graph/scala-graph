@@ -276,14 +276,9 @@ object ArrayTree:
         val newSize = closedSize + activeLeaf.appendUnsafe(it)
         if it.hasNext then
           val nextLeaf = MultiLeaf.empty(leafCap.asPositive, activeLeaf)
-          Tree.extend(root, activeLeaf, nextLeaf) match
-            case Left((newRoot = r))                       => loop(r, newSize, nextLeaf)
-            case Right((extendable = ext, newPath = path)) =>
-              (ext, path) match
-                case (upper: UpperNode[A], node: Node[A])        => upper append node
-                case (leafP: LeafParentNode[A], m: MultiLeaf[A]) => if leafP eq ext then leafP append m
-                case _                                           => assert(false, "unexpected type mismatch")
-              loop(root, newSize, nextLeaf)
+          Tree.extend(root, activeLeaf, nextLeaf, mount = true) match
+            case Left((newRoot = r)) => loop(r, newSize, nextLeaf)
+            case Right((_, _))       => loop(root, newSize, nextLeaf)
         else (root, newSize, activeLeaf, closedSize)
 
       val initial =
@@ -301,9 +296,9 @@ object ArrayTree:
     final def exhausted: Boolean = size == capacity
 
   private object Tree:
-    def extend[A](tree: Tree[A], exhausted: MultiLeaf[A], newMulti: MultiLeaf[A])(using
+    def extend[A](tree: Tree[A], exhausted: MultiLeaf[A], newMulti: MultiLeaf[A], mount: Boolean)(using
         config: Config
-    )(using tag: ClassTag[A]): Either[(newRoot: Node[A]), (extendable: Many[A], newPath: Many[A])] =
+    )(using tag: ClassTag[A]): Either[(newRoot: Node[A]), (extendable: Node[A], newPath: Many[A])] =
       import config.nodeCap
 
       def newNode(upper: Boolean): Node[A] =
@@ -347,7 +342,9 @@ object ArrayTree:
               case leafParent: LeafParentNode[A] =>
                 root getOrElse newMulti
 
-          Right((extendable = extendable, newPath = loop(Size(1), extendable, None)))
+          val path = loop(Size(1), extendable, None)
+          if mount then Tree.mount(extendable, path)
+          Right((extendable = extendable, newPath = path))
     end extend
 
     /** Searches for the closest extendable predecessor of `exhausted`.
@@ -379,6 +376,12 @@ object ArrayTree:
           assert(root eq exhausted)
           Left(exhausted) -> Size.zero
     end findExtendable
+
+    def mount[A](extend: Node[A], byPath: Many[A]): Unit =
+      (extend, byPath) match
+        case (upper: UpperNode[A], node: Node[A])        => upper append node
+        case (leafP: LeafParentNode[A], m: MultiLeaf[A]) => if leafP eq extend then leafP append m
+        case _                                           => assert(false, "unexpected Tree pattern")
 
   sealed protected trait LeafLike[A] extends Tree[A]:
     protected[ArrayTree] def extendTreeAndAppend(
@@ -556,16 +559,13 @@ object ArrayTree:
         val newMulti      = MultiLeaf(config.leafCap.asPositive, this)(a)
         val newClosedSize = closedSize + size
 
-        Tree.extend(tree, this, newMulti) match
+        Tree.extend(tree, this, newMulti, mount = false) match
           case Left((newRoot = root)) =>
             if updateState(newMulti, Some(root), newClosedSize) then newClosedSize
             else Collision
           case Right((extendable = ext, newPath = path)) =>
             if updateState(newMulti, None, newClosedSize) then
-              (ext, path) match
-                case (upper: UpperNode[A], node: Node[A])        => upper append node
-                case (leafP: LeafParentNode[A], m: MultiLeaf[A]) => if leafP eq ext then leafP append m
-                case _                                           => assert(false, "unexpected type mismatch")
+              Tree.mount(ext, path) // causes concurrency issue if done before updateState
               newClosedSize
             else Collision
       end ensureNodeAndAppend
