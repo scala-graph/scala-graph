@@ -101,6 +101,26 @@ final class ArrayTree[A] private (
         lastClosedSize + idx
   end append
 
+  def iterator: Iterator[A] =
+    val treeIt = treeIterator.collect { case leaf: Leaf[A] => leaf }
+    if treeIt.hasNext then
+      new AbstractIterator[A]:
+        override def knownSize: Int     = _size.get
+        private var remaining           = knownSize
+        private var leafIt: Iterator[A] = treeIt.next().iterator(atMost = remaining)
+
+        def hasNext: Boolean =
+          leafIt.hasNext || (treeIt.hasNext && remaining > leafIt.knownSize)
+
+        def next(): A =
+          if leafIt.hasNext then leafIt.next()
+          else if treeIt.hasNext && remaining > leafIt.knownSize then
+            remaining -= leafIt.knownSize
+            leafIt = treeIt.next().iterator(atMost = remaining)
+            leafIt.next()
+          else throw new IndexOutOfBoundsException
+    else Iterator.empty
+
   def reverseIterator: Iterator[A] =
     _activeLeaf match
       case leaf: Leaf[A] if leaf.leftNeighbor eq null => leaf.reverseIterator
@@ -394,6 +414,8 @@ object ArrayTree:
 
     protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null
 
+    protected[ArrayTree] def iterator(atMost: Int): Iterator[A]
+
     protected[ArrayTree] def reverseIterator: Iterator[A]
 
     protected[ArrayTree] def reverseIterator(from: Index): Iterator[A]
@@ -419,13 +441,15 @@ object ArrayTree:
 
     protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null = null
 
-    protected[ArrayTree] def reverseIterator: Iterator[A] = Iterator.empty[A]
+    protected[ArrayTree] def iterator(atMost: Int): Iterator[A] = Iterator.empty
 
-    protected[ArrayTree] def reverseIterator(from: Index): Iterator[A] = Iterator.empty[A]
+    protected[ArrayTree] def reverseIterator: Iterator[A] = Iterator.empty
 
-    protected[ArrayTree] def reverseIteratorWithIndex: Iterator[(A, Index)] = Iterator.empty[(A, Index)]
+    protected[ArrayTree] def reverseIterator(from: Index): Iterator[A] = Iterator.empty
 
-    protected[ArrayTree] def reverseIteratorWithIndex(from: Index): Iterator[(A, Index)] = Iterator.empty[(A, Index)]
+    protected[ArrayTree] def reverseIteratorWithIndex: Iterator[(A, Index)] = Iterator.empty
+
+    protected[ArrayTree] def reverseIteratorWithIndex(from: Index): Iterator[(A, Index)] = Iterator.empty
 
     def capacity: Size = Size.zero
 
@@ -462,12 +486,6 @@ object ArrayTree:
 
     protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null
 
-    protected[ArrayTree] def reverseIterator: Iterator[A]
-    protected[ArrayTree] def reverseIterator(from: Index): Iterator[A]
-
-    protected[ArrayTree] def reverseIteratorWithIndex: Iterator[(A, Index)]
-    protected[ArrayTree] def reverseIteratorWithIndex(from: Index): Iterator[(A, Index)]
-
   final protected[concurrent] case class SingleLeaf[A: ClassTag](elem: A) extends Leaf[A]:
     def capacity: Size = Size(1)
     def size: Size     = Size(1)
@@ -483,6 +501,10 @@ object ArrayTree:
       leaf append a
       if updateState(leaf, Some(leaf), TSize.zero) then TIndex(1)
       else Collision
+
+    protected[ArrayTree] inline def iterator(atMost: Int): Iterator[A] =
+      if atMost > 0 then Iterator(elem)
+      else Iterator.empty
 
     protected[ArrayTree] inline def reverseIterator: Iterator[A] = Iterator(elem)
 
@@ -589,6 +611,10 @@ object ArrayTree:
       if !_used.compareAndSet(used, index) then throw new ConcurrentModificationException()
       Size.trust(index - used)
 
+    protected[ArrayTree] def iterator(atMost: Int): Iterator[A] =
+      val used = _used.get
+      MultiLeaf.Iterator(elems, if used <= atMost then used else atMost)
+
     protected[ArrayTree] def reverseIterator: Iterator[A] =
       MultiLeaf.ReverseIterator(elems, _used.get - 1)
 
@@ -624,6 +650,19 @@ object ArrayTree:
 
     def apply[A: ClassTag](cap: Capacity, leftNeighbor: MultiLeaf[A] | Null)(elems: A*): MultiLeaf[A] =
       empty[A](cap, leftNeighbor) tap (_.appendUnsafe(elems.iterator))
+
+    private[MultiLeaf] class Iterator[A](elems: Array[A], until: Int) extends AbstractIterator[A]:
+      override val knownSize: Int = until
+      private var consumed        = 0
+
+      inline def hasNext: Boolean = consumed < knownSize
+
+      def next(): A =
+        if hasNext then
+          val r = elems(consumed)
+          consumed += 1
+          r
+        else throw new NoSuchElementException
 
     private[MultiLeaf] class ReverseIterator[A](elems: Array[A], from: Int) extends AbstractIterator[A]:
       override val knownSize: Int = from + 1

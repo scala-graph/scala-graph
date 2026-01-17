@@ -294,11 +294,26 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
           ArraySeq.ofInt(buf.asInstanceOf[Array[Int]])
         }
 
-  object `reverse iterator`:
-    val config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
+  object `iterator `:
+    given Config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
 
     private def check(size: Size): Unit =
-      val tree     = ArrayTree.empty[Int](using config) tap (t => 1 to size.value foreach t.append)
+      val tree     = ArrayTree.empty[Int] tap (t => 0 until size.value foreach t.append)
+      val expected = Array.tabulate(size.value)(identity)
+      tree.iterator.toBuffer should contain theSameElementsInOrderAs expected
+
+    def `size:  0`: Unit = check(0)
+    def `size:  1`: Unit = check(1)
+    def `size:  2`: Unit = check(2)
+    def `size:  5`: Unit = check(5)
+    def `size: 10`: Unit = check(10)
+    def `size: 21`: Unit = check(21)
+
+  object `reverse iterator`:
+    given Config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
+
+    private def check(size: Size): Unit =
+      val tree     = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
       val expected = Array.tabulate(size.value)(size.value - _)
       tree.reverseIterator.toBuffer should contain theSameElementsInOrderAs expected
 
@@ -366,9 +381,9 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       val tree = signature match
         case RepeatedParams => ArrayTree(0, (1 until size.value)*)
         case IterableOnce   => ArrayTree(0 until size.value)
-      val expected = Array.tabulate(size.value)(i => i)
+      val expected = Array.tabulate(size.value)(identity)
       tree.size.value shouldBe expected.length
-      tree.reverseIterator.toBuffer.reverse should contain theSameElementsInOrderAs expected
+      tree.iterator.toBuffer should contain theSameElementsInOrderAs expected
 
     def `  1 RepeatedParams`: Unit = check(1, RepeatedParams)
     def `  3 RepeatedParams`: Unit = check(3, RepeatedParams)
