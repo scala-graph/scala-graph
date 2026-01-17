@@ -239,8 +239,8 @@ object ArrayTree:
   type Log2Capacity = PositiveLog2Value
   val Log2Capacity = PositiveLog2Value
 
-  type Level = NonNegative
-  val Level = NonNegative
+  private type Level = NonNegative
+  private val Level = NonNegative
 
   def empty[A](using config: Config)(using tag: ClassTag[A]): ArrayTree[A] =
     new ArrayTree[A](Empty.of[A], TSize.zero, Empty.of[A], TSize.zero)
@@ -262,7 +262,7 @@ object ArrayTree:
       val one = SingleLeaf(it.next())
       new ArrayTree[A](one, TSize(1), one, TSize(1))
     else
-      val config = elems.knownSize match
+      val config = knownSize match
         case -1                                       => _config
         case size if _config.initialCap.value >= size => _config
         case bigSize                                  => _config.copy(initialCap = Capacity.unsafe(bigSize))

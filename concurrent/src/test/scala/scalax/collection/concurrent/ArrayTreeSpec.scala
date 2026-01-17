@@ -356,6 +356,30 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     def `size: 21, from 11`: Unit = check(21, 11)
     def `size: 21, from 21`: Unit = an[IndexOutOfBoundsException] shouldBe thrownBy(check(21, 21))
 
+  object `apply factory`:
+    enum Signature:
+      case RepeatedParams, IterableOnce
+    import Signature.*
+    given Config = Config(initialCap = 8, leafCap = 4, nodeCap = 2)
+
+    def check(size: Size, signature: Signature): Unit =
+      val tree = signature match
+        case RepeatedParams => ArrayTree(0, (1 until size.value)*)
+        case IterableOnce   => ArrayTree(0 until size.value)
+      val expected = Array.tabulate(size.value)(i => i)
+      tree.size.value shouldBe expected.length
+      tree.reverseIterator.toBuffer.reverse should contain theSameElementsInOrderAs expected
+
+    def `  1 RepeatedParams`: Unit = check(1, RepeatedParams)
+    def `  3 RepeatedParams`: Unit = check(3, RepeatedParams)
+    def ` 13 RepeatedParams`: Unit = check(13, RepeatedParams)
+    def ` 37 RepeatedParams`: Unit = check(37, RepeatedParams)
+
+    def `  1 IterableOnce`: Unit = check(1, IterableOnce)
+    def `  3 IterableOnce`: Unit = check(3, IterableOnce)
+    def ` 13 IterableOnce`: Unit = check(13, IterableOnce)
+    def ` 37 IterableOnce`: Unit = check(37, IterableOnce)
+
   def `concurrent integration`: Unit =
     given ExecutionContext   = ExecutionContext.global
     given Config             = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
