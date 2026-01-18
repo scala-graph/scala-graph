@@ -1,7 +1,7 @@
 package scalax.collection.concurrent
 
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
 import scala.collection.immutable.ArraySeq.unsafeWrapArray
@@ -48,7 +48,7 @@ final class ArrayTree[A] private (
     */
   @volatile private var _levels = Level.zero
 
-  private val treeSync = new ReentrantLock
+  private val treeSync = new ReentrantReadWriteLock(fairLock)
 
   @volatile protected[concurrent] def tree: Tree[A] = _tree
 
@@ -69,37 +69,62 @@ final class ArrayTree[A] private (
       case _                                 => throw new IndexOutOfBoundsException
 
   @tailrec infix def append(a: A): TIndex =
-    treeSync.lock()
+    val rLock = treeSync.readLock
+    rLock.lock()
     val lastTree       = _tree
     val lastActiveLeaf = _activeLeaf
     val lastClosedSize = _closedSize
-    treeSync.unlock()
-
-    def updateState(activeLeaf: Leaf[A], tree: Option[NonEmpty[A]], closedSize: TSize): Boolean =
-      treeSync.lock()
-      try
-        if _activeLeaf eq lastActiveLeaf then
-          _activeLeaf = activeLeaf
-          tree foreach { (t: Tree[A]) =>
-            _tree = t
-            if t.isInstanceOf[Node[A]] then _levels = _levels.incr
-          }
-          _closedSize = closedSize
-          if _size.incrementAndGet() > TSize.upperLimit then throw new LimitOverflowException
-          true
-        else false
-      finally
-        treeSync.unlock()
+    rLock.unlock()
 
     lastActiveLeaf append a match
       case Exhausted =>
-        lastActiveLeaf.extendTreeAndAppend(lastTree, _closedSize, updateState)(a) match
+        lastActiveLeaf.extendTreeAndAppend(lastTree, _closedSize, this)(a) match
           case Collision                                      => append(a)
           case idx: TIndex @unchecked /* must be last case */ => idx
       case idx: Index @unchecked /* must be last case */ =>
         if _size.incrementAndGet() > TSize.upperLimit then throw new LimitOverflowException
         lastClosedSize + idx
   end append
+
+  private object updateState:
+    def apply(prevActiveLeaf: LeafLike[A], activeLeaf: Leaf[A]): Boolean =
+      apply(prevActiveLeaf) {
+        _activeLeaf = activeLeaf
+        _tree = activeLeaf
+        updateSize()
+      }
+
+    def apply(prevActiveLeaf: LeafLike[A], activeLeaf: MultiLeaf[A], tree: Node[A], closedSize: TSize): Boolean =
+      apply(prevActiveLeaf) {
+        _activeLeaf = activeLeaf
+        _tree = tree
+        _levels = _levels.incr
+        _closedSize = closedSize
+        updateSize()
+      }
+
+    def apply(prevActiveLeaf: LeafLike[A], activeLeaf: MultiLeaf[A], mount: => Unit, closedSize: TSize): Boolean =
+      apply(prevActiveLeaf) {
+        _activeLeaf = activeLeaf
+        mount
+        _closedSize = closedSize
+        updateSize()
+      }
+
+    private def apply(prevActiveLeaf: LeafLike[A])(block: => Unit): Boolean =
+      val wLock = treeSync.writeLock
+      wLock.lock()
+      try
+        if _activeLeaf eq prevActiveLeaf then
+          block
+          true
+        else false
+      finally
+        wLock.unlock()
+
+    private def updateSize(): Unit =
+      if _size.incrementAndGet() > TSize.upperLimit then throw new LimitOverflowException
+  end updateState
 
   def iterator: Iterator[A] =
     val treeIt = treeIterator.collect { case leaf: Leaf[A] => leaf }
@@ -250,14 +275,11 @@ object ArrayTree:
   /** Indicate that `ArrayTree`'s size is not necessarily limited to Int.
     * For the time being it's fine to limit support to Int, though.
     */
-  type TSize  = Size; protected[concurrent] val TSize   = Size
-  type TIndex = TSize; protected[concurrent] val TIndex = TSize
+  type TSize  = Size; protected[concurrent] val TSize: NonNegative.type   = Size
+  type TIndex = TSize; protected[concurrent] val TIndex: NonNegative.type = TSize
 
-  type Capacity = Positive
-  val Capacity = Positive
-
-  type Log2Capacity = PositiveLog2Value
-  val Log2Capacity = PositiveLog2Value
+  type Capacity     = Positive; val Capacity: Positive.type                       = Positive
+  type Log2Capacity = PositiveLog2Value; val Log2Capacity: PositiveLog2Value.type = PositiveLog2Value
 
   private type Level = NonNegative
   private val Level = NonNegative
@@ -367,6 +389,12 @@ object ArrayTree:
           Right((extendable = extendable, newPath = path))
     end extend
 
+    def mount[A](extend: Node[A], byPath: Many[A]): Unit =
+      (extend, byPath) match
+        case (upper: UpperNode[A], node: Node[A])        => upper append node
+        case (leafP: LeafParentNode[A], m: MultiLeaf[A]) => if leafP eq extend then leafP append m
+        case _                                           => assert(false, "unexpected Tree pattern")
+
     /** Searches for the closest extendable predecessor of `exhausted`.
       *
       * @return
@@ -375,7 +403,7 @@ object ArrayTree:
       *     - `Right` containing an extendable predecessor `Node`
       *   - the distance of the above from `this` leaf.
       */
-    def findExtendable[A](root: Tree[A], exhausted: MultiLeaf[A]): (Either[Many[A], Node[A]], Size) =
+    private def findExtendable[A](root: Tree[A], exhausted: MultiLeaf[A]): (Either[Many[A], Node[A]], Size) =
       root match
         case r: Node[A] =>
           @tailrec def loop(
@@ -397,17 +425,11 @@ object ArrayTree:
           Left(exhausted) -> Size.zero
     end findExtendable
 
-    def mount[A](extend: Node[A], byPath: Many[A]): Unit =
-      (extend, byPath) match
-        case (upper: UpperNode[A], node: Node[A])        => upper append node
-        case (leafP: LeafParentNode[A], m: MultiLeaf[A]) => if leafP eq extend then leafP append m
-        case _                                           => assert(false, "unexpected Tree pattern")
-
   sealed protected trait LeafLike[A] extends Tree[A]:
     protected[ArrayTree] def extendTreeAndAppend(
         tree: Tree[A],
         closedSize: TSize,
-        updateState: (Leaf[A], Option[NonEmpty[A]], TSize) => Boolean
+        arrayTree: ArrayTree[A]
     )(a: A)(using config: Config): TIndex | Collision
 
     protected[ArrayTree] infix def append(a: A): Index | Exhausted
@@ -428,13 +450,13 @@ object ArrayTree:
     protected[ArrayTree] def extendTreeAndAppend(
         tree: Tree[A],
         closedSize: TSize,
-        updateState: (Leaf[A], Option[NonEmpty[A]], TSize) => Boolean
+        arrayTree: ArrayTree[A]
     )(a: A)(using config: Config): TIndex | Collision =
       val leaf: Leaf[A] =
         import config.initialCap
         if initialCap === 1 then SingleLeaf(a)
         else MultiLeaf(initialCap, leftNeighbor = null)(a)
-      if updateState(leaf, Some(leaf), TSize.zero) then TIndex.zero
+      if arrayTree.updateState(this, leaf) then TIndex.zero
       else Collision
 
     protected[ArrayTree] inline infix def append(a: A): Index | Exhausted = Exhausted
@@ -455,7 +477,7 @@ object ArrayTree:
 
     def size: Size = Size.zero
 
-  protected[concurrent] object Empty:
+  private object Empty:
     private object EmptyInt extends Empty[Int]
 
     private object EmptyLong extends Empty[Long]
@@ -481,7 +503,7 @@ object ArrayTree:
     protected[ArrayTree] def extendTreeAndAppend(
         tree: Tree[A],
         closedSize: TSize,
-        updateState: (Leaf[A], Option[NonEmpty[A]], TSize) => Boolean
+        arrayTree: ArrayTree[A]
     )(a: A)(using config: Config): TIndex | Collision
 
     protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null
@@ -495,11 +517,11 @@ object ArrayTree:
     protected[ArrayTree] def extendTreeAndAppend(
         tree: Tree[A],
         closedSize: TSize,
-        updateState: (Leaf[A], Option[NonEmpty[A]], TSize) => Boolean
+        arrayTree: ArrayTree[A]
     )(a: A)(using config: Config): TIndex | Collision =
       val leaf = MultiLeaf(config.leafCap.asPositive, leftNeighbor = null)(elem)
       leaf append a
-      if updateState(leaf, Some(leaf), TSize.zero) then TIndex(1)
+      if arrayTree.updateState(this, leaf) then TIndex(1)
       else Collision
 
     protected[ArrayTree] inline def iterator(atMost: Int): Iterator[A] =
@@ -575,7 +597,7 @@ object ArrayTree:
     protected[ArrayTree] def extendTreeAndAppend(
         tree: Tree[A],
         closedSize: TSize,
-        updateState: (Leaf[A], Option[NonEmpty[A]], TSize) => Boolean
+        arrayTree: ArrayTree[A]
     )(a: A)(using config: Config): TIndex | Collision =
       def ensureNodeAndAppend(a: A): TIndex | Collision =
         val newMulti      = MultiLeaf(config.leafCap.asPositive, this)(a)
@@ -583,12 +605,10 @@ object ArrayTree:
 
         Tree.extend(tree, this, newMulti, mount = false) match
           case Left((newRoot = root)) =>
-            if updateState(newMulti, Some(root), newClosedSize) then newClosedSize
+            if arrayTree.updateState(this, newMulti, root, newClosedSize) then newClosedSize
             else Collision
           case Right((extendable = ext, newPath = path)) =>
-            if updateState(newMulti, None, newClosedSize) then
-              Tree.mount(ext, path) // causes concurrency issue if done before updateState
-              newClosedSize
+            if arrayTree.updateState(this, newMulti, Tree.mount(ext, path), newClosedSize) then newClosedSize
             else Collision
       end ensureNodeAndAppend
 
@@ -786,8 +806,15 @@ object ArrayTree:
     *                for non-leaf nodes.
     *                For small collections, at least 4 is recommended.
     *                For best efficiency, choose it such that the tree height probably won't exceed 8.
+    * @param fairLock whether the `ReentrantReadWriteLock` used internally should be fair.
+    *                 Choose `true` only if you are concerned about delays due to continuous contention.
     */
-  final case class Config(initialCap: Capacity, leafCap: Log2Capacity, nodeCap: Log2Capacity):
+  final case class Config(
+      initialCap: Capacity,
+      leafCap: Log2Capacity,
+      nodeCap: Log2Capacity,
+      fairLock: Boolean = false
+  ):
     import Config.*
     given Log2Capacity = nodeCap
 
