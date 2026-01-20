@@ -1,7 +1,9 @@
 package scalax.collection.concurrent
 
+import java.util.ConcurrentModificationException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
+
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
 import scala.collection.immutable.ArraySeq.unsafeWrapArray
@@ -12,9 +14,8 @@ import scala.util.chaining.given
 import scalax.util.primitives.*
 import scalax.util.primitives.PositiveLog2ValueOverNonNegative.*
 import scalax.util.primitives.PositiveLog2ValueOverPositive.*
-import ArrayTree.{Config, LeafLike, TSize, Tree}
 
-import java.util.ConcurrentModificationException
+import ArrayTree.{Config, LeafLike, TSize, Tree}
 
 /** Concurrent, growing only, compressed rose tree with leaves of type `Array[A]`.
   *
@@ -54,48 +55,30 @@ final class ArrayTree[A] private (
 
   def size: TSize = TSize.trust(_size.get)
 
-  /** @throws `IndexOutOfBoundsException` if `index` is not less than `size`. */
-  def apply(index: TIndex): A =
-    val validIndex = index < size
-    _tree match
-      case upper: UpperNode[A] if validIndex =>
-        val (multi, subIndex, _) = leaf(upper, index)
-        multi.elems(subIndex.value)
-      case LeafParentNode(elems) if validIndex =>
-        val (slot, subIndex, _) = locate(Index.zero, index, leftSide = true)
-        elems(slot.value).elems(subIndex.value)
-      case MultiLeaf(elems, _) if validIndex => elems(index.value)
-      case SingleLeaf(elem) if validIndex    => elem
-      case _                                 => throw new IndexOutOfBoundsException
+  private object readState:
+    private[ArrayTree] inline def treeLevels = withLock(_tree, _levels)
+    private[ArrayTree] inline def treeSize = withLock(_tree, _size)
+    private[ArrayTree] inline def activeLeafClosedSize = withLock(_activeLeaf, _closedSize)
+    private[ArrayTree] inline def treeActiveLeafClosedSize = withLock(_tree, _activeLeaf, _closedSize)
 
-  @tailrec infix def append(a: A): TIndex =
-    val rLock = treeSync.readLock
-    rLock.lock()
-    val lastTree       = _tree
-    val lastActiveLeaf = _activeLeaf
-    val lastClosedSize = _closedSize
-    rLock.unlock()
-
-    lastActiveLeaf append a match
-      case Exhausted =>
-        lastActiveLeaf.extendTreeAndAppend(lastTree, _closedSize, this)(a) match
-          case Collision                                      => append(a)
-          case idx: TIndex @unchecked /* must be last case */ => idx
-      case idx: Index @unchecked /* must be last case */ =>
-        if _size.incrementAndGet() > TSize.upperLimit then throw new LimitOverflowException
-        lastClosedSize + idx
-  end append
+    private def withLock[R](block: => R): R =
+      val rLock = treeSync.readLock
+      rLock.lock()
+      val ret = block
+      rLock.unlock()
+      ret
+  end readState
 
   private object updateState:
     def apply(prevActiveLeaf: LeafLike[A], activeLeaf: Leaf[A]): Boolean =
-      apply(prevActiveLeaf) {
+      withLock(prevActiveLeaf) {
         _activeLeaf = activeLeaf
         _tree = activeLeaf
         updateSize()
       }
 
     def apply(prevActiveLeaf: LeafLike[A], activeLeaf: MultiLeaf[A], tree: Node[A], closedSize: TSize): Boolean =
-      apply(prevActiveLeaf) {
+      withLock(prevActiveLeaf) {
         _activeLeaf = activeLeaf
         _tree = tree
         _levels = _levels.incr
@@ -104,14 +87,14 @@ final class ArrayTree[A] private (
       }
 
     def apply(prevActiveLeaf: LeafLike[A], activeLeaf: MultiLeaf[A], mount: => Unit, closedSize: TSize): Boolean =
-      apply(prevActiveLeaf) {
+      withLock(prevActiveLeaf) {
         _activeLeaf = activeLeaf
         mount
         _closedSize = closedSize
         updateSize()
       }
 
-    private def apply(prevActiveLeaf: LeafLike[A])(block: => Unit): Boolean =
+    private def withLock(prevActiveLeaf: LeafLike[A])(block: => Unit): Boolean =
       val wLock = treeSync.writeLock
       wLock.lock()
       try
@@ -126,11 +109,40 @@ final class ArrayTree[A] private (
       if _size.incrementAndGet() > TSize.upperLimit then throw new LimitOverflowException
   end updateState
 
+  /** @throws `IndexOutOfBoundsException` if `index` is not less than `size`. */
+  def apply(index: TIndex): A =
+    val (tree, levels) = readState.treeLevels
+    val validIndex = index < size
+    tree match
+      case upper: UpperNode[A] if validIndex =>
+        val (multi, subIndex, _) = leaf(upper, levels, index)
+        multi.elems(subIndex.value)
+      case LeafParentNode(elems) if validIndex =>
+        val (slot, subIndex, _) = locate(Index.zero, index, leftSide = true)
+        elems(slot.value).elems(subIndex.value)
+      case MultiLeaf(elems, _) if validIndex => elems(index.value)
+      case SingleLeaf(elem) if validIndex    => elem
+      case _                                 => throw new IndexOutOfBoundsException
+
+  @tailrec infix def append(a: A): TIndex =
+    val (lastTree, lastActiveLeaf, lastClosedSize) = readState.treeActiveLeafClosedSize
+
+    lastActiveLeaf append a match
+      case Exhausted =>
+        lastActiveLeaf.extendTreeAndAppend(lastTree, lastClosedSize, this)(a) match
+          case Collision                                      => append(a)
+          case idx: TIndex @unchecked /* must be last case */ => idx
+      case idx: Index @unchecked /* must be last case */ =>
+        if _size.incrementAndGet() > TSize.upperLimit then throw new LimitOverflowException
+        lastClosedSize + idx
+  end append
+
   def iterator: Iterator[A] =
-    val treeIt = treeIterator.collect { case leaf: Leaf[A] => leaf }
+    val (tree, lastSize) = readState.treeSize
+    val treeIt = treeIterator(tree).collect { case leaf: Leaf[A] => leaf }
     if treeIt.hasNext then
       new AbstractIterator[A]:
-        override def knownSize: Int     = _size.get
+        override def knownSize: Int     = lastSize.get
         private var remaining           = knownSize
         private var leafIt: Iterator[A] = treeIt.next().iterator(atMost = remaining)
 
@@ -147,15 +159,17 @@ final class ArrayTree[A] private (
     else Iterator.empty
 
   def reverseIterator: Iterator[A] =
-    _activeLeaf match
+    val (activeLeaf, closedSize) = readState.activeLeafClosedSize
+    activeLeaf match
       case leaf: Leaf[A] if leaf.leftNeighbor eq null => leaf.reverseIterator
-      case multi: MultiLeaf[A]                        => ReverseIterator(multi, _closedSize)
+      case multi: MultiLeaf[A]                        => ReverseIterator(multi, closedSize)
       case _                                          => Iterator.empty
 
   def reverseIteratorWithIndex: Iterator[(A, TIndex)] =
-    _activeLeaf match
+    val (activeLeaf, closedSize) = readState.activeLeafClosedSize
+    activeLeaf match
       case leaf: Leaf[A] if leaf.leftNeighbor eq null => leaf.reverseIteratorWithIndex
-      case multi: MultiLeaf[A]                        => ReverseIteratorWithIndex(multi, _closedSize)
+      case multi: MultiLeaf[A]                        => ReverseIteratorWithIndex(multi, closedSize)
       case _                                          => Iterator.empty
 
   private def reverseIteratorImpl[B](
@@ -164,9 +178,10 @@ final class ArrayTree[A] private (
       leavesIterator: (MultiLeaf[A], TIndex, TSize) => Iterator[B]
   ): Iterator[B] =
     if from < size then
-      _tree match
+      val (tree, levels) = readState.treeLevels
+      tree match
         case upper: UpperNode[A] =>
-          val (multi, subIndex, leftSize) = leaf(upper, from)
+          val (multi, subIndex, leftSize) = leaf(upper, levels, from)
           leavesIterator(multi, subIndex, leftSize)
         case LeafParentNode(elems) =>
           val (slot, subIndex, leftSize) = locate(Index.zero, from, leftSide = true)
@@ -182,8 +197,8 @@ final class ArrayTree[A] private (
   def reverseIteratorWithIndex(from: TIndex): Iterator[(A, TIndex)] =
     reverseIteratorImpl(from, _.reverseIteratorWithIndex(_), ReverseIteratorWithIndex.apply)
 
-  private def leaf(root: UpperNode[A], index: TIndex): (MultiLeaf[A], Index, TSize) =
-    withLevelCaps(Positive.trust(_levels.value)) { height =>
+  private def leaf(root: UpperNode[A], levels: NonNegative, index: TIndex): (MultiLeaf[A], Index, TSize) =
+    withLevelCaps(Positive.trust(levels.value)) { height =>
       @tailrec def loop(
           capIndex: Index,
           leftSide: Boolean,
@@ -201,10 +216,10 @@ final class ArrayTree[A] private (
       loop(height.asNonNegative.decr, leftSide = true, root, index, TSize.zero)
     }
 
-  protected[concurrent] def treeIterator: Iterator[NonEmpty[A]] =
-    treeIteratorWithLevel map (_._1)
+  protected[concurrent] def treeIterator(tree: Tree[A] = _tree): Iterator[NonEmpty[A]] =
+    treeIteratorWithLevel(tree) map (_._1)
 
-  private def treeIteratorWithLevel: Iterator[(NonEmpty[A], Level)] = _tree match
+  private def treeIteratorWithLevel(tree: Tree[A] = _tree): Iterator[(NonEmpty[A], Level)] = tree match
     case _: Empty[A]       => Iterator.empty
     case tree: NonEmpty[A] =>
       val lastSize = size
@@ -265,8 +280,8 @@ final class ArrayTree[A] private (
       builder append System.lineSeparator
 
     val it =
-      if includeNodes then treeIteratorWithLevel
-      else treeIteratorWithLevel.filter(_._1.isInstanceOf[Leaf[A]])
+      if includeNodes then treeIteratorWithLevel()
+      else treeIteratorWithLevel().filter(_._1.isInstanceOf[Leaf[A]])
 
     it.foreach { case elem -> level => append(elem.toString, level) }
     builder.toString

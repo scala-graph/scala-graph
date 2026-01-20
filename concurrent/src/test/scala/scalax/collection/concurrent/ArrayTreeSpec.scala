@@ -456,7 +456,7 @@ object ArrayTreeSpec:
          """.stripMargin
 
       MatchResult(
-        tree.treeIterator.toList == expected,
+        tree.treeIterator().toList == expected,
         "{0}",
         "{1}",
         Vector(
