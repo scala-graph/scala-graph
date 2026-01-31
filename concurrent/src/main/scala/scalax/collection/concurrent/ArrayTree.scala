@@ -3,7 +3,6 @@ package scalax.collection.concurrent
 import java.util.ConcurrentModificationException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
-
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
 import scala.collection.immutable.ArraySeq.unsafeWrapArray
@@ -11,10 +10,11 @@ import scala.collection.mutable.{ArrayBuffer, Stack}
 import scala.reflect.ClassTag
 import scala.util.{Success, Try}
 import scala.util.chaining.given
+import scalax.util.invoke.ArrayVarHandle
+import scalax.util.invoke.ArrayVarHandle.anyRefHandle
 import scalax.util.primitives.*
 import scalax.util.primitives.PositiveLog2ValueOverNonNegative.*
 import scalax.util.primitives.PositiveLog2ValueOverPositive.*
-
 import ArrayTree.{Config, LeafLike, TSize, Tree}
 
 /** Concurrent, growing only, compressed rose tree with leaves of type `Array[A]`.
@@ -27,7 +27,7 @@ final class ArrayTree[A] private (
     initialSize: TSize,
     initialActiveLeaf: LeafLike[A],
     initialClosedSize: TSize
-)(using config: Config)(using tag: ClassTag[A]):
+)(using config: Config)(using tag: ClassTag[A], varHandle: ArrayVarHandle[A]):
   import config.*
   import ArrayTree.*
 
@@ -56,9 +56,9 @@ final class ArrayTree[A] private (
   def size: TSize = TSize.trust(_size.get)
 
   private object readState:
-    private[ArrayTree] inline def treeLevels = withLock(_tree, _levels)
-    private[ArrayTree] inline def treeSize = withLock(_tree, _size)
-    private[ArrayTree] inline def activeLeafClosedSize = withLock(_activeLeaf, _closedSize)
+    private[ArrayTree] inline def treeLevels               = withLock(_tree, _levels)
+    private[ArrayTree] inline def treeSize                 = withLock(_tree, _size)
+    private[ArrayTree] inline def activeLeafClosedSize     = withLock(_activeLeaf, _closedSize)
     private[ArrayTree] inline def treeActiveLeafClosedSize = withLock(_tree, _activeLeaf, _closedSize)
 
     private def withLock[R](block: => R): R =
@@ -112,7 +112,7 @@ final class ArrayTree[A] private (
   /** @throws `IndexOutOfBoundsException` if `index` is not less than `size`. */
   def apply(index: TIndex): A =
     val (tree, levels) = readState.treeLevels
-    val validIndex = index < size
+    val validIndex     = index < size
     tree match
       case upper: UpperNode[A] if validIndex =>
         val (multi, subIndex, _) = leaf(upper, levels, index)
@@ -139,7 +139,7 @@ final class ArrayTree[A] private (
 
   def iterator: Iterator[A] =
     val (tree, lastSize) = readState.treeSize
-    val treeIt = treeIterator(tree).collect { case leaf: Leaf[A] => leaf }
+    val treeIt           = treeIterator(tree).collect { case leaf: Leaf[A] => leaf }
     if treeIt.hasNext then
       new AbstractIterator[A]:
         override def knownSize: Int     = lastSize.get
@@ -161,14 +161,14 @@ final class ArrayTree[A] private (
   def reverseIterator: Iterator[A] =
     val (activeLeaf, closedSize) = readState.activeLeafClosedSize
     activeLeaf match
-      case leaf: Leaf[A] if leaf.leftNeighbor eq null => leaf.reverseIterator
+      case leaf: Leaf[A] if leaf.leftNeighbor eq null => leaf.reverseIterator()
       case multi: MultiLeaf[A]                        => ReverseIterator(multi, closedSize)
       case _                                          => Iterator.empty
 
   def reverseIteratorWithIndex: Iterator[(A, TIndex)] =
     val (activeLeaf, closedSize) = readState.activeLeafClosedSize
     activeLeaf match
-      case leaf: Leaf[A] if leaf.leftNeighbor eq null => leaf.reverseIteratorWithIndex
+      case leaf: Leaf[A] if leaf.leftNeighbor eq null => leaf.reverseIteratorWithIndex()
       case multi: MultiLeaf[A]                        => ReverseIteratorWithIndex(multi, closedSize)
       case _                                          => Iterator.empty
 
@@ -217,74 +217,14 @@ final class ArrayTree[A] private (
     }
 
   protected[concurrent] def treeIterator(tree: Tree[A] = _tree): Iterator[NonEmpty[A]] =
-    treeIteratorWithLevel(tree) map (_._1)
-
-  private def treeIteratorWithLevel(tree: Tree[A] = _tree): Iterator[(NonEmpty[A], Level)] = tree match
-    case _: Empty[A]       => Iterator.empty
-    case tree: NonEmpty[A] =>
-      val lastSize = size
-      new AbstractIterator[(NonEmpty[A], Level)]:
-        private var consumedElems = TSize.zero
-        private val stack         = Stack.empty[(Node[A], Index)]
-
-        def hasNext: Boolean =
-          def doneStillCheckForProperSize =
-            if consumedElems < lastSize then
-              // should never happen; println is preferable over Exception in test
-              println(
-                s"!!! mismatch detected in treeIteratorWithLevel: consumedElems=$consumedElems < size=$lastSize !!!"
-              )
-            false
-          stack.nonEmpty || consumedElems == TSize.zero || doneStillCheckForProperSize
-
-        def next(): (NonEmpty[A], Level) =
-          stack.headOption match
-            case Some(UpperNode(elems) -> i) =>
-              val node       = elems(i.value)
-              val sizeBefore = stack.size
-              stack push node -> Index.zero
-              node            -> Level.trust(sizeBefore)
-            case Some(LeafParentNode(elems) -> i) =>
-              val leaf  = elems(i.value)
-              val level = Level.trust(stack.size)
-              consumedElems += leaf.size
-              stack.popWhile { case node -> i =>
-                i.incrTrusted == node.size
-              }
-              stack.headOption map { case node -> i =>
-                stack.pop()
-                stack push node -> i.incrTrusted
-              }
-              leaf -> level
-            case None if hasNext => // first call of next()
-              tree match
-                case node: Node[A]         => stack push node -> Index.zero; node -> Level.zero
-                case multi: MultiLeaf[A]   => consumedElems += multi.size; multi -> Level.zero
-                case single: SingleLeaf[A] => consumedElems = consumedElems.incrTrusted; single -> Level.zero
-            case None => throw new NoSuchElementException
-  end treeIteratorWithLevel
+    tree.iteratorWithLevel.map(_._1)
 
   protected[concurrent] def prettifyTree(
       includeNodes: Boolean,
       marginSize: NonNegative = NonNegative(2),
       indentSize: Positive = Positive(2)
   ): String =
-    val builder = new StringBuilder(8_192)
-    val indent  = " ".repeat(indentSize.value)
-    val margin  = " ".repeat(marginSize.value)
-
-    infix def append(elem: String, level: Level): builder.type =
-      builder append margin
-      builder append indent.repeat(level.value)
-      builder append elem
-      builder append System.lineSeparator
-
-    val it =
-      if includeNodes then treeIteratorWithLevel()
-      else treeIteratorWithLevel().filter(_._1.isInstanceOf[Leaf[A]])
-
-    it.foreach { case elem -> level => append(elem.toString, level) }
-    builder.toString
+    _tree.prettifyTree(includeNodes, marginSize, indentSize)
 
 object ArrayTree:
   /** Indicate that `ArrayTree`'s size is not necessarily limited to Int.
@@ -299,20 +239,24 @@ object ArrayTree:
   private type Level = NonNegative
   private val Level = NonNegative
 
-  def empty[A](using config: Config)(using tag: ClassTag[A]): ArrayTree[A] =
+  def empty[A](using config: Config)(using tag: ClassTag[A], vh: ArrayVarHandle[A]): ArrayTree[A] =
     new ArrayTree[A](Empty.of[A], TSize.zero, Empty.of[A], TSize.zero)
 
-  def apply[A](elem: A, elems: A*)(using config: Config)(using tag: ClassTag[A]): ArrayTree[A] =
+  def apply[A](elem: A, elems: A*)(using config: Config)(using tag: ClassTag[A], vh: ArrayVarHandle[A]): ArrayTree[A] =
     applyNonEmpty(Iterator(elem) ++ elems)
 
-  def apply[A](elems: IterableOnce[A])(using config: Config)(using tag: ClassTag[A]): ArrayTree[A] =
+  def apply[A](elems: IterableOnce[A])(using
+      config: Config
+  )(using tag: ClassTag[A], vh: ArrayVarHandle[A]): ArrayTree[A] =
     def isEmpty = elems match
       case it: Iterable[A] => it.isEmpty
       case once            => once.iterator.isEmpty
 
     if isEmpty then empty else applyNonEmpty(elems)
 
-  private def applyNonEmpty[A](elems: IterableOnce[A])(using _config: Config)(using tag: ClassTag[A]) =
+  private def applyNonEmpty[A](elems: IterableOnce[A])(using
+      _config: Config
+  )(using tag: ClassTag[A], vh: ArrayVarHandle[A]) =
     val it        = elems.iterator
     val knownSize = elems.knownSize
     if knownSize == 1 && _config.initialCap == Capacity(1) then
@@ -330,7 +274,7 @@ object ArrayTree:
           closedSize: TSize,
           activeLeaf: MultiLeaf[A]
       ): (Many[A], TSize, MultiLeaf[A], TSize) =
-        val newSize = closedSize + activeLeaf.appendUnsafe(it)
+        val newSize = closedSize + activeLeaf.appendUnsafeFrom(it)
         if it.hasNext then
           val nextLeaf = MultiLeaf.empty(leafCap.asPositive, activeLeaf)
           Tree.extend(root, activeLeaf, nextLeaf, mount = true) match
@@ -351,6 +295,74 @@ object ArrayTree:
     def capacity: Size
     def size: Size
     final def exhausted: Boolean = size == capacity
+
+    def iteratorWithLevel: Iterator[(NonEmpty[A], Level)] = this match
+      case _: Empty[A]       => Iterator.empty
+      case tree: NonEmpty[A] =>
+        val lastSize = size
+        new AbstractIterator[(NonEmpty[A], Level)]:
+          private var consumedElems = TSize.zero
+          private val stack         = Stack.empty[(Node[A], Index)]
+
+          def hasNext: Boolean =
+            def doneStillCheckForProperSize =
+              if consumedElems < lastSize then
+                // should never happen; println is preferable over Exception in test
+                println(
+                  s"!!! mismatch detected in treeIteratorWithLevel: consumedElems=$consumedElems < size=$lastSize !!!"
+                )
+              false
+
+            stack.nonEmpty || consumedElems == TSize.zero || doneStillCheckForProperSize
+
+          def next(): (NonEmpty[A], Level) =
+            stack.headOption match
+              case Some(UpperNode(elems) -> i) =>
+                val node       = elems(i.value)
+                val sizeBefore = stack.size
+                stack push node -> Index.zero
+                node            -> Level.trust(sizeBefore)
+              case Some(LeafParentNode(elems) -> i) =>
+                val leaf  = elems(i.value)
+                val level = Level.trust(stack.size)
+                consumedElems += leaf.size
+                stack.popWhile { case node -> i =>
+                  i.incrTrusted == node.size
+                }
+                stack.headOption map { case node -> i =>
+                  stack.pop()
+                  stack push node -> i.incrTrusted
+                }
+                leaf -> level
+              case None if hasNext => // first call of next()
+                tree match
+                  case node: Node[A]         => stack push node -> Index.zero; node -> Level.zero
+                  case multi: MultiLeaf[A]   => consumedElems += multi.size; multi -> Level.zero
+                  case single: SingleLeaf[A] => consumedElems = consumedElems.incrTrusted; single -> Level.zero
+              case None => throw new NoSuchElementException
+    end iteratorWithLevel
+
+    def prettifyTree(
+        includeNodes: Boolean,
+        marginSize: NonNegative = NonNegative(2),
+        indentSize: Positive = Positive(2)
+    ): String =
+      val builder = new StringBuilder(8_192)
+      val indent  = " ".repeat(indentSize.value)
+      val margin  = " ".repeat(marginSize.value)
+
+      infix def append(elem: String, level: Level): builder.type =
+        builder append margin
+        builder append indent.repeat(level.value)
+        builder append elem
+        builder append System.lineSeparator
+
+      val it =
+        if includeNodes then iteratorWithLevel
+        else iteratorWithLevel.filter(_._1.isInstanceOf[Leaf[A]])
+
+      it.foreach { case elem -> level => append(elem.toString, level) }
+      builder.toString
 
   private object Tree:
     def extend[A](tree: Tree[A], exhausted: MultiLeaf[A], newMulti: MultiLeaf[A], mount: Boolean)(using
@@ -453,15 +465,11 @@ object ArrayTree:
 
     protected[ArrayTree] def iterator(atMost: Int): Iterator[A]
 
-    protected[ArrayTree] def reverseIterator: Iterator[A]
-
     protected[ArrayTree] def reverseIterator(from: Index): Iterator[A]
-
-    protected[ArrayTree] def reverseIteratorWithIndex: Iterator[(A, Index)]
 
     protected[ArrayTree] def reverseIteratorWithIndex(from: Index): Iterator[(A, Index)]
 
-  sealed abstract protected[concurrent] class Empty[A: ClassTag] extends LeafLike[A]:
+  sealed abstract protected[concurrent] class Empty[A: {ClassTag, ArrayVarHandle}] extends LeafLike[A]:
     protected[ArrayTree] def extendTreeAndAppend(
         tree: Tree[A],
         closedSize: TSize,
@@ -480,11 +488,7 @@ object ArrayTree:
 
     protected[ArrayTree] def iterator(atMost: Int): Iterator[A] = Iterator.empty
 
-    protected[ArrayTree] def reverseIterator: Iterator[A] = Iterator.empty
-
     protected[ArrayTree] def reverseIterator(from: Index): Iterator[A] = Iterator.empty
-
-    protected[ArrayTree] def reverseIteratorWithIndex: Iterator[(A, Index)] = Iterator.empty
 
     protected[ArrayTree] def reverseIteratorWithIndex(from: Index): Iterator[(A, Index)] = Iterator.empty
 
@@ -493,13 +497,11 @@ object ArrayTree:
     def size: Size = Size.zero
 
   private object Empty:
-    private object EmptyInt extends Empty[Int]
-
-    private object EmptyLong extends Empty[Long]
-
+    private object EmptyInt    extends Empty[Int]
+    private object EmptyLong   extends Empty[Long]
     private object EmptyAnyRef extends Empty[AnyRef]
 
-    def of[A](using tag: ClassTag[A]): Empty[A] = tag match
+    def of[A](using tag: ClassTag[A], varHandle: ArrayVarHandle[A]): Empty[A] = tag match
       case t if !t.runtimeClass.isPrimitive => EmptyAnyRef.asInstanceOf[Empty[A]]
       case ClassTag.Long                    => EmptyLong
       case ClassTag.Int                     => EmptyInt
@@ -507,7 +509,7 @@ object ArrayTree:
 
   sealed protected[concurrent] trait NonEmpty[A] extends Tree[A]
 
-  sealed protected[concurrent] trait Leaf[A] extends NonEmpty[A] with LeafLike[A]:
+  sealed protected[concurrent] trait Leaf[A: ClassTag] extends NonEmpty[A] with LeafLike[A]:
     /** Appends `a` to `this` if there is free space.
       *
       * @return the index where `a` was inserted, or `Exhausted` if there was no free space.
@@ -523,7 +525,11 @@ object ArrayTree:
 
     protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null
 
-  final protected[concurrent] case class SingleLeaf[A: ClassTag](elem: A) extends Leaf[A]:
+    protected[ArrayTree] def reverseIterator(from: Index = size.decr): Iterator[A]
+
+    protected[ArrayTree] def reverseIteratorWithIndex(from: Index = size.decr): Iterator[(A, Index)]
+
+  final protected[concurrent] case class SingleLeaf[A: {ClassTag, ArrayVarHandle}](elem: A) extends Leaf[A]:
     def capacity: Size = Size(1)
     def size: Size     = Size(1)
 
@@ -543,30 +549,31 @@ object ArrayTree:
       if atMost > 0 then Iterator(elem)
       else Iterator.empty
 
-    protected[ArrayTree] inline def reverseIterator: Iterator[A] = Iterator(elem)
-
-    protected[ArrayTree] inline def reverseIterator(from: Index): Iterator[A] =
+    protected[ArrayTree] inline def reverseIterator(from: Index = Index.zero): Iterator[A] =
       assert(from == Index.zero)
-      reverseIterator
+      Iterator(elem)
 
-    protected[ArrayTree] inline def reverseIteratorWithIndex: Iterator[(A, Index)] =
-      reverseIterator.zip(Iterator(Index.zero))
-
-    protected[ArrayTree] inline def reverseIteratorWithIndex(from: Index): Iterator[(A, Index)] =
+    protected[ArrayTree] inline def reverseIteratorWithIndex(from: Index = Index.zero): Iterator[(A, Index)] =
       assert(from == Index.zero)
-      reverseIteratorWithIndex
+      reverseIterator(from).zip(Iterator(Index.zero))
 
     protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null = null
 
   sealed protected[concurrent] trait Many[A] extends NonEmpty[A]:
     type E
     protected[concurrent] def elems: Array[E]
-    protected[concurrent] def last: E = elems(_used.get - 1)
 
+    /** The number of sequential elements used in `elems` starting at index 0.
+      * Writers of `elems` always increment this before writing to ensure write consistency.
+      */
     final protected[ArrayTree] val _used = AtomicInteger(0)
 
     final def capacity: Size = Size.trust(elems.length)
     final def size: Size     = Size.trust(_used.get)
+
+    final def last: E = varHandle.pollAcquire(elems, _used.get - 1)
+
+    protected def varHandle: ArrayVarHandle[E]
 
     /** To be overridden when comparing array elements or other fields. */
     protected def equalFields(that: Many[?]): Boolean = true
@@ -597,17 +604,19 @@ object ArrayTree:
       val idx = _used.get
       if idx < elems.length then
         if _used.compareAndSet(idx, idx + 1) then
-          elems(idx) = elem
+          varHandle.setRelease(elems, idx, elem)
           Index.trust(idx)
         else append(elem)
       else Exhausted
 
-  final protected[concurrent] case class MultiLeaf[A: ClassTag] private (
+  final protected[concurrent] case class MultiLeaf[A: {ClassTag as tag, ArrayVarHandle as handle}] private (
       protected[concurrent] val elems: Array[A],
       protected[concurrent] val leftNeighbor: MultiLeaf[A] | Null
   ) extends Leaf[A]
       with Many[A]:
     type E = A
+
+    protected inline def varHandle: ArrayVarHandle[E] = handle
 
     protected[ArrayTree] def extendTreeAndAppend(
         tree: Tree[A],
@@ -631,36 +640,50 @@ object ArrayTree:
         case Collision                                              => Collision
         case idx: TIndex @unchecked /* works only as second case */ => idx
 
+    /** Appends `elem` assuming that `capacity` is not exhausted in a thingle-threaded manner.
+      *
+      * @return the index `elem` has been inserted.
+      * @throws IndexOutOfBoundsException if capacity is exhausted.
+      * @throws ConcurrentModificationException in case a concurrent append has been detected.
+      */
+    protected[ArrayTree] def appendUnsafe(elem: A): Index =
+      val idx = _used.get
+      elems(idx) = elem
+      if !_used.compareAndSet(idx, idx + 1) then throw new ConcurrentModificationException()
+      varHandle.setRelease(elems, idx, elem)
+      Index.trust(idx)
+
     /** Appends as many elements of `newElems` as capacity allows in a single threaded manner.
+      * `setRelease` is called only for the last element appended.
       *
       * @return number of elements appended.
       * @throws ConcurrentModificationException in case a concurrent append has been detected.
       */
-    protected[ArrayTree] def appendUnsafe(newElems: Iterator[A]): Size =
+    protected[ArrayTree] def appendUnsafeFrom(newElems: Iterator[A]): Size =
       val used  = _used.get
       var index = used
       val it    = newElems.take(elems.length - index)
       while it.hasNext do
         elems(index) = it.next()
         index += 1
-      if !_used.compareAndSet(used, index) then throw new ConcurrentModificationException()
-      Size.trust(index - used)
+      if index > used then
+        if !_used.compareAndSet(used, index) then throw new ConcurrentModificationException()
+        val lastIdx = index - 1
+        varHandle.setRelease(elems, lastIdx, elems(lastIdx))
+        Size.trust(index - used)
+      else Size.zero
 
     protected[ArrayTree] def iterator(atMost: Int): Iterator[A] =
       val used = _used.get
       MultiLeaf.Iterator(elems, if used <= atMost then used else atMost)
 
-    protected[ArrayTree] def reverseIterator: Iterator[A] =
-      MultiLeaf.ReverseIterator(elems, _used.get - 1)
-
-    protected[ArrayTree] def reverseIterator(from: Index): Iterator[A] =
+    protected[ArrayTree] def reverseIterator(from: Index = Index.trust(_used.get - 1)): Iterator[A] =
       assert(from.value < _used.get)
       MultiLeaf.ReverseIterator(elems, from.value)
 
-    protected[ArrayTree] inline def reverseIteratorWithIndex: Iterator[(A, Index)] =
-      reverseIterator zip Size.trust(_used.get).reverseIndexes
-
-    protected[ArrayTree] inline def reverseIteratorWithIndex(from: Index): Iterator[(A, Index)] =
+    protected[ArrayTree] inline def reverseIteratorWithIndex(
+        from: Index = Index.trust(_used.get - 1)
+    ): Iterator[(A, Index)] =
       assert(from.value < _used.get)
       MultiLeaf.ReverseIterator(elems, from.value) zip from.incrTrusted.reverseIndexes
 
@@ -680,13 +703,24 @@ object ArrayTree:
       s"$MultiLeaf($parentToString, $commonToString: $elemsToString)"
 
   protected[concurrent] case object MultiLeaf:
-    def empty[A: ClassTag](cap: Capacity, leftNeighbor: MultiLeaf[A] | Null): MultiLeaf[A] =
-      new MultiLeaf[A](new Array(cap.value), leftNeighbor)
+    private[ArrayTree] def empty[A: {ClassTag, ArrayVarHandle as handle}](
+        cap: Capacity,
+        leftNeighbor: MultiLeaf[A] | Null
+    ): MultiLeaf[A] =
+      new MultiLeaf[A](handle.newArray(cap.value), leftNeighbor)
 
-    def apply[A: ClassTag](cap: Capacity, leftNeighbor: MultiLeaf[A] | Null)(elems: A*): MultiLeaf[A] =
-      empty[A](cap, leftNeighbor) tap (_.appendUnsafe(elems.iterator))
+    def apply[A: {ClassTag, ArrayVarHandle}](cap: Capacity, leftNeighbor: MultiLeaf[A] | Null)(elem: A): MultiLeaf[A] =
+      empty[A](cap, leftNeighbor) tap (_.appendUnsafe(elem))
 
-    private[MultiLeaf] class Iterator[A](elems: Array[A], until: Int) extends AbstractIterator[A]:
+    def fromNonEmpty[A: {ClassTag, ArrayVarHandle}](cap: Capacity, leftNeighbor: MultiLeaf[A] | Null)(
+        elems: A*
+    ): MultiLeaf[A] =
+      val it = elems.iterator
+      assert(it.nonEmpty)
+      empty[A](cap, leftNeighbor) tap (_.appendUnsafeFrom(it))
+
+    private[MultiLeaf] class Iterator[A: ArrayVarHandle as handle](elems: Array[A], until: Int)
+        extends AbstractIterator[A]:
       override val knownSize: Int = until
       private var consumed        = 0
 
@@ -694,12 +728,13 @@ object ArrayTree:
 
       def next(): A =
         if hasNext then
-          val r = elems(consumed)
+          val r = handle.pollAcquire(elems, consumed)
           consumed += 1
           r
         else throw new NoSuchElementException
 
-    private[MultiLeaf] class ReverseIterator[A](elems: Array[A], from: Int) extends AbstractIterator[A]:
+    private[MultiLeaf] class ReverseIterator[A: ArrayVarHandle as handle](elems: Array[A], from: Int)
+        extends AbstractIterator[A]:
       override val knownSize: Int = from + 1
       private var remaining       = knownSize
 
@@ -708,10 +743,13 @@ object ArrayTree:
       def next(): A =
         if hasNext then
           remaining -= 1
-          elems(remaining)
+          handle.pollAcquire(elems, remaining)
         else throw new NoSuchElementException
 
-  sealed protected[concurrent] trait Node[A] extends Many[A]
+  sealed protected[concurrent] trait Node[A] extends Many[A]:
+    type E <: Many[?]
+
+    protected inline def varHandle: ArrayVarHandle[E] = anyRefHandle
 
   final protected[concurrent] case class UpperNode[A] private (
       protected[concurrent] val elems: Array[Node[A]]
@@ -753,7 +791,7 @@ object ArrayTree:
         currentLeaf.leftNeighbor match
           case multi: MultiLeaf[A] =>
             currentLeaf = multi
-            currentIt = multi.reverseIterator
+            currentIt = multi.reverseIterator()
             currentIt.hasNext
           case null => false
 
@@ -768,7 +806,8 @@ object ArrayTree:
 
   private object ReverseIterator:
     private[ArrayTree] def apply[A](from: MultiLeaf[A], leftSize: TSize): ReverseIterator[A] =
-      new ReverseIterator(from, from.reverseIterator, leftSize + from.size)
+      val fromSize = from.size
+      new ReverseIterator(from, from.reverseIterator(fromSize.decr), leftSize + fromSize)
 
     private[ArrayTree] def apply[A](from: MultiLeaf[A], fromIndex: Index, leftSize: TSize): ReverseIterator[A] =
       new ReverseIterator(from, from.reverseIterator(fromIndex), (leftSize + fromIndex).incr)
@@ -779,7 +818,8 @@ object ArrayTree:
 
   private object ReverseIteratorWithIndex:
     private[ArrayTree] def apply[A](from: MultiLeaf[A], leftSize: TSize): ReverseIteratorWithIndex[A] =
-      new ReverseIteratorWithIndex(from, from.reverseIterator, leftSize + from.size)
+      val fromSize = from.size
+      new ReverseIteratorWithIndex(from, from.reverseIterator(fromSize.decr), leftSize + fromSize)
 
     private[ArrayTree] def apply[A](
         from: MultiLeaf[A],

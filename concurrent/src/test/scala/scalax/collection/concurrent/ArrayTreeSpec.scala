@@ -13,6 +13,7 @@ import ArrayTree.*
 
 import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
+import scala.collection.mutable.Buffer
 
 class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
   implicit val disableDefaultArrayHandling: Prettifier = Prettifier(_.toString)
@@ -72,7 +73,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     append(count = 5)(initialCap = 5)
     append(count = 10)(initialCap = 4)
     append(count = 20)(initialCap = 4)
-    append(count = 25)(initialCap = 3)
+    append(count = 333)(initialCap = 3)
 
   object `treeIterator, leafCapacity: 2, nodeCapacity: 2`:
     private val defaultLeafCapacity: Log2Capacity = 2
@@ -88,13 +89,13 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
 
     extension (multi: MultiLeaf.type)
       private def fake: MultiLeaf[Int] =
-        MultiLeaf.empty[Int](defaultLeafCapacity.asPositive, null)
+        MultiLeaf(defaultLeafCapacity.asPositive, null)(0)
 
       private def withNullLeftNeighbor(elems: Int*): MultiLeaf[Int] =
-        MultiLeaf(defaultLeafCapacity.asPositive, null)(elems*)
+        MultiLeaf.fromNonEmpty(defaultLeafCapacity.asPositive, null)(elems*)
 
       private def withFakeLeftNeighbor(elems: Int*): MultiLeaf[Int] =
-        MultiLeaf(defaultLeafCapacity.asPositive, fake)(elems*)
+        MultiLeaf.fromNonEmpty(defaultLeafCapacity.asPositive, fake)(elems*)
 
     extension (node: UpperNode.type)
       private def fake: UpperNode[Int] =
@@ -136,7 +137,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     def `size:  5, initialCapacity: 4`: Unit =
       tree(5)(initialCap = 4) should equalTree(
         LeafParentNode.denseFake,
-        MultiLeaf(4, null)(1, 2, 3, 4),
+        MultiLeaf.fromNonEmpty(4, null)(1, 2, 3, 4),
         MultiLeaf.withFakeLeftNeighbor(5)
       )
 
@@ -144,7 +145,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       tree(7)(initialCap = 4) should equalTree(
         UpperNode.denseFake,
         LeafParentNode.denseFake,
-        MultiLeaf(4, null)(1, 2, 3, 4),
+        MultiLeaf.fromNonEmpty(4, null)(1, 2, 3, 4),
         MultiLeaf.withFakeLeftNeighbor(5, 6),
         LeafParentNode.sparseFake(elemCount = 1),
         MultiLeaf.withFakeLeftNeighbor(7)
@@ -155,7 +156,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         UpperNode.denseFake,
         UpperNode.denseFake,
         LeafParentNode.denseFake,
-        MultiLeaf(4, null)(1, 2, 3, 4),
+        MultiLeaf.fromNonEmpty(4, null)(1, 2, 3, 4),
         MultiLeaf.withFakeLeftNeighbor(5, 6),
         LeafParentNode.denseFake,
         MultiLeaf.withFakeLeftNeighbor(7, 8),
@@ -370,6 +371,40 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     def `size: 10, from  7`: Unit = check(10, 7)
     def `size: 21, from 11`: Unit = check(21, 11)
     def `size: 21, from 21`: Unit = an[IndexOutOfBoundsException] shouldBe thrownBy(check(21, 21))
+
+  object `reverse iterator concurrently`:
+    given ExecutionContext = ExecutionContext.global
+    given Config           = Config(initialCap = 20, leafCap = 16, nodeCap = 4)
+
+    private def check(size: Int): Unit =
+      val tree    = ArrayTree.empty[Int]
+      val writers = Future.sequence(for _ <- 1 to 4 yield Future(for _ <- 1 to size / 4 do tree append 1))
+      val readers =
+        Range(1, size, step = size / 3).foldLeft(Future.successful(List.empty[Buffer[Int]])) { (acc, minSize) =>
+          acc.flatMap { results =>
+            Future {
+              /* Start reader once `tree` has reached size `minSize` in order to increase failure ratio
+               * as tested `MultiLeaf` without any read sync.
+               */
+              while tree.size < minSize do Thread.`yield`()
+
+              // amplify and check immediately
+              val readings = for _ <- 1 to 50 yield tree.reverseIterator.toBuffer
+              readings find (_ exists (_ != 1)) match
+                case Some(failed) => failed
+                case None         => readings.head
+            }.map(res => results :+ res)
+          }
+        }
+      val both = readers zip writers
+      withClue(f"$size%2d")(whenReady(both) { (read, _) =>
+        read foreach (_ should contain only 1)
+      })
+
+    def `size:  40`: Unit = check(40)
+    def `size: 222`: Unit = check(222)
+    def `size: 333`: Unit = check(333)
+    def `size: 555`: Unit = check(555)
 
   object `apply factory`:
     enum Signature:
