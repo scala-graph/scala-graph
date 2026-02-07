@@ -10,6 +10,7 @@ import scala.collection.mutable.{ArrayBuffer, Stack}
 import scala.reflect.ClassTag
 import scala.util.{Success, Try}
 import scala.util.chaining.given
+import scalax.util.collection.MaxSizeView
 import scalax.util.invoke.ArrayVarHandle
 import scalax.util.invoke.ArrayVarHandle.anyRefHandle
 import scalax.util.primitives.*
@@ -19,8 +20,18 @@ import ArrayTree.{Config, LeafLike, TSize, Tree}
 
 /** Concurrent, growing only, compressed rose tree with leaves of type `Array[A]`.
   *
+  * Weak iterators skip any element not yet visible in the current thread.
+  * Strong iterators wait for elements until they are visible.
+  *
+  * Opt for a strong iterator only if you need to also include elements that were possibly appended
+  * in other threads directly before your call. Otherwise, you are fine with a weak iterator.
+  *
+  * While strong iterators always return an `Iterator` with `knownSize` set, weak iterators return a `MaxSizeView`.
+  * `MaxSizeView` allows for an optimal preallocation when the iterator gets materialized into some
+  * collection that is initiated with the right size for best efficiency, especially into array-based collections.
+  *
   * @param config allows for an optimal setup in terms of speed and memory usage.
-  * @tparam A type of elements
+  * @tparam A type of elements.
   */
 final class ArrayTree[A] private (
     initialTree: Tree[A],
@@ -142,7 +153,7 @@ final class ArrayTree[A] private (
     val treeIt           = treeIterator(tree).collect { case leaf: Leaf[A] => leaf }
     if treeIt.hasNext then
       new AbstractIterator[A]:
-        override def knownSize: Int     = lastSize.get
+        override val knownSize: Int     = lastSize.get
         private var remaining           = knownSize
         private var leafIt: Iterator[A] = treeIt.next().iterator(atMost = remaining)
 
@@ -158,44 +169,68 @@ final class ArrayTree[A] private (
           else throw new IndexOutOfBoundsException
     else Iterator.empty
 
-  def reverseIterator: Iterator[A] =
-    val (activeLeaf, closedSize) = readState.activeLeafClosedSize
-    activeLeaf match
-      case leaf: Leaf[A] if leaf.leftNeighbor eq null => leaf.reverseIterator()
-      case multi: MultiLeaf[A]                        => ReverseIterator(multi, closedSize)
-      case _                                          => Iterator.empty
+  def strongReverseIterator: Iterator[A] =
+    reverseIteratorImpl(_.strongReverseIterator(), stronglyConsistent.ReverseIterator.apply)
 
-  def reverseIteratorWithIndex: Iterator[(A, TIndex)] =
-    val (activeLeaf, closedSize) = readState.activeLeafClosedSize
-    activeLeaf match
-      case leaf: Leaf[A] if leaf.leftNeighbor eq null => leaf.reverseIteratorWithIndex()
-      case multi: MultiLeaf[A]                        => ReverseIteratorWithIndex(multi, closedSize)
-      case _                                          => Iterator.empty
-
-  private def reverseIteratorImpl[B](
-      from: TIndex,
-      leafIterator: (LeafLike[A], Index) => Iterator[B],
-      leavesIterator: (MultiLeaf[A], TIndex, TSize) => Iterator[B]
-  ): Iterator[B] =
-    if from < size then
-      val (tree, levels) = readState.treeLevels
-      tree match
-        case upper: UpperNode[A] =>
-          val (multi, subIndex, leftSize) = leaf(upper, levels, from)
-          leavesIterator(multi, subIndex, leftSize)
-        case LeafParentNode(elems) =>
-          val (slot, subIndex, leftSize) = locate(Index.zero, from, leftSide = true)
-          leavesIterator(elems(slot.value), subIndex, leftSize)
-        case leaf: LeafLike[A] => leafIterator(leaf, from)
-    else throw new IndexOutOfBoundsException
+  def weakReverseIterator: MaxSizeView[A] =
+    MaxSizeView(reverseIteratorImpl(_.weakReverseIterator(), weaklyConsistent.ReverseIterator.apply), size)
 
   /** @throws `IndexOutOfBoundsException` if `from` is not less than `size`. */
-  def reverseIterator(from: TIndex): Iterator[A] =
-    reverseIteratorImpl(from, _.reverseIterator(_), ReverseIterator.apply)
+  def strongReverseIterator(from: TIndex): Iterator[A] =
+    reverseIteratorImpl(from, _.strongReverseIterator(_), stronglyConsistent.ReverseIterator.from)
 
   /** @throws `IndexOutOfBoundsException` if `from` is not less than `size`. */
-  def reverseIteratorWithIndex(from: TIndex): Iterator[(A, TIndex)] =
-    reverseIteratorImpl(from, _.reverseIteratorWithIndex(_), ReverseIteratorWithIndex.apply)
+  def weakReverseIterator(from: TIndex): MaxSizeView[A] = MaxSizeView(
+    reverseIteratorImpl(from, _.weakReverseIterator(_), weaklyConsistent.ReverseIterator.from),
+    from.incrTrusted
+  )
+
+  def strongReverseIteratorWithIndex: Iterator[(A, TIndex)] =
+    reverseIteratorImpl(_.strongReverseIteratorWithIndex(), stronglyConsistent.ReverseIteratorWithIndex.apply)
+
+  def weakReverseIteratorWithIndex: MaxSizeView[(A, TIndex)] = MaxSizeView(
+    reverseIteratorImpl(_.weakReverseIteratorWithIndex(), weaklyConsistent.ReverseIteratorWithIndex.apply),
+    size
+  )
+
+  /** @throws `IndexOutOfBoundsException` if `from` is not less than `size`. */
+  def strongReverseIteratorWithIndex(from: TIndex): Iterator[(A, TIndex)] =
+    reverseIteratorImpl(from, _.strongReverseIteratorWithIndex(_), stronglyConsistent.ReverseIteratorWithIndex.from)
+
+  /** @throws `IndexOutOfBoundsException` if `from` is not less than `size`. */
+  def weakReverseIteratorWithIndex(from: TIndex): MaxSizeView[(A, TIndex)] = MaxSizeView(
+    reverseIteratorImpl(from, _.weakReverseIteratorWithIndex(_), weaklyConsistent.ReverseIteratorWithIndex.from),
+    from.incrTrusted
+  )
+
+  private object reverseIteratorImpl:
+    def apply[B](
+        leafIterator: Leaf[A] => Iterator[B],
+        leavesIterator: (MultiLeaf[A], TSize) => Iterator[B]
+    ): Iterator[B] =
+      val (activeLeaf, closedSize) = readState.activeLeafClosedSize
+      activeLeaf match
+        case leaf: Leaf[A] if leaf.leftNeighbor eq null => leafIterator(leaf)
+        case multi: MultiLeaf[A]                        => leavesIterator(multi, closedSize)
+        case _                                          => Iterator.empty
+
+    def apply[B](
+        from: TIndex,
+        leafIterator: (Leaf[A], Index) => Iterator[B],
+        leavesIterator: (MultiLeaf[A], TIndex, TSize) => Iterator[B]
+    ): Iterator[B] =
+      if from < size then
+        val (tree, levels) = readState.treeLevels
+        tree match
+          case upper: UpperNode[A] =>
+            val (multi, subIndex, leftSize) = leaf(upper, levels, from)
+            leavesIterator(multi, subIndex, leftSize)
+          case LeafParentNode(elems) =>
+            val (slot, subIndex, leftSize) = locate(Index.zero, from, leftSide = true)
+            leavesIterator(elems(slot.value), subIndex, leftSize)
+          case leaf: Leaf[A] => leafIterator(leaf, from)
+          case _: Empty[A]   => Iterator.empty
+      else throw new IndexOutOfBoundsException
 
   private def leaf(root: UpperNode[A], levels: NonNegative, index: TIndex): (MultiLeaf[A], Index, TSize) =
     withLevelCaps(Positive.trust(levels.value)) { height =>
@@ -465,10 +500,6 @@ object ArrayTree:
 
     protected[ArrayTree] def iterator(atMost: Int): Iterator[A]
 
-    protected[ArrayTree] def reverseIterator(from: Index): Iterator[A]
-
-    protected[ArrayTree] def reverseIteratorWithIndex(from: Index): Iterator[(A, Index)]
-
   sealed abstract protected[concurrent] class Empty[A: {ClassTag, ArrayVarHandle}] extends LeafLike[A]:
     protected[ArrayTree] def extendTreeAndAppend(
         tree: Tree[A],
@@ -484,13 +515,9 @@ object ArrayTree:
 
     protected[ArrayTree] inline infix def append(a: A): Index | Exhausted = Exhausted
 
-    protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null = null
+    protected[ArrayTree] inline def leftNeighbor: MultiLeaf[A] | Null = null
 
-    protected[ArrayTree] def iterator(atMost: Int): Iterator[A] = Iterator.empty
-
-    protected[ArrayTree] def reverseIterator(from: Index): Iterator[A] = Iterator.empty
-
-    protected[ArrayTree] def reverseIteratorWithIndex(from: Index): Iterator[(A, Index)] = Iterator.empty
+    protected[ArrayTree] inline def iterator(atMost: Int): Iterator[A] = Iterator.empty
 
     def capacity: Size = Size.zero
 
@@ -523,11 +550,11 @@ object ArrayTree:
         arrayTree: ArrayTree[A]
     )(a: A)(using config: Config): TIndex | Collision
 
-    protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null
+    protected[ArrayTree] def strongReverseIterator(from: Index = size.decr): Iterator[A]
+    protected[ArrayTree] def strongReverseIteratorWithIndex(from: Index = size.decr): Iterator[(A, Index)]
 
-    protected[ArrayTree] def reverseIterator(from: Index = size.decr): Iterator[A]
-
-    protected[ArrayTree] def reverseIteratorWithIndex(from: Index = size.decr): Iterator[(A, Index)]
+    protected[ArrayTree] def weakReverseIterator(from: Index = size.decr): Iterator[A]
+    protected[ArrayTree] def weakReverseIteratorWithIndex(from: Index = size.decr): Iterator[(A, Index)]
 
   final protected[concurrent] case class SingleLeaf[A: {ClassTag, ArrayVarHandle}](elem: A) extends Leaf[A]:
     def capacity: Size = Size(1)
@@ -549,13 +576,19 @@ object ArrayTree:
       if atMost > 0 then Iterator(elem)
       else Iterator.empty
 
-    protected[ArrayTree] inline def reverseIterator(from: Index = Index.zero): Iterator[A] =
+    protected[ArrayTree] inline def strongReverseIterator(from: Index = Index.zero): Iterator[A] =
       assert(from == Index.zero)
       Iterator(elem)
 
-    protected[ArrayTree] inline def reverseIteratorWithIndex(from: Index = Index.zero): Iterator[(A, Index)] =
+    protected[ArrayTree] inline def strongReverseIteratorWithIndex(from: Index = Index.zero): Iterator[(A, Index)] =
       assert(from == Index.zero)
-      reverseIterator(from).zip(Iterator(Index.zero))
+      strongReverseIterator(from).zip(Iterator(Index.zero))
+
+    protected[ArrayTree] inline def weakReverseIterator(from: Index = Index.zero): Iterator[A] =
+      strongReverseIterator(from)
+
+    protected[ArrayTree] inline def weakReverseIteratorWithIndex(from: Index = Index.zero): Iterator[(A, Index)] =
+      strongReverseIteratorWithIndex(from)
 
     protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null = null
 
@@ -677,15 +710,23 @@ object ArrayTree:
       val used = _used.get
       MultiLeaf.Iterator(elems, if used <= atMost then used else atMost)
 
-    protected[ArrayTree] def reverseIterator(from: Index = Index.trust(_used.get - 1)): Iterator[A] =
+    protected[ArrayTree] inline def strongReverseIterator(from: Index = Index.trust(_used.get - 1)): Iterator[A] =
       assert(from.value < _used.get)
-      MultiLeaf.ReverseIterator(elems, from.value)
+      MultiLeaf.StronglyConsistentReverseIterator(elems, from.value)
 
-    protected[ArrayTree] inline def reverseIteratorWithIndex(
+    protected[ArrayTree] inline def strongReverseIteratorWithIndex(
         from: Index = Index.trust(_used.get - 1)
     ): Iterator[(A, Index)] =
+      strongReverseIterator(from) zip from.incrTrusted.reverseIndexes
+
+    protected[ArrayTree] inline def weakReverseIterator(from: Index = Index.trust(_used.get - 1)): Iterator[A] =
       assert(from.value < _used.get)
-      MultiLeaf.ReverseIterator(elems, from.value) zip from.incrTrusted.reverseIndexes
+      MultiLeaf.WeaklyConsistentReverseIterator(elems, from.value)
+
+    protected[ArrayTree] inline def weakReverseIteratorWithIndex(
+        from: Index = Index.trust(_used.get - 1)
+    ): Iterator[(A, Index)] =
+      weakReverseIterator(from) zip from.incrTrusted.reverseIndexes
 
     override protected def equalFields(that: Many[?]): Boolean =
       unsafeWrapArray(this.elems) == unsafeWrapArray(that.elems) &&
@@ -733,7 +774,7 @@ object ArrayTree:
           r
         else throw new NoSuchElementException
 
-    private[MultiLeaf] class ReverseIterator[A: ArrayVarHandle as handle](elems: Array[A], from: Int)
+    private[ArrayTree] class StronglyConsistentReverseIterator[A: ArrayVarHandle as handle](elems: Array[A], from: Int)
         extends AbstractIterator[A]:
       override val knownSize: Int = from + 1
       private var remaining       = knownSize
@@ -745,6 +786,39 @@ object ArrayTree:
           remaining -= 1
           handle.pollAcquire(elems, remaining)
         else throw new NoSuchElementException
+
+    private[ArrayTree] class WeaklyConsistentReverseIterator[A: ArrayVarHandle as handle](elems: Array[A], from: Int)
+        extends AbstractIterator[A]:
+      private val undefined = handle.Undefined
+      private var nextElem  = undefined
+      private var nextIndex = from
+
+      private def findNext() =
+        @tailrec def loop(i: Int): Boolean =
+          if i >= 0 then
+            handle.get(elems, i) match
+              case `undefined` => loop(i - 1)
+              case elem        =>
+                nextElem = elem
+                nextIndex = i - 1
+                true
+          else
+            nextIndex = -1
+            false
+
+        loop(nextIndex)
+
+      def hasNext: Boolean =
+        if nextElem == undefined then findNext() else true
+
+      def next(): A =
+        if hasNext then
+          val r = nextElem
+          nextElem = undefined
+          r
+        else throw new NoSuchElementException
+
+    end WeaklyConsistentReverseIterator
 
   sealed protected[concurrent] trait Node[A] extends Many[A]:
     type E <: Many[?]
@@ -775,15 +849,14 @@ object ArrayTree:
     def apply[A: ClassTag](cap: Log2Capacity)(elems: MultiLeaf[A]*): LeafParentNode[A] =
       empty[A](cap) tap (elems foreach _.append)
 
-  abstract private class AbstractReverseIterator[A, B](from: MultiLeaf[A], fromIt: Iterator[A], total: TSize)
+  abstract protected class AbstractReverseIterator[A, B](from: MultiLeaf[A], fromIt: Iterator[A], total: TSize)
       extends AbstractIterator[B]:
     private var currentLeaf              = from
     protected var currentIt: Iterator[A] = fromIt
     protected var index: TIndex          = total
 
-    override val knownSize: Int = total.value
-
-    protected def nextResult: B
+    protected def nextResult(): B
+    protected def multiLeafReverseIterator(multi: MultiLeaf[A]): Iterator[A]
 
     override def hasNext: Boolean =
       if currentIt.hasNext then true
@@ -791,42 +864,104 @@ object ArrayTree:
         currentLeaf.leftNeighbor match
           case multi: MultiLeaf[A] =>
             currentLeaf = multi
-            currentIt = multi.reverseIterator()
+            currentIt = multiLeafReverseIterator(multi)
             currentIt.hasNext
           case null => false
 
     override def next(): B =
       index = index.decr
-      if hasNext then nextResult
+      if hasNext then nextResult()
       else throw new NoSuchElementException
 
-  private class ReverseIterator[A](from: MultiLeaf[A], fromIt: Iterator[A], total: TSize)
-      extends AbstractReverseIterator[A, A](from, fromIt, total):
-    protected def nextResult: A = currentIt.next()
-
-  private object ReverseIterator:
-    private[ArrayTree] def apply[A](from: MultiLeaf[A], leftSize: TSize): ReverseIterator[A] =
-      val fromSize = from.size
-      new ReverseIterator(from, from.reverseIterator(fromSize.decr), leftSize + fromSize)
-
-    private[ArrayTree] def apply[A](from: MultiLeaf[A], fromIndex: Index, leftSize: TSize): ReverseIterator[A] =
-      new ReverseIterator(from, from.reverseIterator(fromIndex), (leftSize + fromIndex).incr)
-
-  private class ReverseIteratorWithIndex[A](from: MultiLeaf[A], fromIt: Iterator[A], total: TSize)
-      extends AbstractReverseIterator[A, (A, TIndex)](from, fromIt, total):
-    protected def nextResult: (A, TIndex) = currentIt.next() -> index
-
-  private object ReverseIteratorWithIndex:
-    private[ArrayTree] def apply[A](from: MultiLeaf[A], leftSize: TSize): ReverseIteratorWithIndex[A] =
-      val fromSize = from.size
-      new ReverseIteratorWithIndex(from, from.reverseIterator(fromSize.decr), leftSize + fromSize)
-
-    private[ArrayTree] def apply[A](
+  private object stronglyConsistent:
+    abstract protected class AbstractReverseIterator[A: ArrayVarHandle, B](
         from: MultiLeaf[A],
-        fromIndex: Index,
-        leftSize: TSize
-    ): ReverseIteratorWithIndex[A] =
-      new ReverseIteratorWithIndex(from, from.reverseIterator(fromIndex), (leftSize + fromIndex).incr)
+        fromIt: Iterator[A],
+        total: TSize
+    ) extends ArrayTree.AbstractReverseIterator[A, B](from, fromIt, total):
+      override def knownSize: Int = total.value
+
+      protected def multiLeafReverseIterator(multi: MultiLeaf[A]): Iterator[A] =
+        MultiLeaf.StronglyConsistentReverseIterator(multi.elems, multi._used.get - 1)
+
+    class ReverseIterator[A: ArrayVarHandle](from: MultiLeaf[A], fromIt: Iterator[A], total: TSize)
+        extends AbstractReverseIterator[A, A](from, fromIt, total):
+      protected def nextResult(): A = currentIt.next()
+
+    object ReverseIterator:
+      private[ArrayTree] inline def apply[A: ArrayVarHandle](from: MultiLeaf[A], leftSize: TSize): ReverseIterator[A] =
+        val fromSize = from.size
+        new ReverseIterator(from, from.strongReverseIterator(fromSize.decr), leftSize + fromSize)
+
+      private[ArrayTree] inline def from[A: ArrayVarHandle](
+          from: MultiLeaf[A],
+          fromIndex: Index,
+          leftSize: TSize
+      ): ReverseIterator[A] =
+        new ReverseIterator(from, from.strongReverseIterator(fromIndex), (leftSize + fromIndex).incr)
+
+    class ReverseIteratorWithIndex[A: ArrayVarHandle](from: MultiLeaf[A], fromIt: Iterator[A], total: TSize)
+        extends AbstractReverseIterator[A, (A, TIndex)](from, fromIt, total):
+      protected def nextResult(): (A, TIndex) = currentIt.next() -> index
+
+    object ReverseIteratorWithIndex:
+      private[ArrayTree] inline def apply[A: ArrayVarHandle](
+          from: MultiLeaf[A],
+          leftSize: TSize
+      ): ReverseIteratorWithIndex[A] =
+        val fromSize = from.size
+        new ReverseIteratorWithIndex(from, from.strongReverseIterator(fromSize.decr), leftSize + fromSize)
+
+      private[ArrayTree] inline def from[A: ArrayVarHandle](
+          from: MultiLeaf[A],
+          fromIndex: Index,
+          leftSize: TSize
+      ): ReverseIteratorWithIndex[A] =
+        new ReverseIteratorWithIndex(from, from.strongReverseIterator(fromIndex), (leftSize + fromIndex).incr)
+
+  private object weaklyConsistent:
+    abstract protected class AbstractReverseIterator[A: ArrayVarHandle, B](
+        from: MultiLeaf[A],
+        fromIt: Iterator[A],
+        total: TSize
+    ) extends ArrayTree.AbstractReverseIterator[A, B](from, fromIt, total):
+      protected def multiLeafReverseIterator(multi: MultiLeaf[A]): Iterator[A] =
+        MultiLeaf.WeaklyConsistentReverseIterator(multi.elems, multi._used.get - 1)
+
+    class ReverseIterator[A: ArrayVarHandle](from: MultiLeaf[A], fromIt: Iterator[A], total: TSize)
+        extends AbstractReverseIterator[A, A](from, fromIt, total):
+      protected def nextResult(): A = currentIt.next()
+
+    object ReverseIterator:
+      private[ArrayTree] inline def apply[A: ArrayVarHandle](from: MultiLeaf[A], leftSize: TSize): ReverseIterator[A] =
+        val fromSize = from.size
+        new ReverseIterator(from, from.weakReverseIterator(fromSize.decr), leftSize + fromSize)
+
+      private[ArrayTree] inline def from[A: ArrayVarHandle](
+          from: MultiLeaf[A],
+          fromIndex: Index,
+          leftSize: TSize
+      ): ReverseIterator[A] =
+        new ReverseIterator(from, from.weakReverseIterator(fromIndex), (leftSize + fromIndex).incr)
+
+    class ReverseIteratorWithIndex[A: ArrayVarHandle](from: MultiLeaf[A], fromIt: Iterator[A], total: TSize)
+        extends AbstractReverseIterator[A, (A, TIndex)](from, fromIt, total):
+      protected def nextResult(): (A, TIndex) = currentIt.next() -> index
+
+    object ReverseIteratorWithIndex:
+      private[ArrayTree] inline def apply[A: ArrayVarHandle](
+          from: MultiLeaf[A],
+          leftSize: TSize
+      ): ReverseIteratorWithIndex[A] =
+        val fromSize = from.size
+        new ReverseIteratorWithIndex(from, from.weakReverseIterator(fromSize.decr), leftSize + fromSize)
+
+      private[ArrayTree] inline def from[A: ArrayVarHandle](
+          from: MultiLeaf[A],
+          fromIndex: Index,
+          leftSize: TSize
+      ): ReverseIteratorWithIndex[A] =
+        new ReverseIteratorWithIndex(from, from.weakReverseIterator(fromIndex), (leftSize + fromIndex).incr)
 
   /** Defines the expected dimensions of an `ArrayTree`.
     * It is meant to be reused for `ArrayTree` instances, so avoid unnecessarily allocating `Config`s.

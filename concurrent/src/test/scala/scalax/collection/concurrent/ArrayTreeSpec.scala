@@ -13,7 +13,7 @@ import ArrayTree.*
 
 import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
-import scala.collection.mutable.Buffer
+import scala.collection.mutable.{ArrayBuffer, Buffer}
 
 class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
   implicit val disableDefaultArrayHandling: Prettifier = Prettifier(_.toString)
@@ -316,7 +316,8 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     private def check(size: Size): Unit =
       val tree     = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
       val expected = Array.tabulate(size.value)(size.value - _)
-      tree.reverseIterator.toBuffer should contain theSameElementsInOrderAs expected
+      tree.strongReverseIterator.toBuffer should contain theSameElementsInOrderAs expected
+      tree.weakReverseIterator.toBuffer should contain theSameElementsInOrderAs expected
 
     def `size:  0`: Unit = check(0)
     def `size:  1`: Unit = check(1)
@@ -332,7 +333,8 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       val tree         = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
       val expectedSize = from.incr.value
       val expected     = Array.tabulate(expectedSize)(expectedSize - _)
-      tree.reverseIterator(from).toBuffer should contain theSameElementsInOrderAs expected
+      tree.strongReverseIterator(from).toBuffer should contain theSameElementsInOrderAs expected
+      tree.weakReverseIterator(from).toBuffer should contain theSameElementsInOrderAs expected
 
     def `size:  1, from  0`: Unit = check(1, 0)
     def `size:  2, from  1`: Unit = check(2, 1)
@@ -347,7 +349,8 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     private def check(size: Size): Unit =
       val tree     = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
       val expected = Array.tabulate(size.value)(n => (size.value - n) -> (size.value - n - 1))
-      tree.reverseIteratorWithIndex.toBuffer should contain theSameElementsInOrderAs expected
+      tree.strongReverseIteratorWithIndex.toBuffer should contain theSameElementsInOrderAs expected
+      tree.weakReverseIteratorWithIndex.toBuffer should contain theSameElementsInOrderAs expected
 
     def `size:  0`: Unit = check(0)
     def `size:  1`: Unit = check(1)
@@ -363,7 +366,8 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       val tree         = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
       val expectedSize = from.incr.value
       val expected     = Array.tabulate(expectedSize)(n => (expectedSize - n) -> (expectedSize - n - 1))
-      tree.reverseIteratorWithIndex(from).toBuffer should contain theSameElementsInOrderAs expected
+      tree.strongReverseIteratorWithIndex(from).toBuffer should contain theSameElementsInOrderAs expected
+      tree.weakReverseIteratorWithIndex(from).toBuffer should contain theSameElementsInOrderAs expected
 
     def `size:  1, from  0`: Unit = check(1, 0)
     def `size:  2, from  1`: Unit = check(2, 1)
@@ -380,26 +384,64 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       val tree    = ArrayTree.empty[Int]
       val writers = Future.sequence(for _ <- 1 to 4 yield Future(for _ <- 1 to size / 4 do tree append 1))
       val readers =
-        Range(1, size, step = size / 3).foldLeft(Future.successful(List.empty[Buffer[Int]])) { (acc, minSize) =>
+        Range(1, size, step = size / 3).foldLeft(Future.successful(List.empty[Option[String]])) { (acc, minSize) =>
           acc.flatMap { results =>
             Future {
-              /* Start reader once `tree` has reached size `minSize` in order to increase failure ratio
-               * as tested `MultiLeaf` without any read sync.
-               */
+              inline val count                         = 12
+              val readingsWeak, readingsStrong         = new ArrayBuffer[Buffer[Int]](count)
+              val readingsWeakFrom, readingsStrongFrom = new ArrayBuffer[(NonNegative, Buffer[Int])](count)
+
+              // Start reader once `tree` has reached size `minSize` in order to increase failure ratio
               while tree.size < minSize do Thread.`yield`()
 
-              // amplify and check immediately
-              val readings = for _ <- 1 to 50 yield tree.reverseIterator.toBuffer
-              readings find (_ exists (_ != 1)) match
-                case Some(failed) => failed
-                case None         => readings.head
+              def read: Unit =
+                readingsWeak += tree.weakReverseIterator.toBuffer
+                readingsWeakFrom += {
+                  val from = tree.size - 1
+                  from -> tree.weakReverseIterator(from).toBuffer
+                }
+                readingsStrong += tree.strongReverseIterator.toBuffer
+                readingsStrongFrom += {
+                  val from = tree.size - 1
+                  from -> tree.strongReverseIterator(from).toBuffer
+                }
+
+              // amplify
+              for _ <- 1 to count do read
+
+              def checkValues: Option[Buffer[Int]] =
+                List(
+                  readingsWeak,
+                  readingsStrong,
+                  readingsWeakFrom.map(_._2),
+                  readingsStrongFrom.map(_._2)
+                ).iterator.flatten find (_ exists (_ != 1))
+
+              type SizeFailure = (weak: Boolean, expected: NonNegative, actual: Int)
+
+              def checkSizes: Option[SizeFailure] =
+                def check(weak: Boolean, buffer: ArrayBuffer[(NonNegative, Buffer[Int])])(
+                    failure: (NonNegative, Buffer[Int]) => Boolean
+                ): Option[SizeFailure] =
+                  buffer.iterator find { case from -> result => failure(from, result) } map (r =>
+                    (weak = weak, expected = r._1, actual = r._2.size)
+                  )
+
+                def checkWeak: Option[SizeFailure]   = check(true, readingsWeakFrom)(_.value + 1 < _.size)
+                def checkStrong: Option[SizeFailure] = check(false, readingsStrongFrom)(_.value + 1 != _.size)
+
+                checkWeak orElse checkStrong
+
+              (checkValues, checkSizes) match
+                case (Some(failed), _) => Some(s"Expected 1 for all elements but got $failed.")
+                case (_, Some((weak, expected, actual))) if weak => Some(s"Expected size <= $expected but got $actual.")
+                case (_, Some((weak, expected, actual)))         => Some(s"Expected size = $expected but got $actual.")
+                case _                                           => None
             }.map(res => results :+ res)
           }
         }
       val both = readers zip writers
-      withClue(f"$size%2d")(whenReady(both) { (read, _) =>
-        read foreach (_ should contain only 1)
-      })
+      withClue(f"$size%2d")(whenReady(both)((read, _) => read foreach (_ shouldBe empty)))
 
     def `size:  40`: Unit = check(40)
     def `size: 222`: Unit = check(222)
@@ -414,7 +456,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
 
     def check(size: Size, signature: Signature): Unit =
       val tree = signature match
-        case RepeatedParams => ArrayTree(0, (1 until size.value)*)
+        case RepeatedParams => ArrayTree(0, 1 until size.value*)
         case IterableOnce   => ArrayTree(0 until size.value)
       val expected = Array.tabulate(size.value)(identity)
       tree.size.value shouldBe expected.length
@@ -452,14 +494,14 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     def appendIterate(values: Range): IndexedSeq[TIndex] =
       val indexes = append(values)
       withClue(clue(values, indexes)) {
-        tree.reverseIterator.filter(values.contains).toIndexedSeq shouldBe values.reverse
+        tree.weakReverseIterator.filter(values.contains).toBuffer shouldBe values.reverse
       }
       indexes
 
     def appendIterateFrom(values: Range): IndexedSeq[TIndex] =
       val indexes = append(values)
       withClue(clue(values, indexes)) {
-        tree.reverseIterator(indexes(3)).filter(values.contains).toList shouldBe values.take(4).reverse
+        tree.weakReverseIterator(indexes(3)).filter(values.contains).toList shouldBe values.take(4).reverse
       }
       indexes
 

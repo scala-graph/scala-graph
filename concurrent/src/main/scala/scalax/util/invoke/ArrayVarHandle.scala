@@ -9,8 +9,12 @@ import scala.reflect.ClassTag
   * For best possible efficiency, `VarHandle` instances are `static final`.
   */
 trait ArrayVarHandle[A]:
+  def Undefined: A
+
   /** Instantiates an array initialized to the undefined value specific to `A`. */
   def newArray(length: Int): Array[A]
+
+  def get(array: Array[A], index: Int): A
 
   /** Reads the element and, if unset, poll for the set value.
     * Unset elements are identified by a `null` value or a specific constant primitive value for undefined.
@@ -25,9 +29,11 @@ object ArrayVarHandle extends LowPriorityHandles:
   final private val longArrayHandle: VarHandle = arrayElementVarHandle(classOf[Array[Long]])
 
   given ArrayVarHandle[Int] with
-    private inline val Undefined: Int.MinValue.type = Int.MinValue
+    inline def Undefined: Int.MinValue.type = Int.MinValue
 
     def newArray(length: Int): Array[Int] = Array.fill[Int](length)(Undefined)
+
+    inline def get(array: Array[Int], index: Int): Int = intArrayHandle.get(array, index)
 
     inline def pollAcquire(array: Array[Int], index: Int): Int =
       val elem = intArrayHandle.get(array, index).asInstanceOf[Int]
@@ -44,9 +50,11 @@ object ArrayVarHandle extends LowPriorityHandles:
       intArrayHandle.setRelease(array, index, value)
 
   given ArrayVarHandle[Long] with
-    private inline val Undefined: Long.MinValue.type = Long.MinValue
+    inline def Undefined: Long.MinValue.type = Long.MinValue
 
     def newArray(length: Int): Array[Long] = Array.fill[Long](length)(Undefined)
+
+    inline def get(array: Array[Long], index: Int): Long = longArrayHandle.get(array, index)
 
     inline def pollAcquire(array: Array[Long], index: Int): Long =
       val elem = longArrayHandle.get(array, index).asInstanceOf[Long]
@@ -66,7 +74,11 @@ protected trait LowPriorityHandles:
   final private val anyRefArrayHandle: VarHandle = arrayElementVarHandle(classOf[Array[AnyRef]])
 
   given anyRefHandle[A <: AnyRef]: ArrayVarHandle[A] with
+    inline def Undefined: A = null.asInstanceOf[A]
+
     def newArray(length: Int): Array[A] = new Array(length).asInstanceOf[Array[A]]
+
+    inline def get(array: Array[A], index: Int): A = anyRefArrayHandle.get(array, index)
 
     def pollAcquire(array: Array[A], index: Int): A =
       val elem = anyRefArrayHandle.get(array, index).asInstanceOf[A]

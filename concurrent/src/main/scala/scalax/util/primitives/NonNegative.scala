@@ -40,6 +40,14 @@ object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, No
     inline def /(b: NonNegative): NonNegative = nn / b
     inline def %(b: NonNegative): NonNegative = nn % b
 
+    inline def asPositiveOrElse(default: => Positive): Positive =
+      if Positive.valid(nn) then Positive.trust(nn) else default
+
+    inline def asPositiveOrElse1: Positive = nn.asPositiveOrElse(Positive(1))
+
+    def asPositiveOrElseLimit: Positive =
+      nn.asPositiveOrElse(Positive.trust(if nn < 1 then lowerLimit else upperLimit))
+
     def fold[B](ifZero: => B, withPositive: Positive => B): B =
       if nn == zero then ifZero
       else withPositive(Positive.trust(nn))
