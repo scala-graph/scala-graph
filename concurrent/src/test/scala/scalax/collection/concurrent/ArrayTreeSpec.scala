@@ -384,7 +384,8 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       val tree    = ArrayTree.empty[Int]
       val writers = Future.sequence(for _ <- 1 to 4 yield Future(for _ <- 1 to size / 4 do tree append 1))
       val readers =
-        Range(1, size, step = size / 3).foldLeft(Future.successful(List.empty[Option[String]])) { (acc, minSize) =>
+        type ErrMsg = String
+        Range(1, size, step = size / 3).foldLeft(Future.successful(List.empty[Option[ErrMsg]])) { (acc, minSize) =>
           acc.flatMap { results =>
             Future {
               inline val count                         = 12
@@ -394,7 +395,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
               // Start reader once `tree` has reached size `minSize` in order to increase failure ratio
               while tree.size < minSize do Thread.`yield`()
 
-              def read: Unit =
+              def read(): Unit =
                 readingsWeak += tree.weakReverseIterator.toBuffer
                 readingsWeakFrom += {
                   val from = tree.size - 1
@@ -407,36 +408,40 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
                 }
 
               // amplify
-              for _ <- 1 to count do read
+              for _ <- 1 to count do read()
 
-              def checkValues: Option[Buffer[Int]] =
+              def checkValues: Option[ErrMsg] =
                 List(
                   readingsWeak,
                   readingsStrong,
                   readingsWeakFrom.map(_._2),
                   readingsStrongFrom.map(_._2)
-                ).iterator.flatten find (_ exists (_ != 1))
+                ).iterator.flatten.find(_ exists (_ != 1)).map(buf => s"Expected 1 for all elements but got $buf.")
 
-              type SizeFailure = (weak: Boolean, expected: NonNegative, actual: Int)
-
-              def checkSizes: Option[SizeFailure] =
+              def checkSizes: Option[ErrMsg] =
+                type SizeFailure = (weak: Boolean, maxSize: NonNegative, actual: Int)
                 def check(weak: Boolean, buffer: ArrayBuffer[(NonNegative, Buffer[Int])])(
-                    failure: (NonNegative, Buffer[Int]) => Boolean
+                    expectation: (NonNegative, Buffer[Int]) => Boolean
                 ): Option[SizeFailure] =
-                  buffer.iterator find { case from -> result => failure(from, result) } map (r =>
-                    (weak = weak, expected = r._1, actual = r._2.size)
-                  )
+                  buffer.iterator
+                    .find { case from -> result =>
+                      !expectation(from + 1, result)
+                    }
+                    .map { case from -> result =>
+                      (weak = weak, maxSize = from + 1, actual = result.size)
+                    }
 
-                def checkWeak: Option[SizeFailure]   = check(true, readingsWeakFrom)(_.value + 1 < _.size)
-                def checkStrong: Option[SizeFailure] = check(false, readingsStrongFrom)(_.value + 1 != _.size)
+                def checkWeak: Option[ErrMsg] = check(true, readingsWeakFrom)(_.value >= _.size).map {
+                  case (weak, expected, actual) => s"Expected size <= $expected but got $actual."
+                }
+                def checkStrong: Option[ErrMsg] = check(false, readingsStrongFrom)(_.value == _.size).map {
+                  case (weak, expected, actual) => s"Expected size = $expected but got $actual."
+                }
 
                 checkWeak orElse checkStrong
+              end checkSizes
 
-              (checkValues, checkSizes) match
-                case (Some(failed), _) => Some(s"Expected 1 for all elements but got $failed.")
-                case (_, Some((weak, expected, actual))) if weak => Some(s"Expected size <= $expected but got $actual.")
-                case (_, Some((weak, expected, actual)))         => Some(s"Expected size = $expected but got $actual.")
-                case _                                           => None
+              checkValues orElse checkSizes
             }.map(res => results :+ res)
           }
         }

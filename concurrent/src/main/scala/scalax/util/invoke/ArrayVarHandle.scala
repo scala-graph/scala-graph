@@ -1,7 +1,5 @@
 package scalax.util.invoke
 
-import java.lang.invoke.VarHandle
-import java.lang.invoke.MethodHandles.arrayElementVarHandle
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 
@@ -25,71 +23,75 @@ trait ArrayVarHandle[A]:
   def setRelease(array: Array[A], index: Int, value: A): Unit
 
 object ArrayVarHandle extends LowPriorityHandles:
-  final private val intArrayHandle: VarHandle  = arrayElementVarHandle(classOf[Array[Int]])
-  final private val longArrayHandle: VarHandle = arrayElementVarHandle(classOf[Array[Long]])
-
   given ArrayVarHandle[Int] with
+    import VarHandleIntrinsics.{getAcquireInt, getInt, setReleaseInt}
+
     inline def Undefined: Int.MinValue.type = Int.MinValue
 
     def newArray(length: Int): Array[Int] = Array.fill[Int](length)(Undefined)
 
-    inline def get(array: Array[Int], index: Int): Int = intArrayHandle.get(array, index)
+    def get(array: Array[Int], index: Int): Int =
+      getInt(array, index)
 
-    inline def pollAcquire(array: Array[Int], index: Int): Int =
-      val elem = intArrayHandle.get(array, index).asInstanceOf[Int]
+    def pollAcquire(array: Array[Int], index: Int): Int =
+      val elem = getInt(array, index)
       if elem != Undefined then elem
       else
         @tailrec def loop: Int =
           Thread.onSpinWait()
-          intArrayHandle.getAcquire(array, index).asInstanceOf[Int] match
+          getAcquireInt(array, index) match
             case Undefined => loop
             case elem      => elem
         loop
 
-    inline def setRelease(array: Array[Int], index: Int, value: Int): Unit =
-      intArrayHandle.setRelease(array, index, value)
+    def setRelease(array: Array[Int], index: Int, value: Int): Unit =
+      setReleaseInt(array, index, value)
 
   given ArrayVarHandle[Long] with
+    import VarHandleIntrinsics.{getAcquireLong, getLong, setReleaseLong}
+
     inline def Undefined: Long.MinValue.type = Long.MinValue
 
     def newArray(length: Int): Array[Long] = Array.fill[Long](length)(Undefined)
 
-    inline def get(array: Array[Long], index: Int): Long = longArrayHandle.get(array, index)
+    def get(array: Array[Long], index: Int): Long =
+      getLong(array, index)
 
-    inline def pollAcquire(array: Array[Long], index: Int): Long =
-      val elem = longArrayHandle.get(array, index).asInstanceOf[Long]
+    def pollAcquire(array: Array[Long], index: Int): Long =
+      val elem = getLong(array, index)
       if elem != Undefined then elem
       else
         @tailrec def loop: Long =
           Thread.onSpinWait()
-          longArrayHandle.getAcquire(array, index).asInstanceOf[Long] match
+          getAcquireLong(array, index) match
             case Undefined => loop
             case elem      => elem
         loop
 
-    inline def setRelease(array: Array[Long], index: Int, value: Long): Unit =
-      longArrayHandle.setRelease(array, index, value)
+    def setRelease(array: Array[Long], index: Int, value: Long): Unit =
+      setReleaseLong(array, index, value)
 
 protected trait LowPriorityHandles:
-  final private val anyRefArrayHandle: VarHandle = arrayElementVarHandle(classOf[Array[AnyRef]])
+  import VarHandleIntrinsics.{getAcquireObject, getObject, setReleaseObject}
 
   given anyRefHandle[A <: AnyRef]: ArrayVarHandle[A] with
     inline def Undefined: A = null.asInstanceOf[A]
 
     def newArray(length: Int): Array[A] = new Array(length).asInstanceOf[Array[A]]
 
-    inline def get(array: Array[A], index: Int): A = anyRefArrayHandle.get(array, index)
+    def get(array: Array[A], index: Int): A =
+      scalax.util.invoke.VarHandleIntrinsics.getObject(array.asInstanceOf[Array[AnyRef]], index).asInstanceOf[A]
 
     def pollAcquire(array: Array[A], index: Int): A =
-      val elem = anyRefArrayHandle.get(array, index).asInstanceOf[A]
+      val elem = getObject(array.asInstanceOf[Array[AnyRef]], index).asInstanceOf[A]
       if elem ne null then elem
       else
         @tailrec def loop: A =
           Thread.onSpinWait()
-          anyRefArrayHandle.getAcquire(array, index).asInstanceOf[A] match
+          getAcquireObject(array.asInstanceOf[Array[AnyRef]], index).asInstanceOf[A] match
             case null => loop
             case elem => elem
         loop
 
-    inline def setRelease(array: Array[A], index: Int, value: A): Unit =
-      anyRefArrayHandle.setRelease(array, index, value)
+    def setRelease(array: Array[A], index: Int, value: A): Unit =
+      setReleaseObject(array.asInstanceOf[Array[AnyRef]], index, value)
