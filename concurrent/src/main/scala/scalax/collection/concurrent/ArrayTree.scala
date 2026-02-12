@@ -23,8 +23,13 @@ import ArrayTree.{Config, LeafLike, TSize, Tree}
   * Weak iterators skip any element not yet visible in the current thread.
   * Strong iterators wait for elements until they are visible.
   *
-  * Opt for a strong iterator only if you need to also include elements that were possibly appended
-  * in other threads directly before your call. Otherwise, you are fine with a weak iterator.
+  * On x86, strong and weak iterators are equally fast unless under high contention.
+  * Under high contention, weak iterators behave stable while strong iterators might block.
+  * On ARM CPUs, weak iterators should generally be faster irrespective of contention.
+  *
+  * With above in mind, choose strong iterators only if you need to also include elements
+  * that were possibly appended in other threads directly before your call.
+  * Otherwise, go for weak iterators.
   *
   * While strong iterators always return an `Iterator` with `knownSize` set, weak iterators return a `MaxSizeView`.
   * `MaxSizeView` allows for an optimal preallocation when the iterator gets materialized into some
@@ -148,14 +153,14 @@ final class ArrayTree[A] private (
         lastClosedSize + idx
   end append
 
-  def iterator: Iterator[A] =
+  def strongIterator: Iterator[A] =
     val (tree, lastSize) = readState.treeSize
-    val treeIt           = treeIterator(tree).collect { case leaf: Leaf[A] => leaf }
+    val treeIt           = leaves(tree)
     if treeIt.hasNext then
       new AbstractIterator[A]:
         override val knownSize: Int     = lastSize.get
         private var remaining           = knownSize
-        private var leafIt: Iterator[A] = treeIt.next().iterator(atMost = remaining)
+        private var leafIt: Iterator[A] = treeIt.next().strongIterator(atMost = remaining)
 
         def hasNext: Boolean =
           leafIt.hasNext || (treeIt.hasNext && remaining > leafIt.knownSize)
@@ -164,10 +169,36 @@ final class ArrayTree[A] private (
           if leafIt.hasNext then leafIt.next()
           else if treeIt.hasNext && remaining > leafIt.knownSize then
             remaining -= leafIt.knownSize
-            leafIt = treeIt.next().iterator(atMost = remaining)
+            leafIt = treeIt.next().strongIterator(atMost = remaining)
             leafIt.next()
           else throw new IndexOutOfBoundsException
     else Iterator.empty
+
+  def weakIterator: MaxSizeView[A] =
+    val treeIt = leaves(tree)
+    if treeIt.hasNext then
+      val it: AbstractIterator[A] = new AbstractIterator[A]:
+        override def size: Int =
+          if hasNext then -1 else consumed
+
+        var consumed                    = 0
+        private var leafIt: Iterator[A] = treeIt.next().weakIterator
+
+        def hasNext: Boolean =
+          leafIt.hasNext || treeIt.hasNext
+
+        def next(): A =
+          if leafIt.hasNext then
+            consumed += 1
+            leafIt.next()
+          else if treeIt.hasNext then
+            leafIt = treeIt.next().weakIterator
+            consumed += 1
+            leafIt.next()
+          else throw new IndexOutOfBoundsException
+
+      MaxSizeView(it, size)
+    else MaxSizeView.empty
 
   def strongReverseIterator: Iterator[A] =
     reverseIteratorImpl(_.strongReverseIterator(), stronglyConsistent.ReverseIterator.apply)
@@ -250,6 +281,9 @@ final class ArrayTree[A] private (
 
       loop(height.asNonNegative.decr, leftSide = true, root, index, TSize.zero)
     }
+
+  private inline def leaves(tree: Tree[A]): Iterator[Leaf[A]] =
+    treeIterator(tree).collect { case leaf: Leaf[A] => leaf }
 
   protected[concurrent] def treeIterator(tree: Tree[A] = _tree): Iterator[NonEmpty[A]] =
     tree.iteratorWithLevel.map(_._1)
@@ -498,8 +532,6 @@ object ArrayTree:
 
     protected[ArrayTree] def leftNeighbor: MultiLeaf[A] | Null
 
-    protected[ArrayTree] def iterator(atMost: Int): Iterator[A]
-
   sealed abstract protected[concurrent] class Empty[A: {ClassTag, ArrayVarHandle}] extends LeafLike[A]:
     protected[ArrayTree] def extendTreeAndAppend(
         tree: Tree[A],
@@ -517,7 +549,7 @@ object ArrayTree:
 
     protected[ArrayTree] inline def leftNeighbor: MultiLeaf[A] | Null = null
 
-    protected[ArrayTree] inline def iterator(atMost: Int): Iterator[A] = Iterator.empty
+    protected[ArrayTree] inline def strongIterator(atMost: Int): Iterator[A] = Iterator.empty
 
     def capacity: Size = Size.zero
 
@@ -550,6 +582,9 @@ object ArrayTree:
         arrayTree: ArrayTree[A]
     )(a: A)(using config: Config): TIndex | Collision
 
+    protected[ArrayTree] def strongIterator(atMost: Int): Iterator[A]
+    protected[ArrayTree] def weakIterator: Iterator[A]
+
     protected[ArrayTree] def strongReverseIterator(from: Index = size.decr): Iterator[A]
     protected[ArrayTree] def strongReverseIteratorWithIndex(from: Index = size.decr): Iterator[(A, Index)]
 
@@ -572,17 +607,19 @@ object ArrayTree:
       if arrayTree.updateState(this, leaf) then TIndex(1)
       else Collision
 
-    protected[ArrayTree] inline def iterator(atMost: Int): Iterator[A] =
-      if atMost > 0 then Iterator(elem)
+    protected[ArrayTree] inline def strongIterator(atMost: Int): Iterator[A] =
+      if atMost > 0 then Iterator.single(elem)
       else Iterator.empty
+
+    protected[ArrayTree] inline def weakIterator: Iterator[A] = strongIterator(1)
 
     protected[ArrayTree] inline def strongReverseIterator(from: Index = Index.zero): Iterator[A] =
       assert(from == Index.zero)
-      Iterator(elem)
+      Iterator.single(elem)
 
     protected[ArrayTree] inline def strongReverseIteratorWithIndex(from: Index = Index.zero): Iterator[(A, Index)] =
       assert(from == Index.zero)
-      strongReverseIterator(from).zip(Iterator(Index.zero))
+      strongReverseIterator(from).zip(Iterator.single(Index.zero))
 
     protected[ArrayTree] inline def weakReverseIterator(from: Index = Index.zero): Iterator[A] =
       strongReverseIterator(from)
@@ -706,9 +743,12 @@ object ArrayTree:
         Size.trust(index - used)
       else Size.zero
 
-    protected[ArrayTree] def iterator(atMost: Int): Iterator[A] =
+    protected[ArrayTree] def strongIterator(atMost: Int): Iterator[A] =
       val used = _used.get
-      MultiLeaf.Iterator(elems, if used <= atMost then used else atMost)
+      MultiLeaf.StronglyConsistentIterator(elems, if used <= atMost then used else atMost)
+
+    protected[ArrayTree] def weakIterator: Iterator[A] =
+      MultiLeaf.WeaklyConsistentIterator(elems, _used.get)
 
     protected[ArrayTree] inline def strongReverseIterator(from: Index = Index.trust(_used.get - 1)): Iterator[A] =
       assert(from.value < _used.get)
@@ -760,7 +800,7 @@ object ArrayTree:
       assert(it.nonEmpty)
       empty[A](cap, leftNeighbor) tap (_.appendUnsafeFrom(it))
 
-    private[MultiLeaf] class Iterator[A: ArrayVarHandle as handle](elems: Array[A], until: Int)
+    private[MultiLeaf] class StronglyConsistentIterator[A: ArrayVarHandle as handle](elems: Array[A], until: Int)
         extends AbstractIterator[A]:
       override val knownSize: Int = until
       private var consumed        = 0
@@ -773,6 +813,27 @@ object ArrayTree:
           consumed += 1
           r
         else throw new NoSuchElementException
+
+    private[MultiLeaf] class WeaklyConsistentIterator[A: ArrayVarHandle as handle](elems: Array[A], until: Int)
+        extends SkippingIterator[A]:
+      protected val undefined: A = handle.Undefined
+      protected var nextElem: A  = undefined
+      private var nextIndex      = 0
+
+      protected def findNext(): Boolean =
+        @tailrec def loop(i: Int): Boolean =
+          if i < until then
+            handle.get(elems, i) match
+              case `undefined` => loop(i + 1)
+              case elem        =>
+                nextElem = elem
+                nextIndex = i + 1
+                true
+          else
+            nextIndex = until
+            false
+
+        loop(nextIndex)
 
     private[ArrayTree] class StronglyConsistentReverseIterator[A: ArrayVarHandle as handle](elems: Array[A], from: Int)
         extends AbstractIterator[A]:
@@ -788,12 +849,12 @@ object ArrayTree:
         else throw new NoSuchElementException
 
     private[ArrayTree] class WeaklyConsistentReverseIterator[A: ArrayVarHandle as handle](elems: Array[A], from: Int)
-        extends AbstractIterator[A]:
-      private val undefined = handle.Undefined
-      private var nextElem  = undefined
-      private var nextIndex = from
+        extends SkippingIterator[A]:
+      protected val undefined: A = handle.Undefined
+      protected var nextElem: A  = undefined
+      private var nextIndex      = from
 
-      private def findNext() =
+      protected def findNext(): Boolean =
         @tailrec def loop(i: Int): Boolean =
           if i >= 0 then
             handle.get(elems, i) match
@@ -808,6 +869,14 @@ object ArrayTree:
 
         loop(nextIndex)
 
+    end WeaklyConsistentReverseIterator
+
+    abstract protected class SkippingIterator[A] extends AbstractIterator[A]:
+      protected val undefined: A
+      protected var nextElem: A
+
+      protected def findNext(): Boolean
+
       def hasNext: Boolean =
         if nextElem == undefined then findNext() else true
 
@@ -817,8 +886,6 @@ object ArrayTree:
           nextElem = undefined
           r
         else throw new NoSuchElementException
-
-    end WeaklyConsistentReverseIterator
 
   sealed protected[concurrent] trait Node[A] extends Many[A]:
     type E <: Many[?]

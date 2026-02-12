@@ -301,7 +301,12 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     private def check(size: Size): Unit =
       val tree     = ArrayTree.empty[Int] tap (t => 0 until size.value foreach t.append)
       val expected = Array.tabulate(size.value)(identity)
-      tree.iterator.toBuffer should contain theSameElementsInOrderAs expected
+
+      val weakIt = tree.weakIterator
+      weakIt.toBuffer should contain theSameElementsInOrderAs expected
+      weakIt.allocationSize.value shouldBe expected.length
+
+      tree.strongIterator.toBuffer should contain theSameElementsInOrderAs expected
 
     def `size:  0`: Unit = check(0)
     def `size:  1`: Unit = check(1)
@@ -316,8 +321,12 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     private def check(size: Size): Unit =
       val tree     = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
       val expected = Array.tabulate(size.value)(size.value - _)
+
+      val weakIt = tree.weakReverseIterator
+      weakIt.toBuffer should contain theSameElementsInOrderAs expected
+      weakIt.allocationSize.value shouldBe expected.length
+
       tree.strongReverseIterator.toBuffer should contain theSameElementsInOrderAs expected
-      tree.weakReverseIterator.toBuffer should contain theSameElementsInOrderAs expected
 
     def `size:  0`: Unit = check(0)
     def `size:  1`: Unit = check(1)
@@ -333,8 +342,12 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       val tree         = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
       val expectedSize = from.incr.value
       val expected     = Array.tabulate(expectedSize)(expectedSize - _)
+
+      val weakIt = tree.weakReverseIterator(from)
+      weakIt.toBuffer should contain theSameElementsInOrderAs expected
+      weakIt.allocationSize.value shouldBe expected.length
+
       tree.strongReverseIterator(from).toBuffer should contain theSameElementsInOrderAs expected
-      tree.weakReverseIterator(from).toBuffer should contain theSameElementsInOrderAs expected
 
     def `size:  1, from  0`: Unit = check(1, 0)
     def `size:  2, from  1`: Unit = check(2, 1)
@@ -349,8 +362,12 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
     private def check(size: Size): Unit =
       val tree     = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
       val expected = Array.tabulate(size.value)(n => (size.value - n) -> (size.value - n - 1))
+
+      val weakIt = tree.weakReverseIteratorWithIndex
+      weakIt.toBuffer should contain theSameElementsInOrderAs expected
+      weakIt.allocationSize.value shouldBe expected.length
+
       tree.strongReverseIteratorWithIndex.toBuffer should contain theSameElementsInOrderAs expected
-      tree.weakReverseIteratorWithIndex.toBuffer should contain theSameElementsInOrderAs expected
 
     def `size:  0`: Unit = check(0)
     def `size:  1`: Unit = check(1)
@@ -366,8 +383,12 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
       val tree         = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
       val expectedSize = from.incr.value
       val expected     = Array.tabulate(expectedSize)(n => (expectedSize - n) -> (expectedSize - n - 1))
+
+      val weakIt = tree.weakReverseIteratorWithIndex(from)
+      weakIt.toBuffer should contain theSameElementsInOrderAs expected
+      weakIt.allocationSize.value shouldBe expected.length
+
       tree.strongReverseIteratorWithIndex(from).toBuffer should contain theSameElementsInOrderAs expected
-      tree.weakReverseIteratorWithIndex(from).toBuffer should contain theSameElementsInOrderAs expected
 
     def `size:  1, from  0`: Unit = check(1, 0)
     def `size:  2, from  1`: Unit = check(2, 1)
@@ -464,8 +485,14 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         case RepeatedParams => ArrayTree(0, 1 until size.value*)
         case IterableOnce   => ArrayTree(0 until size.value)
       val expected = Array.tabulate(size.value)(identity)
+
       tree.size.value shouldBe expected.length
-      tree.iterator.toBuffer should contain theSameElementsInOrderAs expected
+
+      val weakIt = tree.weakIterator
+      weakIt.toBuffer should contain theSameElementsInOrderAs expected
+      weakIt.allocationSize.value shouldBe expected.length
+
+      tree.strongIterator.toBuffer should contain theSameElementsInOrderAs expected
 
     def `  1 RepeatedParams`: Unit = check(1, RepeatedParams)
     def `  3 RepeatedParams`: Unit = check(3, RepeatedParams)
