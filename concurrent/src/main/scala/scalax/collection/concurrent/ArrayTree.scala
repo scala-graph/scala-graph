@@ -3,7 +3,7 @@ package scalax.collection.concurrent
 import java.util.ConcurrentModificationException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, unused}
 import scala.collection.AbstractIterator
 import scala.collection.immutable.ArraySeq.unsafeWrapArray
 import scala.collection.mutable.{ArrayBuffer, Stack}
@@ -44,11 +44,15 @@ final class ArrayTree[A] private (
     initialActiveLeaf: LeafLike[A],
     initialClosedSize: TSize
 )(using config: Config)(using tag: ClassTag[A], varHandle: ArrayVarHandle[A]):
+  self =>
   import config.*
   import ArrayTree.*
+  import scalax.collection.concurrent.ArrayTreeIntrinsics.SizeH
 
   @volatile private var _tree: Tree[A] = initialTree
-  private val _size                    = AtomicInteger(initialSize.value)
+
+  @unused("Access by VarHandle. '@volatile protected' needed to not be dropped.")
+  @volatile protected var _size: TSize = initialSize
 
   /** The last, so probably not yet exhausted `Leaf` or `Empty`.
     * When extending the tree structure and updating shared values,
@@ -69,11 +73,11 @@ final class ArrayTree[A] private (
 
   @volatile protected[concurrent] def tree: Tree[A] = _tree
 
-  def size: TSize = TSize.trust(_size.get)
+  def size: TSize = TSize.trust(SizeH.get(this))
 
   private object readState:
     private[ArrayTree] inline def treeLevels               = withLock(_tree, _levels)
-    private[ArrayTree] inline def treeSize                 = withLock(_tree, _size)
+    private[ArrayTree] inline def treeSize                 = withLock(_tree, TSize.trust(SizeH.get(self)))
     private[ArrayTree] inline def activeLeafClosedSize     = withLock(_activeLeaf, _closedSize)
     private[ArrayTree] inline def treeActiveLeafClosedSize = withLock(_tree, _activeLeaf, _closedSize)
 
@@ -122,7 +126,7 @@ final class ArrayTree[A] private (
         wLock.unlock()
 
     private def updateSize(): Unit =
-      if _size.incrementAndGet() > TSize.upperLimit then throw new LimitOverflowException
+      if SizeH.incrementAndGet(self) > TSize.upperLimit then throw new LimitOverflowException
   end updateState
 
   /** @throws `IndexOutOfBoundsException` if `index` is not less than `size`. */
@@ -149,7 +153,7 @@ final class ArrayTree[A] private (
           case Collision                                      => append(a)
           case idx: TIndex @unchecked /* must be last case */ => idx
       case idx: Index @unchecked /* must be last case */ =>
-        if _size.incrementAndGet() > TSize.upperLimit then throw new LimitOverflowException
+        if SizeH.incrementAndGet(self) > TSize.upperLimit then throw new LimitOverflowException
         lastClosedSize + idx
   end append
 
@@ -158,7 +162,7 @@ final class ArrayTree[A] private (
     val treeIt           = leaves(tree)
     if treeIt.hasNext then
       new AbstractIterator[A]:
-        override val knownSize: Int     = lastSize.get
+        override val knownSize: Int     = lastSize.value
         private var remaining           = knownSize
         private var leafIt: Iterator[A] = treeIt.next().strongIterator(atMost = remaining)
 
