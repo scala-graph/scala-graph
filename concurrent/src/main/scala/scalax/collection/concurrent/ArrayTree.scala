@@ -75,10 +75,11 @@ final class ArrayTree[A] private (
   def size: TSize = TSize.trust(SizeH.get(this))
 
   private object readState:
-    private[ArrayTree] inline def treeLevels               = withLock(_tree, _levels)
-    private[ArrayTree] inline def treeSize                 = withLock(_tree, TSize.trust(SizeH.get(self)))
-    private[ArrayTree] inline def activeLeafClosedSize     = withLock(_activeLeaf, _closedSize)
-    private[ArrayTree] inline def treeActiveLeafClosedSize = withLock(_tree, _activeLeaf, _closedSize)
+    private[ArrayTree] inline def treeLevels                     = withLock(_tree, _levels)
+    private[ArrayTree] inline def treeSize                       = withLock(_tree, TSize.trust(SizeH.get(self)))
+    private[ArrayTree] inline def activeLeafClosedSize           = withLock(_activeLeaf, _closedSize)
+    private[ArrayTree] inline def treeActiveLeafClosedSize       = withLock(_tree, _activeLeaf, _closedSize)
+    private[ArrayTree] inline def treeLevelsActiveLeafClosedSize = withLock(_tree, _levels, _activeLeaf, _closedSize)
 
     private def withLock[R](block: => R): R =
       val rLock = treeSync.readLock
@@ -254,12 +255,21 @@ final class ArrayTree[A] private (
         leavesIterator: (MultiLeaf[A], TIndex, TSize) => Iterator[B]
     ): Iterator[B] =
       if from < size then
-        val (tree, levels) = readState.treeLevels
+        val (tree, levels, activeLeaf, closedSize) = readState.treeLevelsActiveLeafClosedSize
+        val fromActiveLeaf                         = from >= closedSize
+
+        def leavesIt: Iterator[B] =
+          activeLeaf match
+            case multi: MultiLeaf[A] => leavesIterator(multi, from - closedSize, closedSize)
+            case x => throw new IllegalArgumentException(s"Unexpected non-multi leaf ${x.getClass.getSimpleName}.")
+
         tree match
-          case upper: UpperNode[A] =>
+          case _: UpperNode[A] if fromActiveLeaf => leavesIt
+          case upper: UpperNode[A]               =>
             val (multi, subIndex, leftSize) = leaf(upper, levels, from)
             leavesIterator(multi, subIndex, leftSize)
-          case LeafParentNode(elems) =>
+          case LeafParentNode(_) if fromActiveLeaf => leavesIt
+          case LeafParentNode(elems)               =>
             val (slot, subIndex, leftSize) = locate(Index.zero, from, leftSide = true)
             leavesIterator(elems(slot.value), subIndex, leftSize)
           case leaf: Leaf[A] => leafIterator(leaf, from)
