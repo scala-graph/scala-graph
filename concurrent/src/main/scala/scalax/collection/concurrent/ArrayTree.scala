@@ -1,7 +1,6 @@
 package scalax.collection.concurrent
 
 import java.util.ConcurrentModificationException
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import scala.annotation.{tailrec, unused}
 import scala.collection.AbstractIterator
@@ -126,7 +125,7 @@ final class ArrayTree[A] private (
         wLock.unlock()
 
     private def updateSize(): Unit =
-      if SizeH.incrementAndGet(self) > TSize.upperLimit then throw new LimitOverflowException
+      if SizeH.incrAndGet(self) > TSize.upperLimit then throw new LimitOverflowException
   end updateState
 
   /** @throws `IndexOutOfBoundsException` if `index` is not less than `size`. */
@@ -153,7 +152,7 @@ final class ArrayTree[A] private (
           case Collision                                      => append(a)
           case idx: TIndex @unchecked /* must be last case */ => idx
       case idx: Index @unchecked /* must be last case */ =>
-        if SizeH.incrementAndGet(self) > TSize.upperLimit then throw new LimitOverflowException
+        if SizeH.incrAndGet(self) > TSize.upperLimit then throw new LimitOverflowException
         lastClosedSize + idx
   end append
 
@@ -640,12 +639,14 @@ object ArrayTree:
     /** The number of sequential elements used in `elems` starting at index 0.
       * Writers of `elems` always increment this before writing to ensure write consistency.
       */
-    final protected[ArrayTree] val _used = AtomicInteger(0)
+    protected[ArrayTree] var _used: Int = 0
+    protected[ArrayTree] def getUsed: Int
+    protected[ArrayTree] def compareAndIncrUsed(current: Int): Boolean
 
     final def capacity: Size = Size.trust(elems.length)
-    final def size: Size     = Size.trust(_used.get)
+    final def size: Size     = Size.trust(getUsed)
 
-    final def last: E = varHandle.pollAcquire(elems, _used.get - 1)
+    final def last: E = varHandle.pollAcquire(elems, getUsed - 1)
 
     protected def varHandle: ArrayVarHandle[E]
 
@@ -675,20 +676,25 @@ object ArrayTree:
       * @return the index where `elem` was inserted, or `Exhausted` if there was no free space.
       */
     @tailrec final protected[ArrayTree] infix def append(elem: E): Index | Exhausted =
-      val idx = _used.get
+      val idx = getUsed
       if idx < elems.length then
-        if _used.compareAndSet(idx, idx + 1) then
+        if compareAndIncrUsed(idx) then
           varHandle.setRelease(elems, idx, elem)
           Index.trust(idx)
         else append(elem)
       else Exhausted
+  end Many
 
   final protected[concurrent] case class MultiLeaf[A: {ClassTag as tag, ArrayVarHandle as handle}] private (
       protected[concurrent] val elems: Array[A],
       protected[concurrent] val leftNeighbor: MultiLeaf[A] | Null
   ) extends Leaf[A]
       with Many[A]:
+    import ArrayTreeIntrinsics.MultiLeafUsedH as UsedH
     type E = A
+
+    protected[ArrayTree] inline def compareAndIncrUsed(current: Int): Boolean = UsedH.compareAndIncr(this, current)
+    protected[ArrayTree] inline def getUsed: Int                              = UsedH.get(this)
 
     protected inline def varHandle: ArrayVarHandle[E] = handle
 
@@ -714,16 +720,16 @@ object ArrayTree:
         case Collision                                              => Collision
         case idx: TIndex @unchecked /* works only as second case */ => idx
 
-    /** Appends `elem` assuming that `capacity` is not exhausted in a thingle-threaded manner.
+    /** Appends `elem` assuming that `capacity` is not exhausted in a single-threaded manner.
       *
       * @return the index `elem` has been inserted.
       * @throws IndexOutOfBoundsException if capacity is exhausted.
       * @throws ConcurrentModificationException in case a concurrent append has been detected.
       */
     protected[ArrayTree] def appendUnsafe(elem: A): Index =
-      val idx = _used.get
+      val idx = _used
       elems(idx) = elem
-      if !_used.compareAndSet(idx, idx + 1) then throw new ConcurrentModificationException()
+      if !compareAndIncrUsed(idx) then throw new ConcurrentModificationException()
       varHandle.setRelease(elems, idx, elem)
       Index.trust(idx)
 
@@ -734,41 +740,41 @@ object ArrayTree:
       * @throws ConcurrentModificationException in case a concurrent append has been detected.
       */
     protected[ArrayTree] def appendUnsafeFrom(newElems: Iterator[A]): Size =
-      val used  = _used.get
+      val used  = _used
       var index = used
       val it    = newElems.take(elems.length - index)
       while it.hasNext do
         elems(index) = it.next()
         index += 1
       if index > used then
-        if !_used.compareAndSet(used, index) then throw new ConcurrentModificationException()
+        if !UsedH.compareAndSet(this, used, index) then throw new ConcurrentModificationException()
         val lastIdx = index - 1
         varHandle.setRelease(elems, lastIdx, elems(lastIdx))
         Size.trust(index - used)
       else Size.zero
 
     protected[ArrayTree] def strongIterator(atMost: Int): Iterator[A] =
-      val used = _used.get
+      val used = getUsed
       MultiLeaf.StronglyConsistentIterator(elems, if used <= atMost then used else atMost)
 
     protected[ArrayTree] def weakIterator: Iterator[A] =
-      MultiLeaf.WeaklyConsistentIterator(elems, _used.get)
+      MultiLeaf.WeaklyConsistentIterator(elems, getUsed)
 
-    protected[ArrayTree] inline def strongReverseIterator(from: Index = Index.trust(_used.get - 1)): Iterator[A] =
-      assert(from.value < _used.get)
+    protected[ArrayTree] inline def strongReverseIterator(from: Index = Index.trust(getUsed - 1)): Iterator[A] =
+      assert(from.value < getUsed)
       MultiLeaf.StronglyConsistentReverseIterator(elems, from.value)
 
     protected[ArrayTree] inline def strongReverseIteratorWithIndex(
-        from: Index = Index.trust(_used.get - 1)
+        from: Index = Index.trust(getUsed - 1)
     ): Iterator[(A, Index)] =
       strongReverseIterator(from) zip from.incrTrusted.reverseIndexes
 
-    protected[ArrayTree] inline def weakReverseIterator(from: Index = Index.trust(_used.get - 1)): Iterator[A] =
-      assert(from.value < _used.get)
+    protected[ArrayTree] inline def weakReverseIterator(from: Index = Index.trust(_used - 1)): Iterator[A] =
+      assert(from.value < _used)
       MultiLeaf.WeaklyConsistentReverseIterator(elems, from.value)
 
     protected[ArrayTree] inline def weakReverseIteratorWithIndex(
-        from: Index = Index.trust(_used.get - 1)
+        from: Index = Index.trust(_used - 1)
     ): Iterator[(A, Index)] =
       weakReverseIterator(from) zip from.incrTrusted.reverseIndexes
 
@@ -899,7 +905,11 @@ object ArrayTree:
   final protected[concurrent] case class UpperNode[A] private (
       protected[concurrent] val elems: Array[Node[A]]
   ) extends Node[A]:
+    import ArrayTreeIntrinsics.UpperNodeUsedH as UsedH
     type E = Node[A]
+
+    protected[ArrayTree] def compareAndIncrUsed(current: Int): Boolean = UsedH.compareAndIncr(this, current)
+    protected[ArrayTree] def getUsed: Int                              = UsedH.get(this)
 
   protected[concurrent] case object UpperNode:
     def empty[A: ClassTag](cap: Log2Capacity): UpperNode[A] =
@@ -911,7 +921,11 @@ object ArrayTree:
   final protected[concurrent] case class LeafParentNode[A] private (
       protected[concurrent] val elems: Array[MultiLeaf[A]]
   ) extends Node[A]:
+    import ArrayTreeIntrinsics.LeafParentNodeUsedH as UsedH
     type E = MultiLeaf[A]
+
+    protected[ArrayTree] def compareAndIncrUsed(current: Int): Boolean = UsedH.compareAndIncr(this, current)
+    protected[ArrayTree] def getUsed: Int                              = UsedH.get(this)
 
   protected[concurrent] case object LeafParentNode:
     def empty[A: ClassTag](cap: Log2Capacity): LeafParentNode[A] =
@@ -953,7 +967,7 @@ object ArrayTree:
       override def knownSize: Int = total.value
 
       protected def multiLeafReverseIterator(multi: MultiLeaf[A]): Iterator[A] =
-        MultiLeaf.StronglyConsistentReverseIterator(multi.elems, multi._used.get - 1)
+        MultiLeaf.StronglyConsistentReverseIterator(multi.elems, multi.getUsed - 1)
 
     class ReverseIterator[A: ArrayVarHandle](from: MultiLeaf[A], fromIt: Iterator[A], total: TSize)
         extends AbstractReverseIterator[A, A](from, fromIt, total):
@@ -997,7 +1011,7 @@ object ArrayTree:
         total: TSize
     ) extends ArrayTree.AbstractReverseIterator[A, B](from, fromIt, total):
       protected def multiLeafReverseIterator(multi: MultiLeaf[A]): Iterator[A] =
-        MultiLeaf.WeaklyConsistentReverseIterator(multi.elems, multi._used.get - 1)
+        MultiLeaf.WeaklyConsistentReverseIterator(multi.elems, multi._used - 1)
 
     class ReverseIterator[A: ArrayVarHandle](from: MultiLeaf[A], fromIt: Iterator[A], total: TSize)
         extends AbstractReverseIterator[A, A](from, fromIt, total):
