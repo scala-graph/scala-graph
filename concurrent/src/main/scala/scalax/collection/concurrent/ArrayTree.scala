@@ -130,17 +130,18 @@ final class ArrayTree[A] private (
   /** @throws `IndexOutOfBoundsException` if `index` is not less than `size`. */
   def apply(index: TIndex): A =
     val (tree, levels) = readState.treeLevels
-    val validIndex     = index < size
-    tree match
-      case upper: UpperNode[A] if validIndex =>
-        val (multi, subIndex, _) = leaf(upper, levels, index)
-        multi.elems(subIndex.value)
-      case LeafParentNode(elems) if validIndex =>
-        val (slot, subIndex, _) = locate(Index.zero, index, leftSide = true)
-        elems(slot.value).elems(subIndex.value)
-      case MultiLeaf(elems, _) if validIndex => elems(index.value)
-      case SingleLeaf(elem) if validIndex    => elem
-      case _                                 => throw new IndexOutOfBoundsException
+    if index < size then
+      tree match
+        case upper: UpperNode[A] =>
+          val (multi, subIndex, _) = leaf(upper, levels, index)
+          multi(subIndex)
+        case LeafParentNode(elems) =>
+          val (slot, subIndex, _) = locate(Index.zero, index, leftSide = true)
+          elems(slot.value)(subIndex)
+        case multi: MultiLeaf[A] => multi(index)
+        case SingleLeaf(elem)    => elem
+        case _: Empty[A]         => throw new IndexOutOfBoundsException
+    else throw new IndexOutOfBoundsException
 
   @tailrec infix def append(a: A): TIndex =
     val (lastTree, lastActiveLeaf, lastClosedSize) = readState.treeActiveLeafClosedSize
@@ -642,7 +643,10 @@ object ArrayTree:
 
   sealed protected[concurrent] trait Many[A] extends NonEmpty[A]:
     type E
-    protected[concurrent] def elems: Array[E]
+    protected[ArrayTree] def elems: Array[E]
+
+    /** Read element at `index` of `elems` with strong consistency. */
+    protected[ArrayTree] inline def apply(index: Index): E = varHandle.pollAcquire(elems, index.value)
 
     /** The number of sequential elements used in `elems` starting at index 0.
       * Writers of `elems` always increment this before writing to ensure write consistency.
@@ -694,8 +698,8 @@ object ArrayTree:
   end Many
 
   final protected[concurrent] case class MultiLeaf[A: {ClassTag as tag, ArrayVarHandle as handle}] private (
-      protected[concurrent] val elems: Array[A],
-      protected[concurrent] val leftNeighbor: MultiLeaf[A] | Null
+      protected[ArrayTree] val elems: Array[A],
+      protected[ArrayTree] val leftNeighbor: MultiLeaf[A] | Null
   ) extends Leaf[A]
       with Many[A]:
     import ArrayTreeIntrinsics.MultiLeafUsedH as UsedH
