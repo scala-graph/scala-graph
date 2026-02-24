@@ -34,7 +34,13 @@ object Positive extends Limited[Int, Positive], LimitedArithmetics[Int, Positive
     inline def +(addend: Positive): Positive     = LimitedIntImpl.addPositive(n, addend)
     inline def *(factor: Positive): Positive     = LimitedIntImpl.mulPositive(n, factor)
     inline def -(subtrahend: Positive): Positive = LimitedIntImpl.subPositive(n, subtrahend)
-    inline def /(divisor: Positive): Positive    = n / divisor
+    inline def /(divisor: Positive): Positive    = LimitedIntImpl.divPositive(n, divisor)
+
+    inline infix def plusOrLimit(addend: Positive): Positive      = LimitedIntImpl.addPositiveOrLimit(n, addend)
+    inline infix def minusOrLimit(subtrahend: Positive): Positive = LimitedIntImpl.subPositiveOrLimit(n, subtrahend)
+
+    inline infix def min(that: Positive): Positive = trust(math.min(n, that))
+    inline infix def max(that: Positive): Positive = trust(math.max(n, that))
 
     inline def asNonNegative: NonNegative = NonNegative.trust(n)
 

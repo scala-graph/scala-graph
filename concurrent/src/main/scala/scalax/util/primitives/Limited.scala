@@ -27,6 +27,9 @@ trait Limited[A <: AnyVal, O]:
     inline def ===(b: A): Boolean = limited.asInstanceOf[A] == b
 
     def <(b: O): Boolean
+    def >(b: O): Boolean
+    def <=(b: O): Boolean
+    def >=(b: O): Boolean
 
     /** @throws LimitOverflowException if the result exceeds `upperLimit`. */
     def incr: O
@@ -53,17 +56,19 @@ trait LimitedArithmetics[A <: AnyVal, O]:
   this: Limited[A, O] =>
 
   extension (limited: O)
-    def >(b: O): Boolean
-    def <=(b: O): Boolean
-    def >=(b: O): Boolean
-
     /** @throws LimitOverflowException if the result exceeds `upperLimit`. */
     def +(b: O): O
+
+    /** Like `+` but returns `upperLimit` on overflow. */
+    infix def plusOrLimit(b: O): O
 
     /** @throws LimitOverflowException if the result escapes the `valid` range. */
     def *(b: O): O
 
     /** @throws LimitUnderflowException if the result falls below `lowerLimit`. */
     def -(b: O): O
+
+    /** Like `-` but returns `lowerLimit` on underflow. */
+    infix def minusOrLimit(b: O): O
 
     def /(b: O): O

@@ -36,9 +36,16 @@ object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, No
     inline def *(factor: NonNegative): NonNegative     = LimitedIntImpl.mulNonNegative(nn, factor)
     inline def -(subtrahend: NonNegative): NonNegative = LimitedIntImpl.subNonNegative(nn, subtrahend)
 
+    inline infix def plusOrLimit(addend: NonNegative): NonNegative = LimitedIntImpl.addNonNegativeOrLimit(nn, addend)
+    inline infix def minusOrLimit(subtrahend: NonNegative): NonNegative =
+      LimitedIntImpl.subNonNegativeOrLimit(nn, subtrahend)
+
     /** @throws ArithmeticException on division by zero. */
     inline def /(b: NonNegative): NonNegative = nn / b
     inline def %(b: NonNegative): NonNegative = nn % b
+
+    inline infix def min(that: NonNegative): NonNegative = trust(math.min(nn, that))
+    inline infix def max(that: NonNegative): NonNegative = trust(math.max(nn, that))
 
     inline def asPositiveOrElse(default: => Positive): Positive =
       if Positive.valid(nn) then Positive.trust(nn) else default

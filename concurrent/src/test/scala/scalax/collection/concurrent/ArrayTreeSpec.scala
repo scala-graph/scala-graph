@@ -3,11 +3,12 @@ package scalax.collection.concurrent
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.chaining.scalaUtilChainingOps
 import org.scalactic.Prettifier
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.{LazyArg, MatchResult, Matcher}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
-import scalax.collection.concurrent.ArrayTree.Config.LevelCap
+import scalax.collection.concurrent.ArrayTree.Config.{fromRange, LevelCap}
 import scalax.util.primitives.*
 import ArrayTree.*
 
@@ -15,7 +16,7 @@ import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.{ArrayBuffer, Buffer}
 
-class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
+class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures:
   implicit val disableDefaultArrayHandling: Prettifier = Prettifier(_.toString)
 
   /* The following conversions are not recommended in production code,
@@ -25,7 +26,7 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
   import scala.language.implicitConversions
   private given Conversion[Int, Size]         = (i: Int) => Size.unsafe(i)
   private given Conversion[Int, PositiveSize] = (i: Int) => PositiveSize.unsafe(i)
-  private given Conversion[Int, Log2Capacity] = (i: Int) => Log2Capacity.powerOf2Unsafe(i)
+  private given Conversion[Int, Log2Capacity] = (i: Int) => Log2Capacity.fromPowerOf2Unsafe(i)
 
   import ArrayTreeSpec.*
 
@@ -550,6 +551,65 @@ class ArrayTreeSpec extends RefSpec with Matchers with ScalaFutures:
         results.flatten.size shouldBe useCases.map(_._2.size).sum
       }
     }
+
+  object `Config fromRange`:
+    import Config.fromRange
+
+    an[IllegalArgumentException] shouldBe thrownBy(fromRange(1, 1))
+
+    def check(pLower: PositiveSize, pHigher: PositiveSize)(
+        expectedLeafCap: Log2Capacity,
+        expectedNodeCap: Log2Capacity
+    ): Unit =
+      val config = fromRange(pLower, pHigher)
+      import config.*
+
+      leafCap shouldBe expectedLeafCap
+      nodeCap shouldBe expectedNodeCap
+
+      def levels(caps: ArrayBuffer[LevelCap], size: PositiveSize): Option[Int] =
+        caps.iterator.zipWithIndex
+          .find {
+            case LevelCap.Full(_, _, total) -> index if index == 0 => size <= total
+            case LevelCap.Full(first, _, total) -> _               => first <= size && size <= total
+            case LevelCap.Partial(first, Some(subsequent)) -> _    =>
+              (size - first).asNonNegative / subsequent.asNonNegative <= nodeCap.asNonNegative
+            case _ => false
+          }
+          .map(_._2 + 1)
+
+      val leanConfig = fromRange(pLower, pHigher, lean = true)
+      if expectedLeafCap > Log2Capacity(3) then
+        leanConfig.leafCap.value should (be < expectedLeafCap.value)
+        leanConfig.nodeCap.value should (be < expectedNodeCap.value)
+
+      val height = levels(levelCaps, pHigher).value
+
+      height should (be < 4)
+      levels(leanConfig.levelCaps, pHigher).value should (be >= height)
+
+      try levels(levelCaps, pHigher * 100).value should (be < 6)
+      catch
+        case e: LimitOverflowException =>
+
+      try levels(leanConfig.levelCaps, pHigher * 100).value should (be < 8)
+      catch
+        case e: LimitOverflowException =>
+
+    def `    1`: Unit = check(1, 2)(Log2Capacity(3), Log2Capacity(3))
+    def `    3`: Unit = check(32, 35)(Log2Capacity(3), Log2Capacity(3))
+    def `   90`: Unit = check(30, 120)(Log2Capacity(4), Log2Capacity(4))
+    def ` 7.5k`: Unit = check(2_500, 10_000)(Log2Capacity(6), Log2Capacity(5))
+    def `   1M`: Unit = check(1_000_000, 2_000_000)(Log2Capacity(9), Log2Capacity(6))
+    def `   1G`: Unit = check(100_000_000, 1_100_000_000)(Log2Capacity(13), Log2Capacity(7))
+
+  def `Config fromMean`: Unit =
+    import Config.fromMean
+
+    fromMean(20) shouldBe fromRange(14, 28)
+    fromMean(30_000) shouldBe fromRange(21_000, 42_000)
+    fromMean(60_000, expectedSpread = 100) shouldBe fromRange(24_000, 108_000)
+    fromMean(2_000_000, lean = true) shouldBe fromRange(1_400_000, 2_800_000, lean = true)
 
 object ArrayTreeSpec:
   private val lineSeparator = System.lineSeparator

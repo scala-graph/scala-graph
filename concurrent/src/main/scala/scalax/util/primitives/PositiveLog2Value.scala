@@ -15,8 +15,9 @@ object PositiveLog2Value extends Log2Value[PositiveLog2Value]:
   inline def lowerLimit: Byte = 1
   inline def upperLimit: Byte = 30
 
-  private inline def notInValidRange  = " is not in the range of 1 to 30."
-  private inline def notValidPowerOf2 = " is not a positive power of 2 with a positive log 2."
+  private inline def notInValidRange = " is not in the range of 1 to 30."
+  private inline def invalidPowerOf2 = " is not a positive power of 2 with a positive log 2."
+  private inline def invalidInt      = " cannot be rounded up to a valid log 2."
 
   inline def valid(byte: Byte): Boolean = byte >= lowerLimit && byte <= upperLimit
 
@@ -24,25 +25,36 @@ object PositiveLog2Value extends Log2Value[PositiveLog2Value]:
     inline if valid(byte) then byte
     else error(codeOf(byte) + notInValidRange)
 
-  inline def validLog2(byte: Int): Boolean  = byte >= lowerLimit && byte <= upperLimit
-  inline def validPowerOf2(i: Int): Boolean = i > 1 && ((i & (i - 1)) == 0)
+  private inline def validLog2(byte: Int): Boolean  = byte >= lowerLimit && byte <= upperLimit
+  private inline def validPowerOf2(i: Int): Boolean = i > 1 && ((i & (i - 1)) == 0)
 
-  inline def powerOf2[I <: Int & Singleton](i: I): PositiveLog2Value =
+  inline def fromPowerOf2[I <: Int & Singleton](i: I): PositiveLog2Value =
     type IsPowerOf2[I <: Int] <: Boolean = (I > 1) match
       case true  => BitwiseAnd[I, I - 1] == 0
       case false => false
 
     inline if constValue[IsPowerOf2[I]] then constValue[31 - NumberOfLeadingZeros[I]].toByte
-    else error(codeOf(i) + notValidPowerOf2)
+    else error(codeOf(i) + invalidPowerOf2)
 
-  inline def log2Unsafe(b: Byte): PositiveLog2Value =
+  inline def fromExponentUnsafe(b: Byte): PositiveLog2Value =
     if validLog2(b) then b
     else throw ValueOutOfBoundsException(b, notInValidRange)
 
   /** @throws ValueOutOfBoundsException if `i` is not a positive power of 2 or equals to 1. */
-  final def powerOf2Unsafe(i: Int): PositiveLog2Value =
-    if validPowerOf2(i) then log2Unsafe(Integer.numberOfTrailingZeros(i).toByte)
-    else throw ValueOutOfBoundsException(i, notValidPowerOf2)
+  def fromPowerOf2Unsafe(i: Int): PositiveLog2Value =
+    if validPowerOf2(i) then fromExponentUnsafe(Integer.numberOfTrailingZeros(i).toByte)
+    else throw ValueOutOfBoundsException(i, invalidPowerOf2)
+
+  inline def ceilLog2[I <: Int & Singleton](i: I): PositiveLog2Value =
+    inline val log2 = constValue[32 - NumberOfLeadingZeros[I - 1]]
+    inline if log2 >= lowerLimit && log2 <= upperLimit then log2.toByte
+    else error(codeOf(i) + invalidInt)
+
+  /** @throws ValueOutOfBoundsException if `i` cannot be rounded up to a valid log 2. */
+  def ceilLog2Unsafe(i: Int): PositiveLog2Value =
+    val log2 = (32 - Integer.numberOfLeadingZeros(i - 1)).toByte
+    if valid(log2) then log2
+    else throw ValueOutOfBoundsException(i, invalidInt)
 
   private inline given Log2Value[PositiveLog2Value] = PositiveLog2Value
   extension (k: PositiveLog2Value)
@@ -58,7 +70,10 @@ object PositiveLog2Value extends Log2Value[PositiveLog2Value]:
     /** The power of 2 `NonNegative` that is represented by this `PositiveLog2Value`. */
     inline def asNonNegative: NonNegative = NonNegative.trust(asInt)
 
-    inline def <(b: PositiveLog2Value): Boolean = k < b
+    inline def <(b: PositiveLog2Value): Boolean  = k < b
+    inline def >(b: PositiveLog2Value): Boolean  = k > b
+    inline def <=(b: PositiveLog2Value): Boolean = k <= b
+    inline def >=(b: PositiveLog2Value): Boolean = k >= b
 
     inline def incr: PositiveLog2Value        = LimitedByteImpl.incr(k)
     inline def incrTrusted: PositiveLog2Value = (k + 1).toByte
@@ -69,6 +84,9 @@ object PositiveLog2Value extends Log2Value[PositiveLog2Value]:
       * @throws LimitOverflowException if the product exceeds `upperLimit`.
       */
     inline def *(l: PositiveLog2Value): PositiveLog2Value = Log2ValueImpl.mul(k, l)
+
+    inline infix def min(l: PositiveLog2Value): PositiveLog2Value = trust(math.min(k, l).toByte)
+    inline infix def max(l: PositiveLog2Value): PositiveLog2Value = trust(math.max(k, l).toByte)
 
 object PositiveLog2ValueOverPositive:
   private inline given Limited[Int, Positive]       = Positive

@@ -12,9 +12,7 @@ import scala.util.chaining.given
 import scalax.util.collection.MaxSizeView
 import scalax.util.invoke.ArrayVarHandle
 import scalax.util.invoke.ArrayVarHandle.anyRefHandle
-import scalax.util.primitives.*
-import scalax.util.primitives.PositiveLog2ValueOverNonNegative.*
-import scalax.util.primitives.PositiveLog2ValueOverPositive.*
+import scalax.util.primitives.{LimitOverflowException, *}
 import ArrayTree.{Config, LeafLike, TSize, Tree}
 
 /** Concurrent, growing only, compressed rose tree with leaves of type `Array[A]`.
@@ -1149,8 +1147,79 @@ object ArrayTree:
       levelCaps(capIndex.value).locate(i, leftSide)
 
   object Config:
-    def of[A](expectedSize20thPercentile: Positive, expectedSize90thPercentile: Positive): Config =
-      ??? // TODO
+    /** Suggests a `Config` based on expected sizes of some non-empty collection.
+      *
+      * @param expectedSize20thPercentile along with the absolute size estimate, this value determines `initialCap`.
+      *                                   With bigger sizes, an `initialCap` below this value will be chosen.
+      * @param expectedSize90thPercentile along with `expectedSize20thPercentile`, this value is used to suggest
+      *                                   `leafCap` and `nodeCap` such that smaller collections, and collections
+      *                                   with a smaller difference between 20th and 90th percentiles, will have
+      *                                   a lower tree depth.
+      *                                   This estimated size must be greater than that for the 20th percentile.
+      * @param lean if `false` (default), bigger leaves are favored.
+      *             If `true`, `initialCap` and `leafCap` get smaller to save RAM.
+      * @param fairLock see constructor.
+      */
+    def fromRange[A](
+        expectedSize20thPercentile: PositiveSize,
+        expectedSize90thPercentile: PositiveSize,
+        lean: Boolean = false,
+        fairLock: Boolean = false
+    ): Config =
+      require(expectedSize20thPercentile < expectedSize90thPercentile)
+      import math.{log, max, round}
+      inline val log2 = 0.69314718
+
+      val initialCap: Capacity =
+        if lean then expectedSize20thPercentile.mapTrusted(v => max(v >> 1, 1))
+        else expectedSize20thPercentile
+
+      val leafCap: Log2Capacity =
+        Log2Capacity.trust {
+          val expansion = (expectedSize90thPercentile - initialCap) max Positive(1)
+          val rawCap    = 0.4 * log(expansion.value) / log2
+          val incr: Int = if lean then 0 else 1
+          round((rawCap + incr).toFloat).toByte
+        } max PositiveLog2Value(3)
+
+      val nodeCap: Log2Capacity =
+        Log2Capacity.trust {
+          val rawCap    = 2 * log(leafCap.value) / log2
+          val decr: Int = if lean then 1 else 0
+          round((rawCap - decr).toFloat).toByte
+        } max PositiveLog2Value(3)
+
+      Config(initialCap, leafCap, nodeCap, fairLock)
+
+    /** Suggests a `Config` based on the mean size of some non-empty collection.
+      *
+      * @param expectedMean the expected mean size
+      * @param expectedSpread Factor for the deviation in percent, 100 at most.
+      *                       The default value is 50 meaning, that 90% of the sizes
+      *                       are between 50% and 150% of the `expectedMean`.
+      */
+    def fromMean[A](
+        expectedMean: PositiveSize,
+        expectedSpread: Positive = Positive(50),
+        lean: Boolean = false,
+        fairLock: Boolean = false
+    ): Config = {
+      require(expectedSpread <= Positive(100))
+
+      def expansion(percent: Float): PositiveSize =
+        expectedMean.mapTrusted { m =>
+          (m * percent * expectedSpread.value / 100).toInt
+        }
+
+      val p20 =
+        inline val mimicP20 = 3f / 5
+        expectedMean minusOrLimit expansion(mimicP20)
+      val p90 =
+        inline val mimicP90 = 4f / 5
+        expectedMean plusOrLimit expansion(mimicP90)
+
+      fromRange(p20, p90, lean, fairLock)
+    }
 
     private type Location = (slot: Index, subIndex: Index, leftSize: TSize)
 
@@ -1161,6 +1230,7 @@ object ArrayTree:
       def locate[U](i: Index, leftSide: Boolean): Location
 
       protected def locate[U](i: Index, leftSide: Boolean, subsequent: Log2Capacity): Location =
+        import scalax.util.primitives.PositiveLog2ValueOverNonNegative.*
         if leftSide then
           if i < first.asNonNegative then (Index.zero, i, TSize.zero)
           else
@@ -1173,6 +1243,7 @@ object ArrayTree:
           (slot, i % subsequent, slot *! subsequent)
 
     protected[concurrent] object LevelCap:
+      import scalax.util.primitives.PositiveLog2ValueOverPositive.*
 
       /** Fully defined capacities for some tree height. The Capacities of the subtrees are cumulated.
         * @param first capacity of the first node

@@ -11,7 +11,15 @@ object LimitedIntImpl:
 
   def addNonNegative[O](a: O, b: O)(using lim: Limited[Int, O]): O = add(a, b, a.value)
 
+  def addNonNegativeOrLimit[O](a: O, b: O)(using lim: Limited[Int, O]): O =
+    try addNonNegative(a, b)
+    catch case _: LimitOverflowException => lim.trust(lim.upperLimit)
+
   def addPositive[O](a: O, b: O)(using lim: Limited[Int, O]): O = add(a, b, a.incr.value)
+
+  def addPositiveOrLimit[O](a: O, b: O)(using lim: Limited[Int, O]): O =
+    try addPositive(a, b)
+    catch case _: LimitOverflowException => lim.trust(lim.upperLimit)
 
   private inline def add[O](a: O, b: O, lowerLimit: Int)(using lim: Limited[Int, O]): O =
     val sum = a.value + b.value
@@ -30,7 +38,20 @@ object LimitedIntImpl:
 
   def subNonNegative[O](a: O, b: O)(using lim: Limited[Int, O]): O = subtract(a, b, a.value)
 
+  def subNonNegativeOrLimit[O](a: O, b: O)(using lim: Limited[Int, O]): O =
+    try subNonNegative(a, b)
+    catch case _: LimitUnderflowException => lim.trust(lim.lowerLimit)
+
+  def subPositiveOrLimit[O](a: O, b: O)(using lim: Limited[Int, O]): O =
+    try subPositive(a, b)
+    catch case _: LimitUnderflowException => lim.trust(lim.lowerLimit)
+
   def subPositive[O](a: O, b: O)(using lim: Limited[Int, O]): O = subtract(a, b, a.decr.value)
+
+  def divPositive[O](a: O, b: O)(using lim: Limited[Int, O]): O =
+    val quotient = a.value / b.value
+    if quotient > 0 then lim.trust(quotient)
+    else throw new LimitUnderflowException
 
   private inline def subtract[O](a: O, b: O, upperLimit: Int)(using lim: Limited[Int, O]): O =
     val diff = a.value - b.value

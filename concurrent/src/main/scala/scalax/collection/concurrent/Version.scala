@@ -54,7 +54,10 @@ object Version:
 
     private inline given Limited[Int, BranchId] = BranchId
     extension (n: BranchId)
-      inline def <(b: BranchId): Boolean = n < b
+      inline def <(b: BranchId): Boolean  = n < b
+      inline def >(b: BranchId): Boolean  = n > b
+      inline def <=(b: BranchId): Boolean = n <= b
+      inline def >=(b: BranchId): Boolean = n >= b
 
       inline def incr: BranchId        = LimitedIntImpl.incr(n)
       inline def incrTrusted: BranchId = n + 1
@@ -83,7 +86,10 @@ object Version:
 
     private inline given Limited[Int, Revision] = Revision
     extension (n: Revision)
-      inline def <(b: Revision): Boolean = n < b
+      inline def <(b: Revision): Boolean  = n < b
+      inline def >(b: Revision): Boolean  = n > b
+      inline def <=(b: Revision): Boolean = n <= b
+      inline def >=(b: Revision): Boolean = n >= b
 
       inline def incr: Revision        = LimitedIntImpl.incr(n)
       inline def incrTrusted: Revision = n + 1
