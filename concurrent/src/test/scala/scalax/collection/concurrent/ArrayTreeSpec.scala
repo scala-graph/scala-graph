@@ -2,12 +2,14 @@ package scalax.collection.concurrent
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.chaining.scalaUtilChainingOps
+import org.scalacheck.Gen
 import org.scalactic.Prettifier
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.{LazyArg, MatchResult, Matcher}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.refspec.RefSpec
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import scalax.collection.concurrent.ArrayTree.Config.{fromRange, LevelCap}
 import scalax.util.primitives.*
 import ArrayTree.*
@@ -16,7 +18,7 @@ import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.{ArrayBuffer, Buffer}
 
-class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures:
+class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, ScalaCheckPropertyChecks:
   implicit val disableDefaultArrayHandling: Prettifier = Prettifier(_.toString)
 
   /* The following conversions are not recommended in production code,
@@ -205,6 +207,34 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures:
     def `root UpperNode`: Unit =
       val caps1 = smallConfigLevelCaps(1)
       populateAndCheck(caps1.first + caps1.subsequent.asPositive * 3 + 2)
+
+  object `apply 2 indexes`:
+    given PropertyCheckConfiguration = PropertyCheckConfiguration(minSuccessful = 5, maxDiscardedFactor = 1.0)
+    given Config                     = Config(initialCap = 8, leafCap = 8, nodeCap = 4)
+
+    private def populateAndCheck(size: PositiveSize): Unit =
+      val tree = ArrayTree.empty[Int]
+      size.indexes foreach tree.append
+
+      val indexes =
+        def anIndex = Gen.choose(0, size.value - 1)
+        for
+          i <- anIndex
+          j <- anIndex
+        yield TIndex.trust(i) -> TIndex.trust(j)
+
+      forAll(indexes) { (i: TIndex, j: TIndex) =>
+        tree(i, j) shouldBe (i.value, j.value)
+      }
+
+    def `size:  0`: Unit =
+      an[IndexOutOfBoundsException] shouldBe thrownBy {
+        ArrayTree.empty[Int](TIndex.zero, TIndex.zero)
+      }
+    def `size:  1`: Unit = populateAndCheck(1)
+    def `size:  5`: Unit = populateAndCheck(5)
+    def `size: 11`: Unit = populateAndCheck(11)
+    def `size: 44`: Unit = populateAndCheck(44)
 
   object `config `:
     import ArrayTree.Config

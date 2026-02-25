@@ -129,19 +129,47 @@ final class ArrayTree[A] private (
 
   /** @throws `IndexOutOfBoundsException` if `index` is not less than `size`. */
   def apply(index: TIndex): A =
-    val (tree, levels) = readState.treeLevels
     if index < size then
+      val (tree, levels) = readState.treeLevels
       tree match
-        case upper: UpperNode[A] =>
-          val (multi, subIndex, _) = leaf(upper, levels, index)
-          multi(subIndex)
-        case LeafParentNode(elems) =>
-          val (slot, subIndex, _) = locate(Index.zero, index, leftSide = true)
-          elems(slot.value)(subIndex)
-        case multi: MultiLeaf[A] => multi(index)
-        case SingleLeaf(elem)    => elem
-        case _: Empty[A]         => throw new IndexOutOfBoundsException
+        case root: Many[A]    => _apply(root, levels, index)(_.apply(_))
+        case SingleLeaf(elem) => elem
+        case _: Empty[A]      => throw new IndexOutOfBoundsException
     else throw new IndexOutOfBoundsException
+
+  /** `apply` two times optimized.
+    * This is more efficient than calling `apply` two times in case `index1` and `index2` are close
+    * such that both are stored in the same internal array of leaves.
+    *
+    * @throws `IndexOutOfBoundsException` if `index` is not less than `size`.
+    */
+  def apply(index1: TIndex, index2: TIndex): (A, A) =
+    if index1 < size && index2 < size then
+      val (tree, levels) = readState.treeLevels
+      tree match
+        case root: Many[A] =>
+          def withMulti(multi: MultiLeaf[A], i: Index): (A, A) =
+            val elem1 = multi(i)
+            if index1 == index2 then (elem1, elem1)
+            else
+              val multiIndex = i.value - index1.value + index2.value
+              if multiIndex >= 0 && multiIndex < multi.elems.length then (elem1, multi(Index.trust(multiIndex)))
+              else (elem1, _apply(root, levels, index2)(_.apply(_)))
+
+          _apply(root, levels, index1)(withMulti)
+        case SingleLeaf(elem) => (elem, elem)
+        case _: Empty[A]      => throw new IndexOutOfBoundsException
+    else throw new IndexOutOfBoundsException
+
+  private def _apply[R](many: Many[A], levels: NonNegative, index: TIndex)(withMulti: (MultiLeaf[A], Index) => R): R =
+    many match
+      case upper: UpperNode[A] =>
+        val (multi, subIndex, _) = leaf(upper, levels, index)
+        withMulti(multi, subIndex)
+      case LeafParentNode(elems) =>
+        val (slot, subIndex, _) = locate(Index.zero, index, leftSide = true)
+        withMulti(elems(slot.value), subIndex)
+      case multi: MultiLeaf[A] => withMulti(multi, index)
 
   @tailrec infix def append(a: A): TIndex =
     val (lastTree, lastActiveLeaf, lastClosedSize) = readState.treeActiveLeafClosedSize
