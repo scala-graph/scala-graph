@@ -74,7 +74,7 @@ final class ArrayTree[A] private (
 
   private object readState:
     private[ArrayTree] inline def treeLevels                     = withLock(_tree, _levels)
-    private[ArrayTree] inline def treeSize                       = withLock(_tree, TSize.trust(SizeH.get(self)))
+    private[ArrayTree] inline def treeSize                       = withLock(_tree, self.size)
     private[ArrayTree] inline def activeLeafClosedSize           = withLock(_activeLeaf, _closedSize)
     private[ArrayTree] inline def treeActiveLeafClosedSize       = withLock(_tree, _activeLeaf, _closedSize)
     private[ArrayTree] inline def treeLevelsActiveLeafClosedSize = withLock(_tree, _levels, _activeLeaf, _closedSize)
@@ -173,16 +173,42 @@ final class ArrayTree[A] private (
 
   @tailrec infix def append(a: A): TIndex =
     val (lastTree, lastActiveLeaf, lastClosedSize) = readState.treeActiveLeafClosedSize
+    _append(a)(using lastTree, lastActiveLeaf, lastClosedSize) match
+      case Collision                => append(a)
+      case index: TIndex @unchecked => index
 
+  /** Appends element `a` directly after the index `after` unless that index is already occupied.
+    *
+    * @param a the element to be appended.
+    * @param after the last used index from the caller's perspective. Ignored in case of an empty collection.
+    * @return The index of the appended element or `Conflict` if the subsequent index is already in use.
+    *
+    * @throws `IndexOutOfBoundsException` if `index` is not less than `size`.
+    */
+  def append(a: A, after: TIndex): TIndex | Conflict =
+    val writeLock = treeSync.writeLock
+    if writeLock.tryLock() then
+      try
+        val currentSize = self.size
+        if currentSize > Size.zero && after == currentSize.decrTrusted || currentSize == Size.zero then
+          _append(a)(using _tree, _activeLeaf, _closedSize) match
+            case Collision => throw new AssertionError("Unexpected collision despite write lock.")
+            case index: TIndex @unchecked /* must be last case */ => index
+        else if after < currentSize then Conflict
+        else throw new IndexOutOfBoundsException
+      finally writeLock.unlock()
+    else Conflict
+  end append
+
+  def _append(a: A)(using lastTree: Tree[A], lastActiveLeaf: LeafLike[A], lastClosedSize: TSize): TIndex | Collision =
     lastActiveLeaf append a match
       case Exhausted =>
         lastActiveLeaf.extendTreeAndAppend(lastTree, lastClosedSize, this)(a) match
-          case Collision                                      => append(a)
+          case Collision                                      => Collision
           case idx: TIndex @unchecked /* must be last case */ => idx
       case idx: Index @unchecked /* must be last case */ =>
         if SizeH.incrAndGet(self) > TSize.upperLimit then throw new LimitOverflowException
         lastClosedSize + idx
-  end append
 
   def strongIterator: Iterator[A] =
     val (tree, lastSize) = readState.treeSize
@@ -288,7 +314,7 @@ final class ArrayTree[A] private (
         def leavesIt: Iterator[B] =
           activeLeaf match
             case multi: MultiLeaf[A] => leavesIterator(multi, from - closedSize, closedSize)
-            case x => throw new IllegalArgumentException(s"Unexpected non-multi leaf ${x.getClass.getSimpleName}.")
+            case x => throw new AssertionError(s"Unexpected non-multi leaf ${x.getClass.getSimpleName}.")
 
         tree match
           case _: UpperNode[A] if fromActiveLeaf => leavesIt
@@ -344,6 +370,8 @@ object ArrayTree:
 
   type Capacity     = Positive; val Capacity: Positive.type                       = Positive
   type Log2Capacity = PositiveLog2Value; val Log2Capacity: PositiveLog2Value.type = PositiveLog2Value
+
+  type Conflict = -3; val Conflict: Conflict = -3
 
   private type Level = NonNegative
   private val Level = NonNegative

@@ -33,15 +33,15 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
   import ArrayTreeSpec.*
 
   def `append single threaded`: Unit =
-    def check(appendCount: PositiveSize)(
+    def check(size: PositiveSize)(
         initialCap: Capacity,
         leafCap: Log2Capacity = 2,
         nodeCap: Log2Capacity = 2
     ): Unit =
-      info(f"$appendCount%2d times to tree($initialCap, $leafCap, $nodeCap)")
+      info(f"$size%2d times to tree($initialCap, $leafCap, $nodeCap)")
       given Config = Config(initialCap, leafCap, nodeCap)
       val tree     = ArrayTree.empty[Int]
-      1 to appendCount.value foreach { i =>
+      1 to size.value foreach { i =>
         (tree append i).value shouldBe i - 1
         tree.size.value shouldBe i
       }
@@ -58,25 +58,85 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
   def `append concurrently`: Unit =
     given ExecutionContext = ExecutionContext.global
 
-    def append(count: Int)(
-        initialCap: Capacity,
-        leafCap: Log2Capacity = 2,
-        nodeCap: Log2Capacity = 2
-    ): Unit =
-      given tree: ArrayTree[Int] = ArrayTree.empty[Int](using Config(initialCap, leafCap, nodeCap))
-      val range                  = 0 until count
-      val seq                    = Future.sequence(range map (i => Future(tree append i)))
-      withClue(f"$count%2d futures, tree($initialCap, $leafCap, $nodeCap)$lineSeparator")(
+    def check(count: Int)(initialCap: Capacity): Unit =
+      inline def leafCap: Log2Capacity = 2
+      inline def nodeCap: Log2Capacity = 2
+      given tree: ArrayTree[Int]       = ArrayTree.empty[Int](using Config(initialCap, leafCap, nodeCap))
+
+      val range = 0 until count
+      val seq   = Future.sequence(range map (i => Future(tree append i)))
+      withClue(f"$count%3d futures, tree($initialCap, $leafCap, $nodeCap)$lineSeparator")(
         whenReady(seq) { indexes =>
           indexes should coverRange(range)
           tree.size.value shouldBe count
         }
       )
 
-    append(count = 5)(initialCap = 5)
-    append(count = 10)(initialCap = 4)
-    append(count = 20)(initialCap = 4)
-    append(count = 333)(initialCap = 3)
+    check(count = 5)(initialCap = 5)
+    check(count = 10)(initialCap = 4)
+    check(count = 20)(initialCap = 4)
+    check(count = 333)(initialCap = 3)
+
+  def `append after single threaded`: Unit =
+    def check(size: PositiveSize)(
+        initialCap: Capacity,
+        leafCap: Log2Capacity = 2,
+        nodeCap: Log2Capacity = 2
+    ): Unit =
+      info(f"tree($initialCap, $leafCap, $nodeCap) of size $size%2d")
+
+      given Config = Config(initialCap, leafCap, nodeCap)
+
+      val tree = ArrayTree.empty[Int]
+      0 until size.value foreach tree.append
+      tree.size shouldBe size
+
+      an[IndexOutOfBoundsException] shouldBe thrownBy(tree.append(77, size.asNonNegative))
+      val lastIndex = size.asNonNegative.decrTrusted
+      tree.append(77, lastIndex) shouldBe size
+      tree.append(77, lastIndex) shouldBe Conflict
+
+    check(2)(initialCap = 1)
+    check(4)(initialCap = 4)
+    check(3)(initialCap = 1)
+    check(3)(initialCap = 2)
+    check(5)(initialCap = 4)
+    check(7)(initialCap = 4)
+    check(9)(initialCap = 4)
+    check(40)(initialCap = 1, leafCap = 4, nodeCap = 4)
+
+  def `append after concurrently`: Unit =
+    given ExecutionContext = ExecutionContext.global
+
+    def check(size: Size): Unit =
+      given Config = Config(initialCap = 1, leafCap = 2, nodeCap = 4)
+
+      val tree: ArrayTree[Int] = ArrayTree.empty[Int]
+      0 until size.value foreach tree.append
+      tree.size shouldBe size
+
+      inline def futureCount: Size = 4
+      val seq                      = Future.sequence(
+        for _ <- 1 to futureCount.value
+        yield Future(tree.append(77, size.mapTrusted(s => if s == 0 then 0 else s - 1)))
+      )
+      withClue(f"$futureCount%3d futures, tree of size $size$lineSeparator")(
+        whenReady(seq) { indexes =>
+          val (conflicts, successes) = indexes.partition {
+            case Conflict => true
+            case _        => false
+          }
+          successes should have size 1
+          successes.head shouldBe size
+          conflicts should have size futureCount.decrTrusted.value
+        }
+      )
+
+    check(size = 0)
+    check(size = 1)
+    check(size = 3)
+    check(size = 10)
+    check(size = 11)
 
   object `treeIterator, leafCapacity: 2, nodeCapacity: 2`:
     private val defaultLeafCapacity: Log2Capacity = 2
