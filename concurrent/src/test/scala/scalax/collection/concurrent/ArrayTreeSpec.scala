@@ -43,7 +43,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
       val tree     = ArrayTree.empty[Int]
       1 to size.value foreach { i =>
         (tree append i).value shouldBe i - 1
-        tree.size.value shouldBe i
+        tree.size shouldBe i
       }
 
     check(2)(initialCap = 1)
@@ -68,7 +68,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
       withClue(f"$count%3d futures, tree($initialCap, $leafCap, $nodeCap)$lineSeparator")(
         whenReady(seq) { indexes =>
           indexes should coverRange(range)
-          tree.size.value shouldBe count
+          tree.size shouldBe count
         }
       )
 
@@ -89,7 +89,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
 
       val tree = ArrayTree.empty[Int]
       0 until size.value foreach tree.append
-      tree.size shouldBe size
+      tree.size shouldBe size.value
 
       an[IndexOutOfBoundsException] shouldBe thrownBy(tree.append(77, size.asNonNegative))
       val lastIndex = size.asNonNegative.decrTrusted
@@ -113,7 +113,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
 
       val tree: ArrayTree[Int] = ArrayTree.empty[Int]
       0 until size.value foreach tree.append
-      tree.size shouldBe size
+      tree.size shouldBe size.value
 
       inline def futureCount: Size = 4
       val seq                      = Future.sequence(
@@ -295,6 +295,17 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
     def `size:  5`: Unit = populateAndCheck(5)
     def `size: 11`: Unit = populateAndCheck(11)
     def `size: 44`: Unit = populateAndCheck(44)
+
+  object `extended Seq`:
+    given Config = Config(initialCap = 1, leafCap = 2, nodeCap = 4)
+
+    def `apply `: Unit =
+      ArrayTree(0)(0) shouldBe 0
+
+    def `equals `: Unit =
+      ArrayTree.empty[Int] shouldBe Seq.empty[Int]
+      ArrayTree(0, 1) shouldBe List(0, 1)
+      ArrayTree(0, 1) shouldNot be(ArrayTree(0, 2))
 
   object `config `:
     import ArrayTree.Config
@@ -502,7 +513,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
             Future {
               inline val count                         = 12
               val readingsWeak, readingsStrong         = new ArrayBuffer[Buffer[Int]](count)
-              val readingsWeakFrom, readingsStrongFrom = new ArrayBuffer[(NonNegative, Buffer[Int])](count)
+              val readingsWeakFrom, readingsStrongFrom = new ArrayBuffer[(Int, Buffer[Int])](count)
 
               // Start reader once `tree` has reached size `minSize` in order to increase failure ratio
               while tree.size < minSize do Thread.`yield`()
@@ -532,7 +543,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
 
               def checkSizes: Option[ErrMsg] =
                 type SizeFailure = (weak: Boolean, maxSize: NonNegative, actual: Int)
-                def check(weak: Boolean, buffer: ArrayBuffer[(NonNegative, Buffer[Int])])(
+                def check(weak: Boolean, buffer: ArrayBuffer[(Int, Buffer[Int])])(
                     expectation: (NonNegative, Buffer[Int]) => Boolean
                 ): Option[SizeFailure] =
                   buffer.iterator
@@ -577,7 +588,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
         case IterableOnce   => ArrayTree(0 until size.value)
       val expected = Array.tabulate(size.value)(identity)
 
-      tree.size.value shouldBe expected.length
+      tree.size shouldBe expected.length
 
       val weakIt = tree.weakIterator
       weakIt.toBuffer should contain theSameElementsInOrderAs expected
@@ -693,13 +704,13 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
     def `   1M`: Unit = check(1_000_000, 2_000_000)(Log2Capacity(9), Log2Capacity(6))
     def `   1G`: Unit = check(100_000_000, 1_100_000_000)(Log2Capacity(13), Log2Capacity(7))
 
-  def `Config fromMean`: Unit =
+  object `Config fromMean`:
     import Config.fromMean
 
-    fromMean(20) shouldBe fromRange(14, 28)
-    fromMean(30_000) shouldBe fromRange(21_000, 42_000)
-    fromMean(60_000, expectedSpread = 100) shouldBe fromRange(24_000, 108_000)
-    fromMean(2_000_000, lean = true) shouldBe fromRange(1_400_000, 2_800_000, lean = true)
+    def `  20`: Unit = fromMean(20) shouldBe fromRange(14, 28)
+    def ` 30k`: Unit = fromMean(30_000) shouldBe fromRange(21_000, 42_000)
+    def ` 60k`: Unit = fromMean(60_000, expectedSpread = 100) shouldBe fromRange(24_000, 108_000)
+    def `  2M`: Unit = fromMean(2_000_000, lean = true) shouldBe fromRange(1_400_000, 2_800_000, lean = true)
 
 object ArrayTreeSpec:
   private val lineSeparator = System.lineSeparator

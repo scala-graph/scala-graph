@@ -2,8 +2,8 @@ package scalax.collection.concurrent
 
 import java.util.ConcurrentModificationException
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import scala.annotation.{tailrec, unused}
-import scala.collection.AbstractIterator
+import scala.annotation.{tailrec, targetName, unused}
+import scala.collection.{AbstractIterator, IndexedSeq}
 import scala.collection.immutable.ArraySeq.unsafeWrapArray
 import scala.collection.mutable.{ArrayBuffer, Stack}
 import scala.reflect.ClassTag
@@ -40,7 +40,8 @@ final class ArrayTree[A] private (
     initialSize: TSize,
     initialActiveLeaf: LeafLike[A],
     initialClosedSize: TSize
-)(using config: Config)(using tag: ClassTag[A], varHandle: ArrayVarHandle[A]):
+)(using config: Config)(using tag: ClassTag[A], varHandle: ArrayVarHandle[A])
+    extends IndexedSeq[A]:
   self =>
   import config.*
   import ArrayTree.*
@@ -70,11 +71,11 @@ final class ArrayTree[A] private (
 
   @volatile protected[concurrent] def tree: Tree[A] = _tree
 
-  def size: TSize = TSize.trust(SizeH.get(this))
+  def length: Int = SizeH.get(this)
 
   private object readState:
     private[ArrayTree] inline def treeLevels                     = withLock(_tree, _levels)
-    private[ArrayTree] inline def treeSize                       = withLock(_tree, self.size)
+    private[ArrayTree] inline def treeSize                       = withLock(_tree, self._size)
     private[ArrayTree] inline def activeLeafClosedSize           = withLock(_activeLeaf, _closedSize)
     private[ArrayTree] inline def treeActiveLeafClosedSize       = withLock(_tree, _activeLeaf, _closedSize)
     private[ArrayTree] inline def treeLevelsActiveLeafClosedSize = withLock(_tree, _levels, _activeLeaf, _closedSize)
@@ -127,9 +128,12 @@ final class ArrayTree[A] private (
       if SizeH.incrAndGet(self) > TSize.upperLimit then throw new LimitOverflowException
   end updateState
 
+  def apply(index: Int): A = apply(TIndex.unsafe(index))
+
   /** @throws `IndexOutOfBoundsException` if `index` is not less than `size`. */
+  @targetName("applyTIndex")
   def apply(index: TIndex): A =
-    if index < size then
+    if index < _size then
       val (tree, levels) = readState.treeLevels
       tree match
         case root: Many[A]    => _apply(root, levels, index)(_.apply(_))
@@ -144,7 +148,7 @@ final class ArrayTree[A] private (
     * @throws `IndexOutOfBoundsException` if `index` is not less than `size`.
     */
   def apply(index1: TIndex, index2: TIndex): (A, A) =
-    if index1 < size && index2 < size then
+    if index1 < _size && index2 < _size then
       val (tree, levels) = readState.treeLevels
       tree match
         case root: Many[A] =>
@@ -189,7 +193,7 @@ final class ArrayTree[A] private (
     val writeLock = treeSync.writeLock
     if writeLock.tryLock() then
       try
-        val currentSize = self.size
+        val currentSize = self._size
         if currentSize > Size.zero && after == currentSize.decrTrusted || currentSize == Size.zero then
           _append(a)(using _tree, _activeLeaf, _closedSize) match
             case Collision => throw new AssertionError("Unexpected collision despite write lock.")
@@ -209,6 +213,9 @@ final class ArrayTree[A] private (
       case idx: Index @unchecked /* must be last case */ =>
         if SizeH.incrAndGet(self) > TSize.upperLimit then throw new LimitOverflowException
         lastClosedSize + idx
+
+  /** Same as `strongIterator`. */
+  override def iterator: Iterator[A] = strongIterator
 
   def strongIterator: Iterator[A] =
     val (tree, lastSize) = readState.treeSize
@@ -254,14 +261,14 @@ final class ArrayTree[A] private (
             leafIt.next()
           else throw new IndexOutOfBoundsException
 
-      MaxSizeView(it, size)
+      MaxSizeView(it, _size)
     else MaxSizeView.empty
 
   def strongReverseIterator: Iterator[A] =
     reverseIteratorImpl(_.strongReverseIterator(), stronglyConsistent.ReverseIterator.apply)
 
   def weakReverseIterator: MaxSizeView[A] =
-    MaxSizeView(reverseIteratorImpl(_.weakReverseIterator(), weaklyConsistent.ReverseIterator.apply), size)
+    MaxSizeView(reverseIteratorImpl(_.weakReverseIterator(), weaklyConsistent.ReverseIterator.apply), _size)
 
   /** @throws `IndexOutOfBoundsException` if `from` is not less than `size`. */
   def strongReverseIterator(from: TIndex): Iterator[A] =
@@ -278,7 +285,7 @@ final class ArrayTree[A] private (
 
   def weakReverseIteratorWithIndex: MaxSizeView[(A, TIndex)] = MaxSizeView(
     reverseIteratorImpl(_.weakReverseIteratorWithIndex(), weaklyConsistent.ReverseIteratorWithIndex.apply),
-    size
+    _size
   )
 
   /** @throws `IndexOutOfBoundsException` if `from` is not less than `size`. */
@@ -307,7 +314,7 @@ final class ArrayTree[A] private (
         leafIterator: (Leaf[A], Index) => Iterator[B],
         leavesIterator: (MultiLeaf[A], TIndex, TSize) => Iterator[B]
     ): Iterator[B] =
-      if from < size then
+      if from < _size then
         val (tree, levels, activeLeaf, closedSize) = readState.treeLevelsActiveLeafClosedSize
         val fromActiveLeaf                         = from >= closedSize
 
@@ -360,6 +367,8 @@ final class ArrayTree[A] private (
       indentSize: Positive = Positive(2)
   ): String =
     _tree.prettifyTree(includeNodes, marginSize, indentSize)
+
+  override def knownSize: Int = size
 
 object ArrayTree:
   /** Indicate that `ArrayTree`'s size is not necessarily limited to Int.
