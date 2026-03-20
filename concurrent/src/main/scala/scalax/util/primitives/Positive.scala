@@ -56,4 +56,7 @@ object Positive extends Limited[Int, Positive], LimitedArithmetics[Int, Positive
     def gen: IndexGen = IndexGen(asNonNegative)
 
 type PositiveSize = Positive
-val PositiveSize = Positive
+val PositiveSize: Positive.type = Positive
+
+type Capacity = Positive
+val Capacity: Positive.type = Positive

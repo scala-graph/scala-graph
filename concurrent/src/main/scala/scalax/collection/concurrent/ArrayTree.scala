@@ -3,9 +3,11 @@ package scalax.collection.concurrent
 import java.util.ConcurrentModificationException
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import scala.annotation.{tailrec, targetName, unused}
-import scala.collection.{AbstractIterator, IndexedSeq}
+import scala.collection.{
+  AbstractIterator, IndexedSeq, IndexedSeqOps, IterableFactoryDefaults, SeqFactory, StrictOptimizedSeqOps
+}
 import scala.collection.immutable.ArraySeq.unsafeWrapArray
-import scala.collection.mutable.{ArrayBuffer, Stack}
+import scala.collection.mutable.{AbstractSeq, ArrayBuffer, Builder, Stack}
 import scala.reflect.ClassTag
 import scala.util.{Success, Try}
 import scala.util.chaining.given
@@ -15,7 +17,7 @@ import scalax.util.invoke.ArrayVarHandle.anyRefHandle
 import scalax.util.primitives.{LimitOverflowException, *}
 import ArrayTree.{Config, LeafLike, TSize, Tree}
 
-/** Concurrent, growing only, compressed rose tree with leaves of type `Array[A]`.
+/** Concurrent, appendable only, compressed rose tree with leaves of type `Array[A]`.
   *
   * Weak iterators skip any element not yet visible in the current thread.
   * Strong iterators wait for elements until they are visible.
@@ -28,7 +30,7 @@ import ArrayTree.{Config, LeafLike, TSize, Tree}
   * that were possibly appended in other threads directly before your call.
   * Otherwise, go for weak iterators.
   *
-  * While strong iterators always return an `Iterator` with `knownSize` set, weak iterators return a `MaxSizeView`.
+  * While strong iterators always return an `Iterator` with `knownSize` set, weak iterators return `MaxSizeView`.
   * `MaxSizeView` allows for an optimal preallocation when the iterator gets materialized into some
   * collection that is initiated with the right size for best efficiency, especially into array-based collections.
   *
@@ -41,7 +43,11 @@ final class ArrayTree[A] private (
     initialActiveLeaf: LeafLike[A],
     initialClosedSize: TSize
 )(using config: Config)(using tag: ClassTag[A], varHandle: ArrayVarHandle[A])
-    extends IndexedSeq[A]:
+    extends AbstractSeq[A],
+      IndexedSeq[A],
+      IndexedSeqOps[A, ArrayTree, ArrayTree[A]],
+      StrictOptimizedSeqOps[A, ArrayTree, ArrayTree[A]],
+      IterableFactoryDefaults[A, ArrayTree]:
   self =>
   import config.*
   import ArrayTree.*
@@ -370,15 +376,40 @@ final class ArrayTree[A] private (
 
   override def knownSize: Int = size
 
+  override def iterableFactory: SeqFactory[ArrayTree] =
+    throw new UnsupportedOperationException("Extend ArrayTree or use ArrayTree.newBuilder or iterator instead.")
+
+  override inline def empty: ArrayTree[A]                                         = ArrayTree.empty[A]
+  override protected inline def fromSpecific(coll: IterableOnce[A]): ArrayTree[A] = ArrayTree[A](coll)
+  override protected inline def newSpecificBuilder: Builder[A, ArrayTree[A]]      = newBuilder
+
+  // provide complete signatures for the most often used methods that invoke `iterableFactory` otherwise
+
+  private inline def adjustedInitialCap: Config =
+    config.copy(initialCap = config.initialCap max _size.asPositiveOrElse1)
+
+  inline def map[B: {ClassTag, ArrayVarHandle}](f: A => B): ArrayTree[B] =
+    ArrayTree(iterator map f)(using adjustedInitialCap)
+
+  inline def flatMap[B: {ClassTag, ArrayVarHandle}](f: A => IterableOnce[B]): ArrayTree[B] =
+    ArrayTree(iterator flatMap f)
+
+  inline def collect[B: {ClassTag, ArrayVarHandle}](pf: PartialFunction[A, B]): ArrayTree[B] =
+    ArrayTree(iterator collect pf)
+
+  inline def zip[B: {ClassTag, ArrayVarHandle}](that: IterableOnce[B]): ArrayTree[(A, B)] =
+    ArrayTree(iterator zip that)(using adjustedInitialCap)
+
 object ArrayTree:
+  companion =>
+
   /** Indicate that `ArrayTree`'s size is not necessarily limited to Int.
     * For the time being it's fine to limit support to Int, though.
     */
-  type TSize  = Size; protected[concurrent] val TSize: NonNegative.type   = Size
-  type TIndex = TSize; protected[concurrent] val TIndex: NonNegative.type = TSize
-
-  type Capacity     = Positive; val Capacity: Positive.type                       = Positive
-  type Log2Capacity = PositiveLog2Value; val Log2Capacity: PositiveLog2Value.type = PositiveLog2Value
+  type TSize  = Size
+  type TIndex = Size
+  type TSeqId = Size
+  protected[concurrent] val TSize, TIndex, TSeqId: NonNegative.type = Size
 
   type Conflict = -3; val Conflict: Conflict = -3
 
@@ -799,7 +830,7 @@ object ArrayTree:
 
     /** Appends `elem` assuming that `capacity` is not exhausted in a single-threaded manner.
       *
-      * @return the index `elem` has been inserted.
+      * @return the index `elem` has been inserted at.
       * @throws IndexOutOfBoundsException if capacity is exhausted.
       * @throws ConcurrentModificationException in case a concurrent append has been detected.
       */
@@ -1345,3 +1376,18 @@ object ArrayTree:
         Try(first + (nodeCap.asPositive.decrTrusted *! subsequent)) match
           case Success(total) => Full(first, subsequent, total)
           case _              => Partial(first, Some(subsequent))
+
+  def newBuilder[A](using config: Config)(using ClassTag[A], ArrayVarHandle[A]): Builder[A, ArrayTree[A]] =
+    new Builder[A, ArrayTree[A]]:
+      private var buf = empty[A]
+
+      inline def clear(): Unit              = buf = empty
+      inline def result(): ArrayTree[A]     = buf
+      inline def addOne(elem: A): this.type = { buf append elem; this }
+
+      override def addAll(elems: IterableOnce[A]): this.type =
+        if buf.isEmpty then apply(elems)
+        else elems.iterator foreach addOne
+        this
+
+      override def sizeHint(size: Int): Unit = config.initialCap.value

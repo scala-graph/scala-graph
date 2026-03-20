@@ -31,6 +31,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
   private given Conversion[Int, Log2Capacity] = (i: Int) => Log2Capacity.fromPowerOf2Unsafe(i)
 
   import ArrayTreeSpec.*
+  private val tiny = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
 
   def `append single threaded`: Unit =
     def check(size: PositiveSize)(
@@ -191,7 +192,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
       )
 
     def `size:  3, initialCapacity: 2`: Unit =
-      tree(3)(initialCap = 1) should equalTree(
+      tree(3)(initialCap = 2) should equalTree(
         LeafParentNode.denseFake,
         MultiLeaf.withNullLeftNeighbor(1, 2),
         MultiLeaf.withFakeLeftNeighbor(3)
@@ -398,7 +399,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
         }
 
   object `iterator `:
-    given Config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
+    given Config = tiny
 
     private def check(size: Size): Unit =
       val tree     = ArrayTree.empty[Int] tap (t => 0 until size.value foreach t.append)
@@ -418,7 +419,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
     def `size: 21`: Unit = check(21)
 
   object `reverse iterator`:
-    given Config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
+    given Config = tiny
 
     private def check(size: Size): Unit =
       val tree     = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
@@ -438,7 +439,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
     def `size: 21`: Unit = check(21)
 
   object `reverse iterator from`:
-    given Config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
+    given Config = tiny
 
     private def check(size: Size, from: TIndex): Unit =
       val tree         = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
@@ -459,7 +460,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
     def `size: 21, from 21`: Unit = an[IndexOutOfBoundsException] shouldBe thrownBy(check(21, 21))
 
   object `reverse iterator with index`:
-    given Config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
+    given Config = tiny
 
     private def check(size: Size): Unit =
       val tree     = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
@@ -479,7 +480,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
     def `size: 21`: Unit = check(21)
 
   object `reverse iterator from with index`:
-    given Config = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
+    given Config = tiny
 
     private def check(size: Size, from: TIndex): Unit =
       val tree         = ArrayTree.empty[Int] tap (t => 1 to size.value foreach t.append)
@@ -608,7 +609,7 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
 
   def `concurrent integration`: Unit =
     given ExecutionContext   = ExecutionContext.global
-    given Config             = Config(initialCap = 1, leafCap = 4, nodeCap = 2)
+    given Config             = tiny
     val tree: ArrayTree[Int] = ArrayTree.empty[Int]
 
     def append(values: Range): IndexedSeq[TIndex] = values map tree.append
@@ -711,6 +712,13 @@ class ArrayTreeSpec extends RefSpec, Matchers, OptionValues, ScalaFutures, Scala
     def ` 30k`: Unit = fromMean(30_000) shouldBe fromRange(21_000, 42_000)
     def ` 60k`: Unit = fromMean(60_000, expectedSpread = 100) shouldBe fromRange(24_000, 108_000)
     def `  2M`: Unit = fromMean(2_000_000, lean = true) shouldBe fromRange(1_400_000, 2_800_000, lean = true)
+
+  object `Builder `:
+    val empty = ArrayTree.empty[Int](using tiny)
+
+    def `changing type`: Unit      = empty.map(_.toLong) shouldBe an[ArrayTree[Long]]
+    def `preserving type`: Unit    = empty.take(1) shouldBe an[ArrayTree[Int]]
+    def `unsupported method`: Unit = an[UnsupportedOperationException] shouldBe thrownBy(empty.zipWithIndex)
 
 object ArrayTreeSpec:
   private val lineSeparator = System.lineSeparator

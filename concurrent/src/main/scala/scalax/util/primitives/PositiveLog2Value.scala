@@ -88,6 +88,9 @@ object PositiveLog2Value extends Log2Value[PositiveLog2Value]:
     inline infix def min(l: PositiveLog2Value): PositiveLog2Value = trust(math.min(k, l).toByte)
     inline infix def max(l: PositiveLog2Value): PositiveLog2Value = trust(math.max(k, l).toByte)
 
+type Log2Capacity = PositiveLog2Value
+val Log2Capacity: PositiveLog2Value.type = PositiveLog2Value
+
 object PositiveLog2ValueOverPositive:
   private inline given Limited[Int, Positive]       = Positive
   private inline given Log2Value[PositiveLog2Value] = PositiveLog2Value
