@@ -92,13 +92,13 @@ lazy val defaultSettings_2 = Defaults.coreDefaultSettings ++ Seq(
 
 lazy val defaultTestLibSettings =
   libraryDependencies ++= Seq(
-    "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test,
+    "org.scalatest"     %% "scalatest"       % "3.2.20"   % Test,
     "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
   )
 
 lazy val defaultTestLibSettings_3 =
   libraryDependencies ++= Seq(
-    "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test,
+    "org.scalatest"     %% "scalatest"       % "3.2.20"   % Test,
     "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test exclude (
       "org.scalacheck",
       "scalacheck_3"
