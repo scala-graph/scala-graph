@@ -57,3 +57,6 @@ object LimitedIntImpl:
     val diff = a.value - b.value
     if diff >= lim.lowerLimit && diff <= upperLimit then lim.trust(diff)
     else throw new LimitUnderflowException
+
+  inline def ordering[O](using lim: Limited[Int, O]): Ordering[O] =
+    Ordering.Int.asInstanceOf[Ordering[O]]

@@ -10,15 +10,21 @@ import scala.compiletime.{codeOf, error}
 opaque type NonNegative = Int
 
 object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, NonNegative]:
-  transparent inline def lowerLimit = 0
-  transparent inline def upperLimit = Int.MaxValue - 9
-  inline def zero: NonNegative      = 0
+  transparent inline def lowerLimit: Int = 0
+  transparent inline def upperLimit: Int = Int.MaxValue - 9
+  inline def zero: NonNegative           = 0
+
+  inline val unused1: 2147483639 = upperLimit + 1
+  inline val unused2: 2147483640 = upperLimit + 2
+  inline val unused3: 2147483641 = upperLimit + 3
 
   inline def valid(a: Int): Boolean = a >= lowerLimit && a <= upperLimit
 
   final inline def apply(i: Int): NonNegative =
     inline if valid(i) then i
     else error(codeOf(i) + " is invalid for NonNegativeInt.")
+
+  given Ordering[NonNegative] = LimitedIntImpl.ordering[NonNegative](using NonNegative)
 
   private inline given Limited[Int, NonNegative] = NonNegative
   extension (nn: NonNegative)
@@ -54,6 +60,8 @@ object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, No
 
     def asPositiveOrElseLimit: Positive =
       nn.asPositiveOrElse(Positive.trust(if nn < 1 then lowerLimit else upperLimit))
+
+    inline def mapOrElseZero(f: Int => Int): NonNegative = nn.mapOrElse(f, zero)
 
     def fold[B](ifZero: => B, withPositive: Positive => B): B =
       if nn == zero then ifZero
@@ -107,6 +115,12 @@ object NonNegative extends Limited[Int, NonNegative], LimitedArithmetics[Int, No
     inline def withFilter(p: Int => Boolean): Iterator[Int]       = iterator filter p
     inline def iterator: Iterator[Int]                            = limit.indexes
     inline def foreach(f: Int => Unit): Unit                      = limit foreachIndex f
+
+  extension [A](arr: Array[A])
+    def apply(index: NonNegative): A               = arr(index)
+    def update(index: NonNegative, value: A): Unit = arr(index) = value
+
+  extension [A](iSeq: IndexedSeq[A]) def apply(index: NonNegative): A = iSeq(index)
 
 type Size  = NonNegative
 type Index = NonNegative

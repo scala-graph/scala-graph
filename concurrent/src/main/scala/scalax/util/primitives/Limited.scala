@@ -47,6 +47,11 @@ trait Limited[A <: AnyVal, O]:
     def mapTrusted(f: A => A): O =
       f(limited.value).asInstanceOf[O]
 
+    /** @return the result of `f` if valid, otherwise `default`. */
+    def mapOrElse(f: A => A, default: => O): O =
+      val res = f(limited.value)
+      if valid(res) then res.asInstanceOf[O] else default
+
 final class ValueOutOfBoundsException(value: AnyVal, cause: String) extends Exception(s"Value $value $cause.")
 
 final class LimitOverflowException  extends Exception

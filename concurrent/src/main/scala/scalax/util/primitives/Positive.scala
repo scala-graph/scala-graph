@@ -10,14 +10,20 @@ import scalax.util.primitives.NonNegative.IndexGen
 opaque type Positive = Int
 
 object Positive extends Limited[Int, Positive], LimitedArithmetics[Int, Positive]:
-  inline def lowerLimit: Int = 1
-  inline def upperLimit: Int = Int.MaxValue - 8
+  transparent inline def lowerLimit: Int = 1
+  transparent inline def upperLimit: Int = Int.MaxValue - 8
+
+  inline val unused1: 2147483640 = upperLimit + 1
+  inline val unused2: 2147483641 = upperLimit + 2
+  inline val unused3: 2147483642 = upperLimit + 3
 
   inline def valid(i: Int): Boolean = i >= lowerLimit && i <= upperLimit
 
   final inline def apply(i: Int): Positive =
     inline if valid(i) then i
     else error(codeOf(i) + " is invalid fpr Positive.")
+
+  given Ordering[Positive] = LimitedIntImpl.ordering[Positive](using Positive)
 
   private inline given Limited[Int, Positive] = Positive
   extension (n: Positive)
@@ -43,6 +49,8 @@ object Positive extends Limited[Int, Positive], LimitedArithmetics[Int, Positive
     inline infix def max(that: Positive): Positive = trust(math.max(n, that))
 
     inline def asNonNegative: NonNegative = NonNegative.trust(n)
+
+    inline def mapOrElseOne(f: Int => Int): Positive = n.mapOrElse(f, Positive(1))
 
     /** `Iterator` over all `Int`s in { 0, ..., n - 1 }. */
     def indexes: Iterator[Int] = asNonNegative.indexes

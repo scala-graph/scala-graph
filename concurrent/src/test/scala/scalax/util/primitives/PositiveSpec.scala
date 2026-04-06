@@ -79,3 +79,7 @@ class PositiveSpec extends RefSpec with Matchers with OptionValues:
 
   def `gen `: Unit =
     (for i <- PositiveSize(3).gen yield i).toArray shouldBe Array(0, 1, 2)
+
+  def `unused `: Unit =
+    Positive.unused1 should be > Positive.upperLimit
+    Positive.unused2 should be > Positive.upperLimit

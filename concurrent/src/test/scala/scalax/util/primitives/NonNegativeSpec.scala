@@ -74,3 +74,7 @@ class NonNegativeSpec extends RefSpec, Matchers, OptionValues:
 
   def `gen `: Unit =
     (for i <- Size(3).gen yield i).toArray shouldBe Array(0, 1, 2)
+
+  def `unused `: Unit =
+    NonNegative.unused1 should be > NonNegative.upperLimit
+    NonNegative.unused2 should be > NonNegative.upperLimit

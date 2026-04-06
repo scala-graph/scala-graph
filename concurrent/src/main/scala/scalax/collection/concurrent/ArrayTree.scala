@@ -195,7 +195,7 @@ final class ArrayTree[A] private (
     *
     * @throws `IndexOutOfBoundsException` if `index` is not less than `size`.
     */
-  def append(a: A, after: TIndex): TIndex | Conflict =
+  def append(a: A, after: TIndex): TIndex | Conflict.type =
     val writeLock = treeSync.writeLock
     if writeLock.tryLock() then
       try
@@ -219,6 +219,11 @@ final class ArrayTree[A] private (
       case idx: Index @unchecked /* must be last case */ =>
         if SizeH.incrAndGet(self) > TSize.upperLimit then throw new LimitOverflowException
         lastClosedSize + idx
+
+  def remove(index: TIndex, last: TSeqId): TSeqId | Conflict.type =
+    ???
+
+  def update(idx: HashCode, elem: A): Unit = ???
 
   /** Same as `strongIterator`. */
   override def iterator: Iterator[A] = strongIterator
@@ -411,7 +416,7 @@ object ArrayTree:
   type TSeqId = Size
   protected[concurrent] val TSize, TIndex, TSeqId: NonNegative.type = Size
 
-  type Conflict = -3; val Conflict: Conflict = -3
+  inline val Conflict = -3
 
   private type Level = NonNegative
   private val Level = NonNegative
