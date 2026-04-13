@@ -826,7 +826,7 @@ trait TraverserImpl[N, E <: Edge[N]] {
           val (
             layer_0: Iterable[NodeT],
             inDegrees: MMap[NodeT, Int]
-          ) = setup
+          )                                   = setup
           val untilDepth: Int                 = maxDepth
           val estimatedLayers: Int            = expectedMaxNodes(4)
           val estimatedNodesPerLayer: Int     = order / estimatedLayers

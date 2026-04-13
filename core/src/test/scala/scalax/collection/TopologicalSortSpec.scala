@@ -187,7 +187,7 @@ final private class TopologicalSort[G[N, E <: Edge[N]] <: AnyGraph[N, E] with Gr
       _.topologicalSort.fold(
         Topo.unexpectedCycle,
         _.toLayered.toOuter.toList match {
-          case (layer_0 :: layer_1 :: Nil) =>
+          case layer_0 :: layer_1 :: Nil =>
             layer_0._2.toList.sorted should be(expectedLayer_0)
             layer_1._2.toList.sorted should be(expectedLayer_1)
           case _ => fail()
