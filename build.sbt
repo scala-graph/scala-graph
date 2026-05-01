@@ -52,7 +52,8 @@ lazy val jsonLift = crossProject(JSPlatform, JVMPlatform)
       name := "Graph lift-json",
       description := "Configurable JSON serialization and deserialization of Graphs, provided by graph-core, in terms of lift-json.",
       version                              := Version.jsonLift,
-      libraryDependencies += "net.liftweb" %% "lift-json" % "3.5.0" // not available for Scala 3
+      libraryDependencies += "net.liftweb" %% "lift-json" % "3.5.0", // not available for Scala 3
+      dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
     )
   )
 
