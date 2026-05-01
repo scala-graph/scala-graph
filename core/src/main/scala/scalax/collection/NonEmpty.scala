@@ -49,7 +49,7 @@ protected trait UnchangedSizeOps[+A, CC[+X] <: NonEmpty[X]] {
   /** Builds a new collection by applying a function to all elements of this collection. */
   def map[B](f: A => B): CC[B]
 
-  final def reverse: CC[A]  = newUnsafeBuilder.result(iterator.toList.reverse)
+  final def reverse: CC[A]  = newUnsafeBuilder.result(iterator.toList.reverseIterator)
   final def toList: List[A] = iterator.toList
 
   final def zip[B](that: IterableOnce[B]): CC[(A, B)] = newUnsafeBuilder.result(iterator zip that)
@@ -71,7 +71,7 @@ protected trait LengtheningOps[+A, CC[+X] <: NonEmpty[X]] {
   this: UnchangedSizeOps[A, CC] =>
 
   /** Concatenates the elements of this collection and those of `suffix` into a new collection. */
-  def concat[B >: A](suffix: IterableOnce[B]): CC[B] = appendedAll(suffix)
+  final def concat[B >: A](suffix: IterableOnce[B]): CC[B] = appendedAll(suffix)
 
   /** Alias for `concat` */
   final def ++[B >: A](that: IterableOnce[B]): CC[B] = concat(that)
@@ -135,17 +135,17 @@ protected trait ShorteningEitherOps[+A, CC[+X] <: NonEmpty[X], SCC[+_] <: Iterab
   protected def newConditionalBuilder[B]: NonEmptyBuilder.Conditional[B, CC, SCC]
 
   /** Same as `filter` but $ESCAPING */
-  def filterEither(p: A => Boolean): Either[SCC[A], CC[A]] = newConditionalBuilder.result(iterator filter p)
+  final def filterEither(p: A => Boolean): Either[SCC[A], CC[A]] = newConditionalBuilder.result(iterator filter p)
 
   /** Same as `filterNot` but $ESCAPING */
-  def filterNotEither(p: A => Boolean): Either[SCC[A], CC[A]] = filterEither(!p(_))
+  final def filterNotEither(p: A => Boolean): Either[SCC[A], CC[A]] = filterEither(!p(_))
 
   /** Same as `flatMap` but $ESCAPING */
   final def flatMapEither[B](f: A => IterableOnce[B]): Either[SCC[B], CC[B]] =
     newConditionalBuilder.result(iterator flatMap f)
 
   /** Same as `collect` but $ESCAPING */
-  def collectEither[B](pf: PartialFunction[A, B]): Either[SCC[B], CC[B]] =
+  final def collectEither[B](pf: PartialFunction[A, B]): Either[SCC[B], CC[B]] =
     newConditionalBuilder.result(iterator collect pf)
 }
 
@@ -184,21 +184,21 @@ protected object NonEmptyBuilder {
     def addOne(elem: A): this.type = { buf += elem; this }
     def +=(elem: A): this.type     = addOne(elem)
 
-    def result(it: IterableOnce[A]): R
+    def result(iterator: Iterator[A]): R
   }
 
   protected[collection] class Unsafe[A, CC[+X] <: NonEmpty[X]](factory: NonEmptyFactory[CC]) extends Builder[A, CC[A]] {
     private def from(it: IterableOnce[A]): CC[A] = factory.fromUnsafe(it).tap(_ => clear())
 
-    def result(): CC[A]                    = from(buf)
-    def result(it: IterableOnce[A]): CC[A] = from(it)
+    def result(): CC[A]                      = from(buf)
+    def result(iterator: Iterator[A]): CC[A] = from(iterator)
   }
 
   protected[collection] class Escaping[A, CC[+_]](factory: IterableFactory[CC]) extends Builder[A, CC[A]] {
     private def from(it: IterableOnce[A]): CC[A] = factory.from(it).tap(_ => clear())
 
-    def result(): CC[A]                    = from(buf)
-    def result(it: IterableOnce[A]): CC[A] = from(it)
+    def result(): CC[A]                      = from(buf)
+    def result(iterator: Iterator[A]): CC[A] = from(iterator)
   }
 
   protected[collection] class Conditional[A, CC[+X] <: NonEmpty[X], SCC[+_] <: Iterable[_]](
@@ -213,22 +213,16 @@ protected object NonEmptyBuilder {
       else Left(escapingFactory.from(buf))
     }.tap(_ => clear())
 
-    def result(iterableOnce: IterableOnce[A]): Either[SCC[A], CC[A]] = {
-      def lookAhead(): (Boolean, Iterator[A]) = iterableOnce match {
-        case it: Iterator[A] =>
-          var i = 0
-          while (i < minSize && it.hasNext) {
-            buf += it.next()
-            i += 1
-          }
-          (i == minSize, buf.iterator ++ it)
-        case iterable: Iterable[A] =>
-          val it = iterable.iterator
-          var i  = 0
-          while (i < minSize && it.hasNext)
-            i += 1
-          (i == minSize, iterable.iterator)
-      }
+    def result(iterator: Iterator[A]): Either[SCC[A], CC[A]] = {
+      def lookAhead(): (Boolean, Iterator[A]) =
+        iterator.knownSize match {
+          case -1 =>
+            iterator.take(minSize) foreach buf.append
+            (buf.size == minSize) -> (buf.iterator ++ iterator)
+          case size =>
+            (size >= 2) ->
+              iterator
+        }
 
       (lookAhead() match {
         case (true, it)  => Right(nonEmptyFactory.fromUnsafe(it))
