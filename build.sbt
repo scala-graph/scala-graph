@@ -68,8 +68,8 @@ lazy val jsoniter = crossProject(JSPlatform, JVMPlatform)
       version     := Version.jsoniter, {
         val jsoniterGroup = "com.github.plokhotnyuk.jsoniter-scala"
         libraryDependencies ++= Seq(
-          jsoniterGroup %% "jsoniter-scala-core"   % "2.36.7",
-          jsoniterGroup %% "jsoniter-scala-macros" % "2.36.7"
+          jsoniterGroup %% "jsoniter-scala-core"   % "2.38.9",
+          jsoniterGroup %% "jsoniter-scala-macros" % "2.38.9"
         )
       }
     )
@@ -92,13 +92,13 @@ lazy val defaultSettings_2 = Defaults.coreDefaultSettings ++ Seq(
 
 lazy val defaultTestLibSettings =
   libraryDependencies ++= Seq(
-    "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test,
+    "org.scalatest"     %% "scalatest"       % "3.2.20"   % Test,
     "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
   )
 
 lazy val defaultTestLibSettings_3 =
   libraryDependencies ++= Seq(
-    "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test,
+    "org.scalatest"     %% "scalatest"       % "3.2.20"   % Test,
     "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test exclude (
       "org.scalacheck",
       "scalacheck_3"
