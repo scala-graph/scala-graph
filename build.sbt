@@ -51,8 +51,8 @@ lazy val jsonLift = crossProject(JSPlatform, JVMPlatform)
     defaultSettings_2 ++ Seq(
       name := "Graph lift-json",
       description := "Configurable JSON serialization and deserialization of Graphs, provided by graph-core, in terms of lift-json.",
-      version                              := Version.jsonLift,
-      libraryDependencies += "net.liftweb" %% "lift-json" % "3.5.0", // not available for Scala 3
+      version                                         := Version.jsonLift,
+      libraryDependencies += "net.liftweb"            %% "lift-json" % "3.5.0", // not available for Scala 3
       dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
     )
   )
@@ -69,8 +69,8 @@ lazy val jsoniter = crossProject(JSPlatform, JVMPlatform)
       version     := Version.jsoniter, {
         val jsoniterGroup = "com.github.plokhotnyuk.jsoniter-scala"
         libraryDependencies ++= Seq(
-          jsoniterGroup %% "jsoniter-scala-core"   % "2.38.9",
-          jsoniterGroup %% "jsoniter-scala-macros" % "2.38.9"
+          jsoniterGroup %% "jsoniter-scala-core"   % "2.38.12",
+          jsoniterGroup %% "jsoniter-scala-macros" % "2.38.12"
         )
       }
     )
