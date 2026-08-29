@@ -24,7 +24,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       description := "In-memory graph editing and algorithms with the look and feel of Scala Library collections.",
       version     := Version.core,
       libraryDependencies ++= Seq(
-        "org.scalacheck" %% "scalacheck" % "1.19.0"
+        "org.scalacheck" %% "scalacheck" % "1.20.0"
       )
     )
   )
@@ -51,8 +51,8 @@ lazy val jsonLift = crossProject(JSPlatform, JVMPlatform)
     defaultSettings_2 ++ Seq(
       name := "Graph lift-json",
       description := "Configurable JSON serialization and deserialization of Graphs, provided by graph-core, in terms of lift-json.",
-      version                              := Version.jsonLift,
-      libraryDependencies += "net.liftweb" %% "lift-json" % "3.5.0", // not available for Scala 3
+      version                                         := Version.jsonLift,
+      libraryDependencies += "net.liftweb"            %% "lift-json" % "3.5.0", // not available for Scala 3
       dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
     )
   )
